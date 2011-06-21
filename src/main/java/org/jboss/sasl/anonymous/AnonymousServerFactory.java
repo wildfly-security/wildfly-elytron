@@ -19,36 +19,33 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+package org.jboss.sasl.anonymous;
 
-package org.jboss.sasl;
 
-import static org.jboss.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
-
-import javax.security.sasl.SaslClientFactory;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import java.security.Provider;
-
-import org.jboss.sasl.anonymous.AnonymousClientFactory;
-import org.jboss.sasl.anonymous.AnonymousServerFactory;
-
+import java.util.Map;
 
 /**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * The server factory for the anonymous SASL mechanism.
+ *
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class JBossSaslProvider extends Provider {
+public class AnonymousServerFactory extends AbstractAnonymousFactory implements SaslServerFactory {
 
-    private static final long serialVersionUID = 7613128233053194670L;
-
-    private static final String SASL_CLIENT_FACTORY = SaslClientFactory.class.getSimpleName();
-
-    private static final String SASL_SERVER_FACTORY = SaslServerFactory.class.getSimpleName();
-
-    /**
-     * Construct a new instance.
-     */
-    public JBossSaslProvider() {
-        super("jboss-sasl", 1.0, "JBoss SASL Provider");
-        put(SASL_CLIENT_FACTORY + "." + ANONYMOUS, AnonymousClientFactory.class.getName());
-        put(SASL_SERVER_FACTORY + "." + ANONYMOUS, AnonymousServerFactory.class.getName());
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return super.getMechanismNames(props);
     }
+
+    public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        // Unless we are sure anonymous is required don't return a SaslServer
+        if (ANONYMOUS.equals(mechanism) == false || anonymousCompatible(props) == false) {
+            return null;
+        }
+
+        return new AnonymousSaslServer(protocol, serverName, cbh);
+    }
+
 }

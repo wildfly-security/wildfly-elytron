@@ -22,6 +22,8 @@
 
 package org.jboss.sasl.anonymous;
 
+import static org.jboss.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
+
 import org.jboss.sasl.util.AbstractSaslServer;
 import org.jboss.sasl.util.Charsets;
 import org.jboss.sasl.util.SaslState;
@@ -66,7 +68,7 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
      * @param callbackHandler the callback handler
      */
     public AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
-        super("ANONYMOUS", protocol, serverName, callbackHandler);
+        super(ANONYMOUS, protocol, serverName, callbackHandler);
         getContext().setNegotiationState(INITIAL);
     }
 

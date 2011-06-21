@@ -22,6 +22,8 @@
 
 package org.jboss.sasl.anonymous;
 
+import static org.jboss.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
+
 import org.jboss.sasl.util.AbstractSaslClient;
 import org.jboss.sasl.util.Charsets;
 import org.jboss.sasl.util.SaslState;
@@ -67,10 +69,9 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
      * @param serverName the server name
      * @param callbackHandler the callback handler to use for authentication
      * @param authorizationId the possibly {@code null} protocol-dependent name used for authorization
-     * @param hasInitialResponse {@code true} if the mechanism supports an initial response, {@code false} otherwise
      */
-    protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final boolean hasInitialResponse) {
-        super("ANONYMOUS", protocol, serverName, callbackHandler, authorizationId, hasInitialResponse);
+    protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
+        super(ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, false);
         getContext().setNegotiationState(initial);
     }
 }
