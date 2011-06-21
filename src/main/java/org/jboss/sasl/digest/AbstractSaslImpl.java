@@ -25,17 +25,11 @@
 
 package org.jboss.sasl.digest;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.StringTokenizer;
-import sun.misc.HexDumpEncoder;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The base class used by client and server implementations of SASL
@@ -48,6 +42,8 @@ import java.util.logging.Logger;
  * @author Rosanna Lee
  */
 abstract class AbstractSaslImpl {
+
+    private static final org.jboss.logging.Logger log = org.jboss.logging.Logger.getLogger("org.jboss.sasl.digest");
 
     protected boolean completed = false;
     protected boolean privacy = false;
@@ -72,45 +68,38 @@ abstract class AbstractSaslImpl {
 
             // "auth", "auth-int", "auth-conf"
             qop = parseQop(prop=(String)props.get(Sasl.QOP));
-            logger.logp(Level.FINE, myClassName, "constructor",
-                "SASLIMPL01:Preferred qop property: {0}", prop);
+            log.tracef("Preferred qop property: %s", prop);
             allQop = combineMasks(qop);
-
-            if (logger.isLoggable(Level.FINE)) {
-                logger.logp(Level.FINE, myClassName, "constructor",
-                    "SASLIMPL02:Preferred qop mask: {0}", new Byte(allQop));
-
+            if (log.isTraceEnabled()) {
+                log.tracef("Preferred qop mask: %d", Byte.valueOf(allQop));
                 if (qop.length > 0) {
-                    StringBuffer qopbuf = new StringBuffer();
-                    for (int i = 0; i < qop.length; i++) {
-                        qopbuf.append(Byte.toString(qop[i]));
-                        qopbuf.append(' ');
+                    StringBuilder buf = new StringBuilder();
+                    for (final byte b : qop) {
+                        buf.append(Byte.toString(b));
+                        buf.append(' ');
                     }
-                    logger.logp(Level.FINE, myClassName, "constructor",
-                        "SASLIMPL03:Preferred qops : {0}", qopbuf.toString());
+                    log.tracef("Preferred QOPs : %s", buf);
                 }
             }
 
             // "low", "medium", "high"
             strength = parseStrength(prop=(String)props.get(Sasl.STRENGTH));
-            logger.logp(Level.FINE, myClassName, "constructor",
-                "SASLIMPL04:Preferred strength property: {0}", prop);
-            if (logger.isLoggable(Level.FINE) && strength.length > 0) {
-                StringBuffer strbuf = new StringBuffer();
-                for (int i = 0; i < strength.length; i++) {
-                    strbuf.append(Byte.toString(strength[i]));
-                    strbuf.append(' ');
+            log.tracef("Preferred strength: %s", prop);
+
+            if (log.isTraceEnabled() && strength.length > 0) {
+                StringBuilder buf = new StringBuilder();
+                for (final byte b : strength) {
+                    buf.append(Byte.toString(b));
+                    buf.append(' ');
                 }
-                logger.logp(Level.FINE, myClassName, "constructor",
-                    "SASLIMPL05:Cipher strengths: {0}", strbuf.toString());
+                log.tracef("Cipher strengths: %s", buf);
             }
 
             // Max receive buffer size
             prop = (String)props.get(Sasl.MAX_BUFFER);
             if (prop != null) {
                 try {
-                    logger.logp(Level.FINE, myClassName, "constructor",
-                        "SASLIMPL06:Max receive buffer size: {0}", prop);
+                    log.tracef("Max receive buffer size: %s", prop);
                     recvMaxBufSize = Integer.parseInt(prop);
                 } catch (NumberFormatException e) {
                     throw new SaslException(
@@ -123,8 +112,7 @@ abstract class AbstractSaslImpl {
             prop = (String)props.get(MAX_SEND_BUF);
             if (prop != null) {
                 try {
-                    logger.logp(Level.FINE, myClassName, "constructor",
-                        "SASLIMPL07:Max send buffer size: {0}", prop);
+                    log.tracef("Max send buffer size: %s", prop);
                     sendMaxBufSize = Integer.parseInt(prop);
                 } catch (NumberFormatException e) {
                     throw new SaslException(
@@ -250,42 +238,6 @@ abstract class AbstractSaslImpl {
         return answer;
     }
 
-
-    /**
-     * Outputs a byte array and converts
-     */
-    protected static final void traceOutput(String srcClass, String srcMethod,
-        String traceTag, byte[] output) {
-        traceOutput(srcClass, srcMethod, traceTag, output, 0, output.length);
-    }
-
-    protected static final void traceOutput(String srcClass, String srcMethod,
-        String traceTag, byte[] output, int offset, int len) {
-        try {
-            int origlen = len;
-            Level lev;
-
-            if (!logger.isLoggable(Level.FINEST)) {
-                len = Math.min(16, len);
-                lev = Level.FINER;
-            } else {
-                lev = Level.FINEST;
-            }
-
-            ByteArrayOutputStream out = new ByteArrayOutputStream(len);
-            new HexDumpEncoder().encodeBuffer(
-                new ByteArrayInputStream(output, offset, len), out);
-
-            // Message id supplied by caller as part of traceTag
-            logger.logp(lev, srcClass, srcMethod, "{0} ( {1} ): {2}",
-                new Object[] {traceTag, new Integer(origlen), out.toString()});
-        } catch (Exception e) {
-            logger.logp(Level.WARNING, srcClass, srcMethod,
-                "SASLIMPL09:Error generating trace output: {0}", e);
-        }
-    }
-
-
     /**
      * Returns the integer represented by  4 bytes in network byte order.
      */
@@ -321,13 +273,7 @@ abstract class AbstractSaslImpl {
     }
 
     // ---------------- Constants  -----------------
-    private static final String SASL_LOGGER_NAME = "javax.security.sasl";
     protected static final String MAX_SEND_BUF = "javax.security.sasl.sendmaxbuffer";
-
-    /**
-     * Logger for debug messages
-     */
-    protected static final Logger logger = Logger.getLogger(SASL_LOGGER_NAME);
 
     // default 0 (no protection); 1 (integrity only)
     protected static final byte NO_PROTECTION = (byte)1;

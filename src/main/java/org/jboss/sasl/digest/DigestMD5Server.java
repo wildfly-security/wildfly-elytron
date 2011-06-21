@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import org.jboss.logging.Logger;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -97,6 +98,8 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private static final String UTF8_DIRECTIVE = "charset=utf-8,";
     private static final String ALGORITHM_DIRECTIVE = "algorithm=md5-sess";
 
+    private static final Logger log = Logger.getLogger("org.jboss.sasl.digest.server");
+
     /*
      * Always expect nonce count value to be 1 because we support only
      * initial authentication.
@@ -158,7 +161,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             specifiedQops = (String) props.get(Sasl.QOP);
             if ("false".equals((String) props.get(UTF8_PROPERTY))) {
                 useUTF8 = false;
-                logger.log(Level.FINE, "DIGEST80:Server supports ISO-Latin-1");
+                log.trace("Server supports ISO-Latin-1");
             }
 
             String realms = (String) props.get(REALM_PROPERTY);
@@ -168,8 +171,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 String token = null;
                 for (int i = 0; i < tokenCount; i++) {
                     token = parser.nextToken();
-                    logger.log(Level.FINE, "DIGEST81:Server supports realm {0}",
-                        token);
+                    log.tracef("Server supports realm %s", token);
                     serverRealms.add(token);
                 }
             }
@@ -404,7 +406,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         String username;
         if (responseVal[USERNAME] != null) {
             username = new String(responseVal[USERNAME], encoding);
-            logger.log(Level.FINE, "DIGEST82:Username: {0}", username);
+            log.tracef("Username: %s", username);
         } else {
             throw new SaslException("DIGEST-MD5: digest response format " +
                 "violation. Missing username.");
@@ -413,8 +415,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         /* realm: exactly once if sent by server */
         negotiatedRealm = ((responseVal[REALM] != null) ?
             new String(responseVal[REALM], encoding) : "");
-        logger.log(Level.FINE, "DIGEST83:Client negotiated realm: {0}",
-            negotiatedRealm);
+        log.tracef("Client negotiated realm: %s", negotiatedRealm);
 
         if (!serverRealms.contains(negotiatedRealm)) {
             // Server had sent at least one realm
@@ -455,8 +456,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         negotiatedQop = ((responseVal[QOP] != null) ?
             new String(responseVal[QOP], encoding) : "auth");
 
-        logger.log(Level.FINE, "DIGEST84:Client negotiated qop: {0}",
-            negotiatedQop);
+        log.tracef("Client negotiated qop: %s", negotiatedQop);
 
         // Check that QOP is one sent by server
         byte cQop;
@@ -488,8 +488,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             }
 
             int foundCipher = -1;
-            logger.log(Level.FINE, "DIGEST85:Client negotiated cipher: {0}",
-                negotiatedCipher);
+            log.tracef("Client negotiated cipher: %s", negotiatedCipher);
 
             // Check that cipher is one that we offered
             for (int j = 0; j < CIPHER_TOKENS.length; j++) {
@@ -513,8 +512,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 negotiatedStrength = "low";
             }
 
-            logger.log(Level.FINE, "DIGEST86:Negotiated strength: {0}",
-                negotiatedStrength);
+            log.tracef("Negotiated strength: %s", negotiatedStrength);
         }
 
         // atmost once
@@ -522,8 +520,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             new String(responseVal[DIGEST_URI], encoding) : null);
 
         if (digestUriFromResponse != null) {
-            logger.log(Level.FINE, "DIGEST87:digest URI: {0}",
-                digestUriFromResponse);
+            log.tracef("DIGEST87:digest URI: %s", digestUriFromResponse);
         }
 
         // serv-type "/" host [ "/" serv-name ]
@@ -555,8 +552,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             new String(authzidBytes, encoding) : username);
 
         if (authzidBytes != null) {
-            logger.log(Level.FINE, "DIGEST88:Authzid: {0}",
-                new String(authzidBytes));
+            log.tracef("Authzid: %s", new String(authzidBytes));
         }
 
         // Ignore auth-param

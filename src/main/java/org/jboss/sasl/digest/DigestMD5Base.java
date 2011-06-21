@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.jboss.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -54,8 +55,6 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
-import java.util.logging.Level;
-
 /**
  * Utility class for DIGEST-MD5 mechanism. Provides utility methods
  * and contains two inner classes which implement the SecurityCtx
@@ -67,6 +66,9 @@ import java.util.logging.Level;
  * @author Rosanna Lee
  */
 abstract class DigestMD5Base extends AbstractSaslImpl {
+
+    private static final Logger log = Logger.getLogger("org.jboss.sasl.digest");
+
     /* ------------------------- Constants ------------------------ */
 
     // Used for logging
@@ -428,7 +430,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                 // current installed providers.
                 Cipher.getInstance(JCE_CIPHER_NAME[i]);
 
-                logger.log(Level.FINE, "DIGEST01:Platform supports {0}", JCE_CIPHER_NAME[i]);
+                log.tracef("Platform supports %s", JCE_CIPHER_NAME[i]);
                 ciphers[i] |= CIPHER_MASKS[i];
             } catch (NoSuchAlgorithmException e) {
                 // no implementation found for requested algorithm.
@@ -485,21 +487,19 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         if (qopValue.equals("auth-conf") ||
             qopValue.equals("auth-int")) {
 
-            logger.log(Level.FINE, "DIGEST04:QOP: {0}", qopValue);
+            log.tracef("QOP: %s", qopValue);
 
             A2.write(SECURITY_LAYER_MARKER.getBytes(encoding));
         }
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST05:A2: {0}", A2.toString());
-        }
+        log.tracef("A2: %s", A2);
 
         md5.update(A2.toByteArray());
         byte[] digest = md5.digest();
         hexA2 = binaryToHex(digest);
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST06:HEX(H(A2)): {0}", new String(hexA2));
+        if (log.isTraceEnabled()) {
+            log.tracef("HEX(H(A2)): %s", new String(hexA2));
         }
 
         // A1
@@ -517,9 +517,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         md5.update(beginA1.toByteArray());
         digest = md5.digest();
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST07:H({0}) = {1}",
-                new Object[]{beginA1.toString(), new String(binaryToHex(digest))});
+        if (log.isTraceEnabled()) {
+            log.tracef("H(%s) = %s", beginA1, new String(binaryToHex(digest)));
         }
 
         // A1
@@ -543,8 +542,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         H_A1 = digest; // Record H(A1). Use for integrity & privacy.
         hexA1 = binaryToHex(digest);
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST08:H(A1) = {0}", new String(hexA1));
+        if (log.isTraceEnabled()) {
+            log.tracef("H(A1): %s", new String(hexA1));
         }
 
         //
@@ -563,18 +562,15 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         KD.write(':');
         KD.write(hexA2);
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST09:KD: {0}", KD.toString());
-        }
+        log.tracef("KD: %s", KD);
 
         md5.update(KD.toByteArray());
         digest = md5.digest();
 
         byte[] answer = binaryToHex(digest);
 
-        if (logger.isLoggable(Level.FINE)) {
-            logger.log(Level.FINE, "DIGEST10:response-value: {0}",
-                new String(answer));
+        if (log.isTraceEnabled()) {
+            log.tracef("response-value: %s", new String(answer));
         }
         return (answer);
     }
@@ -770,11 +766,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             if (key.equalsIgnoreCase(keyTable[i])) {
                 if (valueTable[i] == null) {
                     valueTable[i] = value;
-                    if (logger.isLoggable(Level.FINE)) {
-                        logger.log(Level.FINE, "DIGEST11:Directive {0} = {1}",
-                            new Object[]{
-                                keyTable[i],
-                                new String(valueTable[i])});
+                    if (log.isTraceEnabled()) {
+                        log.tracef("DIGEST11:Directive %s = %s", keyTable[i], new String(valueTable[i]));
                     }
                 } else if (realmChoices != null && i == realmIndex) {
                     // > 1 realm specified
@@ -890,13 +883,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             md5.update(keyBuffer);
             byte[] Kis = md5.digest();
 
-            if (logger.isLoggable(Level.FINER)) {
-                traceOutput(DI_CLASS_NAME, "generateIntegrityKeyPair",
-                    "DIGEST12:Kic: ", Kic);
-                traceOutput(DI_CLASS_NAME, "generateIntegrityKeyPair",
-                    "DIGEST13:Kis: ", Kis);
-            }
-
             if (clientMode) {
                 myKi = Kic;
                 peerKi = Kis;
@@ -936,14 +922,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             /* Calculate MAC */
             byte[] mac = getHMAC(myKi, sequenceNum, outgoing, start, len);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DI_CLASS_NAME, "wrap", "DIGEST14:outgoing: ",
-                    outgoing, start, len);
-                traceOutput(DI_CLASS_NAME, "wrap", "DIGEST15:seqNum: ",
-                    sequenceNum);
-                traceOutput(DI_CLASS_NAME, "wrap", "DIGEST16:MAC: ", mac);
-            }
-
             /* Add MAC[0..9] to message */
             System.arraycopy(mac, 0, wrapped, len, 10);
 
@@ -952,9 +930,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
             /* Add sequence number [0..3] */
             System.arraycopy(sequenceNum, 0, wrapped, len+12, 4);
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DI_CLASS_NAME, "wrap", "DIGEST17:wrapped: ", wrapped);
-            }
             return wrapped;
         }
 
@@ -995,23 +970,10 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             /* Calculate MAC to ensure integrity */
             byte[] expectedMac = getHMAC(peerKi, seqNum, msg, 0, msg.length);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DI_CLASS_NAME, "unwrap", "DIGEST18:incoming: ",
-                    msg);
-                traceOutput(DI_CLASS_NAME, "unwrap", "DIGEST19:MAC: ",
-                    mac);
-                traceOutput(DI_CLASS_NAME, "unwrap", "DIGEST20:messageType: ",
-                    msgType);
-                traceOutput(DI_CLASS_NAME, "unwrap", "DIGEST21:sequenceNum: ",
-                    seqNum);
-                traceOutput(DI_CLASS_NAME, "unwrap", "DIGEST22:expectedMAC: ",
-                    expectedMac);
-            }
-
             /* First, compare MAC's before updating any of our state */
             if (!Arrays.equals(mac, expectedMac)) {
                 //  Discard message and do not increment sequence number
-                logger.log(Level.INFO, "DIGEST23:Unmatched MACs");
+                log.trace("Unmatched MACs");
                 return EMPTY_BYTE_ARRAY;
             }
 
@@ -1183,13 +1145,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             md5.update(keyBuffer);
             byte[] Kcs = md5.digest();
 
-            if (logger.isLoggable(Level.FINER)) {
-                traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                    "DIGEST24:Kcc: ", Kcc);
-                traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                    "DIGEST25:Kcs: ", Kcs);
-            }
-
             byte[] myKc;
             byte[] peerKc;
 
@@ -1247,21 +1202,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                     // Initialize cipher objects
                     encCipher.init(Cipher.ENCRYPT_MODE, encKey, encIv);
                     decCipher.init(Cipher.DECRYPT_MODE, decKey, decIv);
-
-                    if (logger.isLoggable(Level.FINER)) {
-                        traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                            "DIGEST26:" + negotiatedCipher + " IVcc: ",
-                            encIv.getIV());
-                        traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                            "DIGEST27:" + negotiatedCipher + " IVcs: ",
-                            decIv.getIV());
-                        traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                            "DIGEST28:" + negotiatedCipher + " encryption key: ",
-                            encKey.getEncoded());
-                        traceOutput(DP_CLASS_NAME, "generatePrivacyKeyPair",
-                            "DIGEST29:" + negotiatedCipher + " decryption key: ",
-                            decKey.getEncoded());
-                    }
                 }
             } catch (InvalidKeySpecException e) {
                 throw new SaslException("DIGEST-MD5: Unsupported key " +
@@ -1304,14 +1244,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             incrementSeqNum();
             byte[] mac = getHMAC(myKi, sequenceNum, outgoing, start, len);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "wrap", "DIGEST30:Outgoing: ",
-                    outgoing, start, len);
-                traceOutput(DP_CLASS_NAME, "wrap", "seqNum: ",
-                    sequenceNum);
-                traceOutput(DP_CLASS_NAME, "wrap", "MAC: ", mac);
-            }
-
             // Calculate padding
             int bs = encCipher.getBlockSize();
             byte[] padding;
@@ -1332,11 +1264,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             System.arraycopy(padding, 0, toBeEncrypted, len, padding.length);
             System.arraycopy(mac, 0, toBeEncrypted, len+padding.length, 10);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "wrap",
-                    "DIGEST31:{msg, pad, KicMAC}: ", toBeEncrypted);
-            }
-
             /* CIPHER(Kc, {msg, pad, HMAC(Ki, {SeqNum, msg}[0..9])}) */
             byte[] cipherBlock;
             try {
@@ -1356,10 +1283,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             System.arraycopy(cipherBlock, 0, wrapped, 0, cipherBlock.length);
             System.arraycopy(messageType, 0, wrapped, cipherBlock.length, 2);
             System.arraycopy(sequenceNum, 0, wrapped, cipherBlock.length+2, 4);
-
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "wrap", "DIGEST32:Wrapped: ", wrapped);
-            }
 
             return wrapped;
         }
@@ -1397,12 +1320,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             System.arraycopy(incoming, start+encryptedMsg.length+2,
                 seqNum, 0, 4);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                logger.log(Level.FINEST,
-                    "DIGEST33:Expecting sequence num: {0}",
-                    new Integer(peerSeqNum));
-                traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST34:incoming: ",
-                    encryptedMsg);
+            if (log.isTraceEnabled()) {
+                log.tracef("Expecting sequence num: %d", Integer.valueOf(peerSeqNum));
             }
 
             // Decrypt message
@@ -1430,16 +1349,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             System.arraycopy(decryptedMsg, msgWithPadding.length,
                 mac, 0, 10);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "unwrap",
-                    "DIGEST35:Unwrapped (w/padding): ", msgWithPadding);
-                traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST36:MAC: ", mac);
-                traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST37:messageType: ",
-                    msgType);
-                traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST38:sequenceNum: ",
-                    seqNum);
-            }
-
             int msgLength = msgWithPadding.length;
             int blockSize = decCipher.getBlockSize();
             if (blockSize > 1) {
@@ -1447,10 +1356,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                 msgLength -= (int)msgWithPadding[msgWithPadding.length - 1];
                 if (msgLength < 0) {
                     //  Discard message and do not increment sequence number
-                    if (logger.isLoggable(Level.INFO)) {
-                        logger.log(Level.INFO,
-                            "DIGEST39:Incorrect padding: {0}",
-                            new Byte(msgWithPadding[msgWithPadding.length - 1]));
+                    if (log.isTraceEnabled()) {
+                        log.tracef("Incorrect padding: %02x", Byte.valueOf(msgWithPadding[msgWithPadding.length - 1]));
                     }
                     return EMPTY_BYTE_ARRAY;
                 }
@@ -1460,15 +1367,10 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
             byte[] expectedMac = getHMAC(peerKi, seqNum, msgWithPadding,
                 0, msgLength);
 
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "unwrap", "DIGEST40:KisMAC: ",
-                    expectedMac);
-            }
-
             // First, compare MACs before updating state
             if (!Arrays.equals(mac, expectedMac)) {
                 //  Discard message and do not increment sequence number
-                logger.log(Level.INFO, "DIGEST41:Unmatched MACs");
+                log.trace("Unmatched MACs");
                 return EMPTY_BYTE_ARRAY;
             }
 
@@ -1574,15 +1476,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
         if (desStrength.equals("des")) {
             spec = new DESKeySpec(subkey1, 0);
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST42:DES key input: ", input);
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST43:DES key parity-adjusted: ", subkey1);
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST44:DES key material: ", ((DESKeySpec)spec).getKey());
-                logger.log(Level.FINEST, "DIGEST45: is parity-adjusted? {0}",
-                    Boolean.valueOf(DESKeySpec.isParityAdjusted(subkey1, 0)));
+            if (log.isTraceEnabled()) {
+                log.tracef("is parity-adjusted? %s", Boolean.valueOf(DESKeySpec.isParityAdjusted(subkey1, 0)));
             }
 
         } else if (desStrength.equals("desede")) {
@@ -1598,16 +1493,8 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
                 subkey1.length);
 
             spec = new DESedeKeySpec(ede, 0);
-            if (logger.isLoggable(Level.FINEST)) {
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST46:3DES key input: ", input);
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST47:3DES key ede: ", ede);
-                traceOutput(DP_CLASS_NAME, "makeDesKeys",
-                    "DIGEST48:3DES key material: ",
-                    ((DESedeKeySpec)spec).getKey());
-                logger.log(Level.FINEST, "DIGEST49: is parity-adjusted? ",
-                    Boolean.valueOf(DESedeKeySpec.isParityAdjusted(ede, 0)));
+            if (log.isTraceEnabled()) {
+                log.tracef("is parity-adjusted? %s", Boolean.valueOf(DESedeKeySpec.isParityAdjusted(ede, 0)));
             }
         } else {
             throw new IllegalArgumentException("Invalid DES strength:" +
