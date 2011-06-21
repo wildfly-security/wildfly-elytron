@@ -23,6 +23,8 @@
 package org.jboss.sasl;
 
 import static org.jboss.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
+import static org.jboss.sasl.digest.DigestMD5ServerFactory.DIGEST_MD5;
+import static org.jboss.sasl.clienttoken.ClientTokenClientFactory.JBOSS_CLIENTTOKEN;
 
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
@@ -30,7 +32,8 @@ import java.security.Provider;
 
 import org.jboss.sasl.anonymous.AnonymousClientFactory;
 import org.jboss.sasl.anonymous.AnonymousServerFactory;
-
+import org.jboss.sasl.clienttoken.ClientTokenClientFactory;
+import org.jboss.sasl.digest.DigestMD5ServerFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -50,5 +53,7 @@ public final class JBossSaslProvider extends Provider {
         super("jboss-sasl", 1.0, "JBoss SASL Provider");
         put(SASL_CLIENT_FACTORY + "." + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + "." + ANONYMOUS, AnonymousServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + "." + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + "." + JBOSS_CLIENTTOKEN, ClientTokenClientFactory.class.getName());
     }
 }

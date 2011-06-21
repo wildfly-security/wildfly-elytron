@@ -19,6 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.jboss.sasl.anonymous;
 
 
@@ -41,7 +42,7 @@ public class AnonymousServerFactory extends AbstractAnonymousFactory implements 
 
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure anonymous is required don't return a SaslServer
-        if (ANONYMOUS.equals(mechanism) == false || anonymousCompatible(props) == false) {
+        if (ANONYMOUS.equals(mechanism) == false || matches(props) == false) {
             return null;
         }
 

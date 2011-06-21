@@ -35,26 +35,8 @@ import java.util.Map;
  */
 public class AnonymousClientFactory extends AbstractAnonymousFactory implements SaslClientFactory {
 
-    public String[] getMechanismNames(Map<String, ?> props) {
-        return super.getMechanismNames(props);
-    }
-
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Only return a client if we are sure anonymous is supported.
-        if (includesAnonymous(mechanisms) == false || anonymousCompatible(props) == false) {
-            return null;
-        }
-
-        return new AnonymousSaslClient(protocol, serverName, cbh, authorizationId);
+        return isIncluded(mechanisms) && matches(props) ? new AnonymousSaslClient(protocol, serverName, cbh, authorizationId) : null;
     }
-
-    private boolean includesAnonymous(final String[] mechanisms) {
-        for (String current : mechanisms) {
-            if (ANONYMOUS.equals(current)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

@@ -20,35 +20,35 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl.anonymous;
+package org.jboss.sasl.clienttoken;
 
+import java.util.Map;
 import org.jboss.sasl.util.AbstractSaslFactory;
 
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
+
 /**
- * A base class for the anonymous factories to verify from the properties supplied if anonymous
- * can be used.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractAnonymousFactory extends AbstractSaslFactory {
+public final class ClientTokenClientFactory extends AbstractSaslFactory implements SaslClientFactory {
 
     /**
-     * The name of the ANONYMOUS SASL mechanism.
+     * The mechanism name.
      */
-    public static final String ANONYMOUS = "ANONYMOUS";
+    public static final String JBOSS_CLIENTTOKEN = "JBOSS-CLIENTTOKEN";
 
     /**
      * Construct a new instance.
      */
-    protected AbstractAnonymousFactory() {
-        super(ANONYMOUS);
+    public ClientTokenClientFactory() {
+        super(JBOSS_CLIENTTOKEN);
     }
 
-    protected boolean isDictionarySusceptible() {
-        return false;
-    }
-
-    protected boolean isPlainText() {
-        return false;
+    /** {@inheritDoc} */
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        return isIncluded(mechanisms) && matches(props) ? new ClientTokenSaslClient(protocol, serverName, cbh, authorizationId) : null;
     }
 }

@@ -20,31 +20,42 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl.anonymous;
+package org.jboss.sasl.digest;
 
+import java.util.Map;
 import org.jboss.sasl.util.AbstractSaslFactory;
 
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
+
 /**
- * A base class for the anonymous factories to verify from the properties supplied if anonymous
- * can be used.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractAnonymousFactory extends AbstractSaslFactory {
+public final class DigestMD5ServerFactory extends AbstractSaslFactory implements SaslServerFactory {
 
     /**
-     * The name of the ANONYMOUS SASL mechanism.
+     * The name of this mechanism.
      */
-    public static final String ANONYMOUS = "ANONYMOUS";
+    public static final String DIGEST_MD5 = "DIGEST-MD5";
 
     /**
      * Construct a new instance.
      */
-    protected AbstractAnonymousFactory() {
-        super(ANONYMOUS);
+    public DigestMD5ServerFactory() {
+        super(DIGEST_MD5);
     }
 
-    protected boolean isDictionarySusceptible() {
+    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        if (DIGEST_MD5.equals(mechanism) == false || matches(props) == false) {
+            return null;
+        }
+
+        return new DigestMD5Server(protocol, serverName, props, cbh);
+    }
+
+    protected boolean isAnonymous() {
         return false;
     }
 
