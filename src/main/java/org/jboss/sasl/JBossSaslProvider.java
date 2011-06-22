@@ -37,6 +37,7 @@ import org.jboss.sasl.digest.DigestMD5ServerFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class JBossSaslProvider extends Provider {
 
@@ -53,7 +54,7 @@ public final class JBossSaslProvider extends Provider {
         super("jboss-sasl", 1.0, "JBoss SASL Provider");
         put(SASL_CLIENT_FACTORY + "." + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + "." + ANONYMOUS, AnonymousServerFactory.class.getName());
-        put(SASL_SERVER_FACTORY + "." + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
-        put(SASL_CLIENT_FACTORY + "." + JBOSS_CLIENTTOKEN, ClientTokenClientFactory.class.getName());
+        //put(SASL_SERVER_FACTORY + "." + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
+        //put(SASL_CLIENT_FACTORY + "." + JBOSS_CLIENTTOKEN, ClientTokenClientFactory.class.getName());
     }
 }
