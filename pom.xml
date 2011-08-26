@@ -29,7 +29,7 @@
 
     <groupId>org.jboss.sasl</groupId>
     <artifactId>jboss-sasl</artifactId>
-    <version>1.0.0.Beta2-SNAPSHOT</version>
+    <version>1.0.0.Beta2</version>
 
     <parent>
         <groupId>org.jboss</groupId>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>
-            <version>3.0.0.Beta5</version>
+            <version>3.0.0.GA</version>
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
