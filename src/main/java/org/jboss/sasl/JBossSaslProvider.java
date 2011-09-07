@@ -45,6 +45,8 @@ public final class JBossSaslProvider extends Provider {
 
     private static final long serialVersionUID = 7613128233053194670L;
 
+    private static final String INFO = "JBoss SASL Provider " + getVersionString();
+
     private static final String SASL_CLIENT_FACTORY = SaslClientFactory.class.getSimpleName();
 
     private static final String SASL_SERVER_FACTORY = SaslServerFactory.class.getSimpleName();
@@ -55,11 +57,21 @@ public final class JBossSaslProvider extends Provider {
      * Construct a new instance.
      */
     public JBossSaslProvider() {
-        super("jboss-sasl", 1.0, "JBoss SASL Provider");
+        super("jboss-sasl", 1.0, INFO);
         put(SASL_CLIENT_FACTORY + DOT + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + ANONYMOUS, AnonymousServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
         //put(SASL_SERVER_FACTORY + "." + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
         //put(SASL_CLIENT_FACTORY + "." + JBOSS_CLIENTTOKEN, ClientTokenClientFactory.class.getName());
     }
+
+    /**
+     * Get the version string of the JBoss SASL provider.
+     *
+     * @return the version string.
+     */
+    public static String getVersionString() {
+        return "NOT SET";
+    }
+
 }

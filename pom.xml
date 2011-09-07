@@ -37,6 +37,40 @@
         <version>6-beta-1</version>
     </parent>
 
+    <build>
+        <plugins>
+
+            <!-- Bytecode plugin for version string in Main -->
+            <plugin>
+                <groupId>org.jboss.maven.plugins</groupId>
+                <artifactId>maven-injection-plugin</artifactId>
+                <version>1.0.2</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>bytecode</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <bytecodeInjections>
+                        <bytecodeInjection>
+                            <expression>${project.version}</expression>
+                            <targetMembers>
+                                <methodBodyReturn>
+                                    <className>org.jboss.sasl.JBossSaslProvider</className>
+                                    <methodName>getVersionString</methodName>
+                                </methodBodyReturn>
+                            </targetMembers>
+                        </bytecodeInjection>
+                    </bytecodeInjections>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -48,6 +82,12 @@
             <artifactId>jboss-logging-processor</artifactId>
             <version>1.0.0.Beta5</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.7</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
