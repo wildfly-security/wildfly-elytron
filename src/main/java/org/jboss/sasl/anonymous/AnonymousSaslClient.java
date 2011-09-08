@@ -71,7 +71,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
      * @param authorizationId the possibly {@code null} protocol-dependent name used for authorization
      */
     protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
-        super(ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, false);
+        super(ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true);
         getContext().setNegotiationState(initial);
     }
 }
