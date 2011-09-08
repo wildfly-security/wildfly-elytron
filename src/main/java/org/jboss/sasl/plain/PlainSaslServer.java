@@ -47,8 +47,6 @@ public final class PlainSaslServer extends AbstractSaslServer {
 
         private static final byte UTF8NUL = 0x00;
 
-        private static final int MAX_DEPTH = 2;
-
         public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
             int length = message.length;
             if (length == 0) {
