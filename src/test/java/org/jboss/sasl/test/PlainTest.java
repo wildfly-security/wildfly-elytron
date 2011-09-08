@@ -156,5 +156,24 @@ public class PlainTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Test a successful exchange using the PLAIN mechanism where no Authorization ID is specified.
+     */
+    @Test
+    public void testSuccessfulExchange_NoAuthorization() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, null, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] message = client.evaluateChallenge(new byte[0]);
+
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
 
 }

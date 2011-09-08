@@ -117,29 +117,82 @@ public final class PlainSaslServer extends AbstractSaslServer {
         }
 
         private String[] split(byte[] message) throws SaslException {
-            return split(message, 0, 0);
-        }
+            String authorizationId = null;
+            String authenticationId;
+            String password;
 
-        private String[] split(final byte[] message, final int startPos, final int depth) throws SaslException {
-            if (depth > MAX_DEPTH) {
+            int startPos = 0;
+
+            int nextNul;
+            int length;
+            // Find the authorization ID
+            nextNul = nextNul(message, startPos, true);
+            if (nextNul > 0) {
+                length = length(nextNul, message.length, startPos);
+                authorizationId = new String(message, startPos, length, Charsets.UTF_8);
+                startPos += length + 1;
+            } else {
+                startPos++;
+            }
+
+            // Find the authentication ID
+            nextNul = nextNul(message, startPos, true);
+            length = length(nextNul, message.length, startPos);
+            authenticationId = new String(message, startPos, length, Charsets.UTF_8);
+            startPos += length + 1;
+
+            // Find the password
+            nextNul = nextNul(message, startPos, false);
+            // Verify there is no nul after the password.
+            if (nextNul > -1) {
                 throw new SaslException("PLAIN: Invalid message format. (Too many delimiters)");
             }
 
+            length = length(nextNul, message.length, startPos);
+            password = new String(message, startPos, length, Charsets.UTF_8);
+            startPos += length + 1;
+
+            if (authorizationId == null) {
+                return new String[]{authenticationId, password};
+            } else {
+                return new String[]{authorizationId, authenticationId, password};
+            }
+        }
+
+        /**
+         * Find the next UTF8 NUL in the message.
+         *
+         * @param message - The message to search.
+         * @param startPos - The point within the message tostart the search from.
+         * @return The position of the next nul byte.
+         */
+        private int nextNul(final byte[] message, final int startPos, final boolean mandatory) throws SaslException {
             int nulpos = -1;
+
             for (int i = startPos; i < message.length && nulpos < 0; i++) {
                 if (message[i] == UTF8NUL)
                     nulpos = i;
             }
 
-            int length = nulpos < 0 ? message.length - startPos : nulpos - startPos;
-            String part = new String(message, startPos, length, Charsets.UTF_8);
+            if (mandatory && nulpos < 0) {
+                throw new SaslException("PLAIN: Invalid message format. (Missing delimiter)");
+            }
 
-            String[] response = nulpos < 0 ? new String[depth + 1] : split(message, nulpos + 1, depth + 1);
-            response[depth] = part;
-
-            return response;
+            return nulpos;
         }
 
+        /**
+         * Calculate the length of the field based on the position of the nul, the length of the message
+         * and the starting point.
+         *
+         * @param nulPos
+         * @param messageLength
+         * @param startPos
+         * @return
+         */
+        private int length(final int nulPos, final int messageLength, final int startPos) {
+            return nulPos < 0 ? messageLength - startPos : nulPos - startPos;
+        }
 
     };
 
