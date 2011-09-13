@@ -26,6 +26,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
 import java.io.IOException;
 
 /**
@@ -37,10 +38,16 @@ class ClientCallbackHandler implements CallbackHandler {
 
     private final String username;
     private final char[] password;
+    private final String realm;
 
     ClientCallbackHandler(final String username, final char[] password) {
+        this(username, password, null);
+    }
+
+    ClientCallbackHandler(final String username, final char[] password, final String realm) {
         this.username = username;
         this.password = password;
+        this.realm = realm;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -51,6 +58,14 @@ class ClientCallbackHandler implements CallbackHandler {
             } else if (current instanceof PasswordCallback) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(password);
+            } else if (current instanceof RealmCallback) {
+                RealmCallback rcb = (RealmCallback) current;
+                if (realm == null) {
+                    String defaultText = rcb.getDefaultText();
+                    rcb.setText(defaultText);
+                } else {
+                    rcb.setText(realm);
+                }
             }
         }
     }

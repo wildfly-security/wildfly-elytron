@@ -58,7 +58,8 @@ class ServerCallbackHandler implements CallbackHandler {
                 }
 
             } else if (current instanceof PasswordCallback) {
-                // TODO - Rewrite
+                PasswordCallback pcb = (PasswordCallback) current;
+                pcb.setPassword(expectedPassword);
             } else if (current instanceof VerifyPasswordCallback) {
                 VerifyPasswordCallback vcb = (VerifyPasswordCallback) current;
                 vcb.setVerified(String.valueOf(expectedPassword).equals(vcb.getPassword()));

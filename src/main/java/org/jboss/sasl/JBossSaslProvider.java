@@ -61,7 +61,7 @@ public final class JBossSaslProvider extends Provider {
         put(SASL_CLIENT_FACTORY + DOT + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + ANONYMOUS, AnonymousServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
-        //put(SASL_SERVER_FACTORY + "." + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
         //put(SASL_CLIENT_FACTORY + "." + JBOSS_CLIENTTOKEN, ClientTokenClientFactory.class.getName());
     }
 

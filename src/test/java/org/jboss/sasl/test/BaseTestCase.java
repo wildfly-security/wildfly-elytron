@@ -50,7 +50,7 @@ public class BaseTestCase {
     public static void registerProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Integer>() {
             public Integer run() {
-                return Security.insertProviderAt(jbossSaslProvider, 0);
+                return Security.insertProviderAt(jbossSaslProvider, 1);
             }
         });
     }
