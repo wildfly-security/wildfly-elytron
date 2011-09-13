@@ -33,6 +33,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -102,6 +103,30 @@ public class DigestTest extends BaseTestCase {
         byte[] message = server.evaluateResponse(new byte[0]);
 
         message = client.evaluateChallenge(message);
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
+    /**
+     * Test a successful exchange using the DIGEST mechanism but the default realm.
+     */
+    @Test
+    public void testSuccessfulExchange_DefaultRealm() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        System.out.println(new String(message));
+        System.out.println("  **  ");
+        message = client.evaluateChallenge(message);
+        System.out.println(new String(message));
+
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
         assertEquals("George", server.getAuthorizationID());

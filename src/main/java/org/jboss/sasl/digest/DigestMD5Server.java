@@ -178,6 +178,11 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         }
 
         encoding = (useUTF8 ? "UTF8" : "8859_1");
+
+        // By default, use server name as realm
+        if (serverRealms.size() == 0) {
+            serverRealms.add(serverName);
+        }
     }
 
     public  byte[] evaluateResponse(byte[] response) throws SaslException {

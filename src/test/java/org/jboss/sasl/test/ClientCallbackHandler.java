@@ -62,7 +62,9 @@ class ClientCallbackHandler implements CallbackHandler {
                 RealmCallback rcb = (RealmCallback) current;
                 if (realm == null) {
                     String defaultText = rcb.getDefaultText();
-                    rcb.setText(defaultText);
+                    if (defaultText != null && defaultText.length() > 0) {
+                        rcb.setText(defaultText);
+                    }
                 } else {
                     rcb.setText(realm);
                 }
