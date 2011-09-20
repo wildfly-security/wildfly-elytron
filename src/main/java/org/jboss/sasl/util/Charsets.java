@@ -36,6 +36,11 @@ public final class Charsets {
      */
     public static final Charset UTF_8 = Charset.forName("UTF-8");
 
+    /**
+     * The {@code 8859_1} character set.
+     */
+    public static final Charset EIGHT859_1 = Charset.forName("8859_1");
+
     private Charsets() {
     }
 }

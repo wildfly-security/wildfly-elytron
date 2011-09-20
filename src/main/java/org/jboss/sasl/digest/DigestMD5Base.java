@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import org.jboss.logging.Logger;
+import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -394,33 +395,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         return digestString.toString().getBytes(encoding);
     }
 
-    /**
-     * Used to convert username-value, passwd or realm to 8859_1 encoding
-     * if all chars in string are within the 8859_1 (Latin 1) encoding range.
-     *
-     * @param str a non-null String
-     * @return a non-null byte array containing the correct character encoding
-     * for username, paswd or realm.
-     */
-    protected byte[] stringToByte_8859_1(String str) throws SaslException {
-
-        char[] buffer = str.toCharArray();
-
-        try {
-            if (useUTF8) {
-                for (final char c : buffer) {
-                    if (c > '\u00FF') {
-                        return str.getBytes("UTF8");
-                    }
-                }
-            }
-            return str.getBytes("8859_1");
-        } catch (UnsupportedEncodingException e) {
-            throw new SaslException(
-                "cannot encode string in UTF8 or 8859-1 (Latin-1)", e);
-        }
-    }
-
     protected static byte[] getPlatformCiphers() {
         byte[] ciphers = new byte[CIPHER_TOKENS.length];
 
@@ -447,7 +421,42 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         return ciphers;
     }
 
+
     /**
+     * Assembles response-value for digest-response.
+     *
+     * @param authMethod "AUTHENTICATE" for client-generated response;
+     *                   "" for server-generated response
+     * @return A non-null byte array containing the repsonse-value.
+     * @throws java.security.NoSuchAlgorithmException
+     *                             if the platform does not have MD5
+     *                             digest support.
+     * @throws java.io.UnsupportedEncodingException
+     *                             if a an error occurs
+     *                             encoding a string into either Latin-1 or UTF-8.
+     * @throws java.io.IOException if an error occurs writing to the output
+     *                             byte array buffer.
+     */
+    protected byte[] generateResponseValue(
+            String authMethod,
+            String digestUriValue,
+            String qopValue,
+            String usernameValue,
+            String realmValue,
+            char[] passwdValue,
+            byte[] nonceValue,
+            byte[] cNonceValue,
+            int nonceCount,
+            byte[] authzidValue
+    ) throws NoSuchAlgorithmException, IOException {
+        UsernamePasswordHashUtil hashUtil = new UsernamePasswordHashUtil();
+        byte[] urpHash = hashUtil.generateHashedURP(usernameValue, realmValue, passwdValue, useUTF8);
+
+        return generateResponseValue(authMethod, digestUriValue, qopValue, urpHash, nonceValue, cNonceValue, nonceCount, authzidValue);
+    }
+
+
+        /**
      * Assembles response-value for digest-response.
      *
      * @param authMethod "AUTHENTICATE" for client-generated response;
@@ -464,9 +473,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         String authMethod,
         String digestUriValue,
         String qopValue,
-        String usernameValue,
-        String realmValue,
-        char[] passwdValue,
+        byte[] urpHash,
         byte[] nonceValue,
         byte[] cNonceValue,
         int nonceCount,
@@ -475,7 +482,9 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
         MessageDigest md5 = MessageDigest.getInstance("MD5");
         byte[] hexA1, hexA2;
-        ByteArrayOutputStream A2, beginA1, A1, KD;
+        ByteArrayOutputStream A2;
+        ByteArrayOutputStream A1;
+        ByteArrayOutputStream KD;
 
         // A2
         // --
@@ -504,21 +513,9 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
         // A1
         // --
-        // H(user-name : realm-value : passwd)
-        //
-        beginA1 = new ByteArrayOutputStream();
-        beginA1.write(stringToByte_8859_1(usernameValue));
-        beginA1.write(':');
-        // if no realm, realm will be an empty string
-        beginA1.write(stringToByte_8859_1(realmValue));
-        beginA1.write(':');
-        beginA1.write(stringToByte_8859_1(new String(passwdValue)));
-
-        md5.update(beginA1.toByteArray());
-        digest = md5.digest();
-
+        // H(user-name : realm-value : passwd) - Now supplied in the urpHash byte[]
         if (log.isTraceEnabled()) {
-            log.tracef("H(%s) = %s", beginA1, new String(binaryToHex(digest)));
+            log.tracef("H(%s) = %s", new String(urpHash), new String(binaryToHex(urpHash)));
         }
 
         // A1
@@ -527,7 +524,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         // : nonce-value, : cnonce-value : authzid-value
         //
         A1 = new ByteArrayOutputStream();
-        A1.write(digest);
+        A1.write(urpHash);
         A1.write(':');
         A1.write(nonceValue);
         A1.write(':');
@@ -599,8 +596,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
      * and value(s)
      *
      * @param buf A non-null digest-challenge string.
-     * @param multipleAllowed true if multiple qop or realm or QOP directives
-     *  are allowed.
      * @throws javax.security.sasl.SaslException if the buf cannot be parsed according to RFC 2831
      */
     protected static byte[][] parseDirectives(byte[] buf,
