@@ -136,7 +136,7 @@ public class AnonymousTest extends BaseTestCase {
 
     @Test
     public void testSuccessfulExchange() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", null);
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(ANONYMOUS, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", null);

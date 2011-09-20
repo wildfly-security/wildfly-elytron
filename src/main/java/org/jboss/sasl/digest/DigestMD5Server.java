@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.jboss.logging.Logger;
+import org.jboss.sasl.callback.DigestHashCallback;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -114,6 +115,9 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private static final String REALM_PROPERTY =
         "com.sun.security.sasl.digest.realm";
 
+    /* Should a pre-digested password be requested? */
+    private static final String PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
+
     /* Directives encountered in responses sent by the client. */
     private static final String[] DIRECTIVE_KEY = {
         "username",    // exactly once
@@ -149,13 +153,17 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private String specifiedQops;
     private byte[] myCiphers;
     private List<String> serverRealms;
+    /** Should the impl request and use pre-digested passwords instead of generating the {username : realm : password} hash? */
+    private boolean preDigestedPasswords;
 
     DigestMD5Server(String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         super(props, MY_CLASS_NAME, 1, protocol + "/" + serverName, cbh);
 
         serverRealms = new ArrayList<String>();
 
-        useUTF8 = true;  // default
+        // Defaults
+        useUTF8 = true;
+        preDigestedPasswords = false;
 
         if (props != null) {
             specifiedQops = (String) props.get(Sasl.QOP);
@@ -174,6 +182,11 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                     log.tracef("Server supports realm %s", token);
                     serverRealms.add(token);
                 }
+            }
+
+            if (props.containsKey(PRE_DIGESTED_PROPERTY)) {
+                preDigestedPasswords = Boolean.parseBoolean(String.valueOf(props.get(PRE_DIGESTED_PROPERTY)));
+                log.tracef("Server using pre-digested hashes (%B)", preDigestedPasswords);
             }
         }
 
@@ -563,7 +576,8 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         // Ignore auth-param
 
         // Get password need to generate verifying response
-        char[] passwd;
+        char[] passwd = null;
+        byte[] userRealmPasswd = null;
         try {
             // Realm and Name callbacks are used to provide info
             RealmCallback rcb = new RealmCallback("DIGEST-MD5 realm: ",
@@ -571,13 +585,21 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             NameCallback ncb = new NameCallback("DIGEST-MD5 authentication ID: ",
                 username);
 
-            // PasswordCallback is used to collect info
-            PasswordCallback pcb =
-                new PasswordCallback("DIGEST-MD5 password: ", false);
+            if (preDigestedPasswords) {
+                // DigestCallback is used to collect info
+                DigestHashCallback dcb = new DigestHashCallback("DIGEST-MD5 { username : realm : password } hash.");
+                cbh.handle(new Callback[]{rcb, ncb, dcb});
+                userRealmPasswd = dcb.getHash();
+                dcb.setHash(null); //
+            } else {
+                // PasswordCallback is used to collect info
+                PasswordCallback pcb =
+                        new PasswordCallback("DIGEST-MD5 password: ", false);
 
-            cbh.handle(new Callback[] {rcb, ncb, pcb});
-            passwd = pcb.getPassword();
-            pcb.clearPassword();
+                cbh.handle(new Callback[]{rcb, ncb, pcb});
+                passwd = pcb.getPassword();
+                pcb.clearPassword();
+            }
 
         } catch (UnsupportedCallbackException e) {
             throw new SaslException(
@@ -588,10 +610,14 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 "DIGEST-MD5: IO error acquiring password", e);
         }
 
-        if (passwd == null) {
+        if (preDigestedPasswords == false && passwd == null) {
             throw new SaslException(
-                "DIGEST-MD5: cannot acquire password for " + username +
-                " in realm : " + negotiatedRealm);
+                    "DIGEST-MD5: cannot acquire password for " + username +
+                            " in realm : " + negotiatedRealm);
+        } else if (preDigestedPasswords && userRealmPasswd == null) {
+            throw new SaslException(
+                    "DIGEST-MD5: cannot acquire hash for " + username +
+                            " in realm : " + negotiatedRealm);
         }
 
         try {
@@ -599,10 +625,16 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             byte[] expectedResponse;
 
             try {
-                expectedResponse = generateResponseValue("AUTHENTICATE",
-                    digestUri, negotiatedQop, username, negotiatedRealm,
-                    passwd, nonce /* use own nonce */,
-                    cnonce, NONCE_COUNT_VALUE, authzidBytes);
+                if (preDigestedPasswords) {
+                    expectedResponse = generateResponseValue("AUTHENTICATE",
+                            digestUri, negotiatedQop, userRealmPasswd, nonce /* use own nonce */,
+                            cnonce, NONCE_COUNT_VALUE, authzidBytes);
+                } else {
+                    expectedResponse = generateResponseValue("AUTHENTICATE",
+                            digestUri, negotiatedQop, username, negotiatedRealm,
+                            passwd, nonce /* use own nonce */,
+                            cnonce, NONCE_COUNT_VALUE, authzidBytes);
+                }
 
             } catch (NoSuchAlgorithmException e) {
                 throw new SaslException(
@@ -639,12 +671,23 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                     "DIGEST-MD5: IO error checking authzid", e);
             }
 
-            return generateResponseAuth(username, passwd, cnonce,
-                NONCE_COUNT_VALUE, authzidBytes);
+            if (preDigestedPasswords) {
+                return generateResponseAuth(userRealmPasswd, cnonce,
+                        NONCE_COUNT_VALUE, authzidBytes);
+            } else {
+                return generateResponseAuth(username, passwd, cnonce,
+                        NONCE_COUNT_VALUE, authzidBytes);
+            }
         } finally {
             // Clear password
-            for (int i = 0; i < passwd.length; i++) {
-                passwd[i] = 0;
+            if (passwd != null) {
+                for (int i = 0; i < passwd.length; i++) {
+                    passwd[i] = 0;
+                }
+            } else if (userRealmPasswd != null) {
+                for (int i = 0; i < userRealmPasswd.length; i++) {
+                    userRealmPasswd[i] = 0;
+                }
             }
         }
     }
@@ -661,7 +704,6 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
      *
      *       A2 = { ":", digest-uri-value, ":00000000000000000000000000000000" }
      *
-     * Clears password afterwards.
      */
     private byte[] generateResponseAuth(String username, char[] passwd,
         byte[] cnonce, int nonceCount, byte[] authzidBytes) throws SaslException {
@@ -673,18 +715,53 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 digestUri, negotiatedQop, username, negotiatedRealm,
                 passwd, nonce, cnonce, nonceCount, authzidBytes);
 
-            byte[] challenge = new byte[responseValue.length + 8];
-            System.arraycopy("rspauth=".getBytes(encoding), 0, challenge, 0, 8);
-            System.arraycopy(responseValue, 0, challenge, 8,
-                responseValue.length );
-
-            return challenge;
-
+            return generateChallenge(responseValue);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("DIGEST-MD5: problem generating response", e);
         } catch (IOException e) {
             throw new SaslException("DIGEST-MD5: problem generating response", e);
         }
+    }
+
+    /**
+     * Server sends a message formatted as follows:
+     *    response-auth = "rspauth" "=" response-value
+     *   where response-value is calculated as above, using the values sent in
+     *   step two, except that if qop is "auth", then A2 is
+     *
+     *       A2 = { ":", digest-uri-value }
+     *
+     *   And if qop is "auth-int" or "auth-conf" then A2 is
+     *
+     *       A2 = { ":", digest-uri-value, ":00000000000000000000000000000000" }
+     *
+     */
+    private byte[] generateResponseAuth(byte[] urpHash,
+        byte[] cnonce, int nonceCount, byte[] authzidBytes) throws SaslException {
+
+        // Construct response value
+
+        try {
+            byte[] responseValue = generateResponseValue("",
+                digestUri, negotiatedQop, urpHash,
+                nonce, cnonce, nonceCount, authzidBytes);
+
+
+            return generateChallenge(responseValue);
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("DIGEST-MD5: problem generating response", e);
+        } catch (IOException e) {
+            throw new SaslException("DIGEST-MD5: problem generating response", e);
+        }
+    }
+
+    private byte[] generateChallenge(byte[] responseValue) throws UnsupportedEncodingException {
+        byte[] challenge = new byte[responseValue.length + 8];
+        System.arraycopy("rspauth=".getBytes(encoding), 0, challenge, 0, 8);
+        System.arraycopy(responseValue, 0, challenge, 8,
+                responseValue.length);
+
+        return challenge;
     }
 
     public String getAuthorizationID() {

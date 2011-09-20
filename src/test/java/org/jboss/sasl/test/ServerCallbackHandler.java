@@ -27,9 +27,11 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.RealmCallback;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.io.IOException;
 
+import org.jboss.sasl.callback.DigestHashCallback;
 import org.jboss.sasl.callback.VerifyPasswordCallback;
 
 /**
@@ -42,10 +44,18 @@ class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;
     private final char[] expectedPassword;
+    private final String hexURPHash;
 
     ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
+        hexURPHash = null;
+    }
+
+    ServerCallbackHandler(final String expectedUsername, final String hexURPHash) {
+        this.expectedUsername = expectedUsername;
+        this.hexURPHash = hexURPHash;
+        expectedPassword = null;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -56,16 +66,21 @@ class ServerCallbackHandler implements CallbackHandler {
                 if (username == null || username.equals(expectedUsername) == false) {
                     throw new IOException("Invalid username received.");
                 }
-
-            } else if (current instanceof PasswordCallback) {
+            } else if (current instanceof PasswordCallback && expectedPassword != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(expectedPassword);
-            } else if (current instanceof VerifyPasswordCallback) {
+            } else if (current instanceof VerifyPasswordCallback && expectedPassword != null) {
                 VerifyPasswordCallback vcb = (VerifyPasswordCallback) current;
                 vcb.setVerified(String.valueOf(expectedPassword).equals(vcb.getPassword()));
+            } else if (current instanceof DigestHashCallback && hexURPHash != null) {
+                DigestHashCallback dhc = (DigestHashCallback) current;
+                dhc.setHexHash(hexURPHash);
             } else if (current instanceof AuthorizeCallback) {
                 AuthorizeCallback acb = (AuthorizeCallback) current;
                 acb.setAuthorized(acb.getAuthenticationID().equals(acb.getAuthorizationID()));
+            } else if (current instanceof RealmCallback) {
+            } else {
+                throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");
             }
         }
 

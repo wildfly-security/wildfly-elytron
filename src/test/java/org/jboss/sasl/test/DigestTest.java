@@ -41,6 +41,7 @@ import java.util.Map;
 
 import org.jboss.sasl.digest.DigestMD5Server;
 import org.jboss.sasl.digest.DigestMD5ServerFactory;
+import org.jboss.sasl.util.UsernamePasswordHashUtil;
 import org.junit.Test;
 
 /**
@@ -54,6 +55,8 @@ public class DigestTest extends BaseTestCase {
 
     private static final String REALM_PROPERTY =
             "com.sun.security.sasl.digest.realm";
+
+    private static final String PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
 
     /*
     *  Mechanism selection tests.
@@ -205,10 +208,143 @@ public class DigestTest extends BaseTestCase {
     }
 
     /*
-     *  Advanced Client/Server interaction.
+     *  Repeat of the above tests but with pre-hashed passwords.
      */
 
-    // Replay previously used nonce.
+    /**
+     * Test a successful exchange using the DIGEST mechanism with a pre-hashed password.
+     */
+    @Test
+    public void testSuccessfulExchange_PreHashed() throws Exception {
+        String urpHexHast = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestRealm", "gpwd".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHast);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(REALM_PROPERTY, "TestRealm");
+        serverProps.put(PRE_DIGESTED_PROPERTY, "true");
+
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+
+        message = client.evaluateChallenge(message);
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
+    /**
+     * Test a successful exchange using the DIGEST mechanism but the default realm with a pre-hashed password.
+     */
+    @Test
+    public void testSuccessfulExchange_DefaultRealm_PreHashed() throws Exception {
+        String urpHexHast = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestServer", "gpwd".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHast);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(PRE_DIGESTED_PROPERTY, "true");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        System.out.println(new String(message));
+        System.out.println("  **  ");
+        message = client.evaluateChallenge(message);
+        System.out.println(new String(message));
+
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+
+    /**
+     * Test that verification fails for a bad password with a pre-hashed password.
+     */
+    @Test
+    public void testBadPassword_PreHashed() throws Exception {
+        String urpHexHast = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestServer", "bad".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHast);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(REALM_PROPERTY, "TestRealm");
+        serverProps.put(PRE_DIGESTED_PROPERTY, "true");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+
+        message = client.evaluateChallenge(message);
+        try {
+            server.evaluateResponse(message);
+            fail("Expection exception not thrown.");
+        } catch (IOException e) {
+        }
+    }
+
+
+    /**
+     * Test that verification fails for a bad username with a pre-hashed password.
+     */
+    @Test
+    public void testBadUsername_PreHashed() throws Exception {
+        String urpHexHast = new UsernamePasswordHashUtil().generateHashedHexURP("Borris", "TestRealm", "gpwd".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHast);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(PRE_DIGESTED_PROPERTY, "true");
+        serverProps.put(REALM_PROPERTY, "TestRealm");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+
+        message = client.evaluateChallenge(message);
+        try {
+            server.evaluateResponse(message);
+            fail("Expection exception not thrown.");
+        } catch (IOException e) {
+        }
+    }
+
+    /**
+     * Test that verification fails for a bad realm with a pre-hashed password
+     */
+    @Test
+    public void testBadRealm_PreHashed() throws Exception {
+        String urpHexHast = new UsernamePasswordHashUtil().generateHashedHexURP("George", "BadRealm", "gpwd".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHast);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(REALM_PROPERTY, "TestRealm");
+        serverProps.put(PRE_DIGESTED_PROPERTY, "true");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(), "BadRealm");
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+
+        message = client.evaluateChallenge(message);
+        try {
+            server.evaluateResponse(message);
+            fail("Expection exception not thrown.");
+        } catch (IOException e) {
+        }
+    }
+    /*
+    *  Advanced Client/Server interaction.
+    */
+
+    // TODO - Replay previously used nonce.
 
 
 }
