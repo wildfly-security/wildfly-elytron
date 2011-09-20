@@ -32,7 +32,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * A utility class for generating both the {user-name : realm-value : passwd } hash
  * and the hex encoded version of the hash.
- *
+ * <p/>
  * This class makes use of the MessageDigest by single calls to the .digest(byte[]) method,
  * however beyond that there is no synchronisation so this should not be considered thread safe.
  *
@@ -59,7 +59,7 @@ public class UsernamePasswordHashUtil {
 
     /**
      * Constructor to allow a pre-instantiated MessageDigest to be supplied.
-     *
+     * <p/>
      * The supplied MessageDigest will be used for the hash generation requests,
      *
      * @param digest The MessageDigest to use for hash generation requests.
@@ -119,14 +119,14 @@ public class UsernamePasswordHashUtil {
     /**
      * Takes the supplied username, realm and password and generates the digested { username ':' realm ':' password}
      *
-     * @param userName The username to use in the generated hash.
-     * @param realm The realm to use in the generated hash.
-     * @param password The password to use in the generated hash.
+     * @param userName             The username to use in the generated hash.
+     * @param realm                The realm to use in the generated hash.
+     * @param password             The password to use in the generated hash.
      * @param utf8StringConversion Should a conversion to UTF-8 be allowed if non 8859_1 chars are encountered.
      * @return The generated hash.
      */
     public byte[] generateHashedURP(final String userName, final String realm, final char[] password,
-                                   final boolean utf8StringConversion) throws IOException {
+                                    final boolean utf8StringConversion) {
         byte[] userNameArray = stringToByte(userName, utf8StringConversion);
         byte[] realmArray = stringToByte(realm, utf8StringConversion);
         byte[] passwordArray = stringToByte(password, utf8StringConversion);
@@ -134,22 +134,55 @@ public class UsernamePasswordHashUtil {
         int requiredSize = userNameArray.length + realmArray.length + passwordArray.length + 2;
 
         try {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(requiredSize);
-        baos.write(userNameArray);
-        baos.write(COLON);
-        baos.write(realmArray);
-        baos.write(COLON);
-        baos.write(passwordArray);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(requiredSize);
+            baos.write(userNameArray);
+            baos.write(COLON);
+            baos.write(realmArray);
+            baos.write(COLON);
+            baos.write(passwordArray);
 
-        return digest.digest(baos.toByteArray());
+            return digest.digest(baos.toByteArray());
         } catch (IOException e) {
-            throw new IllegalStateException("The ByteArrayOutputStream should not be throwing this IOException",e);
+            throw new IllegalStateException("The ByteArrayOutputStream should not be throwing this IOException", e);
         }
     }
 
-    public byte[] generateHashedURP(final String userName, final String realm, final char[] password) throws IOException {
+    public byte[] generateHashedURP(final String userName, final String realm, final char[] password) {
         return generateHashedURP(userName, realm, password, true);
     }
 
+    public String generateHashedHexURP(final String userName, final String realm, final char[] password,
+                                       final boolean utf8StringConversion) {
+        byte[] hashedURP = generateHashedURP(userName, realm, password, utf8StringConversion);
+
+        return HexConverter.convertToHexString(hashedURP);
+    }
+
+    public String generateHashedHexURP(final String userName, final String realm, final char[] password) {
+        return generateHashedHexURP(userName, realm, password, true);
+    }
+
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        String userName;
+        String realm;
+        char[] password;
+
+        if (args.length == 2) {
+            userName = args[0];
+            realm = "";
+            password = args[1].toCharArray();
+        } else if (args.length == 3) {
+            userName = args[0];
+            realm = args[1];
+            password = args[2].toCharArray();
+        } else {
+            System.out.println("Usage : UsernamePasswordHashUtil UserName [Realm] Password");
+            return;
+        }
+
+        UsernamePasswordHashUtil util = new UsernamePasswordHashUtil();
+
+        System.out.println(userName + "=" + util.generateHashedHexURP(userName, realm, password));
+    }
 
 }
