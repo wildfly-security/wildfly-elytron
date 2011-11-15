@@ -33,7 +33,6 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;

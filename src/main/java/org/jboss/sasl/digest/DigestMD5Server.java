@@ -48,8 +48,6 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import java.util.logging.Level;
-
 /**
   * An implementation of the DIGEST-MD5 server SASL mechanism.
   * (<a href="http://www.ietf.org/rfc/rfc2831.txt">RFC 2831</a>)

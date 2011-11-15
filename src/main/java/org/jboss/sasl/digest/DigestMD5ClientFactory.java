@@ -25,21 +25,21 @@ package org.jboss.sasl.digest;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
 
 /**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * The client factory for the digest SASL mechanisms.
+ * 
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class DigestMD5ServerFactory extends AbstractDigestMD5Factory implements SaslServerFactory {
+public class DigestMD5ClientFactory extends AbstractDigestMD5Factory implements SaslClientFactory {
 
-    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        if (DIGEST_MD5.equals(mechanism) == false || matches(props) == false) {
-            return null;
-        }
-
-        return new DigestMD5Server(protocol, serverName, props, cbh);
+    public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
+            Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        return isIncluded(mechanisms) && matches(props) ? new DigestMD5Client(authorizationId, protocol, serverName, props, cbh)
+                : null;
     }
 
 }
