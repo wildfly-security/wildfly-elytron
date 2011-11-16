@@ -139,7 +139,7 @@ public class AnonymousTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(ANONYMOUS, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", null);
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
         SaslClient client = Sasl.createSaslClient(new String[]{ANONYMOUS}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertTrue(client.hasInitialResponse());

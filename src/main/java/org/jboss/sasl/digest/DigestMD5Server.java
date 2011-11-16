@@ -113,9 +113,6 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private static final String REALM_PROPERTY =
         "com.sun.security.sasl.digest.realm";
 
-    /* Should a pre-digested password be requested? */
-    private static final String PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
-
     /* Directives encountered in responses sent by the client. */
     private static final String[] DIRECTIVE_KEY = {
         "username",    // exactly once

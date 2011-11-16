@@ -70,6 +70,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
     private static final Logger log = Logger.getLogger("org.jboss.sasl.digest");
 
+    
     /* ------------------------- Constants ------------------------ */
 
     // Used for logging
@@ -130,6 +131,9 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         ":00000000000000000000000000000000";
 
     protected static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+    
+    /* Should a pre-digested password be requested? */
+    protected static final String PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
 
     /* ------------------- Variable Fields ----------------------- */
 

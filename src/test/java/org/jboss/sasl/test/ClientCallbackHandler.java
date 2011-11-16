@@ -27,6 +27,9 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
+
+import org.jboss.sasl.callback.DigestHashCallback;
+
 import java.io.IOException;
 
 /**
@@ -38,6 +41,7 @@ class ClientCallbackHandler implements CallbackHandler {
 
     private final String username;
     private final char[] password;
+    private final String hexURPHash;
     private final String realm;
 
     ClientCallbackHandler(final String username, final char[] password) {
@@ -48,6 +52,18 @@ class ClientCallbackHandler implements CallbackHandler {
         this.username = username;
         this.password = password;
         this.realm = realm;
+        this.hexURPHash = null;
+    }
+    
+    ClientCallbackHandler(final String username, final String hexURPHash) {
+        this(username, hexURPHash, null);
+    }
+
+    ClientCallbackHandler(final String username, final String hexURPHash, final String realm) {
+        this.username = username;
+        this.hexURPHash = hexURPHash;
+        this.password = null;
+        this.realm = realm;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -55,9 +71,12 @@ class ClientCallbackHandler implements CallbackHandler {
             if (current instanceof NameCallback) {
                 NameCallback ncb = (NameCallback) current;
                 ncb.setName(username);
-            } else if (current instanceof PasswordCallback) {
+            } else if (current instanceof PasswordCallback && password != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(password);
+            } else if (current instanceof DigestHashCallback && hexURPHash != null) {
+                DigestHashCallback dhc = (DigestHashCallback) current;
+                dhc.setHexHash(hexURPHash);
             } else if (current instanceof RealmCallback) {
                 RealmCallback rcb = (RealmCallback) current;
                 if (realm == null) {
@@ -68,6 +87,8 @@ class ClientCallbackHandler implements CallbackHandler {
                 } else {
                     rcb.setText(realm);
                 }
+            } else {
+                throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");
             }
         }
     }
