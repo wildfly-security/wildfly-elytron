@@ -21,7 +21,7 @@
  */
 package org.jboss.sasl.util;
 
-import static org.jboss.sasl.util.Charsets.EIGHT859_1;
+import static org.jboss.sasl.util.Charsets.LATIN_1;
 import static org.jboss.sasl.util.Charsets.UTF_8;
 
 import java.io.ByteArrayOutputStream;
@@ -92,7 +92,7 @@ public class UsernamePasswordHashUtil {
             }
         }
 
-        return toConvert.getBytes(EIGHT859_1);
+        return toConvert.getBytes(LATIN_1);
     }
 
     /**
@@ -113,7 +113,7 @@ public class UsernamePasswordHashUtil {
             }
         }
 
-        return String.valueOf(toConvert).getBytes(EIGHT859_1);
+        return String.valueOf(toConvert).getBytes(LATIN_1);
     }
 
     /**

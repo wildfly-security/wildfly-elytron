@@ -100,11 +100,12 @@ public abstract class AbstractSaslParticipant {
             callbackHandler.handle(callbacks);
         } catch (SaslException e) {
             throw e;
-        } catch (IOException e) {
-            throw new SaslException("Callback handler invocation failed", e);
+        } catch (Throwable t) {
+            throw new SaslException("Callback handler invocation failed", t);
         }
     }
 
+    public void init() {};
 
     /**
      * Get the name of this mechanism.
