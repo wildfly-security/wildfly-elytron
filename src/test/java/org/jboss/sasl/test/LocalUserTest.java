@@ -28,11 +28,14 @@ import org.junit.Test;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 /**
  * Test for the local user SASL mechanism, this will test both the client and server side.
@@ -48,7 +51,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     /**
-     * Test a successful exchange using the ANONYMOUS mechanism.
+     * Test a successful exchange using the JBOSS-LOCAL-USER mechanism.
      */
 
     @Test
@@ -68,6 +71,41 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
+    }
+    
+    /**
+     * Test an exchange where the client sends a bad response is correctly rejected.
+     */
+
+    @Test
+    public void testBadExchange() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] response = client.evaluateChallenge(new byte[0]);
+        byte[] challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        for (int i = 0; i < 8; i++) {
+            response[i] = 0x00;
+        }
+
+        try {
+            challenge = server.evaluateResponse(response);
+            fail("Expected SaslException not thrown.");
+        } catch (SaslException expected) {
+        }
+
+        assertFalse(server.isComplete());
+     
+        try {
+            server.getAuthorizationID();
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
+        }
     }
 
 }

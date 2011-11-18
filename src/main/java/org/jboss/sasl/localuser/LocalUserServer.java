@@ -170,6 +170,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     public String getAuthorizationID() {
-        return authorizationId;
+        if (isComplete()) {
+            return authorizationId;
+        } else {
+            throw new IllegalStateException("JBOSS-LOCAL-USER server negotiation not complete");
+        }
     }
 }
