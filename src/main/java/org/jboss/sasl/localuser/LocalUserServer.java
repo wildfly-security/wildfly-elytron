@@ -149,6 +149,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         if (authenticationId == null) {
                             throw new SaslException("No authentication ID given");
                         }
+                        if (authorizationId == null) {
+                            // If no authorization ID is specifed default to authentication ID
+                            authorizationId = authenticationId;
+                        }
                         final NameCallback nameCallback = new NameCallback("User name", authenticationId);
                         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationId, authorizationId);
                         if (authenticationRealm == null) {

@@ -107,5 +107,30 @@ public class LocalUserTest extends BaseTestCase {
         } catch (IllegalStateException expected) {
         }
     }
+    
+    /**
+     * Test an exchange where there is no authorization ID
+     */
+
+    @Test
+    public void testNoAuthorizationId() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[] { LOCAL_USER }, null, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] response = client.evaluateChallenge(new byte[0]);
+        byte[] challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
 
 }

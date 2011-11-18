@@ -47,9 +47,14 @@ public final class LocalUserClient extends AbstractSaslClient {
     public void init() {
         getContext().setNegotiationState(new SaslState() {
             public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-                final String authorizationId = getAuthorizationId();
-                final byte[] bytes = new byte[Charsets.encodedLengthOf(authorizationId)];
-                Charsets.encodeTo(authorizationId, bytes, 0);
+                final String authorizationId = getAuthorizationId();                
+                final byte[] bytes;
+                if (authorizationId != null) {
+                    bytes = new byte[Charsets.encodedLengthOf(authorizationId)];
+                    Charsets.encodeTo(authorizationId, bytes, 0);
+                } else {
+                    bytes = new byte[0];
+                }
                 context.setNegotiationState(new SaslState() {
                     public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
                         final String path = new String(message, Charsets.UTF_8);
@@ -71,7 +76,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         }
                         String authenticationId = getAuthorizationId();
                         String authenticationRealm;
-                        final NameCallback nameCallback = new NameCallback("User name", authenticationId);
+                        final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name", authenticationId) : new NameCallback("User name");
                         final RealmCallback realmCallback = new RealmCallback("User realm");
                         handleCallbacks(nameCallback, realmCallback);
                         authenticationId = nameCallback.getName();
