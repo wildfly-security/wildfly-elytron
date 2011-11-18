@@ -38,7 +38,7 @@ public final class LocalUserClientFactory extends LocalUserSaslFactory implement
         if (! isIncluded(mechanisms)) {
             return null;
         }
-        final LocalUserClient client = new LocalUserClient(protocol, serverName, cbh, authorizationId);
+        final LocalUserClient client = new LocalUserClient(protocol, serverName, props, cbh, authorizationId);
         client.init();
         return client;
     }

@@ -24,6 +24,8 @@ package org.jboss.sasl.test;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jboss.sasl.util.Charsets;
 import org.junit.Test;
@@ -75,6 +77,34 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
     }
+    
+    /**
+     * Test a successful exchange using the JBOSS-LOCAL-USER mechanism with quiet client side
+     * and default user server side.
+     */
+
+    @Test
+    public void testSuccessfulQuietExchange() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("$local", (char[]) null);
+        Map<String, String> serverOptions = new HashMap<String, String>();
+        serverOptions.put("jboss.sasl.local-user.default-user", "$local");
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", serverOptions, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        Map<String, String> clientOptions = new HashMap<String, String>();
+        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");        
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, null, "TestProtocol", "TestServer", clientOptions, clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] response = client.evaluateChallenge(new byte[0]);
+        byte[] challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("$local", server.getAuthorizationID());
+    }    
     
     /**
      * Test an exchange where the client sends a bad response is correctly rejected.

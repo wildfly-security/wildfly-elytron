@@ -49,9 +49,11 @@ import javax.security.sasl.SaslServer;
 public final class LocalUserServer extends AbstractSaslServer implements SaslServer {
 
     public static final String LOCAL_USER_CHALLENGE_PATH = "jboss.sasl.local-user.challenge-path";
+    public static final String DEFAULT_USER = "jboss.sasl.local-user.default-user";
 
     private volatile String authorizationId;
     private final File basePath;
+    private final String defaultUser;
 
     LocalUserServer(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler);
@@ -63,6 +65,8 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
         } else {
             basePath = new File(getProperty("java.io.tmpdir"));
         }
+
+        defaultUser = (String) (props.containsKey(DEFAULT_USER) ? props.get(DEFAULT_USER) : null);
     }
 
     private static String getProperty(final String name) {
@@ -145,6 +149,9 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         } else {
                             authenticationId = null;
                             authenticationRealm = null;
+                        }
+                        if (authenticationId == null || authenticationId.length() == 0) {
+                            authenticationId = defaultUser;
                         }
                         if (authenticationId == null) {
                             throw new SaslException("No authentication ID given");

@@ -25,6 +25,8 @@ package org.jboss.sasl.localuser;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
+
 import org.jboss.sasl.util.AbstractSaslClient;
 import org.jboss.sasl.util.Charsets;
 import org.jboss.sasl.util.SaslState;
@@ -40,14 +42,20 @@ import javax.security.sasl.SaslException;
  */
 public final class LocalUserClient extends AbstractSaslClient {
 
-    LocalUserClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
+    public static final String QUIET_AUTH = "jboss.sasl.local-user.quiet-auth";
+
+    private final boolean quietAuth;
+
+    LocalUserClient(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler, final String authorizationId) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, authorizationId, true);
+
+        quietAuth = props.containsKey(QUIET_AUTH) ? Boolean.parseBoolean((String) props.get(QUIET_AUTH)) : false;
     }
 
     public void init() {
         getContext().setNegotiationState(new SaslState() {
             public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-                final String authorizationId = getAuthorizationId();                
+                final String authorizationId = getAuthorizationId();
                 final byte[] bytes;
                 if (authorizationId != null) {
                     bytes = new byte[Charsets.encodedLengthOf(authorizationId)];
@@ -75,12 +83,15 @@ public final class LocalUserClient extends AbstractSaslClient {
                             throw new SaslException("Failed to read server challenge", e);
                         }
                         String authenticationId = getAuthorizationId();
-                        String authenticationRealm;
-                        final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name", authenticationId) : new NameCallback("User name");
-                        final RealmCallback realmCallback = new RealmCallback("User realm");
-                        handleCallbacks(nameCallback, realmCallback);
-                        authenticationId = nameCallback.getName();
-                        authenticationRealm = realmCallback.getText();
+                        String authenticationRealm = null;
+                        if (quietAuth == false) {
+                            final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name",
+                                    authenticationId) : new NameCallback("User name");
+                            final RealmCallback realmCallback = new RealmCallback("User realm");
+                            handleCallbacks(nameCallback, realmCallback);
+                            authenticationId = nameCallback.getName();
+                            authenticationRealm = realmCallback.getText();
+                        }
                         if (authenticationId == null) authenticationId = "";
                         if (authenticationRealm == null) authenticationRealm = "";
                         final int authenticationIdLength = Charsets.encodedLengthOf(authenticationId);
