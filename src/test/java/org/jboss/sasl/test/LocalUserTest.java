@@ -22,7 +22,10 @@
 
 package org.jboss.sasl.test;
 
+import java.io.File;
 import java.util.Collections;
+
+import org.jboss.sasl.util.Charsets;
 import org.junit.Test;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -107,6 +110,43 @@ public class LocalUserTest extends BaseTestCase {
         } catch (IllegalStateException expected) {
         }
     }
+    
+    /**
+     * Test an exchange where the client is passed the path to a file that does not exist.
+     */
+
+    @Test
+    public void testBadFile() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[] { LOCAL_USER }, "George", "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), clientCallback);
+
+        assertTrue(client.hasInitialResponse());
+        byte[] response = client.evaluateChallenge(new byte[0]);
+        byte[] challenge = server.evaluateResponse(response);
+
+        File nonExistant = new File("nonExistant.txt");
+        String path = nonExistant.getAbsolutePath();
+        challenge = new byte[Charsets.encodedLengthOf(path)];
+        Charsets.encodeTo(path, challenge, 0);
+
+        try {
+            response = client.evaluateChallenge(challenge);
+        } catch (SaslException expected) {
+        }
+
+        assertFalse(server.isComplete());
+
+        try {
+            server.getAuthorizationID();
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
+        }
+    }    
     
     /**
      * Test an exchange where there is no authorization ID
