@@ -62,6 +62,7 @@ public final class JBossSaslProvider extends Provider {
      */
     public JBossSaslProvider() {
         super("jboss-sasl", 1.0, INFO);
+        // NOTE: make sure that all client and server factories listed here also end up in the META-INF/services files.
         put(SASL_CLIENT_FACTORY + DOT + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + ANONYMOUS, AnonymousServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
