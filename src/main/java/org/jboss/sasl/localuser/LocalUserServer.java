@@ -85,6 +85,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     public void init() {
         getContext().setNegotiationState(new SaslState() {
             public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
+                if (message.length == 0) {
+                    // trigger initial response
+                    return NO_BYTES;
+                }
                 // initial message
                 authorizationId = message.length > 0 ? new String(message, Charsets.UTF_8) : null;
                 final Random random = new Random();
