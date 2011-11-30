@@ -51,6 +51,8 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     public static final String LOCAL_USER_CHALLENGE_PATH = "jboss.sasl.local-user.challenge-path";
     public static final String DEFAULT_USER = "jboss.sasl.local-user.default-user";
 
+    private static final byte UTF8NUL = 0x00;
+
     private volatile String authorizationId;
     private final File basePath;
     private final String defaultUser;
@@ -89,8 +91,13 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     // trigger initial response
                     return NO_BYTES;
                 }
+
                 // initial message
-                authorizationId = message.length > 0 ? new String(message, Charsets.UTF_8) : null;
+                if (message.length == 1 && message[0] == UTF8NUL) {
+                    authorizationId = null;
+                } else {
+                    authorizationId = new String(message, Charsets.UTF_8);
+                }
                 final Random random = new Random();
                 File testFile;
                 do {

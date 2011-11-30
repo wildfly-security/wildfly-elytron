@@ -46,6 +46,8 @@ public final class LocalUserClient extends AbstractSaslClient {
 
     private final boolean quietAuth;
 
+    private static final byte UTF8NUL = 0x00;
+
     LocalUserClient(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler, final String authorizationId) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, authorizationId, true);
 
@@ -61,7 +63,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                     bytes = new byte[Charsets.encodedLengthOf(authorizationId)];
                     Charsets.encodeTo(authorizationId, bytes, 0);
                 } else {
-                    bytes = new byte[0];
+                    bytes = new byte[] { UTF8NUL };
                 }
                 context.setNegotiationState(new SaslState() {
                     public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {

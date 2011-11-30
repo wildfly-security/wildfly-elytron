@@ -51,8 +51,9 @@ import static org.junit.Assert.fail;
 public class LocalUserTest extends BaseTestCase {
 
     private static final String LOCAL_USER = "JBOSS-LOCAL-USER";
+    
     /*
-     *  Normal SASL Client/Server interaction.
+     *  Normal SASL Client/Server interaction - Client First
      */
 
     /**
@@ -60,7 +61,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     @Test
-    public void testSuccessfulExchange() throws Exception {
+    public void testSuccessfulExchange_CF() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
@@ -84,7 +85,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     @Test
-    public void testSuccessfulQuietExchange() throws Exception {
+    public void testSuccessfulQuietExchange_CF() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("$local", (char[]) null);
         Map<String, String> serverOptions = new HashMap<String, String>();
         serverOptions.put("jboss.sasl.local-user.default-user", "$local");
@@ -111,7 +112,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     @Test
-    public void testBadExchange() throws Exception {
+    public void testBadExchange_CF() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
@@ -146,7 +147,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     @Test
-    public void testBadFile() throws Exception {
+    public void testBadFile_CF() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
                 Collections.<String, Object> emptyMap(), serverCallback);
@@ -183,7 +184,7 @@ public class LocalUserTest extends BaseTestCase {
      */
 
     @Test
-    public void testNoAuthorizationId() throws Exception {
+    public void testNoAuthorizationId_CF() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
         SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
                 Collections.<String, Object> emptyMap(), serverCallback);
@@ -202,5 +203,157 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
     }
+    
+    /*
+     *  Normal SASL Client/Server interaction - Server First
+     */
+
+    /**
+     * Test a successful exchange using the JBOSS-LOCAL-USER mechanism.
+     */
+
+    @Test
+    public void testSuccessfulExchange_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        byte[] response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }
+    
+    /**
+     * Test a successful exchange using the JBOSS-LOCAL-USER mechanism with quiet client side
+     * and default user server side.
+     */
+
+    @Test
+    public void testSuccessfulQuietExchange_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("$local", (char[]) null);
+        Map<String, String> serverOptions = new HashMap<String, String>();
+        serverOptions.put("jboss.sasl.local-user.default-user", "$local");
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", serverOptions, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        Map<String, String> clientOptions = new HashMap<String, String>();
+        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");        
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, null, "TestProtocol", "TestServer", clientOptions, clientCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        byte[] response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("$local", server.getAuthorizationID());
+    }    
+    
+    /**
+     * Test an exchange where the client sends a bad response is correctly rejected.
+     */
+
+    @Test
+    public void testBadExchange_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        byte[] response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        for (int i = 0; i < 8; i++) {
+            response[i] = 0x00;
+        }
+
+        try {
+            challenge = server.evaluateResponse(response);
+            fail("Expected SaslException not thrown.");
+        } catch (SaslException expected) {
+        }
+
+        assertFalse(server.isComplete());
+     
+        try {
+            server.getAuthorizationID();
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
+        }
+    }
+    
+    /**
+     * Test an exchange where the client is passed the path to a file that does not exist.
+     */
+
+    @Test
+    public void testBadFile_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[] { LOCAL_USER }, "George", "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), clientCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        byte[] response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+
+        File nonExistant = new File("nonExistant.txt");
+        String path = nonExistant.getAbsolutePath();
+        challenge = new byte[Charsets.encodedLengthOf(path)];
+        Charsets.encodeTo(path, challenge, 0);
+
+        try {
+            response = client.evaluateChallenge(challenge);
+        } catch (SaslException expected) {
+        }
+
+        assertFalse(server.isComplete());
+
+        try {
+            server.getAuthorizationID();
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
+        }
+    }    
+    
+    /**
+     * Test an exchange where there is no authorization ID
+     */
+
+    @Test
+    public void testNoAuthorizationId_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        SaslClient client = Sasl.createSaslClient(new String[] { LOCAL_USER }, null, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), clientCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        byte[] response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        response = client.evaluateChallenge(challenge);
+        challenge = server.evaluateResponse(response);
+        assertNull(challenge);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+    }    
 
 }
