@@ -149,7 +149,7 @@ public abstract class AbstractSaslFactory {
      * @return {@code true} if the names include our mechanism
      */
     protected boolean isIncluded(final String... names) {
-        final String ourName = names[0];
+        final String ourName = this.names[0];
         for (String name : names) {
             if (name.equals(ourName)) {
                 return true;
