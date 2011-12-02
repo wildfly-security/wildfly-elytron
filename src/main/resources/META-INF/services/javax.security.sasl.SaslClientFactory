@@ -20,8 +20,9 @@
 # 02110-1301 USA, or see the FSF site: http://www.fsf.org.
 #
 
-# our SASL factory providers
-org.jboss.sasl.anonymous.AnonymousClientFactory
-org.jboss.sasl.digest.DigestMD5ClientFactory
-org.jboss.sasl.clienttoken.ClientTokenClientFactory
+# our SASL factory providers (Ordered)
 org.jboss.sasl.localuser.LocalUserClientFactory
+org.jboss.sasl.digest.DigestMD5ClientFactory
+org.jboss.sasl.anonymous.AnonymousClientFactory
+org.jboss.sasl.clienttoken.ClientTokenClientFactory
+
