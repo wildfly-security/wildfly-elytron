@@ -54,7 +54,7 @@ public abstract class LocalUserSaslFactory extends AbstractSaslFactory {
     }
 
     protected boolean isPlainText() {
-        return true;
+        return false;
     }
 
     protected boolean isAnonymous() {
