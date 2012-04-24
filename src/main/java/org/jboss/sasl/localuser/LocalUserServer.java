@@ -28,13 +28,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
-import org.jboss.sasl.util.AbstractSaslServer;
-import org.jboss.sasl.util.Charsets;
-import org.jboss.sasl.util.SaslState;
-import org.jboss.sasl.util.SaslStateContext;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -43,12 +40,19 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.jboss.sasl.util.AbstractSaslServer;
+import org.jboss.sasl.util.Charsets;
+import org.jboss.sasl.util.SaslState;
+import org.jboss.sasl.util.SaslStateContext;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class LocalUserServer extends AbstractSaslServer implements SaslServer {
 
+    // Should SecureRandom be used? Default to true
+    public static final String LOCAL_USER_USE_SECURE_RANDOM = "jboss.sasl.local-user.use-secure-random";
     public static final String LOCAL_USER_CHALLENGE_PATH = "jboss.sasl.local-user.challenge-path";
     public static final String DEFAULT_USER = "jboss.sasl.local-user.default-user";
 
@@ -57,6 +61,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     private volatile String authorizationId;
     private final File basePath;
     private final String defaultUser;
+    private final boolean useSecureRandom;
 
     LocalUserServer(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler);
@@ -67,6 +72,25 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
             basePath = new File(value).getAbsoluteFile();
         } else {
             basePath = new File(getProperty("java.io.tmpdir"));
+        }
+
+        Object useSecureRandomObj = null;
+        if (props.containsKey(LOCAL_USER_USE_SECURE_RANDOM)) {
+            useSecureRandomObj = props.get(LOCAL_USER_USE_SECURE_RANDOM);
+        } else {
+            useSecureRandomObj = getProperty(LOCAL_USER_USE_SECURE_RANDOM);
+        }
+
+        if (useSecureRandomObj != null) {
+            if (useSecureRandomObj instanceof Boolean) {
+                useSecureRandom = ((Boolean) useSecureRandomObj).booleanValue();
+            } else if (useSecureRandomObj instanceof String) {
+                useSecureRandom = Boolean.parseBoolean((String) useSecureRandomObj);
+            } else {
+                useSecureRandom = true;
+            }
+        } else {
+            useSecureRandom = true;
         }
 
         defaultUser = (String) (props.containsKey(DEFAULT_USER) ? props.get(DEFAULT_USER) : null);
@@ -85,6 +109,14 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
         }
     }
 
+    private Random getRandom() {
+        if (useSecureRandom) {
+            return new SecureRandom();
+        } else {
+            return new Random();
+        }
+    }
+
     public void init() {
         getContext().setNegotiationState(new SaslState() {
             public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
@@ -99,7 +131,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 } else {
                     authorizationId = new String(message, Charsets.UTF_8);
                 }
-                final Random random = new Random();
+                final Random random = getRandom();
                 final File challengeFile;
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
