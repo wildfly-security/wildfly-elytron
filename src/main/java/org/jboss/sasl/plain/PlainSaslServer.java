@@ -53,9 +53,9 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 // need initial challenge
                 return NO_BYTES;
             } else {
-                // sanity check - RFC 4616, page 3
-                if (length > 1020) {
-                    throw new SaslException("Authentication name string is too long");
+                // Define an upper limit on accepted message so we don't accept overly large messages.
+                if (length > 65536) {
+                    throw new SaslException("Authentication message is too long");
                 }
 
                 String[] parts = split(message);
@@ -73,19 +73,12 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 } else {
                     throw new SaslException("Invalid number of message parts (" + parts.length + ")");
                 }
+                
+                // By this point we have already created the Strings no point checking the length as the
+                // memory is already allocated.
 
-                if (authcid.length() > 255) {
-                    throw new SaslException("Authentication identity string is too long");
-                }
-                if (authzid.length() > 255) {
-                    throw new SaslException("Authorization identity string is too long");
-                }
-                if (passwd.length() > 255) {
-                    throw new SaslException("Password string is too long");
-                }
-
-                // The message has now been parsed, split, converted to UTF-8 Strings and the lengths validation
-                // not it is time to use the CallbackHandler to validate the supplied credentials.
+                // The message has now been parsed, split and converted to UTF-8 Strings
+                // now it is time to use the CallbackHandler to validate the supplied credentials.
 
                 // First verify username and password.
 
@@ -153,9 +146,9 @@ public final class PlainSaslServer extends AbstractSaslServer {
             startPos += length + 1;
 
             if (authorizationId == null) {
-                return new String[]{authenticationId, password};
+                return new String[] { authenticationId, password };
             } else {
-                return new String[]{authorizationId, authenticationId, password};
+                return new String[] { authorizationId, authenticationId, password };
             }
         }
 
