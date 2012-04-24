@@ -45,6 +45,7 @@ import javax.security.sasl.SaslServer;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class LocalUserServer extends AbstractSaslServer implements SaslServer {
 
@@ -99,15 +100,16 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     authorizationId = new String(message, Charsets.UTF_8);
                 }
                 final Random random = new Random();
-                File testFile;
-                do {
-                    testFile = new File(basePath, "challenge-" + (random.nextInt(8999999) + 1000000));
-                } while (testFile.exists());
-                final File challengeFile = testFile;
+                final File challengeFile;
+                try {
+                    challengeFile = File.createTempFile("local", ".challenge", basePath);
+                } catch (IOException e) {
+                    throw new SaslException("Failed to create challenge file", e);
+                }
+
                 final FileOutputStream fos;
                 try {
-                    challengeFile.delete();
-                    fos = new FileOutputStream(testFile);
+                    fos = new FileOutputStream(challengeFile);
                     challengeFile.deleteOnExit();
                 } catch (FileNotFoundException e) {
                     throw new SaslException("Failed to create challenge file", e);
