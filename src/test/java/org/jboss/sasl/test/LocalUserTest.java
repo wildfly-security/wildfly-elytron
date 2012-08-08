@@ -354,6 +354,26 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
-    }    
+    }
+    
+    /**
+     * Test that is a SaslServer is disposed of before the challenge is verified the temporary file is deleted.
+     */
+
+    @Test
+    public void testTmpFileDeleted_SF() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
+        SaslServer server = Sasl.createSaslServer(LOCAL_USER, "TestProtocol", "TestServer",
+                Collections.<String, Object> emptyMap(), serverCallback);
+
+        byte[] challenge = server.evaluateResponse(new byte[0]);
+        challenge = server.evaluateResponse(new byte[] { 0 }); // Simulate initial message from client.
+        final String path = new String(challenge, Charsets.UTF_8);
+        final File file = new File(path);        
+
+        assertTrue("Temporary file was created.", file.exists());
+        server.dispose();
+        assertFalse("Temporary file was deleted.", file.exists());
+    }
 
 }

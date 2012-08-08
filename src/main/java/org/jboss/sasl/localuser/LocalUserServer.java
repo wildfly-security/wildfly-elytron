@@ -59,6 +59,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     private static final byte UTF8NUL = 0x00;
 
     private volatile String authorizationId;
+    private volatile File challengeFile;
     private final File basePath;
     private final String defaultUser;
     private final boolean useSecureRandom;
@@ -132,7 +133,6 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     authorizationId = new String(message, Charsets.UTF_8);
                 }
                 final Random random = getRandom();
-                final File challengeFile;
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
                 } catch (IOException e) {
@@ -160,7 +160,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     }
                 } finally {
                     if (!ok) {
-                        challengeFile.delete();
+                        deleteChallenge();
                     }
                     try {
                         fos.close();
@@ -172,7 +172,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 Charsets.encodeTo(path, response, 0);
                 getContext().setNegotiationState(new SaslState() {
                     public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-                        challengeFile.delete();
+                        deleteChallenge();
                         final int length = message.length;
                         if (length < 8) {
                             throw new SaslException("Invalid response");
@@ -231,5 +231,23 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
         } else {
             throw new IllegalStateException("JBOSS-LOCAL-USER server negotiation not complete");
         }
+    }
+    
+    private void deleteChallenge() {
+        if (challengeFile != null) {
+            challengeFile.delete();
+            challengeFile = null;
+        }
+    }
+
+    @Override
+    public void dispose() throws SaslException {
+        super.dispose();
+        deleteChallenge();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        deleteChallenge();
     }
 }
