@@ -142,7 +142,6 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 final FileOutputStream fos;
                 try {
                     fos = new FileOutputStream(challengeFile);
-                    challengeFile.deleteOnExit();
                 } catch (FileNotFoundException e) {
                     throw new SaslException("Failed to create challenge file", e);
                 }
@@ -232,7 +231,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
             throw new IllegalStateException("JBOSS-LOCAL-USER server negotiation not complete");
         }
     }
-    
+
     private void deleteChallenge() {
         if (challengeFile != null) {
             challengeFile.delete();

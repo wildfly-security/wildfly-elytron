@@ -51,7 +51,7 @@ import static org.junit.Assert.fail;
 public class LocalUserTest extends BaseTestCase {
 
     private static final String LOCAL_USER = "JBOSS-LOCAL-USER";
-    
+
     /*
      *  Normal SASL Client/Server interaction - Client First
      */
@@ -77,8 +77,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
+
+        server.dispose();
     }
-    
+
     /**
      * Test a successful exchange using the JBOSS-LOCAL-USER mechanism with quiet client side
      * and default user server side.
@@ -93,7 +95,7 @@ public class LocalUserTest extends BaseTestCase {
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
         Map<String, String> clientOptions = new HashMap<String, String>();
-        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");        
+        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");
         SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, null, "TestProtocol", "TestServer", clientOptions, clientCallback);
 
         assertTrue(client.hasInitialResponse());
@@ -105,8 +107,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("$local", server.getAuthorizationID());
-    }    
-    
+
+        server.dispose();
+    }
+
     /**
      * Test an exchange where the client sends a bad response is correctly rejected.
      */
@@ -134,14 +138,16 @@ public class LocalUserTest extends BaseTestCase {
         }
 
         assertFalse(server.isComplete());
-     
+
         try {
             server.getAuthorizationID();
             fail("Expected IllegalStateException not thrown");
         } catch (IllegalStateException expected) {
         }
+
+        server.dispose();
     }
-    
+
     /**
      * Test an exchange where the client is passed the path to a file that does not exist.
      */
@@ -177,8 +183,10 @@ public class LocalUserTest extends BaseTestCase {
             fail("Expected IllegalStateException not thrown");
         } catch (IllegalStateException expected) {
         }
-    }    
-    
+
+        server.dispose();
+    }
+
     /**
      * Test an exchange where there is no authorization ID
      */
@@ -202,8 +210,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
+
+        server.dispose();
     }
-    
+
     /*
      *  Normal SASL Client/Server interaction - Server First
      */
@@ -229,8 +239,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
+
+        server.dispose();
     }
-    
+
     /**
      * Test a successful exchange using the JBOSS-LOCAL-USER mechanism with quiet client side
      * and default user server side.
@@ -245,7 +257,7 @@ public class LocalUserTest extends BaseTestCase {
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
         Map<String, String> clientOptions = new HashMap<String, String>();
-        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");        
+        clientOptions.put("jboss.sasl.local-user.quiet-auth", "true");
         SaslClient client = Sasl.createSaslClient(new String[]{ LOCAL_USER }, null, "TestProtocol", "TestServer", clientOptions, clientCallback);
 
         byte[] challenge = server.evaluateResponse(new byte[0]);
@@ -257,8 +269,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("$local", server.getAuthorizationID());
-    }    
-    
+
+        server.dispose();
+    }
+
     /**
      * Test an exchange where the client sends a bad response is correctly rejected.
      */
@@ -286,14 +300,16 @@ public class LocalUserTest extends BaseTestCase {
         }
 
         assertFalse(server.isComplete());
-     
+
         try {
             server.getAuthorizationID();
             fail("Expected IllegalStateException not thrown");
         } catch (IllegalStateException expected) {
         }
+
+        server.dispose();
     }
-    
+
     /**
      * Test an exchange where the client is passed the path to a file that does not exist.
      */
@@ -329,8 +345,10 @@ public class LocalUserTest extends BaseTestCase {
             fail("Expected IllegalStateException not thrown");
         } catch (IllegalStateException expected) {
         }
-    }    
-    
+
+        server.dispose();
+    }
+
     /**
      * Test an exchange where there is no authorization ID
      */
@@ -354,8 +372,10 @@ public class LocalUserTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
+
+        server.dispose();
     }
-    
+
     /**
      * Test that is a SaslServer is disposed of before the challenge is verified the temporary file is deleted.
      */
@@ -369,7 +389,7 @@ public class LocalUserTest extends BaseTestCase {
         byte[] challenge = server.evaluateResponse(new byte[0]);
         challenge = server.evaluateResponse(new byte[] { 0 }); // Simulate initial message from client.
         final String path = new String(challenge, Charsets.UTF_8);
-        final File file = new File(path);        
+        final File file = new File(path);
 
         assertTrue("Temporary file was created.", file.exists());
         server.dispose();
