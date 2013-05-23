@@ -34,7 +34,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-security-manager</artifactId>
-    <version>1.0.0.Beta1-SNAPSHOT</version>
+    <version>1.0.0.Beta1</version>
 
     <name>WildFly Security Manager</name>
 
