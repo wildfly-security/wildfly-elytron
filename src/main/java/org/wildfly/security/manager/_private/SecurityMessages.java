@@ -36,7 +36,7 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MessageLogger(projectCode = "WFSECMGR")
+@MessageLogger(projectCode = "WFSM")
 public interface SecurityMessages {
     SecurityMessages access = Logger.getMessageLogger(SecurityMessages.class, "org.wildfly.security.access");
 
