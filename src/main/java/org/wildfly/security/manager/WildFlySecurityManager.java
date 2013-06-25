@@ -73,6 +73,7 @@ public final class WildFlySecurityManager extends SecurityManager {
     private static final Field PD_STACK;
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
+    private static final int callerOffset;
 
     static {
         PD_STACK = doPrivileged(new GetAccessibleDeclaredFieldAction(AccessControlContext.class, "context"));
@@ -82,10 +83,14 @@ public final class WildFlySecurityManager extends SecurityManager {
             }
         });
         boolean result = false;
+        int offset = 0;
         try {
-            result = Reflection.getCallerClass(1) == WildFlySecurityManager.class;
+            result = Reflection.getCallerClass(1) == WildFlySecurityManager.class || Reflection.getCallerClass(2) == WildFlySecurityManager.class;
+            offset = Reflection.getCallerClass(1) == Reflection.class ? 2 : 1;
+
         } catch (Throwable ignored) {}
         hasGetCallerClass = result;
+        callerOffset = offset;
     }
 
     private WildFlySecurityManager() {
@@ -104,9 +109,9 @@ public final class WildFlySecurityManager extends SecurityManager {
 
     private static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
-            return Reflection.getCallerClass(n + 1);
+            return Reflection.getCallerClass(n + callerOffset);
         } else {
-            return INSTANCE.getClassContext()[n];
+            return INSTANCE.getClassContext()[n + callerOffset];
         }
     }
 
