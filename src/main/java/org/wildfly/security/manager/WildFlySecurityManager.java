@@ -441,6 +441,57 @@ public final class WildFlySecurityManager extends SecurityManager {
     }
 
     /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @return the return value of the action
+     */
+    public static <T> T doChecked(PrivilegedAction<T> action, AccessControlContext context) {
+        final ThreadLocal<Boolean> checking = WildFlySecurityManager.CHECKING;
+        if (checking.get() == TRUE) {
+            return action.run();
+        }
+        checking.set(TRUE);
+        try {
+            return AccessController.doPrivileged(action, context);
+        } finally {
+            checking.set(FALSE);
+        }
+    }
+
+    /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T> T doChecked(PrivilegedExceptionAction<T> action, AccessControlContext context) throws PrivilegedActionException {
+        final ThreadLocal<Boolean> checking = WildFlySecurityManager.CHECKING;
+        if (checking.get() == TRUE) {
+            try {
+                return action.run();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
+        checking.set(TRUE);
+        try {
+            return AccessController.doPrivileged(action, context);
+        } finally {
+            checking.set(FALSE);
+        }
+    }
+
+    /**
      * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
      * simply run.  The immediate caller must have the {@code doUnchecked} runtime permission.
      *
@@ -492,6 +543,59 @@ public final class WildFlySecurityManager extends SecurityManager {
             return action.run();
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
+        } finally {
+            checking.set(TRUE);
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The immediate caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @return the return value of the action
+     */
+    public static <T> T doUnchecked(PrivilegedAction<T> action, AccessControlContext context) {
+        final ThreadLocal<Boolean> checking = WildFlySecurityManager.CHECKING;
+        if (checking.get() != TRUE) {
+            return AccessController.doPrivileged(action, context);
+        }
+        checking.set(FALSE);
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2).getProtectionDomain(), UNCHECKED_PERMISSION);
+            }
+            return AccessController.doPrivileged(action, context);
+        } finally {
+            checking.set(TRUE);
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T> T doUnchecked(PrivilegedExceptionAction<T> action, AccessControlContext context) throws PrivilegedActionException {
+        final ThreadLocal<Boolean> checking = WildFlySecurityManager.CHECKING;
+        if (checking.get() != TRUE) {
+            return AccessController.doPrivileged(action, context);
+        }
+        checking.set(FALSE);
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2).getProtectionDomain(), UNCHECKED_PERMISSION);
+            }
+            return AccessController.doPrivileged(action, context);
         } finally {
             checking.set(TRUE);
         }
