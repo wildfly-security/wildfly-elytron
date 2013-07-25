@@ -98,4 +98,18 @@ public final class StackInspector {
         final Class<?>[] stack = WildFlySecurityManager.getCallStack();
         return copyOfRange(stack, 2, stack.length);
     }
+
+    /**
+     * Determine whether the call stack contains a given class.  Useful for assertions.
+     *
+     * @param clazz the class to test
+     * @return {@code true} if the call stack contains the class
+     */
+    public boolean callStackContains(Class<?> clazz) {
+        final Class<?>[] stack = WildFlySecurityManager.getCallStack();
+        for (int i = 2; i < stack.length; i ++) {
+            if (stack[i] == clazz) return true;
+        }
+        return false;
+    }
 }
