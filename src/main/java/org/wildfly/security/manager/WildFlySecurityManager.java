@@ -107,12 +107,16 @@ public final class WildFlySecurityManager extends SecurityManager {
         }
     }
 
-    private static Class<?> getCallerClass(int n) {
+    static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
             return Reflection.getCallerClass(n + callerOffset);
         } else {
-            return INSTANCE.getClassContext()[n + callerOffset];
+            return getCallStack()[n + callerOffset];
         }
+    }
+
+    static Class<?>[] getCallStack() {
+        return INSTANCE.getClassContext();
     }
 
     /**
