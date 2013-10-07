@@ -31,8 +31,11 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import org.jboss.logging.Logger;
 import org.jboss.sasl.callback.DigestHashCallback;
@@ -106,12 +109,11 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     private static final int NONCE_COUNT_VALUE = 1;
 
     /* "true" means use UTF8; "false" ISO 8859-1; default is "true" */
-    private static final String UTF8_PROPERTY =
-        "com.sun.security.sasl.digest.utf8";
-
+    private static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
     /* List of space-separated realms used for authentication */
-    private static final String REALM_PROPERTY =
-        "com.sun.security.sasl.digest.realm";
+    private static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
+    /* Space separated list of alternative protocols accepted. */
+    private static final String ALTERNATIVE_PROTOCOLS_PROPERTY = "org.jboss.sasl.digest.alternative_protocols";
 
     /* Directives encountered in responses sent by the client. */
     private static final String[] DIRECTIVE_KEY = {
@@ -147,18 +149,22 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
     /* Server-generated/supplied information */
     private String specifiedQops;
     private byte[] myCiphers;
-    private List<String> serverRealms;
+    private final List<String> serverRealms;
     /** Should the impl request and use pre-digested passwords instead of generating the {username : realm : password} hash? */
     private boolean preDigestedPasswords;
+    private final List<String> digestUris;
 
     DigestMD5Server(String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        super(props, MY_CLASS_NAME, 1, protocol + "/" + serverName, cbh);
+        super(props, MY_CLASS_NAME, 1, cbh);
 
         serverRealms = new ArrayList<String>();
 
         // Defaults
         useUTF8 = true;
         preDigestedPasswords = false;
+
+        List<String> digestUris = new ArrayList<String>();
+        digestUris.add(protocol + "/" + serverName);
 
         if (props != null) {
             specifiedQops = (String) props.get(Sasl.QOP);
@@ -179,11 +185,22 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
                 }
             }
 
+            String protocols = (String) props.get(ALTERNATIVE_PROTOCOLS_PROPERTY);
+            if (protocols != null) {
+                StringTokenizer parser = new StringTokenizer(protocols, ", \t\n");
+                while (parser.hasMoreTokens()) {
+                    String digestUri = parser.nextToken().trim() + "/" + serverName;
+                    digestUris.add(digestUri);
+                    log.tracef("Server supports digestUri %s", digestUri);
+                }
+            }
+
             if (props.containsKey(PRE_DIGESTED_PROPERTY)) {
                 preDigestedPasswords = Boolean.parseBoolean(String.valueOf(props.get(PRE_DIGESTED_PROPERTY)));
                 log.tracef("Server using pre-digested hashes (%B)", preDigestedPasswords);
             }
         }
+        this.digestUris = Collections.unmodifiableList(digestUris);
 
         encoding = (useUTF8 ? "UTF8" : "8859_1");
 
@@ -544,12 +561,20 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
         // host should match one of service's configured service names
         // Check against digest URI that mech was created with
 
-        if (digestUri.equalsIgnoreCase(digestUriFromResponse)) {
-            digestUri = digestUriFromResponse; // account for case-sensitive diffs
-        } else {
-            throw new SaslException("DIGEST-MD5: digest response format " +
-                "violation. Mismatched URI: " + digestUriFromResponse +
-                "; expecting: " + digestUri);
+        String digestUri = null;
+        for (String current : digestUris) {
+            if (current.equalsIgnoreCase(digestUriFromResponse)) {
+                digestUri = digestUriFromResponse; // account for case-sensitive diffs
+            }
+        }
+
+        if (digestUri == null) {
+            StringBuilder sb = new StringBuilder();
+            for (String current : digestUris) {
+                sb.append(current).append(" ");
+            }
+            throw new SaslException("DIGEST-MD5: digest response format " + "violation. Mismatched URI: "
+                    + digestUriFromResponse + "; expecting one of: " + sb.toString());
         }
 
         // response: exactly once
@@ -667,10 +692,10 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
             }
 
             if (preDigestedPasswords) {
-                return generateResponseAuth(userRealmPasswd, cnonce,
+                return generateResponseAuth(digestUri, userRealmPasswd, cnonce,
                         NONCE_COUNT_VALUE, authzidBytes);
             } else {
-                return generateResponseAuth(username, passwd, cnonce,
+                return generateResponseAuth(digestUri, username, passwd, cnonce,
                         NONCE_COUNT_VALUE, authzidBytes);
             }
         } finally {
@@ -700,7 +725,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
      *       A2 = { ":", digest-uri-value, ":00000000000000000000000000000000" }
      *
      */
-    private byte[] generateResponseAuth(String username, char[] passwd,
+    private byte[] generateResponseAuth(String digestUri, String username, char[] passwd,
         byte[] cnonce, int nonceCount, byte[] authzidBytes) throws SaslException {
 
         // Construct response value
@@ -731,7 +756,7 @@ public final class DigestMD5Server extends DigestMD5Base implements SaslServer {
      *       A2 = { ":", digest-uri-value, ":00000000000000000000000000000000" }
      *
      */
-    private byte[] generateResponseAuth(byte[] urpHash,
+    private byte[] generateResponseAuth(String digestUri, byte[] urpHash,
         byte[] cnonce, int nonceCount, byte[] authzidBytes) throws SaslException {
 
         // Construct response value

@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+
 import org.jboss.logging.Logger;
 import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
@@ -70,7 +71,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
 
     private static final Logger log = Logger.getLogger("org.jboss.sasl.digest");
 
-    
+
     /* ------------------------- Constants ------------------------ */
 
     // Used for logging
@@ -131,7 +132,7 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
         ":00000000000000000000000000000000";
 
     protected static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-    
+
     /* Should a pre-digested password be requested? */
     protected static final String PRE_DIGESTED_PROPERTY = "org.jboss.sasl.digest.pre_digested";
 
@@ -157,7 +158,6 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
     protected boolean useUTF8 = false;
     protected String encoding = "8859_1";  // default unless server specifies utf-8
 
-    protected String digestUri;
     protected String authzid;       // authzid or canonicalized authzid
 
     /**
@@ -172,11 +172,10 @@ abstract class DigestMD5Base extends AbstractSaslImpl {
      *
      * @throws javax.security.sasl.SaslException If invalid value found in props.
      */
-    protected DigestMD5Base(Map<String, ?> props, String className, int firstStep, String digestUri, CallbackHandler cbh) throws SaslException {
+    protected DigestMD5Base(Map<String, ?> props, String className, int firstStep, CallbackHandler cbh) throws SaslException {
         super(props, className); // sets QOP, STENGTH and BUFFER_SIZE
 
         step = firstStep;
-        this.digestUri = digestUri;
         this.cbh = cbh;
     }
 

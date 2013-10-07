@@ -129,7 +129,7 @@ final class DigestMD5Client extends DigestMD5Base implements SaslClient {
     private static final int CIPHER = 6;
     private static final int RESPONSE_AUTH = 7;
     private static final int STALE = 8;
-    
+
     private static final Logger log = Logger.getLogger("org.jboss.sasl.digest.client");
 
     private int nonceCount; // number of times nonce has been used/seen
@@ -141,9 +141,11 @@ final class DigestMD5Client extends DigestMD5Base implements SaslClient {
     private char[] passwd;
     private byte[] preDigested;
     private byte[] authzidBytes;  // byte repr of authzid
-    
+
     /** Should the impl request and use pre-digested passwords instead of generating the {username : realm : password} hash? */
     private boolean preDigestedPasswords;
+
+    private final String digestUri;
 
     /**
       * Constructor for DIGEST-MD5 mechanism.
@@ -160,7 +162,8 @@ final class DigestMD5Client extends DigestMD5Base implements SaslClient {
     DigestMD5Client(String authzid, String protocol, String serverName,
         Map props, CallbackHandler cbh) throws SaslException {
 
-        super(props, MY_CLASS_NAME, 2, protocol + "/" + serverName, cbh);
+        super(props, MY_CLASS_NAME, 2, cbh);
+        this.digestUri = protocol + "/" + serverName;
 
         // authzID can only be encoded in UTF8 - RFC 2222
         if (authzid != null) {
@@ -340,8 +343,8 @@ final class DigestMD5Client extends DigestMD5Base implements SaslClient {
                 new NameCallback("DIGEST-MD5 authentication ID: ") :
                 new NameCallback("DIGEST-MD5 authentication ID: ", authzid);
             Callback credentialCallback = preDigestedPasswords ? new DigestHashCallback("DIGEST-MD5 hash: ")
-                    : new PasswordCallback("DIGEST-MD5 password: ", false);    
-                
+                    : new PasswordCallback("DIGEST-MD5 password: ", false);
+
             if (realmTokens == null) {
                 // Server specified <= 1 realm
                 // If 0, RFC 2831: the client SHOULD solicit a realm from the user.
@@ -681,7 +684,7 @@ final class DigestMD5Client extends DigestMD5Base implements SaslClient {
             if (preDigestedPasswords) {
                 expected = generateResponseValue("",
                         digestUri, negotiatedQop, preDigested,
-                        nonce, cnonce,  nonceCount, authzidBytes);                
+                        nonce, cnonce,  nonceCount, authzidBytes);
             } else {
                 expected = generateResponseValue("",
                     digestUri, negotiatedQop, username, negotiatedRealm,
