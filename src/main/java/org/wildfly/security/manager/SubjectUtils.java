@@ -22,7 +22,6 @@
 
 package org.wildfly.security.manager;
 
-import java.security.AccessController;
 import java.security.Principal;
 
 import javax.security.auth.Subject;
@@ -34,14 +33,6 @@ import javax.security.auth.Subject;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SubjectUtils {
-    /**
-     * Get the current subject of the executing thread.
-     *
-     * @return the current subject of the executing thread
-     */
-    public static Subject getCurrent() {
-        return Subject.getSubject(AccessController.getContext());
-    }
 
     /**
      * Get the principal of the given type.  If multiple principals of the given type exist, only
