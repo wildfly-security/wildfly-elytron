@@ -20,33 +20,32 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
-import java.security.AccessControlContext;
-import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.Provider;
+import java.security.Security;
 
 /**
- * A privileged action to get the current access control context.
+ * A security action to add a global security provider.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetAccessControlContextAction implements PrivilegedAction<AccessControlContext> {
-    private static final GetAccessControlContextAction INSTANCE = new GetAccessControlContextAction();
+public final class AddGlobalSecurityProviderAction implements PrivilegedAction<Void> {
+
+    private final Provider provider;
 
     /**
-     * Get the singleton instance.
+     * Construct a new instance.
      *
-     * @return the singleton instance of this action
+     * @param provider the provider to add
      */
-    public static GetAccessControlContextAction getInstance() {
-        return INSTANCE;
+    public AddGlobalSecurityProviderAction(final Provider provider) {
+        this.provider = provider;
     }
 
-    private GetAccessControlContextAction() {
-    }
-
-    public AccessControlContext run() {
-        return AccessController.getContext();
+    public Void run() {
+        Security.addProvider(provider);
+        return null;
     }
 }

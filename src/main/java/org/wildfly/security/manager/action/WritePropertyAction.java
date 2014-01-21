@@ -20,33 +20,31 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A security action to get and set the context class loader of the current thread.
+ * A privileged action for setting a system property.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SetContextClassLoaderFromClassAction implements PrivilegedAction<ClassLoader> {
-    private final Class<?> clazz;
+public final class WritePropertyAction implements PrivilegedAction<String> {
+    private final String propertyName;
+    private final String value;
 
     /**
      * Construct a new instance.
      *
-     * @param clazz a class from the class loader to set
+     * @param propertyName the property name to set
+     * @param value the value to use
      */
-    public SetContextClassLoaderFromClassAction(final Class<?> clazz) {
-        this.clazz = clazz;
+    public WritePropertyAction(final String propertyName, final String value) {
+        this.propertyName = propertyName;
+        this.value = value;
     }
 
-    public ClassLoader run() {
-        final Thread thread = Thread.currentThread();
-        try {
-            return thread.getContextClassLoader();
-        } finally {
-            thread.setContextClassLoader(clazz.getClassLoader());
-        }
+    public String run() {
+        return System.setProperty(propertyName, value);
     }
 }

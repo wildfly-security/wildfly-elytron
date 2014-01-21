@@ -20,33 +20,42 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.util.Properties;
 
 /**
- * A security action to retrieve the system properties map.
+ * A security action which reads an environment property.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetSystemPropertiesAction implements PrivilegedAction<Properties> {
+public final class ReadEnvironmentPropertyAction implements PrivilegedAction<String> {
 
-    private static final GetSystemPropertiesAction INSTANCE = new GetSystemPropertiesAction();
+    private final String propertyName;
+    private final String defaultValue;
 
-    private GetSystemPropertiesAction() {
+    /**
+     * Construct a new instance.
+     *
+     * @param propertyName the environment property to read
+     */
+    public ReadEnvironmentPropertyAction(final String propertyName) {
+        this(propertyName, null);
     }
 
     /**
-     * Get the singleton instance.
+     * Construct a new instance.
      *
-     * @return the singleton instance
+     * @param propertyName the environment property to read
+     * @param defaultValue the value to return if the property is not present
      */
-    public static GetSystemPropertiesAction getInstance() {
-        return INSTANCE;
+    public ReadEnvironmentPropertyAction(final String propertyName, final String defaultValue) {
+        this.propertyName = propertyName;
+        this.defaultValue = defaultValue;
     }
 
-    public Properties run() {
-        return System.getProperties();
+    public String run() {
+        final String val = System.getenv(propertyName);
+        return val == null ? defaultValue : val;
     }
 }

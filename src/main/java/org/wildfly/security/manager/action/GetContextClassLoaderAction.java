@@ -20,42 +20,31 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A security action which reads an environment property.
+ * An action which gets the current thread's context class loader.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ReadEnvironmentPropertyAction implements PrivilegedAction<String> {
+public final class GetContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
+    private static final GetContextClassLoaderAction INSTANCE = new GetContextClassLoaderAction();
 
-    private final String propertyName;
-    private final String defaultValue;
-
-    /**
-     * Construct a new instance.
-     *
-     * @param propertyName the environment property to read
-     */
-    public ReadEnvironmentPropertyAction(final String propertyName) {
-        this(propertyName, null);
+    private GetContextClassLoaderAction() {
     }
 
     /**
-     * Construct a new instance.
+     * Get the singleton instance.
      *
-     * @param propertyName the environment property to read
-     * @param defaultValue the value to return if the property is not present
+     * @return the singleton instance
      */
-    public ReadEnvironmentPropertyAction(final String propertyName, final String defaultValue) {
-        this.propertyName = propertyName;
-        this.defaultValue = defaultValue;
+    public static GetContextClassLoaderAction getInstance() {
+        return INSTANCE;
     }
 
-    public String run() {
-        final String val = System.getenv(propertyName);
-        return val == null ? defaultValue : val;
+    public ClassLoader run() {
+        return Thread.currentThread().getContextClassLoader();
     }
 }

@@ -38,6 +38,17 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyPermission;
+
+import org.wildfly.security.manager.action.ClearPropertyAction;
+import org.wildfly.security.manager.action.GetClassLoaderAction;
+import org.wildfly.security.manager.action.GetContextClassLoaderAction;
+import org.wildfly.security.manager.action.GetEnvironmentAction;
+import org.wildfly.security.manager.action.GetProtectionDomainAction;
+import org.wildfly.security.manager.action.GetSystemPropertiesAction;
+import org.wildfly.security.manager.action.ReadEnvironmentPropertyAction;
+import org.wildfly.security.manager.action.ReadPropertyAction;
+import org.wildfly.security.manager.action.SetContextClassLoaderAction;
+import org.wildfly.security.manager.action.WritePropertyAction;
 import sun.reflect.Reflection;
 
 import static java.lang.Boolean.FALSE;

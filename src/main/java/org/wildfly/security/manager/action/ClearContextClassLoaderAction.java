@@ -20,31 +20,37 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.util.Properties;
 
 /**
- * A security action which replaces the system properties map.
+ * A security action to clear the current thread context class loader.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SetSystemPropertiesAction implements PrivilegedAction<Void> {
+public final class ClearContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
 
-    private final Properties properties;
+    private static final ClearContextClassLoaderAction INSTANCE = new ClearContextClassLoaderAction();
 
-    /**
-     * Construct a new instance.
-     *
-     * @param properties the new properties map
-     */
-    public SetSystemPropertiesAction(final Properties properties) {
-        this.properties = properties;
+    private ClearContextClassLoaderAction() {
     }
 
-    public Void run() {
-        System.setProperties(properties);
-        return null;
+    /**
+     * Get the singleton instance.
+     *
+     * @return the singleton instance
+     */
+    public static ClearContextClassLoaderAction getInstance() {
+        return INSTANCE;
+    }
+
+    public ClassLoader run() {
+        final Thread thread = Thread.currentThread();
+        try {
+            return thread.getContextClassLoader();
+        } finally {
+            thread.setContextClassLoader(null);
+        }
     }
 }

@@ -20,31 +20,29 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 
 /**
- * An action which gets the current thread's context class loader.
+ * A security action to get the protection domain of a class.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
-    private static final GetContextClassLoaderAction INSTANCE = new GetContextClassLoaderAction();
-
-    private GetContextClassLoaderAction() {
-    }
+public final class GetProtectionDomainAction implements PrivilegedAction<ProtectionDomain> {
+    private final Class<?> clazz;
 
     /**
-     * Get the singleton instance.
+     * Construct a new instance.
      *
-     * @return the singleton instance
+     * @param clazz the class whose protection domain is to be probed
      */
-    public static GetContextClassLoaderAction getInstance() {
-        return INSTANCE;
+    public GetProtectionDomainAction(final Class<?> clazz) {
+        this.clazz = clazz;
     }
 
-    public ClassLoader run() {
-        return Thread.currentThread().getContextClassLoader();
+    public ProtectionDomain run() {
+        return clazz.getProtectionDomain();
     }
 }

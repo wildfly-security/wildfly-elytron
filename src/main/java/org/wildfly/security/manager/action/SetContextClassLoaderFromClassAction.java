@@ -20,39 +20,33 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.util.Properties;
 
 /**
- * A privileged action for setting a system property if it is absent.
+ * A security action to get and set the context class loader of the current thread.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class WritePropertyIfAbsentAction implements PrivilegedAction<String> {
-    private final String propertyName;
-    private final String value;
+public final class SetContextClassLoaderFromClassAction implements PrivilegedAction<ClassLoader> {
+    private final Class<?> clazz;
 
     /**
      * Construct a new instance.
      *
-     * @param propertyName the property name to set
-     * @param value the value to use
+     * @param clazz a class from the class loader to set
      */
-    public WritePropertyIfAbsentAction(final String propertyName, final String value) {
-        this.propertyName = propertyName;
-        this.value = value;
+    public SetContextClassLoaderFromClassAction(final Class<?> clazz) {
+        this.clazz = clazz;
     }
 
-    public String run() {
-        final Properties properties = System.getProperties();
-        synchronized (properties) {
-            if (properties.containsKey(propertyName)) {
-                return properties.getProperty(propertyName);
-            } else {
-                return (String) properties.setProperty(propertyName, value);
-            }
+    public ClassLoader run() {
+        final Thread thread = Thread.currentThread();
+        try {
+            return thread.getContextClassLoader();
+        } finally {
+            thread.setContextClassLoader(clazz.getClassLoader());
         }
     }
 }

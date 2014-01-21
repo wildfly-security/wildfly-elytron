@@ -20,37 +20,28 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A security action to clear the current thread context class loader.
+ * A security action to get the class loader of a class.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ClearContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
-
-    private static final ClearContextClassLoaderAction INSTANCE = new ClearContextClassLoaderAction();
-
-    private ClearContextClassLoaderAction() {
-    }
+public final class GetClassLoaderAction implements PrivilegedAction<ClassLoader> {
+    private final Class<?> clazz;
 
     /**
-     * Get the singleton instance.
+     * Construct a new instance.
      *
-     * @return the singleton instance
+     * @param clazz the class whose class loader is to be probed
      */
-    public static ClearContextClassLoaderAction getInstance() {
-        return INSTANCE;
+    public GetClassLoaderAction(final Class<?> clazz) {
+        this.clazz = clazz;
     }
 
     public ClassLoader run() {
-        final Thread thread = Thread.currentThread();
-        try {
-            return thread.getContextClassLoader();
-        } finally {
-            thread.setContextClassLoader(null);
-        }
+        return clazz.getClassLoader();
     }
 }

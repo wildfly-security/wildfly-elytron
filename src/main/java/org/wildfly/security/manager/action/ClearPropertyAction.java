@@ -20,29 +20,29 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.security.ProtectionDomain;
 
 /**
- * A security action to get the protection domain of a class.
+ * A security action which clears a system property.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetProtectionDomainAction implements PrivilegedAction<ProtectionDomain> {
-    private final Class<?> clazz;
+public final class ClearPropertyAction implements PrivilegedAction<String> {
+
+    private final String propertyName;
 
     /**
      * Construct a new instance.
      *
-     * @param clazz the class whose protection domain is to be probed
+     * @param propertyName the name of the property to clear
      */
-    public GetProtectionDomainAction(final Class<?> clazz) {
-        this.clazz = clazz;
+    public ClearPropertyAction(final String propertyName) {
+        this.propertyName = propertyName;
     }
 
-    public ProtectionDomain run() {
-        return clazz.getProtectionDomain();
+    public String run() {
+        return System.clearProperty(propertyName);
     }
 }

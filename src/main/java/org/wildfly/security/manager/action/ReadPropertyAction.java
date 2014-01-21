@@ -20,31 +20,40 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A privileged action for setting a system property.
+ * A privileged action for reading a system property.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class WritePropertyAction implements PrivilegedAction<String> {
+public final class ReadPropertyAction implements PrivilegedAction<String> {
     private final String propertyName;
-    private final String value;
+    private final String defaultValue;
 
     /**
      * Construct a new instance.
      *
-     * @param propertyName the property name to set
-     * @param value the value to use
+     * @param propertyName the property name to read
      */
-    public WritePropertyAction(final String propertyName, final String value) {
+    public ReadPropertyAction(final String propertyName) {
+        this(propertyName, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param propertyName the property name to read
+     * @param defaultValue the value to use if the property is not present ({@code null} for none)
+     */
+    public ReadPropertyAction(final String propertyName, final String defaultValue) {
         this.propertyName = propertyName;
-        this.value = value;
+        this.defaultValue = defaultValue;
     }
 
     public String run() {
-        return System.setProperty(propertyName, value);
+        return defaultValue == null ? System.getProperty(propertyName) : System.getProperty(propertyName, defaultValue);
     }
 }

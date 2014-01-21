@@ -20,32 +20,28 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.security.Provider;
 import java.security.Security;
 
 /**
- * A security action to add a global security provider.
+ * A security action which sets a security property.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AddGlobalSecurityProviderAction implements PrivilegedAction<Void> {
+public final class WriteSecurityPropertyAction implements PrivilegedAction<Void> {
 
-    private final Provider provider;
+    private final String key;
+    private final String value;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param provider the provider to add
-     */
-    public AddGlobalSecurityProviderAction(final Provider provider) {
-        this.provider = provider;
+    public WriteSecurityPropertyAction(final String key, final String value) {
+        this.key = key;
+        this.value = value;
     }
 
     public Void run() {
-        Security.addProvider(provider);
+        Security.setProperty(key, value);
         return null;
     }
 }

@@ -20,47 +20,30 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
+import java.security.PrivilegedAction;
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleClassLoader;
 
 /**
- * A security action to create a temporary file.
+ * A security action to get the class loader for a module.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class CreateTempFileAction implements PrivilegedExceptionAction<File> {
-
-    private final String prefix;
-    private final String suffix;
-    private final File directory;
+public final class GetModuleClassLoaderAction implements PrivilegedAction<ModuleClassLoader> {
+    private final Module module;
 
     /**
      * Construct a new instance.
      *
-     * @param prefix the prefix to set
-     * @param suffix the suffix to set
-     * @param directory the directory
+     * @param module the module to read
      */
-    public CreateTempFileAction(final String prefix, final String suffix, final File directory) {
-        this.prefix = prefix;
-        this.suffix = suffix;
-        this.directory = directory;
+    public GetModuleClassLoaderAction(final Module module) {
+        this.module = module;
     }
 
-    /**
-     * Construct a new instance.
-     *
-     * @param prefix the prefix to set
-     * @param suffix the suffix to set
-     */
-    public CreateTempFileAction(final String suffix, final String prefix) {
-        this(prefix, suffix, null);
-    }
-
-    public File run() throws IOException {
-        return File.createTempFile(prefix, suffix, directory);
+    public ModuleClassLoader run() {
+        return module.getClassLoader();
     }
 }

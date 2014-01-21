@@ -20,33 +20,32 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
+import java.util.Map;
 
 /**
- * A security action to get and set the context class loader of the current thread.
+ * A security action which retrieves the current environment variable map.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SetContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
-    private final ClassLoader classLoader;
+public final class GetEnvironmentAction implements PrivilegedAction<Map<String, String>> {
+    private static final GetEnvironmentAction INSTANCE = new GetEnvironmentAction();
 
-    /**
-     * Construct a new instance.
-     *
-     * @param classLoader the class loader to set
-     */
-    public SetContextClassLoaderAction(final ClassLoader classLoader) {
-        this.classLoader = classLoader;
+    private GetEnvironmentAction() {
     }
 
-    public ClassLoader run() {
-        final Thread thread = Thread.currentThread();
-        try {
-            return thread.getContextClassLoader();
-        } finally {
-            thread.setContextClassLoader(classLoader);
-        }
+    /**
+     * Get the singleton instance.
+     *
+     * @return the singleton instance
+     */
+    public static GetEnvironmentAction getInstance() {
+        return INSTANCE;
+    }
+
+    public Map<String, String> run() {
+        return System.getenv();
     }
 }

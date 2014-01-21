@@ -20,28 +20,39 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.security.Security;
+import java.util.Properties;
 
 /**
- * A security action which sets a security property.
+ * A privileged action for setting a system property if it is absent.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class WriteSecurityPropertyAction implements PrivilegedAction<Void> {
-
-    private final String key;
+public final class WritePropertyIfAbsentAction implements PrivilegedAction<String> {
+    private final String propertyName;
     private final String value;
 
-    public WriteSecurityPropertyAction(final String key, final String value) {
-        this.key = key;
+    /**
+     * Construct a new instance.
+     *
+     * @param propertyName the property name to set
+     * @param value the value to use
+     */
+    public WritePropertyIfAbsentAction(final String propertyName, final String value) {
+        this.propertyName = propertyName;
         this.value = value;
     }
 
-    public Void run() {
-        Security.setProperty(key, value);
-        return null;
+    public String run() {
+        final Properties properties = System.getProperties();
+        synchronized (properties) {
+            if (properties.containsKey(propertyName)) {
+                return properties.getProperty(propertyName);
+            } else {
+                return (String) properties.setProperty(propertyName, value);
+            }
+        }
     }
 }

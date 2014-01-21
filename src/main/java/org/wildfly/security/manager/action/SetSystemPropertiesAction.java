@@ -20,29 +20,31 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
+import java.util.Properties;
 
 /**
- * A security action which clears a system property.
+ * A security action which replaces the system properties map.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ClearPropertyAction implements PrivilegedAction<String> {
+public final class SetSystemPropertiesAction implements PrivilegedAction<Void> {
 
-    private final String propertyName;
+    private final Properties properties;
 
     /**
      * Construct a new instance.
      *
-     * @param propertyName the name of the property to clear
+     * @param properties the new properties map
      */
-    public ClearPropertyAction(final String propertyName) {
-        this.propertyName = propertyName;
+    public SetSystemPropertiesAction(final Properties properties) {
+        this.properties = properties;
     }
 
-    public String run() {
-        return System.clearProperty(propertyName);
+    public Void run() {
+        System.setProperties(properties);
+        return null;
     }
 }

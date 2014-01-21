@@ -20,30 +20,33 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A security action which adds a shutdown hook.
+ * A security action to get and set the context class loader of the current thread.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AddShutdownHookAction implements PrivilegedAction<Void> {
-
-    private final Thread hook;
+public final class SetContextClassLoaderAction implements PrivilegedAction<ClassLoader> {
+    private final ClassLoader classLoader;
 
     /**
      * Construct a new instance.
      *
-     * @param hook the shutdown hook to add
+     * @param classLoader the class loader to set
      */
-    public AddShutdownHookAction(final Thread hook) {
-        this.hook = hook;
+    public SetContextClassLoaderAction(final ClassLoader classLoader) {
+        this.classLoader = classLoader;
     }
 
-    public Void run() {
-        Runtime.getRuntime().addShutdownHook(hook);
-        return null;
+    public ClassLoader run() {
+        final Thread thread = Thread.currentThread();
+        try {
+            return thread.getContextClassLoader();
+        } finally {
+            thread.setContextClassLoader(classLoader);
+        }
     }
 }

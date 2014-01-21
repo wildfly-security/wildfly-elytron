@@ -20,39 +20,33 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Properties;
 
 /**
- * A privileged action for setting a system property only if it is set to another value.
+ * A privileged action to get the current access control context.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ReplacePropertyAction implements PrivilegedAction<String> {
-    private final String propertyName;
-    private final String value;
+public final class GetAccessControlContextAction implements PrivilegedAction<AccessControlContext> {
+    private static final GetAccessControlContextAction INSTANCE = new GetAccessControlContextAction();
 
     /**
-     * Construct a new instance.
+     * Get the singleton instance.
      *
-     * @param propertyName the property name to set
-     * @param value the value to use
+     * @return the singleton instance of this action
      */
-    public ReplacePropertyAction(final String propertyName, final String value) {
-        this.propertyName = propertyName;
-        this.value = value;
+    public static GetAccessControlContextAction getInstance() {
+        return INSTANCE;
     }
 
-    public String run() {
-        final Properties properties = System.getProperties();
-        synchronized (properties) {
-            if (properties.containsKey(propertyName)) {
-                return (String) properties.setProperty(propertyName, value);
-            } else {
-                return null;
-            }
-        }
+    private GetAccessControlContextAction() {
+    }
+
+    public AccessControlContext run() {
+        return AccessController.getContext();
     }
 }

@@ -20,40 +20,47 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
-import java.security.PrivilegedAction;
+import java.io.File;
+import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 
 /**
- * A privileged action for reading a system property.
+ * A security action to create a temporary file.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ReadPropertyAction implements PrivilegedAction<String> {
-    private final String propertyName;
-    private final String defaultValue;
+public final class CreateTempFileAction implements PrivilegedExceptionAction<File> {
+
+    private final String prefix;
+    private final String suffix;
+    private final File directory;
 
     /**
      * Construct a new instance.
      *
-     * @param propertyName the property name to read
+     * @param prefix the prefix to set
+     * @param suffix the suffix to set
+     * @param directory the directory
      */
-    public ReadPropertyAction(final String propertyName) {
-        this(propertyName, null);
+    public CreateTempFileAction(final String prefix, final String suffix, final File directory) {
+        this.prefix = prefix;
+        this.suffix = suffix;
+        this.directory = directory;
     }
 
     /**
      * Construct a new instance.
      *
-     * @param propertyName the property name to read
-     * @param defaultValue the value to use if the property is not present ({@code null} for none)
+     * @param prefix the prefix to set
+     * @param suffix the suffix to set
      */
-    public ReadPropertyAction(final String propertyName, final String defaultValue) {
-        this.propertyName = propertyName;
-        this.defaultValue = defaultValue;
+    public CreateTempFileAction(final String suffix, final String prefix) {
+        this(prefix, suffix, null);
     }
 
-    public String run() {
-        return defaultValue == null ? System.getProperty(propertyName) : System.getProperty(propertyName, defaultValue);
+    public File run() throws IOException {
+        return File.createTempFile(prefix, suffix, directory);
     }
 }

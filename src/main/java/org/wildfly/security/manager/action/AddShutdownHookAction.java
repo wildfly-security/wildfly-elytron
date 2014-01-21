@@ -20,28 +20,30 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
 
 /**
- * A security action to get the class loader of a class.
+ * A security action which adds a shutdown hook.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetClassLoaderAction implements PrivilegedAction<ClassLoader> {
-    private final Class<?> clazz;
+public final class AddShutdownHookAction implements PrivilegedAction<Void> {
+
+    private final Thread hook;
 
     /**
      * Construct a new instance.
      *
-     * @param clazz the class whose class loader is to be probed
+     * @param hook the shutdown hook to add
      */
-    public GetClassLoaderAction(final Class<?> clazz) {
-        this.clazz = clazz;
+    public AddShutdownHookAction(final Thread hook) {
+        this.hook = hook;
     }
 
-    public ClassLoader run() {
-        return clazz.getClassLoader();
+    public Void run() {
+        Runtime.getRuntime().addShutdownHook(hook);
+        return null;
     }
 }

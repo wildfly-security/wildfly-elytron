@@ -20,32 +20,39 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.wildfly.security.manager;
+package org.wildfly.security.manager.action;
 
 import java.security.PrivilegedAction;
-import java.util.Map;
+import java.util.Properties;
 
 /**
- * A security action which retrieves the current environment variable map.
+ * A privileged action for setting a system property only if it is set to another value.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class GetEnvironmentAction implements PrivilegedAction<Map<String, String>> {
-    private static final GetEnvironmentAction INSTANCE = new GetEnvironmentAction();
-
-    private GetEnvironmentAction() {
-    }
+public final class ReplacePropertyAction implements PrivilegedAction<String> {
+    private final String propertyName;
+    private final String value;
 
     /**
-     * Get the singleton instance.
+     * Construct a new instance.
      *
-     * @return the singleton instance
+     * @param propertyName the property name to set
+     * @param value the value to use
      */
-    public static GetEnvironmentAction getInstance() {
-        return INSTANCE;
+    public ReplacePropertyAction(final String propertyName, final String value) {
+        this.propertyName = propertyName;
+        this.value = value;
     }
 
-    public Map<String, String> run() {
-        return System.getenv();
+    public String run() {
+        final Properties properties = System.getProperties();
+        synchronized (properties) {
+            if (properties.containsKey(propertyName)) {
+                return (String) properties.setProperty(propertyName, value);
+            } else {
+                return null;
+            }
+        }
     }
 }
