@@ -78,7 +78,12 @@ public final class WildFlySecurityManager extends SecurityManager {
     private static final Permission GET_CLASS_LOADER_PERMISSION = new RuntimePermission("getClassLoader");
     private static final Permission SET_CLASS_LOADER_PERMISSION = new RuntimePermission("setClassLoader");
 
-    private static final InheritableThreadLocal<Boolean> CHECKING = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<Boolean> CHECKING = new InheritableThreadLocal<Boolean>() {
+        protected Boolean initialValue() {
+            return Boolean.TRUE;
+        }
+    };
+
     private static final ThreadLocal<Boolean> ENTERED = new ThreadLocal<Boolean>();
 
     private static final Field PD_STACK;
