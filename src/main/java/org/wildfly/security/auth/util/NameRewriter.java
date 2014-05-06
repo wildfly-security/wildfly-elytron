@@ -24,7 +24,7 @@ package org.wildfly.security.auth.util;
  * <ul>
  *     <li>Normalizing case</li>
  *     <li>Trimming extra whitespace</li>
- *     <li>Mapping one naming scheme to another (e.g. "user@realm" to/from "realm\user" or similar)</li>
+ *     <li>Mapping one naming scheme to another (e.g. "user@realm" to/from "realm/user" or similar)</li>
  *     <li>Removing a realm component (e.g. "user@realm" to "user")</li>
  * </ul>
  * A name rewriter may also be used to perform a validation step on the syntax of the name.
