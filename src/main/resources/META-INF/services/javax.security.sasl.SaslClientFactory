@@ -24,5 +24,4 @@
 org.jboss.sasl.localuser.LocalUserClientFactory
 org.jboss.sasl.digest.DigestMD5ClientFactory
 org.jboss.sasl.anonymous.AnonymousClientFactory
-org.jboss.sasl.clienttoken.ClientTokenClientFactory
 
