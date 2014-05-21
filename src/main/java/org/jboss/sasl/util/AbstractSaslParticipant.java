@@ -22,6 +22,8 @@
 
 package org.jboss.sasl.util;
 
+import java.util.Map;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -103,7 +105,7 @@ public abstract class AbstractSaslParticipant {
         }
     }
 
-    public void init() {};
+    public void init() {}
 
     /**
      * Get the name of this mechanism.
@@ -236,6 +238,42 @@ public abstract class AbstractSaslParticipant {
     public Object getNegotiatedProperty(final String propName) {
         return null;
     }
+
+    /**
+     * Get a string property value from the given map.
+     *
+     * @param map the property map
+     * @param key the property
+     * @param defaultVal the value to return if the key is not in the map
+     * @return the value
+     */
+    public String getStringProperty(Map<String, ?> map, String key, String defaultVal) {
+        final Object val = map.get(key);
+        if (val == null) {
+            return defaultVal;
+        } else {
+            return String.valueOf(val);
+        }
+    }
+
+    /**
+     * Get a string property value from the given map.
+     *
+     * @param map the property map
+     * @param key the property
+     * @param defaultVal the value to return if the key is not in the map
+     * @return the value
+     */
+    public int getIntProperty(Map<String, ?> map, String key, int defaultVal) {
+        final Object val = map.get(key);
+        if (val == null) {
+            return defaultVal;
+        } else {
+            return Integer.parseInt(val.toString());
+        }
+    }
+
+
 
     /**
      * Dispose of this participant.
