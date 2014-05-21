@@ -25,13 +25,14 @@ package org.jboss.sasl.anonymous;
 import static org.jboss.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
 import org.jboss.sasl.util.AbstractSaslClient;
-import org.jboss.sasl.util.Charsets;
+import org.jboss.sasl.util.ByteStringBuilder;
 import org.jboss.sasl.util.SaslState;
 import org.jboss.sasl.util.SaslStateContext;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.SaslException;
+import org.jboss.sasl.util.StringPrep;
 
 /**
  * A client implementation of the RFC 4505 {@code ANONYMOUS} mechanism.
@@ -57,8 +58,22 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
             if (name.isEmpty()) {
                 throw new SaslException("Authentication name is empty");
             }
+            ByteStringBuilder b = new ByteStringBuilder();
+            StringPrep.encode(name, b, 0
+                | StringPrep.MAP_TO_NOTHING
+                | StringPrep.MAP_TO_SPACE
+                | StringPrep.FORBID_ASCII_CONTROL
+                | StringPrep.FORBID_NON_ASCII_CONTROL
+                | StringPrep.FORBID_PRIVATE_USE
+                | StringPrep.FORBID_NON_CHARACTER
+                | StringPrep.FORBID_SURROGATE
+                | StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT
+                | StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED
+                | StringPrep.FORBID_TAGGING
+                | StringPrep.NORMALIZE_KC
+            );
             context.negotiationComplete();
-            return name == null ? NO_BYTES : name.getBytes(Charsets.UTF_8);
+            return b.toArray();
         }
     };
 
