@@ -18,7 +18,6 @@
 package org.wildfly.sasl.test;
 
 import static javax.security.sasl.Sasl.POLICY_NOANONYMOUS;
-import static javax.security.sasl.Sasl.POLICY_NOPLAINTEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -40,7 +39,6 @@ import org.wildfly.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.sasl.anonymous.AnonymousSaslClient;
 import org.wildfly.sasl.anonymous.AnonymousSaslServer;
 import org.wildfly.sasl.anonymous.AnonymousServerFactory;
-import org.wildfly.sasl.plain.PlainServerFactory;
 
 /**
  * Test for the Anonymous SASL mechanism, this will test both the client and server side.
