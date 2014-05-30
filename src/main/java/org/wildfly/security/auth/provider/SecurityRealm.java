@@ -59,8 +59,23 @@ public interface SecurityRealm {
      */
     <P> P proveAuthentic(Principal principal, Verifier<P> verifier) throws AuthenticationException;
 
+    /**
+     * Determine whether a given credential is definitely supported, possibly supported (for some identities), or
+     * definitely not supported.
+     *
+     * @param credentialType the credential type
+     * @return the level of support for this credential type
+     */
     CredentialSupport getCredentialSupport(Class<?> credentialType);
 
+    /**
+     * Determine whether a given credential is definitely supported, possibly supported, or
+     * definitely not supported for a specific identity.
+     *
+     * @param principal the identity's principal
+     * @param credentialType the credential type
+     * @return the level of support for this credential type
+     */
     CredentialSupport getCredentialSupport(Principal principal, Class<?> credentialType);
 
     SecurityIdentity createSecurityIdentity(Principal principal);

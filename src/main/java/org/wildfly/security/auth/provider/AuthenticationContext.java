@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
-import java.util.Set;
+
 import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.auth.login.AuthenticationException;
 
