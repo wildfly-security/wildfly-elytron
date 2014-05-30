@@ -25,10 +25,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.List;
-
-import sun.security.jca.ProviderList;
-import sun.security.jca.Providers;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -50,11 +46,6 @@ public final class PasswordFactory {
             if (service != null) {
                 return new PasswordFactory(provider, algorithm, (PasswordFactorySpi) service.newInstance(null));
             }
-        }
-        ProviderList list = Providers.getProviderList();
-        final List<Provider.Service> services = list.getServices("PasswordFactory", algorithm);
-        for (Provider.Service service : services) {
-            service.newInstance(null);
         }
         return null;
     }
