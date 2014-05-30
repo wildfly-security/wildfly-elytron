@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.util;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -26,16 +27,19 @@ import java.util.regex.Pattern;
 public final class RegexNameRewriter implements NameRewriter {
     private final Pattern pattern;
     private final String replacement;
+    private final boolean replaceAll;
 
     /**
      * Construct a new instance.
      *
      * @param pattern the substitution pattern
      * @param replacement the replacement string
+     * @param replaceAll {@code true} to replace all occurrences of the pattern; {@code false} to replace only the first occurrence
      */
-    public RegexNameRewriter(final Pattern pattern, final String replacement) {
+    public RegexNameRewriter(final Pattern pattern, final String replacement, final boolean replaceAll) {
         this.pattern = pattern;
         this.replacement = replacement;
+        this.replaceAll = replaceAll;
     }
 
     /**
@@ -46,6 +50,25 @@ public final class RegexNameRewriter implements NameRewriter {
      * @return the rewritten name
      */
     public String rewriteName(final String original) {
-        return pattern.matcher(original).replaceAll(replacement);
+        final Matcher matcher = pattern.matcher(original);
+        return replaceAll ? matcher.replaceAll(replacement) : matcher.replaceFirst(replacement);
+    }
+
+    /**
+     * Get the pattern.
+     *
+     * @return the pattern
+     */
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    /**
+     * Get the replacement string.
+     *
+     * @return the replacement string
+     */
+    public String getReplacement() {
+        return replacement;
     }
 }

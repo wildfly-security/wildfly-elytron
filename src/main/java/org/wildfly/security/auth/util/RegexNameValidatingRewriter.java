@@ -32,20 +32,43 @@ import java.util.regex.Pattern;
  */
 public final class RegexNameValidatingRewriter implements NameRewriter {
     private final Pattern pattern;
+    private final boolean match;
 
     /**
-     * Construct a new instance.
+     * Construct a new instance.  The pattern is a partial pattern; if the whole string is to be matched, then
+     * the appropriate regex anchors should be used.
      *
-     * @param pattern the pattern that the name must match in order to be considered valid
+     * @param pattern the pattern that the name must match (or not match) in order to be considered valid
+     * @param match {@code true} if the pattern must match, {@code false} if the pattern must not match
      */
-    public RegexNameValidatingRewriter(final Pattern pattern) {
+    public RegexNameValidatingRewriter(final Pattern pattern, final boolean match) {
         this.pattern = pattern;
+        this.match = match;
     }
 
     public String rewriteName(final String original) throws IllegalArgumentException {
-        if (! pattern.matcher(original).matches()) {
+        if (pattern.matcher(original).find() != match) {
             throw new IllegalArgumentException("Invalid name");
         }
         return original;
+    }
+
+    /**
+     * Get the pattern.
+     *
+     * @return the pattern
+     */
+    public Pattern getPattern() {
+        return pattern;
+    }
+
+    /**
+     * Get the match flag.  If the flag is {@code true}, the pattern must match; if {@code false}, the pattern
+     * must not match.
+     *
+     * @return the match flag
+     */
+    public boolean isMatch() {
+        return match;
     }
 }
