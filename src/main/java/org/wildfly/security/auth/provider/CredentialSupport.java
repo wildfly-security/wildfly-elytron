@@ -23,22 +23,48 @@
 package org.wildfly.security.auth.provider;
 
 /**
+ * The level of support for a type of credential.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public enum CredentialSupport {
+    /**
+     * The given credential type is definitely not supported.
+     */
     UNSUPPORTED,
+    /**
+     * The given credential type may be supported.
+     */
     POSSIBLY_SUPPORTED,
+    /**
+     * The given credential type is definitely supported.
+     */
     SUPPORTED,
     ;
 
+    /**
+     * Determine if this object represents definite support.
+     *
+     * @return {@code true} if this object represents definite support, {@code false} otherwise
+     */
     public boolean isDefinitelySupported() {
         return this == SUPPORTED;
     }
 
+    /**
+     * Determine if this object represents possible <em>or</em> definite support.
+     *
+     * @return {@code true} if this object represents possible <em>or</em> definite support, {@code false} otherwise
+     */
     public boolean mayBeSupported() {
         return this != UNSUPPORTED;
     }
 
+    /**
+     * Determine if this object represents definite lack of support.
+     *
+     * @return {@code true} if this object represents definite lack of support, {@code false} otherwise
+     */
     public boolean isNotSupported() {
         return this == UNSUPPORTED;
     }
