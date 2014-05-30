@@ -23,15 +23,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.wildfly.security</groupId>
-    <artifactId>wildfly-aa-service</artifactId>
+    <artifactId>wildfly-elytron</artifactId>
     <version>1.0.0.Beta1-SNAPSHOT</version>
 
-    <name>WildFly AA Services</name>
+    <name>WildFly Elytron</name>
+    <description>WildFly Security SPIs</description>
 
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>11</version>
+        <version>14</version>
     </parent>
 
     <properties>
