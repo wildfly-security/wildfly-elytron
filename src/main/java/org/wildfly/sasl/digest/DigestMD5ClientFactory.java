@@ -20,15 +20,26 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.digest;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import java.util.Map;
+
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
+ * The client factory for the digest SASL mechanisms.
+ * 
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public class DigestMD5ClientFactory extends AbstractDigestMD5Factory implements SaslClientFactory {
+
+    public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
+            Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        return isIncluded(mechanisms) && matches(props) ? new DigestMD5Client(authorizationId, protocol, serverName, props, cbh)
+                : null;
+    }
+
 }

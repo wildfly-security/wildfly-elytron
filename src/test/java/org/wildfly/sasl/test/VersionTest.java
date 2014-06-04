@@ -19,16 +19,21 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+package org.wildfly.sasl.test;
 
-package org.jboss.sasl;
+import static junit.framework.Assert.assertFalse;
 
+import org.junit.Test;
 import org.wildfly.sasl.WildFlySaslProvider;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public class VersionTest {
+
+    @Test
+    public void testVersionSet() {
+        assertFalse(WildFlySaslProvider.getVersionString().equals("NOT SET"));
+    }
+
 }

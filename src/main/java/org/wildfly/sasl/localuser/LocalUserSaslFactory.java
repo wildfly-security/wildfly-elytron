@@ -20,15 +20,44 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.localuser;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import org.wildfly.sasl.util.AbstractSaslFactory;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
+ * Base class for the {@code JBOSS-LOCAL-USER} SASL mechanism.
  *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public abstract class LocalUserSaslFactory extends AbstractSaslFactory {
+
+    public static final String JBOSS_LOCAL_USER = "JBOSS-LOCAL-USER";
+
+    LocalUserSaslFactory() {
+        super(JBOSS_LOCAL_USER);
+    }
+
+    protected boolean isPassCredentials() {
+        return false;
+    }
+
+    protected boolean isDictionarySusceptible() {
+        return false;
+    }
+
+    protected boolean isActiveSusceptible() {
+        return false;
+    }
+
+    protected boolean isForwardSecrecy() {
+        return false;
+    }
+
+    protected boolean isPlainText() {
+        return false;
+    }
+
+    protected boolean isAnonymous() {
+        return false;
+    }
 }

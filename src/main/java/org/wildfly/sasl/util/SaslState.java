@@ -20,15 +20,32 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.util;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import javax.security.sasl.SaslException;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public interface SaslState {
+
+    /**
+     * Evaluate a SASL challenge or response message.
+     *
+     * @param context the state context
+     * @param message the message to evaluate
+     * @return the reply message
+     * @throws SaslException if negotiation has failed
+     */
+    byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException;
+
+    /**
+     * The SASL negotiation failure state.
+     */
+    SaslState FAILED = new ExceptionSaslState("SASL negotiation failed");
+
+    /**
+     * The SASL negotiation completed state.
+     */
+    SaslState COMPLETE = new ExceptionSaslState("SASL negotiation already complete");
 }

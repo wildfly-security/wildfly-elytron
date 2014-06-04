@@ -79,7 +79,7 @@
                             <expression>${project.version}</expression>
                             <targetMembers>
                                 <methodBodyReturn>
-                                    <className>org.jboss.sasl.JBossSaslProvider</className>
+                                    <className>org.wildfly.sasl.WildFlySaslProvider</className>
                                     <methodName>getVersionString</methodName>
                                 </methodBodyReturn>
                             </targetMembers>

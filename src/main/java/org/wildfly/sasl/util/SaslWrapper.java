@@ -20,15 +20,15 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.util;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import javax.security.sasl.SaslException;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public interface SaslWrapper {
+    byte[] wrap(byte[] outgoing, final int offset, final int len) throws SaslException;
+
+    byte[] unwrap(byte[] incoming, final int offset, final int len) throws SaslException;
 }

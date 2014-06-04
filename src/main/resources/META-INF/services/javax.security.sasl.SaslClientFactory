@@ -21,7 +21,7 @@
 #
 
 # our SASL factory providers (Ordered)
-org.jboss.sasl.localuser.LocalUserClientFactory
-org.jboss.sasl.digest.DigestMD5ClientFactory
-org.jboss.sasl.anonymous.AnonymousClientFactory
+org.wildfly.sasl.localuser.LocalUserClientFactory
+org.wildfly.sasl.digest.DigestMD5ClientFactory
+org.wildfly.sasl.anonymous.AnonymousClientFactory
 

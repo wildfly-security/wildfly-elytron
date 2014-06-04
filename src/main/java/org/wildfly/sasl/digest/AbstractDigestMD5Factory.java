@@ -20,15 +20,35 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.digest;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import org.wildfly.sasl.util.AbstractSaslFactory;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
+ * The abstract factory for the digest SASL mechanisms.
+ * 
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public abstract class AbstractDigestMD5Factory extends AbstractSaslFactory {
+
+    /**
+     * The name of this mechanism.
+     */
+    public static final String DIGEST_MD5 = "DIGEST-MD5";
+
+    /**
+     * Construct a new instance.
+     */
+    public AbstractDigestMD5Factory() {
+        super(DIGEST_MD5);
+    }
+
+    protected boolean isAnonymous() {
+        return false;
+    }
+
+    protected boolean isPlainText() {
+        return false;
+    }
+
 }

@@ -20,15 +20,26 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.localuser;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import java.util.Map;
+
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public final class LocalUserClientFactory extends LocalUserSaslFactory implements SaslClientFactory {
+
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        if (! isIncluded(mechanisms)) {
+            return null;
+        }
+        final LocalUserClient client = new LocalUserClient(protocol, serverName, props, cbh, authorizationId);
+        client.init();
+        return client;
+    }
 }

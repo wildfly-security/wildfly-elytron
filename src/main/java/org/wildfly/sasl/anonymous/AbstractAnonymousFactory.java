@@ -20,15 +20,35 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.anonymous;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import org.wildfly.sasl.util.AbstractSaslFactory;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
+ * A base class for the anonymous factories to verify from the properties supplied if anonymous
+ * can be used.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public abstract class AbstractAnonymousFactory extends AbstractSaslFactory {
+
+    /**
+     * The name of the ANONYMOUS SASL mechanism.
+     */
+    public static final String ANONYMOUS = "ANONYMOUS";
+
+    /**
+     * Construct a new instance.
+     */
+    protected AbstractAnonymousFactory() {
+        super(ANONYMOUS);
+    }
+
+    protected boolean isDictionarySusceptible() {
+        return false;
+    }
+
+    protected boolean isPlainText() {
+        return false;
+    }
 }

@@ -20,15 +20,36 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.callback;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import javax.security.auth.callback.Callback;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
+ * A Callback to indicate the password has been verified instead of retrieving the
+ * password.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public class VerifyPasswordCallback implements Callback {
+
+    private final String password;
+
+    private boolean verified = false;
+
+    public VerifyPasswordCallback(final String password) {
+        this.password = password;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
 }

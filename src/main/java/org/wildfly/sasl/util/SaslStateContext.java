@@ -20,15 +20,22 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
-
-import org.wildfly.sasl.WildFlySaslProvider;
+package org.wildfly.sasl.util;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public interface SaslStateContext {
+
+    /**
+     * Set the state to use for the next incoming message.
+     *
+     * @param newState the new state
+     */
+    void setNegotiationState(SaslState newState);
+
+    /**
+     * Indicate that negotiation is complete.  To re-initiate negotiation, call {@link #setNegotiationState(SaslState)}.
+     */
+    void negotiationComplete();
 }

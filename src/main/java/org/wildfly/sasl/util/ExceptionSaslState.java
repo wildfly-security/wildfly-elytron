@@ -20,15 +20,18 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.util;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import javax.security.sasl.SaslException;
 
-/**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+class ExceptionSaslState implements SaslState {
+    private final String text;
+
+    ExceptionSaslState(final String text) {
+        this.text = text;
+    }
+
+    public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
+        throw new SaslException(text);
+    }
 }

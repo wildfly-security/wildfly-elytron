@@ -20,15 +20,23 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.sasl;
+package org.wildfly.sasl.anonymous;
 
-import org.wildfly.sasl.WildFlySaslProvider;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
+import java.util.Map;
 
 /**
- * @deprecated Deprecated from 2.0, replaced by {@link WildFlySaslProvider}
+ * The client factory for the anonymous SASL mechanism.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@Deprecated
-public final class JBossSaslProvider extends WildFlySaslProvider {
+public class AnonymousClientFactory extends AbstractAnonymousFactory implements SaslClientFactory {
+
+    public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        // Only return a client if we are sure anonymous is supported.
+        return isIncluded(mechanisms) && matches(props) ? new AnonymousSaslClient(protocol, serverName, cbh, authorizationId) : null;
+    }
 }
