@@ -22,7 +22,6 @@
 
 # our SASL factory providers (Ordered)
 org.wildfly.sasl.localuser.LocalUserServerFactory
-org.wildfly.sasl.digest.DigestMD5ServerFactory
 org.wildfly.sasl.plain.PlainServerFactory
 org.wildfly.sasl.anonymous.AnonymousServerFactory
 

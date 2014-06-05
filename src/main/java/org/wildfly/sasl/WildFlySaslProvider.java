@@ -23,7 +23,6 @@
 package org.wildfly.sasl;
 
 import static org.wildfly.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
-import static org.wildfly.sasl.digest.AbstractDigestMD5Factory.DIGEST_MD5;
 import static org.wildfly.sasl.localuser.LocalUserSaslFactory.JBOSS_LOCAL_USER;
 import static org.wildfly.sasl.plain.PlainServerFactory.PLAIN;
 
@@ -34,8 +33,6 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.sasl.anonymous.AnonymousServerFactory;
-import org.wildfly.sasl.digest.DigestMD5ClientFactory;
-import org.wildfly.sasl.digest.DigestMD5ServerFactory;
 import org.wildfly.sasl.localuser.LocalUserClientFactory;
 import org.wildfly.sasl.localuser.LocalUserServerFactory;
 import org.wildfly.sasl.plain.PlainServerFactory;
@@ -64,8 +61,6 @@ public class WildFlySaslProvider extends Provider {
         put(SASL_CLIENT_FACTORY + DOT + ANONYMOUS, AnonymousClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + ANONYMOUS, AnonymousServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
-        put(SASL_CLIENT_FACTORY + DOT + DIGEST_MD5, DigestMD5ClientFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + DIGEST_MD5, DigestMD5ServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserServerFactory.class.getName());
         put(SASL_CLIENT_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserClientFactory.class.getName());
     }
