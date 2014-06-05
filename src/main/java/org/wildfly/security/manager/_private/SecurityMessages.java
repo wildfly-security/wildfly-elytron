@@ -49,8 +49,8 @@ public interface SecurityMessages {
     @Message(value = "Permission check failed (permission \"%s\" in code source \"%s\" of \"%s\")")
     void accessCheckFailed(Permission permission, CodeSource codeSource, ClassLoader classLoader);
 
-    @Message(id = 1, value = "Permission check failed for %s")
-    AccessControlException accessControlException(@Param Permission permission, Permission permission_);
+    @Message(id = 1, value = "Permission check failed (permission \"%s\" in code source \"%s\" of \"%s\")")
+    AccessControlException accessControlException(@Param Permission permission, Permission permission_, CodeSource codeSource, ClassLoader classLoader);
 
     @Message(id = 2, value = "Security manager may not be changed")
     SecurityException secMgrChange();
