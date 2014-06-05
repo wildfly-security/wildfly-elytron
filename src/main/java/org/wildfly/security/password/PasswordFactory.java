@@ -27,6 +27,13 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
 /**
+ * A factory for passwords.
+ * <p>
+ * Password factories are used to handle and manipulate <em>password</em> objects and their corresponding
+ * <em>password specifications</em>.  Passwords are a kind of key which are used to store and compare against a
+ * string of text entered by a human.  Passwords can be one-way ({@link OneWayPassword}) or two-way
+ * ({@link TwoWayPassword}).
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class PasswordFactory {
@@ -40,6 +47,13 @@ public final class PasswordFactory {
         this.spi = spi;
     }
 
+    /**
+     * Get a password factory instance.  The returned password factory object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @return a password factory instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     */
     public static PasswordFactory getInstance(String algorithm) throws NoSuchAlgorithmException {
         for (Provider provider : Security.getProviders()) {
             final Provider.Service service = provider.getService("PasswordFactory", algorithm);
@@ -50,43 +64,108 @@ public final class PasswordFactory {
         return null;
     }
 
+    /**
+     * Get a password factory instance.  The returned password factory object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @param providerName the name of the provider to use
+     * @return a password factory instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     */
     public static PasswordFactory getInstance(String algorithm, String providerName) throws NoSuchAlgorithmException, NoSuchProviderException {
         final Provider provider = Security.getProvider(providerName);
         if (provider == null) throw new NoSuchProviderException(providerName);
         return getInstance(algorithm, provider);
     }
 
+    /**
+     * Get a password factory instance.  The returned password factory object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @param provider the provider to use
+     * @return a password factory instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     */
     public static PasswordFactory getInstance(String algorithm, Provider provider) throws NoSuchAlgorithmException {
         final Provider.Service service = provider.getService("PasswordFactory", algorithm);
         if (service == null) throw new NoSuchAlgorithmException(algorithm);
         return new PasswordFactory(provider, algorithm, (PasswordFactorySpi) service.newInstance(null));
     }
 
+    /**
+     * Get the provider of this password factory.
+     *
+     * @return the provider
+     */
     public Provider getProvider() {
         return provider;
     }
 
+    /**
+     * Get the algorithm of this password factory.
+     *
+     * @return the algorithm
+     */
     public String getAlgorithm() {
         return algorithm;
     }
 
+    /**
+     * Generate a new {@link Password} object for the given specification.
+     *
+     * @param keySpec the specification
+     * @return the password object
+     * @throws InvalidKeySpecException if the key specification is not valid for this algorithm
+     */
     public Password generatePassword(KeySpec keySpec) throws InvalidKeySpecException {
-        return spi.engineGeneratePassword(keySpec);
+        return spi.engineGeneratePassword(algorithm, keySpec);
     }
 
+    /**
+     * Generate a key specification of the given type from the given password object.
+     *
+     * @param password the password object
+     * @param specType the specification class
+     * @param <T> the specification type
+     * @return the key specification
+     * @throws InvalidKeySpecException if the password cannot be translated to the given key specification type
+     */
     public <T extends KeySpec> T getKeySpec(Password password, Class<T> specType) throws InvalidKeySpecException {
-        return spi.engineGetKeySpec(password, specType);
+        return spi.engineGetKeySpec(algorithm, password, specType);
     }
 
+    /**
+     * Determine whether the given password can be converted to the given key specification type by this factory.
+     *
+     * @param password the password object
+     * @param specType the specification class
+     * @param <T> the specification type
+     * @return {@code true} if the password can be converted, {@code false} otherwise
+     */
     public <T extends KeySpec> boolean convertibleToKeySpec(Password password, Class<T> specType) {
-        return spi.engineConvertibleToKeySpec(password, specType);
+        return spi.engineConvertibleToKeySpec(algorithm, password, specType);
     }
 
+    /**
+     * Translate the given password object to one which is consumable by this factory.
+     *
+     * @param password the password object
+     * @return the equivalent password object that this factory can work with
+     * @throws InvalidKeyException if the given password is not supported by this algorithm
+     */
     public Password translate(Password password) throws InvalidKeyException {
-        return spi.engineTranslatePassword(password);
+        return spi.engineTranslatePassword(algorithm, password);
     }
 
+    /**
+     * Verify a password guess.
+     *
+     * @param password the password object
+     * @param guess the guessed password characters
+     * @return {@code true} if the guess matches the password, {@code false} otherwise
+     * @throws InvalidKeyException if the given password is not supported by this factory
+     */
     public boolean verify(Password password, char[] guess) throws InvalidKeyException {
-        return spi.engineVerify(password, guess);
+        return spi.engineVerify(algorithm, password, guess);
     }
 }

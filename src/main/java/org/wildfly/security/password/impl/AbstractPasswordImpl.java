@@ -16,12 +16,24 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password;
+package org.wildfly.security.password.impl;
+
+import java.security.InvalidKeyException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+
+import org.wildfly.security.password.Password;
 
 /**
- * A password which can be verified but not recovered.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface OneWayPassword extends Password {
+abstract class AbstractPasswordImpl implements Password {
+
+    private static final long serialVersionUID = -7527865607883174548L;
+
+    abstract <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException;
+
+    abstract boolean verify(final char[] guess) throws InvalidKeyException;
+
+    abstract <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType);
 }

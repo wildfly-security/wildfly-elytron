@@ -22,12 +22,12 @@ import java.security.Provider;
 import java.util.Collections;
 
 @SuppressWarnings("ThisEscapedInObjectConstruction")
-public final class WildFlyPasswordProvider extends Provider {
+public final class WildFlyElytronPasswordProvider extends Provider {
 
     private static final long serialVersionUID = 2138229726296095412L;
 
-    public WildFlyPasswordProvider() {
-        super("WildFlyPassword", 1.0, "WildFly Security Password Provider");
+    public WildFlyElytronPasswordProvider() {
+        super("WildFlyElytronPassword", 1.0, "WildFly Elytron Password Provider");
         putService(new Service(this, "Password", "clear", PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
     }
 }
