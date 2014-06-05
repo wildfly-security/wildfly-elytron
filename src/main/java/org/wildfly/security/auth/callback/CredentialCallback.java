@@ -19,16 +19,31 @@
 package org.wildfly.security.auth.callback;
 
 /**
+ * A callback used to acquire credentials, either for outbound or inbound authentication.  This callback
+ * is required only if a default credential was not supplied.  The callback handler is expected to provide
+ * a credential to this callback if one is not present.  If no credential is available, {@code null} is set, and
+ * authentication may fail.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class CredentialCallback implements ExtendedCallback {
 
     private Object credential;
 
+    /**
+     * Get the acquired credential.
+     *
+     * @return the acquired credential, or {@code null} if it wasn't set yet.
+     */
     public Object getCredential() {
         return credential;
     }
 
+    /**
+     * Set the credential.
+     *
+     * @param credential the credential, or {@code null} if no credential is available
+     */
     public void setCredential(final Object credential) {
         this.credential = credential;
     }

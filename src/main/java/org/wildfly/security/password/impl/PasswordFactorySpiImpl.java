@@ -23,51 +23,70 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
-    protected Password engineGeneratePassword(final KeySpec keySpec) throws InvalidKeySpecException {
-        // Avoid initializing implementation classes if not referenced
-        switch (keySpec.getClass().getName()) {
-            case "org.wildfly.security.password.spec.ClearPasswordSpec": {
-                // trivial implementation
-                return new ClearPasswordImpl(((ClearPasswordSpec)keySpec).getEncodedPassword().clone());
-            }
-            default: {
-                throw new InvalidKeySpecException();
-            }
-        }
-    }
-
-    protected <S extends KeySpec> S engineGetKeySpec(final Password password, final Class<S> keySpecType) throws InvalidKeySpecException {
-        switch (password.getClass().getName()) {
-            case "org.wildfly.security.password.impl.ClearPasswordImpl": {
-                switch (keySpecType.getName()) {
-                    case "org.wildfly.security.password.spec.ClearPasswordSpec": {
-                        return keySpecType.cast(new ClearPasswordSpec(((ClearPasswordImpl)password).getPassword()));
-                    }
-                    default: {
-                        break;
-                    }
+    protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
+        switch (algorithm) {
+            case "clear": {
+                if (keySpec instanceof ClearPasswordSpec) {
+                    return new ClearPasswordImpl(((ClearPasswordSpec)keySpec).getEncodedPassword().clone());
+                } else {
+                    break;
                 }
-            }
-            default: {
-                break;
             }
         }
         throw new InvalidKeySpecException();
     }
 
-    protected Password engineTranslatePassword(final Password password) throws InvalidKeyException {
-        return null;
+    protected <S extends KeySpec> S engineGetKeySpec(final String algorithm, final Password password, final Class<S> keySpecType) throws InvalidKeySpecException {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword.getKeySpec(keySpecType);
+            }
+        }
+        throw new InvalidKeySpecException();
     }
 
-    protected boolean engineVerify(final Password password, final char[] guess) throws InvalidKeyException {
-        return false;
+    protected Password engineTranslatePassword(final String algorithm, final Password password) throws InvalidKeyException {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword;
+            }
+        }
+        switch (algorithm) {
+            case "clear": {
+                if (password instanceof ClearPassword) {
+                    return new ClearPasswordImpl((ClearPassword) password);
+                } else {
+                    break;
+                }
+            }
+        }
+        throw new InvalidKeyException();
     }
 
-    protected <T extends KeySpec> boolean engineConvertibleToKeySpec(final Password password, final Class<T> specType) {
+    protected boolean engineVerify(final String algorithm, final Password password, final char[] guess) throws InvalidKeyException {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword.verify(guess);
+            }
+        }
+        throw new InvalidKeyException();
+    }
+
+    protected <S extends KeySpec> boolean engineConvertibleToKeySpec(final String algorithm, final Password password, final Class<S> keySpecType) {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword.convertibleTo(keySpecType);
+            }
+        }
         return false;
     }
 }

@@ -21,6 +21,8 @@ package org.wildfly.security.password;
 import javax.security.auth.Destroyable;
 
 /**
+ * A password which can be verified and recovered.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface TwoWayPassword extends Password, Destroyable {

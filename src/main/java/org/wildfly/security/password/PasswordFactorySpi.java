@@ -23,20 +23,69 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
 /**
+ * The SPI for password factories to implement.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public abstract class PasswordFactorySpi {
 
+    /**
+     * Construct a new instance.
+     */
     protected PasswordFactorySpi() {
     }
 
-    protected abstract Password engineGeneratePassword(KeySpec keySpec) throws InvalidKeySpecException;
+    /**
+     * Generate a password from the given key specification.
+     *
+     * @param algorithm the password algorithm
+     * @param keySpec the key specification
+     * @return the password
+     * @throws InvalidKeySpecException if the key specification is not supported
+     */
+    protected abstract Password engineGeneratePassword(String algorithm, KeySpec keySpec) throws InvalidKeySpecException;
 
-    protected abstract <S extends KeySpec> S engineGetKeySpec(Password password, Class<S> keySpecType) throws InvalidKeySpecException;
+    /**
+     * Get a key specification for the given password object.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password object
+     * @param keySpecType the key specification class
+     * @param <S> the key specification type
+     * @return the key specification
+     * @throws InvalidKeySpecException if the key specification type is not supported
+     */
+    protected abstract <S extends KeySpec> S engineGetKeySpec(String algorithm, Password password, Class<S> keySpecType) throws InvalidKeySpecException;
 
-    protected abstract Password engineTranslatePassword(Password password) throws InvalidKeyException;
+    /**
+     * Translate a password object into one which is supported by this engine.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password object
+     * @return the translated password
+     * @throws InvalidKeyException if the given password type is not supported
+     */
+    protected abstract Password engineTranslatePassword(String algorithm, Password password) throws InvalidKeyException;
 
-    protected abstract boolean engineVerify(final Password password, final char[] guess) throws InvalidKeyException;
+    /**
+     * Perform password verification.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password object
+     * @param guess the guessed password
+     * @return {@code true} if the password matches, {@code false} otherwise
+     * @throws InvalidKeyException if the given password type is not supported
+     */
+    protected abstract boolean engineVerify(String algorithm, Password password, final char[] guess) throws InvalidKeyException;
 
-    protected abstract <T extends KeySpec> boolean engineConvertibleToKeySpec(final Password password, final Class<T> specType);
+    /**
+     * Determine whether the given password object is convertible to the given key specification type.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password object
+     * @param keySpecType the key specification class
+     * @param <S> the key specification type
+     * @return {@code true} if the password is convertible, {@code false} otherwise
+     */
+    protected abstract <S extends KeySpec> boolean engineConvertibleToKeySpec(String algorithm, Password password, Class<S> keySpecType);
 }

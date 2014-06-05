@@ -18,12 +18,15 @@
 
 package org.wildfly.security.password.impl;
 
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
-import org.wildfly.security.password.interfaces.ClearPassword;
-
 import javax.security.auth.DestroyFailedException;
 
-final class ClearPasswordImpl implements ClearPassword {
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
+
+final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassword {
 
     private static final long serialVersionUID = -3949572193624333918L;
 
@@ -65,5 +68,21 @@ final class ClearPasswordImpl implements ClearPassword {
 
     public boolean isDestroyed() {
         return password == null;
+    }
+
+    <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
+        final char[] password = getPassword();
+        if (keySpecType == ClearPasswordSpec.class) {
+            return keySpecType.cast(new ClearPasswordSpec(password.clone()));
+        }
+        throw new InvalidKeySpecException();
+    }
+
+    boolean verify(final char[] guess) {
+        return Arrays.equals(getPassword(), guess);
+    }
+
+    <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
+        return keySpecType == ClearPasswordSpec.class;
     }
 }
