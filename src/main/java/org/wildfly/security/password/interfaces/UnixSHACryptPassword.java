@@ -20,13 +20,35 @@ package org.wildfly.security.password.interfaces;
 
 import org.wildfly.security.password.OneWayPassword;
 
+import java.nio.charset.Charset;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface UnixSHACryptPassword extends OneWayPassword {
+
+    /**
+     * The salt used during the hashing of this password. Should have at most 16 bytes.
+     * @return the salt
+     */
     byte[] getSalt();
 
+    /**
+     * The number of iterations to perform when hashing the password. Should be bigger than 1,000 and lower than 999,999,999.
+     * The default value is 5,000
+     * @return  the number of iterations to perform
+     */
     int getIterationCount();
 
+    /**
+     * Represents the "ID" part of the Unix-SHA-Crypt. Possible values are '5' for SHA-256 and '6' for SHA-512
+     * @return  the char '5' for SHA-256 or '6' for SHA-512
+     */
     char getId();
+
+    /**
+     * Represents the charset of which the bytes should be converted to/from.
+     * @return  the charset
+     */
+    Charset getCharset();
 }

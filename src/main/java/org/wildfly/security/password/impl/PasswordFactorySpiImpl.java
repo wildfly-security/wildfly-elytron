@@ -18,21 +18,41 @@
 
 package org.wildfly.security.password.impl;
 
-import java.security.InvalidKeyException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
+
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
+    private static final String ALGORITHM_CLEAR = "clear";
+    private static final String ALGORITHM_SHACRYPT = "sha-crypt";
+
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
         switch (algorithm) {
-            case "clear": {
+            case ALGORITHM_CLEAR: {
                 if (keySpec instanceof ClearPasswordSpec) {
                     return new ClearPasswordImpl(((ClearPasswordSpec)keySpec).getEncodedPassword().clone());
+                } else {
+                    break;
+                }
+            }
+            case ALGORITHM_SHACRYPT: {
+                if (keySpec instanceof UnixSHACryptPasswordSpec) {
+                    UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) keySpec;
+                    try {
+                        return new UnixSHACryptPasswordImpl(UnixSHACryptPasswordUtil.encode(spec));
+                    } catch (NoSuchAlgorithmException e) {
+                        // TODO: what to do here? convert into a RuntimeException?
+                        e.printStackTrace();
+                    }
                 } else {
                     break;
                 }
@@ -48,6 +68,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return abstractPassword.getKeySpec(keySpecType);
             }
         }
+
+        switch (algorithm) {
+            case ALGORITHM_SHACRYPT: {
+                if (password instanceof UnixSHACryptPassword) {
+                    if (keySpecType == UnixSHACryptPasswordSpec.class) {
+                        UnixSHACryptPassword p = ((UnixSHACryptPassword) password);
+                        return keySpecType.cast(new UnixSHACryptPasswordSpec(p.getId(), p.getEncoded(), p.getSalt(), p.getIterationCount()));
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
         throw new InvalidKeySpecException();
     }
 
@@ -59,9 +92,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
         }
         switch (algorithm) {
-            case "clear": {
+            case ALGORITHM_CLEAR: {
                 if (password instanceof ClearPassword) {
                     return new ClearPasswordImpl((ClearPassword) password);
+                } else {
+                    break;
+                }
+            }
+            case ALGORITHM_SHACRYPT: {
+                if (password instanceof UnixSHACryptPassword) {
+                    return new UnixSHACryptPasswordImpl((UnixSHACryptPassword) password);
                 } else {
                     break;
                 }
@@ -75,6 +115,20 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
             if (algorithm.equals(abstractPassword.getAlgorithm())) {
                 return abstractPassword.verify(guess);
+            }
+        }
+        switch (algorithm) {
+            case ALGORITHM_SHACRYPT: {
+                if (password instanceof UnixSHACryptPassword) {
+                    try {
+                        // TODO: what to do here? convert into a RuntimeException?
+                        return UnixSHACryptPasswordUtil.verify(password, guess);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    break;
+                }
             }
         }
         throw new InvalidKeyException();
