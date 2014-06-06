@@ -27,4 +27,6 @@ public interface UnixSHACryptPassword extends OneWayPassword {
     byte[] getSalt();
 
     int getIterationCount();
+
+    char getId();
 }
