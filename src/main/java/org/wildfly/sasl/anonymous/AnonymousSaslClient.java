@@ -43,7 +43,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
                 throw new SaslException("Invalid challenge received from server");
             }
             NameCallback nameCallback = new NameCallback("Authentication name");
-            handleCallbacks(nameCallback);
+            tryHandleCallbacks(nameCallback);
             String name = nameCallback.getName();
             if (name == null) {
                 throw new SaslException("Authentication name is missing");

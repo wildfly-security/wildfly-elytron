@@ -98,7 +98,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                             final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name",
                                     authenticationId) : new NameCallback("User name");
                             final RealmCallback realmCallback = new RealmCallback("User realm");
-                            handleCallbacks(nameCallback, realmCallback);
+                            tryHandleCallbacks(nameCallback, realmCallback);
                             authenticationId = nameCallback.getName();
                             authenticationRealm = realmCallback.getText();
                         }

@@ -71,31 +71,19 @@ public abstract class AbstractSaslParticipant {
     }
 
     /**
-     * Handle callbacks, wrapping exceptions as needed (including unsupported callbacks).
-     *
-     * @param callbacks the callbacks to handle
-     * @throws SaslException if a callback failed
-     */
-    protected void handleCallbacks(Callback... callbacks) throws SaslException {
-        try {
-            tryHandleCallbacks(callbacks);
-        } catch (UnsupportedCallbackException e) {
-            throw new SaslException("Callback handler cannot support callback " + e.getCallback().getClass(), e);
-        }
-    }
-
-    /**
      * Handle callbacks, wrapping exceptions as needed.
      *
      * @param callbacks the callbacks to handle
      * @throws SaslException if a callback failed
      * @throws UnsupportedCallbackException if a callback isn't supported
      */
-    protected void tryHandleCallbacks(Callback... callbacks) throws SaslException, UnsupportedCallbackException {
+    protected void tryHandleCallbacks(Callback... callbacks) throws SaslException {
         try {
             callbackHandler.handle(callbacks);
         } catch (SaslException e) {
             throw e;
+        } catch (UnsupportedCallbackException e) {
+            throw new SaslException("Callback handler cannot support callback " + e.getCallback().getClass(), e);
         } catch (Throwable t) {
             throw new SaslException("Callback handler invocation failed", t);
         }
@@ -157,7 +145,7 @@ public abstract class AbstractSaslParticipant {
         return context;
     }
 
-    byte[] evaluateMessage(final byte[] message) throws SaslException {
+    protected byte[] evaluateMessage(final byte[] message) throws SaslException {
         boolean ok = true;
         try {
             byte[] result = state.evaluateMessage(context, message);
@@ -222,6 +210,17 @@ public abstract class AbstractSaslParticipant {
      */
     public boolean isComplete() {
         return state == SaslState.COMPLETE;
+    }
+
+    /**
+     * A convenience method to throw a {@link IllegalStateException} is authentication is not yet complete.
+     *
+     * To be called by methods that must only be called after authentication is complete.
+     */
+    protected void assertComplete() {
+        if (isComplete() == false) {
+            throw new IllegalStateException("Authentication is not yet complete.");
+        }
     }
 
     /**

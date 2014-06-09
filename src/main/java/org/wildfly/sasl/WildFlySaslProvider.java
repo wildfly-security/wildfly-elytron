@@ -31,6 +31,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.wildfly.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.sasl.anonymous.AnonymousServerFactory;
 import org.wildfly.sasl.gssapi.GssapiClientFactory;
+import org.wildfly.sasl.gssapi.GssapiServerFactory;
 import org.wildfly.sasl.localuser.LocalUserClientFactory;
 import org.wildfly.sasl.localuser.LocalUserServerFactory;
 import org.wildfly.sasl.plain.PlainServerFactory;
@@ -41,6 +42,8 @@ import org.wildfly.sasl.plain.PlainServerFactory;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class WildFlySaslProvider extends Provider {
+
+    private static final long serialVersionUID = 2819852358608732038L;
 
     private static final String INFO = "JBoss SASL Provider " + getVersionString();
 
@@ -61,7 +64,8 @@ public class WildFlySaslProvider extends Provider {
         put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserServerFactory.class.getName());
         put(SASL_CLIENT_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserClientFactory.class.getName());
-        //put(SASL_CLIENT_FACTORY + DOT + GSSAPI, GssapiClientFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + GSSAPI, GssapiServerFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + GSSAPI, GssapiClientFactory.class.getName());
     }
 
     /**

@@ -53,9 +53,9 @@ class JAASUtil {
         return login("jduke", "theduke".toCharArray(), false);
     }
 
-    static Subject loginServer(final String serverName) throws LoginException {
+    static Subject loginServer() throws LoginException {
         log.debug("loginServer");
-        return login("sasl/" + serverName, "servicepwd".toCharArray(), true);
+        return login("sasl/test_server_1", "servicepwd".toCharArray(), true);
     }
 
     static Subject login(final String userName, final char[] password, final boolean server) throws LoginException {

@@ -15,31 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.sasl.gssapi;
 
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.SaslClient;
-import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+import javax.security.sasl.SaslServerFactory;
 
 /**
- * SaslClientFactory for the GSSAPI mechanism as defined by RFC 4752
+ * SaslServerFactory for the GSSAPI mechanism as defined by RFC 4752
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class GssapiClientFactory extends AbstractGssapiFactory implements SaslClientFactory {
+public class GssapiServerFactory extends AbstractGssapiFactory implements SaslServerFactory {
 
     @Override
-    public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
-            Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        if (isIncluded(mechanisms) && matches(props)) {
-            GssapiClient client = new GssapiClient(protocol, serverName, props, cbh, authorizationId);
-            client.init();
+    public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props,
+            CallbackHandler cbh) throws SaslException {
+        // TODO - We are actually required by RFC4752 to ensure we have the acceptor credential BEFORE advertising the
+        // mechanism is available.
+        if (GSSAPI.equals(mechanism) && matches(props)) {
+            GssapiServer server = new GssapiServer(protocol, serverName, props, cbh);
+            server.init();
 
-            return client;
+            return server;
         }
 
         return null;

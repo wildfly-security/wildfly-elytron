@@ -20,12 +20,34 @@ package org.wildfly.sasl;
 
 import java.security.SecureRandom;
 
+import javax.security.sasl.Sasl;
+
+import org.ietf.jgss.GSSCredential;
+
 /**
  * The core WildFly SASL utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class WildFlySasl {
+
+    /**
+     * Property name to specify if the GSSAPI mechanism should support credential delegation. The property contains "true" then
+     * the credential should be delegated from the client to the server, "false" otherwise. The default value is "false" unless
+     * a {@link GSSCredential} was already passed in using the {@link Sasl.CREDENTIALS} property in which case the defailt would
+     * be "true".
+     *
+     * Note: This is a client only property and is not used server side.
+     */
+    public static final String GSSAPI_DELEGATE_CREDENTIAL = "wildfly.sasl.gssapi.client.delegate-credential";
+
+    /**
+     * The various specifications for the SASL mechanisms mandate certain behaviour and verification of that behaviour at the
+     * opposite side of the connection, unfortunately when interacting with other SASL mechanism implementations some of these
+     * requirements have been interpreted loosely. If this property contains "true" then where differences in spec
+     * interpretation have been identified the checking can be relaxed. The default value is "false".
+     */
+    public static final String RELAX_COMPLIANCE = "wildfly.sasl.relax-compliance";
 
     /**
      * The minimum iteration count to use for SCRAM.  Default is 4096.

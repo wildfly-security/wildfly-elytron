@@ -53,6 +53,7 @@
                     <printSummary>true</printSummary>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*TestSuite.java</include>
                     </includes>
                     <forkMode>always</forkMode>
                 </configuration>

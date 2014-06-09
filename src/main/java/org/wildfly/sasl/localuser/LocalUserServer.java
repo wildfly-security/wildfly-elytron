@@ -221,10 +221,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         final NameCallback nameCallback = new NameCallback("User name", authenticationId);
                         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationId, authorizationId);
                         if (authenticationRealm == null) {
-                            handleCallbacks(nameCallback, authorizeCallback);
+                            tryHandleCallbacks(nameCallback, authorizeCallback);
                         } else {
                             final RealmCallback realmCallback = new RealmCallback("User realm", authenticationRealm);
-                            handleCallbacks(realmCallback, nameCallback, authorizeCallback);
+                            tryHandleCallbacks(realmCallback, nameCallback, authorizeCallback);
                         }
                         if (!authorizeCallback.isAuthorized()) {
                             throw new SaslException("User " + authorizationId + " is not authorized");
@@ -239,11 +239,9 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     public String getAuthorizationID() {
-        if (isComplete()) {
-            return authorizationId;
-        } else {
-            throw new IllegalStateException("JBOSS-LOCAL-USER server negotiation not complete");
-        }
+        assertComplete();
+
+        return authorizationId;
     }
 
     private void deleteChallenge() {

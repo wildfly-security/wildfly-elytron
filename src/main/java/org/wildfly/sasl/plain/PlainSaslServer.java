@@ -69,7 +69,7 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 } else {
                     throw new SaslException("Invalid number of message parts (" + parts.length + ")");
                 }
-                
+
                 // By this point we have already created the Strings no point checking the length as the
                 // memory is already allocated.
 
@@ -81,7 +81,7 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 NameCallback ncb = new NameCallback("PLAIN authentication identity", authcid);
                 VerifyPasswordCallback vpc = new VerifyPasswordCallback(passwd);
 
-                handleCallbacks(ncb, vpc);
+                tryHandleCallbacks(ncb, vpc);
 
                 if (vpc.isVerified() == false) {
                     throw new SaslException("PLAIN password not verified by CallbackHandler");
@@ -90,7 +90,7 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 // Now check the authorization id
 
                 AuthorizeCallback acb = new AuthorizeCallback(authcid, authzid);
-                handleCallbacks(acb);
+                tryHandleCallbacks(acb);
 
                 if (acb.isAuthorized() == true) {
                     authorizedId = acb.getAuthorizedID();
@@ -198,12 +198,9 @@ public final class PlainSaslServer extends AbstractSaslServer {
     }
 
     public String getAuthorizationID() {
-        if (isComplete()) {
-            return authorizedId;
-        } else {
-            throw new IllegalStateException(
-                    "PLAIN server negotiation not complete");
-        }
+        assertComplete();
+
+        return authorizedId;
     }
 
 }

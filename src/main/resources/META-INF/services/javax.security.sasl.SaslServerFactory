@@ -17,6 +17,7 @@
 
 # our SASL factory providers (Ordered)
 org.wildfly.sasl.localuser.LocalUserServerFactory
+org.wildfly.sasl.gssapi.GssapiServerFactory
 org.wildfly.sasl.plain.PlainServerFactory
 org.wildfly.sasl.anonymous.AnonymousServerFactory
 
