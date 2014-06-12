@@ -12,32 +12,40 @@ public class UnixSHACryptPasswordImpl implements UnixSHACryptPassword {
     private byte[] salt;
     private int iterationCount;
     private char id;
-    private byte[] encoded;
-    private Charset charset;
+    private byte[] hash;
 
     public UnixSHACryptPasswordImpl(UnixSHACryptPassword password) {
-        this.salt = password.getSalt();
-        this.iterationCount = password.getIterationCount();
-        this.id = password.getId();
-        this.encoded = password.getEncoded();
-        this.charset = password.getCharset();
+        this(password.getSalt(), password.getIterationCount(), password.getId(), password.getHash());
     }
 
-    public UnixSHACryptPasswordImpl(byte[] salt, int iterationCount, char id, byte[] encoded, Charset charset) {
+    public UnixSHACryptPasswordImpl(byte[] salt, int iterationCount, char id) {
+        this(salt, iterationCount, id, null);
+    }
+
+    public UnixSHACryptPasswordImpl(byte[] salt, int iterationCount, char id, byte[] hash) {
+        if (id != '5' && id != '6') {
+            throw new IllegalArgumentException("The ID for this Unix SHA crypt password was neither 5 nor 6.");
+        }
+
         this.salt = salt;
         this.iterationCount = iterationCount;
         this.id = id;
-        this.encoded = encoded;
-        this.charset = charset;
+        this.hash = hash;
     }
 
-    public UnixSHACryptPasswordImpl(byte[] salt, int iterationCount, char id, byte[] encoded) {
-        this(salt, iterationCount, id, encoded, Charset.forName("UTF-8"));
+    @Override
+    public String getAlgorithm() {
+        switch (getId()) {
+            case '5': return "sha-256-crypt";
+            case '6': return "sha-512-crypt";
+            // we validate it on the constructor already, but let's check it here as well
+            default: throw new IllegalStateException("The ID for this Unix SHA crypt password was neither 5 nor 6.");
+        }
     }
 
     @Override
     public byte[] getSalt() {
-        return salt;
+        return salt.clone();
     }
 
     @Override
@@ -51,22 +59,17 @@ public class UnixSHACryptPasswordImpl implements UnixSHACryptPassword {
     }
 
     @Override
-    public Charset getCharset() {
-        return charset;
-    }
-
-    @Override
-    public String getAlgorithm() {
-        return "sha-crypt";
-    }
-
-    @Override
     public String getFormat() {
         return null;
     }
 
     @Override
     public byte[] getEncoded() {
-        return encoded;
+        return null;
+    }
+
+    @Override
+    public byte[] getHash() {
+        return hash.clone();
     }
 }

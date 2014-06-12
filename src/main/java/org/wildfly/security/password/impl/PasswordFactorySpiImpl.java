@@ -33,7 +33,8 @@ import java.security.spec.KeySpec;
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
     private static final String ALGORITHM_CLEAR = "clear";
-    private static final String ALGORITHM_SHACRYPT = "sha-crypt";
+    private static final String ALGORITHM_SHA256CRYPT = "sha-256-crypt";
+    private static final String ALGORITHM_SHA512CRYPT = "sha-512-crypt";
 
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
         switch (algorithm) {
@@ -44,14 +45,14 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_SHACRYPT: {
+            case ALGORITHM_SHA256CRYPT:
+            case ALGORITHM_SHA512CRYPT: {
                 if (keySpec instanceof UnixSHACryptPasswordSpec) {
                     UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) keySpec;
                     try {
                         return new UnixSHACryptPasswordImpl(UnixSHACryptPasswordUtil.encode(spec));
                     } catch (NoSuchAlgorithmException e) {
-                        // TODO: what to do here? convert into a RuntimeException?
-                        e.printStackTrace();
+                        throw new InvalidKeySpecException("Cannot read key spec", e);
                     }
                 } else {
                     break;
@@ -70,7 +71,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         }
 
         switch (algorithm) {
-            case ALGORITHM_SHACRYPT: {
+            case ALGORITHM_SHA256CRYPT:
+            case ALGORITHM_SHA512CRYPT: {
                 if (password instanceof UnixSHACryptPassword) {
                     if (keySpecType == UnixSHACryptPasswordSpec.class) {
                         UnixSHACryptPassword p = ((UnixSHACryptPassword) password);
@@ -99,7 +101,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_SHACRYPT: {
+            case ALGORITHM_SHA256CRYPT:
+            case ALGORITHM_SHA512CRYPT: {
                 if (password instanceof UnixSHACryptPassword) {
                     return new UnixSHACryptPasswordImpl((UnixSHACryptPassword) password);
                 } else {
@@ -118,13 +121,13 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
         }
         switch (algorithm) {
-            case ALGORITHM_SHACRYPT: {
+            case ALGORITHM_SHA256CRYPT:
+            case ALGORITHM_SHA512CRYPT: {
                 if (password instanceof UnixSHACryptPassword) {
                     try {
-                        // TODO: what to do here? convert into a RuntimeException?
                         return UnixSHACryptPasswordUtil.verify(password, guess);
                     } catch (NoSuchAlgorithmException e) {
-                        e.printStackTrace();
+                        throw new InvalidKeyException("Cannot verify password", e);
                     }
                 } else {
                     break;
