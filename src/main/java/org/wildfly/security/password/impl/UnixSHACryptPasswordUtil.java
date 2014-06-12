@@ -59,14 +59,35 @@ final class UnixSHACryptPasswordUtil {
         return new UnixSHACryptPasswordImpl(spec.getSalt(), spec.getIterationCount(), spec.getId(), encoded);
     }
 
+    /**
+     * Verifies that a guess encoded in UTF-8 matches a password.
+     * @param password the password with the hash to be matched against
+     * @param guess as a char[], with the assumption that it's encoded in UTF-8
+     * @return whether the guess matches the password
+     * @throws NoSuchAlgorithmException
+     * @see #encode(char, byte[], int, byte[], java.nio.charset.Charset)
+     */
     public static boolean verify(final Password password, final char[] guess) throws NoSuchAlgorithmException {
+        return verify(password, guess, Charset.forName("UTF-8"));
+    }
+
+    /**
+     * Verifies that a guess encoded with the given charset matches a password.
+     * @param password the password with the hash to be matched against
+     * @param guess as a char[]
+     * @param charset the charset on which the guess is encoded
+     * @return whether the guess matches the password
+     * @throws NoSuchAlgorithmException
+     */
+    public static boolean verify(final Password password, final char[] guess, Charset charset) throws NoSuchAlgorithmException {
         UnixSHACryptPassword p = ((UnixSHACryptPassword) password);
-        ByteBuffer guessAsBuffer = p.getCharset().encode(CharBuffer.wrap(guess));
+
+        ByteBuffer guessAsBuffer = charset.encode(CharBuffer.wrap(guess));
         byte[] guessAsBytes = new byte[guessAsBuffer.remaining()];
         guessAsBuffer.get(guessAsBytes);
 
         byte[] encodedGuess = UnixSHACryptPasswordUtil.encode(p.getId(), p.getSalt(), p.getIterationCount(), guessAsBytes);
-        return Arrays.equals(password.getEncoded(), encodedGuess);
+        return Arrays.equals(p.getHash(), encodedGuess);
     }
 
     /**
