@@ -18,11 +18,9 @@
 
 package org.wildfly.security.auth;
 
-import java.security.PrivilegedActionException;
-
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface ParametricPrivilegedExceptionAction<T, P> {
-    T run(P parameter) throws PrivilegedActionException;
+    T run(P parameter) throws Exception;
 }
