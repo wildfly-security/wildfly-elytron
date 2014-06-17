@@ -73,7 +73,7 @@ public final class IdentityContext {
      * @param keys the keys to include
      * @return the context copy
      */
-    public IdentityContext including(IdentityKey<?>... keys) {
+    public IdentityContext includingOnly(IdentityKey<?>... keys) {
         if (keys == null || keys.length == 0) return EMPTY;
         final HashMap<IdentityKey<?>, SecurityIdentity> map = new HashMap<>(identityKeys.size());
         for (IdentityKey<?> key : keys) {
@@ -98,7 +98,7 @@ public final class IdentityContext {
      * @param key the key to include
      * @return the context copy
      */
-    public IdentityContext including(IdentityKey<?> key) {
+    public IdentityContext includingOnly(IdentityKey<?> key) {
         if (key == null) return EMPTY;
         if (identityKeys.containsKey(key)) {
             if (identityKeys.size() == 1) {
@@ -148,11 +148,27 @@ public final class IdentityContext {
         }
     }
 
+    public IdentityContext mergedWith(IdentityContext other) {
+        if (other == null) {
+            throw new IllegalArgumentException("other is null");
+        }
+        final Map<IdentityKey<?>, SecurityIdentity> otherKeys = other.identityKeys;
+        if (otherKeys.isEmpty()) return this;
+        if (identityKeys.isEmpty()) return other;
+        final HashMap<IdentityKey<?>, SecurityIdentity> map = new HashMap<IdentityKey<?>, SecurityIdentity>(otherKeys.size() + identityKeys.size());
+        map.putAll(identityKeys);
+        map.putAll(otherKeys);
+        return new IdentityContext(map);
+    }
+
     public <T> T run(PrivilegedAction<T> action) {
         if (action == null) {
             throw new NullPointerException("action is null");
         }
         final IdentityContext oldSubj = currentIdentityContext.get();
+        if (oldSubj == this) {
+            return action.run();
+        }
         currentIdentityContext.set(this);
         try {
             return action.run();
@@ -166,6 +182,15 @@ public final class IdentityContext {
             throw new NullPointerException("action is null");
         }
         final IdentityContext oldSubj = currentIdentityContext.get();
+        if (oldSubj == this) {
+            try {
+                return action.run();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
         currentIdentityContext.set(this);
         try {
             try {
@@ -185,6 +210,9 @@ public final class IdentityContext {
             throw new NullPointerException("action is null");
         }
         final IdentityContext oldSubj = currentIdentityContext.get();
+        if (oldSubj == this) {
+            return action.run(parameter);
+        }
         currentIdentityContext.set(this);
         try {
             return action.run(parameter);
@@ -198,6 +226,15 @@ public final class IdentityContext {
             throw new NullPointerException("action is null");
         }
         final IdentityContext oldSubj = currentIdentityContext.get();
+        if (oldSubj == this) {
+            try {
+                return action.run(parameter);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
         currentIdentityContext.set(this);
         try {
             try {
