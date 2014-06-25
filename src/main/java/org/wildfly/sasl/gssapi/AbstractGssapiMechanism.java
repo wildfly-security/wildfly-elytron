@@ -132,7 +132,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
 
     private QOP[] parsePreferredQop(final String qop) throws SaslException {
         if (qop != null) {
-            String[] qopNames = qop.split(", ");
+            String[] qopNames = qop.split("\\s*,\\s*");
             if (qopNames.length > 0) {
                 QOP[] preferredQop = new QOP[qopNames.length];
                 for (int i = 0; i < qopNames.length; i++) {

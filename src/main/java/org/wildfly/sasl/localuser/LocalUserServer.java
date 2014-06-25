@@ -221,10 +221,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         final NameCallback nameCallback = new NameCallback("User name", authenticationId);
                         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationId, authorizationId);
                         if (authenticationRealm == null) {
-                            tryHandleCallbacks(nameCallback, authorizeCallback);
+                            handleCallbacks(nameCallback, authorizeCallback);
                         } else {
                             final RealmCallback realmCallback = new RealmCallback("User realm", authenticationRealm);
-                            tryHandleCallbacks(realmCallback, nameCallback, authorizeCallback);
+                            handleCallbacks(realmCallback, nameCallback, authorizeCallback);
                         }
                         if (!authorizeCallback.isAuthorized()) {
                             throw new SaslException("User " + authorizationId + " is not authorized");

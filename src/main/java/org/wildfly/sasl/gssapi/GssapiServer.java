@@ -247,7 +247,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
             }
 
             AuthorizeCallback cb = new AuthorizeCallback(authenticationId, authorizationId);
-            tryHandleCallbacks(new Callback[] {cb});
+            handleCallbacks(new Callback[] {cb});
 
             if (cb.isAuthorized() == false) {
                 throw new SaslException(String.format("User %s is not authorized to act as %s", authenticationId, authorizationId));

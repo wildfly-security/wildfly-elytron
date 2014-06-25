@@ -81,7 +81,7 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 NameCallback ncb = new NameCallback("PLAIN authentication identity", authcid);
                 VerifyPasswordCallback vpc = new VerifyPasswordCallback(passwd);
 
-                tryHandleCallbacks(ncb, vpc);
+                handleCallbacks(ncb, vpc);
 
                 if (vpc.isVerified() == false) {
                     throw new SaslException("PLAIN password not verified by CallbackHandler");
@@ -90,7 +90,7 @@ public final class PlainSaslServer extends AbstractSaslServer {
                 // Now check the authorization id
 
                 AuthorizeCallback acb = new AuthorizeCallback(authcid, authzid);
-                tryHandleCallbacks(acb);
+                handleCallbacks(acb);
 
                 if (acb.isAuthorized() == true) {
                     authorizedId = acb.getAuthorizedID();

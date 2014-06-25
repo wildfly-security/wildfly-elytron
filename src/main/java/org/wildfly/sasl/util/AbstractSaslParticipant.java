@@ -71,19 +71,31 @@ public abstract class AbstractSaslParticipant {
     }
 
     /**
+     * Handle callbacks, wrapping exceptions as needed (including unsupported callbacks).
+     *
+     * @param callbacks the callbacks to handle
+     * @throws SaslException if a callback failed
+     */
+    protected void handleCallbacks(Callback... callbacks) throws SaslException {
+        try {
+            tryHandleCallbacks(callbacks);
+        } catch (UnsupportedCallbackException e) {
+            throw new SaslException("Callback handler cannot support callback " + e.getCallback().getClass(), e);
+        }
+    }
+
+    /**
      * Handle callbacks, wrapping exceptions as needed.
      *
      * @param callbacks the callbacks to handle
      * @throws SaslException if a callback failed
      * @throws UnsupportedCallbackException if a callback isn't supported
      */
-    protected void tryHandleCallbacks(Callback... callbacks) throws SaslException {
+    protected void tryHandleCallbacks(Callback... callbacks) throws SaslException, UnsupportedCallbackException {
         try {
             callbackHandler.handle(callbacks);
-        } catch (SaslException e) {
+        } catch (SaslException | UnsupportedCallbackException e) {
             throw e;
-        } catch (UnsupportedCallbackException e) {
-            throw new SaslException("Callback handler cannot support callback " + e.getCallback().getClass(), e);
         } catch (Throwable t) {
             throw new SaslException("Callback handler invocation failed", t);
         }
@@ -229,7 +241,6 @@ public abstract class AbstractSaslParticipant {
      * @param propName the property name
      * @return the property value or {@code null} if not defined
      */
-    @SuppressWarnings("unused")
     public Object getNegotiatedProperty(final String propName) {
         return null;
     }
