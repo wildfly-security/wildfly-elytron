@@ -26,5 +26,5 @@ import org.wildfly.security.password.OneWayPassword;
 public interface UnixMD5CryptPassword extends OneWayPassword {
     byte[] getSalt();
 
-    int getIterationCount();
+    byte[] getHash();
 }

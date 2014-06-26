@@ -19,12 +19,15 @@
 package org.wildfly.security.password.impl;
 
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
@@ -33,6 +36,23 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case "clear": {
                 if (keySpec instanceof ClearPasswordSpec) {
                     return new ClearPasswordImpl(((ClearPasswordSpec)keySpec).getEncodedPassword().clone());
+                } else {
+                    break;
+                }
+            }
+            case UnixMD5CryptUtil.ALGORITHM_MD5_CRYPT: {
+                if (keySpec instanceof UnixMD5CryptPasswordSpec) {
+                    final UnixMD5CryptPasswordSpec md5CryptKeySpec = (UnixMD5CryptPasswordSpec) keySpec;
+                    final byte[] salt = md5CryptKeySpec.getSalt().clone();
+                    final byte[] password = md5CryptKeySpec.getHashBytes().clone();
+                    final byte[] encodedPassword;
+
+                    try {
+                        encodedPassword = UnixMD5CryptUtil.encode(password, salt);
+                    } catch (NoSuchAlgorithmException e) {
+                        throw new InvalidKeySpecException("Cannot read key spec", e);
+                    }
+                    return new UnixMD5CryptPasswordImpl(encodedPassword, salt);
                 } else {
                     break;
                 }
@@ -62,6 +82,13 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case "clear": {
                 if (password instanceof ClearPassword) {
                     return new ClearPasswordImpl((ClearPassword) password);
+                } else {
+                    break;
+                }
+            }
+            case UnixMD5CryptUtil.ALGORITHM_MD5_CRYPT: {
+                if (password instanceof UnixMD5CryptPassword) {
+                    return new UnixMD5CryptPasswordImpl((UnixMD5CryptPassword) password);
                 } else {
                     break;
                 }
