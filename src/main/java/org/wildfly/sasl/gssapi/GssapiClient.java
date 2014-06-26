@@ -33,6 +33,7 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
+import org.jboss.logging.Logger;
 import org.wildfly.sasl.WildFlySasl;
 import org.wildfly.sasl.util.Charsets;
 import org.wildfly.sasl.util.SaslState;
@@ -45,11 +46,13 @@ import org.wildfly.sasl.util.SaslStateContext;
  */
 public class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
+    private static final Logger log = Logger.getLogger(GssapiClient.class);
+
     private final String authorizationId;
 
     GssapiClient(final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler callbackHandler, final String authorizationId) throws SaslException {
-        super(AbstractGssapiFactory.GSSAPI, protocol, serverName, props, callbackHandler);
+        super(AbstractGssapiFactory.GSSAPI, protocol, serverName, props, callbackHandler, log);
 
         this.authorizationId = authorizationId;
 
@@ -57,6 +60,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
         GSSManager manager = GSSManager.getInstance();
 
         String acceptorNameString = protocol + "@" + serverName;
+        log.tracef("Acceptor Name '%s'", acceptorNameString);
         final GSSName acceptorName;
         try {
             // The client can use other name types but this should be added to the config.
@@ -65,13 +69,12 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             throw new SaslException("Unable to create name for acceptor.", e);
         }
 
-        boolean mayRequireSecurityLayer = mayRequireSecurityLater(orderedQops);
-
         // Pull the credential if we have it.
         GSSCredential credential = null;
 
         Object credObj = props.get(Sasl.CREDENTIALS);
         if (credObj != null && credObj instanceof GSSCredential) {
+            log.trace("Using GSSCredential supplied in properties.");
             credential = (GSSCredential) credObj;
         }
 
@@ -92,6 +95,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             if (props.containsKey(WildFlySasl.GSSAPI_DELEGATE_CREDENTIAL)) {
                 delegate = Boolean.parseBoolean((String) props.get(WildFlySasl.GSSAPI_DELEGATE_CREDENTIAL));
             }
+            log.tracef("Delegating credential = %b", delegate);
             if (delegate) {
                 gssContext.requestCredDeleg(true);
             }
@@ -110,18 +114,22 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 serverAuth = Boolean.parseBoolean((String) props.get(Sasl.SERVER_AUTH));
             }
 
+            boolean mayRequireSecurityLayer = mayRequireSecurityLater(orderedQops);
             if (serverAuth || mayRequireSecurityLayer) {
+                log.trace("Requesting mutual authentication.");
                 gssContext.requestMutualAuth(true);
             }
 
             // Request sequence detection if a security layer could be requested.
             if (mayRequireSecurityLayer) {
+                log.trace("Requesting sequence detection.");
                 gssContext.requestSequenceDet(true);
             }
 
             // Need to set this is we may want confidentiality, integrity is always requested.
             for (QOP current : orderedQops) {
                 if (current == QOP.AUTH_CONF) {
+                    log.trace("Requesting confidentiality");
                     gssContext.requestConf(true);
                     break;
                 }
@@ -197,8 +205,14 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
 
             try {
                 byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
-                context.setNegotiationState(gssContext.isEstablished() ? new SecurityLayerNegotiationState()
-                        : new ChallengeResponseState());
+                if (gssContext.isEstablished()) {
+                    log.trace("GSSContext established, transitioning to negotiate security layer.");
+                    context.setNegotiationState(new SecurityLayerNegotiationState());
+                } else {
+                    log.trace("GSSContext not established, expecting subsequent exchanges.");
+                    context.setNegotiationState(new ChallengeResponseState());
+                }
+
                 return response;
             } catch (GSSException e) {
                 throw new SaslException("Unable to create output token.", e);
@@ -221,7 +235,10 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 byte[] response = gssContext.initSecContext(message, 0, message.length);
 
                 if (gssContext.isEstablished()) {
+                    log.trace("GSSContext established, transitioning to negotiate security layer.");
                     context.setNegotiationState(new SecurityLayerNegotiationState());
+                } else {
+                    log.trace("GSSContext not established, expecting subsequent exchanges.");
                 }
                 return response;
             } catch (GSSException e) {
@@ -247,6 +264,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 byte qopByte = unwrapped[0];
                 selectedQop = findAgreeableQop(qopByte);
                 maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
+                log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
                 if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
                         && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
                     throw new SaslException(String.format(
@@ -262,6 +280,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 } else {
                     actualMaxReceiveBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF,
                             configuredMaxReceiveBuffer);
+                    log.tracef("Out max buffer %d", actualMaxReceiveBuffer);
                     baos.write(intToNetworkOrderBytes(actualMaxReceiveBuffer));
                 }
 
@@ -274,9 +293,11 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 response = gssContext.wrap(response, 0, response.length, msgProp);
 
                 if (selectedQop != QOP.AUTH) {
+                    log.trace("Setting message wrapper.");
                     setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
                 }
 
+                log.trace("Negotiation Complete");
                 context.negotiationComplete();
                 return response;
             } catch (IOException e) {

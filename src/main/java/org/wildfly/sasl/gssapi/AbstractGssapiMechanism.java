@@ -28,6 +28,7 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
+import org.jboss.logging.Logger;
 import org.wildfly.sasl.WildFlySasl;
 import org.wildfly.sasl.util.AbstractSaslParticipant;
 import org.wildfly.sasl.util.SaslWrapper;
@@ -58,6 +59,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         }
     }
 
+    private final Logger log;
     protected GSSContext gssContext;
     protected final int configuredMaxReceiveBuffer;
     protected int actualMaxReceiveBuffer;
@@ -67,8 +69,10 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     protected QOP selectedQop;
 
     protected AbstractGssapiMechanism(String mechanismName, String protocol, String serverName, final Map<String, ?> props,
-            CallbackHandler callbackHandler) throws SaslException {
+            final CallbackHandler callbackHandler, final Logger log) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
+
+        this.log = log;
 
         if (props.containsKey(Sasl.MAX_BUFFER)) {
             configuredMaxReceiveBuffer = Integer.parseInt((String) props.get(Sasl.MAX_BUFFER));
@@ -85,6 +89,20 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             relaxComplianceChecks = false;
         }
         orderedQops = parsePreferredQop((String) props.get(Sasl.QOP));
+
+        if (log.isTraceEnabled()) {
+            log.tracef("configuredMaxReceiveBuffer=%d", configuredMaxReceiveBuffer);
+            log.tracef("relaxComplianceChecks=%b", relaxComplianceChecks);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < orderedQops.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(orderedQops[i]);
+            }
+
+            log.tracef("QOP={%s}", sb.toString());
+        }
     }
 
     /**
@@ -122,6 +140,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     @Override
     public void dispose() throws SaslException {
         try {
+            log.trace("dispose");
             gssContext.dispose();
         } catch (GSSException e) {
             throw new SaslException("Unable to dispose of GSSContext", e);
@@ -233,7 +252,9 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
             MessageProp prop = new MessageProp(0, confidential);
             try {
-                return gssContext.wrap(outgoing, offset, len, prop);
+                byte[] response = gssContext.wrap(outgoing, offset, len, prop);
+                log.tracef("Wrapping message of length '%d' resulting message of length '%d'", len, response.length);
+                return response;
             } catch (GSSException e) {
                 throw new SaslException("Unable to wrap message.", e);
             }
@@ -243,7 +264,9 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException {
             MessageProp prop = new MessageProp(0, confidential);
             try {
-                return gssContext.unwrap(incoming, offset, len, prop);
+                byte[] response = gssContext.unwrap(incoming, offset, len, prop);
+                log.tracef("Unwrapping message of length '%d' resulting message of length '%d'", len, response.length);
+                return response;
             } catch (GSSException e) {
                 throw new SaslException("Unable to wrap message.", e);
             }

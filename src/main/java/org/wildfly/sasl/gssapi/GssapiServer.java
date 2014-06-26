@@ -33,8 +33,7 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
-import org.wildfly.sasl.gssapi.AbstractGssapiMechanism.GssapiWrapper;
-import org.wildfly.sasl.gssapi.AbstractGssapiMechanism.QOP;
+import org.jboss.logging.Logger;
 import org.wildfly.sasl.util.Charsets;
 import org.wildfly.sasl.util.SaslState;
 import org.wildfly.sasl.util.SaslStateContext;
@@ -46,17 +45,20 @@ import org.wildfly.sasl.util.SaslStateContext;
  */
 public class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
+    private static final Logger log = Logger.getLogger(GssapiServer.class);
+
     private String authroizationId;
 
     GssapiServer(final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler callbackHandler) throws SaslException {
-        super(AbstractGssapiFactory.GSSAPI, protocol, serverName, props, callbackHandler);
+        super(AbstractGssapiFactory.GSSAPI, protocol, serverName, props, callbackHandler, log);
 
         // Initialise our GSSContext
         GSSManager manager = GSSManager.getInstance();
 
         // According to the Javadoc we will have a protocol and server name.
         String localName = protocol + "@" + serverName;
+        log.tracef("Our name '%s'", localName);
         GSSContext gssContext = null;
         try {
             GSSName ourName = manager.createName(localName, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
@@ -105,6 +107,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
 
                 if (gssContext.isEstablished()) {
                     Oid actualMech = gssContext.getMech();
+                    log.tracef("Negotiated mechanism %s", actualMech);
                     if (KERBEROS_V5.equals(actualMech) == false) {
                         throw new SaslException("Negotiated mechanism was not Kerberos V5");
                     }
@@ -113,8 +116,11 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                     context.setNegotiationState(nextState);
 
                     if (response == null || response.length == 0) {
+                        log.trace("No response so triggering next state immediately.");
                         return nextState.evaluateMessage(context, null);
                     }
+                } else {
+                    log.trace("GSSContext not established, expecting subsequent exchange.");
                 }
 
                 return response;
@@ -151,12 +157,18 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                         if (gssContext.getIntegState()) {
                             supportedSecurityLayers |= current.getValue();
                             offeringSecurityLayer = true;
+                            log.trace("Offering AUTH_INT");
+                        } else {
+                            log.trace("No integrity protection so unable to offer AUTH_INT");
                         }
                         break;
                     case AUTH_CONF:
                         if (gssContext.getConfState()) {
                             supportedSecurityLayers |= current.getValue();
                             offeringSecurityLayer = true;
+                            log.trace("Offering AUTH_CONF");
+                        } else {
+                            log.trace("No confidentiality available so unable to offer AUTH_CONF");
                         }
                         break;
                     default:
@@ -175,8 +187,10 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 if (offeringSecurityLayer) {
                     actualMaxReceiveBuffer = gssContext.getWrapSizeLimit(0,
                             (supportedSecurityLayers & QOP.AUTH_CONF.getValue()) != 0, configuredMaxReceiveBuffer);
+                    log.tracef("Our max buffer size %d", actualMaxReceiveBuffer);
                     length = intToNetworkOrderBytes(actualMaxReceiveBuffer);
                 } else {
+                    log.trace("Not offering a security layer so zero length.");
                     length = new byte[] { 0x00, 0x00, 0x00 };
                 }
                 System.arraycopy(length, 0, response, 1, 3);
@@ -187,6 +201,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 throw new SaslException("Unable to generate security layer challenge.", e);
             }
 
+            log.trace("Transitioning to receive chosen security layer from client");
             context.setNegotiationState(new SecurityLayerReceiver(supportedSecurityLayers));
 
             return response;
@@ -228,6 +243,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
             assert selectedQop != null;
 
             maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
+            log.tracef("Client selected security layer %s, with maxBuffer of %d", selectedQop, maxBuffer);
             if (relaxComplianceChecks == false && selectedQop == QOP.AUTH && maxBuffer != 0) {
                 throw new SaslException("No security layer selected but message length received.");
             }
@@ -245,6 +261,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
             } else {
                 authorizationId = authenticationId;
             }
+            log.tracef("Authentication ID=%s,  Authorization ID=%s", authenticationId, authorizationId);
 
             AuthorizeCallback cb = new AuthorizeCallback(authenticationId, authorizationId);
             handleCallbacks(new Callback[] {cb});
@@ -255,9 +272,11 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
             GssapiServer.this.authroizationId = authorizationId;
 
             if (selectedQop != QOP.AUTH) {
+                log.trace("Setting message wrapper.");
                 setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
             }
 
+            log.trace("Negotiation complete.");
             context.negotiationComplete();
             // By now this is the end.
             return null;
