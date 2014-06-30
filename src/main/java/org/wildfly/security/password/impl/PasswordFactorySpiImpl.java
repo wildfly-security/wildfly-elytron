@@ -28,6 +28,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
@@ -35,7 +36,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         switch (algorithm) {
             case "clear": {
                 if (keySpec instanceof ClearPasswordSpec) {
-                    return new ClearPasswordImpl(((ClearPasswordSpec)keySpec).getEncodedPassword().clone());
+                    return new ClearPasswordImpl(((ClearPasswordSpec) keySpec).getEncodedPassword().clone());
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    return new ClearPasswordImpl(((EncryptablePasswordSpec) keySpec).getPassword().clone());
                 } else {
                     break;
                 }
