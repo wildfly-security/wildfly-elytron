@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
 
@@ -28,9 +29,11 @@ import java.security.spec.KeySpec;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.TrivialDigestPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
@@ -86,6 +89,20 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_DIGEST_MD2:
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA_1:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
+            case ALGORITHM_DIGEST_SHA_512: {
+                if (keySpec instanceof TrivialDigestPasswordSpec) {
+                    return new TrivialDigestPasswordImpl((TrivialDigestPasswordSpec) keySpec);
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    return new TrivialDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                } else {
+                    break;
+                }
+            }
         }
         throw new InvalidKeySpecException("Unknown algorithm");
     }
@@ -111,14 +128,18 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         }
         switch (algorithm) {
             case ALGORITHM_CLEAR: {
-                if (password instanceof ClearPassword) {
+                if (password instanceof ClearPasswordImpl) {
+                    return password;
+                } else if (password instanceof ClearPassword) {
                     return new ClearPasswordImpl((ClearPassword) password);
                 } else {
                     break;
                 }
             }
             case ALGORITHM_MD5_CRYPT: {
-                if (password instanceof UnixMD5CryptPassword) {
+                if (password instanceof UnixMD5CryptPasswordImpl) {
+                    return password;
+                } else if (password instanceof UnixMD5CryptPassword) {
                     return new UnixMD5CryptPasswordImpl((UnixMD5CryptPassword) password);
                 } else {
                     break;
@@ -126,14 +147,30 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SHA256CRYPT:
             case ALGORITHM_SHA512CRYPT: {
-                if (password instanceof UnixSHACryptPassword) {
+                if (password instanceof UnixSHACryptPasswordImpl) {
+                    return password;
+                } else if (password instanceof UnixSHACryptPassword) {
                     return new UnixSHACryptPasswordImpl((UnixSHACryptPassword) password);
                 } else {
                     break;
                 }
             }
+            case ALGORITHM_DIGEST_MD2:
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA_1:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
+            case ALGORITHM_DIGEST_SHA_512: {
+                if (password instanceof TrivialDigestPasswordImpl) {
+                    return password;
+                } else if (password instanceof TrivialDigestPassword) {
+                    return new TrivialDigestPasswordImpl((TrivialDigestPassword) password);
+                } else {
+                    break;
+                }
+            }
         }
-        throw new InvalidKeyException();
+        throw new InvalidKeyException("Unknown password type or algorithm");
     }
 
     @Override
