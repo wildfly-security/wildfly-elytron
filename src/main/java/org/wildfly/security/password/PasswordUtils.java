@@ -134,7 +134,11 @@ public class PasswordUtils {
      * @return the algorithm name, or {@code null} if no algorithm could be guessed
      */
     public static String identifyAlgorithm(char[] chars) {
-        switch (doIdentifyAlgorithm(chars)) {
+        return getAlgorithmNameString(doIdentifyAlgorithm(chars));
+    }
+
+    static String getAlgorithmNameString(final int id) {
+        switch (id) {
             case A_CRYPT_MD5:       return "crypt-md5";
             case A_BCRYPT:          return "bcrypt";
             case A_BSD_NT_HASH:     return "bsd-nt-hash";
@@ -193,7 +197,7 @@ public class PasswordUtils {
             final TrivialDigestPasswordSpec spec = (TrivialDigestPasswordSpec) passwordSpec;
             final String algorithm = spec.getAlgorithm();
             b.append('[').append(algorithm).append(']');
-            base64EncodeA(b, new ByteIter(spec.getDigest()));
+            base64EncodeB(b, new ByteIter(spec.getDigest()));
         } else if (passwordSpec instanceof UnixDESCryptPasswordSpec) {
             final UnixDESCryptPasswordSpec spec = (UnixDESCryptPasswordSpec) passwordSpec;
             final short salt = spec.getSalt();
@@ -254,7 +258,8 @@ public class PasswordUtils {
         if (cryptString == null) {
             throw new IllegalArgumentException("cryptString is null");
         }
-        switch (doIdentifyAlgorithm(cryptString)) {
+        final int algorithmId = doIdentifyAlgorithm(cryptString);
+        switch (algorithmId) {
             case A_CRYPT_MD5: {
                 return parseUnixMD5CryptPasswordString(cryptString);
             }
@@ -282,23 +287,14 @@ public class PasswordUtils {
             case A_CRYPT_DES: {
                 return parseUnixDESCryptPasswordString(cryptString);
             }
-            case A_DIGEST_MD2: {
-                throw new UnsupportedOperationException("not supported yet");
-            }
-            case A_DIGEST_MD5: {
-                throw new UnsupportedOperationException("not supported yet");
-            }
-            case A_DIGEST_SHA_1: {
-                throw new UnsupportedOperationException("not supported yet");
-            }
-            case A_DIGEST_SHA_256: {
-                throw new UnsupportedOperationException("not supported yet");
-            }
-            case A_DIGEST_SHA_384: {
-                throw new UnsupportedOperationException("not supported yet");
-            }
-            case A_DIGEST_SHA_512: {
-                throw new UnsupportedOperationException("not supported yet");
+            case A_DIGEST_MD2:
+            case A_DIGEST_MD5:
+            case A_DIGEST_SHA_1:
+            case A_DIGEST_SHA_256:
+            case A_DIGEST_SHA_384:
+            case A_DIGEST_SHA_512:
+            {
+                return parseTrivialDigestPasswordString(algorithmId, cryptString);
             }
             default: throw new InvalidKeySpecException("Unknown crypt string algorithm");
         }
@@ -477,6 +473,22 @@ public class PasswordUtils {
                         63
     };
 
+    private static TrivialDigestPasswordSpec parseTrivialDigestPasswordString(final int algorithmId, final char[] cryptString) throws InvalidKeySpecException {
+        final int initialLen;
+        switch (algorithmId) {
+            case A_DIGEST_MD2:
+            case A_DIGEST_MD5: initialLen = "[mdX]".length(); break;
+            case A_DIGEST_SHA_1: initialLen = "[sha-1]".length(); break;
+            case A_DIGEST_SHA_256:
+            case A_DIGEST_SHA_384:
+            case A_DIGEST_SHA_512: initialLen = "[sha-XXX]".length(); break;
+            default: throw new IllegalStateException();
+        }
+        byte[] bytes = new byte[cryptString.length * 3 / 4];
+        base64DecodeB(new CharIter(cryptString, initialLen), bytes);
+        return new TrivialDigestPasswordSpec(getAlgorithmNameString(algorithmId), bytes);
+    }
+
     private static UnixSHACryptPasswordSpec parseUnixSHA256CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
         assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
         assert cryptString[1] == '5'; // previously tested by doIdentifyAlgorithm
@@ -598,7 +610,7 @@ public class PasswordUtils {
 
     /**
      * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
-     * standard scheme.
+     * standard scheme and the modular crypt alphabet.
      *
      * @param iter the character iterator
      * @param target the target array
@@ -615,6 +627,29 @@ public class PasswordUtils {
             target[i] = (byte) (b << 4 | a >> 2);
             if (++ i >= len) break;
             b = base64DecodeA(iter.next());
+            target[i] = (byte) (a << 6 | b >> 0);
+        }
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
+     * standard scheme and the standard alphabet.
+     *
+     * @param iter the character iterator
+     * @param target the target array
+     */
+    private static void base64DecodeB(CharIter iter, byte[] target) throws InvalidKeySpecException {
+        int len = target.length;
+        int a, b;
+        for (int i = 0; i < len; ++ i) {
+            a = base64DecodeB(iter.next());
+            b = base64DecodeB(iter.next());
+            target[i] = (byte) (a << 2 | b >> 4);
+            if (++ i >= len) break;
+            a = base64DecodeB(iter.next());
+            target[i] = (byte) (b << 4 | a >> 2);
+            if (++ i >= len) break;
+            b = base64DecodeB(iter.next());
             target[i] = (byte) (a << 6 | b >> 0);
         }
     }
@@ -642,6 +677,29 @@ public class PasswordUtils {
         }
     }
 
+    /**
+     * Base-64 decode a single character with alphabet B (standard Base64).
+     *
+     * @param ch the character
+     * @return the byte
+     * @throws InvalidKeySpecException if the character is not in the alphabet
+     */
+    private static int base64DecodeB(int ch) throws InvalidKeySpecException {
+        if (ch >= 'A' && ch <= 'Z') {
+            return ch - 'A';
+        } else if (ch >= 'a' && ch <= 'z') {
+            return ch + 26 - 'a';
+        } else if (ch >= '0' && ch <= '9') {
+            return ch + 52 - '0';
+        } else if (ch == '+') {
+            return 62;
+        } else if (ch == '/') {
+            return 63;
+        } else {
+            throw new InvalidKeySpecException("Invalid character encountered");
+        }
+    }
+
     private static void base64EncodeA(StringBuilder target, ByteIter src) throws InvalidKeySpecException {
         int a, b;
         while (src.hasNext()) {
@@ -660,6 +718,27 @@ public class PasswordUtils {
             a = src.next();
             base64EncodeA(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
             base64EncodeA(target, a); // bottom 6 bits
+        }
+    }
+
+    private static void base64EncodeB(StringBuilder target, ByteIter src) throws InvalidKeySpecException {
+        int a, b;
+        while (src.hasNext()) {
+            a = src.next();
+            base64EncodeB(target, a >> 2); // top 6 bits
+            if (! src.hasNext()) {
+                base64EncodeB(target, a << 4); // bottom 2 bits + 0000
+                return;
+            }
+            b = src.next();
+            base64EncodeB(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
+            if (! src.hasNext()) {
+                base64EncodeB(target, b << 2); // bottom 4 bits + 00
+                return;
+            }
+            a = src.next();
+            base64EncodeB(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
+            base64EncodeB(target, a); // bottom 6 bits
         }
     }
 
@@ -697,6 +776,23 @@ public class PasswordUtils {
             c = (char) (a + 'A' - 12);
         } else { // a < 64
             c = (char) (a + 'a' - 38);
+        }
+        target.append(c);
+    }
+
+    private static void base64EncodeB(StringBuilder target, int a) {
+        a &= 0b0011_1111;
+        final char c;
+        if (a < 26) {
+            c = (char) (a + 'A');
+        } else if (a < 52) {
+            c = (char) (a + 'a' - 26);
+        } else if (a < 62) {
+            c = (char) (a + '0' - 52);
+        } else if (a == 62) {
+            c = '+';
+        } else { // a == 63
+            c = '/';
         }
         target.append(c);
     }
