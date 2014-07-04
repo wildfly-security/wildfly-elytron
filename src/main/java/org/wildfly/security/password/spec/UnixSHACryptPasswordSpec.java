@@ -28,8 +28,8 @@ public final class UnixSHACryptPasswordSpec implements PasswordSpec {
     private final Charset charset;
 
     /**
-     * Creates a new password specification, declaring how a password should be
-     * hashed.
+     * Creates a new password specification, with the parameters that will be used
+     * when hashing the plain text.
      *
      * @param algorithm         the algorithm to be used. Possible values are available as constants on {link}UnixSHACryptPassword{link}
      * @param hashBytes         the bytes to be hashed
