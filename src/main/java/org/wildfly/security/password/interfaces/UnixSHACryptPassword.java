@@ -24,7 +24,25 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface UnixSHACryptPassword extends OneWayPassword {
+    public static final String ALGORITHM_SHA256CRYPT = "sha-256-crypt";
+    public static final String ALGORITHM_SHA512CRYPT = "sha-512-crypt";
+
+    /**
+     * The salt used during the hashing of this password. Should have at most 16 bytes.
+     * @return the salt
+     */
     byte[] getSalt();
 
+    /**
+     * The final hash, based on the password, salt and iteration count
+     * @return the hash
+     */
+    byte[] getHash();
+
+    /**
+     * The number of iterations to perform when hashing the password. Should be bigger than 1,000 and lower than 999,999,999.
+     * The default value is 5,000
+     * @return  the number of iterations to perform
+     */
     int getIterationCount();
 }
