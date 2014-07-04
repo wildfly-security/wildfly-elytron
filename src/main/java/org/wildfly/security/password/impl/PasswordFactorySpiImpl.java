@@ -36,6 +36,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
     private static final String ALGORITHM_SHA256CRYPT = "sha-256-crypt";
     private static final String ALGORITHM_SHA512CRYPT = "sha-512-crypt";
 
+    @Override
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
         switch (algorithm) {
             case ALGORITHM_CLEAR: {
@@ -62,6 +63,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         throw new InvalidKeySpecException();
     }
 
+    @Override
     protected <S extends KeySpec> S engineGetKeySpec(final String algorithm, final Password password, final Class<S> keySpecType) throws InvalidKeySpecException {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
@@ -69,23 +71,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return abstractPassword.getKeySpec(keySpecType);
             }
         }
-
-        switch (algorithm) {
-            case ALGORITHM_SHA256CRYPT:
-            case ALGORITHM_SHA512CRYPT: {
-                if (password instanceof UnixSHACryptPassword) {
-                    if (keySpecType == UnixSHACryptPasswordSpec.class) {
-                        UnixSHACryptPassword p = ((UnixSHACryptPassword) password);
-                        return keySpecType.cast(new UnixSHACryptPasswordSpec(p.getId(), p.getEncoded(), p.getSalt(), p.getIterationCount()));
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
         throw new InvalidKeySpecException();
     }
 
+    @Override
     protected Password engineTranslatePassword(final String algorithm, final Password password) throws InvalidKeyException {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
@@ -113,6 +102,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
         throw new InvalidKeyException();
     }
 
+    @Override
     protected boolean engineVerify(final String algorithm, final Password password, final char[] guess) throws InvalidKeyException {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
@@ -120,23 +110,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return abstractPassword.verify(guess);
             }
         }
-        switch (algorithm) {
-            case ALGORITHM_SHA256CRYPT:
-            case ALGORITHM_SHA512CRYPT: {
-                if (password instanceof UnixSHACryptPassword) {
-                    try {
-                        return UnixSHACryptPasswordUtil.verify(password, guess);
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new InvalidKeyException("Cannot verify password", e);
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
         throw new InvalidKeyException();
     }
 
+    @Override
     protected <S extends KeySpec> boolean engineConvertibleToKeySpec(final String algorithm, final Password password, final Class<S> keySpecType) {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;

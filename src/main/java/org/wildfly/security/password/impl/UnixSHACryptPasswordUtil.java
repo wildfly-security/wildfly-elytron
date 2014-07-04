@@ -22,7 +22,6 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -37,7 +36,7 @@ import java.util.Arrays;
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  * @see <a href="http://ftp.arlut.utexas.edu/pub/java_hashes/SHA-crypt.txt">http://ftp.arlut.utexas.edu/pub/java_hashes/SHA-crypt.txt</a>
  */
-final class UnixSHACryptPasswordUtil {
+public final class UnixSHACryptPasswordUtil {
 
     private byte[] salt;
     private int iterationCount;
@@ -53,10 +52,12 @@ final class UnixSHACryptPasswordUtil {
      *
      * @param spec    the Key Specification to generate the password for.
      * @return a {@link UnixSHACryptPassword} with the results
+     * @throws java.security.NoSuchAlgorithmException
      */
     public static UnixSHACryptPassword encode(UnixSHACryptPasswordSpec spec) throws NoSuchAlgorithmException {
-        byte[] encoded = encode(spec.getId(), spec.getSalt(), spec.getIterationCount(), spec.getHashBytes());
-        return new UnixSHACryptPasswordImpl(spec.getSalt(), spec.getIterationCount(), spec.getId(), encoded);
+        char id = getIdForAlgorithm(spec.getAlgorithm());
+        byte[] encoded = encode(id, spec.getSalt(), spec.getIterationCount(), spec.getHashBytes());
+        return new UnixSHACryptPasswordImpl(spec.getSalt(), spec.getIterationCount(), spec.getAlgorithm(), encoded);
     }
 
     /**
@@ -86,7 +87,7 @@ final class UnixSHACryptPasswordUtil {
         byte[] guessAsBytes = new byte[guessAsBuffer.remaining()];
         guessAsBuffer.get(guessAsBytes);
 
-        byte[] encodedGuess = UnixSHACryptPasswordUtil.encode(p.getId(), p.getSalt(), p.getIterationCount(), guessAsBytes);
+        byte[] encodedGuess = UnixSHACryptPasswordUtil.encode(getIdForAlgorithm(p.getAlgorithm()), p.getSalt(), p.getIterationCount(), guessAsBytes);
         return Arrays.equals(p.getHash(), encodedGuess);
     }
 
@@ -192,6 +193,38 @@ final class UnixSHACryptPasswordUtil {
      */
     public static byte[] encode(String formatted, byte[] password) throws IllegalArgumentException, NoSuchAlgorithmException {
         return encode(formatted, Charset.forName("UTF-8"), password);
+    }
+
+    /**
+     * Converts a given algorithm ID into the string representation
+     * @param id    the id to be converted. Possible values are 5 or 6.
+     * @return      the string representation of the algorithm ID
+     * @throws      IllegalArgumentException if the algorithm is not recognized.
+     */
+    public static String getAlgorithmForId(char id) {
+        switch (id) {
+            case '5':
+                return UnixSHACryptPassword.ALGORITHM_SHA256CRYPT;
+            case '6':
+                return UnixSHACryptPassword.ALGORITHM_SHA512CRYPT;
+            default: throw new IllegalArgumentException("Invalid algorithm ID, possible values are 5 or 6");
+        }
+    }
+
+    /**
+     * Converts a given algorithm string into the algorithm ID, as per the specification
+     * @param algorithm     the algorithm, as available on UnixSHACryptPassword, as constant.
+     * @return              the char representation of the algorithm.
+     * @throws              IllegalArgumentException if the algorithm is not recognized.
+     */
+    public static char getIdForAlgorithm(String algorithm) {
+        switch (algorithm) {
+            case UnixSHACryptPassword.ALGORITHM_SHA256CRYPT:
+                return '5';
+            case UnixSHACryptPassword.ALGORITHM_SHA512CRYPT:
+                return '6';
+            default: throw new IllegalArgumentException("Invalid algorithm, possible values are specified on UnixSHACryptPassword as constants.");
+        }
     }
 
     /**
