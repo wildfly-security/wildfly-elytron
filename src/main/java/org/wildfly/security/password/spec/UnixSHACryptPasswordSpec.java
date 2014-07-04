@@ -32,11 +32,9 @@ public final class UnixSHACryptPasswordSpec implements PasswordSpec {
      * when hashing the plain text.
      *
      * @param algorithm         the algorithm to be used. Possible values are available as constants on {link}UnixSHACryptPassword{link}
-     * @param hashBytes         the bytes to be hashed
-     * @param salt              the salt to use. If none is provided, a new one is randomly generated
-     * @param iterationCount    the iteration count, between 1,000 and 999,999,999. Any values outside of the boundaries
-     *                          will be shifted to the closest boundary (1,000 if it's lower than 1,000, or 999,999,999
-     *                          if bigger than that).
+     * @param hashBytes         the plain text, as bytes
+     * @param salt              the salt. If none is provided, a new one is randomly generated
+     * @param iterationCount    the iteration count
      */
     public UnixSHACryptPasswordSpec(final String algorithm, final byte[] hashBytes, final byte[] salt, final int iterationCount, Charset charset) {
         this.algorithm = algorithm;
