@@ -19,16 +19,16 @@
 package org.wildfly.security.password.spec;
 
 public final class UnixMD5CryptPasswordSpec implements PasswordSpec {
-    private final byte[] hashBytes;
+    private final byte[] hash;
     private final byte[] salt;
 
-    public UnixMD5CryptPasswordSpec(final byte[] hashBytes, final byte[] salt) {
-        this.hashBytes = hashBytes;
+    public UnixMD5CryptPasswordSpec(final byte[] hash, final byte[] salt) {
+        this.hash = hash;
         this.salt = salt;
     }
 
-    public byte[] getHashBytes() {
-        return hashBytes;
+    public byte[] getHash() {
+        return hash;
     }
 
     public byte[] getSalt() {

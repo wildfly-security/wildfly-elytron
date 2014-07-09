@@ -23,8 +23,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import org.junit.Ignore;
+import java.security.spec.InvalidKeySpecException;
+
 import org.junit.Test;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 
 /**
  * Tests for UnixMD5CryptUtil.
@@ -37,25 +44,25 @@ import org.junit.Test;
 public class UnixMD5CryptUtilTest {
 
     @Test
-    public void testSaltTruncated() throws NoSuchAlgorithmException {
+    public void testSaltTruncated() throws NoSuchAlgorithmException, InvalidKeySpecException {
         String result = getEncoded("password", "thissaltstringistoolong");
         assertTrue("Didn't truncate the salt", result.startsWith("$1$thissalt$"));
         assertEquals("$1$thissalt$B4AUaoQwRs3ex2F95O4ut/", result);
     }
 
     @Test
-    public void testEmptyPassword() throws NoSuchAlgorithmException {
+    public void testEmptyPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
         String result = getEncoded("", "1234");
         assertEquals("$1$1234$.hKN8.QH1vHyGVLB072C0.", result);
     }
 
     @Test
-    public void testShortPassword() throws NoSuchAlgorithmException {
+    public void testShortPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
         String result = getEncoded("Hello world!", "saltstring");
         assertEquals("$1$saltstri$YMyguxXMBpd2TEZ.vS/3q1", result);
     }
     @Test
-    public void testLongPassword() throws NoSuchAlgorithmException {
+    public void testLongPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
         String password = "This is a very very very long password. This is another sentence in the password. This is a test.";
         String salt = "saltstringsaltstring";
         String result = getEncoded(password, salt);
@@ -63,14 +70,15 @@ public class UnixMD5CryptUtilTest {
     }
 
     @Test
-    public void testCaseFromOriginalCImplementation() throws NoSuchAlgorithmException {
+    public void testCaseFromOriginalCImplementation() throws NoSuchAlgorithmException, InvalidKeySpecException {
         String result = getEncoded("0.s0.l33t", "deadbeef");
         assertEquals("$1$deadbeef$0Huu6KHrKLVWfqa4WljDE0", result);
     }
 
-    private String getEncoded(String passwordStr, String saltStr) throws NoSuchAlgorithmException {
-        byte[] password = passwordStr.getBytes(StandardCharsets.UTF_8);
+    private String getEncoded(String passwordStr, String saltStr) throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] salt = saltStr.getBytes(StandardCharsets.UTF_8);
-        return new String(UnixMD5CryptUtil.encode(password, salt));
+        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
+        final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_MD5_CRYPT, new EncryptablePasswordSpec(passwordStr.toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
+        return PasswordUtils.getCryptString(spi.engineGetKeySpec(UnixMD5CryptPassword.ALGORITHM_MD5_CRYPT, password, UnixMD5CryptPasswordSpec.class));
     }
 }

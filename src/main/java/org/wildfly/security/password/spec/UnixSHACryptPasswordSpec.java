@@ -18,14 +18,11 @@
 
 package org.wildfly.security.password.spec;
 
-import java.nio.charset.Charset;
-
 public final class UnixSHACryptPasswordSpec implements PasswordSpec {
     private final byte[] hashBytes;
     private final byte[] salt;
     private final int iterationCount;
     private final String algorithm;
-    private final Charset charset;
 
     /**
      * Creates a new password specification, with the parameters that will be used
@@ -36,19 +33,14 @@ public final class UnixSHACryptPasswordSpec implements PasswordSpec {
      * @param salt              the salt. If none is provided, a new one is randomly generated
      * @param iterationCount    the iteration count
      */
-    public UnixSHACryptPasswordSpec(final String algorithm, final byte[] hashBytes, final byte[] salt, final int iterationCount, Charset charset) {
+    public UnixSHACryptPasswordSpec(final String algorithm, final byte[] hashBytes, final byte[] salt, final int iterationCount) {
         this.algorithm = algorithm;
         this.hashBytes = hashBytes;
         this.salt = salt;
         this.iterationCount = iterationCount;
-        this.charset = charset;
     }
 
-    public UnixSHACryptPasswordSpec(final String algorithm, final byte[] hashBytes, final byte[] salt, final int iterationCount) {
-        this(algorithm, hashBytes, salt, iterationCount, Charset.forName("UTF-8"));
-    }
-
-    public byte[] getHashBytes() {
+    public byte[] getHash() {
         return hashBytes;
     }
 
@@ -58,10 +50,6 @@ public final class UnixSHACryptPasswordSpec implements PasswordSpec {
 
     public int getIterationCount() {
         return iterationCount;
-    }
-
-    public Charset getCharset() {
-        return charset;
     }
 
     public String getAlgorithm() {
