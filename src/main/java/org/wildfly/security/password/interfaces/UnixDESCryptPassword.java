@@ -31,5 +31,5 @@ public interface UnixDESCryptPassword extends OneWayPassword {
      *
      * @return the crypt bytes
      */
-    byte[] getEncoded();
+    byte[] getHash();
 }

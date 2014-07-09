@@ -24,4 +24,9 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface BSDUnixDESCryptPassword extends OneWayPassword {
+    int getIterationCount();
+
+    int getSalt();
+
+    byte[] getHash();
 }

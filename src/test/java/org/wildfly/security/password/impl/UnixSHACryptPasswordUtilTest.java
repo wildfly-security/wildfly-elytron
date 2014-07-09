@@ -24,78 +24,72 @@ import org.wildfly.security.password.Password;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_SHA256CRYPT;
+import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_SHA512CRYPT;
+
+import org.wildfly.security.password.PasswordUtils;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
 /**
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class UnixSHACryptPasswordUtilTest {
 
     @Test
-    public void shouldParseSpecWithoutRounds() throws NoSuchAlgorithmException {
-        String result = new String(UnixSHACryptPasswordUtil.encode("$6$saltstring", "".getBytes()));
-        assertTrue("Didn't parse the ID correctly", result.startsWith("$6$"));
-        assertTrue("Didn't parse the salt correctly", result.startsWith("$6$saltstring$"));
+    public void shouldParseSpecWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPasswordSpec) PasswordUtils.parseCryptString("$6$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
-    public void shouldParseSpecWithRounds() throws NoSuchAlgorithmException {
-        String result = new String(UnixSHACryptPasswordUtil.encode("$6$rounds=10000$saltstring", "".getBytes()));
-        assertTrue("Didn't parse the number of rounds correctly", result.startsWith("$6$rounds=10000$saltstring$"));
+    public void shouldParseSpecWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        assertEquals("Didn't parse the number of rounds correctly", 10_000, ((UnixSHACryptPasswordSpec) PasswordUtils.parseCryptString("$6$rounds=10000$saltstring$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
-    public void shouldTruncateSaltAt16Chars() throws NoSuchAlgorithmException {
-        String result = new String(UnixSHACryptPasswordUtil.encode("$6$rounds=5000$toolongsaltstring", "".getBytes()));
-        assertTrue("Didn't parse the number of rounds correctly", result.startsWith("$6$rounds=5000$toolongsaltstrin$"));
+    public void shouldTruncateSaltAt16Chars() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPasswordSpec) PasswordUtils.parseCryptString("$6$rounds=5000$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
-    public void shouldIncreaseIterationCountIfLowerThan1000() throws NoSuchAlgorithmException {
-        String result = new String(UnixSHACryptPasswordUtil.encode("$6$rounds=10$roundstoolow", "".getBytes()));
-        assertTrue("Didn't increase the number of rounds", result.startsWith("$6$rounds=1000$roundstoolow"));
+    public void shouldIncreaseIterationCountIfLowerThan1000() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        assertEquals("Didn't increase the number of rounds", 1_000, ((UnixSHACryptPasswordSpec) PasswordUtils.parseCryptString("$6$rounds=10$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
-    @Ignore("The way it currently works, this would really hash the password and it would take a really long time.")
-    public void shouldDecreaseIterationCountIfBiggerThan999999999() throws NoSuchAlgorithmException {
+    public void shouldDecreaseIterationCountIfBiggerThan999999999() throws NoSuchAlgorithmException, InvalidKeySpecException {
         // this test is being kept as a way to mark that this behavior is intended, but it's not tested with the
         // usual tests because it would run the hashing with 999,999,999 iterations
-        String result = new String(UnixSHACryptPasswordUtil.encode("$6$rounds=1000000000$roundstoobig", "".getBytes()));
-        assertTrue("Didn't decrease the number of rounds", result.startsWith("$6$rounds=999999999$roundstoobig"));
-    }
-
-    @Test(expected=IllegalArgumentException.class)
-    public void shouldRejectInvalidId() throws NoSuchAlgorithmException {
-        UnixSHACryptPasswordUtil.encode("$8$rounds=10000$saltstring", "".getBytes());
-    }
-
-    @Test(expected=IllegalArgumentException.class)
-    public void shouldRejectInvalidIdStartingWithValidChar() throws NoSuchAlgorithmException {
-        UnixSHACryptPasswordUtil.encode("$68$rounds=10000$saltstring", "".getBytes());
-    }
-
-    @Test(expected=IllegalArgumentException.class)
-    public void shouldRejectIncompleteSpecification() throws NoSuchAlgorithmException {
-        UnixSHACryptPasswordUtil.encode("$6$", "".getBytes());
-    }
-
-    @Test(expected=IllegalArgumentException.class)
-    public void shouldRejectEmptySpecification() throws NoSuchAlgorithmException {
-        UnixSHACryptPasswordUtil.encode("$$", "".getBytes());
+        assertEquals("Didn't decrease the number of rounds", 999_999_999, ((UnixSHACryptPasswordSpec) PasswordUtils.parseCryptString("$6$rounds=1000000000$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
-    public void shouldVerifyOnMatchingHashes() throws UnsupportedEncodingException, NoSuchAlgorithmException {
-        Charset charset = Charset.forName("UTF-8");
-        byte[] salt = "saltstringsaltstring".getBytes(charset);
-        byte[] encoded = "$5$rounds=10000$saltstringsaltst$3xv.VbSHBb41AL9AvLeujZkZRBAwqFMz2.opqey6IcA".getBytes(charset);
-        Password password = new UnixSHACryptPasswordImpl(salt, 10000, UnixSHACryptPassword.ALGORITHM_SHA256CRYPT, encoded);
-        assertTrue(UnixSHACryptPasswordUtil.verify(password, "Hello world!".toCharArray()));
+    public void shouldVerifyOnMatchingHashes() throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        String cryptString = "$5$rounds=10000$saltstringsaltst$3xv.VbSHBb41AL9AvLeujZkZRBAwqFMz2.opqey6IcA";
+        final PasswordFactorySpiImpl factorySpi = new PasswordFactorySpiImpl();
+        final PasswordSpec parsed = PasswordUtils.parseCryptString(cryptString);
+        assertEquals(cryptString, PasswordUtils.getCryptString(parsed));
+        UnixSHACryptPassword password = (UnixSHACryptPassword) factorySpi.engineGeneratePassword(PasswordUtils.identifyAlgorithm(cryptString), parsed);
+        final String algorithm = password.getAlgorithm();
+        UnixSHACryptPassword comparePassword = (UnixSHACryptPassword) factorySpi.engineGeneratePassword(algorithm, new EncryptablePasswordSpec("Hello world!".toCharArray(), new HashedPasswordAlgorithmSpec(10000, password.getSalt())));
+        assertEquals(cryptString, PasswordUtils.getCryptString(factorySpi.engineGetKeySpec(algorithm, comparePassword, UnixSHACryptPasswordSpec.class)));
+        assertEquals(password.getIterationCount(), comparePassword.getIterationCount());
+        assertArrayEquals(password.getSalt(), comparePassword.getSalt());
+        assertArrayEquals(password.getHash(), comparePassword.getHash());
+        assertTrue(factorySpi.engineVerify(algorithm, password, "Hello world!".toCharArray()));
     }
 
     @Test
@@ -103,86 +97,85 @@ public class UnixSHACryptPasswordUtilTest {
 
     }
 
+    private String generate(String alg, String salt, String passwd, int iterationCount) throws InvalidKeySpecException {
+        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
+        final Password password = spi.engineGeneratePassword(alg, new EncryptablePasswordSpec(passwd.toCharArray(), new HashedPasswordAlgorithmSpec(iterationCount, salt.getBytes(UTF_8))));
+        return PasswordUtils.getCryptString(spi.engineGetKeySpec(alg, password, UnixSHACryptPasswordSpec.class));
+    }
+
     @Test
-    public void shouldPassAllCasesFromSpecForSha256() throws NoSuchAlgorithmException {
-        Charset charset = Charset.forName("UTF-8");
+    public void shouldPassAllCasesFromSpecForSha256() throws NoSuchAlgorithmException, InvalidKeySpecException {
         assertEquals(
                 "$5$saltstring$5B8vYYiY.CVt1RlTTf8KbXBH3hsxY/GNooZaBBGWEc5",
-                new String(UnixSHACryptPasswordUtil.encode("$5$saltstring", "Hello world!".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "saltstring", "Hello world!", 5_000)
         );
 
         assertEquals(
                 "$5$rounds=10000$saltstringsaltst$3xv.VbSHBb41AL9AvLeujZkZRBAwqFMz2.opqey6IcA",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=10000$saltstringsaltstring", "Hello world!".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "saltstringsaltstring", "Hello world!", 10_000)
         );
 
         assertEquals(
-                "$5$rounds=10000$saltstringsaltst$3xv.VbSHBb41AL9AvLeujZkZRBAwqFMz2.opqey6IcA",
-                new String(UnixSHACryptPasswordUtil.encode('5', "saltstringsaltstring".getBytes(charset), 10000, "Hello world!".getBytes(charset)))
-        );
-
-        assertEquals(
-                "$5$rounds=5000$toolongsaltstrin$Un/5jzAHMgOGZ5.mWJpuVolil07guHPvOW8mGRcvxa5",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=5000$toolongsaltstring", "This is just a test".getBytes(charset)))
+                "$5$toolongsaltstrin$Un/5jzAHMgOGZ5.mWJpuVolil07guHPvOW8mGRcvxa5",
+                generate(ALGORITHM_SHA256CRYPT, "toolongsaltstring", "This is just a test", 5_000)
         );
 
         assertEquals(
                 "$5$rounds=1400$anotherlongsalts$Rx.j8H.h8HjEDGomFU8bDkXm3XIUnzyxf12oP84Bnq1",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=1400$anotherlongsaltstring", "a very much longer text to encrypt.  This one even stretches over morethan one line.".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "anotherlongsaltstring", "a very much longer text to encrypt.  This one even stretches over morethan one line.", 1_400)
         );
 
         assertEquals(
                 "$5$rounds=77777$short$JiO1O3ZpDAxGJeaDIuqCoEFysAe1mZNJRs3pw0KQRd/",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=77777$short", "we have a short salt string but not a short password".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "short", "we have a short salt string but not a short password", 77_777)
         );
 
         assertEquals(
                 "$5$rounds=123456$asaltof16chars..$gP3VQ/6X7UUEW3HkBn2w1/Ptq2jxPyzV/cZKmF/wJvD",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=123456$asaltof16chars..", "a short string".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "asaltof16chars..", "a short string", 123_456)
         );
 
         assertEquals(
                 "$5$rounds=1000$roundstoolow$yfvwcWrQ8l/K0DAWyuPMDNHpIVlTQebY9l/gL972bIC",
-                new String(UnixSHACryptPasswordUtil.encode("$5$rounds=10$roundstoolow", "the minimum number is still observed".getBytes(charset)))
+                generate(ALGORITHM_SHA256CRYPT, "roundstoolow", "the minimum number is still observed", 10)
         );
     }
 
     @Test
-    public void shouldPassAllCasesFromSpecForSha512() throws NoSuchAlgorithmException {
-        Charset charset = Charset.forName("UTF-8");
+    public void shouldPassAllCasesFromSpecForSha512() throws NoSuchAlgorithmException, InvalidKeySpecException {
         assertEquals(
                 "$6$saltstring$svn8UoSVapNtMuq1ukKS4tPQd8iKwSMHWjl/O817G3uBnIFNjnQJuesI68u4OTLiBFdcbYEdFCoEOfaS35inz1",
-                new String(UnixSHACryptPasswordUtil.encode("$6$saltstring", "Hello world!".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "saltstring", "Hello world!", 5_000)
         );
 
         assertEquals(
                 "$6$rounds=10000$saltstringsaltst$OW1/O6BYHV6BcXZu8QVeXbDWra3Oeqh0sbHbbMCVNSnCM/UrjmM0Dp8vOuZeHBy/YTBmSK6H9qs/y3RnOaw5v.",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=10000$saltstringsaltstring", "Hello world!".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "saltstringsaltstring", "Hello world!", 10_000)
         );
 
         assertEquals(
-                "$6$rounds=5000$toolongsaltstrin$lQ8jolhgVRVhY4b5pZKaysCLi0QBxGoNeKQzQ3glMhwllF7oGDZxUhx1yxdYcz/e1JSbq3y6JMxxl8audkUEm0",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=5000$toolongsaltstring", "This is just a test".getBytes(charset)))
+                "$6$toolongsaltstrin$lQ8jolhgVRVhY4b5pZKaysCLi0QBxGoNeKQzQ3glMhwllF7oGDZxUhx1yxdYcz/e1JSbq3y6JMxxl8audkUEm0",
+                generate(ALGORITHM_SHA512CRYPT, "toolongsaltstring", "This is just a test", 5_000)
         );
 
         assertEquals(
                 "$6$rounds=1400$anotherlongsalts$POfYwTEok97VWcjxIiSOjiykti.o/pQs.wPvMxQ6Fm7I6IoYN3CmLs66x9t0oSwbtEW7o7UmJEiDwGqd8p4ur1",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=1400$anotherlongsaltstring", "a very much longer text to encrypt.  This one even stretches over morethan one line.".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "anotherlongsaltstring", "a very much longer text to encrypt.  This one even stretches over morethan one line.", 1_400)
         );
 
         assertEquals(
                 "$6$rounds=77777$short$WuQyW2YR.hBNpjjRhpYD/ifIw05xdfeEyQoMxIXbkvr0gge1a1x3yRULJ5CCaUeOxFmtlcGZelFl5CxtgfiAc0",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=77777$short", "we have a short salt string but not a short password".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "short", "we have a short salt string but not a short password", 77_777)
         );
 
         assertEquals(
                 "$6$rounds=123456$asaltof16chars..$BtCwjqMJGx5hrJhZywWvt0RLE8uZ4oPwcelCjmw2kSYu.Ec6ycULevoBK25fs2xXgMNrCzIMVcgEJAstJeonj1",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=123456$asaltof16chars..", "a short string".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "asaltof16chars..", "a short string", 123_456)
         );
 
         assertEquals(
                 "$6$rounds=1000$roundstoolow$kUMsbe306n21p9R.FRkW3IGn.S9NPN0x50YhH1xhLsPuWGsUSklZt58jaTfF4ZEQpyUNGc0dqbpBYYBaHHrsX.",
-                new String(UnixSHACryptPasswordUtil.encode("$6$rounds=10$roundstoolow", "the minimum number is still observed".getBytes(charset)))
+                generate(ALGORITHM_SHA512CRYPT, "roundstoolow", "the minimum number is still observed", 10)
         );
     }
 

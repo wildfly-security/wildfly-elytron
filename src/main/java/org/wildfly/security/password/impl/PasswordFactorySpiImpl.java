@@ -18,6 +18,9 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
+import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -35,8 +38,6 @@ import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 
     private static final String ALGORITHM_CLEAR = "clear";
-    private static final String ALGORITHM_SHA256CRYPT = "sha-256-crypt";
-    private static final String ALGORITHM_SHA512CRYPT = "sha-512-crypt";
 
     @Override
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
@@ -50,37 +51,43 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case UnixMD5CryptUtil.ALGORITHM_MD5_CRYPT: {
+            case ALGORITHM_MD5_CRYPT: {
                 if (keySpec instanceof UnixMD5CryptPasswordSpec) {
-                    final UnixMD5CryptPasswordSpec md5CryptKeySpec = (UnixMD5CryptPasswordSpec) keySpec;
-                    final byte[] salt = md5CryptKeySpec.getSalt().clone();
-                    final byte[] password = md5CryptKeySpec.getHashBytes().clone();
-                    final byte[] encodedPassword;
-
                     try {
-                        encodedPassword = UnixMD5CryptUtil.encode(password, salt);
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException("Cannot read key spec", e);
+                        return new UnixMD5CryptPasswordImpl((UnixMD5CryptPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
                     }
-                    return new UnixMD5CryptPasswordImpl(encodedPassword, salt);
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    try {
+                        return new UnixMD5CryptPasswordImpl((EncryptablePasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
+                } else {
+                    break;
                 }
-                break;
             }
             case ALGORITHM_SHA256CRYPT:
             case ALGORITHM_SHA512CRYPT: {
                 if (keySpec instanceof UnixSHACryptPasswordSpec) {
-                    UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) keySpec;
                     try {
-                        return new UnixSHACryptPasswordImpl(UnixSHACryptPasswordUtil.encode(spec));
-                    } catch (NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException("Cannot read key spec", e);
+                        return new UnixSHACryptPasswordImpl((UnixSHACryptPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    try {
+                        return new UnixSHACryptPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
                     }
                 } else {
                     break;
                 }
             }
         }
-        throw new InvalidKeySpecException();
+        throw new InvalidKeySpecException("Unknown algorithm");
     }
 
     @Override
@@ -110,7 +117,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case UnixMD5CryptUtil.ALGORITHM_MD5_CRYPT: {
+            case ALGORITHM_MD5_CRYPT: {
                 if (password instanceof UnixMD5CryptPassword) {
                     return new UnixMD5CryptPasswordImpl((UnixMD5CryptPassword) password);
                 } else {

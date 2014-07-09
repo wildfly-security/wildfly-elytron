@@ -22,39 +22,70 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.text.Normalizer;
 import java.util.Arrays;
 
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 
 /**
  * Implementation of the Unix MD5 Crypt password.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements UnixMD5CryptPassword {
 
     private static final long serialVersionUID = 8315521712238708363L;
 
+    static final String MD5 = "MD5";
+    static final byte[] MAGIC_BYTES = "$1$".getBytes(StandardCharsets.UTF_8);
+
     private final byte[] hash;
     private final byte[] salt;
 
-    UnixMD5CryptPasswordImpl(final byte[] hash, final byte[] salt) {
-        this.hash = hash;
-        this.salt = salt;
+    UnixMD5CryptPasswordImpl(final byte[] clonedHash, final byte[] clonedSalt) {
+        this.hash = clonedHash;
+        this.salt = clonedSalt;
     }
 
-    UnixMD5CryptPasswordImpl(UnixMD5CryptPassword unixMD5CryptPassword) {
-        this.hash = unixMD5CryptPassword.getHash().clone();
-        this.salt = unixMD5CryptPassword.getSalt().clone();
+    UnixMD5CryptPasswordImpl(UnixMD5CryptPassword password) {
+        this(password.getHash().clone(), truncatedClone(password.getSalt()));
+    }
+
+    UnixMD5CryptPasswordImpl(final UnixMD5CryptPasswordSpec spec) {
+        this(spec.getHash().clone(), truncatedClone(spec.getSalt()));
+    }
+
+    UnixMD5CryptPasswordImpl(final EncryptablePasswordSpec spec) throws NoSuchAlgorithmException {
+        this(spec.getPassword(), (HashedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+    }
+
+    private UnixMD5CryptPasswordImpl(final char[] password, final HashedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
+        this(password, truncatedClone(spec.getSalt()));
+    }
+
+    private UnixMD5CryptPasswordImpl(final char[] password, final byte[] clonedSalt) throws NoSuchAlgorithmException {
+        this(encode(getNormalizedPasswordBytes(password), clonedSalt), clonedSalt);
+    }
+
+    private static byte[] truncatedClone(final byte[] salt) {
+        if (salt.length <= 8) {
+            return salt.clone();
+        } else {
+            return Arrays.copyOf(salt, 8);
+        }
     }
 
     @Override
     public String getAlgorithm() {
-        return UnixMD5CryptUtil.ALGORITHM_MD5_CRYPT;
+        return ALGORITHM_MD5_CRYPT;
     }
 
     @Override
@@ -80,7 +111,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
     @Override
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType == UnixMD5CryptPasswordSpec.class) {
-            return keySpecType.cast(new UnixMD5CryptPasswordSpec(getEncoded(), getSalt()));
+            return keySpecType.cast(new UnixMD5CryptPasswordSpec(getHash(), getSalt()));
         }
         throw new InvalidKeySpecException();
     }
@@ -93,15 +124,119 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
         byte[] test;
         try {
-            test = UnixMD5CryptUtil.encode(guessAsBytes, getSalt());
+            test = encode(guessAsBytes, getSalt());
         } catch (NoSuchAlgorithmException e) {
             throw new InvalidKeyException("Cannot verify password", e);
         }
         return Arrays.equals(getHash(), test);
     }
 
+    private static byte[] getNormalizedPasswordBytes(final char[] characters) {
+        // normalize the password for verification - XXX double-check this idea
+        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
+    }
+
     @Override
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
         return keySpecType == UnixMD5CryptPasswordSpec.class;
+    }
+
+    /**
+     * Hashes the given password using the MD5 Crypt algorithm.
+     *
+     * @param password the password to be hashed
+     * @param salt the salt, will be truncated to an array of 8 bytes if an array larger than 8 bytes is given
+     * @return a {@code byte[]} containing the hashed password
+     * @throws NoSuchAlgorithmException if a {@code MessageDigest} object that implements MD5 cannot be retrieved
+     */
+    static byte[] encode(final byte[] password, byte[] salt) throws NoSuchAlgorithmException {
+        // Note that many of the comments below have been taken from or are based on comments from:
+        // ftp://ftp.arlut.utexas.edu/pub/java_hashes/SHA-crypt.txt and
+        // http://svnweb.freebsd.org/base/head/lib/libcrypt/crypt.c?revision=4246&view=markup (this is
+        // the original C implementation of the algorithm)
+
+        if (salt.length > 8) {
+            salt = Arrays.copyOfRange(salt, 0, 8);
+        }
+
+        // Add the password to digest A first since that is what is most unknown, then our magic
+        // string, then the raw salt
+        MessageDigest digestA = getMD5MessageDigest();
+        digestA.update(password);
+        digestA.update(MAGIC_BYTES);
+        digestA.update(salt);
+
+        // Add the password to digest B, followed by the salt, followed by the password again
+        MessageDigest digestB = getMD5MessageDigest();
+        digestB.update(password);
+        digestB.update(salt);
+        digestB.update(password);
+
+        // Finish digest B
+        byte[] finalDigest = digestB.digest();
+
+        // For each block of 16 bytes in the password string, add digest B to digest A and for the
+        // remaining N bytes of the password string, add the first N bytes of digest B to digest A
+        for (int i = password.length; i > 0; i -= 16) {
+            digestA.update(finalDigest, 0, i > 16 ? 16 : i);
+        }
+
+        // Don't leave anything around in vm they could use
+        Arrays.fill(finalDigest, (byte) 0);
+
+        // For each bit in the binary representation of the length of the password string up to
+        // and including the highest 1-digit, starting from the lowest bit position (numeric value 1):
+        // a) for a 1-digit, add a null character to digest A
+        // b) for a 0-digit, add the first character of the password to digest A
+        for (int i = password.length; i > 0; i >>= 1) {
+            if ((i & 1) == 1) {
+                digestA.update(finalDigest, 0, 1);
+            } else {
+                digestA.update(password, 0, 1);
+            }
+        }
+
+        // Finish digest A
+        finalDigest = digestA.digest();
+
+        // The algorithm uses a fixed number of iterations
+        for (int i = 0; i < 1000; i++) {
+
+            // Start a new digest
+            digestB = getMD5MessageDigest();
+
+            // If the round is odd, add the password to this digest
+            // Otherwise, add the previous round's digest (or digest A if this is round 0)
+            if ((i & 1) == 1) {
+                digestB.update(password);
+            } else {
+                digestB.update(finalDigest, 0, 16);
+            }
+
+            // If the round is not divisible by 3, add the salt
+            if ((i % 3) != 0) {
+                digestB.update(salt);
+            }
+
+            // If the round is not divisible by 7, add the password
+            if ((i % 7) != 0) {
+                digestB.update(password);
+            }
+
+            // If the round is odd, add the previous round's digest (or digest A if this is round 0)
+            // Otherwise, add the password
+            if ((i & 1) == 1) {
+                digestB.update(finalDigest, 0, 16);
+            } else {
+                digestB.update(password);
+            }
+
+            finalDigest = digestB.digest();
+        }
+        return finalDigest;
+    }
+
+    static MessageDigest getMD5MessageDigest() throws NoSuchAlgorithmException {
+        return MessageDigest.getInstance(MD5);
     }
 }
