@@ -18,41 +18,16 @@
 
 package org.wildfly.security.ldap;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.apacheds.LdapService;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
  *
+ * Note: Verify {@link ConnectionTests} is working first before focussing on errors in this test case.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class UserPasswordTest {
-
-    private static LdapService ldapService;
-
-    @BeforeClass
-    public static void beforeClass() throws Exception {
-        ldapService = LdapService.builder()
-            .setWorkingDir(new File("./target/apache-ds/working"))
-            .createDirectoryService("Test Service")
-            .addPartition("Elytron", "dc=elytron,dc=wildfly,dc=org", 5, "uid")
-            .importLdif(UserPasswordTest.class.getResourceAsStream("/Elytron.ldif"))
-            .addTcpServer("Default TCP", "0.0.0.0", 11390)
-            .start();
-    }
-
-    @AfterClass
-    public static void afterClass() throws IOException {
-        if (ldapService != null) {
-            ldapService.close();
-        }
-        ldapService = null;
-    }
+public class UserPasswordTests {
 
     @Test
     public void helloWorld() {

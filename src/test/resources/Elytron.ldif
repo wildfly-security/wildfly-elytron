@@ -5,25 +5,15 @@ objectclass: top
 objectclass: domain
 dc: elytron
 
-dn: uid=sha512User,dc=elytron,dc=wildfly,dc=org
+dn: uid=server,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: organizationalPerson
-cn: sha512User
-sn: sha512User
-uid: sha512User
-userPassword:: e3NoYTUxMn1yVytVTnB2Kzc1Z2k5RFZNdnMxTkVGMGxKV1ljQVNoenBDWXhBTlh3akdGS0l2bnFTWkx4bjZEUkhPbVVVWHltSzYyUDdScFFDSU9ZQ3I0bGlwWThwUT09
-
-dn: uid=cryptUser,dc=elytron,dc=wildfly,dc=org
-objectClass: top
-objectClass: inetOrgPerson
-objectClass: person
-objectClass: organizationalPerson
-cn: cryptUser
-sn: cryptUser
-uid: cryptUser
-userPassword:: e2NyeXB0fUZjb3B0aG9ybUlBcE0=
+cn: server
+sn: server
+uid: server
+userPassword:: c2VydmVyUGFzc3dvcmQ=
 
 dn: uid=plainUser,dc=elytron,dc=wildfly,dc=org
 objectClass: top
@@ -35,15 +25,15 @@ sn: plainUser
 uid: plainUser
 userPassword:: cGxhaW5QYXNzd29yZA==
 
-dn: uid=server,dc=elytron,dc=wildfly,dc=org
+dn: uid=sha512User,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: inetOrgPerson
 objectClass: person
 objectClass: organizationalPerson
-cn: server
-sn: server
-uid: server
-userPassword:: c2VydmVyUGFzc3dvcmQ=
+cn: sha512User
+sn: sha512User
+uid: sha512User
+userPassword:: e3NoYTUxMn1yVytVTnB2Kzc1Z2k5RFZNdnMxTkVGMGxKV1ljQVNoenBDWXhBTlh3akdGS0l2bnFTWkx4bjZEUkhPbVVVWHltSzYyUDdScFFDSU9ZQ3I0bGlwWThwUT09
 
 dn: uid=ssha512User,dc=elytron,dc=wildfly,dc=org
 objectClass: top
@@ -54,4 +44,15 @@ cn: ssha512User
 sn: ssha512User
 uid: ssha512User
 userPassword:: e3NzaGE1MTJ9TENnMmdRdTlwWnN2SDBqekVaZUYyWjVCU0U2NlZmQjRsc1RxTC81ZzFhNWtnUytidkZtelYzd0d2WFRVcDdLSXhhLzNHWk9jeUtCNEVISkdpRkdHbmNYbWZKRll5UEI3
+
+dn: uid=cryptUser,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+cn: cryptUser
+sn: cryptUser
+uid: cryptUser
+userPassword:: e2NyeXB0fUZjb3B0aG9ybUlBcE0=
+
 

@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
+
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
  *
