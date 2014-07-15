@@ -19,6 +19,7 @@
 package org.wildfly.security.password;
 
 import static java.lang.Math.max;
+import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 
 import java.security.spec.InvalidKeySpecException;
@@ -28,6 +29,7 @@ import java.util.NoSuchElementException;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
@@ -44,21 +46,22 @@ public class PasswordUtils {
 
     // the order or value of these numbers is not important, just their uniqueness
 
-    private static final int A_CRYPT_MD5        = 1;
-    private static final int A_BCRYPT           = 2;
-    private static final int A_BSD_NT_HASH      = 3;
-    private static final int A_CRYPT_SHA_256    = 4;
-    private static final int A_CRYPT_SHA_512    = 5;
-    private static final int A_SUN_MD5_CRYPT    = 6;
-    private static final int A_APACHE_HTDIGEST  = 7;
-    private static final int A_BSD_CRYPT_DES    = 8;
-    private static final int A_CRYPT_DES        = 9;
-    private static final int A_DIGEST_MD2       = 10;
-    private static final int A_DIGEST_MD5       = 11;
-    private static final int A_DIGEST_SHA_1     = 12;
-    private static final int A_DIGEST_SHA_256   = 13;
-    private static final int A_DIGEST_SHA_384   = 14;
-    private static final int A_DIGEST_SHA_512   = 15;
+    private static final int A_CRYPT_MD5                = 1;
+    private static final int A_BCRYPT                   = 2;
+    private static final int A_BSD_NT_HASH              = 3;
+    private static final int A_CRYPT_SHA_256            = 4;
+    private static final int A_CRYPT_SHA_512            = 5;
+    private static final int A_SUN_CRYPT_MD5            = 6;
+    private static final int A_APACHE_HTDIGEST          = 7;
+    private static final int A_BSD_CRYPT_DES            = 8;
+    private static final int A_CRYPT_DES                = 9;
+    private static final int A_DIGEST_MD2               = 10;
+    private static final int A_DIGEST_MD5               = 11;
+    private static final int A_DIGEST_SHA_1             = 12;
+    private static final int A_DIGEST_SHA_256           = 13;
+    private static final int A_DIGEST_SHA_384           = 14;
+    private static final int A_DIGEST_SHA_512           = 15;
+    private static final int A_SUN_CRYPT_MD5_BARE_SALT  = 16;
 
     private static int doIdentifyAlgorithm(char[] chars) {
         if (chars.length < 5) {
@@ -89,7 +92,16 @@ public class PasswordUtils {
                 }
             } else if (chars[4] == '$' || chars[4] == ',') {
                 if (chars[1] == 'm' && chars[2] == 'd' && chars[3] == '5') {
-                    return A_SUN_MD5_CRYPT;
+                    int idx = lastIndexOf(chars, '$');
+                    if (idx > 0) {
+                        if (chars[idx - 1] == '$') {
+                            return A_SUN_CRYPT_MD5;
+                        } else {
+                            return A_SUN_CRYPT_MD5_BARE_SALT;
+                        }
+                    } else {
+                        return 0;
+                    }
                 } else {
                     return 0;
                 }
@@ -139,21 +151,22 @@ public class PasswordUtils {
 
     static String getAlgorithmNameString(final int id) {
         switch (id) {
-            case A_CRYPT_MD5:       return "crypt-md5";
-            case A_BCRYPT:          return "bcrypt";
-            case A_BSD_NT_HASH:     return "bsd-nt-hash";
-            case A_CRYPT_SHA_256:   return ALGORITHM_SHA256CRYPT;
-            case A_CRYPT_SHA_512:   return ALGORITHM_SHA512CRYPT;
-            case A_SUN_MD5_CRYPT:   return "sun-crypt-md5";
-            case A_APACHE_HTDIGEST: return "apache-htdigest";
-            case A_BSD_CRYPT_DES:   return "bsd-crypt-des";
-            case A_CRYPT_DES:       return "crypt-des";
-            case A_DIGEST_MD2:      return "digest-md2";
-            case A_DIGEST_MD5:      return "digest-md5";
-            case A_DIGEST_SHA_1:    return "digest-sha-1";
-            case A_DIGEST_SHA_256:  return "digest-sha-256";
-            case A_DIGEST_SHA_384:  return "digest-sha-384";
-            case A_DIGEST_SHA_512:  return "digest-sha-512";
+            case A_CRYPT_MD5:               return "crypt-md5";
+            case A_BCRYPT:                  return "bcrypt";
+            case A_BSD_NT_HASH:             return "bsd-nt-hash";
+            case A_CRYPT_SHA_256:           return ALGORITHM_SHA256CRYPT;
+            case A_CRYPT_SHA_512:           return ALGORITHM_SHA512CRYPT;
+            case A_SUN_CRYPT_MD5:           return ALGORITHM_SUN_CRYPT_MD5;
+            case A_APACHE_HTDIGEST:         return "apache-htdigest";
+            case A_BSD_CRYPT_DES:           return "bsd-crypt-des";
+            case A_CRYPT_DES:               return "crypt-des";
+            case A_DIGEST_MD2:              return "digest-md2";
+            case A_DIGEST_MD5:              return "digest-md5";
+            case A_DIGEST_SHA_1:            return "digest-sha-1";
+            case A_DIGEST_SHA_256:          return "digest-sha-256";
+            case A_DIGEST_SHA_384:          return "digest-sha-384";
+            case A_DIGEST_SHA_512:          return "digest-sha-512";
+            case A_SUN_CRYPT_MD5_BARE_SALT: return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
             default: return null;
         }
     }
@@ -212,6 +225,32 @@ public class PasswordUtils {
                 b.append((char) (sb & 0xff));
             }
             b.append('$');
+            base64EncodeACryptLE(b, new IByteIter(spec.getHash(), MD5_IDX));
+        } else if (passwordSpec instanceof SunUnixMD5CryptPasswordSpec) {
+            final SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) passwordSpec;
+            final int iterationCount = spec.getIterationCount();
+            if (iterationCount > 0) {
+                b.append("$md5,rounds=").append(iterationCount).append('$');
+            } else {
+                b.append("$md5$");
+            }
+            final byte[] salt = spec.getSalt();
+            for (final byte sb : salt) {
+                b.append((char) (sb & 0xff));
+            }
+            switch (spec.getAlgorithm()) {
+                case ALGORITHM_SUN_CRYPT_MD5: {
+                    b.append("$$");
+                    break;
+                }
+                case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
+                    b.append("$");
+                    break;
+                }
+                default: {
+                    throw new InvalidKeySpecException("Unrecognized key spec algorithm");
+                }
+            }
             base64EncodeACryptLE(b, new IByteIter(spec.getHash(), MD5_IDX));
         } else if (passwordSpec instanceof UnixSHACryptPasswordSpec) {
             final UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) passwordSpec;
@@ -275,8 +314,11 @@ public class PasswordUtils {
             case A_CRYPT_SHA_512: {
                 return parseUnixSHA512CryptPasswordString(cryptString);
             }
-            case A_SUN_MD5_CRYPT: {
-                throw new UnsupportedOperationException("not supported yet");
+            case A_SUN_CRYPT_MD5: {
+                return parseSunUnixMD5CryptPasswordString(ALGORITHM_SUN_CRYPT_MD5, cryptString);
+            }
+            case A_SUN_CRYPT_MD5_BARE_SALT: {
+                return parseSunUnixMD5CryptPasswordString(ALGORITHM_SUN_CRYPT_MD5_BARE_SALT, cryptString);
             }
             case A_APACHE_HTDIGEST: {
                 throw new UnsupportedOperationException("not supported yet");
@@ -399,19 +441,20 @@ public class PasswordUtils {
         }
     }
 
-    private static int parseModCryptIterationCount(final CharIter iter) throws InvalidKeySpecException {
+    private static int parseModCryptIterationCount(final CharIter iter, final int minIterations, final int maxIterations,
+            final int defaultIterations) throws InvalidKeySpecException {
         int iterationCount;
         if (iter.contentEquals("rounds=")) {
             iter.skip(7);
             iterationCount = 0;
             for (int ch = iter.next(); ch != '$'; ch = iter.next()) {
-                if (iterationCount != 999_999_999) {
+                if (iterationCount != maxIterations) {
                     if (ch >= '0' && ch <= '9') {
                         // multiply by 10, add next
                         iterationCount = (iterationCount << 3) + (iterationCount << 1) + ch - '0';
-                        if (iterationCount > 999_999_999) {
+                        if (iterationCount > maxIterations) {
                             // stop overflow
-                            iterationCount = 999_999_999;
+                            iterationCount = maxIterations;
                         }
                     }
                 } else {
@@ -419,9 +462,9 @@ public class PasswordUtils {
                 }
             }
         } else {
-            iterationCount = 5_000;
+            iterationCount = defaultIterations;
         }
-        return max(1_000, iterationCount);
+        return max(minIterations, iterationCount);
     }
 
     private static final int[] MD5_IDX = {
@@ -509,7 +552,7 @@ public class PasswordUtils {
             final int iterationCount; // spec default
 
             // iteration count
-            iterationCount = parseModCryptIterationCount(i);
+            iterationCount = parseModCryptIterationCount(i, 1_000, 999_999_999, 5_000);
 
             int saltByteLen = i.distanceTo('$');
             if (saltByteLen == -1) {
@@ -556,6 +599,54 @@ public class PasswordUtils {
             base64DecodeACryptLE(i, hash, MD5_IDX);
 
             return new UnixMD5CryptPasswordSpec(hash, salt);
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+            throw new InvalidKeySpecException("Unexpected end of password string");
+        }
+    }
+
+    private static SunUnixMD5CryptPasswordSpec parseSunUnixMD5CryptPasswordString(final String algorithm, final char[] cryptString) throws InvalidKeySpecException {
+        assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
+        assert cryptString[1] == 'm'; // previously tested by doIdentifyAlgorithm
+        assert cryptString[2] == 'd'; // previously tested by doIdentifyAlgorithm
+        assert cryptString[3] == '5'; // previously tested by doIdentifyAlgorithm
+        assert (cryptString[4] == '$' || cryptString[4] == ','); // previously tested by doIdentifyAlgorithm
+        CharIter i = new CharIter(cryptString, 5);
+        try {
+            final int iterationCount;
+            if (cryptString[4] == ',') {
+                // The spec doesn't specify a maximum number of rounds but we're using 2,147,479,551
+                // to prevent overflow (2,147,483,647 - 4,096 = 2,147,479,551)
+                iterationCount = parseModCryptIterationCount(i, 0, 2_147_479_551, 0);
+            } else {
+                iterationCount = 0;
+            }
+            int saltByteLen = i.distanceTo('$');
+            if (saltByteLen == -1) {
+                throw new InvalidKeySpecException("No salt terminator given");
+            }
+
+            byte[] salt = new byte[saltByteLen];
+            int b = i.next();
+            int j = 0;
+            while (b != '$') {
+                salt[j++] = (byte) b;
+                b = i.next();
+            }
+
+            // Consume the second '$' after the salt, if present. Note that crypt strings returned
+            // by the Sun implementation can have one of the following two formats:
+            // 1) $md5[,rounds={rounds}]${salt}$${hash} (this format is more common)
+            // 2) $md5[,rounds={rounds}]${salt}${hash} (because there's only a single '$' after the
+            //                                          salt, this is referred to as a "bare salt")
+            if (algorithm.equals(ALGORITHM_SUN_CRYPT_MD5)) {
+                b = i.next();
+                assert b == '$'; // previously tested by doIdentifyAlgorithm
+            }
+
+            byte[] hash = new byte[MD5_IDX.length]; // key size == table length
+            base64DecodeACryptLE(i, hash, MD5_IDX);
+
+            return new SunUnixMD5CryptPasswordSpec(algorithm, hash, salt, iterationCount);
         } catch (ArrayIndexOutOfBoundsException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
         }
@@ -799,6 +890,13 @@ public class PasswordUtils {
 
     private static int indexOf(final char[] chars, final char c) {
         for (int i = 0; i < chars.length; i ++) {
+            if (chars[i] == c) return i;
+        }
+        return -1;
+    }
+
+    private static int lastIndexOf(final char[] chars, final char c) {
+        for (int i = (chars.length - 1); i >= 0; i--) {
             if (chars[i] == c) return i;
         }
         return -1;
