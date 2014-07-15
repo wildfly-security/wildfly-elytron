@@ -19,6 +19,7 @@
 package org.wildfly.security.password.impl;
 
 import static org.wildfly.security.password.impl.ClearPasswordImpl.*;
+import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
@@ -32,12 +33,14 @@ import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
+import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
+import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
@@ -65,6 +68,23 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return new ClearPasswordImpl(((ClearPasswordSpec) keySpec).getEncodedPassword().clone());
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     return new ClearPasswordImpl(((EncryptablePasswordSpec) keySpec).getPassword().clone());
+                } else {
+                    break;
+                }
+            }
+            case ALGORITHM_BCRYPT: {
+                if (keySpec instanceof BCryptPasswordSpec) {
+                    try {
+                        return new BCryptPasswordImpl((BCryptPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    try {
+                        return new BCryptPasswordImpl((EncryptablePasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
                 } else {
                     break;
                 }
@@ -184,6 +204,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof ClearPassword) {
                     return new ClearPasswordImpl((ClearPassword) password);
+                } else {
+                    break;
+                }
+            }
+            case ALGORITHM_BCRYPT: {
+                if (password instanceof BCryptPasswordImpl) {
+                    return password;
+                } else if (password instanceof BCryptPassword) {
+                    return new BCryptPasswordImpl((BCryptPassword) password);
                 } else {
                     break;
                 }

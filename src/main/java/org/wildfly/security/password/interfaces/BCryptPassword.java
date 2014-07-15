@@ -25,4 +25,15 @@ import org.wildfly.security.password.OneWayPassword;
  */
 public interface BCryptPassword extends OneWayPassword {
 
+    String ALGORITHM_BCRYPT = "bcrypt";
+
+    int BCRYPT_SALT_SIZE = 16;
+
+    int BCRYPT_HASH_SIZE = 23;
+
+    byte[] getHash();
+
+    byte[] getSalt();
+
+    int getIterationCount();
 }

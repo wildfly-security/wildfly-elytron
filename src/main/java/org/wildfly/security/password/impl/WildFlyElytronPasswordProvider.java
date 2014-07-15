@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.password.impl.BCryptPasswordImpl.*;
 import static org.wildfly.security.password.impl.ClearPasswordImpl.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
@@ -48,6 +49,7 @@ public final class WildFlyElytronPasswordProvider extends Provider {
         putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
         putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
         putService(new Service(this, "Password", ALGORITHM_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
     }
 
 }

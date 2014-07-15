@@ -26,6 +26,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 
+import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
@@ -192,7 +193,14 @@ public class PasswordUtils {
         }
         final StringBuilder b = new StringBuilder();
         if (passwordSpec instanceof BCryptPasswordSpec) {
-            throw new UnsupportedOperationException("not supported yet");
+            BCryptPasswordSpec spec = (BCryptPasswordSpec) passwordSpec;
+            b.append("$2a$");
+            if (spec.getIterationCount() < 10)
+                b.append(0);
+            b.append(spec.getIterationCount());
+            b.append("$");
+            base64EncodeBCrypt(b, new ByteIter(spec.getSalt()));
+            base64EncodeBCrypt(b, new ByteIter(spec.getHashBytes()));
         } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
             final BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) passwordSpec;
             final int salt = spec.getSalt();
@@ -303,7 +311,7 @@ public class PasswordUtils {
                 return parseUnixMD5CryptPasswordString(cryptString);
             }
             case A_BCRYPT: {
-                throw new UnsupportedOperationException("not supported yet");
+                return parseBCryptPasswordString(cryptString);
             }
             case A_BSD_NT_HASH: {
                 throw new UnsupportedOperationException("not supported yet");
@@ -652,6 +660,46 @@ public class PasswordUtils {
         }
     }
 
+    private static BCryptPasswordSpec parseBCryptPasswordString(final char[] cryptString) throws InvalidKeySpecException {
+        assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
+        assert cryptString[1] == '2'; // previously tested by doIdentifyAlgorithm
+        char minor = 0;
+        if (cryptString[2] != '$') {
+            minor = cryptString[2];
+            if (minor != 'a' && minor != 'x' && minor != 'y') {
+                throw new InvalidKeySpecException("Invalid minor version");
+            }
+            assert cryptString[3] == '$';
+        }
+
+        try {
+            // read the bcrypt cost (number of rounds in log format)
+            CharIter charIter = new CharIter(cryptString, minor == 0 ? 3 : 4);
+            int costLength = charIter.distanceTo('$');
+            if (costLength != 2) {
+                throw new InvalidKeySpecException("Invalid cost: must be a two digit integer");
+            }
+            char[] costDigits = new char[2];
+            costDigits[0] = (char) charIter.next();
+            costDigits[1] = (char) charIter.next();
+            int cost = Integer.parseInt(new String(costDigits));
+            // discard the '$'
+            charIter.skip(1);
+
+            // the next 22 characters correspond to the encoded salt - it is mapped to a 16-byte array after decoding.
+            byte[] decodedSalt = new byte[BCryptPassword.BCRYPT_SALT_SIZE];
+            base64DecodeBCrypt(charIter, decodedSalt);
+
+            // the final 31 characters correspond to the encoded password - it is mapped to a 23-byte array after decoding.
+            byte[] decodedPassword = new byte[BCryptPassword.BCRYPT_HASH_SIZE];
+            base64DecodeBCrypt(charIter, decodedPassword);
+
+            return new BCryptPasswordSpec(decodedPassword, decodedSalt, cost);
+        } catch (ArrayIndexOutOfBoundsException ignored) {
+            throw new InvalidKeySpecException("Unexpected end of password string");
+        }
+    }
+
     private static UnixDESCryptPasswordSpec parseUnixDESCryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
         assert cryptString.length == 13; // previously tested by doIdentifyAlgorithm
         // 12 bit salt
@@ -746,6 +794,29 @@ public class PasswordUtils {
     }
 
     /**
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
+     * standard scheme and the bcrypt alphabet.
+     *
+     * @param iter the character iterator
+     * @param target the target array
+     */
+    private static void base64DecodeBCrypt(CharIter iter, byte[] target) throws InvalidKeySpecException {
+        int len = target.length;
+        int a, b;
+        for (int i = 0; i < len; ++ i) {
+            a = base64DecodeBCrypt(iter.next());
+            b = base64DecodeBCrypt(iter.next());
+            target[i] = (byte) (a << 2 | b >> 4);
+            if (++ i >= len) break;
+            a = base64DecodeBCrypt(iter.next());
+            target[i] = (byte) (b << 4 | a >> 2);
+            if (++ i >= len) break;
+            b = base64DecodeBCrypt(iter.next());
+            target[i] = (byte) (a << 6 | b >> 0);
+        }
+    }
+
+    /**
      * Base-64 decode a single character with alphabet A (DES/MD5/SHA crypt).
      *
      * @param ch the character
@@ -791,6 +862,29 @@ public class PasswordUtils {
         }
     }
 
+    /**
+     * Base-64 decode a single character with the bcrypt alphabet.
+     *
+     * @param ch the character
+     * @return the byte
+     * @throws InvalidKeySpecException if the character is not in the alphabet
+     */
+    private static int base64DecodeBCrypt(int ch) throws InvalidKeySpecException {
+        if (ch == '.') {
+            return 0;
+        } else if (ch == '/') {
+            return 1;
+        } else if (ch >= 'A' && ch <= 'Z') {
+            return ch + 2 - 'A';
+        } else if (ch >= 'a' && ch <= 'z') {
+            return ch + 28 - 'a';
+        } else if (ch >= '0' && ch <= '9') {
+            return ch + 54 - '0';
+        } else {
+            throw new InvalidKeySpecException("Invalid character encountered");
+        }
+    }
+
     private static void base64EncodeA(StringBuilder target, ByteIter src) throws InvalidKeySpecException {
         int a, b;
         while (src.hasNext()) {
@@ -830,6 +924,27 @@ public class PasswordUtils {
             a = src.next();
             base64EncodeB(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
             base64EncodeB(target, a); // bottom 6 bits
+        }
+    }
+
+    private static void base64EncodeBCrypt(StringBuilder target, ByteIter src) throws InvalidKeySpecException {
+        int a, b;
+        while (src.hasNext()) {
+            a = src.next();
+            base64EncodeBCrypt(target, a >> 2); // top 6 bits
+            if (! src.hasNext()) {
+                base64EncodeBCrypt(target, a << 4); // bottom 2 bits + 0000
+                return;
+            }
+            b = src.next();
+            base64EncodeBCrypt(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
+            if (! src.hasNext()) {
+                base64EncodeBCrypt(target, b << 2); // bottom 4 bits + 00
+                return;
+            }
+            a = src.next();
+            base64EncodeBCrypt(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
+            base64EncodeBCrypt(target, a); // bottom 6 bits
         }
     }
 
@@ -884,6 +999,23 @@ public class PasswordUtils {
             c = '+';
         } else { // a == 63
             c = '/';
+        }
+        target.append(c);
+    }
+
+    private static void base64EncodeBCrypt(StringBuilder target, int a) {
+        a &= 0b0011_1111;
+        final char c;
+        if (a == 0) {
+            c = '.';
+        } else if (a == 1) {
+            c = '/';
+        } else if (a < 28) {
+            c = (char) (a + 'A' - 2);
+        } else if (a < 54) {
+            c = (char) (a + 'a' - 28);
+        } else { // a < 64
+            c = (char) (a + '0' - 54);
         }
         target.append(c);
     }
