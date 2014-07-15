@@ -36,6 +36,8 @@
     </parent>
 
     <properties>
+        <version.org.apache.directory.server>2.0.0-M17</version.org.apache.directory.server>
+        <version.org.apache.directory.api>1.0.0-M23</version.org.apache.directory.api>        
         <version.org.jboss.logging>3.1.3.GA</version.org.jboss.logging>
         <version.org.jboss.logmanager>1.5.0.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j>1.0.0.GA</version.org.jboss.logmanager.log4j>
@@ -163,6 +165,25 @@
                                         <ignore/>
                                     </action>
                                 </pluginExecution>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>
+                                            org.jboss.seven2six
+                                        </groupId>
+                                        <artifactId>
+                                            seven2six
+                                        </artifactId>
+                                        <versionRange>
+                                            [1.1.Final,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>transform</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
@@ -170,6 +191,7 @@
             </plugins>
         </pluginManagement>
     </build>
+     
 
     <dependencies>
         <dependency>
@@ -290,6 +312,51 @@
             <version>${version.junit.junit}</version>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>org.apache.directory.jdbm</groupId>
+            <artifactId>apacheds-jdbm1</artifactId>
+            <version>2.0.0-M2</version>
+            <type>jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-core-annotations</artifactId>
+            <version>${version.org.apache.directory.server}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.directory.jdbm</groupId>
+                    <artifactId>apacheds-jdbm1</artifactId>
+                </exclusion>
+            </exclusions>            
+        </dependency>
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-core-api</artifactId>
+            <version>${version.org.apache.directory.server}</version>
+            <scope>test</scope>
+        </dependency>        
+        <dependency>
+            <groupId>org.apache.directory.server</groupId>
+            <artifactId>apacheds-protocol-ldap</artifactId>
+            <version>${version.org.apache.directory.server}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.directory.jdbm</groupId>
+                    <artifactId>apacheds-jdbm1</artifactId>
+                </exclusion>
+            </exclusions>            
+        </dependency>                     
+        <dependency>
+            <groupId>org.apache.directory.api</groupId>
+            <artifactId>api-ldap-codec-standalone</artifactId>
+            <version>${version.org.apache.directory.api}</version>
+            <scope>test</scope>
+        </dependency>
+                 
     </dependencies>
 
 </project>
