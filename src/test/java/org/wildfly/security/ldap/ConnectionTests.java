@@ -37,7 +37,7 @@ public class ConnectionTests {
 
     @Test
     public void testServer() throws NamingException {
-        testUser("uid=server,dc=elytron,dc=wildfly,dc=org", "serverPassword");
+        testUser(LdapTest.SERVER_DN, LdapTest.SERVER_CREDENTIAL);
     }
 
     @Test

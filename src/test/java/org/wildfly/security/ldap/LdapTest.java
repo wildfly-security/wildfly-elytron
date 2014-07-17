@@ -34,9 +34,12 @@ import org.wildfly.security.apacheds.LdapService;
 @RunWith(Suite.class)
 @Suite.SuiteClasses(
     {ConnectionTests.class,
+     PrincipalMappingTests.class,
      UserPasswordTests.class})
 public class LdapTest {
 
+    static final String SERVER_DN = "uid=server,dc=elytron,dc=wildfly,dc=org";
+    static final String SERVER_CREDENTIAL = "serverPassword";
     static final int LDAP_PORT = 11390;
 
     private static LdapService ldapService;

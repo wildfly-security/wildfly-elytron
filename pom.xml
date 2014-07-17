@@ -191,7 +191,6 @@
             </plugins>
         </pluginManagement>
     </build>
-     
 
     <dependencies>
         <dependency>
@@ -330,14 +329,14 @@
                     <groupId>org.apache.directory.jdbm</groupId>
                     <artifactId>apacheds-jdbm1</artifactId>
                 </exclusion>
-            </exclusions>            
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-core-api</artifactId>
             <version>${version.org.apache.directory.server}</version>
             <scope>test</scope>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-protocol-ldap</artifactId>
@@ -348,15 +347,14 @@
                     <groupId>org.apache.directory.jdbm</groupId>
                     <artifactId>apacheds-jdbm1</artifactId>
                 </exclusion>
-            </exclusions>            
-        </dependency>                     
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>org.apache.directory.api</groupId>
             <artifactId>api-ldap-codec-standalone</artifactId>
             <version>${version.org.apache.directory.api}</version>
             <scope>test</scope>
         </dependency>
-                 
     </dependencies>
 
 </project>
