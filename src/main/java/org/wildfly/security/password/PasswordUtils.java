@@ -196,15 +196,15 @@ public class PasswordUtils {
         } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
             final BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) passwordSpec;
             final int salt = spec.getSalt();
-            base64EncodeA(b, salt >> 18);
-            base64EncodeA(b, salt >> 12);
-            base64EncodeA(b, salt >> 6);
             base64EncodeA(b, salt);
+            base64EncodeA(b, salt >> 6);
+            base64EncodeA(b, salt >> 12);
+            base64EncodeA(b, salt >> 18);
             final int iterationCount = spec.getIterationCount();
-            base64EncodeA(b, iterationCount >> 18);
-            base64EncodeA(b, iterationCount >> 12);
-            base64EncodeA(b, iterationCount >> 6);
             base64EncodeA(b, iterationCount);
+            base64EncodeA(b, iterationCount >> 6);
+            base64EncodeA(b, iterationCount >> 12);
+            base64EncodeA(b, iterationCount >> 18);
             base64EncodeA(b, new ByteIter(spec.getHashBytes()));
         } else if (passwordSpec instanceof TrivialDigestPasswordSpec) {
             final TrivialDigestPasswordSpec spec = (TrivialDigestPasswordSpec) passwordSpec;
@@ -214,9 +214,9 @@ public class PasswordUtils {
         } else if (passwordSpec instanceof UnixDESCryptPasswordSpec) {
             final UnixDESCryptPasswordSpec spec = (UnixDESCryptPasswordSpec) passwordSpec;
             final short salt = spec.getSalt();
-            base64EncodeA(b, salt >> 6);
             base64EncodeA(b, salt);
-            base64EncodeA(b, new ByteIter(spec.getHashBytes()));
+            base64EncodeA(b, salt >> 6);
+            base64EncodeA(b, new ByteIter(spec.getHash()));
         } else if (passwordSpec instanceof UnixMD5CryptPasswordSpec) {
             b.append("$1$");
             final UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) passwordSpec;
@@ -655,7 +655,7 @@ public class PasswordUtils {
     private static UnixDESCryptPasswordSpec parseUnixDESCryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
         assert cryptString.length == 13; // previously tested by doIdentifyAlgorithm
         // 12 bit salt
-        short salt = (short) (base64DecodeA(cryptString[0]) << 6 | base64DecodeA(cryptString[1]));
+        short salt = (short) (base64DecodeA(cryptString[0]) | base64DecodeA(cryptString[1]) << 6);
         // 64 bit hash
         byte[] hash = new byte[8];
         base64DecodeA(new CharIter(cryptString, 2), hash);

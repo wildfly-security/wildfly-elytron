@@ -27,7 +27,7 @@ public final class UnixDESCryptPasswordSpec implements PasswordSpec {
         this.salt = salt;
     }
 
-    public byte[] getHashBytes() {
+    public byte[] getHash() {
         return hashBytes;
     }
 
