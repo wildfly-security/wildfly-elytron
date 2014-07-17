@@ -19,5 +19,4 @@
 org.wildfly.security.sasl.localuser.LocalUserClientFactory
 org.wildfly.security.sasl.gssapi.GssapiClientFactory
 org.wildfly.security.sasl.anonymous.AnonymousClientFactory
-
-
+org.wildfly.security.sasl.md5digest.MD5DigestClientFactory
