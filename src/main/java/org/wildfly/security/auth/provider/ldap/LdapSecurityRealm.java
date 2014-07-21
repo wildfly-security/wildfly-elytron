@@ -169,8 +169,8 @@ class LdapSecurityRealm implements SecurityRealm {
                         distinguishedName = (String) dnAttribute.get();
                     }
                 }
-
             } else {
+                simpleName = providedName;
                 SearchControls searchControls = new SearchControls();
                 searchControls.setSearchScope(principalMapping.recursive ? SearchControls.SUBTREE_SCOPE
                         : SearchControls.ONELEVEL_SCOPE);

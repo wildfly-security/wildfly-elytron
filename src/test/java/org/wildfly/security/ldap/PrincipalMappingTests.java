@@ -18,7 +18,6 @@
 
 package org.wildfly.security.ldap;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +29,7 @@ import javax.security.auth.x500.X500Principal;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -72,11 +72,169 @@ public class PrincipalMappingTests {
 
         Principal principal = realm.mapNameToPrincipal("plainUser");
         assertNotNull(principal);
-        assertTrue(principal instanceof X500Principal);
+        assertTrue("Principal Type", principal instanceof X500Principal);
         assertTrue("Mapped DN", "uid=plainUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
 
         principal = realm.mapNameToPrincipal("nobody");
         assertNull(principal);
     }
+
+    @Test
+    public void testDnToSimple() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(true)
+                .setPrincipalUseDn(false)
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setNameAttribute("uid")
+                .build()
+                .build();
+
+        Principal principal = realm.mapNameToPrincipal("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof NamePrincipal);
+        assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
+
+        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        assertNull(principal);
+    }
+
+    @Test
+    public void testSimpleToSimpleNoLookup() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(false)
+                .setPrincipalUseDn(false)
+                .setValidatePresence(false)
+                .setReloadPrincipalName(false)
+                .build()
+                .build();
+
+        /*
+         * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
+         */
+
+        Principal principal = realm.mapNameToPrincipal("otherUser");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof NamePrincipal);
+        assertTrue("Mapped DN", "otherUser".equalsIgnoreCase(principal.getName()));
+    }
+
+    @Test
+    public void testSimpleToSimpleValidate() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(false)
+                .setPrincipalUseDn(false)
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setNameAttribute("uid")
+                .setReloadPrincipalName(false)
+                .setValidatePresence(true)
+                .build()
+                .build();
+
+        Principal principal = realm.mapNameToPrincipal("PlainUser");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof NamePrincipal);
+        assertTrue("Mapped DN", "PlainUser".equalsIgnoreCase(principal.getName()));
+
+        principal = realm.mapNameToPrincipal("nobody");
+        assertNull(principal);
+    }
+
+    @Test
+    public void testSimpleToSimpleReload() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(false)
+                .setPrincipalUseDn(false)
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setNameAttribute("uid")
+                .setReloadPrincipalName(true)
+                .setValidatePresence(true)
+                .build()
+                .build();
+
+        Principal principal = realm.mapNameToPrincipal("PlainUser");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof NamePrincipal);
+        assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
+
+        principal = realm.mapNameToPrincipal("nobody");
+        assertNull(principal);
+    }
+
+    @Test
+    public void testDnToDnNoLookup() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(true)
+                .setPrincipalUseDn(true)
+                .setValidatePresence(false)
+                .setReloadPrincipalName(false)
+                .build()
+                .build();
+
+        /*
+         * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
+         */
+
+        Principal principal = realm.mapNameToPrincipal("uid=otherUser,dc=elytron,dc=wildfly,dc=org");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof X500Principal);
+        assertTrue("Mapped DN", "uid=otherUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
+    }
+
+    @Test
+    public void testDnToDnVerify() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(true)
+                .setPrincipalUseDn(true)
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setReloadPrincipalName(false)
+                .setValidatePresence(true)
+                .build()
+                .build();
+
+        Principal principal = realm.mapNameToPrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof X500Principal);
+        assertTrue("Mapped DN", "UID=PlainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
+
+        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        assertNull(principal);
+    }
+
+    /* - Not supported with current schema in Apache DS
+    @Test
+    public void testDnToDnReload() {
+        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .principalMapping()
+                .setNameIsDn(true)
+                .setPrincipalUseDn(true)
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setReloadPrincipalName(true)
+                .setValidatePresence(true)
+                .setDnAttribute("dn")
+                .build()
+                .build();
+
+        Principal principal = realm.mapNameToPrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
+        assertNotNull(principal);
+        assertTrue("Principal Type", principal instanceof X500Principal);
+        assertTrue("Mapped DN", "UID=plainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
+
+        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        assertNull(principal);
+    }
+    */
 
 }
