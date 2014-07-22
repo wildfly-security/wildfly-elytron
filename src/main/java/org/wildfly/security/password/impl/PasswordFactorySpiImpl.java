@@ -57,7 +57,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_MD5_CRYPT: {
+            case ALGORITHM_CRYPT_MD5: {
                 if (keySpec instanceof UnixMD5CryptPasswordSpec) {
                     try {
                         return new UnixMD5CryptPasswordImpl((UnixMD5CryptPasswordSpec) keySpec);
@@ -157,7 +157,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_MD5_CRYPT: {
+            case ALGORITHM_CRYPT_MD5: {
                 if (password instanceof UnixMD5CryptPasswordImpl) {
                     return password;
                 } else if (password instanceof UnixMD5CryptPassword) {

@@ -18,10 +18,13 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -44,41 +47,75 @@ import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 public class UnixMD5CryptUtilTest {
 
     @Test
+    public void testParseCryptString() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        String cryptString = "$1$saltsalt$qjXMvbEw8oaL.CzflDtaK/";
+
+        // Get the spec by parsing the crypt string
+        UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+
+        // Use the spec to build a new crypt string and compare it to the original
+        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+    }
+
+    @Test
     public void testSaltTruncated() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String result = getEncoded("password", "thissaltstringistoolong");
-        assertTrue("Didn't truncate the salt", result.startsWith("$1$thissalt$"));
-        assertEquals("$1$thissalt$B4AUaoQwRs3ex2F95O4ut/", result);
-    }
+        final String passwordStr = "password";
+        byte[] salt = "thissaltstringistoolong".getBytes(StandardCharsets.UTF_8);
 
-    @Test
-    public void testEmptyPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String result = getEncoded("", "1234");
-        assertEquals("$1$1234$.hKN8.QH1vHyGVLB072C0.", result);
-    }
-
-    @Test
-    public void testShortPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String result = getEncoded("Hello world!", "saltstring");
-        assertEquals("$1$saltstri$YMyguxXMBpd2TEZ.vS/3q1", result);
-    }
-    @Test
-    public void testLongPassword() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String password = "This is a very very very long password. This is another sentence in the password. This is a test.";
-        String salt = "saltstringsaltstring";
-        String result = getEncoded(password, salt);
-        assertEquals("$1$saltstri$IQDu.vaa8hwk2UnOjF2PP.", result);
-    }
-
-    @Test
-    public void testCaseFromOriginalCImplementation() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        String result = getEncoded("0.s0.l33t", "deadbeef");
-        assertEquals("$1$deadbeef$0Huu6KHrKLVWfqa4WljDE0", result);
-    }
-
-    private String getEncoded(String passwordStr, String saltStr) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] salt = saltStr.getBytes(StandardCharsets.UTF_8);
+        // Create a new password using EncryptablePasswordSpec
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_MD5_CRYPT, new EncryptablePasswordSpec(passwordStr.toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
-        return PasswordUtils.getCryptString(spi.engineGetKeySpec(UnixMD5CryptPassword.ALGORITHM_MD5_CRYPT, password, UnixMD5CryptPasswordSpec.class));
+        final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new EncryptablePasswordSpec(passwordStr.toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
+
+        // Check if the salt was truncated in the resulting crypt string
+        final String cryptString = PasswordUtils.getCryptString(spi.engineGetKeySpec(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, password, UnixMD5CryptPasswordSpec.class));
+        assertTrue("Didn't truncate the salt", cryptString.startsWith("$1$thissalt$"));
+        assertEquals("$1$thissalt$B4AUaoQwRs3ex2F95O4ut/", cryptString);
+    }
+
+    private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
+        UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+
+        // Use the spec to generate a UnixMD5CryptPasswordImpl and then verify the hash using the correct password
+        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
+        UnixMD5CryptPasswordImpl password = (UnixMD5CryptPasswordImpl) spi.engineGeneratePassword(PasswordUtils.identifyAlgorithm(cryptString), spec);
+        final String algorithm = password.getAlgorithm();
+        assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
+        assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
+
+        // Create a new password using EncryptablePasswordSpec and check if the hash matches the hash from the spec
+        UnixMD5CryptPasswordImpl password2 = (UnixMD5CryptPasswordImpl) spi.engineGeneratePassword(algorithm,
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(0, spec.getSalt())));
+        assertArrayEquals(spec.getHash(), password2.getHash());
+
+        // Use the new password to obtain a spec and then check if this spec yields the same crypt string
+        spec = spi.engineGetKeySpec(PasswordUtils.identifyAlgorithm(cryptString), password2, UnixMD5CryptPasswordSpec.class);
+        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+    }
+
+    @Test
+    public void testEmptyPassword() throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        String password = "";
+        String cryptString = "$1$1234$.hKN8.QH1vHyGVLB072C0.";
+        generateAndVerify(cryptString, password);
+    }
+
+    @Test
+    public void testShortPassword() throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        String password = "Hello world!";
+        String cryptString = "$1$saltstri$YMyguxXMBpd2TEZ.vS/3q1";
+        generateAndVerify(cryptString, password);
+    }
+    @Test
+    public void testLongPassword() throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        String password = "This is a very very very long password. This is another sentence in the password. This is a test.";
+        String cryptString = "$1$saltstri$IQDu.vaa8hwk2UnOjF2PP.";
+        generateAndVerify(cryptString, password);
+    }
+
+    @Test
+    public void testCaseFromOriginalCImplementation() throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        String password = "0.s0.l33t";
+        String cryptString = "$1$deadbeef$0Huu6KHrKLVWfqa4WljDE0";
+        generateAndVerify(cryptString, password);
     }
 }

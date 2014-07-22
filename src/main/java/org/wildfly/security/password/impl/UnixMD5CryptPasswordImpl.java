@@ -85,7 +85,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     public String getAlgorithm() {
-        return ALGORITHM_MD5_CRYPT;
+        return ALGORITHM_CRYPT_MD5;
     }
 
     @Override

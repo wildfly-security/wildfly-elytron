@@ -25,7 +25,7 @@ import org.wildfly.security.password.OneWayPassword;
  */
 public interface UnixMD5CryptPassword extends OneWayPassword {
 
-    String ALGORITHM_MD5_CRYPT = "md5-crypt";
+    String ALGORITHM_CRYPT_MD5 = "crypt-md5";
 
     byte[] getSalt();
 
