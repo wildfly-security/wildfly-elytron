@@ -19,12 +19,15 @@ package org.wildfly.security.ldap;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Provider;
+import java.security.Security;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.wildfly.security.apacheds.LdapService;
+import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 
 /**
  * Suite for running a set of LDAP tests against a single server.
@@ -43,9 +46,12 @@ public class LdapTest {
     static final int LDAP_PORT = 11390;
 
     private static LdapService ldapService;
+    private static final Provider provider = new WildFlyElytronPasswordProvider();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+        Security.addProvider(provider);
+
         ldapService = LdapService.builder()
             .setWorkingDir(new File("./target/apache-ds/working"))
             .createDirectoryService("Test Service")
@@ -61,6 +67,8 @@ public class LdapTest {
             ldapService.close();
         }
         ldapService = null;
+
+        Security.removeProvider(provider.getName());
     }
 
 }

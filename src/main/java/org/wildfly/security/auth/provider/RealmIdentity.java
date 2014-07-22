@@ -29,7 +29,8 @@ import org.wildfly.security.auth.verifier.Verifier;
  * A representation of a pre-authentication identity.
  *
  * The life of a {@code RealmIdentity} is short and is for a specific authentication attempt. A {@link SecurityRealm} creating a
- * {@code RealmIdentity} does not confirm the existance of the identity.
+ * {@code RealmIdentity} does not confirm the existence of the identity.
+ *
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -40,6 +41,8 @@ public interface RealmIdentity {
      *
      * Note: {@link #createSecurityIdentity()} may be sufficient to make this redundant, just retaining as we currently support
      * early {@link Principal} access.
+     *
+     * This method can return {@code null} if there is no mapping from the identity to a {@link Principal}
      *
      * @return The {@link Principal} for this identity.
      */

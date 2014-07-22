@@ -46,7 +46,7 @@ import org.wildfly.security.util.CharacterArrayIterator;
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class PasswordUtils {
+public final class PasswordUtils {
     private PasswordUtils() {}
 
     // the order or value of these numbers is not important, just their uniqueness

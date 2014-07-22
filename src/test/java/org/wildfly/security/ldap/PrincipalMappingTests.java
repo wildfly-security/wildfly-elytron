@@ -30,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.provider.RealmIdentity;
 import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -70,12 +71,14 @@ public class PrincipalMappingTests {
                 .build()
                 .build();
 
-        Principal principal = realm.mapNameToPrincipal("plainUser");
+        RealmIdentity identity = realm.createRealmIdentity("plainUser");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof X500Principal);
         assertTrue("Mapped DN", "uid=plainUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
 
-        principal = realm.mapNameToPrincipal("nobody");
+        identity = realm.createRealmIdentity("nobody");
+        principal = identity.getPrincipal();
         assertNull(principal);
     }
 
@@ -91,36 +94,39 @@ public class PrincipalMappingTests {
                 .build()
                 .build();
 
-        Principal principal = realm.mapNameToPrincipal("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof NamePrincipal);
         assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
 
-        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        principal = identity.getPrincipal();
         assertNull(principal);
     }
 
-    @Test
-    public void testSimpleToSimpleNoLookup() {
-        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(false)
-                .setValidatePresence(false)
-                .setReloadPrincipalName(false)
-                .build()
-                .build();
-
-        /*
-         * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
-         */
-
-        Principal principal = realm.mapNameToPrincipal("otherUser");
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof NamePrincipal);
-        assertTrue("Mapped DN", "otherUser".equalsIgnoreCase(principal.getName()));
-    }
+//    @Test
+//    public void testSimpleToSimpleNoLookup() {
+//        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
+//                .setDirContextFactory(dirContextFactory)
+//                .principalMapping()
+//                .setNameIsDn(false)
+//                .setPrincipalUseDn(false)
+//                .setValidatePresence(false)
+//                .setReloadPrincipalName(false)
+//                .build()
+//                .build();
+//
+//        /*
+//         * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
+//         */
+//
+//        RealmIdentity identity = realm.createRealmIdentity("otherUser");
+//        Principal principal = identity.getPrincipal();
+//        assertNotNull(principal);
+//        assertTrue("Principal Type", principal instanceof NamePrincipal);
+//        assertTrue("Mapped DN", "otherUser".equalsIgnoreCase(principal.getName()));
+//    }
 
     @Test
     public void testSimpleToSimpleValidate() {
@@ -136,12 +142,14 @@ public class PrincipalMappingTests {
                 .build()
                 .build();
 
-        Principal principal = realm.mapNameToPrincipal("PlainUser");
+        RealmIdentity identity = realm.createRealmIdentity("PlainUser");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof NamePrincipal);
         assertTrue("Mapped DN", "PlainUser".equalsIgnoreCase(principal.getName()));
 
-        principal = realm.mapNameToPrincipal("nobody");
+        identity = realm.createRealmIdentity("nobody");
+        principal = identity.getPrincipal();
         assertNull(principal);
     }
 
@@ -159,12 +167,14 @@ public class PrincipalMappingTests {
                 .build()
                 .build();
 
-        Principal principal = realm.mapNameToPrincipal("PlainUser");
+        RealmIdentity identity = realm.createRealmIdentity("PlainUser");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof NamePrincipal);
         assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
 
-        principal = realm.mapNameToPrincipal("nobody");
+        identity = realm.createRealmIdentity("nobody");
+        principal = identity.getPrincipal();
         assertNull(principal);
     }
 
@@ -184,7 +194,8 @@ public class PrincipalMappingTests {
          * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
          */
 
-        Principal principal = realm.mapNameToPrincipal("uid=otherUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.createRealmIdentity("uid=otherUser,dc=elytron,dc=wildfly,dc=org");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof X500Principal);
         assertTrue("Mapped DN", "uid=otherUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
@@ -203,38 +214,15 @@ public class PrincipalMappingTests {
                 .build()
                 .build();
 
-        Principal principal = realm.mapNameToPrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.createRealmIdentity("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
+        Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof X500Principal);
         assertTrue("Mapped DN", "UID=PlainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
 
-        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        principal = identity.getPrincipal();
         assertNull(principal);
     }
-
-    /* - Not supported with current schema in Apache DS
-    @Test
-    public void testDnToDnReload() {
-        SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(true)
-                .setPrincipalUseDn(true)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setReloadPrincipalName(true)
-                .setValidatePresence(true)
-                .setDnAttribute("dn")
-                .build()
-                .build();
-
-        Principal principal = realm.mapNameToPrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof X500Principal);
-        assertTrue("Mapped DN", "UID=plainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
-
-        principal = realm.mapNameToPrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org");
-        assertNull(principal);
-    }
-    */
 
 }

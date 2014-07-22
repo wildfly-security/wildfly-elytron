@@ -18,6 +18,14 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.wildfly.security.auth.provider.CredentialSupport;
+import org.wildfly.security.auth.util.NameRewriter;
+
 /**
  * Security realm implementation backed by LDAP.
  *
@@ -26,14 +34,24 @@ package org.wildfly.security.auth.provider.ldap;
 public class LdapSecurityRealmBuilder {
 
     private boolean built = false;
+    private String realmName = null;
     private DirContextFactory dirContextFactory;
+    private List<NameRewriter> nameRewriters = new LinkedList<NameRewriter>();
     private LdapSecurityRealm.PrincipalMapping principalMapping;
+    private List<CredentialLoader> credentialLoaders = new LinkedList<CredentialLoader>();
 
     private LdapSecurityRealmBuilder() {
     }
 
     public static LdapSecurityRealmBuilder builder() {
         return new LdapSecurityRealmBuilder();
+    }
+
+    public LdapSecurityRealmBuilder setRealmName(final String realmName) {
+        assertNotBuilt();
+        this.realmName = realmName;
+
+        return this;
     }
 
     public LdapSecurityRealmBuilder setDirContextFactory(final DirContextFactory dirContextFactory) {
@@ -43,10 +61,23 @@ public class LdapSecurityRealmBuilder {
         return this;
     }
 
+    public LdapSecurityRealmBuilder addNameRewriter(final NameRewriter nameReWriter) {
+        assertNotBuilt();
+        nameRewriters.add(nameReWriter);
+
+        return this;
+    }
+
     public PrincipalMappingBuilder principalMapping() {
         assertNotBuilt();
 
         return new PrincipalMappingBuilder();
+    }
+
+    public UserPasswordCredentialLoaderBuilder userPassword() {
+        assertNotBuilt();
+
+        return new UserPasswordCredentialLoaderBuilder();
     }
 
     public LdapSecurityRealm build() {
@@ -59,7 +90,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, principalMapping);
+        return new LdapSecurityRealm(realmName, dirContextFactory, nameRewriters, principalMapping, credentialLoaders);
     }
 
     private void assertNotBuilt() {
@@ -154,6 +185,44 @@ public class LdapSecurityRealmBuilder {
             LdapSecurityRealmBuilder.this.assertNotBuilt();
         }
 
+    }
+
+    public class UserPasswordCredentialLoaderBuilder {
+
+        private boolean built = false;
+        private String userPasswordAttributeName = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
+        private Map<Class<?>, CredentialSupport> credentialSupportMap = new HashMap<Class<?>, CredentialSupport>();
+
+        public UserPasswordCredentialLoaderBuilder setUserPasswordAttributeName(final String userPasswordAttributeName) {
+            assertNotBuilt();
+            this.userPasswordAttributeName = userPasswordAttributeName;
+
+            return this;
+        }
+
+        public UserPasswordCredentialLoaderBuilder addCredentialSupport(final Class<?> credentialType, final CredentialSupport support) {
+            assertNotBuilt();
+            credentialSupportMap.put(credentialType, support);
+
+            return this;
+        }
+
+        public LdapSecurityRealmBuilder build() {
+            assertNotBuilt();
+
+            built = true;
+            credentialLoaders.add(new UserPasswordCredentialLoader(userPasswordAttributeName, credentialSupportMap));
+
+            return LdapSecurityRealmBuilder.this;
+        }
+
+        private void assertNotBuilt() {
+            if (built) {
+                throw new IllegalStateException("Builder has already been built.");
+            }
+
+            LdapSecurityRealmBuilder.this.assertNotBuilt();
+        }
     }
 
 }
