@@ -19,64 +19,46 @@
 package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
-import java.util.Set;
-import org.wildfly.security.auth.SecurityIdentity;
-import org.wildfly.security.auth.verifier.Verifier;
-import org.wildfly.security.auth.login.AuthenticationException;
 
 /**
- * A single authentication realm.  A realm is backed by a single homogeneous store of identities and credentials.
+ * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public interface SecurityRealm {
 
     /**
-     * Perform a realm-specific mapping of the given name to a principal.  This may include rewriting of the
-     * given name.
+     * For the given name create the {@link RealmIdentity} in the context of this security realm.
      *
-     * @param name the original name
-     * @return the principal
+     * Any validation / name mapping is an implementation detail for the realm.
+     *
+     * A realm returning a {@link RealmIdentity} does not confirm the existence of an identity, a realm may also return
+     * {@code null} from this method if the provided {code name} can not be mapped to an identity although this is not required
+     * of the realm.
+     *
+     * @param name The name to use when creating the {@link RealmIdentity}
+     * @return The {@link RealmIdentity} for the provided {@code name} or {@code null}
      */
-    Principal mapNameToPrincipal(String name);
+    RealmIdentity createRealmIdentity(String name);
 
     /**
-     * Acquire a credential of the given type from the realm.
+     * Create a {@link RealmIdentity} from an existing {@link Principal}.
      *
-     * @param credentialType the credential type class
-     * @param principal the principal to examine
-     * @param <C> the credential type
-     * @return the credential, or {@code null} if the principal has no credential of that type
+     * TODO - Not entirely convinced we need this yet,
+     *
+     * @param principal The principal to use to create the {@link RealmIdentity}
+     * @return The {@link RealmIdentity} for the provided {@code principal} or {@code null}
      */
-    <C> C getCredential(Class<C> credentialType, Principal principal);
+    RealmIdentity createRealmIdentity(Principal principal);
 
     /**
-     * Use a verifier to acquire proof of authentication.
-     *
-     * @param principal the principal to authenticate
-     * @param verifier the verifier containing evidence of authenticity
-     * @param <P> the type of proof returned by the verifier, or {@link Void} if the verifier cannot return proof
-     * @return the proof, or {@code null} if the verifier cannot return proof
-     * @throws AuthenticationException if the authentication of the principal cannot be verified based on the evidence
-     */
-    <P> P proveAuthentic(Principal principal, Verifier<P> verifier) throws AuthenticationException;
-
-    /**
-     * Determine whether a given credential is definitely supported, possibly supported (for some identities), or
-     * definitely not supported.
+     * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
+     * supported.
      *
      * @param credentialType the credential type
      * @return the level of support for this credential type
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType);
 
-    /**
-     * Determine whether a given credential is definitely supported, possibly supported, or
-     * definitely not supported for a specific identity.
-     *
-     * @param principal the identity's principal
-     * @param credentialType the credential type
-     * @return the level of support for this credential type
-     */
-    CredentialSupport getCredentialSupport(Principal principal, Class<?> credentialType);
-
-    SecurityIdentity createSecurityIdentity(Principal principal);
 }

@@ -37,12 +37,15 @@ import org.wildfly.security.password.Password;
  * for very large security realms.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
+    private final String realmName;
     private final NameRewriter[] rewriters;
     private volatile Map<NamePrincipal, Password> map = Collections.emptyMap();
 
-    public SimpleMapBackedSecurityRealm(final NameRewriter... rewriters) {
+    public SimpleMapBackedSecurityRealm(final String realmName, final NameRewriter... rewriters) {
+        this.realmName = realmName;
         this.rewriters = rewriters.clone();
     }
 
@@ -56,16 +59,20 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         map = passwordMap;
     }
 
-    public Principal mapNameToPrincipal(String name) {
+    @Override
+    public RealmIdentity createRealmIdentity(String name) {
         for (NameRewriter rewriter : rewriters) {
             name = rewriter.rewriteName(name);
         }
-        return new NamePrincipal(name);
+        return createRealmIdentity(new NamePrincipal(name));
     }
 
-    public <C> C getCredential(final Class<C> credentialType, final Principal principal) {
-        final Password password = map.get(principal);
-        return credentialType.isInstance(password) ? credentialType.cast(password) : null;
+    @Override
+    public RealmIdentity createRealmIdentity(Principal principal) {
+        if (principal instanceof NamePrincipal == false) {
+            throw new IllegalArgumentException("Invalid Principal type");
+        }
+        return new SimpleMapRealmIdentity(principal);
     }
 
     private boolean checkType(final Set<Class<?>> supportedTypes, HashSet<Class<?>> checked, Class<?> actualType) {
@@ -79,29 +86,61 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         return false;
     }
 
+    @Override
     public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
         return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.POSSIBLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
     }
 
-    public CredentialSupport getCredentialSupport(final Principal principal, final Class<?> credentialType) {
-        final Password password = map.get(principal);
-        return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
-    }
 
-    public <P> P proveAuthentic(final Principal principal, final Verifier<P> verifier) throws AuthenticationException {
-        final Password password = map.get(principal);
-        if (password != null) {
-            Class<?> clazz = password.getClass();
-            if (! checkType(verifier.getSupportedCredentialTypes(), new HashSet<Class<?>>(), clazz)) {
-                throw new AuthenticationException("Unsupported credential type");
-            }
-            return verifier.performVerification(password);
-        } else {
-            throw new AuthenticationException("No such user");
+    private class SimpleMapRealmIdentity implements RealmIdentity {
+
+        private final Principal principal;
+
+        SimpleMapRealmIdentity(final Principal principal) {
+            this.principal = principal;
         }
-    }
 
-    public SecurityIdentity createSecurityIdentity(final Principal principal) {
-        return null;
+        @Override
+        public Principal getPrincipal() {
+            return principal;
+        }
+
+        @Override
+        public String getRealmName() {
+            return realmName;
+        }
+
+        @Override
+        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+            final Password password = map.get(principal);
+            return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+        }
+
+        @Override
+        public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
+            final Password password = map.get(principal);
+            if (password != null) {
+                Class<?> clazz = password.getClass();
+                if (! checkType(verifier.getSupportedCredentialTypes(), new HashSet<Class<?>>(), clazz)) {
+                    throw new AuthenticationException("Unsupported credential type");
+                }
+                return verifier.performVerification(password);
+            } else {
+                throw new AuthenticationException("No such user");
+            }
+        }
+
+        @Override
+        public <C> C getCredential(Class<C> credentialType) {
+            final Password password = map.get(principal);
+            return credentialType.isInstance(password) ? credentialType.cast(password) : null;
+        }
+
+        @Override
+        public SecurityIdentity createSecurityIdentity() {
+            // TODO Add SecurityIdentity Support ELY-33
+            return null;
+        }
+
     }
 }

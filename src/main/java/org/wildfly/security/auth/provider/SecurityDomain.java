@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.provider;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,6 +28,9 @@ import org.wildfly.security.auth.util.RealmMapper;
 
 /**
  * A security domain.  Security domains encapsulate a set of security policies.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class SecurityDomain {
     private final Map<String, SecurityRealm> realmMap;
@@ -60,13 +62,12 @@ public final class SecurityDomain {
     }
 
     /**
-     * Map and rewrite the given name.
+     * Map the provided name to a {@link RealmIdentity}
      *
-     * @param name the name to map
-     *
-     * @return the rewritten name with its realm
+     * @param name The name to map.
+     * @return The identity for the name.
      */
-    public PrincipalAndRealmName mapName(String name) {
+    public RealmIdentity mapName(String name) {
         for (NameRewriter rewriter : preRealmRewriters) {
             name = rewriter.rewriteName(name);
         }
@@ -82,8 +83,7 @@ public final class SecurityDomain {
         for (NameRewriter rewriter : postRealmRewriters) {
             name = rewriter.rewriteName(name);
         }
-        final Principal principal = securityRealm.mapNameToPrincipal(name);
-        return new PrincipalAndRealmName(principal, realmName);
+        return securityRealm.createRealmIdentity(name);
     }
 
     SecurityRealm getRealm(final String realmName) {
@@ -124,11 +124,7 @@ public final class SecurityDomain {
         return realm.getCredentialSupport(credentialType);
     }
 
-    CredentialSupport getCredentialSupport(final String realmName, final Principal principal, final Class<?> credentialType) {
-        final SecurityRealm realm = getRealm(realmName);
-        return realm.getCredentialSupport(principal, credentialType);
-    }
-
+    // TODO - Any reason to not be fluent?
     public static final class Builder {
         private static final NameRewriter[] NONE = new NameRewriter[0];
 
