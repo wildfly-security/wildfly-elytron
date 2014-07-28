@@ -27,6 +27,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
 
 import org.wildfly.security.password.interfaces.BCryptPassword;
+import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
@@ -204,18 +205,19 @@ public class PasswordUtils {
             base64EncodeBCrypt(b, new ByteArrayIterator(spec.getSalt()));
             base64EncodeBCrypt(b, new ByteArrayIterator(spec.getHashBytes()));
         } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
+            b.append("_");
             final BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) passwordSpec;
-            final int salt = spec.getSalt();
-            base64EncodeA(b, salt);
-            base64EncodeA(b, salt >> 6);
-            base64EncodeA(b, salt >> 12);
-            base64EncodeA(b, salt >> 18);
             final int iterationCount = spec.getIterationCount();
             base64EncodeA(b, iterationCount);
             base64EncodeA(b, iterationCount >> 6);
             base64EncodeA(b, iterationCount >> 12);
             base64EncodeA(b, iterationCount >> 18);
-            base64EncodeA(b, new ByteArrayIterator(spec.getHashBytes()));
+            final int salt = spec.getSalt();
+            base64EncodeA(b, salt);
+            base64EncodeA(b, salt >> 6);
+            base64EncodeA(b, salt >> 12);
+            base64EncodeA(b, salt >> 18);
+            base64EncodeA(b, new ByteArrayIterator(spec.getHash()));
         } else if (passwordSpec instanceof TrivialDigestPasswordSpec) {
             final TrivialDigestPasswordSpec spec = (TrivialDigestPasswordSpec) passwordSpec;
             final String algorithm = spec.getAlgorithm();
@@ -632,14 +634,20 @@ public class PasswordUtils {
     }
 
     private static BSDUnixDESCryptPasswordSpec parseBSDUnixDESCryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
+        // Note that crypt strings have the format: "_{rounds}{salt}{hash}" as described
+        // in the "DES Extended Format" section here: http://www.freebsd.org/cgi/man.cgi?crypt(3)
+
         assert cryptString.length == 20;
-        assert cryptString[0] == '_';
-        // 24 bit iteration count
-        int iterationCount = base64DecodeA(cryptString[1]) << 18 | base64DecodeA(cryptString[2]) << 12 | base64DecodeA(cryptString[3]) << 6 | base64DecodeA(cryptString[4]);
-        // 24 bit salt
-        int salt = base64DecodeA(cryptString[5]) << 18 | base64DecodeA(cryptString[6]) << 12 | base64DecodeA(cryptString[7]) << 6 | base64DecodeA(cryptString[8]);
-        // 64 bit hash
-        byte[] hash = new byte[8];
+        assert cryptString[0] == '_'; // previously tested by doIdentifyAlgorithm
+
+        // The next 4 characters correspond to the encoded number of rounds - this is decoded to a 24-bit integer
+        int iterationCount = base64DecodeA(cryptString[1]) | base64DecodeA(cryptString[2]) << 6 | base64DecodeA(cryptString[3]) << 12 | base64DecodeA(cryptString[4]) << 18;
+
+        // The next 4 characters correspond to the encoded salt - this is decoded to a 24-bit integer
+        int salt = base64DecodeA(cryptString[5]) | base64DecodeA(cryptString[6]) << 6 | base64DecodeA(cryptString[7]) << 12 | base64DecodeA(cryptString[8]) << 18;
+
+        // The final 11 characters correspond to the encoded password - this is decoded to a 64-bit hash
+        byte[] hash = new byte[BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE];
         base64DecodeA(new CharacterArrayIterator(cryptString, 9), hash);
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }

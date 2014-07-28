@@ -24,6 +24,12 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface BSDUnixDESCryptPassword extends OneWayPassword {
+    String ALGORITHM_BSD_CRYPT_DES = "bsd-crypt-des";
+
+    int BSD_CRYPT_DES_HASH_SIZE = 8;
+
+    int BSD_CRYPT_DES_SALT_SIZE = 3;
+
     int getIterationCount();
 
     int getSalt();

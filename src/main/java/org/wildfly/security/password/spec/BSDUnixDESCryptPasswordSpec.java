@@ -19,18 +19,18 @@
 package org.wildfly.security.password.spec;
 
 public final class BSDUnixDESCryptPasswordSpec implements PasswordSpec {
-    private final byte[] hashBytes;
+    private final byte[] hash;
     private final int salt;
     private final int iterationCount;
 
-    public BSDUnixDESCryptPasswordSpec(final byte[] hashBytes, final int salt, final int iterationCount) {
-        this.hashBytes = hashBytes;
+    public BSDUnixDESCryptPasswordSpec(final byte[] hash, final int salt, final int iterationCount) {
+        this.hash = hash;
         this.salt = salt;
         this.iterationCount = iterationCount;
     }
 
-    public byte[] getHashBytes() {
-        return hashBytes;
+    public byte[] getHash() {
+        return hash;
     }
 
     public int getSalt() {
