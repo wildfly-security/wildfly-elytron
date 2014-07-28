@@ -92,8 +92,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_SHA256CRYPT:
-            case ALGORITHM_SHA512CRYPT: {
+            case ALGORITHM_CRYPT_SHA_256:
+            case ALGORITHM_CRYPT_SHA_512: {
                 if (keySpec instanceof UnixSHACryptPasswordSpec) {
                     try {
                         return new UnixSHACryptPasswordImpl((UnixSHACryptPasswordSpec) keySpec);
@@ -176,8 +176,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_SHA256CRYPT:
-            case ALGORITHM_SHA512CRYPT: {
+            case ALGORITHM_CRYPT_SHA_256:
+            case ALGORITHM_CRYPT_SHA_512: {
                 if (password instanceof UnixSHACryptPasswordImpl) {
                     return password;
                 } else if (password instanceof UnixSHACryptPassword) {

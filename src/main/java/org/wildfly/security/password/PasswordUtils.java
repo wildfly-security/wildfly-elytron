@@ -154,8 +154,8 @@ public class PasswordUtils {
             case A_CRYPT_MD5:               return "crypt-md5";
             case A_BCRYPT:                  return "bcrypt";
             case A_BSD_NT_HASH:             return "bsd-nt-hash";
-            case A_CRYPT_SHA_256:           return ALGORITHM_SHA256CRYPT;
-            case A_CRYPT_SHA_512:           return ALGORITHM_SHA512CRYPT;
+            case A_CRYPT_SHA_256:           return ALGORITHM_CRYPT_SHA_256;
+            case A_CRYPT_SHA_512:           return ALGORITHM_CRYPT_SHA_512;
             case A_SUN_CRYPT_MD5:           return ALGORITHM_SUN_CRYPT_MD5;
             case A_APACHE_HTDIGEST:         return "apache-htdigest";
             case A_BSD_CRYPT_DES:           return "bsd-crypt-des";
@@ -256,12 +256,12 @@ public class PasswordUtils {
             final UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) passwordSpec;
             final int[] interleave;
             switch (spec.getAlgorithm()) {
-                case ALGORITHM_SHA256CRYPT: {
+                case ALGORITHM_CRYPT_SHA_256: {
                     b.append("$5$");
                     interleave = SHA_256_IDX;
                     break;
                 }
-                case ALGORITHM_SHA512CRYPT: {
+                case ALGORITHM_CRYPT_SHA_512: {
                     b.append("$6$");
                     interleave = SHA_512_IDX;
                     break;
@@ -536,14 +536,14 @@ public class PasswordUtils {
         assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
         assert cryptString[1] == '5'; // previously tested by doIdentifyAlgorithm
         assert cryptString[2] == '$'; // previously tested by doIdentifyAlgorithm
-        return parseUnixSHACryptPasswordSpec(cryptString, SHA_256_IDX, ALGORITHM_SHA256CRYPT);
+        return parseUnixSHACryptPasswordSpec(cryptString, SHA_256_IDX, ALGORITHM_CRYPT_SHA_256);
     }
 
     private static UnixSHACryptPasswordSpec parseUnixSHA512CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
         assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
         assert cryptString[1] == '6'; // previously tested by doIdentifyAlgorithm
         assert cryptString[2] == '$'; // previously tested by doIdentifyAlgorithm
-        return parseUnixSHACryptPasswordSpec(cryptString, SHA_512_IDX, ALGORITHM_SHA512CRYPT);
+        return parseUnixSHACryptPasswordSpec(cryptString, SHA_512_IDX, ALGORITHM_CRYPT_SHA_512);
     }
 
     private static UnixSHACryptPasswordSpec parseUnixSHACryptPasswordSpec(final char[] cryptString, final int[] table, final String algorithm) throws InvalidKeySpecException {

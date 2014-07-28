@@ -58,7 +58,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         if (algorithm == null) {
             throw new IllegalArgumentException("Algorithm is null");
         }
-        if (!ALGORITHM_SHA256CRYPT.equals(algorithm) && !ALGORITHM_SHA512CRYPT.equals(algorithm)) {
+        if (!ALGORITHM_CRYPT_SHA_256.equals(algorithm) && !ALGORITHM_CRYPT_SHA_512.equals(algorithm)) {
             throw new IllegalArgumentException("Unsupported algorithm given");
         }
 
@@ -401,16 +401,16 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
-            case ALGORITHM_SHA256CRYPT: return MessageDigest.getInstance("SHA-256");
-            case ALGORITHM_SHA512CRYPT: return MessageDigest.getInstance("SHA-512");
+            case ALGORITHM_CRYPT_SHA_256: return MessageDigest.getInstance("SHA-256");
+            case ALGORITHM_CRYPT_SHA_512: return MessageDigest.getInstance("SHA-512");
             default: throw new NoSuchAlgorithmException(algorithm);
         }
     }
 
     private static int getInputSize(final String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
-            case ALGORITHM_SHA256CRYPT: return 32;
-            case ALGORITHM_SHA512CRYPT: return 64;
+            case ALGORITHM_CRYPT_SHA_256: return 32;
+            case ALGORITHM_CRYPT_SHA_512: return 64;
             default: throw new NoSuchAlgorithmException(algorithm);
         }
     }
