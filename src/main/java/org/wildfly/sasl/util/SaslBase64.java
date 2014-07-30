@@ -99,7 +99,7 @@ public final class SaslBase64 {
             if (t2 == -1) throw truncatedInput();
             if (t2 == -2) throw unexpectedPadding();
             if (count == len) throw truncatedInput();
-            target.append(new byte[] {(byte)((t1 & 0xff) << 2 | (t2 & 0xff) >>> 4)});
+            target.append((byte)((t1 & 0xff) << 2 | (t2 & 0xff) >>> 4));
 
             // bottom 4 bits + top 4 bits of the third byte - or == if it's the end
             t1 = decodeByte(encoded[offset + count++]);
@@ -113,13 +113,13 @@ public final class SaslBase64 {
                 }
                 return count;
             }
-            target.append(new byte[] {(byte) ((t2 & 0xff) << 4 | (t1 & 0xff) >>> 2)});
+            target.append((byte) ((t2 & 0xff) << 4 | (t1 & 0xff) >>> 2));
 
             // top 2 bits of the third byte + bottom 6 bits of the fourth byte - or = if it's the end
             t2 = decodeByte(encoded[offset + count++]);
             if (t2 == -1) throw truncatedInput();
             if (t2 == -2) return count;
-            target.append(new byte[] {(byte) ((t1 & 0xff) << 6 | t2)});
+            target.append((byte) ((t1 & 0xff) << 6 | t2));
         }
         return count;
     }

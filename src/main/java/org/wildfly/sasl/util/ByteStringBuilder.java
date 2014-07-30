@@ -44,6 +44,11 @@ public final class ByteStringBuilder {
         return this;
     }
 
+    public ByteStringBuilder append(byte b) {
+        doAppend(b);
+        return this;
+    }
+    
     public ByteStringBuilder append(char c) {
         return appendUtf8Raw((byte) c);
     }
