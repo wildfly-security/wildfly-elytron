@@ -39,10 +39,10 @@ public class UnixCryptTest {
     @Test
     public void testBasicString() throws InvalidKeySpecException, InvalidKeyException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final Password password = spi.engineGeneratePassword("des-crypt", new EncryptablePasswordSpec("test".toCharArray(), new HashedPasswordAlgorithmSpec(0, null)));
-        assertTrue(spi.engineVerify("des-crypt", password, "test".toCharArray()));
-        assertFalse(spi.engineVerify("des-crypt", password, "test_".toCharArray()));
-        assertFalse(spi.engineVerify("des-crypt", password, "test_foo_bar".toCharArray()));
+        final Password password = spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new HashedPasswordAlgorithmSpec(0, null)));
+        assertTrue(spi.engineVerify("crypt-des", password, "test".toCharArray()));
+        assertFalse(spi.engineVerify("crypt-des", password, "test_".toCharArray()));
+        assertFalse(spi.engineVerify("crypt-des", password, "test_foo_bar".toCharArray()));
     }
 
     @Test
@@ -53,16 +53,16 @@ public class UnixCryptTest {
         salt[0] = (byte) (spec.getSalt() >> 8);
         salt[1] = (byte) (spec.getSalt() >> 0);
         assertEquals("ABwOg1D2JDxIQ", PasswordUtils.getCryptString(spec));
-        final UnixDESCryptPassword p2 = (UnixDESCryptPassword) spi.engineGeneratePassword("des-crypt", new EncryptablePasswordSpec("test".toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
+        final UnixDESCryptPassword p2 = (UnixDESCryptPassword) spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
         assertEquals("Salts unmatched", spec.getSalt(), p2.getSalt());
-        assertEquals("ABwOg1D2JDxIQ", PasswordUtils.getCryptString(spi.engineGetKeySpec("des-crypt", p2, UnixDESCryptPasswordSpec.class)));
+        assertEquals("ABwOg1D2JDxIQ", PasswordUtils.getCryptString(spi.engineGetKeySpec("crypt-des", p2, UnixDESCryptPasswordSpec.class)));
     }
 
     @Test
     public void testKnownStrings() throws InvalidKeySpecException, InvalidKeyException {
         PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        assertTrue(spi.engineVerify("des-crypt", spi.engineGeneratePassword("des-crypt", PasswordUtils.parseCryptString("xyf/bMLia/2RU")), "testtest".toCharArray()));
-        assertTrue(spi.engineVerify("des-crypt", spi.engineGeneratePassword("des-crypt", PasswordUtils.parseCryptString("ABwOg1D2JDxIQ")), "test".toCharArray()));
-        assertTrue(spi.engineVerify("des-crypt", spi.engineGeneratePassword("des-crypt", PasswordUtils.parseCryptString("./derspCn2Kmo")), "testtestextra".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtils.parseCryptString("xyf/bMLia/2RU")), "testtest".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtils.parseCryptString("ABwOg1D2JDxIQ")), "test".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtils.parseCryptString("./derspCn2Kmo")), "testtestextra".toCharArray()));
     }
 }

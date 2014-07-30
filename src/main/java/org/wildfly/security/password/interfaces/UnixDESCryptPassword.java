@@ -24,7 +24,7 @@ import org.wildfly.security.password.OneWayPassword;
  *
  */
 public interface UnixDESCryptPassword extends OneWayPassword {
-    String ALGORITHM_DES_CRYPT = "des-crypt";
+    String ALGORITHM_CRYPT_DES = "crypt-des";
 
     short getSalt();
 

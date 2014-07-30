@@ -128,7 +128,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_DES_CRYPT: {
+            case ALGORITHM_CRYPT_DES: {
                 if (keySpec instanceof UnixDESCryptPasswordSpec) {
                     return new UnixDESCryptPasswordImpl((UnixDESCryptPasswordSpec) keySpec);
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
@@ -217,7 +217,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_DES_CRYPT: {
+            case ALGORITHM_CRYPT_DES: {
                 if (password instanceof UnixDESCryptPasswordImpl) {
                     return password;
                 } else if (password instanceof UnixDESCryptPassword) {
