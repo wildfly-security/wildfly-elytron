@@ -21,6 +21,7 @@ package org.wildfly.security.password.impl;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
+
 import javax.security.auth.DestroyFailedException;
 
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -29,6 +30,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassword {
 
     private static final long serialVersionUID = -3949572193624333918L;
+
+    public static final String ALGORITHM_CLEAR = "clear";
 
     private char[] password;
 

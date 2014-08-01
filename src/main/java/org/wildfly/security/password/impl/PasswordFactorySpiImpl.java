@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.password.impl.ClearPasswordImpl.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
@@ -45,12 +46,19 @@ import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
+/**
+ *
+ *
+ */
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
-
-    private static final String ALGORITHM_CLEAR = "clear";
 
     @Override
     protected Password engineGeneratePassword(final String algorithm, final KeySpec keySpec) throws InvalidKeySpecException {
+        /*
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * updated.
+         */
+
         switch (algorithm) {
             case ALGORITHM_CLEAR: {
                 if (keySpec instanceof ClearPasswordSpec) {
@@ -164,6 +172,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return abstractPassword;
             }
         }
+
+        /*
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * updated.
+         */
+
         switch (algorithm) {
             case ALGORITHM_CLEAR: {
                 if (password instanceof ClearPasswordImpl) {

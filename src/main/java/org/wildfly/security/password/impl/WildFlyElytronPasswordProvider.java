@@ -18,6 +18,13 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.password.impl.ClearPasswordImpl.*;
+import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
+import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
+import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
+import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
+import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
+
 import java.security.Provider;
 import java.util.Collections;
 
@@ -28,6 +35,19 @@ public final class WildFlyElytronPasswordProvider extends Provider {
 
     public WildFlyElytronPasswordProvider() {
         super("WildFlyElytronPassword", 1.0, "WildFly Elytron Password Provider");
-        putService(new Service(this, "Password", "clear", PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_CLEAR, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_SUN_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_SUN_CRYPT_MD5_BARE_SALT, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_CRYPT_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_CRYPT_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_MD2, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, "Password", ALGORITHM_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
     }
+
 }
