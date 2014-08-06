@@ -81,7 +81,7 @@ public interface RealmIdentity {
     <C> C getCredential(Class<C> credentialType);
 
     /**
-     * Create tje {@link SecurityIdentity} that will be associated with the {@link IdentityContext}
+     * Create the {@link SecurityIdentity} that will be associated with the {@link IdentityContext}
      *
      * Note: The caller is responsible for ensuring the identity is actually authenticated.
      *
