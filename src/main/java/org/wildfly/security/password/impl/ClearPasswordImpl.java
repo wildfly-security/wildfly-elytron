@@ -31,8 +31,6 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
 
     private static final long serialVersionUID = -3949572193624333918L;
 
-    public static final String ALGORITHM_CLEAR = "clear";
-
     private char[] password;
 
     ClearPasswordImpl(final char[] password) {

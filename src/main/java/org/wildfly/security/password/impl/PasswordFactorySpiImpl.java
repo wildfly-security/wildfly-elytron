@@ -18,7 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
-import static org.wildfly.security.password.impl.ClearPasswordImpl.*;
+import static org.wildfly.security.password.interfaces.ClearPassword.*;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;

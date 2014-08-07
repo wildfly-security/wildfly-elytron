@@ -19,8 +19,6 @@
 package org.wildfly.security.password.impl;
 
 import java.io.Serializable;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
