@@ -61,7 +61,7 @@ public final class PasswordFactory {
                 return new PasswordFactory(provider, algorithm, (PasswordFactorySpi) service.newInstance(null));
             }
         }
-        return null;
+        throw new NoSuchAlgorithmException();
     }
 
     /**
