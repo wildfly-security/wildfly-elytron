@@ -37,6 +37,7 @@ public final class ByteStringBuilder {
 
     public ByteStringBuilder(final byte[] content) {
         this.content = content.clone();
+        this.length = this.content.length;
     }
 
     public ByteStringBuilder append(boolean b) {
