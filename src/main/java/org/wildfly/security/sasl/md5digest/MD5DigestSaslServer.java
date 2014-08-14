@@ -170,9 +170,9 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         
         // charset
         if (Charsets.UTF_8.equals(charset)) {
-            challenge.append("charset=\"");
+            challenge.append("charset=");
             challenge.append("utf-8");
-            challenge.append("\"").append(DELIMITER);
+            challenge.append(DELIMITER);
         }
         
         // cipher
@@ -194,7 +194,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             nonce = null;
         }
         
-        data = parsedDigestResponse.get("nonce-count");
+        data = parsedDigestResponse.get("nc");
         if (data != null) {
             nonceCount = Integer.valueOf(new String(data));
         } else {
@@ -249,7 +249,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
         byte[] cnonce = parsedDigestResponse.get("cnonce");
         
-        if (parsedDigestResponse.get("nonce-count") == null) {
+        if (parsedDigestResponse.get("nc") == null) {
             throw new SaslException(getMechanismName() + ": missing nonce-count");
         }
         

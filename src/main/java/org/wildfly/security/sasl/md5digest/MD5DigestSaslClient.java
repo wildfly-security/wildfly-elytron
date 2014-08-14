@@ -178,9 +178,9 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
         // charset
         if (Charsets.UTF_8.equals(charset)) {
-            digestResponse.append("charset=\"");
+            digestResponse.append("charset=");
             digestResponse.append("utf-8");
-            digestResponse.append("\"").append(DELIMITER);
+            digestResponse.append(DELIMITER);
         }
 
         
@@ -215,9 +215,9 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
-        digestResponse.append("realm=");
+        digestResponse.append("realm=\"");
         digestResponse.append(SaslQuote.quote(realm).getBytes(charset));
-        digestResponse.append(DELIMITER);
+        digestResponse.append("\"").append(DELIMITER);
 
         // nonce
         digestResponse.append("nonce=\"");
