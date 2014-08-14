@@ -38,6 +38,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
+import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 
 /**
@@ -71,6 +72,7 @@ public class UserPasswordTests {
                 .userPassword()
                 .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .addCredentialSupport(TrivialDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(TrivialSaltedDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .build()
                 .build();
 
@@ -87,6 +89,7 @@ public class UserPasswordTests {
                 .userPassword()
                 .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .addCredentialSupport(TrivialDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(TrivialSaltedDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .build()
                 .build();
     }
@@ -109,7 +112,7 @@ public class UserPasswordTests {
 
     @Test
     public void testSsha512User() throws Exception {
-        performSimpleNameTest("ssha512User", TrivialDigestPassword.class, TrivialDigestPassword.ALGORITHM_DIGEST_SHA_512, "ssha512Password".toCharArray());
+        performSimpleNameTest("ssha512User", TrivialSaltedDigestPassword.class, TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
     }
 
     @Test

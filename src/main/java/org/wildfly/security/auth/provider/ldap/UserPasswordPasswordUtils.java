@@ -19,12 +19,15 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
+import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
+
 import java.nio.charset.Charset;
 import java.security.spec.InvalidKeySpecException;
 
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
 import org.wildfly.security.util.Base64;
 import org.wildfly.security.util.CharacterArrayIterator;
 
@@ -62,16 +65,28 @@ class UserPasswordPasswordUtils {
                     // {sha512}
                     return createTrivialDigestSpec(ALGORITHM_DIGEST_SHA_512, 8, userPassword);
                 }
-                for (int i = 1; i < userPassword.length - 1; i++) {
-                    if (userPassword[i] == '}') {
-                        throw new InvalidKeySpecException();
-                    }
+            } else if (userPassword[1] == 's' && userPassword[2] == 's' && userPassword[3] == 'h' && userPassword[4] == 'a') {
+                if (userPassword[5] == '}') {
+                    // {ssha}
+                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
+                } else if (userPassword[5] == '2' && userPassword[6] == '5' && userPassword[7] == '6' && userPassword[8] == '}') {
+                    // {ssha256}
+                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
+                } else if (userPassword[5] == '3' && userPassword[6] == '8' && userPassword[7] == '4' && userPassword[8] == '}') {
+                    // {ssha384}
+                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
+                } else if (userPassword[5] == '5' && userPassword[6] == '1' && userPassword[7] == '2' && userPassword[8] == '}') {
+                    // {ssha512}
+                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
-                return createClearPasswordSpec(userPassword);
             }
+            for (int i = 1; i < userPassword.length - 1; i++) {
+                if (userPassword[i] == '}') {
+                    throw new InvalidKeySpecException();
+                }
+            }
+            return createClearPasswordSpec(userPassword);
         }
-
-        throw new InvalidKeySpecException();
     }
 
     private static PasswordSpec createClearPasswordSpec(byte[] userPassword) {
@@ -95,6 +110,51 @@ class UserPasswordPasswordUtils {
         Base64.base64DecodeB(new CharacterArrayIterator(encodedBase64), digest);
 
         return new TrivialDigestPasswordSpec(algorithm, digest);
+    }
+
+    private static PasswordSpec createTrivialSaltedPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
+            throws InvalidKeySpecException {
+        // TODO - ELY-43 should clean up Base64 handling and remove the need to trim the padding from the encoded value.
+        int length = userPassword.length - prefixSize;
+        for (int i = userPassword.length - 1; i > 0; i--) {
+            if (userPassword[i] == '=') {
+                length--;
+            } else {
+                break;
+            }
+        }
+
+        char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
+        byte[] decoded = new byte[encodedBase64.length * 3 / 4];
+        Base64.base64DecodeB(new CharacterArrayIterator(encodedBase64), decoded);
+
+        int digestLength = expectedDigestLengthBytes(algorithm);
+        int saltLength = decoded.length - digestLength;
+        if (saltLength < 1) {
+            throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
+        }
+
+        byte[] digest = new byte[digestLength];
+        byte[] salt = new byte[saltLength];
+        System.arraycopy(decoded, 0, digest, 0, digestLength);
+        System.arraycopy(decoded, digestLength, salt, 0, saltLength);
+
+        return new TrivialSaltedDigestPasswordSpec(algorithm, digest, salt);
+    }
+
+    private static int expectedDigestLengthBytes(final String algorithm) {
+        switch (algorithm) {
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
+                return 20;
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
+                return 32;
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
+                return 48;
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+                return 64;
+            default:
+                throw new IllegalArgumentException("Unrecognised algorithm.");
+        }
     }
 
 }
