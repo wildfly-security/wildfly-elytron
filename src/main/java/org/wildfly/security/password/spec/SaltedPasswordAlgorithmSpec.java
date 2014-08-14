@@ -22,37 +22,23 @@ import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
- * Algorithm parameter specification for common hashed password types.
+ * Algorithm parameter specification for salted hashed password types.
  *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class HashedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
+public final class SaltedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
 
-    // TODO - This could extend SaltedPasswordAlgorithmSpec but final classes makes type detection safer.
+    private static final long serialVersionUID = 2106649716615705081L;
 
-    private static final long serialVersionUID = -13504632816489169L;
-
-    private final int iterationCount;
     private final byte[] salt;
 
     /**
-     * Construct a new instance.
+     * Create a new instance.
      *
-     * @param iterationCount the iteration count
      * @param salt the salt bytes
      */
-    public HashedPasswordAlgorithmSpec(final int iterationCount, final byte[] salt) {
-        this.iterationCount = iterationCount;
+    public SaltedPasswordAlgorithmSpec(final byte[] salt) {
         this.salt = salt;
-    }
-
-    /**
-     * Get the iteration count.
-     *
-     * @return the iteration count
-     */
-    public int getIterationCount() {
-        return iterationCount;
     }
 
     /**
@@ -63,4 +49,5 @@ public final class HashedPasswordAlgorithmSpec implements AlgorithmParameterSpec
     public byte[] getSalt() {
         return salt;
     }
+
 }

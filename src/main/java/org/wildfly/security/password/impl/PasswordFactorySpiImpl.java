@@ -23,6 +23,7 @@ import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
+import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
@@ -32,6 +33,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
+
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -39,6 +41,7 @@ import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
+import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
@@ -47,6 +50,7 @@ import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -159,6 +163,20 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
+                if (keySpec instanceof TrivialSaltedDigestPasswordSpec) {
+                    return new TrivialSaltedDigestPasswordImpl((TrivialSaltedDigestPasswordSpec) keySpec);
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    return new TrivialSaltedDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                }
+                break;
             case ALGORITHM_CRYPT_DES: {
                 if (keySpec instanceof UnixDESCryptPasswordSpec) {
                     return new UnixDESCryptPasswordImpl((UnixDESCryptPasswordSpec) keySpec);
@@ -275,6 +293,21 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 } else {
                     break;
                 }
+            }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
+                if (password instanceof TrivialSaltedDigestPasswordImpl) {
+                    return password;
+                } else if (password instanceof TrivialSaltedDigestPassword) {
+                    return new TrivialSaltedDigestPasswordImpl((TrivialSaltedDigestPassword) password);
+                }
+                break;
             }
             case ALGORITHM_CRYPT_DES: {
                 if (password instanceof UnixDESCryptPasswordImpl) {
