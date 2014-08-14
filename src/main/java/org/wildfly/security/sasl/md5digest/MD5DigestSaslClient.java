@@ -138,6 +138,40 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         cipher = "";
     }
 
+    /**
+     * Method creates client response to the server challenge:
+     * 
+     *    digest-response  = 1#( username | realm | nonce | cnonce |
+     *                     nonce-count | qop | digest-uri | response |
+     *                     maxbuf | charset | cipher | authzid |
+     *                     auth-param )
+     *
+     *  username         = "username" "=" <"> username-value <">
+     *  username-value   = qdstr-val
+     *  cnonce           = "cnonce" "=" <"> cnonce-value <">
+     *  cnonce-value     = qdstr-val
+     *  nonce-count      = "nc" "=" nc-value
+     *  nc-value         = 8LHEX
+     *  qop              = "qop" "=" qop-value
+     *  digest-uri       = "digest-uri" "=" <"> digest-uri-value <">
+     *  digest-uri-value  = serv-type "/" host [ "/" serv-name ]
+     *  serv-type        = 1*ALPHA
+     *  host             = 1*( ALPHA | DIGIT | "-" | "." )
+     *  serv-name        = host
+     *  response         = "response" "=" response-value
+     *  response-value   = 32LHEX
+     *  LHEX             = "0" | "1" | "2" | "3" |
+     *                     "4" | "5" | "6" | "7" |
+     *                     "8" | "9" | "a" | "b" |
+     *                     "c" | "d" | "e" | "f"
+     *  cipher           = "cipher" "=" cipher-value
+     *  authzid          = "authzid" "=" <"> authzid-value <">
+     *  authzid-value    = qdstr-val
+     *  
+     * @param parsedChallenge
+     * @return
+     * @throws SaslException
+     */
     private byte[] createResponse(HashMap<String, byte[]> parsedChallenge) throws SaslException {
 
         ByteStringBuilder digestResponse = new ByteStringBuilder();
@@ -196,8 +230,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         digestResponse.append(cnonce);
         digestResponse.append("\"").append(DELIMITER);
 
-        // nonce-count
-        digestResponse.append("nonce-count=");
+        // nc | nonce-count
+        digestResponse.append("nc=");
         int nonceCount = getNonceCount();
         digestResponse.append(convertToHexBytesWithLeftPadding(nonceCount, 8));
         digestResponse.append(DELIMITER);

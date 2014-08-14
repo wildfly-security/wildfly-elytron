@@ -152,6 +152,25 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         return retValue;
     }
         
+    /**
+     * Method to produce digest-response:
+     * response-value  =
+     *    HEX( KD ( HEX(H(A1)),
+     *             { nonce-value, ":" nc-value, ":",
+     *               cnonce-value, ":", qop-value, ":", HEX(H(A2)) }))
+     * 
+     * @param username
+     * @param realm
+     * @param password
+     * @param nonce
+     * @param nonce_count
+     * @param cnonce
+     * @param authzid
+     * @param qop
+     * @param digest_uri
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
     byte[] digestResponse(String username, String realm, char[] password, 
             byte[] nonce, int nonce_count, byte[] cnonce,
             String authzid, String qop, String digest_uri) throws NoSuchAlgorithmException {
