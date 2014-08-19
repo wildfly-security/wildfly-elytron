@@ -28,14 +28,44 @@ import org.wildfly.security.password.Password;
  */
 public interface TrivialSaltedDigestPassword extends OneWayPassword {
 
+    /**
+     * Algorithm name for digest created using SHA-1 with the password digested first followed by the salt.
+     */
     public static final String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1 = "password-salt-digest-sha-1";
+
+    /**
+     * Algorithm name for digest created using SHA-256 with the password digested first followed by the salt.
+     */
     public static final String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256 = "password-salt-digest-sha-256";
+
+    /**
+     * Algorithm name for digest created using SHA-384 with the password digested first followed by the salt.
+     */
     public static final String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384 = "password-salt-digest-sha-384";
+
+    /**
+     * Algorithm name for digest created using SHA-512 with the password digested first followed by the salt.
+     */
     public static final String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512 = "password-salt-digest-sha-512";
 
+    /**
+     * Algorithm name for digest created using SHA-1 with the salt digested first followed by the password.
+     */
     public static final String ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1 = "salt-password-digest-sha-1";
+
+    /**
+     * Algorithm name for digest created using SHA-256 with the salt digested first followed by the password.
+     */
     public static final String ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256 = "salt-password-digest-sha-256";
+
+    /**
+     * Algorithm name for digest created using SHA-384 with the salt digested first followed by the password.
+     */
     public static final String ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384 = "salt-password-digest-sha-384";
+
+    /**
+     * Algorithm name for digest created using SHA-512 with the salt digested first followed by the password.
+     */
     public static final String ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512 = "salt-password-digest-sha-512";
 
     /**

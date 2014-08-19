@@ -36,7 +36,7 @@ import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements TrivialSaltedDigestPassword {
+class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements TrivialSaltedDigestPassword {
 
     private static final long serialVersionUID = -6754143875392946386L;
 
