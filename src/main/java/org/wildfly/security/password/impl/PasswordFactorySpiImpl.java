@@ -21,6 +21,7 @@ package org.wildfly.security.password.impl;
 import static org.wildfly.security.password.interfaces.ClearPassword.*;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
@@ -39,6 +40,7 @@ import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
 import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
@@ -48,6 +50,7 @@ import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
@@ -203,6 +206,25 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_SCRAM_SHA_1:
+            case ALGORITHM_SCRAM_SHA_256: {
+                if (keySpec instanceof ScramDigestPasswordSpec) {
+                    try {
+                        return new ScramDigestPasswordImpl((ScramDigestPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    try {
+                        return new ScramDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e.getMessage());
+                    }
+                }
+                else {
+                    break;
+                }
+            }
         }
         throw new InvalidKeySpecException("Unknown algorithm");
     }
@@ -323,6 +345,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof BSDUnixDESCryptPassword) {
                     return new BSDUnixDESCryptPasswordImpl((BSDUnixDESCryptPassword) password);
+                } else {
+                    break;
+                }
+            }
+            case ALGORITHM_SCRAM_SHA_1:
+            case ALGORITHM_SCRAM_SHA_256: {
+                if (password instanceof ScramDigestPasswordImpl) {
+                    return password;
+                } else if (password instanceof ScramDigestPassword) {
+                    return new ScramDigestPasswordImpl((ScramDigestPassword) password);
                 } else {
                     break;
                 }

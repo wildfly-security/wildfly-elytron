@@ -21,6 +21,7 @@ package org.wildfly.security.password.impl;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
 import static org.wildfly.security.password.interfaces.ClearPassword.*;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
@@ -63,6 +64,8 @@ public final class WildFlyElytronPasswordProvider extends Provider {
         putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
         putService(new Service(this, FACTORY_TYPE, ALGORITHM_BSD_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
         putService(new Service(this, FACTORY_TYPE, ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
     }
 
 }

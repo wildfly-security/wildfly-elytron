@@ -311,7 +311,7 @@ public class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPa
      *
      * @return a byte[] containing the hashed password.
      */
-    public static byte[] bcrypt(final int cost, final byte[] salt, final byte[] password) {
+    static byte[] bcrypt(final int cost, final byte[] salt, final byte[] password) {
 
         if (cost < 4 || cost > 31)
             throw new IllegalArgumentException("Invalid number of rounds. Must be an int between 4 and 31");
