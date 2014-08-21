@@ -18,15 +18,7 @@
 
 package org.wildfly.sasl.util;
 
-import java.io.BufferedReader;
-import java.io.IOError;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
-import java.util.Arrays;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -165,13 +157,14 @@ public final class StringPrep {
     public static void forbidChangeDisplayPropertiesOrDeprecated(int input) {
         if (input >= 0x0340 && input <= 0x0341
             || input >= 0x200E && input <= 0x200F
-            || input >= 0x202A && input <= 0x202E) {
+            || input >= 0x202A && input <= 0x202E
+            || input >= 0x206A && input <= 0x206F) {
             throw new IllegalArgumentException("Invalid control character");
         }
     }
 
     public static void forbidTagging(int input) {
-        if (input == 0x0E0000 || input >= 0x0E0020 && input <= 0x0E007F) {
+        if (input == 0x0E0001 || input >= 0x0E0020 && input <= 0x0E007F) {
             throw new IllegalArgumentException("Invalid tagging character");
         }
     }
@@ -196,31 +189,33 @@ public final class StringPrep {
         // technically we're supposed to normalize after mapping, but it should be equivalent if we don't
         if (isSet(profile, NORMALIZE_KC)) string = Normalizer.normalize(string, Normalizer.Form.NFKC);
         final int len = string.length();
-        int ch;
-        int i = 0;
         boolean isRAndLCat = false;
+        int i = 0;
         while (i < len) {
-            ch = string.codePointAt(i++);
-            if (Character.isHighSurrogate((char) ch)) {
-                if (i == len) {
-                    throw new IllegalArgumentException("Invalid surrogate pair");
+            char ch = string.charAt(i++);
+            int cp;
+            if (Character.isHighSurrogate(ch)) {
+            	if (i == len) {
+                    throw new IllegalArgumentException("Invalid surrogate pair (high at end of string)");
                 }
-                char tmp = string.charAt(i ++);
-                if (! Character.isLowSurrogate(tmp)) {
-                    throw new IllegalArgumentException("Invalid surrogate pair");
+                char low = string.charAt(i++);
+                if (! Character.isLowSurrogate(low)) {
+                    throw new IllegalArgumentException("Invalid surrogate pair (second is not low)");
                 }
-                ch = Character.toCodePoint((char) ch, string.charAt(i ++));
-            } else if (Character.isLowSurrogate((char) ch)) {
-                throw new IllegalArgumentException("Invalid surrogate pair");
+                cp = Character.toCodePoint(ch, low);
+            } else if (Character.isLowSurrogate(ch)) {
+            	throw new IllegalArgumentException("Invalid surrogate pair (low without high)");
+            } else {
+            	cp = (char) ch;
             }
 
-            if (! Character.isValidCodePoint(ch)) {
+            if (! Character.isValidCodePoint(cp)) {
                 throw new IllegalArgumentException("Invalid code point");
             }
 
-            assert ch < Character.MAX_CODE_POINT;
+            assert cp < Character.MAX_CODE_POINT;
 
-            switch (Character.getDirectionality(ch)) {
+            switch (Character.getDirectionality(cp)) {
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT: {
                     if (i == 0) {
@@ -241,36 +236,36 @@ public final class StringPrep {
             }
 
             // StringPrep 3 - Mapping
-            if (isSet(profile, MAP_TO_NOTHING) && mapCodePointToNothing(ch)) continue;
-            if (isSet(profile, MAP_TO_SPACE) && mapCodePointToSpace(ch)) {
+            if (isSet(profile, MAP_TO_NOTHING) && mapCodePointToNothing(cp)) continue;
+            if (isSet(profile, MAP_TO_SPACE) && mapCodePointToSpace(cp)) {
                 target.append(' ');
                 continue;
             }
             if (isSet(profile, MAP_SCRAM_LOGIN_CHARS)) {
-                if (ch == '=') {
+                if (cp == '=') {
                     target.append('=').append('3').append('D');
                     continue;
-                } else if (ch == ',') {
+                } else if (cp == ',') {
                     target.append('=').append('2').append('C');
                     continue;
                 }
             }
 
             // StringPrep 5 - Prohibition
-            if (isSet(profile, FORBID_NON_ASCII_SPACES)) forbidNonAsciiSpaces(ch);
-            if (isSet(profile, FORBID_ASCII_CONTROL)) forbidAsciiControl(ch);
-            if (isSet(profile, FORBID_NON_ASCII_CONTROL)) forbidNonAsciiControl(ch);
-            if (isSet(profile, FORBID_PRIVATE_USE)) forbidPrivateUse(ch);
-            if (isSet(profile, FORBID_NON_CHARACTER)) forbidNonCharacter(ch);
-            if (isSet(profile, FORBID_SURROGATE)) forbidSurrogate(ch);
-            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT)) forbidInappropriateForPlainText(ch);
-            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_CANON_REP)) forbidInappropriateForCanonicalRepresentation(ch);
-            if (isSet(profile, FORBID_CHANGE_DISPLAY_AND_DEPRECATED)) forbidChangeDisplayPropertiesOrDeprecated(ch);
-            if (isSet(profile, FORBID_TAGGING)) forbidTagging(ch);
-            if (isSet(profile, FORBID_UNASSIGNED)) forbidUnassigned(ch);
+            if (isSet(profile, FORBID_NON_ASCII_SPACES)) forbidNonAsciiSpaces(cp);
+            if (isSet(profile, FORBID_ASCII_CONTROL)) forbidAsciiControl(cp);
+            if (isSet(profile, FORBID_NON_ASCII_CONTROL)) forbidNonAsciiControl(cp);
+            if (isSet(profile, FORBID_PRIVATE_USE)) forbidPrivateUse(cp);
+            if (isSet(profile, FORBID_NON_CHARACTER)) forbidNonCharacter(cp);
+            if (isSet(profile, FORBID_SURROGATE)) forbidSurrogate(cp);
+            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT)) forbidInappropriateForPlainText(cp);
+            if (isSet(profile, FORBID_INAPPROPRIATE_FOR_CANON_REP)) forbidInappropriateForCanonicalRepresentation(cp);
+            if (isSet(profile, FORBID_CHANGE_DISPLAY_AND_DEPRECATED)) forbidChangeDisplayPropertiesOrDeprecated(cp);
+            if (isSet(profile, FORBID_TAGGING)) forbidTagging(cp);
+            if (isSet(profile, FORBID_UNASSIGNED)) forbidUnassigned(cp);
 
             // Now, encode that one
-            target.appendUtf8Raw(ch);
+            target.appendUtf8Raw(cp);
         }
     }
 }

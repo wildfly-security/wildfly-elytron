@@ -51,7 +51,7 @@ public final class ByteStringBuilder {
     }
     
     public ByteStringBuilder append(char c) {
-        return appendUtf8Raw((byte) c);
+        return appendUtf8Raw((int) c);
     }
 
     public ByteStringBuilder appendUtf8Raw(int codePoint) {
@@ -171,7 +171,7 @@ public final class ByteStringBuilder {
 
     public ByteStringBuilder append(String s, int offs, int len) {
         int c;
-        int i = offs;
+        int i = 0;
         while (i < len) {
             c = s.charAt(offs + i++);
             if (Character.isHighSurrogate((char) c)) {
