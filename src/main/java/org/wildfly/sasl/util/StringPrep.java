@@ -22,6 +22,7 @@ import java.text.Normalizer;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 public final class StringPrep {
     // these flags must keep their numeric values permanently,, and must not conflict
@@ -189,7 +190,8 @@ public final class StringPrep {
         // technically we're supposed to normalize after mapping, but it should be equivalent if we don't
         if (isSet(profile, NORMALIZE_KC)) string = Normalizer.normalize(string, Normalizer.Form.NFKC);
         final int len = string.length();
-        boolean isRAndLCat = false;
+        boolean isRALString = false;
+        boolean first = true;
         int i = 0;
         while (i < len) {
             char ch = string.charAt(i++);
@@ -206,7 +208,7 @@ public final class StringPrep {
             } else if (Character.isLowSurrogate(ch)) {
             	throw new IllegalArgumentException("Invalid surrogate pair (low without high)");
             } else {
-            	cp = (char) ch;
+            	cp = ch;
             }
 
             if (! Character.isValidCodePoint(cp)) {
@@ -215,24 +217,28 @@ public final class StringPrep {
 
             assert cp < Character.MAX_CODE_POINT;
 
+            // StringPrep 6 - Bidirectional Characters
             switch (Character.getDirectionality(cp)) {
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
-                case Character.DIRECTIONALITY_RIGHT_TO_LEFT: {
-                    if (i == 0) {
-                        isRAndLCat = true;
-                    }
-                    if (i == len - 1) {
-                        if (! isRAndLCat) {
-                            throw new IllegalArgumentException("Missing trailing R/AL directionality character");
-                        }
+                case Character.DIRECTIONALITY_RIGHT_TO_LEFT: // R/AL character
+                    if (first) {
+                        isRALString = true;
+                    } else if (! isRALString) {
+                    	throw new IllegalArgumentException("Disallowed R/AL directionality character in L string");
                     }
                     break;
-                }
-                case Character.DIRECTIONALITY_LEFT_TO_RIGHT: {
-                    if (isRAndLCat) {
+                case Character.DIRECTIONALITY_LEFT_TO_RIGHT: // L character
+                    if (isRALString) {
                         throw new IllegalArgumentException("Disallowed L directionality character in R/AL string");
                     }
-                }
+                    break;
+                default: // neutral character
+                	if (i == len && isRALString) {
+                        throw new IllegalArgumentException("Missing trailing R/AL directionality character");
+                    }
+            }
+            if(first){
+            	first = false;
             }
 
             // StringPrep 3 - Mapping
