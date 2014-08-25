@@ -105,24 +105,67 @@ public class StringPrepTest {
 	}
 	
 	@Test
-	@Ignore("Have to be discussed")
-	public void testEncodingRightLeftString() throws Exception {
+	public void testRightString() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
-		StringPrep.encode("\u05BE\uFBA8", b, 0);
-		Assert.assertArrayEquals(new byte[]{(byte)0xD6,(byte)0xBE,(byte)0xEF,(byte)0xAE,(byte)0xA8}, b.toArray());
+		StringPrep.encode("\u05BE", b, 0);
+		Assert.assertArrayEquals(new byte[]{(byte)0xD6,(byte)0xBE}, b.toArray());
 	}
 	
 	@Test
-	@Ignore("Have to be discussed")
-	public void testChangeLeftRigtToRightLeft() throws Exception {
+	public void testRightStringWithNeutralChars() throws Exception {
+		ByteStringBuilder b = new ByteStringBuilder();
+		StringPrep.encode("\u05BE - \uFBA8", b, 0);
+		Assert.assertArrayEquals(new byte[]{(byte)0xD6,(byte)0xBE,(byte)0x20,(byte)0x2D,(byte)0x20,(byte)0xEF,(byte)0xAE,(byte)0xA8}, b.toArray()); // D6 BE 20 2D 20 EF AE A8
+	}
+	
+	/** RFC 3454: If a string contains any RandALCat character, the string MUST NOT contain any LCat character. */
+	@Test
+	public void testLeftInRightString() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
 		try{
-			StringPrep.encode("abc\uFBA8", b, 0);
-			throw new Exception("Not throwed changed directionality exception");
+			StringPrep.encode("\u05BE\uFBA8a\u05BE\uFBA8", b, 0); // <right><right><left><right><right>
+			throw new Exception("Not throwed directionality exception");
 		}
 		catch(IllegalArgumentException e){}
 	}
 	
+	/** RFC 3454: requirement 3 prohibits strings such as <U+0627><U+0031> */
+	@Test
+	public void testRightWithoutTrailing() throws Exception {
+		ByteStringBuilder b = new ByteStringBuilder();
+		try{
+			StringPrep.encode("\u0627\u0031", b, 0); // <right><neutral>
+			throw new Exception("Not throwed directionality exception");
+		}
+		catch(IllegalArgumentException e){}
+	}
+	
+	/** RFC 3454: requirement 3 ... allows strings such as <U+0627><U+0031><U+0628> */
+	@Test
+	public void testRightWithTrailing() throws Exception {
+		ByteStringBuilder b = new ByteStringBuilder();
+		StringPrep.encode("\u0627\u0031\u0628", b, 0); // <right><neutral><right>
+	}
+	
+	@Test
+	public void testRightWithoutLeading() throws Exception {
+		ByteStringBuilder b = new ByteStringBuilder();
+		try{
+			StringPrep.encode("\u0031\u0627", b, 0); // <neutral><right>
+			throw new Exception("Not throwed directionality exception");
+		}
+		catch(IllegalArgumentException e){}
+	}
+	
+	@Test
+	public void testRightWithoutLeadingAndTrailing() throws Exception {
+		ByteStringBuilder b = new ByteStringBuilder();
+		try{
+			StringPrep.encode("\u0031\u0627\u0032", b, 0); // <neutral><right><neutral>
+			throw new Exception("Not throwed directionality exception");
+		}
+		catch(IllegalArgumentException e){}
+	}
 	
 	/** RFC 3454 3.1 Commonly mapped to nothing / Table B.1 */
 	@Test
@@ -187,7 +230,6 @@ public class StringPrepTest {
 	}
 	
 	@Test
-	//@Ignore("Problem with same three-bytes characters, see ELY-46")
 	public void testForbitPrivateUse() throws Exception {
 		testForbitChars(StringPrep.FORBID_PRIVATE_USE, (int)0xE000,(int)0xF8FF);
 		testForbitChars(StringPrep.FORBID_PRIVATE_USE, (int)0xF0000,(int)0xFFFFD);
@@ -253,7 +295,7 @@ public class StringPrepTest {
 	
 	/** A.1 Unassigned code points in Unicode 3.2 */
 	@Test
-	@Ignore("This implementation use newer Unicode (but require RFC of StringPrep 3.2?), see ELY-48")
+	@Ignore("This implementation use newer Unicode (but require RFC of StringPrep Unicode 3.2?), see ELY-48")
 	public void testForbitUnassigned() throws Exception {
 		testForbitChars(StringPrep.FORBID_UNASSIGNED, (int)0x0221);
 		testForbitChars(StringPrep.FORBID_UNASSIGNED, (int)0x0234, (int)0x024F);

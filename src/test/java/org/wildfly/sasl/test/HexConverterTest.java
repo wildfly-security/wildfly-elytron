@@ -41,6 +41,7 @@ public class HexConverterTest {
 	public void testConvertFromHexChars(){
 		Assert.assertArrayEquals(new byte[]{},HexConverter.convertFromHex(new char[]{}));
 		Assert.assertArrayEquals(new byte[]{(byte)0x1F,(byte)0x0E},HexConverter.convertFromHex(new char[]{'1','f','0','e'}));
+		Assert.assertArrayEquals(new byte[]{(byte)0xAF,(byte)0x0E},HexConverter.convertFromHex(new char[]{'A','f','0','E'}));
 	}
 	
 	@Test
