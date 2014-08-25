@@ -20,8 +20,13 @@ package org.wildfly.sasl.test;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
+
+import java.io.UnsupportedEncodingException;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.wildfly.sasl.util.ByteStringBuilder;
+import org.wildfly.sasl.util.HexConverter;
 import org.wildfly.sasl.util.SaslBase64;
 
 /**
@@ -37,7 +42,7 @@ public class SaslBase64TestCase {
      * (data length) % 3 == 0
      */
     @Test
-    public void testEcodeDecodeToByteStringBuilderMod0() {
+    public void testEncodeDecodeToByteStringBuilderMod0() {
         doEncodeDecodeTest(generateData(255));
     }
 
@@ -46,7 +51,7 @@ public class SaslBase64TestCase {
      * (data length) % 3 == 0
      */
     @Test
-    public void testEcodeDecodeToByteStringBuilderMod1() {
+    public void testEncodeDecodeToByteStringBuilderMod1() {
         doEncodeDecodeTest(generateData(256));
     }
 
@@ -55,7 +60,7 @@ public class SaslBase64TestCase {
      * (data length) % 3 == 0
      */
     @Test
-    public void testEcodeDecodeToByteStringBuilderMod2() {
+    public void testEncodeDecodeToByteStringBuilderMod2() {
         doEncodeDecodeTest(generateData(253));
     }
 
@@ -108,6 +113,21 @@ public class SaslBase64TestCase {
             data[i] = (byte)i;
         }
         return data;
+    }
+
+    @Test
+    public void testEncodeAgainstPrecomputedValue() throws UnsupportedEncodingException {
+
+        byte[] input = "Testing input of base64 function".getBytes("UTF-8");
+        ByteStringBuilder encoded = new ByteStringBuilder();
+        ByteStringBuilder decoded = new ByteStringBuilder();
+
+        SaslBase64.encode(input, encoded);
+        Assert.assertArrayEquals("VGVzdGluZyBpbnB1dCBvZiBiYXNlNjQgZnVuY3Rpb24=".getBytes(), encoded.toArray());
+
+        SaslBase64.decode(encoded.toArray(), 0, decoded);
+        Assert.assertArrayEquals(input, decoded.toArray());
+
     }
 
 }

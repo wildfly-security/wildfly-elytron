@@ -13,11 +13,11 @@ import org.wildfly.sasl.util.ByteStringBuilder;
 
 /**
  * Tests of org.wildfly.sasl.util.ByteStringBuilder
- * 
+ *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 public class ByteStringBuilderTest {
-	
+
 	@Test
 	public void testInit() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
@@ -26,7 +26,7 @@ public class ByteStringBuilderTest {
 		assertTrue(b.contentEquals(new byte[]{}));
 		assertTrue(b.contentEquals(new byte[]{},0,0));
 	}
-	
+
 	@Test
 	public void testAppendByte() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -38,7 +38,7 @@ public class ByteStringBuilderTest {
 		assertTrue(b.contentEquals(new byte[]{(byte)0x00,(byte)0x01}));
 		assertTrue(b.contentEquals(new byte[]{(byte)0x99,(byte)0x00,(byte)0x01,(byte)0x99},1,2));
 	}
-	
+
 	@Test
 	public void testAppendBoolean() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -49,7 +49,7 @@ public class ByteStringBuilderTest {
 		assertEquals(10, b.length());
 		Assert.assertArrayEquals(new byte[]{0x00,0x74,0x72,0x75,0x65,0x66,0x61,0x6C,0x73,0x65}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendChar() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
@@ -60,7 +60,7 @@ public class ByteStringBuilderTest {
 		assertEquals(2, b.length());
 		Assert.assertArrayEquals(new byte[]{0x61,0x62}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendUtfRawChar() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -76,8 +76,11 @@ public class ByteStringBuilderTest {
 		b.appendUtf8Raw(0x1F0A1);
 		assertEquals(11, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0xD0,(byte)0xB8,(byte)0xE4,(byte)0xBD,(byte)0xA0,(byte)0xF0,(byte)0x9F,(byte)0x82,(byte)0xA1}, b.toArray());
+		b.appendUtf8Raw(0x10FFFF);
+		assertEquals(15, b.length());
+		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0xD0,(byte)0xB8,(byte)0xE4,(byte)0xBD,(byte)0xA0,(byte)0xF0,(byte)0x9F,(byte)0x82,(byte)0xA1,(byte)0xF4,(byte)0x8F,(byte)0xBF,(byte)0xBF}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendUtfChar() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -91,7 +94,7 @@ public class ByteStringBuilderTest {
 		assertEquals(7, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0xD0,(byte)0xB8,(byte)0xE4,(byte)0xBD,(byte)0xA0}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendBytes() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
@@ -100,7 +103,7 @@ public class ByteStringBuilderTest {
 		assertEquals(3, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x11,(byte)0x22}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendPartOfBytes() throws Exception {
 		byte[] bytes3456 = new byte[]{0x33,0x44,0x55,0x66};
@@ -118,7 +121,7 @@ public class ByteStringBuilderTest {
 		assertEquals(6, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x11,(byte)0x22,(byte)0x44,(byte)0x55,(byte)0x33,(byte)0x66}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendCharSequence() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -127,7 +130,7 @@ public class ByteStringBuilderTest {
 		assertEquals(7, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0x62,(byte)0x63,(byte)0xE4,(byte)0xBD,(byte)0xA0}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendPartOfCharSequence() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -135,7 +138,7 @@ public class ByteStringBuilderTest {
 		assertEquals(3, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x62,(byte)0x63}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendString() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -146,7 +149,7 @@ public class ByteStringBuilderTest {
 		assertEquals(7, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0x62,(byte)0x63,(byte)0xE4,(byte)0xBD,(byte)0xA0}, b.toArray());
 	}
-	
+
 	@Test // failing
 	public void testAppendPartOfString() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x68}); // "h"
@@ -157,7 +160,7 @@ public class ByteStringBuilderTest {
 		assertEquals(4, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x68,(byte)0x62,(byte)0x63,(byte)0x61}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendLatin1CharSequence() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -166,7 +169,7 @@ public class ByteStringBuilderTest {
 		assertEquals(5, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0x62,(byte)0x63,(byte)0xE4}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendLatin1PartOfCharSequence() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x68});
@@ -174,7 +177,7 @@ public class ByteStringBuilderTest {
 		assertEquals(3, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x68,(byte)0x62,(byte)0x63}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendLatin1String() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -185,7 +188,7 @@ public class ByteStringBuilderTest {
 		assertEquals(5, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x61,(byte)0x62,(byte)0x63,(byte)0xE4}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendLatin1PartOfString() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
@@ -196,38 +199,38 @@ public class ByteStringBuilderTest {
 		assertEquals(4, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x62,(byte)0x63,(byte)0x61}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendBE() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
-		b.appendBE((int)0x12345678);
+		b.appendBE(0x12345678);
 		assertEquals(5, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x12,(byte)0x34,(byte)0x56,(byte)0x78}, b.toArray());
-		b.appendBE((long)0x0123456789ABCDEFL);
+		b.appendBE(0x0123456789ABCDEFL);
 		assertEquals(13, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x12,(byte)0x34,(byte)0x56,(byte)0x78,(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,(byte)0x89,(byte)0xAB,(byte)0xCD,(byte)0xEF}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendNumber() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
-		b.appendNumber((int)12);
+		b.appendNumber(12);
 		assertEquals(3, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x31,(byte)0x32}, b.toArray());
 		b.appendNumber((long)34);
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x31,(byte)0x32,(byte)0x33,(byte)0x34}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendObject() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00});
-		b.appendObject((Object)new Integer(12));
+		b.appendObject(new Integer(12));
 		assertEquals(3, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x31,(byte)0x32}, b.toArray());
-		b.appendObject((Object)new Integer(34));
+		b.appendObject(new Integer(34));
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x31,(byte)0x32,(byte)0x33,(byte)0x34}, b.toArray());
 	}
-	
+
 	@Test
 	public void testAppendByteStringBuilder() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x00,0x01});
@@ -236,7 +239,7 @@ public class ByteStringBuilderTest {
 		assertEquals(4, b.length());
 		Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x01,(byte)0x02,(byte)0x03}, b.toArray());
 	}
-	
+
 	@Test
 	public void testUpdateMac() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x12,0x34,0x56});
@@ -246,7 +249,7 @@ public class ByteStringBuilderTest {
 		byte[] d = mac.doFinal();
 		Assert.assertArrayEquals(new byte[]{(byte)0x99,(byte)0x83,(byte)0xDF,(byte)0x83,(byte)0x66,(byte)0xD9,(byte)0x7C,(byte)0xC9,(byte)0x3E,(byte)0x41,(byte)0x9E,(byte)0xAB,(byte)0x62,(byte)0x24,(byte)0x7A,(byte)0x75,(byte)0x9B,(byte)0x2D,(byte)0x8E,(byte)0xCB}, d);
 	}
-	
+
 	@Test
 	public void testUpdateDigest() throws Exception {
 		MessageDigest md = MessageDigest.getInstance("MD5");
@@ -256,7 +259,7 @@ public class ByteStringBuilderTest {
 		byte[] d = md.digest();
 		Assert.assertArrayEquals(new byte[]{(byte)0x90,(byte)0x01,(byte)0x50,(byte)0x98,(byte)0x3C,(byte)0xD2,(byte)0x4F,(byte)0xB0,(byte)0xD6,(byte)0x96,(byte)0x3F,(byte)0x7D,(byte)0x28,(byte)0xE1,(byte)0x7F,(byte)0x72}, d);
 	}
-	
+
 	@Test
 	public void testCapacity() throws Exception {
 		ByteStringBuilder b = new ByteStringBuilder();
@@ -264,5 +267,5 @@ public class ByteStringBuilderTest {
 		b.append("123456789012345678901234567890");
 		assertTrue(b.capacity()>=30);
 	}
-	
+
 }
