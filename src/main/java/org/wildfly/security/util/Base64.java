@@ -18,6 +18,7 @@
 
 package org.wildfly.security.util;
 
+import java.io.ByteArrayInputStream;
 import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 
@@ -206,103 +207,75 @@ public final class Base64 {
         }
     }
 
-    public static void base64EncodeA(StringBuilder target, ByteArrayIterator src) throws InvalidKeySpecException {
+    public static void base64EncodeA(StringBuilder target, ByteArrayInputStream src) {
         int a, b;
-        try{
-            while (src.hasNext()) {
-                a = src.next();
-                base64EncodeA(target, a >> 2); // top 6 bits
-                if (! src.hasNext()) {
-                    base64EncodeA(target, a << 4); // bottom 2 bits + 0000
-                    return;
-                }
-                b = src.next();
-                base64EncodeA(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-                if (! src.hasNext()) {
-                    base64EncodeA(target, b << 2); // bottom 4 bits + 00
-                    return;
-                }
-                a = src.next();
-                base64EncodeA(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-                base64EncodeA(target, a); // bottom 6 bits
+        while ((a = src.read()) != -1) {
+            base64EncodeA(target, a >> 2); // top 6 bits
+            if ((b = src.read()) == -1) {
+                base64EncodeA(target, a << 4); // bottom 2 bits + 0000
+                return;
             }
-        } catch (NoSuchElementException e) {
-            throw new InvalidKeySpecException("Unexpected end of input bytes");
+            base64EncodeA(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
+            if ((a = src.read()) == -1) {
+                base64EncodeA(target, b << 2); // bottom 4 bits + 00
+                return;
+            }
+            base64EncodeA(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
+            base64EncodeA(target, a); // bottom 6 bits
         }
     }
 
-    public static void base64EncodeB(StringBuilder target, ByteArrayIterator src) throws InvalidKeySpecException {
+    public static void base64EncodeB(StringBuilder target, ByteArrayInputStream src) {
         int a, b;
-        try{
-            while (src.hasNext()) {
-                a = src.next();
-                base64EncodeB(target, a >> 2); // top 6 bits
-                if (! src.hasNext()) {
-                    base64EncodeB(target, a << 4); // bottom 2 bits + 0000
-                    return;
-                }
-                b = src.next();
-                base64EncodeB(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-                if (! src.hasNext()) {
-                    base64EncodeB(target, b << 2); // bottom 4 bits + 00
-                    return;
-                }
-                a = src.next();
-                base64EncodeB(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-                base64EncodeB(target, a); // bottom 6 bits
+        while ((a = src.read()) != -1) {
+            base64EncodeB(target, a >> 2); // top 6 bits
+            if ((b = src.read()) == -1) {
+                base64EncodeB(target, a << 4); // bottom 2 bits + 0000
+                return;
             }
-        } catch (NoSuchElementException e) {
-            throw new InvalidKeySpecException("Unexpected end of input bytes");
+            base64EncodeB(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
+            if ((a = src.read()) == -1) {
+                base64EncodeB(target, b << 2); // bottom 4 bits + 00
+                return;
+            }
+            base64EncodeB(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
+            base64EncodeB(target, a); // bottom 6 bits
         }
     }
 
-    public static void base64EncodeBCrypt(StringBuilder target, ByteArrayIterator src) throws InvalidKeySpecException {
+    public static void base64EncodeBCrypt(StringBuilder target, ByteArrayInputStream src) {
         int a, b;
-        try{
-            while (src.hasNext()) {
-                a = src.next();
-                base64EncodeBCrypt(target, a >> 2); // top 6 bits
-                if (! src.hasNext()) {
-                    base64EncodeBCrypt(target, a << 4); // bottom 2 bits + 0000
-                    return;
-                }
-                b = src.next();
-                base64EncodeBCrypt(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-                if (! src.hasNext()) {
-                    base64EncodeBCrypt(target, b << 2); // bottom 4 bits + 00
-                    return;
-                }
-                a = src.next();
-                base64EncodeBCrypt(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-                base64EncodeBCrypt(target, a); // bottom 6 bits
+        while ((a = src.read()) != -1) {
+            base64EncodeBCrypt(target, a >> 2); // top 6 bits
+            if ((b = src.read()) == -1) {
+                base64EncodeBCrypt(target, a << 4); // bottom 2 bits + 0000
+                return;
             }
-        } catch (NoSuchElementException e) {
-            throw new InvalidKeySpecException("Unexpected end of input bytes");
+            base64EncodeBCrypt(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
+            if ((a = src.read()) == -1) {
+                base64EncodeBCrypt(target, b << 2); // bottom 4 bits + 00
+                return;
+            }
+            base64EncodeBCrypt(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
+            base64EncodeBCrypt(target, a); // bottom 6 bits
         }
     }
 
-    public static void base64EncodeACryptLE(StringBuilder target, ByteArrayIterator src) throws InvalidKeySpecException {
+    public static void base64EncodeACryptLE(StringBuilder target, ByteArrayInputStream src) {
         int a, b;
-        try{
-            while (src.hasNext()) {
-                a = src.next();
-                base64EncodeA(target, a); // b0[5..0]
-                if (! src.hasNext()) {
-                    base64EncodeA(target, a >> 6); // 0000 + b0[7..6]
-                    return;
-                }
-                b = src.next();
-                base64EncodeA(target, b << 2 | a >> 6); // b1[3..0] + b0[7..6]
-                if (! src.hasNext()) {
-                    base64EncodeA(target, b >> 4); // 00 + b1[7..4]
-                    return;
-                }
-                a = src.next();
-                base64EncodeA(target, a << 4 | b >> 4); // b2[1..0] + b1[7..4]
-                base64EncodeA(target, a >> 2); // b2[7..2]
+        while ((a = src.read()) != -1) {
+            base64EncodeA(target, a); // b0[5..0]
+            if ((b = src.read()) == -1) {
+                base64EncodeA(target, a >> 6); // 0000 + b0[7..6]
+                return;
             }
-        } catch (NoSuchElementException e) {
-            throw new InvalidKeySpecException("Unexpected end of input bytes");
+            base64EncodeA(target, b << 2 | a >> 6); // b1[3..0] + b0[7..6]
+            if ((a = src.read()) == -1) {
+                base64EncodeA(target, b >> 4); // 00 + b1[7..4]
+                return;
+            }
+            base64EncodeA(target, a << 4 | b >> 4); // b2[1..0] + b1[7..4]
+            base64EncodeA(target, a >> 2); // b2[7..2]
         }
     }
 
