@@ -16,8 +16,8 @@
 #
 
 # our SASL factory providers (Ordered)
-org.wildfly.sasl.localuser.LocalUserClientFactory
-org.wildfly.sasl.gssapi.GssapiClientFactory
-org.wildfly.sasl.anonymous.AnonymousClientFactory
+org.wildfly.security.sasl.localuser.LocalUserClientFactory
+org.wildfly.security.sasl.gssapi.GssapiClientFactory
+org.wildfly.security.sasl.anonymous.AnonymousClientFactory
 
 

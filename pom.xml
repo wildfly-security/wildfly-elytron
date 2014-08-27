@@ -78,7 +78,7 @@
                             <expression>${project.version}</expression>
                             <targetMembers>
                                 <methodBodyReturn>
-                                    <className>org.wildfly.sasl.WildFlySaslProvider</className>
+                                    <className>org.wildfly.security.sasl.WildFlySaslProvider</className>
                                     <methodName>getVersionString</methodName>
                                 </methodBodyReturn>
                             </targetMembers>
