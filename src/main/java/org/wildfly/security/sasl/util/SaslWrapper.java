@@ -16,26 +16,15 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.remote;
+package org.wildfly.security.sasl.util;
 
-import java.security.Principal;
-
-import org.jboss.remoting3.Connection;
-import org.wildfly.security.auth.SecurityIdentity;
+import javax.security.sasl.SaslException;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ConnectionSecurityIdentity extends SecurityIdentity {
+public interface SaslWrapper {
+    byte[] wrap(byte[] outgoing, final int offset, final int len) throws SaslException;
 
-    private final Connection connection;
-
-    ConnectionSecurityIdentity(final Principal principal, final Connection connection) {
-        super(principal);
-        this.connection = connection;
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
+    byte[] unwrap(byte[] incoming, final int offset, final int len) throws SaslException;
 }
