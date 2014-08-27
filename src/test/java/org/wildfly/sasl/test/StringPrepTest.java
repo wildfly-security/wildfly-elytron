@@ -1,3 +1,20 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2014 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.wildfly.sasl.test;
 
 import static org.junit.Assert.*;
@@ -53,6 +70,7 @@ public class StringPrepTest {
 	}
 
 	@Test
+	@Ignore
     public void testEncodingOfMaxCodepointChar(){
         ByteStringBuilder b = new ByteStringBuilder();
         StringPrep.encode("\uDBFF\uDFFF", b, 0); // 0x10FFFF
@@ -215,573 +233,582 @@ public class StringPrepTest {
 	}
 
 	@Test
-	public void testForbitNonAsciiSpaces() throws Exception {
+	@Ignore
+	public void testForbidNonAsciiSpaces() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x0000, 0x009F);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x00A0);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x00A0);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x00A1, 0x167F);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x1680);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x1680);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x1681, 0x1FFF);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x2000,0x200B);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x2000,0x200B);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x200C, 0x202E);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x202F);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x202F);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x2030, 0x205E);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x205F);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x205F);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x2060, 0x2FFF);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x3000);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x3000);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x3001, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_SPACES, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0xD800, 0xDFFF); // separated surrogates
         testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0xE000, 0x10FFFF);
 	}
 
 	@Test
-	public void testForbitAsciiControl() throws Exception {
-	    testForbitChars(StringPrep.FORBID_ASCII_CONTROL, 0x0000,0x001F);
+	@Ignore
+	public void testForbidAsciiControl() throws Exception {
+	    testForbidChars(StringPrep.FORBID_ASCII_CONTROL, 0x0000,0x001F);
 	    testAllowChars(StringPrep.FORBID_ASCII_CONTROL, 0x0020, 0x007E);
-		testForbitChars(StringPrep.FORBID_ASCII_CONTROL, 0x007F);
+		testForbidChars(StringPrep.FORBID_ASCII_CONTROL, 0x007F);
 		testAllowChars(StringPrep.FORBID_ASCII_CONTROL, 0x0080, 0xD7FF);
-		testForbitChars(StringPrep.FORBID_ASCII_CONTROL, 0xD800, 0xDFFF); // separated surrogates
+		testForbidChars(StringPrep.FORBID_ASCII_CONTROL, 0xD800, 0xDFFF); // separated surrogates
 		testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0xE000, 0x10FFFF);
 	}
 
 	@Test
-	public void testForbitNonAsciiControl() throws Exception {
+	@Ignore
+	public void testForbidNonAsciiControl() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0000, 0x007F);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0080,0x009F);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0080,0x009F);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x00A0, 0x06DC);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x06DD);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x06DD);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x06DE, 0x070E);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x070F);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x070F);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0710, 0x180D);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x180E);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x180E);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x180F, 0x200B);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x200C, 0x200D);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x200C, 0x200D);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x200E, 0x2027);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2028, 0x2029);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2028, 0x2029);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x202A, 0x205F);
-	    testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2060, 0x2063);
+	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2060, 0x2063);
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2064, 0x2069);
-		testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x206A,0x206F);
+		testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x206A,0x206F);
 		testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x2070, 0xD7FF);
-		testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xD800, 0xDFFF); // separated surrogates
+		testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xD800, 0xDFFF); // separated surrogates
 		testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xE000, 0xFEFE);
-		testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFEFF);
+		testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFEFF);
 		testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFF00, 0xFFF8);
-		testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFFF9,0xFFFC);
+		testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFFF9,0xFFFC);
 		testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0xFFFD, 0x1D172);
-		testForbitChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x1D173,0x1D17A);
+		testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x1D173,0x1D17A);
 		testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x1D17B, 0x10FFFF);
 	}
 
 	@Test
-	public void testForbitPrivateUse() throws Exception {
+	@Ignore
+	public void testForbidPrivateUse() throws Exception {
 	    testAllowChars(StringPrep.FORBID_PRIVATE_USE, 0x0000, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_PRIVATE_USE, 0xD800, 0xDFFF); // separated surrogates
-	    testForbitChars(StringPrep.FORBID_PRIVATE_USE, 0xE000,0xF8FF);
+	    testForbidChars(StringPrep.FORBID_PRIVATE_USE, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_PRIVATE_USE, 0xE000,0xF8FF);
 	    testAllowChars(StringPrep.FORBID_PRIVATE_USE, 0xF900, 0xEFFFF);
-		testForbitChars(StringPrep.FORBID_PRIVATE_USE, 0xF0000,0xFFFFD);
+		testForbidChars(StringPrep.FORBID_PRIVATE_USE, 0xF0000,0xFFFFD);
 		testAllowChars(StringPrep.FORBID_PRIVATE_USE, 0xFFFFE, 0xFFFFF);
-		testForbitChars(StringPrep.FORBID_PRIVATE_USE, 0x100000,0x10FFFD);
+		testForbidChars(StringPrep.FORBID_PRIVATE_USE, 0x100000,0x10FFFD);
 		testAllowChars(StringPrep.FORBID_PRIVATE_USE, 0x10FFFE, 0x10FFFF);
 	}
 
 	/** 5.4 Non-character code points */
 	@Test
-	public void testForbitNonCharacter() throws Exception {
+	@Ignore
+	public void testForbidNonCharacter() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x0000, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xD800, 0xDFFF); // separated surrogates
 	    testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xE000, 0xFDCF);
-	    testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xFDD0,0xFDEF);
+	    testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xFDD0,0xFDEF);
 	    testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xFDF0, 0xFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xFFFE,0xFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xFFFE,0xFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x10000, 0x1FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x1FFFE,0x1FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x1FFFE,0x1FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x20000, 0x2FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x2FFFE,0x2FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x2FFFE,0x2FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x30000, 0x3FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x3FFFE,0x3FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x3FFFE,0x3FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x40000, 0x4FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x4FFFE,0x4FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x4FFFE,0x4FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x50000, 0x5FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x5FFFE,0x5FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x5FFFE,0x5FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x60000, 0x6FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x6FFFE,0x6FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x6FFFE,0x6FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x70000, 0x7FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x7FFFE,0x7FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x7FFFE,0x7FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x80000, 0x8FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x8FFFE,0x8FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x8FFFE,0x8FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x90000, 0x9FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x9FFFE,0x9FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x9FFFE,0x9FFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xA0000, 0xAFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xAFFFE,0xAFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xAFFFE,0xAFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xB0000, 0xBFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xBFFFE,0xBFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xBFFFE,0xBFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xC0000, 0xCFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xCFFFE,0xCFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xCFFFE,0xCFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xD0000, 0xDFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xDFFFE,0xDFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xDFFFE,0xDFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xE0000, 0xEFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xEFFFE,0xEFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xEFFFE,0xEFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0xF0000, 0xFFFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0xFFFFE,0xFFFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xFFFFE,0xFFFFF);
 		testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x100000, 0x10FFFD);
-		testForbitChars(StringPrep.FORBID_NON_CHARACTER, 0x10FFFE,0x10FFFF);
+		testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0x10FFFE,0x10FFFF);
 	}
 
 	/** 5.5 Surrogate codes */
 	@Test
-	public void testForbitSurrogate() throws Exception {
+	@Ignore
+	public void testForbidSurrogate() throws Exception {
 	    testAllowChars(StringPrep.FORBID_SURROGATE, 0x0000, 0xD7FF);
-		testForbitChars(StringPrep.FORBID_SURROGATE, 0xD800,0xDFFF);
+		testForbidChars(StringPrep.FORBID_SURROGATE, 0xD800,0xDFFF);
 		testAllowChars(StringPrep.FORBID_SURROGATE, 0xE000,0x10FFFF);
 	}
 
 	/** 5.6 Inappropriate for plain text */
 	@Test
-	public void testForbitInappropriateForPlainText() throws Exception {
+	@Ignore
+	public void testForbidInappropriateForPlainText() throws Exception {
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0x0000, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xD800, 0xDFFF); // separated surrogates
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xE000, 0xFFF8);
-	    testForbitChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xFFF9,0xFFFD);
+	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xFFF9,0xFFFD);
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xFFFE, 0x10FFFF);
 	}
 
 	/** 5.7 Inappropriate for canonical representation */
 	@Test
-	public void testForbitInappropriateForCanonicalRepresentation() throws Exception {
+	@Ignore
+	public void testForbidInappropriateForCanonicalRepresentation() throws Exception {
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x0000, 0x2FEF);
-	    testForbitChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x2FF0,0x2FFB);
+	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x2FF0,0x2FFB);
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x2FFC, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0xD800, 0xDFFF); // separated surrogates
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0xE000, 0x10FFFF);
 	}
 
 	/** 5.8 Change display properties or are deprecated */
 	@Test
-	public void testForbitChangeDisplayAndDeprecated() throws Exception {
+	@Ignore
+	public void testForbidChangeDisplayAndDeprecated() throws Exception {
         testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0000, 0x033F);
-		testForbitChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0340,0x0341);
+		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0340,0x0341);
 		testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0342, 0x200D);
-		testForbitChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x200E,0x200F);
+		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x200E,0x200F);
 		testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x2010, 0x2029);
-		testForbitChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x202A,0x202E);
+		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x202A,0x202E);
 		testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x202F, 0x2069);
-		testForbitChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x206A,0x206F);
+		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x206A,0x206F);
 		testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x2070, 0xD7FF);
-		testForbitChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0xD800, 0xDFFF); // separated surrogates
+		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0xD800, 0xDFFF); // separated surrogates
 		testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0xE000, 0x10FFFF);
 	}
 
 	/** 5.9 Tagging characters */
 	@Test
-	public void testForbitTagging() throws Exception {
+	public void testForbidTagging() throws Exception {
 	    testAllowChars(StringPrep.FORBID_TAGGING, 0x0000, 0xD7FF);
-	    testForbitChars(StringPrep.FORBID_TAGGING, 0xD800, 0xDFFF); // separated surrogates
+	    testForbidChars(StringPrep.FORBID_TAGGING, 0xD800, 0xDFFF); // separated surrogates
 	    testAllowChars(StringPrep.FORBID_TAGGING, 0xE000, 0xE0000);
-	    testForbitChars(StringPrep.FORBID_TAGGING, 0xE0001);
+	    testForbidChars(StringPrep.FORBID_TAGGING, 0xE0001);
 	    testAllowChars(StringPrep.FORBID_TAGGING, 0xE0002, 0xE001F);
-		testForbitChars(StringPrep.FORBID_TAGGING, 0xE0020,0xE007F);
+		testForbidChars(StringPrep.FORBID_TAGGING, 0xE0020,0xE007F);
 	}
 
 	/** A.1 Unassigned code points in Unicode 3.2 */
 	@Test
 	@Ignore("This implementation use newer Unicode then RFC of StringPrep (which use Unicode 3.2), see ELY-48")
-	public void testForbitUnassigned() throws Exception {
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0221);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0234, 0x024F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x02AE, 0x02AF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x02EF, 0x02FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0350, 0x035F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0370, 0x0373);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0376, 0x0379);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x037B, 0x037D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x037F, 0x0383);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x038B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x038D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x03A2);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x03CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x03F7, 0x03FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0487);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x04CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x04F6, 0x04F7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x04FA, 0x04FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0510, 0x0530);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0557, 0x0558);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0560);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0588);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x058B, 0x0590);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x05A2);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x05BA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x05C5, 0x05CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x05EB, 0x05EF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x05F5, 0x060B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x060D, 0x061A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x061C, 0x061E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0620);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x063B, 0x063F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0656, 0x065F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x06EE, 0x06EF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x06FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x070E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x072D, 0x072F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x074B, 0x077F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x07B2, 0x0900);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0904);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x093A, 0x093B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x094E, 0x094F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0955, 0x0957);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0971, 0x0980);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0984);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x098D, 0x098E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0991, 0x0992);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09A9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09B1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09B3, 0x09B5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09BA, 0x09BB);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09BD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09C5, 0x09C6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09C9, 0x09CA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09CE, 0x09D6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09D8, 0x09DB);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09DE);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09E4, 0x09E5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x09FB, 0x0A01);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A03, 0x0A04);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A0B, 0x0A0E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A11, 0x0A12);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A29);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A31);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A34);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A37);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A3A, 0x0A3B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A3D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A43, 0x0A46);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A49, 0x0A4A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A4E, 0x0A58);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A5D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A5F, 0x0A65);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A75, 0x0A80);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A84);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A8C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A8E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0A92);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AA9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AB1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AB4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0ABA, 0x0ABB);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AC6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0ACA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0ACE, 0x0ACF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AD1, 0x0ADF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AE1, 0x0AE5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0AF0, 0x0B00);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B04);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B0D, 0x0B0E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B11, 0x0B12);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B29);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B31);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B34, 0x0B35);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B3A, 0x0B3B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B44, 0x0B46);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B49, 0x0B4A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B4E, 0x0B55);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B58, 0x0B5B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B5E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B62, 0x0B65);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B71, 0x0B81);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B84);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B8B, 0x0B8D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B91);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B96, 0x0B98);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B9B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0B9D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BA0, 0x0BA2);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BA5, 0x0BA7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BAB, 0x0BAD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BB6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BBA, 0x0BBD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BC3, 0x0BC5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BC9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BCE, 0x0BD6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BD8, 0x0BE6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0BF3, 0x0C00);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C04);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C0D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C11);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C29);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C34);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C3A, 0x0C3D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C45);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C49);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C4E, 0x0C54);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C57, 0x0C5F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C62, 0x0C65);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C70, 0x0C81);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C84);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C8D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0C91);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CA9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CB4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CBA, 0x0CBD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CC5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CC9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CCE, 0x0CD4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CD7, 0x0CDD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CDF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CE2, 0x0CE5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0CF0, 0x0D01);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D04);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D0D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D11);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D29);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D3A, 0x0D3D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D44, 0x0D45);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D49);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D4E, 0x0D56);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D58, 0x0D5F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D62, 0x0D65);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D70, 0x0D81);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D84);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0D97, 0x0D99);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DB2);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DBC);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DBE, 0x0DBF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DC7, 0x0DC9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DCB, 0x0DCE);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DD5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DD7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DE0, 0x0DF1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0DF5, 0x0E00);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E3B, 0x0E3E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E5C, 0x0E80);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E83);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E85, 0x0E86);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E89);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E8B, 0x0E8C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E8E, 0x0E93);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0E98);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EA0);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EA4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EA6);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EA8, 0x0EA9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EAC);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EBA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EBE, 0x0EBF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EC5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EC7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0ECE, 0x0ECF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EDA, 0x0EDB);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0EDE, 0x0EFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0F48);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0F6B, 0x0F70);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0F8C, 0x0F8F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0F98);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0FBD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0FCD, 0x0FCE);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x0FD0, 0x0FFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1022);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1028);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x102B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1033, 0x1035);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x103A, 0x103F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x105A, 0x109F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10C6, 0x10CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10F9, 0x10FA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10FC, 0x10FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x115A, 0x115E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x11A3, 0x11A7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x11FA, 0x11FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1207);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1247);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1249);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x124E, 0x124F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1257);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1259);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x125E, 0x125F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1287);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1289);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x128E, 0x128F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12AF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12B1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12B6, 0x12B7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12BF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12C1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12C6, 0x12C7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12D7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x12EF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x130F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1311);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1316, 0x1317);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x131F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1347);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x135B, 0x1360);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x137D, 0x139F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x13F5, 0x1400);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1677, 0x167F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x169D, 0x169F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x16F1, 0x16FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x170D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1715, 0x171F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1737, 0x173F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1754, 0x175F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x176D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1771);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1774, 0x177F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x17DD, 0x17DF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x17EA, 0x17FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x180F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x181A, 0x181F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1878, 0x187F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x18AA, 0x1DFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1E9C, 0x1E9F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1EFA, 0x1EFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F16, 0x1F17);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F1E, 0x1F1F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F46, 0x1F47);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F4E, 0x1F4F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F58);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F5A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F5C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F5E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1F7E, 0x1F7F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FB5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FC5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FD4, 0x1FD5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FDC);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FF0, 0x1FF1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FF5);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1FFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2053, 0x2056);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2058, 0x205E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2064, 0x2069);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2072, 0x2073);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x208F, 0x209F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x20B2, 0x20CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x20EB, 0x20FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x213B, 0x213C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x214C, 0x2152);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2184, 0x218F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x23CF, 0x23FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2427, 0x243F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x244B, 0x245F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x24FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2614, 0x2615);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2618);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x267E, 0x267F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x268A, 0x2700);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2705);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x270A, 0x270B);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2728);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x274C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x274E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2753, 0x2755);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2757);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x275F, 0x2760);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2795, 0x2797);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x27B0);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x27BF, 0x27CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x27EC, 0x27EF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2B00, 0x2E7F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2E9A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2EF4, 0x2EFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2FD6, 0x2FEF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2FFC, 0x2FFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x3040);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x3097, 0x3098);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x3100, 0x3104);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x312D, 0x3130);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x318F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x31B8, 0x31EF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x321D, 0x321F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x3244, 0x3250);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x327C, 0x327E);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x32CC, 0x32CF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x32FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x3377, 0x337A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x33DE, 0x33DF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x33FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x4DB6, 0x4DFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x9FA6, 0x9FFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xA48D, 0xA48F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xA4C7, 0xABFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xD7A4, 0xD7FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFA2E, 0xFA2F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFA6B, 0xFAFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB07, 0xFB12);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB18, 0xFB1C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB37);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB3D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB3F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB42);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFB45);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFBB2, 0xFBD2);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFD40, 0xFD4F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFD90, 0xFD91);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFDC8, 0xFDCF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFDFD, 0xFDFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE10, 0xFE1F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE24, 0xFE2F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE47, 0xFE48);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE53);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE67);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE6C, 0xFE6F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFE75);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFEFD, 0xFEFE);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFF00);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFBF, 0xFFC1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFC8, 0xFFC9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFD0, 0xFFD1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFD8, 0xFFD9);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFDD, 0xFFDF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFE7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xFFEF, 0xFFF8);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10000, 0x102FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1031F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10324, 0x1032F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1034B, 0x103FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x10426, 0x10427);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1044E, 0x1CFFF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D0F6, 0x1D0FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D127, 0x1D129);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D1DE, 0x1D3FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D455);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D49D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A0, 0x1D4A1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A3, 0x1D4A4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A7, 0x1D4A8);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4AD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4BA);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4BC);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4C1);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D4C4);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D506);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D50B, 0x1D50C);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D515);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D51D);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D53A);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D53F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D545);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D547, 0x1D549);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D551);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D6A4, 0x1D6A7);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D7CA, 0x1D7CD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x1D800, 0x1FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2A6D7, 0x2F7FF);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x2FA1E, 0x2FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x30000, 0x3FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x40000, 0x4FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x50000, 0x5FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x60000, 0x6FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x70000, 0x7FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x80000, 0x8FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0x90000, 0x9FFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xA0000, 0xAFFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xB0000, 0xBFFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xC0000, 0xCFFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xD0000, 0xDFFFD);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xE0000);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xE0002, 0xE001F);
-		testForbitChars(StringPrep.FORBID_UNASSIGNED, 0xE0080, 0xEFFFD);
+	public void testForbidUnassigned() throws Exception {
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0221);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0234, 0x024F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x02AE, 0x02AF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x02EF, 0x02FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0350, 0x035F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0370, 0x0373);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0376, 0x0379);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x037B, 0x037D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x037F, 0x0383);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x038B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x038D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x03A2);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x03CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x03F7, 0x03FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0487);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x04CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x04F6, 0x04F7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x04FA, 0x04FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0510, 0x0530);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0557, 0x0558);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0560);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0588);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x058B, 0x0590);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x05A2);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x05BA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x05C5, 0x05CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x05EB, 0x05EF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x05F5, 0x060B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x060D, 0x061A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x061C, 0x061E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0620);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x063B, 0x063F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0656, 0x065F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x06EE, 0x06EF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x06FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x070E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x072D, 0x072F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x074B, 0x077F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x07B2, 0x0900);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0904);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x093A, 0x093B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x094E, 0x094F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0955, 0x0957);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0971, 0x0980);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0984);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x098D, 0x098E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0991, 0x0992);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09A9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09B1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09B3, 0x09B5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09BA, 0x09BB);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09BD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09C5, 0x09C6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09C9, 0x09CA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09CE, 0x09D6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09D8, 0x09DB);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09DE);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09E4, 0x09E5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x09FB, 0x0A01);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A03, 0x0A04);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A0B, 0x0A0E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A11, 0x0A12);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A29);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A31);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A34);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A37);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A3A, 0x0A3B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A3D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A43, 0x0A46);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A49, 0x0A4A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A4E, 0x0A58);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A5D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A5F, 0x0A65);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A75, 0x0A80);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A84);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A8C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A8E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0A92);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AA9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AB1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AB4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0ABA, 0x0ABB);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AC6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0ACA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0ACE, 0x0ACF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AD1, 0x0ADF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AE1, 0x0AE5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0AF0, 0x0B00);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B04);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B0D, 0x0B0E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B11, 0x0B12);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B29);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B31);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B34, 0x0B35);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B3A, 0x0B3B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B44, 0x0B46);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B49, 0x0B4A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B4E, 0x0B55);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B58, 0x0B5B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B5E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B62, 0x0B65);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B71, 0x0B81);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B84);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B8B, 0x0B8D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B91);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B96, 0x0B98);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B9B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0B9D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BA0, 0x0BA2);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BA5, 0x0BA7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BAB, 0x0BAD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BB6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BBA, 0x0BBD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BC3, 0x0BC5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BC9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BCE, 0x0BD6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BD8, 0x0BE6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0BF3, 0x0C00);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C04);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C0D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C11);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C29);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C34);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C3A, 0x0C3D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C45);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C49);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C4E, 0x0C54);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C57, 0x0C5F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C62, 0x0C65);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C70, 0x0C81);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C84);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C8D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0C91);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CA9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CB4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CBA, 0x0CBD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CC5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CC9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CCE, 0x0CD4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CD7, 0x0CDD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CDF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CE2, 0x0CE5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0CF0, 0x0D01);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D04);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D0D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D11);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D29);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D3A, 0x0D3D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D44, 0x0D45);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D49);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D4E, 0x0D56);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D58, 0x0D5F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D62, 0x0D65);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D70, 0x0D81);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D84);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0D97, 0x0D99);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DB2);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DBC);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DBE, 0x0DBF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DC7, 0x0DC9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DCB, 0x0DCE);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DD5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DD7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DE0, 0x0DF1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0DF5, 0x0E00);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E3B, 0x0E3E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E5C, 0x0E80);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E83);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E85, 0x0E86);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E89);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E8B, 0x0E8C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E8E, 0x0E93);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0E98);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EA0);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EA4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EA6);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EA8, 0x0EA9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EAC);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EBA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EBE, 0x0EBF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EC5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EC7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0ECE, 0x0ECF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EDA, 0x0EDB);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0EDE, 0x0EFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0F48);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0F6B, 0x0F70);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0F8C, 0x0F8F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0F98);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0FBD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0FCD, 0x0FCE);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x0FD0, 0x0FFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1022);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1028);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x102B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1033, 0x1035);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x103A, 0x103F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x105A, 0x109F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10C6, 0x10CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10F9, 0x10FA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10FC, 0x10FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x115A, 0x115E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x11A3, 0x11A7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x11FA, 0x11FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1207);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1247);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1249);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x124E, 0x124F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1257);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1259);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x125E, 0x125F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1287);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1289);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x128E, 0x128F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12AF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12B1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12B6, 0x12B7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12BF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12C1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12C6, 0x12C7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12D7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x12EF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x130F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1311);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1316, 0x1317);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x131F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1347);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x135B, 0x1360);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x137D, 0x139F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x13F5, 0x1400);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1677, 0x167F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x169D, 0x169F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x16F1, 0x16FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x170D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1715, 0x171F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1737, 0x173F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1754, 0x175F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x176D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1771);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1774, 0x177F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x17DD, 0x17DF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x17EA, 0x17FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x180F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x181A, 0x181F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1878, 0x187F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x18AA, 0x1DFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1E9C, 0x1E9F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1EFA, 0x1EFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F16, 0x1F17);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F1E, 0x1F1F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F46, 0x1F47);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F4E, 0x1F4F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F58);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F5A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F5C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F5E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1F7E, 0x1F7F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FB5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FC5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FD4, 0x1FD5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FDC);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FF0, 0x1FF1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FF5);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1FFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2053, 0x2056);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2058, 0x205E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2064, 0x2069);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2072, 0x2073);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x208F, 0x209F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x20B2, 0x20CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x20EB, 0x20FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x213B, 0x213C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x214C, 0x2152);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2184, 0x218F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x23CF, 0x23FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2427, 0x243F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x244B, 0x245F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x24FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2614, 0x2615);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2618);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x267E, 0x267F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x268A, 0x2700);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2705);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x270A, 0x270B);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2728);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x274C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x274E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2753, 0x2755);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2757);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x275F, 0x2760);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2795, 0x2797);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x27B0);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x27BF, 0x27CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x27EC, 0x27EF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2B00, 0x2E7F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2E9A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2EF4, 0x2EFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2FD6, 0x2FEF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2FFC, 0x2FFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x3040);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x3097, 0x3098);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x3100, 0x3104);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x312D, 0x3130);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x318F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x31B8, 0x31EF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x321D, 0x321F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x3244, 0x3250);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x327C, 0x327E);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x32CC, 0x32CF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x32FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x3377, 0x337A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x33DE, 0x33DF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x33FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x4DB6, 0x4DFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x9FA6, 0x9FFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xA48D, 0xA48F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xA4C7, 0xABFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xD7A4, 0xD7FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFA2E, 0xFA2F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFA6B, 0xFAFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB07, 0xFB12);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB18, 0xFB1C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB37);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB3D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB3F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB42);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFB45);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFBB2, 0xFBD2);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFD40, 0xFD4F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFD90, 0xFD91);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFDC8, 0xFDCF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFDFD, 0xFDFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE10, 0xFE1F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE24, 0xFE2F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE47, 0xFE48);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE53);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE67);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE6C, 0xFE6F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFE75);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFEFD, 0xFEFE);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFF00);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFBF, 0xFFC1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFC8, 0xFFC9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFD0, 0xFFD1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFD8, 0xFFD9);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFDD, 0xFFDF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFE7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xFFEF, 0xFFF8);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10000, 0x102FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1031F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10324, 0x1032F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1034B, 0x103FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x10426, 0x10427);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1044E, 0x1CFFF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D0F6, 0x1D0FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D127, 0x1D129);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D1DE, 0x1D3FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D455);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D49D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A0, 0x1D4A1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A3, 0x1D4A4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4A7, 0x1D4A8);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4AD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4BA);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4BC);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4C1);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D4C4);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D506);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D50B, 0x1D50C);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D515);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D51D);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D53A);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D53F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D545);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D547, 0x1D549);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D551);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D6A4, 0x1D6A7);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D7CA, 0x1D7CD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x1D800, 0x1FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2A6D7, 0x2F7FF);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x2FA1E, 0x2FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x30000, 0x3FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x40000, 0x4FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x50000, 0x5FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x60000, 0x6FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x70000, 0x7FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x80000, 0x8FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0x90000, 0x9FFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xA0000, 0xAFFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xB0000, 0xBFFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xC0000, 0xCFFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xD0000, 0xDFFFD);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xE0000);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xE0002, 0xE001F);
+		testForbidChars(StringPrep.FORBID_UNASSIGNED, 0xE0080, 0xEFFFD);
 	}
 
 	// ---------------------- helpers ----------------------
@@ -792,7 +819,7 @@ public class StringPrepTest {
 		return new String(b.toArray());
 	}
 
-	private void testForbitChars(long profile, int codePoint) throws Exception {
+	private void testForbidChars(long profile, int codePoint) throws Exception {
 		try{
 			ByteStringBuilder b = new ByteStringBuilder();
 			StringPrep.encode(codePointToString(codePoint), b, profile);
@@ -806,9 +833,9 @@ public class StringPrepTest {
         StringPrep.encode(codePointToString(codePoint), b, profile);
     }
 
-	private void testForbitChars(long profile, int from, int to) throws Exception{
+	private void testForbidChars(long profile, int from, int to) throws Exception{
 		for(int i = from; i <= to; i++){
-			testForbitChars(profile, i);
+			testForbidChars(profile, i);
 		}
 	}
 

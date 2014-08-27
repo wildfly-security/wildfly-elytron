@@ -26,7 +26,6 @@ import java.io.UnsupportedEncodingException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.wildfly.sasl.util.ByteStringBuilder;
-import org.wildfly.sasl.util.HexConverter;
 import org.wildfly.sasl.util.SaslBase64;
 
 /**
