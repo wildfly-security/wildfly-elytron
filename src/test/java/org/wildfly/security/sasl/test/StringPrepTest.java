@@ -70,7 +70,6 @@ public class StringPrepTest {
 	}
 
 	@Test
-	@Ignore
     public void testEncodingOfMaxCodepointChar(){
         ByteStringBuilder b = new ByteStringBuilder();
         StringPrep.encode("\uDBFF\uDFFF", b, 0); // 0x10FFFF
@@ -233,7 +232,6 @@ public class StringPrepTest {
 	}
 
 	@Test
-	@Ignore
 	public void testForbidNonAsciiSpaces() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x0000, 0x009F);
 	    testForbidChars(StringPrep.FORBID_NON_ASCII_SPACES, 0x00A0);
@@ -253,7 +251,6 @@ public class StringPrepTest {
 	}
 
 	@Test
-	@Ignore
 	public void testForbidAsciiControl() throws Exception {
 	    testForbidChars(StringPrep.FORBID_ASCII_CONTROL, 0x0000,0x001F);
 	    testAllowChars(StringPrep.FORBID_ASCII_CONTROL, 0x0020, 0x007E);
@@ -264,7 +261,6 @@ public class StringPrepTest {
 	}
 
 	@Test
-	@Ignore
 	public void testForbidNonAsciiControl() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0000, 0x007F);
 	    testForbidChars(StringPrep.FORBID_NON_ASCII_CONTROL, 0x0080,0x009F);
@@ -294,7 +290,6 @@ public class StringPrepTest {
 	}
 
 	@Test
-	@Ignore
 	public void testForbidPrivateUse() throws Exception {
 	    testAllowChars(StringPrep.FORBID_PRIVATE_USE, 0x0000, 0xD7FF);
 	    testForbidChars(StringPrep.FORBID_PRIVATE_USE, 0xD800, 0xDFFF); // separated surrogates
@@ -308,7 +303,6 @@ public class StringPrepTest {
 
 	/** 5.4 Non-character code points */
 	@Test
-	@Ignore
 	public void testForbidNonCharacter() throws Exception {
 	    testAllowChars(StringPrep.FORBID_NON_CHARACTER, 0x0000, 0xD7FF);
 	    testForbidChars(StringPrep.FORBID_NON_CHARACTER, 0xD800, 0xDFFF); // separated surrogates
@@ -352,7 +346,6 @@ public class StringPrepTest {
 
 	/** 5.5 Surrogate codes */
 	@Test
-	@Ignore
 	public void testForbidSurrogate() throws Exception {
 	    testAllowChars(StringPrep.FORBID_SURROGATE, 0x0000, 0xD7FF);
 		testForbidChars(StringPrep.FORBID_SURROGATE, 0xD800,0xDFFF);
@@ -361,7 +354,6 @@ public class StringPrepTest {
 
 	/** 5.6 Inappropriate for plain text */
 	@Test
-	@Ignore
 	public void testForbidInappropriateForPlainText() throws Exception {
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0x0000, 0xD7FF);
 	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_PLAIN_TEXT, 0xD800, 0xDFFF); // separated surrogates
@@ -372,7 +364,6 @@ public class StringPrepTest {
 
 	/** 5.7 Inappropriate for canonical representation */
 	@Test
-	@Ignore
 	public void testForbidInappropriateForCanonicalRepresentation() throws Exception {
 	    testAllowChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x0000, 0x2FEF);
 	    testForbidChars(StringPrep.FORBID_INAPPROPRIATE_FOR_CANON_REP, 0x2FF0,0x2FFB);
@@ -383,7 +374,6 @@ public class StringPrepTest {
 
 	/** 5.8 Change display properties or are deprecated */
 	@Test
-	@Ignore
 	public void testForbidChangeDisplayAndDeprecated() throws Exception {
         testAllowChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0000, 0x033F);
 		testForbidChars(StringPrep.FORBID_CHANGE_DISPLAY_AND_DEPRECATED, 0x0340,0x0341);

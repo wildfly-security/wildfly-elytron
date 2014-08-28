@@ -215,7 +215,7 @@ public final class StringPrep {
                 throw new IllegalArgumentException("Invalid code point");
             }
 
-            assert cp < Character.MAX_CODE_POINT;
+            assert Character.MIN_CODE_POINT <= cp && cp <= Character.MAX_CODE_POINT;
 
             // StringPrep 6 - Bidirectional Characters
             switch (Character.getDirectionality(cp)) {
