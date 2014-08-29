@@ -18,7 +18,6 @@
 
 package org.wildfly.security.util;
 
-import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 
 /**
@@ -36,6 +35,9 @@ public class CharacterArrayIterator {
     }
 
     public CharacterArrayIterator(final char[] c, final int i) {
+        if (i < 0 || i >= c.length) {
+            throw new NoSuchElementException();
+        }
         this.c = c;
         this.i = i;
     }
@@ -44,16 +46,11 @@ public class CharacterArrayIterator {
         return i < c.length;
     }
 
-    public int next() throws InvalidKeySpecException {
+    public int next() throws NoSuchElementException {
         if (! hasNext()) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
+            throw new NoSuchElementException();
         }
         return c[i++];
-    }
-
-    public int current() {
-        if (i == 0) throw new NoSuchElementException();
-        return c[i - 1];
     }
 
     public int distanceTo(int ch) {

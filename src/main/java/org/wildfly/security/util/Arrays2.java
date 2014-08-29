@@ -37,8 +37,8 @@ final class Arrays2 {
         return true;
     }
 
-    public static boolean equals(byte[] a1, int offs, byte[] a2) {
-        return equals(a1, offs, a2, 0, a2.length);
+    public static boolean equals(byte[] a1, int offs1, byte[] a2) {
+        return equals(a1, offs1, a2, 0, a2.length);
     }
 
     public static boolean equals(char[] a1, int offs1, char[] a2, int offs2, int len) {
@@ -52,8 +52,8 @@ final class Arrays2 {
         return true;
     }
 
-    public static boolean equals(char[] a1, int offs, char[] a2) {
-        return equals(a1, offs, a2, 0, a2.length);
+    public static boolean equals(char[] a1, int offs1, char[] a2) {
+        return equals(a1, offs1, a2, 0, a2.length);
     }
 
     public static boolean equals(char[] a1, int offs1, String a2, int offs2, int len) {
@@ -67,12 +67,12 @@ final class Arrays2 {
         return true;
     }
 
-    public static boolean equals(char[] a1, int offs, String a2) {
-        return equals(a1, offs, a2, 0, a2.length());
+    public static boolean equals(char[] a1, int offs1, String a2) {
+        return equals(a1, offs1, a2, 0, a2.length());
     }
 
-    public static boolean equals(String a1, int offs, char[] a2) {
-        return equals(a2, 0, a1, offs, a2.length);
+    public static boolean equals(String a1, int offs1, char[] a2) {
+        return equals(a2, 0, a1, offs1, a2.length);
     }
 
     public static boolean equals(String a1, char[] a2) {

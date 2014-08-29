@@ -18,7 +18,6 @@
 
 package org.wildfly.security.util;
 
-import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 
 /**
@@ -27,6 +26,7 @@ import java.util.NoSuchElementException;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class ByteArrayIterator {
+
     private final byte[] b;
     private int i;
 
@@ -35,6 +35,9 @@ public class ByteArrayIterator {
     }
 
     public ByteArrayIterator(final byte[] b, final int i) {
+        if (i < 0 || i >= b.length) {
+            throw new NoSuchElementException();
+        }
         this.b = b;
         this.i = i;
     }
@@ -43,16 +46,11 @@ public class ByteArrayIterator {
         return i < b.length;
     }
 
-    public int next() throws InvalidKeySpecException {
+    public int next() throws NoSuchElementException {
         if (! hasNext()) {
-            throw new InvalidKeySpecException("Unexpected end of input bytes");
+            throw new NoSuchElementException();
         }
         return lookup(i++);
-    }
-
-    public int current() {
-        if (i == 0) throw new NoSuchElementException();
-        return lookup(i - 1);
     }
 
     protected int lookup(int idx) {

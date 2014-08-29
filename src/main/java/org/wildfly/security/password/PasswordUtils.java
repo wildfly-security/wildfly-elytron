@@ -25,6 +25,7 @@ import static org.wildfly.security.util.Base64.*;
 
 import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
+import java.util.NoSuchElementException;
 
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
@@ -367,6 +368,7 @@ public class PasswordUtils {
             this.interleave = interleave;
         }
 
+        @Override
         protected int lookup(final int idx) {
             return super.lookup(interleave[idx]);
         }
@@ -375,25 +377,29 @@ public class PasswordUtils {
     private static int parseModCryptIterationCount(final CharacterArrayIterator iter, final int minIterations, final int maxIterations,
             final int defaultIterations) throws InvalidKeySpecException {
         int iterationCount;
-        if (iter.contentEquals("rounds=")) {
-            iter.skip(7);
-            iterationCount = 0;
-            for (int ch = iter.next(); ch != '$'; ch = iter.next()) {
-                if (iterationCount != maxIterations) {
-                    if (ch >= '0' && ch <= '9') {
-                        // multiply by 10, add next
-                        iterationCount = (iterationCount << 3) + (iterationCount << 1) + ch - '0';
-                        if (iterationCount > maxIterations) {
-                            // stop overflow
-                            iterationCount = maxIterations;
+        try {
+            if (iter.contentEquals("rounds=")) {
+                iter.skip(7);
+                iterationCount = 0;
+                for (int ch = iter.next(); ch != '$'; ch = iter.next()) {
+                    if (iterationCount != maxIterations) {
+                        if (ch >= '0' && ch <= '9') {
+                            // multiply by 10, add next
+                            iterationCount = (iterationCount << 3) + (iterationCount << 1) + ch - '0';
+                            if (iterationCount > maxIterations) {
+                                // stop overflow
+                                iterationCount = maxIterations;
+                            }
                         }
+                    } else {
+                        throw new InvalidKeySpecException("Invalid character encountered");
                     }
-                } else {
-                    throw new InvalidKeySpecException("Invalid character encountered");
                 }
+            } else {
+                iterationCount = defaultIterations;
             }
-        } else {
-            iterationCount = defaultIterations;
+        } catch (NoSuchElementException ignored) {
+            throw new InvalidKeySpecException("Unexpected end of input string");
         }
         return max(minIterations, iterationCount);
     }
@@ -502,7 +508,7 @@ public class PasswordUtils {
             base64DecodeACryptLE(i, hash, table);
 
             return new UnixSHACryptPasswordSpec(algorithm, hash, salt, iterationCount);
-        } catch (ArrayIndexOutOfBoundsException ignored) {
+        } catch (NoSuchElementException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
         }
     }
@@ -530,7 +536,7 @@ public class PasswordUtils {
             base64DecodeACryptLE(i, hash, MD5_IDX);
 
             return new UnixMD5CryptPasswordSpec(hash, salt);
-        } catch (ArrayIndexOutOfBoundsException ignored) {
+        } catch (NoSuchElementException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
         }
     }
@@ -578,7 +584,7 @@ public class PasswordUtils {
             base64DecodeACryptLE(i, hash, MD5_IDX);
 
             return new SunUnixMD5CryptPasswordSpec(algorithm, hash, salt, iterationCount);
-        } catch (ArrayIndexOutOfBoundsException ignored) {
+        } catch (NoSuchElementException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
         }
     }
@@ -618,7 +624,7 @@ public class PasswordUtils {
             base64DecodeBCrypt(CharacterArrayIterator, decodedPassword);
 
             return new BCryptPasswordSpec(decodedPassword, decodedSalt, cost);
-        } catch (ArrayIndexOutOfBoundsException ignored) {
+        } catch (NoSuchElementException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
         }
     }
