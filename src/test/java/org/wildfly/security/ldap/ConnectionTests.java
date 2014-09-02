@@ -57,7 +57,7 @@ public class ConnectionTests {
 
     @Test
     public void testCrypt() throws NamingException {
-        testUser("uid=cryptUser,dc=elytron,dc=wildfly,dc=org", "cryptPassword");
+        testUser("uid=cryptUser,dc=elytron,dc=wildfly,dc=org", "cryptIt");
     }
 
     private void testUser(final String principal, final String credential) throws NamingException {

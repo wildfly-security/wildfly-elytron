@@ -21,6 +21,7 @@ package org.wildfly.security.auth.provider.ldap;
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtils.UTF_8;
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtils.parseUserPassword;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
+import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -36,6 +37,7 @@ import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
@@ -141,6 +143,8 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                 return ((TrivialDigestPasswordSpec) passwordSpec).getAlgorithm();
             } else if (passwordSpec instanceof TrivialSaltedDigestPasswordSpec) {
                 return ((TrivialSaltedDigestPasswordSpec) passwordSpec).getAlgorithm();
+            } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
+                return ALGORITHM_BSD_CRYPT_DES;
             }
 
             return null;

@@ -19,8 +19,8 @@
 package org.wildfly.security.ldap;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -36,10 +36,10 @@ import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
 import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -51,7 +51,6 @@ import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 public class UserPasswordTests {
 
     private static SecurityRealm simpleToDnRealm;
-    private static SecurityRealm simpleToSimpleRealm;
 
     @BeforeClass
     public static void createRealm() {
@@ -73,30 +72,13 @@ public class UserPasswordTests {
                 .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .addCredentialSupport(TrivialDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .addCredentialSupport(TrivialSaltedDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .build()
-                .build();
-
-        simpleToSimpleRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(false)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .setReloadPrincipalName(true)
-                .setValidatePresence(true)
-                .build()
-                .userPassword()
-                .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(TrivialDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(TrivialSaltedDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .build()
                 .build();
     }
 
     @AfterClass
     public static void removeRealm() {
-        simpleToSimpleRealm = null;
         simpleToDnRealm = null;
     }
 
@@ -117,7 +99,7 @@ public class UserPasswordTests {
 
     @Test
     public void testCryptUser() throws Exception {
-        performSimpleNameTest("cryptUser", ClearPassword.class, ClearPassword.ALGORITHM_CLEAR, "cryptPassword".toCharArray());
+        performSimpleNameTest("cryptUser", BSDUnixDESCryptPassword.class, BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptIt".toCharArray());
     }
 
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException {

@@ -22,8 +22,10 @@ import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
 
+import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
@@ -79,6 +81,8 @@ class UserPasswordPasswordUtils {
                     // {ssha512}
                     return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
+            } else if (userPassword[1] == 'c' && userPassword[2] == 'r' && userPassword[3] == 'y' && userPassword[4] == 'p' && userPassword[5] == 't' && userPassword[6] == '}') {
+                return createCrypBasedSpec(userPassword);
             }
             for (int i = 1; i < userPassword.length - 1; i++) {
                 if (userPassword[i] == '}') {
@@ -140,6 +144,26 @@ class UserPasswordPasswordUtils {
         System.arraycopy(decoded, digestLength, salt, 0, saltLength);
 
         return new TrivialSaltedDigestPasswordSpec(algorithm, digest, salt);
+    }
+
+    private static PasswordSpec createCrypBasedSpec(byte[] userPassword) throws InvalidKeySpecException {
+        if (userPassword.length != 20) {
+            throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
+        }
+
+        final int iterationCount = 25; // Apache DS fix this at 25 so not represented in the userPassword value.
+
+        byte[] saltBytes = new byte[2];
+        System.arraycopy(userPassword, 7, saltBytes, 0, 2);
+        int salt = 0;
+        for (int i = 1; i >= 0; i--) {
+            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeA(saltBytes[i]));
+        }
+
+        byte[] hash = new byte[8];
+        Base64.base64DecodeA(new CharacterArrayIterator(new String(userPassword, 9, 11, StandardCharsets.UTF_8).toCharArray()), hash);
+
+        return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
 
     private static int expectedDigestLengthBytes(final String algorithm) {
