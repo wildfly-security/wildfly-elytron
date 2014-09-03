@@ -33,15 +33,17 @@ import org.wildfly.security.sasl.util.AbstractSaslFactory;
  *
  */
 public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
-    
+
     public static final String JBOSS_DIGEST_MD5 = "DIGEST-MD5";
+    public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
+    public static final String QOP_PROPERTY = "javax.security.sasl.qop";
     public static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
     public static final String REALM_DELIMITER = " ";
-    
+
     public MD5DigestServerFactory() {
         super(JBOSS_DIGEST_MD5);
     }
-    
+
     /* (non-Javadoc)
      * @see javax.security.sasl.SaslServerFactory#createSaslServer(java.lang.String, java.lang.String, java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
      */
@@ -51,7 +53,7 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
         if (! isIncluded(mechanism)) {
             return null;
         }
-        
+
         String realmList = (String)props.get(REALM_PROPERTY);
         String[] realms;
         if (realmList != null) {
@@ -59,8 +61,17 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
         } else {
             realms = new String[] {serverName};
         }
-        
-        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, null);
+
+        String charset = null;
+        Boolean utf8 = (Boolean)props.get(UTF8_PROPERTY);
+        if(utf8==null || utf8.booleanValue()){
+            charset = "UTF-8";
+        }
+
+        String qopsString = (String)props.get(QOP_PROPERTY);
+        String[] qops = qopsString==null ? null : qopsString.split(",");
+
+        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops);
         server.init();
         return server;
     }

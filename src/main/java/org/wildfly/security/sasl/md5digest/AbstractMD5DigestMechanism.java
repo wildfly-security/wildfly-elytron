@@ -36,14 +36,14 @@ import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.sasl.util.SaslBase64;
 
 /**
- * 
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
 abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
-    
-    public static enum FORMAT {CLIENT, SERVER}; 
-    
+
+    public static enum FORMAT {CLIENT, SERVER};
+
     private static final int MAX_PARSED_RESPONSE_SIZE = 13;
     private static final String algorithm = "MD5";
     static String authMethod = "AUTHENTICATE";
@@ -55,15 +55,15 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
     public static final String DEFAULT_QOP = "auth";
     public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
 
-    public static final String[] DEFAULT_CIPHER_NAMES = { 
+    public static final String[] DEFAULT_CIPHER_NAMES = {
         "DESede/CBC/NoPadding",
         "RC4",
-        "DES/CBC/NoPadding"   
+        "DES/CBC/NoPadding"
     };
 
     private FORMAT format;
     protected String digestURI;
-    
+
     /**
      * @param mechanismName
      * @param protocol
@@ -76,7 +76,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         this.digestURI = getProtocol() + "/" + getServerName();
     }
 
-    
+
     public static int skipWhiteSpace(byte[] buffer, int startPoint) {
         int i = startPoint;
         while (i < buffer.length && isWhiteSpace(buffer[i])) {
@@ -84,7 +84,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         }
         return i;
     }
-    
+
     public static boolean isWhiteSpace(byte b) {
         if (b == 13)   // CR
             return true;
@@ -97,7 +97,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         else
             return false;
     }
-    
+
     static String getSupportedCiphers() {
         StringBuilder ciphers = new StringBuilder();
         // TODO: introduce system property to get list of ciphers to evaluate
@@ -115,7 +115,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
                 // no impl found
             }
         }
-        
+
         return ciphers.toString();
     }
 
@@ -126,39 +126,39 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         ByteStringBuilder nonceBase64 = new ByteStringBuilder();
         SaslBase64.encode(nonceData, nonceBase64);
-        
+
         return nonceBase64.toArray();
-    }    
+    }
 
     /**
      * Converts input to HEX and pad it from left with zeros to totalLength.
-     * 
+     *
      * @param input to be converted to HEX
      * @param totalLength length of returned array of bytes
      * @return
      */
     static byte[] convertToHexBytesWithLeftPadding(int input, int totalLength) {
-        byte[] retValue = new byte[totalLength];  
+        byte[] retValue = new byte[totalLength];
         Arrays.fill(retValue, (byte) '0');
         byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(Charsets.UTF_8);
         if (hex.length > totalLength) {
             throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
         }
-        
+
         int from = totalLength - hex.length;
         for (int i = 0; i < hex.length; i++) {
             retValue[from + i] = hex[i];
         }
         return retValue;
     }
-        
+
     /**
      * Method to produce digest-response:
      * response-value  =
      *    HEX( KD ( HEX(H(A1)),
      *             { nonce-value, ":" nc-value, ":",
      *               cnonce-value, ":", qop-value, ":", HEX(H(A2)) }))
-     * 
+     *
      * @param username
      * @param realm
      * @param password
@@ -171,7 +171,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @return
      * @throws NoSuchAlgorithmException
      */
-    byte[] digestResponse(String username, String realm, char[] password, 
+    byte[] digestResponse(String username, String realm, char[] password,
             byte[] nonce, int nonce_count, byte[] cnonce,
             String authzid, String qop, String digest_uri) throws NoSuchAlgorithmException {
 
@@ -204,10 +204,10 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         }
         byte[] digest_A1 = md5.digest(A1.toArray());
         md5.reset();
-        
+
         // QOP
         String qop_value;
-        if (qop != null && "".equals(qop)) {
+        if (qop != null && ! "".equals(qop)) {
             qop_value = qop;
         } else {
             qop_value = DEFAULT_QOP;
@@ -215,7 +215,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         // A2
         ByteStringBuilder A2 = new ByteStringBuilder();
-        //if (format == FORMAT.CLIENT) { 
+        //if (format == FORMAT.CLIENT) {
             A2.append(authMethod);
         //}
         A2.append(':');
@@ -227,7 +227,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         byte[] digest_A2 = md5.digest(A2.toArray());
         md5.reset();
-        
+
         ByteStringBuilder KD = new ByteStringBuilder();
         KD.append(HexConverter.convertToHexBytes(digest_A1));
         KD.append(':');
@@ -364,7 +364,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         return response;
     }
-    
+
     private int addToParsedChallenge(HashMap<String, byte[]> response, StringBuilder keyBuilder, ByteStringBuilder valueBuilder, int realmNumber) {
         String k = keyBuilder.toString();
         byte[] v = valueBuilder.toArray();
@@ -377,5 +377,11 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         }
         return realmNumber;
     }
-    
+
+    protected boolean arrayContains(String[] array, String searched){
+        for(String item : array){
+            if(searched.equals(item)) return true;
+        }
+        return false;
+    }
 }

@@ -43,44 +43,47 @@ import org.wildfly.security.sasl.util.SaslQuote;
  *
  */
 public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements SaslServer {
-    
+
     public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
-            CallbackHandler callbackHandler, String charsetName) {
+            CallbackHandler callbackHandler, String charsetName, String[] qops) {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers();
+        this.qops = qops;
         if (charsetName != null && charsetName.equalsIgnoreCase("UTF-8")) {
             // there are only two possibilities 8859_1 or UTF-8 (the 8859_1 is default)
             this.charset = Charsets.UTF_8;
         }
-        
+
     }
+
+    public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
 
     public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
 
-    private static final String DELIMITER = ",";
-    
-    public static final String[] DEFAULT_CIPHER_NAMES = { 
+    private static final char DELIMITER = ',';
+
+    public static final String[] DEFAULT_CIPHER_NAMES = {
         "DESede/CBC/NoPadding",
         "RC4",
-        "DES/CBC/NoPadding"   
+        "DES/CBC/NoPadding"
     };
 
     private String[] realms;
     private String configuredQops;
     private String supportedCiphers;
     private Charset charset = Charsets.LATIN_1; // 8859_1 is default
-    private int receivingMaxBuffSize;
-    private String qops;
+    private int receivingMaxBuffSize = DEFAULT_MAXBUF;
+    private String[] qops;
     private String authorizationId;
     private int nonceCount = -1;
     private byte[] nonce = null;
-    
+
     private final SaslState STEP_ONE = new SaslState() {
-        
+
         @Override
         public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-    
+
             if (message.length != 0) {
                 throw new SaslException(getMechanismName() + ": When sending challenge message has to be empty.");
             }
@@ -89,32 +92,32 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
     };
 
-    
+
     private final SaslState STEP_THREE = new SaslState() {
 
         @Override
         public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-            
+
             if (message == null || message.length == 0) {
                 throw new SaslException(getMechanismName() + ": message cannot be empty nor null");
             }
-            
+
             // parse digest response
             HashMap<String, byte[]> parsedDigestResponse = parseResponse(message);
             noteDigestResponseData(parsedDigestResponse);
-         
+
             // validate
             byte[] response = validateDigestResponse(parsedDigestResponse);
 
             getContext().setNegotiationState(SaslState.COMPLETE);
             return response;
         }
-        
+
     };
 
     /**
      * Generates a digest challenge
-     * 
+     *
      *    digest-challenge  =
      *    1#( realm | nonce | qop-options | stale | maxbuf | charset
      *          algorithm | cipher-opts | auth-param )
@@ -139,75 +142,74 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
      * @return
      */
     private byte[] generateChallenge() {
-        ByteStringBuilder challenge = new ByteStringBuilder(); 
-        
+        ByteStringBuilder challenge = new ByteStringBuilder();
+
         // realms
         StringBuilder sb = new StringBuilder();
         for (String realm: this.realms) {
             sb.append("realm=\"").append(SaslQuote.quote(realm)).append("\"").append(DELIMITER);
         }
         challenge.append(sb.toString().getBytes(charset));
-        
-        
+
+
         // nonce
+        assert nonce == null;
+        nonce = SaslQuote.quote(generateNonce());
         challenge.append("nonce=\"");
-        challenge.append(SaslQuote.quote(generateNonce()));
+        challenge.append(nonce);
         challenge.append("\"").append(DELIMITER);
-        
+
         // qop
         if (qops != null) {
             challenge.append("qop=\"");
-            challenge.append(SaslQuote.quote(qops).getBytes(charset));
+            boolean first = true;
+            for(String qop : qops){
+                if(!first) challenge.append(DELIMITER);
+                challenge.append(SaslQuote.quote(qop).getBytes(charset));
+            }
             challenge.append("\"").append(DELIMITER);
         }
-        
+
         // maxbuf
         if (receivingMaxBuffSize != DEFAULT_MAXBUF) {
             challenge.append("maxbuf=");
             challenge.append(String.valueOf(receivingMaxBuffSize));
             challenge.append(DELIMITER);
         }
-        
+
         // charset
         if (Charsets.UTF_8.equals(charset)) {
             challenge.append("charset=");
             challenge.append("utf-8");
             challenge.append(DELIMITER);
         }
-        
+
         // cipher
-        if (supportedCiphers != null) {
+        if (supportedCiphers != null && qops != null && arrayContains(qops,"auth-conf")) {
             challenge.append("cipher=\"");
             challenge.append(SaslQuote.quote(supportedCiphers).getBytes(charset));
             challenge.append("\"").append(DELIMITER);
         }
-        
+
+        challenge.append("algorithm=md5-sess"); // only for backwards compatibility with HTTP Digest
+
         return challenge.toArray();
     }
 
     private void noteDigestResponseData(HashMap<String, byte[]> parsedDigestResponse) {
-        
-        byte[] data = parsedDigestResponse.get("nonce");
-        if (data != null) {
-            nonce = data.clone();
-        } else {
-            nonce = null;
-        }
-        
-        data = parsedDigestResponse.get("nc");
+        byte[] data = parsedDigestResponse.get("nc");
         if (data != null) {
             nonceCount = Integer.valueOf(new String(data));
         } else {
             nonceCount = -1;
         }
-
     }
-    
+
     private byte[] validateDigestResponse(HashMap<String, byte[]> parsedDigestResponse) throws SaslException {
         if (nonceCount != 1) {
             throw new SaslException(getMechanismName() + ": nonce-count is not equal to 1");
         }
-        
+
         Charset clientCharset = Charsets.LATIN_1;
         if (parsedDigestResponse.get("charset") != null) {
             String cCharset = new String(parsedDigestResponse.get("charset"), charset);
@@ -217,42 +219,42 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
                 throw new SaslException(getMechanismName() + ": client charset should not be specified as server is using iso 8859-1");
             }
         }
-        
+
         String userName;
         if (parsedDigestResponse.get("username") != null) {
             userName = new String(parsedDigestResponse.get("username"), clientCharset);
         } else {
             throw new SaslException(getMechanismName() + ": missing username directive");
         }
-        
+
         String clientRealm;
         if (parsedDigestResponse.get("realm") != null) {
             clientRealm = new String(parsedDigestResponse.get("realm"), clientCharset);
         } else {
             clientRealm = "";
         }
-        if (!serverContainsRealm(clientRealm)) {
+        if (!arrayContains(realms, clientRealm)) {
             throw new SaslException(getMechanismName() + ": client sent realm not present at the server (" + clientRealm + ")");
         }
-        
+
         if (parsedDigestResponse.get("nonce") == null) {
             throw new SaslException(getMechanismName() + ": missing nonce");
         }
-        
+
         byte[] nonceFromClient = parsedDigestResponse.get("nonce");
         if (!Arrays.equals(nonce, nonceFromClient)) {
             throw new SaslException(getMechanismName() + ": nonce mismatch");
         }
-        
+
         if (parsedDigestResponse.get("cnonce") == null) {
             throw new SaslException(getMechanismName() + ": missing cnonce");
         }
         byte[] cnonce = parsedDigestResponse.get("cnonce");
-        
+
         if (parsedDigestResponse.get("nc") == null) {
             throw new SaslException(getMechanismName() + ": missing nonce-count");
         }
-        
+
         String digest_uri;
         if (parsedDigestResponse.get("digest-uri") != null) {
             digest_uri = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
@@ -263,32 +265,34 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             throw new SaslException(getMechanismName() + ": digest-uri directive is missing");
         }
 
-        String qop;
+        String qop = "auth";
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
-            if (!qop.equals("auth") && !qop.equals("auth-int") && !qop.equals("auth-conf")) {
+            if (!arrayContains(QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
-        } else {
-            qop = "auth";
         }
-        
-        
+
+
         // get password
         final NameCallback nameCallback = new NameCallback("User name", userName);
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         final RealmCallback realmCallback = new RealmCallback("User realm");
 
         handleCallbacks(realmCallback, nameCallback, passwordCallback);
-        
+
+        byte[] authzid = parsedDigestResponse.get("authzid");
+        String authorizationId = (authzid==null || authzid.equals(userName)) ? null : new String(authzid, Charsets.UTF_8);
+
         char[] passwd = null;
         byte[] expectedResponse;
         try {
             passwd = passwordCallback.getPassword();
             passwordCallback.clearPassword();
-            expectedResponse = digestResponse(userName, clientRealm, passwd, 
-                    nonce, nonceCount, cnonce, 
-                    new String(parsedDigestResponse.get("authzid"), clientCharset), qop, digestURI);
+
+            expectedResponse = digestResponse(userName, clientRealm, passwd,
+                    nonce, nonceCount, cnonce,
+                    authorizationId, qop, digestURI);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         } finally {
@@ -297,41 +301,32 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
                 Arrays.fill(passwd, (char)0);
             }
         }
-        
+
         if (parsedDigestResponse.get("response") != null) {
             if (Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {
-                this.authorizationId = new String(parsedDigestResponse.get("authzid"), clientCharset);
-                return new byte[0];
+                this.authorizationId = authorizationId!=null ? authorizationId : userName; // TODO: Check permission use given authzid!
+                return createResponseAuth(parsedDigestResponse);
             } else {
                 throw new SaslException(getMechanismName() + ": authentication failed");
             }
-            
+
         } else {
             throw new SaslException(getMechanismName() + ": missing response directive");
         }
-        
+
     }
-    
-    private boolean serverContainsRealm(String realm) {
-        for (String r: realms) {
-            if (realm.equals(r)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
+
     private byte[] createResponseAuth(HashMap<String, byte[]> parsedDigestResponse) {
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
-        
+
         // TODO
-        byte[] response_value = null;
-        
+        byte[] response_value = new byte[0];
+
         responseAuth.append(response_value);
         return responseAuth.toArray();
     }
-    
+
     /* (non-Javadoc)
      * @see javax.security.sasl.SaslServer#getAuthorizationID()
      */
@@ -353,5 +348,5 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         return evaluateMessage(response);
     }
 
-    
+
 }
