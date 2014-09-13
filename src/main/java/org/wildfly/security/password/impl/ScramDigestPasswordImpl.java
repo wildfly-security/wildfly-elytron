@@ -127,7 +127,7 @@ public class ScramDigestPasswordImpl extends AbstractPasswordImpl implements Scr
     }
 
     @Override
-    boolean verify(char[] guess) throws InvalidKeyException {
+    public boolean verify(char[] guess) throws InvalidKeyException {
         try {
             byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
             return Arrays.equals(this.digest, output);
@@ -144,7 +144,7 @@ public class ScramDigestPasswordImpl extends AbstractPasswordImpl implements Scr
         throw new InvalidKeySpecException();
     }
 
-    private static byte[] getNormalizedPasswordBytes(final char[] characters) {
+    static byte[] getNormalizedPasswordBytes(final char[] characters) {
         // normalize the password for verification - XXX double-check this idea
         return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
