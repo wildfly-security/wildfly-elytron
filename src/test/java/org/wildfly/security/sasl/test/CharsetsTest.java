@@ -24,10 +24,10 @@ import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * Tests of org.wildfly.security.sasl.util.Charsets
- *
+ * <p>
  * Reference output by:
- * http://www.ltg.ed.ac.uk/~richard/utf-8.html
- * http://www.russellcottrell.com/greek/utilities/SurrogatePairCalculator.htm
+ * <li> http://www.ltg.ed.ac.uk/~richard/utf-8.html
+ * <li> http://www.russellcottrell.com/greek/utilities/SurrogatePairCalculator.htm
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */

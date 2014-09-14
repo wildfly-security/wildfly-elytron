@@ -84,7 +84,21 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
             HashMap<String, byte[]> parsedChallenge = parseResponse(message);
             noteChallengeData(parsedChallenge);
+            getContext().setNegotiationState(STEP_FOUR);
             return createResponse(parsedChallenge);
+        }
+
+    };
+
+    private final SaslState STEP_FOUR = new SaslState() {
+
+        @Override
+        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
+
+            // TODO: check rspauth
+
+            getContext().setNegotiationState(COMPLETE);
+            return null;
         }
 
     };
@@ -122,21 +136,20 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                 nonce = parsedChallenge.get(keyWord);
             }
             else if (keyWord.equals("cipher")) {
-                cipher_opts = new String(parsedChallenge.get(keyWord), Charsets.UTF_8);
+                cipher_opts = new String(parsedChallenge.get(keyWord), charset);
+                selectCipher(cipher_opts);
             }
         }
 
         realms = new String[realmList.size()];
         realmList.toArray(realms);
-
-        choose();
-
     }
 
 
-    private void choose() {
+    private void selectCipher(String ciphersFromServer) {
         cipher = "";
     }
+
 
     /**
      * Method creates client response to the server challenge:
@@ -194,7 +207,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
 
 
-        String realm;
+        String realm = null;
         if (realms != null && realms.length > 1) {
             final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
             handleCallbacks(realmChoiceCallBack, nameCallback, passwordCallback);
@@ -204,9 +217,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
             handleCallbacks(realmCallback, nameCallback, passwordCallback);
             realm = realmCallback.getText();
         } else {
-            final RealmCallback realmCallback = new RealmCallback("User realm", "DEFAULT_REALM"); // here should be same default getting
-            handleCallbacks(realmCallback, nameCallback, passwordCallback);
-            realm = realmCallback.getText();
+            handleCallbacks(nameCallback, passwordCallback);
         }
 
         // username
@@ -216,11 +227,16 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
-        digestResponse.append("realm=\"");
-        digestResponse.append(SaslQuote.quote(realm).getBytes(charset));
-        digestResponse.append("\"").append(DELIMITER);
+        if(realm != null){
+            digestResponse.append("realm=\"");
+            digestResponse.append(SaslQuote.quote(realm).getBytes(charset));
+            digestResponse.append("\"").append(DELIMITER);
+        }
 
         // nonce
+        if(nonce == null){
+            throw new SaslException("Nonce not provided by server");
+        }
         digestResponse.append("nonce=\"");
         digestResponse.append(nonce);
         digestResponse.append("\"").append(DELIMITER);
@@ -268,11 +284,9 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         digestResponse.append(response_value);
 
         // qop
-        if (qop != null) {
-            digestResponse.append(DELIMITER);
-            digestResponse.append("qop=");
-            digestResponse.append(qop);
-        }
+        digestResponse.append(DELIMITER);
+        digestResponse.append("qop=");
+        digestResponse.append(qop!=null ? qop : "auth");
 
         // cipher
         if (cipher != null && cipher.length() != 0) {

@@ -45,16 +45,12 @@ import org.wildfly.security.sasl.util.SaslQuote;
 public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements SaslServer {
 
     public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
-            CallbackHandler callbackHandler, String charsetName, String[] qops) {
+            CallbackHandler callbackHandler, Charset charset, String[] qops) {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers();
         this.qops = qops;
-        if (charsetName != null && charsetName.equalsIgnoreCase("UTF-8")) {
-            // there are only two possibilities 8859_1 or UTF-8 (the 8859_1 is default)
-            this.charset = Charsets.UTF_8;
-        }
-
+        this.charset = charset;
     }
 
     public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
@@ -154,9 +150,9 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
         // nonce
         assert nonce == null;
-        nonce = SaslQuote.quote(generateNonce());
+        nonce = generateNonce();
         challenge.append("nonce=\"");
-        challenge.append(nonce);
+        challenge.append(SaslQuote.quote(nonce));
         challenge.append("\"").append(DELIMITER);
 
         // qop
@@ -307,7 +303,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
                 this.authorizationId = authorizationId!=null ? authorizationId : userName; // TODO: Check permission use given authzid!
                 return createResponseAuth(parsedDigestResponse);
             } else {
-                throw new SaslException(getMechanismName() + ": authentication failed");
+                throw new SaslException(getMechanismName() + ": authentication failed - bad response");
             }
 
         } else {

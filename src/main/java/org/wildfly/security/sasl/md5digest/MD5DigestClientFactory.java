@@ -46,19 +46,21 @@ public class MD5DigestClientFactory extends AbstractSaslFactory implements SaslC
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
             Map<String, ?> props, CallbackHandler cbh) throws SaslException {
 
-        String selectedMech = null;
-        for (String mech : mechanisms) {
-            if (isIncluded(mech)) {
-                selectedMech = mech;
-                break;
-            }
-        }
-        if (selectedMech == null) {
-            return null;
-        }
+        String selectedMech = selectMechanism(mechanisms);
+        if (selectedMech == null) return null;
+        
         final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false);
         client.init();
         return client;
     }
+
+	private String selectMechanism(String[] mechanisms) {
+		for (String mech : mechanisms) {
+			if (isIncluded(mech)) {
+				return mech;
+			}
+		}
+		return null;
+	}
 
 }

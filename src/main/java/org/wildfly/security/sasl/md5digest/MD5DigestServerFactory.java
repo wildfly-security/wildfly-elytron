@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.md5digest;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -27,6 +28,7 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.md5digest.MD5DigestSaslServer;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -62,12 +64,9 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
             realms = new String[] {serverName};
         }
 
-        String charset = null;
         Boolean utf8 = (Boolean)props.get(UTF8_PROPERTY);
-        if(utf8==null || utf8.booleanValue()){
-            charset = "UTF-8";
-        }
-
+        Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
+        
         String qopsString = (String)props.get(QOP_PROPERTY);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 

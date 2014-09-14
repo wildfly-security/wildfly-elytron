@@ -65,7 +65,7 @@ public class HexConverterTest {
     public void testConvertFromBadCountOfHexChars() throws Exception {
 	    try{
 	        HexConverter.convertFromHex(new char[]{'1','F','A'});
-            throw new Exception("Not throwed IllegalArgumentException!");
+            fail("Not throwed IllegalArgumentException!");
         }
         catch(IllegalArgumentException e){}
 	}
@@ -74,7 +74,7 @@ public class HexConverterTest {
 	public void testConvertFromUnvalidHexChars() throws Exception {
 	    try{
             HexConverter.convertFromHex(new char[]{'B','Z'});
-            throw new Exception("Not throwed IllegalArgumentException!");
+            fail("Not throwed IllegalArgumentException!");
         }
         catch(IllegalArgumentException e){}
     }

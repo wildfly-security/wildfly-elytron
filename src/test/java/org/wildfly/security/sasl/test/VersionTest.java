@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.sasl.test;
 
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySaslProvider;
@@ -29,7 +29,9 @@ public class VersionTest {
 
     @Test
     public void testVersionSet() {
-        assertFalse(WildFlySaslProvider.getVersionString().equals("NOT SET"));
+        assertNotNull(WildFlySaslProvider.getVersionString());
+        assertNotEquals("", WildFlySaslProvider.getVersionString());
+        assertNotEquals("NOT SET", WildFlySaslProvider.getVersionString());
     }
 
 }

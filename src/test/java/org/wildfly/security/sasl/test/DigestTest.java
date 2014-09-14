@@ -18,10 +18,7 @@
 
 package org.wildfly.security.sasl.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -34,6 +31,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 
 import org.jboss.logging.Logger;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
@@ -45,14 +43,16 @@ import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class DigestTest extends BaseTestCase {
-    
+
     private static Logger log = Logger.getLogger(DigestTest.class);
-    
+
     private static final String DIGEST = "DIGEST-MD5";
 
     private static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
 
     private static final String PRE_DIGESTED_PROPERTY = "org.wildfly.security.sasl.digest.pre_digested";
+
+    private static final String QOP_PROPERTY = "javax.security.sasl.qop";
 
     /*
     *  Mechanism selection tests.
@@ -513,13 +513,71 @@ public class DigestTest extends BaseTestCase {
         }
     }
 
+    /**
+     * Test a successful exchange with integrity check
+     */
+    @Test
+    @Ignore
+    public void testSuccessfulExchangeWithIntegrityCheck() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(QOP_PROPERTY, "auth-int");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> clientProps = new HashMap<String, Object>();
+        clientProps.put(QOP_PROPERTY, "auth-int");
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = new byte[0];
+        message = server.evaluateResponse(message);
+        message = client.evaluateChallenge(message);
+        message = server.evaluateResponse(message);
+        message = client.evaluateChallenge(message);
+        assertTrue(client.isComplete());
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+
+        message = server.wrap(new byte[]{0x12,0x34,0x56}, 0, 3);
+        Assert.assertArrayEquals(new byte[]{0x12,0x34,0x56}, client.unwrap(message, 0, message.length));
+
+        message = client.wrap(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, 0, 3);
+        Assert.assertArrayEquals(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, server.unwrap(message, 0, message.length));
+    }
 
 
-   /*
-    *  Advanced Client/Server interaction.
-    */
+    /**
+     * Test a successful exchange with privacy protection
+     */
+    @Test
+    @Ignore
+    public void testSuccessfulExchangeWithPrivacyProtection() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(QOP_PROPERTY, "auth-conf");
+        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
-    // TODO - Replay previously used nonce.
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> clientProps = new HashMap<String, Object>();
+        clientProps.put(QOP_PROPERTY, "auth-conf");
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
+        assertFalse(client.hasInitialResponse());
+        byte[] message = new byte[0];
+        message = server.evaluateResponse(message);
+        message = client.evaluateChallenge(message);
+        message = server.evaluateResponse(message);
+        message = client.evaluateChallenge(message);
+        assertTrue(client.isComplete());
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
+
+        message = server.wrap(new byte[]{0x12,0x34,0x56}, 0, 3);
+        Assert.assertArrayEquals(new byte[]{0x12,0x34,0x56}, client.unwrap(message, 0, message.length));
+
+        message = client.wrap(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, 0, 3);
+        Assert.assertArrayEquals(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, server.unwrap(message, 0, message.length));
+    }
 
 }

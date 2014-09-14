@@ -23,6 +23,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
+import javax.security.sasl.RealmChoiceCallback;
 
 import org.wildfly.security.sasl.callback.DigestHashCallback;
 
@@ -47,8 +48,8 @@ class ClientCallbackHandler implements CallbackHandler {
     ClientCallbackHandler(final String username, final char[] password, final String realm) {
         this.username = username;
         this.password = password;
-        this.realm = realm;
         this.hexURPHash = null;
+        this.realm = realm;
     }
     
     ClientCallbackHandler(final String username, final String hexURPHash) {
@@ -57,8 +58,8 @@ class ClientCallbackHandler implements CallbackHandler {
 
     ClientCallbackHandler(final String username, final String hexURPHash, final String realm) {
         this.username = username;
-        this.hexURPHash = hexURPHash;
         this.password = null;
+        this.hexURPHash = hexURPHash;
         this.realm = realm;
     }
 
@@ -82,6 +83,19 @@ class ClientCallbackHandler implements CallbackHandler {
                     }
                 } else {
                     rcb.setText(realm);
+                }
+            } else if (current instanceof RealmChoiceCallback || realm != null) {
+                RealmChoiceCallback rcb = (RealmChoiceCallback) current;
+                boolean selected = false;
+                String[] choices = rcb.getChoices();
+                for(int i = 0; i < choices.length; i++){
+                    if(choices[i].equals(realm)){
+                        rcb.setSelectedIndex(i);
+                        selected = true;
+                    }
+                }
+                if(!selected){
+                    throw new UnsupportedCallbackException(current, "Realm which should be selected is not in choices.");
                 }
             } else {
                 throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");

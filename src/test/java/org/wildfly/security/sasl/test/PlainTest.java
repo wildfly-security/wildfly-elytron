@@ -18,11 +18,7 @@
 package org.wildfly.security.sasl.test;
 
 import static javax.security.sasl.Sasl.POLICY_NOPLAINTEXT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -40,7 +36,7 @@ import org.wildfly.security.sasl.plain.PlainSaslServer;
 import org.wildfly.security.sasl.plain.PlainServerFactory;
 
 /**
- * Test the server side of the Plain SASL mecanism.
+ * Test the server side of the Plain SASL mechanism.
  * <p/>
  * (The client side is provided by the JDK so this test case will be testing interoperability
  * with the JDK supplied implementation)
@@ -103,11 +99,16 @@ public class PlainTest extends BaseTestCase {
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("George\0George\0gpwd",new String(message));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
     }
 
@@ -116,20 +117,26 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "bad".toCharArray());
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "bad".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("George\0George\0bad",new String(message));
 
         try {
             server.evaluateResponse(message);
             fail("Expection exception not thrown.");
-        } catch (IOException e) {
-        }
+        } catch (IOException e) {}
+
+        assertFalse(server.isComplete());
+        assertTrue(client.isComplete());
     }
 
     /**
@@ -143,14 +150,20 @@ public class PlainTest extends BaseTestCase {
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("George\0George\0gpwd",new String(message));
 
         try {
             server.evaluateResponse(message);
             fail("Expection exception not thrown.");
-        } catch (IOException e) {
-        }
+        } catch (IOException e) {}
+
+        assertFalse(server.isComplete());
+        assertTrue(client.isComplete());
     }
 
     /**
@@ -164,13 +177,68 @@ public class PlainTest extends BaseTestCase {
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, null, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("\0George\0gpwd",new String(message));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
         assertEquals("George", server.getAuthorizationID());
     }
 
+    /**
+     * Test that an exchange involving a disallowed authorization ID is correctly rejected.
+     */
+    @Test
+    public void testSuccessfulExchange_DifferentAuthorizationID() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "Borris", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
+        assertTrue(client.hasInitialResponse());
+        byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("Borris\0George\0gpwd",new String(message));
+
+        try {
+            server.evaluateResponse(message);
+            fail("Expection exception not thrown.");
+        } catch (IOException e) {
+        }
+
+        assertFalse(server.isComplete());
+        assertTrue(client.isComplete());
+    }
+
+    /**
+     * Test a successful exchange using minimal maximum allowed length of credentials - 255B
+     */
+    @Test
+    public void testMaximumLength() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
+        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(server.isComplete());
+        assertFalse(client.isComplete());
+
+        assertTrue(client.hasInitialResponse());
+        byte[] message = client.evaluateChallenge(new byte[0]);
+        assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",new String(message));
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertTrue(client.isComplete());
+        assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", server.getAuthorizationID());
+    }
 
 }

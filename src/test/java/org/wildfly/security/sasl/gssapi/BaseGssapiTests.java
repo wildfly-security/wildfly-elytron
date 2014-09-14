@@ -317,7 +317,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
             for (Callback current : callbacks) {
                 if (current instanceof AuthorizeCallback) {
                     AuthorizeCallback ac = (AuthorizeCallback) current;
-                    ac.setAuthorized(ac.getAuthorizationID().equals(ac.getAuthorizationID()));
+                    ac.setAuthorized(ac.getAuthorizationID().equals(ac.getAuthenticationID()));
                 } else {
                     throw new UnsupportedCallbackException(current);
                 }

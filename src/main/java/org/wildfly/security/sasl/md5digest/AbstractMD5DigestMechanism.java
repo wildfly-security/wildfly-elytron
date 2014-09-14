@@ -178,15 +178,11 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         MessageDigest md5 = MessageDigest.getInstance(algorithm);
 
         ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.appendLatin1(username);
+        urp.append(username);
         urp.append(':');
-        if (realm == null) {
-            urp.appendLatin1("");
-        } else {
-            urp.appendLatin1(realm);
-        }
+        urp.append(realm != null ? realm : "");
         urp.append(':');
-        urp.appendLatin1(new String(password));
+        urp.append(new String(password));
 
         byte[] digest_urp = md5.digest(urp.toArray());
         md5.reset();
@@ -215,9 +211,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         // A2
         ByteStringBuilder A2 = new ByteStringBuilder();
-        //if (format == FORMAT.CLIENT) {
-            A2.append(authMethod);
-        //}
+        A2.append(authMethod);
         A2.append(':');
         A2.append(digest_uri);
         if ("auth-conf".equals(qop_value) || "auth-int".equals(qop_value)) {
@@ -314,7 +308,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
                 if (b == '\\') {
                     i++; // skip the escape char
                     if (i < challenge.length) {
-                        value.append((char)challenge[i]);
+                        value.append(challenge[i]);
                     }
                     else {
                         throw new SaslException("Unmatched quote found for value: " + value.toString());
@@ -327,7 +321,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
                     expectSeparator = true;
                 }
                 else {
-                    value.append((char)b);
+                    value.append(b);
                     i++;
                 }
             }
