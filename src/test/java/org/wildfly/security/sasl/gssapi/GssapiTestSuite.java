@@ -26,7 +26,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 /**
- * Test suite to run all GSSAPI tests to allow various permutations of mechanism interaction to be verified..
+ * Test suite to run all GSSAPI tests to allow various permutations of mechanism interaction to be verified.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

@@ -115,10 +115,9 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             }
 
             boolean mayRequireSecurityLayer = mayRequireSecurityLater(orderedQops);
-            if (serverAuth || mayRequireSecurityLayer) {
-                log.trace("Requesting mutual authentication.");
-                gssContext.requestMutualAuth(true);
-            }
+            boolean requestMutualAuth = serverAuth || mayRequireSecurityLayer;
+            log.trace("Setting requering mutual authentication to "+Boolean.toString(requestMutualAuth));
+            gssContext.requestMutualAuth(requestMutualAuth);
 
             // Request sequence detection if a security layer could be requested.
             if (mayRequireSecurityLayer) {
@@ -237,6 +236,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 if (gssContext.isEstablished()) {
                     log.trace("GSSContext established, transitioning to negotiate security layer.");
                     context.setNegotiationState(new SecurityLayerNegotiationState());
+                    if (response == null) response = NO_BYTES;
                 } else {
                     log.trace("GSSContext not established, expecting subsequent exchanges.");
                 }
@@ -271,6 +271,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                             "Invalid message size received when no security layer supported by server '%d'",
                             maxBuffer));
                 }
+                maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 baos.write(selectedQop.getValue());
@@ -278,8 +279,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                     // No security layer selected to must set response to 000.
                     baos.write(new byte[] { 0x00, 0x00, 0x00 });
                 } else {
-                    actualMaxReceiveBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF,
-                            configuredMaxReceiveBuffer);
+                    actualMaxReceiveBuffer = configuredMaxReceiveBuffer!=0 ? configuredMaxReceiveBuffer : maxBuffer;
                     log.tracef("Out max buffer %d", actualMaxReceiveBuffer);
                     baos.write(intToNetworkOrderBytes(actualMaxReceiveBuffer));
                 }
