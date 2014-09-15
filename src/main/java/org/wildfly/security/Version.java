@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth;
+package org.wildfly.security;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,20 +45,16 @@ public final class Version {
             resources = classLoader == null ? ClassLoader.getSystemResources("META-INF/MANIFEST.MF") : classLoader.getResources("META-INF/MANIFEST.MF");
             while (resources.hasMoreElements()) {
                 final URL url = resources.nextElement();
-                final InputStream stream = url.openStream();
-                if (stream != null) try {
+                try (InputStream stream = url.openStream()) {
                     final Manifest manifest = new Manifest(stream);
                     final Attributes mainAttributes = manifest.getMainAttributes();
-                    if (mainAttributes != null && "WildFly AA Services".equals(mainAttributes.getValue("Specification-Title"))) {
+                    if (mainAttributes != null && "WildFly Elytron".equals(mainAttributes.getValue("Specification-Title"))) {
                         jarName = mainAttributes.getValue("Jar-Name");
                         versionString = mainAttributes.getValue("Jar-Version");
                     }
-                } finally {
-                    try { stream.close(); } catch (Throwable ignored) {}
-                }
+                } catch (IOException ignored) {}
             }
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
         JAR_NAME = jarName;
         VERSION_STRING = versionString;
     }
@@ -87,7 +83,7 @@ public final class Version {
      * @param args ignored
      */
     public static void main(String[] args) {
-        System.out.printf("WildFly Authentication/Authorization Services version %s\n", VERSION_STRING);
+        System.out.printf("WildFly Elytron version %s\n", VERSION_STRING);
     }
 
 }

@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.wildfly.security.ParametricPrivilegedAction;
+import org.wildfly.security.ParametricPrivilegedExceptionAction;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

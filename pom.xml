@@ -45,7 +45,6 @@
         <version.org.jboss.logmanager>1.5.0.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j>1.0.0.GA</version.org.jboss.logmanager.log4j>
         <version.org.jboss.logging.tools>1.2.0.Beta1</version.org.jboss.logging.tools>
-        <version.org.jboss.remoting>4.0.0.Beta1</version.org.jboss.remoting>
         <version.junit.junit>4.11</version.junit.junit>
 
         <maven.compiler.source>1.7</maven.compiler.source>
