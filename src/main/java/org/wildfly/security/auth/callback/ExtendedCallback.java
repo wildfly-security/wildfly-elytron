@@ -33,6 +33,10 @@ import javax.security.auth.callback.Callback;
     // Let the caller know that we failed to support this callback
     throw new UnsupportedCallbackException(callback);
  * }</pre>
+ * Or, the utility method in {@link CallbackUtils} can be used:
+ * <pre>{@code
+    CallbackUtils.unsupported(callback);
+ * }</pre>
  */
 public interface ExtendedCallback extends Callback {
 
