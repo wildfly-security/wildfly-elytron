@@ -24,11 +24,14 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import java.util.Map;
 
+import org.kohsuke.MetaInfServices;
+
 /**
  * The client factory for the anonymous SASL mechanism.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@MetaInfServices(value = SaslClientFactory.class, priority = -10)
 public class AnonymousClientFactory extends AbstractAnonymousFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {

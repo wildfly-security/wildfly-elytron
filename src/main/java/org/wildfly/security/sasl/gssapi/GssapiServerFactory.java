@@ -24,11 +24,14 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.kohsuke.MetaInfServices;
+
 /**
  * SaslServerFactory for the GSSAPI mechanism as defined by RFC 4752
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@MetaInfServices(value = SaslServerFactory.class)
 public class GssapiServerFactory extends AbstractGssapiFactory implements SaslServerFactory {
 
     @Override

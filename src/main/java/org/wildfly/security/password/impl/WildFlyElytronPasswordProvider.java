@@ -32,7 +32,10 @@ import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
 import java.security.Provider;
 import java.util.Collections;
 
+import org.kohsuke.MetaInfServices;
+
 @SuppressWarnings("ThisEscapedInObjectConstruction")
+@MetaInfServices
 public final class WildFlyElytronPasswordProvider extends Provider {
 
     private static final long serialVersionUID = 2138229726296095412L;

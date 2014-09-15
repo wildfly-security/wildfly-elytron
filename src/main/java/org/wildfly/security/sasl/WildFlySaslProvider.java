@@ -29,6 +29,7 @@ import java.security.Provider;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.security.sasl.anonymous.AnonymousServerFactory;
 import org.wildfly.security.sasl.gssapi.GssapiClientFactory;
@@ -43,6 +44,7 @@ import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@MetaInfServices(value = Provider.class)
 public class WildFlySaslProvider extends Provider {
 
     private static final long serialVersionUID = 2819852358608732038L;

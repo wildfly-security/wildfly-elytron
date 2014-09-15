@@ -25,6 +25,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import java.util.Map;
 
+import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
 
 /**
@@ -32,6 +33,7 @@ import org.wildfly.security.sasl.util.AbstractSaslFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@MetaInfServices(value = SaslServerFactory.class)
 public class PlainServerFactory extends AbstractSaslFactory implements SaslServerFactory {
 
     /**

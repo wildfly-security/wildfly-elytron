@@ -25,11 +25,14 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import java.util.Map;
 
+import org.kohsuke.MetaInfServices;
+
 /**
  * The server factory for the anonymous SASL mechanism.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@MetaInfServices(value = SaslServerFactory.class, priority = -10)
 public class AnonymousServerFactory extends AbstractAnonymousFactory implements SaslServerFactory {
 
     public String[] getMechanismNames(Map<String, ?> props) {

@@ -26,6 +26,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
+import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.md5digest.MD5DigestSaslServer;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
@@ -34,6 +35,7 @@ import org.wildfly.security.sasl.util.Charsets;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
+@MetaInfServices(value = SaslServerFactory.class)
 public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
 
     public static final String JBOSS_DIGEST_MD5 = "DIGEST-MD5";
