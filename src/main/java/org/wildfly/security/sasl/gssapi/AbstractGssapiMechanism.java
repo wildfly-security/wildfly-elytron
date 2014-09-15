@@ -46,7 +46,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     private static final byte NO_SECURITY_LAYER = (byte) 0x01;
     private static final byte INTEGRITY_PROTECTION = (byte) 0x02;
     private static final byte CONFIDENTIALITY_PROTECTION = (byte) 0x04;
-    protected static final int DEFAULT_MAX_BUFFER_SIZE = (int) 0xFFF;
+    protected static final int DEFAULT_MAX_BUFFER_SIZE = (int) 0xFFFFFF; // 3 bytes
     protected static final Oid KERBEROS_V5;
 
     // Kerberos V5 OID
@@ -116,7 +116,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
 
         for (int i = start; i < length + start; i++) {
             result <<= 8;
-            result |= bytes[i];
+            result |= (int)bytes[i] & 0xFF;
         }
 
         return result;
@@ -129,7 +129,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     protected byte[] intToNetworkOrderBytes(final int value) {
         byte[] response = new byte[3];
         int workingValue = value;
-        for (int i = response.length - 1; i < 0; i--) {
+        for (int i = response.length - 1; i >= 0; i--) {
             response[i] = (byte) (workingValue & 0xFF);
             workingValue >>>= 8;
         }
@@ -149,9 +149,9 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         }
     }
 
-    private QOP[] parsePreferredQop(final String qop) throws SaslException {
+    protected QOP[] parsePreferredQop(final String qop) throws SaslException {
         if (qop != null) {
-            String[] qopNames = qop.split("\\s*,\\s*");
+            String[] qopNames = qop.trim().split("\\s*,\\s*");
             if (qopNames.length > 0) {
                 QOP[] preferredQop = new QOP[qopNames.length];
                 for (int i = 0; i < qopNames.length; i++) {
@@ -178,9 +178,9 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             case Sasl.QOP:
                 return selectedQop.getName();
             case Sasl.MAX_BUFFER:
-                return actualMaxReceiveBuffer;
+                return Integer.toString(actualMaxReceiveBuffer != 0 ? actualMaxReceiveBuffer : configuredMaxReceiveBuffer);
             case Sasl.RAW_SEND_SIZE:
-                return maxBuffer;
+                return Integer.toString(maxBuffer);
         }
 
         return null;
