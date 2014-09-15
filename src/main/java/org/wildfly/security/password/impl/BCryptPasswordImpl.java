@@ -38,7 +38,7 @@ import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword {
+class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword {
 
     private byte[] hash;
     private byte[] salt;

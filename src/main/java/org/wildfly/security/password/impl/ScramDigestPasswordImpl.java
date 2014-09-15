@@ -18,8 +18,6 @@
 
 package org.wildfly.security.password.impl;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -28,6 +26,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.text.Normalizer;
 import java.util.Arrays;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -39,7 +40,7 @@ import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDigestPassword {
+class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDigestPassword {
 
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
     private static final String HMAC_SHA256_ALGORITHM = "HmacSHA256";
@@ -127,7 +128,7 @@ public class ScramDigestPasswordImpl extends AbstractPasswordImpl implements Scr
     }
 
     @Override
-    public boolean verify(char[] guess) throws InvalidKeyException {
+    boolean verify(char[] guess) throws InvalidKeyException {
         try {
             byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
             return Arrays.equals(this.digest, output);
