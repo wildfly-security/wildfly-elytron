@@ -19,11 +19,9 @@
 package org.wildfly.security.password.impl;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.text.Normalizer;
 import java.util.Arrays;
 
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -125,11 +123,6 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
         return keySpecType == BCryptPasswordSpec.class;
-    }
-
-    private static byte[] getNormalizedPasswordBytes(final char[] characters) {
-        // normalize the password for verification - XXX double-check this idea
-        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
 
     private static final int[] Parray = {

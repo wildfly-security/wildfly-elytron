@@ -18,13 +18,11 @@
 
 package org.wildfly.security.password.impl;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
-import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -115,11 +113,6 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
 
     public byte[] getHash() {
         return hash.clone();
-    }
-
-    private static byte[] getNormalizedPasswordBytes(final char[] characters) {
-        // normalize the password for verification - XXX double-check this idea
-        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
 
     private static byte[] generateHash(final short salt, final char[] password) {

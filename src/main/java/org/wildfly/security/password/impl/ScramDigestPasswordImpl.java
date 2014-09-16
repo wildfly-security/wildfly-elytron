@@ -18,13 +18,11 @@
 
 package org.wildfly.security.password.impl;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.text.Normalizer;
 import java.util.Arrays;
 
 import javax.crypto.Mac;
@@ -143,11 +141,6 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
             return keySpecType.cast(new ScramDigestPasswordSpec(this.getAlgorithm(), this.getDigest(), this.getSalt(), this.getIterationCount()));
         }
         throw new InvalidKeySpecException();
-    }
-
-    static byte[] getNormalizedPasswordBytes(final char[] characters) {
-        // normalize the password for verification - XXX double-check this idea
-        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
