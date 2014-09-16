@@ -29,18 +29,6 @@ import java.util.concurrent.ConcurrentMap;
 public final class SecuritySystem {
     private final ConcurrentMap<String, SecurityDomain> securityDomains = new ConcurrentHashMap<>();
 
-    private static volatile SecuritySystemSelector selector;
-
-    public static SecuritySystem getCurrent() {
-        final SecuritySystemSelector selector = SecuritySystem.selector;
-        return selector == null ? null : selector.getSecuritySystem();
-    }
-
-    public static void setSelector(final SecuritySystemSelector selector) {
-        // todo permission check security system selector
-        SecuritySystem.selector = selector;
-    }
-
     public SecuritySystem() {
     }
 
