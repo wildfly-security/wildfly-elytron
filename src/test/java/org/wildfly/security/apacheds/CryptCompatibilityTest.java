@@ -37,7 +37,7 @@ import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayIterator;
+import org.wildfly.security.util.CharacterArrayReader;
 
 /**
  * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link UnixDESCryptPassword}
@@ -77,7 +77,9 @@ public class CryptCompatibilityTest {
         final int salt = convertSaltRepresentation(saltBytes);
 
         byte[] digest = new byte[8];
-        Base64.base64DecodeA(new CharacterArrayIterator(new String(digestBase64, StandardCharsets.UTF_8).toCharArray()), digest);
+        CharacterArrayReader r = new CharacterArrayReader(new String(digestBase64, StandardCharsets.UTF_8).toCharArray());
+        Base64.base64DecodeA(r, digest);
+        r.close();
 
         BSDUnixDESCryptPasswordSpec spec = new BSDUnixDESCryptPasswordSpec(digest, salt, iterationCount);
 

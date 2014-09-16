@@ -35,7 +35,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayIterator;
+import org.wildfly.security.util.CharacterArrayReader;
 
 /**
  * <p>
@@ -81,10 +81,14 @@ public class ScramDigestPasswordTest {
     private void performTest(final String algorithm, final char[] base64Digest, final char[] base64Salt, final int iterationCount) throws Exception {
 
         byte[] decodedDigest = new byte[base64Digest.length * 3/4];
-        Base64.base64DecodeB(new CharacterArrayIterator(base64Digest), decodedDigest);
+        CharacterArrayReader r = new CharacterArrayReader(base64Digest);
+        Base64.base64DecodeB(r, decodedDigest);
+        r.close();
 
         byte[] decodedSalt = new byte[base64Salt.length * 3/4];
-        Base64.base64DecodeB(new CharacterArrayIterator(base64Salt), decodedSalt);
+        r = new CharacterArrayReader(base64Salt);
+        Base64.base64DecodeB(r, decodedSalt);
+        r.close();
 
         // use an encryptable spec to hash the password and compare the results with the expected hash.
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);

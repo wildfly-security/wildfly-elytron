@@ -24,6 +24,8 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.util.Base64.*;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
 import java.util.NoSuchElementException;
@@ -38,7 +40,7 @@ import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
-import org.wildfly.security.util.CharacterArrayIterator;
+import org.wildfly.security.util.CharacterArrayReader;
 
 /**
  * General password utilities.
@@ -374,14 +376,14 @@ public final class PasswordUtils {
         }
     }
 
-    private static int parseModCryptIterationCount(final CharacterArrayIterator iter, final int minIterations, final int maxIterations,
+    private static int parseModCryptIterationCount(final CharacterArrayReader reader, final int minIterations, final int maxIterations,
             final int defaultIterations) throws InvalidKeySpecException {
         int iterationCount;
         try {
-            if (iter.contentEquals("rounds=")) {
-                iter.skip(7);
+            if (reader.contentEquals("rounds=")) {
+                reader.skip(7);
                 iterationCount = 0;
-                for (int ch = iter.next(); ch != '$'; ch = iter.next()) {
+                for (int ch = reader.read(); ch != '$'; ch = reader.read()) {
                     if (iterationCount != maxIterations) {
                         if (ch >= '0' && ch <= '9') {
                             // multiply by 10, add next
@@ -398,7 +400,7 @@ public final class PasswordUtils {
             } else {
                 iterationCount = defaultIterations;
             }
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of input string");
         }
         return max(minIterations, iterationCount);
@@ -465,7 +467,12 @@ public final class PasswordUtils {
             default: throw new IllegalStateException();
         }
         byte[] bytes = new byte[cryptString.length * 3 / 4];
-        base64DecodeB(new CharacterArrayIterator(cryptString, initialLen), bytes);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, initialLen);
+        try {
+            base64DecodeB(r, bytes);
+        } finally {
+            safeClose(r);
+        }
         return new TrivialDigestPasswordSpec(getAlgorithmNameString(algorithmId), bytes);
     }
 
@@ -484,32 +491,34 @@ public final class PasswordUtils {
     }
 
     private static UnixSHACryptPasswordSpec parseUnixSHACryptPasswordSpec(final char[] cryptString, final int[] table, final String algorithm) throws InvalidKeySpecException {
-        CharacterArrayIterator i = new CharacterArrayIterator(cryptString, 3);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, 3);
         try {
             final int iterationCount; // spec default
 
             // iteration count
-            iterationCount = parseModCryptIterationCount(i, 1_000, 999_999_999, 5_000);
+            iterationCount = parseModCryptIterationCount(r, 1_000, 999_999_999, 5_000);
 
-            int saltByteLen = i.distanceTo('$');
+            int saltByteLen = r.distanceTo('$');
             if (saltByteLen == -1) {
                 throw new InvalidKeySpecException("No salt terminator given");
             }
 
             byte[] salt = new byte[saltByteLen];
-            int b = i.next();
+            int b = r.read();
             int j = 0;
             while (b != '$') {
                 salt[j++] = (byte) b;
-                b = i.next();
+                b = r.read();
             }
 
             byte[] hash = new byte[table.length]; // key size == table length
-            base64DecodeACryptLE(i, hash, table);
+            base64DecodeACryptLE(r, hash, table);
 
             return new UnixSHACryptPasswordSpec(algorithm, hash, salt, iterationCount);
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
+        } finally {
+            safeClose(r);
         }
     }
 
@@ -517,27 +526,29 @@ public final class PasswordUtils {
         assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
         assert cryptString[1] == '1'; // previously tested by doIdentifyAlgorithm
         assert cryptString[2] == '$'; // previously tested by doIdentifyAlgorithm
-        CharacterArrayIterator i = new CharacterArrayIterator(cryptString, 3);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, 3);
         try {
-            int saltByteLen = i.distanceTo('$');
+            int saltByteLen = r.distanceTo('$');
             if (saltByteLen == -1) {
                 throw new InvalidKeySpecException("No salt terminator given");
             }
 
             byte[] salt = new byte[saltByteLen];
-            int b = i.next();
+            int b = r.read();
             int j = 0;
             while (b != '$') {
                 salt[j++] = (byte) b;
-                b = i.next();
+                b = r.read();
             }
 
             byte[] hash = new byte[MD5_IDX.length]; // key size == table length
-            base64DecodeACryptLE(i, hash, MD5_IDX);
+            base64DecodeACryptLE(r, hash, MD5_IDX);
 
             return new UnixMD5CryptPasswordSpec(hash, salt);
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
+        } finally {
+            safeClose(r);
         }
     }
 
@@ -547,27 +558,27 @@ public final class PasswordUtils {
         assert cryptString[2] == 'd'; // previously tested by doIdentifyAlgorithm
         assert cryptString[3] == '5'; // previously tested by doIdentifyAlgorithm
         assert (cryptString[4] == '$' || cryptString[4] == ','); // previously tested by doIdentifyAlgorithm
-        CharacterArrayIterator i = new CharacterArrayIterator(cryptString, 5);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, 5);
         try {
             final int iterationCount;
             if (cryptString[4] == ',') {
                 // The spec doesn't specify a maximum number of rounds but we're using 2,147,479,551
                 // to prevent overflow (2,147,483,647 - 4,096 = 2,147,479,551)
-                iterationCount = parseModCryptIterationCount(i, 0, 2_147_479_551, 0);
+                iterationCount = parseModCryptIterationCount(r, 0, 2_147_479_551, 0);
             } else {
                 iterationCount = 0;
             }
-            int saltByteLen = i.distanceTo('$');
+            int saltByteLen = r.distanceTo('$');
             if (saltByteLen == -1) {
                 throw new InvalidKeySpecException("No salt terminator given");
             }
 
             byte[] salt = new byte[saltByteLen];
-            int b = i.next();
+            int b = r.read();
             int j = 0;
             while (b != '$') {
                 salt[j++] = (byte) b;
-                b = i.next();
+                b = r.read();
             }
 
             // Consume the second '$' after the salt, if present. Note that crypt strings returned
@@ -576,16 +587,18 @@ public final class PasswordUtils {
             // 2) $md5[,rounds={rounds}]${salt}${hash} (because there's only a single '$' after the
             //                                          salt, this is referred to as a "bare salt")
             if (algorithm.equals(ALGORITHM_SUN_CRYPT_MD5)) {
-                b = i.next();
+                b = r.read();
                 assert b == '$'; // previously tested by doIdentifyAlgorithm
             }
 
             byte[] hash = new byte[MD5_IDX.length]; // key size == table length
-            base64DecodeACryptLE(i, hash, MD5_IDX);
+            base64DecodeACryptLE(r, hash, MD5_IDX);
 
             return new SunUnixMD5CryptPasswordSpec(algorithm, hash, salt, iterationCount);
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
+        } finally {
+            safeClose(r);
         }
     }
 
@@ -601,31 +614,34 @@ public final class PasswordUtils {
             assert cryptString[3] == '$';
         }
 
+        CharacterArrayReader r = null;
         try {
             // read the bcrypt cost (number of rounds in log format)
-            CharacterArrayIterator CharacterArrayIterator = new CharacterArrayIterator(cryptString, minor == 0 ? 3 : 4);
-            int costLength = CharacterArrayIterator.distanceTo('$');
+            r = new CharacterArrayReader(cryptString, minor == 0 ? 3 : 4);
+            int costLength = r.distanceTo('$');
             if (costLength != 2) {
                 throw new InvalidKeySpecException("Invalid cost: must be a two digit integer");
             }
             char[] costDigits = new char[2];
-            costDigits[0] = (char) CharacterArrayIterator.next();
-            costDigits[1] = (char) CharacterArrayIterator.next();
+            costDigits[0] = (char) r.read();
+            costDigits[1] = (char) r.read();
             int cost = Integer.parseInt(new String(costDigits));
             // discard the '$'
-            CharacterArrayIterator.skip(1);
+            r.skip(1);
 
             // the next 22 characters correspond to the encoded salt - it is mapped to a 16-byte array after decoding.
             byte[] decodedSalt = new byte[BCryptPassword.BCRYPT_SALT_SIZE];
-            base64DecodeBCrypt(CharacterArrayIterator, decodedSalt);
+            base64DecodeBCrypt(r, decodedSalt);
 
             // the final 31 characters correspond to the encoded password - it is mapped to a 23-byte array after decoding.
             byte[] decodedPassword = new byte[BCryptPassword.BCRYPT_HASH_SIZE];
-            base64DecodeBCrypt(CharacterArrayIterator, decodedPassword);
+            base64DecodeBCrypt(r, decodedPassword);
 
             return new BCryptPasswordSpec(decodedPassword, decodedSalt, cost);
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of password string");
+        } finally {
+            safeClose(r);
         }
     }
 
@@ -635,7 +651,12 @@ public final class PasswordUtils {
         short salt = (short) (base64DecodeA(cryptString[0]) | base64DecodeA(cryptString[1]) << 6);
         // 64 bit hash
         byte[] hash = new byte[8];
-        base64DecodeA(new CharacterArrayIterator(cryptString, 2), hash);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, 2);
+        try {
+            base64DecodeA(r, hash);
+        } finally {
+            safeClose(r);
+        }
         return new UnixDESCryptPasswordSpec(hash, salt);
     }
 
@@ -654,7 +675,12 @@ public final class PasswordUtils {
 
         // The final 11 characters correspond to the encoded password - this is decoded to a 64-bit hash
         byte[] hash = new byte[BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE];
-        base64DecodeA(new CharacterArrayIterator(cryptString, 9), hash);
+        CharacterArrayReader r = new CharacterArrayReader(cryptString, 9);
+        try {
+            base64DecodeA(r, hash);
+        } finally {
+            safeClose(r);
+        }
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
 
@@ -672,5 +698,13 @@ public final class PasswordUtils {
             if (chars[i] == c) return i;
         }
         return -1;
+    }
+
+    private static void safeClose(Closeable c) {
+        if (c != null) { 
+            try {
+                c.close();
+            } catch (Throwable ignored) {}
+        }
     }
 }

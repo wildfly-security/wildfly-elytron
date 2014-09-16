@@ -43,7 +43,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
 import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayIterator;
+import org.wildfly.security.util.CharacterArrayReader;
 
 /**
  * Test case for the {@link TrivialSaledDigestPassword} implementation.
@@ -124,7 +124,9 @@ public class TrivialSaltedDigestPasswordTest {
      */
     private void performTest(final String algorithmName, final char[] base64Digest) throws Exception {
         byte[] preDigested = new byte[base64Digest.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(base64Digest), preDigested);
+        CharacterArrayReader r = new CharacterArrayReader(base64Digest);
+        Base64.base64DecodeB(r, preDigested);
+        r.close();
 
         PasswordFactory pf = PasswordFactory.getInstance(algorithmName);
         // Encryptable Spec -> Password

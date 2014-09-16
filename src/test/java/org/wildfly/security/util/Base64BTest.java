@@ -141,7 +141,9 @@ public class Base64BTest {
     public void testDecodeBlank() throws Exception {
         char[] in = new char[]{};
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         Assert.assertArrayEquals(new byte[]{}, out);
     }
 
@@ -149,7 +151,9 @@ public class Base64BTest {
     public void testDecodeWithoutPadding() throws Exception {
         char[] in = "YWJj".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("abc", new String(out));
     }
 
@@ -158,7 +162,9 @@ public class Base64BTest {
     public void testDecodeWith1Padding() throws Exception {
         char[] in = "YWI=".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("ab", new String(out));
     }
 
@@ -167,7 +173,9 @@ public class Base64BTest {
     public void testDecodeWith2Padding() throws Exception {
         char[] in = "YWJjZA==".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("abcd", new String(out));
     }
 
@@ -175,7 +183,9 @@ public class Base64BTest {
     public void testDecodeBinary() throws Exception {
         char[] in = "AAEjRWeJq83v".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,(byte)0x89,(byte)0xAB,(byte)0xCD,(byte)0xEF}, out);
     }
 
@@ -184,7 +194,9 @@ public class Base64BTest {
     public void testDecodeRfc1() throws Exception {
         char[] in = "Zg==".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("f", new String(out));
     }
 
@@ -193,7 +205,9 @@ public class Base64BTest {
     public void testDecodeRfc2() throws Exception {
         char[] in = "Zm8=".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("fo", new String(out));
     }
 
@@ -201,7 +215,9 @@ public class Base64BTest {
     public void testDecodeRfc3() throws Exception {
         char[] in = "Zm9v".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("foo", new String(out));
     }
 
@@ -210,7 +226,9 @@ public class Base64BTest {
     public void testDecodeRfc4() throws Exception {
         char[] in = "Zm9vYg==".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("foob", new String(out));
     }
 
@@ -219,7 +237,9 @@ public class Base64BTest {
     public void testDecodeRfc5() throws Exception {
         char[] in = "Zm9vYmE=".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("fooba", new String(out));
     }
 
@@ -227,7 +247,9 @@ public class Base64BTest {
     public void testDecodeRfc6() throws Exception {
         char[] in = "Zm9vYmFy".toCharArray();
         byte[] out = new byte[in.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(in), out);
+        CharacterArrayReader r = new CharacterArrayReader(in);
+        Base64.base64DecodeB(r, out);
+        r.close();
         assertEquals("foobar", new String(out));
     }
 

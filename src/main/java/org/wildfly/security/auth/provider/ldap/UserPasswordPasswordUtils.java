@@ -21,6 +21,7 @@ package org.wildfly.security.auth.provider.ldap;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
 
+import java.io.Closeable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
@@ -31,7 +32,7 @@ import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
 import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayIterator;
+import org.wildfly.security.util.CharacterArrayReader;
 
 /**
  * A password utility for LDAP formatted passwords.
@@ -111,7 +112,12 @@ class UserPasswordPasswordUtils {
 
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
         byte[] digest = new byte[encodedBase64.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(encodedBase64), digest);
+        CharacterArrayReader r = new CharacterArrayReader(encodedBase64);
+        try {
+            Base64.base64DecodeB(r, digest);
+        } finally {
+            safeClose(r);
+        }
 
         return new TrivialDigestPasswordSpec(algorithm, digest);
     }
@@ -130,7 +136,12 @@ class UserPasswordPasswordUtils {
 
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
         byte[] decoded = new byte[encodedBase64.length * 3 / 4];
-        Base64.base64DecodeB(new CharacterArrayIterator(encodedBase64), decoded);
+        CharacterArrayReader r = new CharacterArrayReader(encodedBase64);
+        try {
+            Base64.base64DecodeB(r, decoded);
+        } finally {
+            safeClose(r);
+        }
 
         int digestLength = expectedDigestLengthBytes(algorithm);
         int saltLength = decoded.length - digestLength;
@@ -161,7 +172,12 @@ class UserPasswordPasswordUtils {
         }
 
         byte[] hash = new byte[8];
-        Base64.base64DecodeA(new CharacterArrayIterator(new String(userPassword, 9, 11, StandardCharsets.UTF_8).toCharArray()), hash);
+        CharacterArrayReader r = new CharacterArrayReader(new String(userPassword, 9, 11, StandardCharsets.UTF_8).toCharArray());
+        try {
+            Base64.base64DecodeA(r, hash);
+        } finally {
+            safeClose(r);
+        }
 
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
@@ -181,4 +197,11 @@ class UserPasswordPasswordUtils {
         }
     }
 
+    private static void safeClose(Closeable c) {
+        if (c != null) { 
+            try {
+                c.close();
+            } catch (Throwable ignored) {}
+        }
+    }
 }

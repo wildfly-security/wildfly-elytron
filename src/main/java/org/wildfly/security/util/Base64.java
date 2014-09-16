@@ -19,6 +19,7 @@
 package org.wildfly.security.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.NoSuchElementException;
 
@@ -33,26 +34,26 @@ public final class Base64 {
      * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset with an
      * interleave table, using the modular crypt style little-endian scheme.
      *
-     * @param iter the character iterator
+     * @param reader the character reader
      * @param target the target array
      * @param interleave the interleave table to use
      */
-    public static void base64DecodeACryptLE(CharacterArrayIterator iter, byte[] target, int[] interleave) throws InvalidKeySpecException {
+    public static void base64DecodeACryptLE(CharacterArrayReader reader, byte[] target, int[] interleave) throws InvalidKeySpecException {
         int len = target.length;
         int a, b;
         try {
             for (int i = 0; i < len; ++i) {
-                a = base64DecodeA(iter.next()); // b0[5..0]
-                b = base64DecodeA(iter.next()); // b1[3..0] + b0[7..6]
+                a = base64DecodeA(reader.read()); // b0[5..0]
+                b = base64DecodeA(reader.read()); // b1[3..0] + b0[7..6]
                 target[interleave[i]] = (byte) (a | b << 6); // b0
                 if (++i >= len) break;
-                a = base64DecodeA(iter.next()); // b2[1..0] + b1[7..4]
+                a = base64DecodeA(reader.read()); // b2[1..0] + b1[7..4]
                 target[interleave[i]] = (byte) (a << 4 | b >> 2); // b1
                 if (++i >= len) break;
-                b = base64DecodeA(iter.next()); // b2[7..2]
+                b = base64DecodeA(reader.read()); // b2[7..2]
                 target[interleave[i]] = (byte) (b << 2 | a >> 4); // b2
             }
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of input string");
         }
     }
@@ -61,25 +62,25 @@ public final class Base64 {
      * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
      * standard scheme and the modular crypt alphabet.
      *
-     * @param iter the character iterator
+     * @param reader the character reader
      * @param target the target array
      */
-    public static void base64DecodeA(CharacterArrayIterator iter, byte[] target) throws InvalidKeySpecException {
+    public static void base64DecodeA(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
         int len = target.length;
         int a, b;
         try{
             for (int i = 0; i < len; ++i) {
-                a = base64DecodeA(iter.next());
-                b = base64DecodeA(iter.next());
+                a = base64DecodeA(reader.read());
+                b = base64DecodeA(reader.read());
                 target[i] = (byte) (a << 2 | b >> 4);
                 if (++i >= len) break;
-                a = base64DecodeA(iter.next());
+                a = base64DecodeA(reader.read());
                 target[i] = (byte) (b << 4 | a >> 2);
                 if (++i >= len) break;
-                b = base64DecodeA(iter.next());
+                b = base64DecodeA(reader.read());
                 target[i] = (byte) (a << 6 | b >> 0);
             }
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of input string");
         }
     }
@@ -88,25 +89,25 @@ public final class Base64 {
      * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
      * standard scheme and the standard alphabet.
      *
-     * @param iter the character iterator
+     * @param reader the character reader
      * @param target the target array
      */
-    public static void base64DecodeB(CharacterArrayIterator iter, byte[] target) throws InvalidKeySpecException {
+    public static void base64DecodeB(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
         int len = target.length;
         int a, b;
         try{
             for (int i = 0; i < len; ++i) {
-                a = base64DecodeB(iter.next());
-                b = base64DecodeB(iter.next());
+                a = base64DecodeB(reader.read());
+                b = base64DecodeB(reader.read());
                 target[i] = (byte) (a << 2 | b >> 4);
                 if (++i >= len) break;
-                a = base64DecodeB(iter.next());
+                a = base64DecodeB(reader.read());
                 target[i] = (byte) (b << 4 | a >> 2);
                 if (++i >= len) break;
-                b = base64DecodeB(iter.next());
+                b = base64DecodeB(reader.read());
                 target[i] = (byte) (a << 6 | b >> 0);
             }
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of input string");
         }
     }
@@ -115,25 +116,25 @@ public final class Base64 {
      * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
      * standard scheme and the bcrypt alphabet.
      *
-     * @param iter the character iterator
+     * @param reader the character reader
      * @param target the target array
      */
-    public static void base64DecodeBCrypt(CharacterArrayIterator iter, byte[] target) throws InvalidKeySpecException {
+    public static void base64DecodeBCrypt(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
         int len = target.length;
         int a, b;
         try{
             for (int i = 0; i < len; ++i) {
-                a = base64DecodeBCrypt(iter.next());
-                b = base64DecodeBCrypt(iter.next());
+                a = base64DecodeBCrypt(reader.read());
+                b = base64DecodeBCrypt(reader.read());
                 target[i] = (byte) (a << 2 | b >> 4);
                 if (++i >= len) break;
-                a = base64DecodeBCrypt(iter.next());
+                a = base64DecodeBCrypt(reader.read());
                 target[i] = (byte) (b << 4 | a >> 2);
                 if (++i >= len) break;
-                b = base64DecodeBCrypt(iter.next());
+                b = base64DecodeBCrypt(reader.read());
                 target[i] = (byte) (a << 6 | b >> 0);
             }
-        } catch (NoSuchElementException ignored) {
+        } catch (NoSuchElementException | IOException ignored) {
             throw new InvalidKeySpecException("Unexpected end of input string");
         }
     }
