@@ -19,24 +19,91 @@
 package org.wildfly.security.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
  * Utility class for handling Base64 encoded values.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public final class Base64 {
 
+    // Standard Base64 alphabet, as specified in RFC 4648 (http://tools.ietf.org/html/rfc4648)
+    private static final char[] STANDARD_ALPHABET = {
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+        'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
+        'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+        'w', 'x', 'y', 'z', '0', '1', '2', '3',
+        '4', '5', '6', '7', '8', '9', '+', '/'
+    };
+
+    // Modular crypt alphabet (used by DES/MD5/SHA crypt)
+    private static final char[] MOD_CRYPT_ALPHABET = {
+        '.', '/', '0', '1', '2', '3', '4', '5',
+        '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+        'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
+        'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+        'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b',
+        'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
+        'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+        's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    };
+
+    // bcrypt alphabet
+    private static final char[] BCRYPT_ALPHABET = {
+        '.', '/', 'A', 'B', 'C', 'D', 'E', 'F',
+        'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+        'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+        'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
+        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
+        'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+        'u', 'v', 'w', 'x', 'y', 'z', '0', '1',
+        '2', '3', '4', '5', '6', '7', '8', '9'
+    };
+
+    // Lookup tables to be used when decoding characters from the standard, modular crypt, and bcrypt alphabets
+    private static final int[] FROM_STANDARD_ALPHABET = getDecodeAlphabet(STANDARD_ALPHABET, true);
+    private static final int[] FROM_MOD_CRYPT_ALPHABET = getDecodeAlphabet(MOD_CRYPT_ALPHABET, false);
+    private static final int[] FROM_BCRYPT_ALPHABET = getDecodeAlphabet(BCRYPT_ALPHABET, false);
+
+    private static final char PAD = '=';
+
     /**
-     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset with an
+     * Get a lookup table that can be used when decoding characters from the given alphabet.
+     *
+     * @param alphabet the alphabet used for encoding
+     * @param includePaddingChar whether or not the padding character, {@code '='}, should be included in the lookup table
+     * @return a lookup table that can be used for decoding characters from the given alphabet
+     */
+    public static final int[] getDecodeAlphabet(char[] alphabet, boolean includePaddingChar) {
+        int[] decodeAlphabet = new int[256];
+        Arrays.fill(decodeAlphabet, -1);
+
+        for (int i = 0; i < alphabet.length; i++) {
+            decodeAlphabet[alphabet[i]] = i;
+        }
+        if (includePaddingChar) {
+            decodeAlphabet[PAD] = -2;
+        }
+        return decodeAlphabet;
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array with an
      * interleave table, using the modular crypt style little-endian scheme.
      *
      * @param reader the character reader
      * @param target the target array
      * @param interleave the interleave table to use
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
      */
     public static void base64DecodeACryptLE(CharacterArrayReader reader, byte[] target, int[] interleave) throws InvalidKeySpecException {
         int len = target.length;
@@ -59,84 +126,176 @@ public final class Base64 {
     }
 
     /**
-     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array, using the
+     * standard scheme and the given lookup table. The padding character, {@code '='},
+     * is allowed at the end of the encoded sequence of characters but it is not required. If a
+     * padding character is provided, the correct number of padding characters must be present.
+     *
+     * @param reader the character reader
+     * @param target the target array
+     * @param decodeAlphabet the lookup table to use when decoding 
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     */
+    public static void base64Decode(CharacterArrayReader reader, byte[] target, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+        int len = target.length;
+        int a, b;
+        try{
+            for (int i = 0; i < len; ++i) {
+                a = base64Decode(reader.read(), decodeAlphabet);
+                if (a == -2) throw unexpectedPadding();
+                b = base64Decode(reader.read(), decodeAlphabet);
+                if (b == -2) throw unexpectedPadding();
+                target[i] = (byte) (a << 2 | b >> 4);
+                if (++i >= len) break;
+                a = base64Decode(reader.read(), decodeAlphabet);
+                if (a == -2) {
+                    // If a padding character is found, the correct number of padding characters should be present
+                    if (base64Decode(reader.read(), decodeAlphabet) != -2) {
+                        throw missingRequiredPadding();
+                    }
+                } else {
+                    target[i] = (byte) (b << 4 | a >> 2);
+                    if (++i >= len) break;
+                    if ((b = base64Decode(reader.read(), decodeAlphabet)) != -2) {
+                        target[i] = (byte) (a << 6 | b >> 0);
+                    }
+                }
+            }
+        } catch (NoSuchElementException | IOException ignored) {
+            throw new InvalidKeySpecException("Unexpected end of input string");
+        }
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into a newly created byte array, starting from the given offset,
+     * using the standard scheme and the given alphabet. The padding character, {@code '='}, is allowed at the
+     * end of the encoded sequence of characters but it is not required. If a padding character is provided, the
+     * correct number of padding characters must be present.
+     *
+     * @param encoded the characters to decode
+     * @param offset the offset of the first character to decode
+     * @param len the number of characters to decode
+     * @param decodeAlphabet the lookup table to use when decoding
+     * @return an appropriately-sized byte array containing the decoded bytes
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     */
+    public static byte[] base64Decode(char[] encoded, int offset, int len, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+        int decodedLen = calculateDecodedLength(encoded, offset, len);
+        byte[] target = new byte[decodedLen];
+        CharacterArrayReader r = new CharacterArrayReader(encoded, offset, len);
+        try {
+            base64Decode(r, target, decodeAlphabet);
+        } finally {
+            safeClose(r);
+        }
+        return target;
+    }
+
+    /**
+     * Base-64 decode a single character using the given lookup table.
+     *
+     * @param ch the character
+     * @param decodeAlphabet the lookup table to use when decoding
+     * @return the byte
+     * @throws InvalidKeySpecException if the character is not in the alphabet
+     */
+    public static int base64Decode(int ch, int[] decodeAlphabet) throws InvalidKeySpecException {
+        int decoded = decodeAlphabet[ch];
+        if (decoded == -1) {
+            throw new InvalidKeySpecException("Invalid character encountered");
+        }
+        return decoded;
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into a newly created byte array, starting from the given offset,
+     * using the standard scheme and the given alphabet. The padding character, {@code '='}, is allowed at the
+     * end of the encoded sequence of characters but it is not required. If a padding character is provided, the
+     * correct number of padding characters must be present.
+     *
+     * @param encoded the characters to decode
+     * @param offset the offset of the first character to decode
+     * @param decodeAlphabet the lookup table to use when decoding
+     * @return an appropriately-sized byte array containing the decoded bytes
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     */
+    public static byte[] base64Decode(char[] encoded, int offset, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+        return base64Decode(encoded, offset, encoded.length - offset, decodeAlphabet);
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array, using the
      * standard scheme and the modular crypt alphabet.
      *
      * @param reader the character reader
      * @param target the target array
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
      */
     public static void base64DecodeA(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
-        int len = target.length;
-        int a, b;
-        try{
-            for (int i = 0; i < len; ++i) {
-                a = base64DecodeA(reader.read());
-                b = base64DecodeA(reader.read());
-                target[i] = (byte) (a << 2 | b >> 4);
-                if (++i >= len) break;
-                a = base64DecodeA(reader.read());
-                target[i] = (byte) (b << 4 | a >> 2);
-                if (++i >= len) break;
-                b = base64DecodeA(reader.read());
-                target[i] = (byte) (a << 6 | b >> 0);
-            }
-        } catch (NoSuchElementException | IOException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
-        }
+        base64Decode(reader, target, FROM_MOD_CRYPT_ALPHABET);
     }
 
     /**
-     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
-     * standard scheme and the standard alphabet.
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array, using the standard
+     * scheme and the standard alphabet. The padding character, {@code '='}, is allowed at the end of the
+     * encoded sequence of characters but it is not required. If a padding character is provided, the correct
+     * number of padding characters must be present.
      *
      * @param reader the character reader
      * @param target the target array
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
      */
-    public static void base64DecodeB(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
-        int len = target.length;
-        int a, b;
-        try{
-            for (int i = 0; i < len; ++i) {
-                a = base64DecodeB(reader.read());
-                b = base64DecodeB(reader.read());
-                target[i] = (byte) (a << 2 | b >> 4);
-                if (++i >= len) break;
-                a = base64DecodeB(reader.read());
-                target[i] = (byte) (b << 4 | a >> 2);
-                if (++i >= len) break;
-                b = base64DecodeB(reader.read());
-                target[i] = (byte) (a << 6 | b >> 0);
-            }
-        } catch (NoSuchElementException | IOException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
-        }
+    public static void base64DecodeB(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException, IllegalArgumentException {
+        base64Decode(reader, target, FROM_STANDARD_ALPHABET);
     }
 
     /**
-     * Base-64 decode a sequence of characters into an appropriately-sized byte array at the given offset, using the
-     * standard scheme and the bcrypt alphabet.
+     * Base-64 decode a sequence of characters into a newly created byte array, starting from the given offset,
+     * using the standard scheme and the standard alphabet. The padding character, {@code '='}, is allowed at the
+     * end of the encoded sequence of characters but it is not required. If a padding character is provided, the
+     * correct number of padding characters must be present.
+     *
+     * @param encoded the characters to decode
+     * @param offset the offset of the first character to decode
+     * @param len the number of characters to decode
+     * @return an appropriately-sized byte array containing the decoded bytes
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     */
+    public static byte[] base64DecodeB(char[] encoded, int offset, int len) throws InvalidKeySpecException, IllegalArgumentException {
+        return base64Decode(encoded, offset, len, FROM_STANDARD_ALPHABET);
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into a newly created byte array, starting from the given offset,
+     * using the standard scheme and the standard alphabet. The padding character, {@code '='}, is allowed at the
+     * end of the encoded sequence of characters but it is not required. If a padding character is provided, the
+     * correct number of padding characters must be present.
+     *
+     * @param encoded the characters to decode
+     * @param offset the offset of the first character to decode
+     * @return an appropriately-sized byte array containing the decoded bytes
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     */
+    public static byte[] base64DecodeB(char[] encoded, int offset) throws InvalidKeySpecException, IllegalArgumentException {
+        return base64Decode(encoded, offset, FROM_STANDARD_ALPHABET);
+    }
+
+    /**
+     * Base-64 decode a sequence of characters into an appropriately-sized byte array, using the standard scheme and
+     * the bcrypt alphabet.
      *
      * @param reader the character reader
      * @param target the target array
+     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
      */
     public static void base64DecodeBCrypt(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
-        int len = target.length;
-        int a, b;
-        try{
-            for (int i = 0; i < len; ++i) {
-                a = base64DecodeBCrypt(reader.read());
-                b = base64DecodeBCrypt(reader.read());
-                target[i] = (byte) (a << 2 | b >> 4);
-                if (++i >= len) break;
-                a = base64DecodeBCrypt(reader.read());
-                target[i] = (byte) (b << 4 | a >> 2);
-                if (++i >= len) break;
-                b = base64DecodeBCrypt(reader.read());
-                target[i] = (byte) (a << 6 | b >> 0);
-            }
-        } catch (NoSuchElementException | IOException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
-        }
+        base64Decode(reader, target, FROM_BCRYPT_ALPHABET);
     }
 
     /**
@@ -147,42 +306,19 @@ public final class Base64 {
      * @throws InvalidKeySpecException if the character is not in the alphabet
      */
     public static int base64DecodeA(int ch) throws InvalidKeySpecException {
-        if (ch == '.') {
-            return 0;
-        } else if (ch == '/') {
-            return 1;
-        } else if (ch >= '0' && ch <= '9') {
-            return ch + 2 - '0';
-        } else if (ch >= 'A' && ch <= 'Z') {
-            return ch + 12 - 'A';
-        } else if (ch >= 'a' && ch <= 'z') {
-            return ch + 38 - 'a';
-        } else {
-            throw new InvalidKeySpecException("Invalid character encountered");
-        }
+        return base64Decode(ch, FROM_MOD_CRYPT_ALPHABET);
     }
 
     /**
-     * Base-64 decode a single character with alphabet B (standard Base64).
+     * Base-64 decode a single character with alphabet B (standard Base64, as specified in
+     * Table 1 in <a href="http://tools.ietf.org/html/rfc4648"> RFC 4648</a>).
      *
      * @param ch the character
      * @return the byte
      * @throws InvalidKeySpecException if the character is not in the alphabet
      */
     private static int base64DecodeB(int ch) throws InvalidKeySpecException {
-        if (ch >= 'A' && ch <= 'Z') {
-            return ch - 'A';
-        } else if (ch >= 'a' && ch <= 'z') {
-            return ch + 26 - 'a';
-        } else if (ch >= '0' && ch <= '9') {
-            return ch + 52 - '0';
-        } else if (ch == '+') {
-            return 62;
-        } else if (ch == '/') {
-            return 63;
-        } else {
-            throw new InvalidKeySpecException("Invalid character encountered");
-        }
+        return base64Decode(ch, FROM_STANDARD_ALPHABET);
     }
 
     /**
@@ -193,76 +329,112 @@ public final class Base64 {
      * @throws InvalidKeySpecException if the character is not in the alphabet
      */
     private static int base64DecodeBCrypt(int ch) throws InvalidKeySpecException {
-        if (ch == '.') {
-            return 0;
-        } else if (ch == '/') {
-            return 1;
-        } else if (ch >= 'A' && ch <= 'Z') {
-            return ch + 2 - 'A';
-        } else if (ch >= 'a' && ch <= 'z') {
-            return ch + 28 - 'a';
-        } else if (ch >= '0' && ch <= '9') {
-            return ch + 54 - '0';
-        } else {
-            throw new InvalidKeySpecException("Invalid character encountered");
+        return base64Decode(ch, FROM_BCRYPT_ALPHABET);
+    }
+
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the standard
+     * scheme and the given alphabet.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     * @param alphabet the alphabet to use when encoding
+     * @param doPadding whether or not padding characters should be appended to the encoded result
+     */
+    public static void base64Encode(StringBuilder target, ByteArrayInputStream src, char[] alphabet, boolean doPadding) {
+        int a, b;
+        while ((a = src.read()) != -1) {
+            base64Encode(target, a >> 2, alphabet); // top 6 bits
+            if ((b = src.read()) == -1) {
+                base64Encode(target, a << 4, alphabet); // bottom 2 bits + 0000
+                if (doPadding) {
+                    target.append(PAD).append(PAD);
+                }
+                return;
+            }
+            base64Encode(target, (a & 0b11) << 4 | b >> 4, alphabet); // bottom 2 bits + top 4 bits
+            if ((a = src.read()) == -1) {
+                base64Encode(target, b << 2, alphabet); // bottom 4 bits + 00
+                if (doPadding) {
+                    target.append(PAD);
+                }
+                return;
+            }
+            base64Encode(target, b << 2 | a >> 6, alphabet); // bottom 4 bits + top 2 bits
+            base64Encode(target, a, alphabet); // bottom 6 bits
         }
     }
 
+    /**
+     * Base-64 encode a single byte with the given alphabet and append the resulting
+     * character to the given {@code StringBuilder}.
+     *
+     * @param target the target string builder
+     * @param a the byte
+     * @param alphabet the alphabet to use when encoding
+     */
+    public static void base64Encode(StringBuilder target, int a, char[] alphabet) {
+        a &= 0b0011_1111;
+        target.append(alphabet[a]);
+    }
+
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the standard
+     * scheme and modular crypt alphabet.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     */
     public static void base64EncodeA(StringBuilder target, ByteArrayInputStream src) {
-        int a, b;
-        while ((a = src.read()) != -1) {
-            base64EncodeA(target, a >> 2); // top 6 bits
-            if ((b = src.read()) == -1) {
-                base64EncodeA(target, a << 4); // bottom 2 bits + 0000
-                return;
-            }
-            base64EncodeA(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-            if ((a = src.read()) == -1) {
-                base64EncodeA(target, b << 2); // bottom 4 bits + 00
-                return;
-            }
-            base64EncodeA(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-            base64EncodeA(target, a); // bottom 6 bits
-        }
+        base64Encode(target, src, MOD_CRYPT_ALPHABET, false);
     }
 
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the standard
+     * scheme and the standard alphabet but do not include padding characters at the end of the
+     * encoded result.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     */
     public static void base64EncodeB(StringBuilder target, ByteArrayInputStream src) {
-        int a, b;
-        while ((a = src.read()) != -1) {
-            base64EncodeB(target, a >> 2); // top 6 bits
-            if ((b = src.read()) == -1) {
-                base64EncodeB(target, a << 4); // bottom 2 bits + 0000
-                return;
-            }
-            base64EncodeB(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-            if ((a = src.read()) == -1) {
-                base64EncodeB(target, b << 2); // bottom 4 bits + 00
-                return;
-            }
-            base64EncodeB(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-            base64EncodeB(target, a); // bottom 6 bits
-        }
+        base64Encode(target, src, STANDARD_ALPHABET, false);
     }
 
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the standard
+     * scheme and the standard alphabet and optionally include padding characters at the end of the
+     * encoded result.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     * @param doPadding whether or not padding characters should be appended to the encoded result
+     */
+    public static void base64EncodeB(StringBuilder target, ByteArrayInputStream src, boolean doPadding) {
+        base64Encode(target, src, STANDARD_ALPHABET, doPadding);
+    }
+
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the standard
+     * scheme and the bcrypt alphabet.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     */
     public static void base64EncodeBCrypt(StringBuilder target, ByteArrayInputStream src) {
-        int a, b;
-        while ((a = src.read()) != -1) {
-            base64EncodeBCrypt(target, a >> 2); // top 6 bits
-            if ((b = src.read()) == -1) {
-                base64EncodeBCrypt(target, a << 4); // bottom 2 bits + 0000
-                return;
-            }
-            base64EncodeBCrypt(target, (a & 0b11) << 4 | b >> 4); // bottom 2 bits + top 4 bits
-            if ((a = src.read()) == -1) {
-                base64EncodeBCrypt(target, b << 2); // bottom 4 bits + 00
-                return;
-            }
-            base64EncodeBCrypt(target, b << 2 | a >> 6); // bottom 4 bits + top 2 bits
-            base64EncodeBCrypt(target, a); // bottom 6 bits
-        }
+        base64Encode(target, src, BCRYPT_ALPHABET, false);
     }
 
+    /**
+     * Base-64 encode a sequence of bytes into the given {@code StringBuilder} using the modular
+     * crypt style little-endian scheme.
+     *
+     * @param target the target string builder
+     * @param src the source byte array input stream to encode
+     */
     public static void base64EncodeACryptLE(StringBuilder target, ByteArrayInputStream src) {
+        // A detailed description of the encoding scheme used here can be found in:
+        // ftp://ftp.arlut.utexas.edu/pub/java_hashes/SHA-crypt.txt
         int a, b;
         while ((a = src.read()) != -1) {
             base64EncodeA(target, a); // b0[5..0]
@@ -280,55 +452,84 @@ public final class Base64 {
         }
     }
 
+    /**
+     * Base-64 encode a single byte with alphabet A (DES/MD5/SHA crypt) and append the resulting
+     * character to the given {@code StringBuilder}.
+     *
+     * @param target the target string builder
+     * @param a the byte
+     */
     public static void base64EncodeA(StringBuilder target, int a) {
-        a &= 0b0011_1111;
-        final char c;
-        if (a == 0) {
-            c = '.';
-        } else if (a == 1) {
-            c = '/';
-        } else if (a < 12) {
-            c = (char) (a + '0' - 2);
-        } else if (a < 38) {
-            c = (char) (a + 'A' - 12);
-        } else { // a < 64
-            c = (char) (a + 'a' - 38);
-        }
-        target.append(c);
+        base64Encode(target, a, MOD_CRYPT_ALPHABET);
     }
 
+    /**
+     * Base-64 encode a single byte with alphabet B (standard Base64, as specified in Table 1
+     * in <a href="http://tools.ietf.org/html/rfc4648"> RFC 4648</a>), and append the resulting
+     * character to the given {@code StringBuilder}.
+     *
+     * @param target the target string builder
+     * @param a the byte
+     */
     public static void base64EncodeB(StringBuilder target, int a) {
-        a &= 0b0011_1111;
-        final char c;
-        if (a < 26) {
-            c = (char) (a + 'A');
-        } else if (a < 52) {
-            c = (char) (a + 'a' - 26);
-        } else if (a < 62) {
-            c = (char) (a + '0' - 52);
-        } else if (a == 62) {
-            c = '+';
-        } else { // a == 63
-            c = '/';
-        }
-        target.append(c);
+        base64Encode(target, a, STANDARD_ALPHABET);
     }
 
+    /**
+     * Base-64 encode a single byte with the bcrypt alphabet and append the resulting character
+     * to the given {@code StringBuilder}.
+     *
+     * @param target the target string builder
+     * @param a the byte
+     */
     public static void base64EncodeBCrypt(StringBuilder target, int a) {
-        a &= 0b0011_1111;
-        final char c;
-        if (a == 0) {
-            c = '.';
-        } else if (a == 1) {
-            c = '/';
-        } else if (a < 28) {
-            c = (char) (a + 'A' - 2);
-        } else if (a < 54) {
-            c = (char) (a + 'a' - 28);
-        } else { // a < 64
-            c = (char) (a + '0' - 54);
-        }
-        target.append(c);
+        base64Encode(target, a, BCRYPT_ALPHABET);
     }
 
+    /**
+     * Calculate the number of bytes that will be needed to store the result of Base-64 decoding
+     * the given sequence of characters using the given offset and length. The padding character,
+     * {@code '='}, is allowed in the encoded sequence of characters but it is not required.
+     *
+     * @param encoded the characters that will be decoded
+     * @param offset the offset of the first character that will be decoded
+     * @param len the number of characters that will be decoded
+     * @return the size of the byte array that will be needed to store the decoded bytes
+     */
+    private static int calculateDecodedLength(char[] encoded, int offset, int len) {
+        if (len == 0) {
+            return 0;
+        }
+
+        // Determine if padding characters are present
+        int numPaddings = 0;
+        if (encoded[offset + len - 1] == PAD) {
+            numPaddings += 1;
+            if (encoded[offset + len - 2] == PAD) {
+                numPaddings += 1;
+            }
+        }
+
+        int remainder = len % 4;
+        if ((numPaddings == 0) & (remainder != 0)) {
+            numPaddings = 4 - remainder;
+        }
+        return (((len + 3) / 4) * 3) - numPaddings;
+    }
+
+    private static void safeClose(Closeable c) {
+        if (c != null) {
+            try {
+                c.close();
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    private static IllegalArgumentException missingRequiredPadding() {
+        return new IllegalArgumentException("Missing required padding");
+    }
+
+    private static IllegalArgumentException unexpectedPadding() {
+        return new IllegalArgumentException("Unexpected padding");
+    }
 }

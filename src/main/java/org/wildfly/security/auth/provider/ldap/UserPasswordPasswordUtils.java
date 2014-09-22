@@ -100,48 +100,18 @@ class UserPasswordPasswordUtils {
 
     private static PasswordSpec createTrivialDigestSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
-        // TODO - ELY-43 should clean up Base64 handling and remove the need to trim the padding from the encoded value.
         int length = userPassword.length - prefixSize;
-        for (int i = userPassword.length - 1; i > 0; i--) {
-            if (userPassword[i] == '=') {
-                length--;
-            } else {
-                break;
-            }
-        }
-
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] digest = new byte[encodedBase64.length * 3 / 4];
-        CharacterArrayReader r = new CharacterArrayReader(encodedBase64);
-        try {
-            Base64.base64DecodeB(r, digest);
-        } finally {
-            safeClose(r);
-        }
+        byte[] digest = Base64.base64DecodeB(encodedBase64, 0);
 
         return new TrivialDigestPasswordSpec(algorithm, digest);
     }
 
     private static PasswordSpec createTrivialSaltedPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
-        // TODO - ELY-43 should clean up Base64 handling and remove the need to trim the padding from the encoded value.
         int length = userPassword.length - prefixSize;
-        for (int i = userPassword.length - 1; i > 0; i--) {
-            if (userPassword[i] == '=') {
-                length--;
-            } else {
-                break;
-            }
-        }
-
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] decoded = new byte[encodedBase64.length * 3 / 4];
-        CharacterArrayReader r = new CharacterArrayReader(encodedBase64);
-        try {
-            Base64.base64DecodeB(r, decoded);
-        } finally {
-            safeClose(r);
-        }
+        byte[] decoded = Base64.base64DecodeB(encodedBase64, 0);
 
         int digestLength = expectedDigestLengthBytes(algorithm);
         int saltLength = decoded.length - digestLength;

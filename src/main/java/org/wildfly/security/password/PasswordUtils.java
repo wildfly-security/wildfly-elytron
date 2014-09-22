@@ -466,13 +466,7 @@ public final class PasswordUtils {
             case A_DIGEST_SHA_512: initialLen = "[sha-XXX]".length(); break;
             default: throw new IllegalStateException();
         }
-        byte[] bytes = new byte[cryptString.length * 3 / 4];
-        CharacterArrayReader r = new CharacterArrayReader(cryptString, initialLen);
-        try {
-            base64DecodeB(r, bytes);
-        } finally {
-            safeClose(r);
-        }
+        byte[] bytes = base64DecodeB(cryptString, initialLen);
         return new TrivialDigestPasswordSpec(getAlgorithmNameString(algorithmId), bytes);
     }
 
