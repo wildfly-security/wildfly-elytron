@@ -67,7 +67,10 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
         String qopsString = (String)props.get(AbstractMD5DigestMechanism.QOP_PROPERTY);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
-        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops);
+        String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
+        
+        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
         server.init();
         return server;
     }

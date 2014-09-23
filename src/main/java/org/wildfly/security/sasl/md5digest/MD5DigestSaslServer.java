@@ -45,20 +45,14 @@ import org.wildfly.security.sasl.util.SaslQuote;
 public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements SaslServer {
 
     public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
-            CallbackHandler callbackHandler, Charset charset, String[] qops) {
-        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset);
+            CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) {
+        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
         this.realms = realms;
-        this.supportedCiphers = getSupportedCiphers();
+        this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
     }
 
     public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
-
-    public static final String[] DEFAULT_CIPHER_NAMES = {
-        "DESede/CBC/NoPadding",
-        "RC4",
-        "DES/CBC/NoPadding"
-    };
 
     private String[] realms;
     private String supportedCiphers;
@@ -176,7 +170,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         // cipher
         if (supportedCiphers != null && qops != null && arrayContains(qops,"auth-conf")) {
             challenge.append("cipher=\"");
-            challenge.append(SaslQuote.quote(supportedCiphers));
+            challenge.append(supportedCiphers);
             challenge.append("\"").append(DELIMITER);
         }
 

@@ -38,6 +38,9 @@ import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslState;
 import org.wildfly.security.sasl.util.SaslStateContext;
 import org.wildfly.security.sasl.util.SaslQuote;
+import org.wildfly.security.util.DefaultTransformationMapper;
+import org.wildfly.security.util.TransformationMapper;
+import org.wildfly.security.util.TransformationSpec;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -56,7 +59,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
     private final String authorizationId;
     private final boolean hasInitialResponse;
-
+    private final String[] demandedCiphers;
 
 
     /**
@@ -68,11 +71,12 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
      * @param hasInitialResponse
      */
     public MD5DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler,
-            String authorizationId, boolean hasInitialResponse, Charset charset) {
-        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset);
+            String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) {
+        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
+        this.demandedCiphers = (ciphers == null ? new String[] {} : ciphers);
     }
 
 
@@ -137,6 +141,23 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
 
     private void selectCipher(String ciphersFromServer) {
+        if (ciphersFromServer == null) {
+            cipher = ""; 
+            return;
+        } 
+        
+        TransformationMapper trans = new DefaultTransformationMapper();
+        String[] tokensToChooseFrom = ciphersFromServer.split(String.valueOf(DELIMITER));
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(MD5DigestServerFactory.JBOSS_DIGEST_MD5, tokensToChooseFrom)) {
+            // take the strongest cipher
+            for (String c: demandedCiphers) {
+               if (c.equals(ts.getToken())) {
+                   cipher = ts.getToken();
+                   return;
+               }
+            }
+        }
+        
         cipher = "";
     }
 

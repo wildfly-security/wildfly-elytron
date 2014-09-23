@@ -26,8 +26,6 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
@@ -36,6 +34,9 @@ import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.sasl.util.SaslBase64;
+import org.wildfly.security.util.DefaultTransformationMapper;
+import org.wildfly.security.util.TransformationMapper;
+import org.wildfly.security.util.TransformationSpec;
 
 /**
  *
@@ -47,6 +48,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
     public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
     public static final String QOP_PROPERTY = "javax.security.sasl.qop";
     public static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
+    public static final String SUPPORTED_CIPHERS_PROPERTY = "org.jboss.security.sasl.digest.ciphers";
 
     public static enum FORMAT {CLIENT, SERVER};
 
@@ -61,12 +63,6 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
     public static final String DEFAULT_QOP = "auth";
     public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
 
-    public static final String[] DEFAULT_CIPHER_NAMES = {
-        "DESede/CBC/NoPadding",
-        "RC4",
-        "DES/CBC/NoPadding"
-    };
-
     private FORMAT format;
     protected String digestURI;
     private Charset charset = Charsets.LATIN_1;
@@ -77,7 +73,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @param serverName
      * @param callbackHandler
      */
-    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset) {
+    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.format = format;
         this.digestURI = getProtocol() + "/" + getServerName();
@@ -110,24 +106,24 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             return false;
     }
 
-    static String getSupportedCiphers() {
-        StringBuilder ciphers = new StringBuilder();
-        // TODO: introduce system property to get list of ciphers to evaluate
-        // for now stick with default
-        for (String c : DEFAULT_CIPHER_NAMES) {
-            try {
-                Cipher.getInstance(c);
-                if (ciphers.length() > 0) {
-                    ciphers.append(DELIMITER);
-                }
-                ciphers.append(c);
-            } catch (NoSuchAlgorithmException e) {
-                // no impl found
-            } catch (NoSuchPaddingException e) {
-                // no impl found
-            }
-        }
 
+    /**
+     * Get supported ciphers as comma separated list of cipher-opts by Digest MD5 spec.
+     *
+     * @return comma separated list of ciphers
+     */
+    static String getSupportedCiphers(String[] demandedCiphers) {
+        TransformationMapper trans = new DefaultTransformationMapper();
+        if (demandedCiphers == null) {
+            demandedCiphers = CIPHER_OPTS;
+        }
+        StringBuilder ciphers = new StringBuilder();
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(MD5DigestServerFactory.JBOSS_DIGEST_MD5, demandedCiphers)) {
+            if (ciphers.length() > 0) {
+                ciphers.append(DELIMITER);
+            }
+            ciphers.append(ts.getToken());
+        }
         return ciphers.toString();
     }
 
