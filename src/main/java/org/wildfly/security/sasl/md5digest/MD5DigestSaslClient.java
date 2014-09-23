@@ -46,8 +46,6 @@ import org.wildfly.security.sasl.util.SaslQuote;
 public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements SaslClient {
 
 
-    private static final String DELIMITER = ",";
-
     private String[] realms;
     private byte[] nonce;
     private String qop;
@@ -59,7 +57,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
     private final String authorizationId;
     private final boolean hasInitialResponse;
 
-    private Charset charset = Charsets.LATIN_1;
+
 
     /**
      * @param mechanismName
@@ -70,8 +68,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
      * @param hasInitialResponse
      */
     public MD5DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler,
-            String authorizationId, boolean hasInitialResponse) {
-        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT);
+            String authorizationId, boolean hasInitialResponse, Charset charset) {
+        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset);
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
@@ -106,25 +104,17 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
     private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) {
 
-        byte[] chb = parsedChallenge.get("charset");
-        if (chb != null) {
-            String chs = new String(chb);
-            if ("utf-8".equals(chs)) {
-                charset = Charsets.UTF_8;
-            }
-        }
-
         LinkedList<String> realmList = new LinkedList<String>();
         for (String keyWord: parsedChallenge.keySet()) {
 
             if (keyWord.startsWith("realm")) {
-                realmList.add(new String(parsedChallenge.get(keyWord), charset));
+                realmList.add(new String(parsedChallenge.get(keyWord)));
             }
             else if (keyWord.equals("qop")) {
-                qop = new String(parsedChallenge.get(keyWord), charset);
+                qop = new String(parsedChallenge.get(keyWord));
             }
             else if (keyWord.equals("stale")) {
-                stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord), charset));
+                stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord)));
             }
             else if (keyWord.equals("maxbuf")) {
                 int maxbuf = Integer.parseInt(new String(parsedChallenge.get(keyWord)));
@@ -136,7 +126,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                 nonce = parsedChallenge.get(keyWord);
             }
             else if (keyWord.equals("cipher")) {
-                cipher_opts = new String(parsedChallenge.get(keyWord), charset);
+                cipher_opts = new String(parsedChallenge.get(keyWord));
                 selectCipher(cipher_opts);
             }
         }
@@ -189,8 +179,21 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
         ByteStringBuilder digestResponse = new ByteStringBuilder();
 
-        // charset
-        if (Charsets.UTF_8.equals(charset)) {
+        // charset on server
+        Charset serverHashedURPUsingcharset;
+        byte[] chb = parsedChallenge.get("charset");
+        if (chb != null) {
+            String chs = new String(chb);
+            if ("utf-8".equals(chs)) {
+                serverHashedURPUsingcharset = Charsets.UTF_8;
+            } else {
+                serverHashedURPUsingcharset = Charsets.LATIN_1;
+            }
+        } else {
+            serverHashedURPUsingcharset = Charsets.LATIN_1;
+        }
+        
+        if (Charsets.UTF_8.equals(serverHashedURPUsingcharset)) {
             digestResponse.append("charset=");
             digestResponse.append("utf-8");
             digestResponse.append(DELIMITER);
@@ -223,13 +226,13 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         // username
         digestResponse.append("username=\"");
         String userName = nameCallback.getName();
-        digestResponse.append(SaslQuote.quote(userName).getBytes(charset));
+        digestResponse.append(SaslQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
         if(realm != null){
             digestResponse.append("realm=\"");
-            digestResponse.append(SaslQuote.quote(realm).getBytes(charset));
+            digestResponse.append(SaslQuote.quote(realm).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"").append(DELIMITER);
         }
 
@@ -271,7 +274,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         try {
             passwd = passwordCallback.getPassword();
             passwordCallback.clearPassword();
-            response_value = digestResponse(userName, realm, passwd, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
+            response_value = digestResponse(userName, realm, passwd, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         } finally {

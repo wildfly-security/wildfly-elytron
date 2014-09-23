@@ -46,18 +46,13 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
     public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
             CallbackHandler callbackHandler, Charset charset, String[] qops) {
-        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER);
+        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers();
         this.qops = qops;
-        this.charset = charset;
     }
 
     public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
-
-    public static final String[] CIPHER_OPTS = {"des", "3des", "rc4", "rc4-40", "rc4-56"};
-
-    private static final char DELIMITER = ',';
 
     public static final String[] DEFAULT_CIPHER_NAMES = {
         "DESede/CBC/NoPadding",
@@ -66,9 +61,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
     };
 
     private String[] realms;
-    private String configuredQops;
     private String supportedCiphers;
-    private Charset charset = Charsets.LATIN_1; // 8859_1 is default
     private int receivingMaxBuffSize = DEFAULT_MAXBUF;
     private String[] qops;
     private String authorizationId;
@@ -145,7 +138,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         for (String realm: this.realms) {
             sb.append("realm=\"").append(SaslQuote.quote(realm)).append("\"").append(DELIMITER);
         }
-        challenge.append(sb.toString().getBytes(charset));
+        challenge.append(sb.toString().getBytes(getCharset()));
 
 
         // nonce
@@ -161,7 +154,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             boolean first = true;
             for(String qop : qops){
                 if(!first) challenge.append(DELIMITER);
-                challenge.append(SaslQuote.quote(qop).getBytes(charset));
+                challenge.append(SaslQuote.quote(qop));
             }
             challenge.append("\"").append(DELIMITER);
         }
@@ -174,7 +167,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
 
         // charset
-        if (Charsets.UTF_8.equals(charset)) {
+        if (Charsets.UTF_8.equals(getCharset())) {
             challenge.append("charset=");
             challenge.append("utf-8");
             challenge.append(DELIMITER);
@@ -183,7 +176,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         // cipher
         if (supportedCiphers != null && qops != null && arrayContains(qops,"auth-conf")) {
             challenge.append("cipher=\"");
-            challenge.append(SaslQuote.quote(supportedCiphers).getBytes(charset));
+            challenge.append(SaslQuote.quote(supportedCiphers));
             challenge.append("\"").append(DELIMITER);
         }
 
@@ -208,8 +201,8 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
         Charset clientCharset = Charsets.LATIN_1;
         if (parsedDigestResponse.get("charset") != null) {
-            String cCharset = new String(parsedDigestResponse.get("charset"), charset);
-            if (Charsets.UTF_8.equals(charset) && cCharset.equals("utf-8")) {
+            String cCharset = new String(parsedDigestResponse.get("charset"));
+            if (Charsets.UTF_8.equals(getCharset()) && cCharset.equals("utf-8")) {
                 clientCharset = Charsets.UTF_8;
             } else {
                 throw new SaslException(getMechanismName() + ": client charset should not be specified as server is using iso 8859-1");
@@ -288,7 +281,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
             expectedResponse = digestResponse(userName, clientRealm, passwd,
                     nonce, nonceCount, cnonce,
-                    authorizationId, qop, digestURI);
+                    authorizationId, qop, digestURI, clientCharset);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         } finally {

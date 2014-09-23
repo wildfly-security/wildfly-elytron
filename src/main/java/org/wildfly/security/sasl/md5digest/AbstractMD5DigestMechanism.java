@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.md5digest;
 
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -42,6 +44,10 @@ import org.wildfly.security.sasl.util.SaslBase64;
  */
 abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
+    public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
+    public static final String QOP_PROPERTY = "javax.security.sasl.qop";
+    public static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
+
     public static enum FORMAT {CLIENT, SERVER};
 
     private static final int MAX_PARSED_RESPONSE_SIZE = 13;
@@ -63,6 +69,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
     private FORMAT format;
     protected String digestURI;
+    private Charset charset = Charsets.LATIN_1;
 
     /**
      * @param mechanismName
@@ -70,10 +77,15 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @param serverName
      * @param callbackHandler
      */
-    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format) {
+    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset) {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.format = format;
         this.digestURI = getProtocol() + "/" + getServerName();
+        if (charset != null) {
+            this.charset = charset;
+        } else {
+            this.charset = Charsets.LATIN_1;
+        }
     }
 
 
@@ -173,16 +185,30 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      */
     byte[] digestResponse(String username, String realm, char[] password,
             byte[] nonce, int nonce_count, byte[] cnonce,
-            String authzid, String qop, String digest_uri) throws NoSuchAlgorithmException {
+            String authzid, String qop, String digest_uri, Charset responseCharset) throws NoSuchAlgorithmException {
+
+        CharsetEncoder latin1Encoder = Charsets.LATIN_1.newEncoder();
+        latin1Encoder.reset();
+        boolean bothLatin1 = latin1Encoder.canEncode(username);
+        latin1Encoder.reset();
+        if (bothLatin1) {
+            for (char c: password) {
+                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
+            }
+        }
 
         MessageDigest md5 = MessageDigest.getInstance(algorithm);
 
         ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.append(username);
+        urp.append(username.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
         urp.append(':');
-        urp.append(realm != null ? realm : "");
+        if (realm != null) {
+            urp.append(realm.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
+        } else {
+            urp.append("");
+        }
         urp.append(':');
-        urp.append(new String(password));
+        urp.append(new String(password).getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
 
         byte[] digest_urp = md5.digest(urp.toArray());
         md5.reset();
@@ -377,5 +403,9 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             if(searched.equals(item)) return true;
         }
         return false;
+    }
+
+    public Charset getCharset() {
+        return charset;
     }
 }

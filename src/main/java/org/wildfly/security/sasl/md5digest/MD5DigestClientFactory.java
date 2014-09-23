@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.md5digest;
 
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -28,6 +29,7 @@ import javax.security.sasl.SaslException;
 import org.wildfly.security.sasl.md5digest.MD5DigestSaslClient;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -49,7 +51,11 @@ public class MD5DigestClientFactory extends AbstractSaslFactory implements SaslC
         String selectedMech = selectMechanism(mechanisms);
         if (selectedMech == null) return null;
         
-        final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false);
+        Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
+        Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
+
+        
+        final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset);
         client.init();
         return client;
     }
