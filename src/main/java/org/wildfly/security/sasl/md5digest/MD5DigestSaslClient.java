@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.md5digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -48,11 +47,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
     private static final int STEP_FOUR = 2;
 
     private String[] realms;
-    private byte[] nonce;
-    private String qop;
     private boolean stale = false;
     private int maxbuf = DEFAULT_MAXBUF;
-    private String cipher;
     private String cipher_opts;
 
     private final String authorizationId;
@@ -69,7 +65,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
      * @param hasInitialResponse
      */
     public MD5DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler,
-            String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) {
+            String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) throws SaslException {
         super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
 
         this.hasInitialResponse = hasInitialResponse;
@@ -86,7 +82,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                 realmList.add(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
             }
             else if (keyWord.equals("qop")) {
-                qop = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
+                String qopServerOptions = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
+                selectQop(qopServerOptions);
             }
             else if (keyWord.equals("stale")) {
                 stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
@@ -110,6 +107,18 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         realmList.toArray(realms);
     }
 
+    private void selectQop(String qopServerOptions) {
+        // TODO: make this configurable
+        // for now choose the strongest one
+        String[] qops = qopServerOptions.split(String.valueOf(DELIMITER));
+        if (arrayContains(qops, QOP_AUTH_CONF)) {
+            this.qop = QOP_AUTH_CONF;
+        } else if (arrayContains(qops, QOP_AUTH_INT)) {
+            this.qop = QOP_AUTH_INT;
+        } else {
+            this.qop = QOP_AUTH;
+        }
+    }
 
     private void selectCipher(String ciphersFromServer) {
         if (ciphersFromServer == null) {
@@ -261,19 +270,16 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         //}
 
         // response
-        char[] passwd = null;
-        byte[] response_value;
-        try {
-            passwd = passwordCallback.getPassword();
-            passwordCallback.clearPassword();
-            response_value = digestResponse(userName, realm, passwd, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
-        } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Algorithm not supported", e);
-        } finally {
-            // wipe out the password
-            if (passwd != null) {
-                Arrays.fill(passwd, (char)0);
-            }
+        char[] passwd = passwordCallback.getPassword();
+        passwordCallback.clearPassword();
+
+        byte[] H_A1 = H_A1(md5, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = Arrays.copyOf(H_A1, H_A1.length);
+
+        byte[] response_value = digestResponse(md5, H_A1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
+        // wipe out the password
+        if (passwd != null) {
+            Arrays.fill(passwd, (char)0);
         }
         digestResponse.append("response=");
         digestResponse.append(response_value);
@@ -281,7 +287,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         // qop
         digestResponse.append(DELIMITER);
         digestResponse.append("qop=");
-        digestResponse.append(qop!=null ? qop : "auth");
+        digestResponse.append(qop !=null ? qop : QOP_AUTH);
 
         // cipher
         if (cipher != null && cipher.length() != 0) {

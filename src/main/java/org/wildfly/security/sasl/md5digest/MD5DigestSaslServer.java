@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.md5digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -31,6 +30,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslQuote;
@@ -43,14 +43,13 @@ import org.wildfly.security.sasl.util.SaslQuote;
 public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements SaslServer {
 
     public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
-            CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) {
+            CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
     }
 
-    public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
 
     private static final int STEP_ONE = 1;
     private static final int STEP_THREE = 2;
@@ -59,9 +58,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
     private String supportedCiphers;
     private int receivingMaxBuffSize = DEFAULT_MAXBUF;
     private String[] qops;
-    private String authorizationId;
     private int nonceCount = -1;
-    private byte[] nonce = null;
 
     /**
      * Generates a digest challenge
@@ -133,7 +130,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
 
         // cipher
-        if (supportedCiphers != null && qops != null && arrayContains(qops,"auth-conf")) {
+        if (supportedCiphers != null && qops != null && arrayContains(qops, QOP_AUTH_CONF)) {
             challenge.append("cipher=\"");
             challenge.append(supportedCiphers);
             challenge.append("\"").append(DELIMITER);
@@ -151,6 +148,23 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         } else {
             nonceCount = -1;
         }
+
+        data = parsedDigestResponse.get("cipher");
+        if (data != null) {
+            cipher = new String(data);
+        } else {
+            cipher = "";
+        }
+
+        data = parsedDigestResponse.get("authzid");
+        if (data != null) {
+            authzid = new String(data);
+        } else {
+            authzid = null;
+        }
+
+
+
     }
 
     private byte[] validateDigestResponse(HashMap<String, byte[]> parsedDigestResponse) throws SaslException {
@@ -213,14 +227,16 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             throw new SaslException(getMechanismName() + ": digest-uri directive is missing");
         }
 
-        String qop = "auth";
+        qop = QOP_AUTH;
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
             if (!arrayContains(QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
+            if (!qop.equals(QOP_AUTH)) {
+                setWrapper(new MD5DigestWrapper(qop.equals(QOP_AUTH_CONF)));
+            }
         }
-
 
         // get password
         final NameCallback nameCallback = new NameCallback("User name", userName);
@@ -229,30 +245,22 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
         handleCallbacks(realmCallback, nameCallback, passwordCallback);
 
-        byte[] authzid = parsedDigestResponse.get("authzid");
-        String authorizationId = (authzid==null || authzid.equals(userName)) ? null : new String(authzid, Charsets.UTF_8);
+        char[] passwd = passwordCallback.getPassword();
+        passwordCallback.clearPassword();
 
-        char[] passwd = null;
-        byte[] expectedResponse;
-        try {
-            passwd = passwordCallback.getPassword();
-            passwordCallback.clearPassword();
 
-            expectedResponse = digestResponse(userName, clientRealm, passwd,
-                    nonce, nonceCount, cnonce,
-                    authorizationId, qop, digestURI, clientCharset);
-        } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Algorithm not supported", e);
-        } finally {
-            // wipe out the password
-            if (passwd != null) {
-                Arrays.fill(passwd, (char)0);
-            }
+        byte[] H_A1 = H_A1(md5, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+        byte[] expectedResponse = digestResponse(md5, H_A1, nonce, nonceCount, cnonce, authzid, qop, digestURI, clientCharset);
+        // wipe out the password
+        if (passwd != null) {
+            Arrays.fill(passwd, (char)0);
         }
 
         if (parsedDigestResponse.get("response") != null) {
             if (Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {
-                this.authorizationId = authorizationId!=null ? authorizationId : userName; // TODO: Check permission use given authzid!
+                if (authzid == null) {
+                    authzid = userName; // TODO: Check permission use given authzid!
+                }
                 return createResponseAuth(parsedDigestResponse);
             } else {
                 throw new SaslException(getMechanismName() + ": authentication failed - bad response");
@@ -280,7 +288,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
      */
     @Override
     public String getAuthorizationID() {
-        return authorizationId;
+        return authzid;
     }
 
     /* (non-Javadoc)
