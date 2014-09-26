@@ -47,6 +47,7 @@
         <version.org.jboss.logging.processor>1.2.0.Beta1</version.org.jboss.logging.processor>
         <version.org.jboss.logmanager>1.4.1.Final</version.org.jboss.logmanager>
         <version.org.jboss.modules>1.2.0.Final</version.org.jboss.modules>
+        <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
 
         <test.level>INFO</test.level>
     </properties>
@@ -98,6 +99,14 @@
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>org.kohsuke.metainf-services</groupId>
+            <artifactId>metainf-services</artifactId>
+            <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

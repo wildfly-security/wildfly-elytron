@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyPermission;
 
+import org.kohsuke.MetaInfServices;
 import org.wildfly.security.manager.action.ClearPropertyAction;
 import org.wildfly.security.manager.action.GetClassLoaderAction;
 import org.wildfly.security.manager.action.GetContextClassLoaderAction;
@@ -69,6 +70,7 @@ import static org.wildfly.security.manager._private.SecurityMessages.access;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@MetaInfServices
 public final class WildFlySecurityManager extends SecurityManager {
 
     private static final Permission SECURITY_MANAGER_PERMISSION = new RuntimePermission("setSecurityManager");
