@@ -24,6 +24,7 @@ package org.wildfly.security.manager;
 
 import java.io.FileDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.net.InetAddress;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -38,6 +39,9 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyPermission;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.manager.action.ClearPropertyAction;
@@ -110,6 +114,8 @@ public final class WildFlySecurityManager extends SecurityManager {
         hasGetCallerClass = result;
         callerOffset = offset;
     }
+
+    private static final RuntimePermission ACCESS_DECLARED_MEMBERS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
 
     /**
      * Construct a new instance.  If the caller does not have permission to do so, this method will throw an exception.
@@ -391,9 +397,79 @@ public final class WildFlySecurityManager extends SecurityManager {
         }
     }
 
+    private static final Class<?>[] ATOMIC_FIELD_UPDATER_TYPES = new Class<?>[] {
+        AtomicReferenceFieldUpdater.class, AtomicLongFieldUpdater.class, AtomicIntegerFieldUpdater.class
+    };
+
+    private static boolean isAssignableToOneOf(Class<?> test, Class<?>... expect) {
+        for (Class<?> clazz : expect) {
+            if (! clazz.isAssignableFrom(test)) return false;
+        }
+        return true;
+    }
+
     public void checkMemberAccess(final Class<?> clazz, final int which) {
         if (CHECKING.get() == TRUE) {
-            super.checkMemberAccess(clazz, which);
+            if (clazz == null) {
+                throw new NullPointerException("class can't be null");
+            }
+            if (which != Member.PUBLIC) {
+                /* The default sec mgr implementation makes some ugly assumptions about call stack depth that we must
+                 * unfortunately replicate (and improve upon).  Here are the stack elements we expect to see:
+                 *
+                 *   0: this method
+                 *   1: java.lang.Class#checkMemberAccess()
+                 *   2: getDeclaredField or whatever
+                 *   3: user code | java.util.concurrent.Atomic*FieldUpdater (impl)
+                 *   4: ???       | user code
+                 *
+                 * The great irony is that Class is supposed to detect that this method is overridden and fall back to
+                 * a simple permission check, however that doesn't seem to be working in practice.
+                 */
+                Class<?>[] context = getClassContext();
+                int depth = context.length;
+                if (depth >= 4) {
+                    final Class<?> classThree = context[3];
+                    final ClassLoader classLoaderThree;
+                    final ClassLoader objectClassLoader;
+                    final ClassLoader classLoaderFour;
+                    final ClassLoader clazzClassLoader;
+                    // get class loaders without permission check
+                    ENTERED.set(TRUE);
+                    try {
+                        classLoaderThree = classThree.getClassLoader();
+                        objectClassLoader = Object.class.getClassLoader();
+                        classLoaderFour = depth >= 5 ? context[4].getClassLoader() : null;
+                        clazzClassLoader = clazz.getClassLoader();
+                    } finally {
+                        ENTERED.set(FALSE);
+                    }
+                    // check above assumptions
+                    if (context[1] == Class.class) {
+                        // good so far
+                        // todo - don't know a really safe way to ensure that the caller is reflection proper
+                        // todo - maybe looking for Class.class at [2] as well would suffice?
+                        // check to see if #3 might be an official/trusted Atomic*FieldUpdater
+                        if (depth >= 5 && classLoaderThree == objectClassLoader) {
+                            // it might be!
+                            if (isAssignableToOneOf(classThree, ATOMIC_FIELD_UPDATER_TYPES)) {
+                                // bingo
+                                if (classLoaderFour == clazzClassLoader) {
+                                    // permission granted
+                                    return;
+                                }
+                            }
+                        }
+                        // fall back to other reflection check
+                        if (classLoaderThree == clazzClassLoader) {
+                                    // permission granted
+                            return;
+                        }
+                    }
+                }
+                // fall back to paranoid check
+                checkPermission(ACCESS_DECLARED_MEMBERS_PERMISSION);
+            }
         }
     }
 
