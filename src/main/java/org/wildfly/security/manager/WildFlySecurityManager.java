@@ -419,7 +419,7 @@ public final class WildFlySecurityManager extends SecurityManager {
                  *
                  *   0: this method
                  *   1: java.lang.Class#checkMemberAccess()
-                 *   2: getDeclaredField or whatever
+                 *   2: java.lang.Class#getDeclared*() or similar in Class
                  *   3: user code | java.util.concurrent.Atomic*FieldUpdater (impl)
                  *   4: ???       | user code
                  *
@@ -445,10 +445,8 @@ public final class WildFlySecurityManager extends SecurityManager {
                         ENTERED.set(FALSE);
                     }
                     // check above assumptions
-                    if (context[1] == Class.class) {
+                    if (context[1] == Class.class && context[2] == Class.class) {
                         // good so far
-                        // todo - don't know a really safe way to ensure that the caller is reflection proper
-                        // todo - maybe looking for Class.class at [2] as well would suffice?
                         // check to see if #3 might be an official/trusted Atomic*FieldUpdater
                         if (depth >= 5 && classLoaderThree == objectClassLoader) {
                             // it might be!
