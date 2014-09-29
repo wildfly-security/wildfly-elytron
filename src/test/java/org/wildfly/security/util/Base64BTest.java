@@ -27,6 +27,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import org.wildfly.security.sasl.util.ByteStringBuilder;
+
 /**
  * Tests of encoding/decoding Base64 B (standard alphabet)
  * implemented in org.wildfly.security.util.Base64
@@ -268,5 +270,100 @@ public class Base64BTest {
         char[] in = "K_fMJwH-Q5e0nr7tWsxwkA==".toCharArray();
         byte[] out = Base64.base64Decode(in, 0, decodeCustomAlphabet);
         assertArrayEquals(new byte[]{ 43, -9, -52, 39, 1, -2, 67, -105, -76, -98, -66, -19, 90, -52, 112, -112 }, out);
+    }
+
+    /* SASL Base64 test cases */
+
+    /**
+     * Tests if encoding/decoding works properly.
+     * (data length) % 3 == 0
+     */
+    @Test
+    public void testEncodeDecodeToByteStringBuilderMod0() throws Exception {
+        doEncodeDecodeTest(generateData(255));
+    }
+
+    /**
+     * Tests if encoding/decoding works properly.
+     * (data length) % 3 == 0
+     */
+    @Test
+    public void testEncodeDecodeToByteStringBuilderMod1() throws Exception {
+        doEncodeDecodeTest(generateData(256));
+    }
+
+    /**
+     * Tests if encoding/decoding works properly.
+     * (data length) % 3 == 0
+     */
+    @Test
+    public void testEncodeDecodeToByteStringBuilderMod2() throws Exception {
+        doEncodeDecodeTest(generateData(253));
+    }
+
+    private void doEncodeDecodeTest(byte[] inputData) throws Exception {
+        ByteStringBuilder bsb = new ByteStringBuilder();
+        Base64.base64EncodeB(bsb, new ByteArrayInputStream(inputData), true);
+
+        byte[] result = bsb.toArray();
+        assertTrue("Whole result data has to be within the range for base64", isInRange(result));
+        assertEncodedLength(inputData.length, result.length);
+
+        ByteStringBuilder afterDecode = new ByteStringBuilder();
+        Base64.base64DecodeB(result, 0, afterDecode);
+
+        assertArrayEquals("Encode-Decode test failed, results are not the same.", inputData, afterDecode.toArray());
+    }
+
+    private boolean isInRange(byte[] data) {
+        boolean allMembersInRange = true;
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] == '=') {
+                if ((i != data.length - 1) && (i != data.length - 2)) {
+                    allMembersInRange = false;
+                }
+            } else {
+                if (!((data[i] >= 'A' && data[i] <= 'Z') || (data[i] >= 'a' && data[i] <= 'z')
+                        || (data[i] >= '0' && data[i] <= '9') || data[i] == '+' || data[i] == '/')) {
+                    allMembersInRange = false;
+                }
+            }
+        }
+        return allMembersInRange;
+    }
+
+    private void assertEncodedLength(int originalLen, int encodedLen) {
+
+        int expectedLen;
+        if (originalLen % 3 != 0) {
+            expectedLen = (originalLen/3 + 1) * 4;
+        } else {
+            expectedLen = originalLen/3 * 4;
+        }
+
+        assertTrue("Encoded data are too long for base64 encoding ", encodedLen <= expectedLen);
+    }
+
+    private byte[] generateData(final int len) {
+        byte[] data = new byte[len];
+        for (int i = 0; i < len ; i++) {
+            data[i] = (byte)i;
+        }
+        return data;
+    }
+
+    @Test
+    public void testEncodeAgainstPrecomputedValue() throws Exception {
+
+        byte[] input = "Testing input of base64 function".getBytes("UTF-8");
+        ByteStringBuilder encoded = new ByteStringBuilder();
+        ByteStringBuilder decoded = new ByteStringBuilder();
+
+        Base64.base64EncodeB(encoded, new ByteArrayInputStream(input), true);
+        Assert.assertArrayEquals("VGVzdGluZyBpbnB1dCBvZiBiYXNlNjQgZnVuY3Rpb24=".getBytes(), encoded.toArray());
+
+        Base64.base64DecodeB(encoded.toArray(), 0, decoded);
+        Assert.assertArrayEquals(input, decoded.toArray());
+
     }
 }
