@@ -403,13 +403,13 @@ public final class WildFlySecurityManager extends SecurityManager {
 
     private static boolean isAssignableToOneOf(Class<?> test, Class<?>... expect) {
         for (Class<?> clazz : expect) {
-            if (! clazz.isAssignableFrom(test)) return false;
+            if (clazz.isAssignableFrom(test)) return true;
         }
-        return true;
+        return false;
     }
 
     public void checkMemberAccess(final Class<?> clazz, final int which) {
-        if (CHECKING.get() == TRUE) {
+        if (CHECKING.get() == TRUE && ENTERED.get() != TRUE) {
             if (clazz == null) {
                 throw new NullPointerException("class can't be null");
             }
