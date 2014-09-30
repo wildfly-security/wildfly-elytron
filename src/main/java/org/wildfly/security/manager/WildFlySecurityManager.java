@@ -125,6 +125,12 @@ public final class WildFlySecurityManager extends SecurityManager {
     public WildFlySecurityManager() throws SecurityException {
     }
 
+    @Deprecated
+    public static void install() throws SecurityException {
+        if (System.getSecurityManager() instanceof WildFlySecurityManager) return;
+        System.setSecurityManager(new WildFlySecurityManager());
+    }
+
     static Class<?> getCallerClass(int n) {
         if (hasGetCallerClass) {
             return Reflection.getCallerClass(n + callerOffset);
