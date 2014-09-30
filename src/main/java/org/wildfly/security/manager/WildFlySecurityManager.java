@@ -159,7 +159,7 @@ public final class WildFlySecurityManager extends SecurityManager {
      */
     public static boolean isChecking() {
         final SecurityManager sm = getSecurityManager();
-        return sm instanceof WildFlySecurityManager ? CTX.get().checking : sm != null;
+        return sm instanceof WildFlySecurityManager ? doCheck() : sm != null;
     }
 
     /**
@@ -281,124 +281,132 @@ public final class WildFlySecurityManager extends SecurityManager {
         return stack;
     }
 
+    private static boolean doCheck() {
+        return doCheck(CTX.get());
+    }
+
+    private static boolean doCheck(final WildFlySecurityManager.Context ctx) {
+        return ctx.checking && ! ctx.entered;
+    }
+
     public void checkCreateClassLoader() {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkCreateClassLoader();
         }
     }
 
     public void checkAccess(final Thread t) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkAccess(t);
         }
     }
 
     public void checkAccess(final ThreadGroup g) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkAccess(g);
         }
     }
 
     public void checkExit(final int status) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkExit(status);
         }
     }
 
     public void checkExec(final String cmd) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkExec(cmd);
         }
     }
 
     public void checkLink(final String lib) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkLink(lib);
         }
     }
 
     public void checkRead(final FileDescriptor fd) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkRead(fd);
         }
     }
 
     public void checkRead(final String file) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkRead(file);
         }
     }
 
     public void checkRead(final String file, final Object context) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkRead(file, context);
         }
     }
 
     public void checkWrite(final FileDescriptor fd) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkWrite(fd);
         }
     }
 
     public void checkWrite(final String file) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkWrite(file);
         }
     }
 
     public void checkDelete(final String file) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkDelete(file);
         }
     }
 
     public void checkConnect(final String host, final int port) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkConnect(host, port);
         }
     }
 
     public void checkConnect(final String host, final int port, final Object context) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkConnect(host, port, context);
         }
     }
 
     public void checkListen(final int port) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkListen(port);
         }
     }
 
     public void checkAccept(final String host, final int port) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkAccept(host, port);
         }
     }
 
     public void checkMulticast(final InetAddress maddr) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkMulticast(maddr);
         }
     }
 
     @Deprecated @SuppressWarnings("deprecation")
     public void checkMulticast(final InetAddress maddr, final byte ttl) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkMulticast(maddr, ttl);
         }
     }
 
     public void checkPropertiesAccess() {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkPropertiesAccess();
         }
     }
 
     public void checkPropertyAccess(final String key) {
         final Context ctx = CTX.get();
-        if (ctx.checking) {
+        if (doCheck(ctx)) {
             /*
              * Here is our expected stack:
              *   0: this method
@@ -449,25 +457,25 @@ public final class WildFlySecurityManager extends SecurityManager {
     }
 
     public void checkPrintJobAccess() {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkPrintJobAccess();
         }
     }
 
     public void checkPackageAccess(final String pkg) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkPackageAccess(pkg);
         }
     }
 
     public void checkPackageDefinition(final String pkg) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkPackageDefinition(pkg);
         }
     }
 
     public void checkSetFactory() {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkSetFactory();
         }
     }
@@ -485,7 +493,7 @@ public final class WildFlySecurityManager extends SecurityManager {
 
     public void checkMemberAccess(final Class<?> clazz, final int which) {
         final Context ctx = CTX.get();
-        if (ctx.checking && ! ctx.entered) {
+        if (doCheck(ctx)) {
             if (clazz == null) {
                 throw new NullPointerException("class can't be null");
             }
@@ -546,7 +554,7 @@ public final class WildFlySecurityManager extends SecurityManager {
     }
 
     public void checkSecurityAccess(final String target) {
-        if (CTX.get().checking) {
+        if (doCheck()) {
             super.checkSecurityAccess(target);
         }
     }
