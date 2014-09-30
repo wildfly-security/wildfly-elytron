@@ -63,61 +63,61 @@ public class TestPermissionActions {
     public void testParseValidActionString() {
         EnumSet<ActionSetOne> set;
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "");
         assertEquals(0, set.size());
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "bar,foo");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "bar,foo");
         assertEquals(2, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "bar,foo,bar,bar");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "bar,foo,bar,bar");
         assertEquals(2, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, ",,bar,foo,,");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, ",,bar,foo,,");
         assertEquals(2, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "bar,foo,baz");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "bar,foo,baz");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "bar, foo ,baz");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "bar, foo ,baz");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "    bar, foo ,baz          ");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "    bar, foo ,baz          ");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "*");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "*");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "*,bar");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "*,bar");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, ",bar,*,bar");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, ",bar,*,bar");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
         assertTrue(set.contains(ActionSetOne.foo));
         // ---
-        set = PermissionActions.parseActionString(ActionSetOne.class, "*,,,,,,baz");
+        set = PermissionActions.parseActionStringToSet(ActionSetOne.class, "*,,,,,,baz");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetOne.bar));
         assertTrue(set.contains(ActionSetOne.baz));
@@ -128,31 +128,31 @@ public class TestPermissionActions {
     public void testParseInvalidActionString() {
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "xxx");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "xxx");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "barf,foo");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "barf,foo");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, ",barf,foo,foo,");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, ",barf,foo,foo,");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "*,barf,foo");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "*,barf,foo");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "*,bar f,foo");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "*,bar f,foo");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "*,bar foo,foo");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "*,bar foo,foo");
         } catch (IllegalArgumentException ignored) {}
         // ---
         try {
-            PermissionActions.parseActionString(ActionSetOne.class, "FOO,BAR");
+            PermissionActions.parseActionStringToSet(ActionSetOne.class, "FOO,BAR");
         } catch (IllegalArgumentException ignored) {}
         // ---
     }
@@ -161,21 +161,21 @@ public class TestPermissionActions {
     public void testCommonPrefixActionString() {
         EnumSet<ActionSetTwo> set;
         // ---
-        set = PermissionActions.parseActionString(ActionSetTwo.class, "");
+        set = PermissionActions.parseActionStringToSet(ActionSetTwo.class, "");
         assertEquals(0, set.size());
         // ---
-        set = PermissionActions.parseActionString(ActionSetTwo.class, "foobar,fooba");
+        set = PermissionActions.parseActionStringToSet(ActionSetTwo.class, "foobar,fooba");
         assertEquals(2, set.size());
         assertTrue(set.contains(ActionSetTwo.fooba));
         assertTrue(set.contains(ActionSetTwo.foobar));
         // ---
-        set = PermissionActions.parseActionString(ActionSetTwo.class, "foobar,fooba,foobazz");
+        set = PermissionActions.parseActionStringToSet(ActionSetTwo.class, "foobar,fooba,foobazz");
         assertEquals(3, set.size());
         assertTrue(set.contains(ActionSetTwo.fooba));
         assertTrue(set.contains(ActionSetTwo.foobar));
         assertTrue(set.contains(ActionSetTwo.foobazz));
         // ---
-        set = PermissionActions.parseActionString(ActionSetTwo.class, "foobar,fooba,foobazz,foobaz");
+        set = PermissionActions.parseActionStringToSet(ActionSetTwo.class, "foobar,fooba,foobazz,foobaz");
         assertEquals(4, set.size());
         assertTrue(set.contains(ActionSetTwo.fooba));
         assertTrue(set.contains(ActionSetTwo.foobar));

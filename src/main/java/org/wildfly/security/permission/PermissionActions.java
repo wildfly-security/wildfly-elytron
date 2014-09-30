@@ -28,18 +28,22 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Iterator;
 
-import org.wildfly.security.manager._private.SecurityMessages;
-
 /**
  * A helper class for defining permissions which use a finite list of actions.  Define custom permissions using
  * an {@code enum} of actions, where the string representation (via {@code toString()}) of each enum is one possible
  * action name.  Typically the {@code enum} should be non-public, and the constant names should be lowercase.  If
  * an action name contains a character which is not a valid Java identifier, then the {@code toString()} method of
- * such constants should be overridden to report the correct string.
+ * such constants should be overridden to report the correct string.  The actions may be stored on the permission as
+ * an {@code EnumSet}, an {@code int}, or a {@code long}.  The field should be marked {@code transient}, and
+ * the actions represented by a (possibly synthetic) field of type {@code String} which uses the canonical representation
+ * of the actions.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class PermissionActions {
+
+    private PermissionActions() {
+    }
 
     static final class TrieNode<E> {
         private static final char[] C_EMPTY = new char[0];
@@ -90,43 +94,172 @@ public final class PermissionActions {
         }
     }
 
-    private static final ClassValue<TrieNode<?>> storedTrie = new ClassValue<TrieNode<?>>() {
-        protected TrieNode<?> computeValue(final Class<?> type) {
+    static final class Info<E> {
+        final TrieNode<E> root;
+        final E[] constants;
+
+        Info(final TrieNode<E> root, final E[] constants) {
+            this.root = root;
+            this.constants = constants;
+        }
+    }
+
+    private static final ClassValue<Info<?>> storedInfo = new ClassValue<Info<?>>() {
+        protected Info<?> computeValue(final Class<?> type) {
             return computeReal(type.asSubclass(Enum.class));
         }
 
-        private <E extends Enum<E>> TrieNode<E> computeReal(final Class<E> type) {
+        private <E extends Enum<E>> Info<E> computeReal(final Class<E> type) {
             final TrieNode<E> root = new TrieNode<>();
             final E[] enumConstants = type.getEnumConstants();
             for (E e : enumConstants) {
                 root.put(e.toString(), 0, e);
             }
-            return root;
+            return new Info<>(root, type.getEnumConstants());
         }
     };
 
+    interface MatchAction<E extends Enum<E>> {
+        void matched(E item);
+
+        void matchedAll(Class<E> type);
+    }
+
+    static class SetMatchAction<E extends Enum<E>> implements MatchAction<E> {
+        private EnumSet<E> set;
+
+        SetMatchAction(final EnumSet<E> set) {
+            this.set = set;
+        }
+
+        public void matched(final E item) {
+            set.add(item);
+        }
+
+        public void matchedAll(final Class<E> type) {
+            set = EnumSet.allOf(type);
+        }
+
+        public EnumSet<E> getSet() {
+            return set;
+        }
+    }
+
+    static class IntMatchAction<E extends Enum<E>> implements MatchAction<E> {
+        private int result;
+
+        IntMatchAction() {
+        }
+
+        public void matched(final E item) {
+            result |= 1 << item.ordinal();
+        }
+
+        public void matchedAll(final Class<E> type) {
+            result |= (1 << storedInfo.get(type).constants.length) - 1;
+        }
+
+        public int getResult() {
+            return result;
+        }
+    }
+
+    static class LongMatchAction<E extends Enum<E>> implements MatchAction<E> {
+        private long result;
+
+        LongMatchAction() {
+        }
+
+        public void matched(final E item) {
+            result |= 1L << item.ordinal();
+        }
+
+        public void matchedAll(final Class<E> type) {
+            result |= (1L << storedInfo.get(type).constants.length) - 1;
+        }
+
+        public long getResult() {
+            return result;
+        }
+    }
+
     /**
-     * Parse an action string using the given action type.
+     * Parse an action string using the given action type to an {@code EnumSet}.
      *
      * @param actionType the action {@code enum} type class
      * @param actionString the string to parse
      * @param <E> the action {@code enum} type
+     *
      * @return the set of actions from the string
+     *
      * @throws IllegalArgumentException if the string contained an invalid action
      */
-    public static <E extends Enum<E>> EnumSet<E> parseActionString(Class<E> actionType, String actionString) throws IllegalArgumentException {
+    public static <E extends Enum<E>> EnumSet<E> parseActionStringToSet(Class<E> actionType, String actionString) throws IllegalArgumentException {
         if (actionString == null) {
             throw new IllegalArgumentException("actionString is null");
         }
         if (actionType == null) {
             throw new IllegalArgumentException("actionType is null");
         }
+        final SetMatchAction<E> matchAction = new SetMatchAction<>(EnumSet.noneOf(actionType));
+        doParse(actionType, actionString, matchAction);
+        return matchAction.getSet();
+    }
+
+    /**
+     * Parse an action string using the given action type to an {@code int}.  The given {@code enum} type must have
+     * 32 or fewer constant values.
+     *
+     * @param actionType the action {@code enum} type class
+     * @param actionString the string to parse
+     * @param <E> the action {@code enum} type
+     *
+     * @return the set of actions from the string
+     *
+     * @throws IllegalArgumentException if the string contained an invalid action
+     */
+    public static <E extends Enum<E>> int parseActionStringToInt(Class<E> actionType, String actionString) throws IllegalArgumentException {
+        if (actionString == null) {
+            throw new IllegalArgumentException("actionString is null");
+        }
+        if (actionType == null) {
+            throw new IllegalArgumentException("actionType is null");
+        }
+        final IntMatchAction<E> matchAction = new IntMatchAction<>();
+        doParse(actionType, actionString, matchAction);
+        return matchAction.getResult();
+    }
+
+    /**
+     * Parse an action string using the given action type to a {@code long}.  The given {@code enum} type must have
+     * 64 or fewer constant values.
+     *
+     * @param actionType the action {@code enum} type class
+     * @param actionString the string to parse
+     * @param <E> the action {@code enum} type
+     *
+     * @return the set of actions from the string
+     *
+     * @throws IllegalArgumentException if the string contained an invalid action
+     */
+    public static <E extends Enum<E>> long parseActionStringToLong(Class<E> actionType, String actionString) throws IllegalArgumentException {
+        if (actionString == null) {
+            throw new IllegalArgumentException("actionString is null");
+        }
+        if (actionType == null) {
+            throw new IllegalArgumentException("actionType is null");
+        }
+        final LongMatchAction<E> matchAction = new LongMatchAction<>();
+        doParse(actionType, actionString, matchAction);
+        return matchAction.getResult();
+    }
+
+    private static <E extends Enum<E>> void doParse(final Class<E> actionType, final String actionString, final MatchAction<E> matchAction) {
         @SuppressWarnings("unchecked")
-        final TrieNode<E> rootNode = (TrieNode<E>) storedTrie.get(actionType);
-        boolean star = false;
+        final Info<E> info = (Info<E>) storedInfo.get(actionType);
+        final TrieNode<E> rootNode = info.root;
         // begin parse
         char c;
-        final EnumSet<E> set = EnumSet.noneOf(actionType);
         final int length = actionString.length();
         int i = 0;
         L0: for (;;) {
@@ -146,7 +279,7 @@ public final class PermissionActions {
             }
             if (c == '*') {
                 // potential star
-                star = true;
+                matchAction.matchedAll(actionType);
                 for (;;) {
                     i ++;
                     if (i == length) {
@@ -176,7 +309,7 @@ public final class PermissionActions {
                     if (action == null) {
                         throw permission.invalidAction(actionString.substring(start, i), start, actionString);
                     }
-                    set.add(action);
+                    matchAction.matched(action);
                     if (i == length) {
                         // done
                         break L0;
@@ -198,7 +331,6 @@ public final class PermissionActions {
             }
             // not reachable
         }
-        return star ? EnumSet.allOf(actionType) : set;
     }
 
     /**
@@ -233,6 +365,84 @@ public final class PermissionActions {
                 b.append(',');
                 b.append(e.toString());
             }
+        }
+    }
+
+    /**
+     * Get the canonical action string representation for the given action set.
+     *
+     * @param type the action {@code enum} type class
+     * @param set the action set
+     * @param <E> the action type
+     * @return the canonical representation
+     */
+    public static <E extends Enum<E>> String getCanonicalActionString(Class<E> type, int set) {
+        if (set == 0) return "";
+        final StringBuilder b = new StringBuilder();
+        getCanonicalActionString(type, set, b);
+        return b.toString();
+    }
+
+    /**
+     * Get the canonical action string representation for the given action set, appending it to the given string builder.
+     *
+     * @param type the action {@code enum} type class
+     * @param set the action set
+     * @param b the string builder
+     * @param <E> the action type
+     */
+    public static <E extends Enum<E>> void getCanonicalActionString(Class<E> type, int set, StringBuilder b) {
+        if (set == 0) return;
+        @SuppressWarnings("unchecked")
+        final E[] constants = (E[]) storedInfo.get(type).constants;
+        int bit = Integer.lowestOneBit(set);
+        E e = constants[Integer.numberOfTrailingZeros(bit)];
+        b.append(e.toString());
+        set &= ~bit;
+        while (set != 0) {
+            bit = Integer.lowestOneBit(set);
+            e = constants[Integer.numberOfTrailingZeros(bit)];
+            b.append(',').append(e.toString());
+            set &= ~bit;
+        }
+    }
+
+    /**
+     * Get the canonical action string representation for the given action set.
+     *
+     * @param type the action {@code enum} type class
+     * @param set the action set
+     * @param <E> the action type
+     * @return the canonical representation
+     */
+    public static <E extends Enum<E>> String getCanonicalActionString(Class<E> type, long set) {
+        if (set == 0) return "";
+        final StringBuilder b = new StringBuilder();
+        getCanonicalActionString(type, set, b);
+        return b.toString();
+    }
+
+    /**
+     * Get the canonical action string representation for the given action set, appending it to the given string builder.
+     *
+     * @param type the action {@code enum} type class
+     * @param set the action set
+     * @param b the string builder
+     * @param <E> the action type
+     */
+    public static <E extends Enum<E>> void getCanonicalActionString(Class<E> type, long set, StringBuilder b) {
+        if (set == 0) return;
+        @SuppressWarnings("unchecked")
+        final E[] constants = (E[]) storedInfo.get(type).constants;
+        long bit = Long.lowestOneBit(set);
+        E e = constants[Long.numberOfTrailingZeros(bit)];
+        b.append(e.toString());
+        set &= ~bit;
+        while (set != 0) {
+            bit = Long.lowestOneBit(set);
+            e = constants[Long.numberOfTrailingZeros(bit)];
+            b.append(',').append(e.toString());
+            set &= ~bit;
         }
     }
 }
