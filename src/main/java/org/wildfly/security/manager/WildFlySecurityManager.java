@@ -66,6 +66,7 @@ import static java.lang.System.getenv;
 import static java.lang.System.setProperty;
 import static java.lang.Thread.currentThread;
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.security.manager.WildFlySecurityManagerPermission.DO_UNCHECKED_PERMISSION;
 import static org.wildfly.security.manager._private.SecurityMessages.access;
 
 /**
@@ -78,7 +79,6 @@ import static org.wildfly.security.manager._private.SecurityMessages.access;
 public final class WildFlySecurityManager extends SecurityManager {
 
     private static final Permission SECURITY_MANAGER_PERMISSION = new RuntimePermission("setSecurityManager");
-    private static final Permission UNCHECKED_PERMISSION = new RuntimePermission("doUnchecked");
     private static final Permission PROPERTIES_PERMISSION = new PropertyPermission("*", "read,write");
     private static final Permission ENVIRONMENT_PERMISSION = new RuntimePermission("getenv.*");
     private static final Permission GET_CLASS_LOADER_PERMISSION = new RuntimePermission("getClassLoader");
@@ -604,7 +604,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
             }
             return action.run();
         } finally {
@@ -634,7 +634,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
             }
             return action.run();
         } catch (Exception e) {
@@ -662,7 +662,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
             }
             return AccessController.doPrivileged(action, context);
         } finally {
@@ -689,7 +689,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
             }
             return AccessController.doPrivileged(action, context);
         } finally {

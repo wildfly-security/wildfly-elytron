@@ -22,8 +22,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.System.getSecurityManager;
 import static java.util.Arrays.copyOfRange;
-
-import java.security.Permission;
+import static org.wildfly.security.manager.WildFlySecurityManagerPermission.GET_STACK_INSPECTOR_PERMISSION;
 
 /**
  * A utility class which is useful for inspecting the call stack.
@@ -32,7 +31,6 @@ import java.security.Permission;
  */
 public final class StackInspector {
 
-    private static final Permission GET_STACK_INSPECTOR_PERMISSION = new RuntimePermission("getStackInspector");
     private static final StackInspector INSTANCE = new StackInspector();
 
     private StackInspector() {

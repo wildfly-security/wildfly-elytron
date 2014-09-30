@@ -30,6 +30,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
+import org.wildfly.security.manager.WildFlySecurityManagerPermission;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 
@@ -63,4 +64,14 @@ public interface SecurityMessages {
 
     @Message(id = 5, value = "Invalid action '%s' at offset %d of '%s'")
     IllegalArgumentException invalidAction(String action, int offset, String actionString);
+
+    @Message(id = 6, value = "Invalid permission name '%s'")
+    IllegalArgumentException invalidName(String name);
+
+    @Message(id = 7, value = "Permission collection is read-only")
+    SecurityException readOnlyPermCollection();
+
+    @Message(id = 8, value = "Invalid permission (expected an instance of %s, but got %s)")
+    IllegalArgumentException wrongPermType(Class<? extends Permission> expectedType, Permission permission);
+
 }
