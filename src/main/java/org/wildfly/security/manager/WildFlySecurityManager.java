@@ -497,48 +497,46 @@ public final class WildFlySecurityManager extends SecurityManager {
                  *   1: java.lang.Class#checkMemberAccess()
                  *   2: java.lang.Class#getDeclared*() or similar in Class
                  *   3: user code | java.util.concurrent.Atomic*FieldUpdater (impl)
-                 *   4: ???       | user code
+                 *  4+: ???       | java.util.concurrent.Atomic*FieldUpdater (possibly more)
+                 *   n: ???       | user code
                  *
                  * The great irony is that Class is supposed to detect that this method is overridden and fall back to
                  * a simple permission check, however that doesn't seem to be working in practice.
                  */
                 Class<?>[] context = getClassContext();
                 int depth = context.length;
-                if (depth >= 4) {
-                    final Class<?> classThree = context[3];
-                    final ClassLoader classLoaderThree;
+                if (depth >= 4 && context[1] == Class.class && context[2] == Class.class) {
                     final ClassLoader objectClassLoader;
-                    final ClassLoader classLoaderFour;
                     final ClassLoader clazzClassLoader;
+                    ClassLoader classLoader;
                     // get class loaders without permission check
                     ctx.entered = true;
                     try {
-                        classLoaderThree = classThree.getClassLoader();
                         objectClassLoader = Object.class.getClassLoader();
-                        classLoaderFour = depth >= 5 ? context[4].getClassLoader() : null;
                         clazzClassLoader = clazz.getClassLoader();
-                    } finally {
-                        ctx.entered = false;
-                    }
-                    // check above assumptions
-                    if (context[1] == Class.class && context[2] == Class.class) {
-                        // good so far
-                        // check to see if #3 might be an official/trusted Atomic*FieldUpdater
-                        if (depth >= 5 && classLoaderThree == objectClassLoader) {
-                            // it might be!
-                            if (isAssignableToOneOf(classThree, ATOMIC_FIELD_UPDATER_TYPES)) {
-                                // bingo
-                                if (classLoaderFour == clazzClassLoader) {
+                        for (int i = 3; i < depth; i ++) {
+                            classLoader = context[i].getClassLoader();
+                            if (classLoader == objectClassLoader) {
+                                if (isAssignableToOneOf(context[i], ATOMIC_FIELD_UPDATER_TYPES)) {
+                                    // keep going
+                                } else {
+                                    // unknown JDK class, fall back
+                                    checkPermission(ACCESS_DECLARED_MEMBERS_PERMISSION);
+                                    return;
+                                }
+                            } else {
+                                if (clazzClassLoader == classLoader) {
                                     // permission granted
+                                    return;
+                                } else {
+                                    // class loaders differ
+                                    checkPermission(ACCESS_DECLARED_MEMBERS_PERMISSION);
                                     return;
                                 }
                             }
                         }
-                        // fall back to other reflection check
-                        if (classLoaderThree == clazzClassLoader) {
-                                    // permission granted
-                            return;
-                        }
+                    } finally {
+                        ctx.entered = false;
                     }
                 }
                 // fall back to paranoid check
