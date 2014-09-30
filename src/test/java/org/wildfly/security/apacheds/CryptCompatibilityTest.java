@@ -78,7 +78,7 @@ public class CryptCompatibilityTest {
 
         byte[] digest = new byte[8];
         CharacterArrayReader r = new CharacterArrayReader(new String(digestBase64, StandardCharsets.UTF_8).toCharArray());
-        Base64.base64DecodeA(r, digest);
+        Base64.base64DecodeModCrypt(r, digest);
         r.close();
 
         BSDUnixDESCryptPasswordSpec spec = new BSDUnixDESCryptPasswordSpec(digest, salt, iterationCount);
@@ -94,7 +94,7 @@ public class CryptCompatibilityTest {
         int salt = 0;
 
         for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeA(saltBytes[i]));
+            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeModCrypt(saltBytes[i]));
         }
 
         return salt;

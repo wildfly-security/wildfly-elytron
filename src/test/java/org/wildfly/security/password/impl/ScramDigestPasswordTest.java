@@ -79,8 +79,8 @@ public class ScramDigestPasswordTest {
 
     private void performTest(final String algorithm, final char[] base64Digest, final char[] base64Salt, final int iterationCount) throws Exception {
 
-        byte[] decodedDigest = Base64.base64DecodeB(base64Digest, 0);
-        byte[] decodedSalt = Base64.base64DecodeB(base64Salt, 0);
+        byte[] decodedDigest = Base64.base64DecodeStandard(base64Digest, 0);
+        byte[] decodedSalt = Base64.base64DecodeStandard(base64Salt, 0);
 
         // use an encryptable spec to hash the password and compare the results with the expected hash.
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);

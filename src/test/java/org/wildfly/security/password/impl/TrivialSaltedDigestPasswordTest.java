@@ -122,7 +122,7 @@ public class TrivialSaltedDigestPasswordTest {
      * @param base64Digest the Base64 representation of the expected digest for this algorithm.
      */
     private void performTest(final String algorithmName, final char[] base64Digest) throws Exception {
-        byte[] preDigested = Base64.base64DecodeB(base64Digest, 0);
+        byte[] preDigested = Base64.base64DecodeStandard(base64Digest, 0);
 
         PasswordFactory pf = PasswordFactory.getInstance(algorithmName);
         // Encryptable Spec -> Password

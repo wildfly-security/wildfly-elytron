@@ -102,7 +102,7 @@ class UserPasswordPasswordUtils {
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] digest = Base64.base64DecodeB(encodedBase64, 0);
+        byte[] digest = Base64.base64DecodeStandard(encodedBase64, 0);
 
         return new TrivialDigestPasswordSpec(algorithm, digest);
     }
@@ -111,7 +111,7 @@ class UserPasswordPasswordUtils {
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] decoded = Base64.base64DecodeB(encodedBase64, 0);
+        byte[] decoded = Base64.base64DecodeStandard(encodedBase64, 0);
 
         int digestLength = expectedDigestLengthBytes(algorithm);
         int saltLength = decoded.length - digestLength;
@@ -138,13 +138,13 @@ class UserPasswordPasswordUtils {
         System.arraycopy(userPassword, 7, saltBytes, 0, 2);
         int salt = 0;
         for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeA(saltBytes[i]));
+            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeModCrypt(saltBytes[i]));
         }
 
         byte[] hash = new byte[8];
         CharacterArrayReader r = new CharacterArrayReader(new String(userPassword, 9, 11, StandardCharsets.UTF_8).toCharArray());
         try {
-            Base64.base64DecodeA(r, hash);
+            Base64.base64DecodeModCrypt(r, hash);
         } finally {
             safeClose(r);
         }

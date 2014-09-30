@@ -50,7 +50,7 @@ public class Base64BTest {
     public void testEncodeBlank() {
         ByteArrayInputStream in = new ByteArrayInputStream(new byte[]{});
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("", out.toString());
     }
 
@@ -58,7 +58,7 @@ public class Base64BTest {
     public void testEncodeWithoutPadding() {
         ByteArrayInputStream in = new ByteArrayInputStream("abc".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, false);
+        Base64.base64EncodeStandard(out, in, false);
         assertEquals("YWJj", out.toString());
     }
 
@@ -66,7 +66,7 @@ public class Base64BTest {
     public void testEncodeWith1Padding() {
         ByteArrayInputStream in = new ByteArrayInputStream("ab".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("YWI=", out.toString());
     }
 
@@ -74,7 +74,7 @@ public class Base64BTest {
     public void testEncodeWith2Padding() {
         ByteArrayInputStream in = new ByteArrayInputStream("abcd".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("YWJjZA==", out.toString());
     }
 
@@ -82,7 +82,7 @@ public class Base64BTest {
     public void testEncodeBinary() {
         ByteArrayInputStream in = new ByteArrayInputStream(new byte[]{(byte)0x00,(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,(byte)0x89,(byte)0xAB,(byte)0xCD,(byte)0xEF});
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("AAEjRWeJq83v", out.toString());
     }
 
@@ -90,7 +90,7 @@ public class Base64BTest {
     public void testEncodeRfc1() {
         ByteArrayInputStream in = new ByteArrayInputStream("f".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zg==", out.toString());
     }
 
@@ -98,7 +98,7 @@ public class Base64BTest {
     public void testEncodeRfc2() {
         ByteArrayInputStream in = new ByteArrayInputStream("fo".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zm8=", out.toString());
     }
 
@@ -106,7 +106,7 @@ public class Base64BTest {
     public void testEncodeRfc3() {
         ByteArrayInputStream in = new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zm9v", out.toString());
     }
 
@@ -114,7 +114,7 @@ public class Base64BTest {
     public void testEncodeRfc4() {
         ByteArrayInputStream in = new ByteArrayInputStream("foob".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zm9vYg==", out.toString());
     }
 
@@ -122,7 +122,7 @@ public class Base64BTest {
     public void testEncodeRfc5() {
         ByteArrayInputStream in = new ByteArrayInputStream("fooba".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zm9vYmE=", out.toString());
     }
 
@@ -130,7 +130,7 @@ public class Base64BTest {
     public void testEncodeRfc6() {
         ByteArrayInputStream in = new ByteArrayInputStream("foobar".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeB(out, in, true);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("Zm9vYmFy", out.toString());
     }
 
@@ -141,79 +141,79 @@ public class Base64BTest {
         char[] in = new char[]{};
         byte[] out = new byte[in.length * 3 / 4];
         CharacterArrayReader r = new CharacterArrayReader(in);
-        Base64.base64DecodeB(r, out);
+        Base64.base64DecodeStandard(r, out);
         r.close();
         Assert.assertArrayEquals(new byte[]{}, out);
-        Assert.assertArrayEquals(new byte[]{}, Base64.base64DecodeB(in, 0));
+        Assert.assertArrayEquals(new byte[]{}, Base64.base64DecodeStandard(in, 0));
     }
 
     @Test
     public void testDecodeWithoutPadding() throws Exception {
         char[] in = "YWJj".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("abc", new String(out));
     }
 
     @Test
     public void testDecodeWith1Padding() throws Exception {
         char[] in = "YWI=".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("ab", new String(out));
     }
 
     @Test
     public void testDecodeWith2Padding() throws Exception {
         char[] in = "YWJjZA==".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("abcd", new String(out));
     }
 
     @Test
     public void testDecodeBinary() throws Exception {
         char[] in = "AAEjRWeJq83v".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         Assert.assertArrayEquals(new byte[]{(byte)0x00,(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,(byte)0x89,(byte)0xAB,(byte)0xCD,(byte)0xEF}, out);
     }
 
     @Test
     public void testDecodeRfc1() throws Exception {
         char[] in = "Zg==".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("f", new String(out));
     }
 
     @Test
     public void testDecodeRfc2() throws Exception {
         char[] in = "Zm8=".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("fo", new String(out));
     }
 
     @Test
     public void testDecodeRfc3() throws Exception {
         char[] in = "Zm9v".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("foo", new String(out));
     }
 
     @Test
     public void testDecodeRfc4() throws Exception {
         char[] in = "Zm9vYg==".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("foob", new String(out));
     }
 
     @Test
     public void testDecodeRfc5() throws Exception {
         char[] in = "Zm9vYmE=".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("fooba", new String(out));
     }
 
     @Test
     public void testDecodeRfc6() throws Exception {
         char[] in = "Zm9vYmFy".toCharArray();
-        byte[] out = Base64.base64DecodeB(in, 0);
+        byte[] out = Base64.base64DecodeStandard(in, 0);
         assertEquals("foobar", new String(out));
     }
 
@@ -303,14 +303,14 @@ public class Base64BTest {
 
     private void doEncodeDecodeTest(byte[] inputData) throws Exception {
         ByteStringBuilder bsb = new ByteStringBuilder();
-        Base64.base64EncodeB(bsb, new ByteArrayInputStream(inputData), true);
+        Base64.base64EncodeStandard(bsb, new ByteArrayInputStream(inputData), true);
 
         byte[] result = bsb.toArray();
         assertTrue("Whole result data has to be within the range for base64", isInRange(result));
         assertEncodedLength(inputData.length, result.length);
 
         ByteStringBuilder afterDecode = new ByteStringBuilder();
-        Base64.base64DecodeB(result, 0, afterDecode);
+        Base64.base64DecodeStandard(result, 0, afterDecode);
 
         assertArrayEquals("Encode-Decode test failed, results are not the same.", inputData, afterDecode.toArray());
     }
@@ -359,10 +359,10 @@ public class Base64BTest {
         ByteStringBuilder encoded = new ByteStringBuilder();
         ByteStringBuilder decoded = new ByteStringBuilder();
 
-        Base64.base64EncodeB(encoded, new ByteArrayInputStream(input), true);
+        Base64.base64EncodeStandard(encoded, new ByteArrayInputStream(input), true);
         Assert.assertArrayEquals("VGVzdGluZyBpbnB1dCBvZiBiYXNlNjQgZnVuY3Rpb24=".getBytes(), encoded.toArray());
 
-        Base64.base64DecodeB(encoded.toArray(), 0, decoded);
+        Base64.base64DecodeStandard(encoded.toArray(), 0, decoded);
         Assert.assertArrayEquals(input, decoded.toArray());
 
     }
