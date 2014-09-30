@@ -386,23 +386,25 @@ public final class WildFlySecurityManager extends SecurityManager {
              *   0: this method
              *   1: java.lang.System.getProperty()
              *   2: user code   | java.lang.(Boolean|Integer|Long).getXxx()
-             *   3: ???         | user code
+             *  3+: ???         | java.lang.(Boolean|Integer|Long).getXxx() (more)
+             *   n:             | user code
              */
             Class<?>[] context = getClassContext();
             if (context.length < 3) {
                 super.checkPropertyAccess(key);
                 return;
             }
-            Class<?> testClass;
-            if (context[1] == System.class) {
-                if (context.length >= 4 && (context[2] == Boolean.class || context[2] == Integer.class || context[2] == Long.class)) {
-                    testClass = context[3];
-                } else {
-                    testClass = context[2];
-                }
-            } else {
+            if (context[1] != System.class) {
                 super.checkPropertyAccess(key);
                 return;
+            }
+            Class<?> testClass = context[2];
+            if (context.length >= 4) for (int i = 2; i < context.length; i ++) {
+                if (context[i] == Boolean.class || context[i] == Integer.class || context[i] == Long.class) {
+                    testClass = context[i + 1];
+                } else {
+                    break;
+                }
             }
             final ProtectionDomain protectionDomain;
             final ClassLoader classLoader;
