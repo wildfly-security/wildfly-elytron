@@ -32,7 +32,7 @@ import java.security.Permission;
  */
 public final class StackInspector {
 
-    private static final Permission GET_STACK_INSPECTOR_PERMMISSION = new RuntimePermission("getStackInspector");
+    private static final Permission GET_STACK_INSPECTOR_PERMISSION = new RuntimePermission("getStackInspector");
     private static final StackInspector INSTANCE = new StackInspector();
 
     private StackInspector() {
@@ -46,7 +46,7 @@ public final class StackInspector {
      */
     public static StackInspector getInstance() {
         if (WildFlySecurityManager.isChecking()) {
-            getSecurityManager().checkPermission(GET_STACK_INSPECTOR_PERMMISSION);
+            getSecurityManager().checkPermission(GET_STACK_INSPECTOR_PERMISSION);
         }
         return INSTANCE;
     }
@@ -63,7 +63,7 @@ public final class StackInspector {
     }
 
     /**
-     * Get all or a portion of the call stack.  The {@code numFrames} arguement specifies how many frames should be
+     * Get all or a portion of the call stack.  The {@code numFrames} argument specifies how many frames should be
      * returned.
      *
      * @param skipFrames the number of frames to skip; 0 will include the immediate caller at index 0
@@ -77,7 +77,7 @@ public final class StackInspector {
     }
 
     /**
-     * Get all or a portion of the call stack.  The {@code numFrames} arguement specifies how many frames should be
+     * Get all or a portion of the call stack.  The {@code numFrames} argument specifies how many frames should be
      * returned.
      *
      * @param skipFrames the number of frames to skip; 0 will include the immediate caller at index 0
