@@ -39,6 +39,7 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 @MessageLogger(projectCode = "WFSM")
 public interface SecurityMessages {
     SecurityMessages access = Logger.getMessageLogger(SecurityMessages.class, "org.wildfly.security.access");
+    SecurityMessages permission = Logger.getMessageLogger(SecurityMessages.class, "org.wildfly.security.permission");
 
     @LogMessage(level = DEBUG)
     @Message(value = "Permission check failed (permission \"%s\" in code source \"%s\" of \"%s\", principals \"%s\")")
@@ -56,4 +57,10 @@ public interface SecurityMessages {
 
     @Message(id = 3, value = "Unknown security context type")
     SecurityException unknownContext();
+
+    @Message(id = 4, value = "Unexpected character '%s' at offset %d of '%s'")
+    IllegalArgumentException unexpectedActionCharacter(char ch, int offset, String actionString);
+
+    @Message(id = 5, value = "Invalid action '%s' at offset %d of '%s'")
+    IllegalArgumentException invalidAction(String action, int offset, String actionString);
 }
