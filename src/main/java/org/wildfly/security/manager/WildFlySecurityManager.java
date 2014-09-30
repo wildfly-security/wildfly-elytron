@@ -375,7 +375,50 @@ public final class WildFlySecurityManager extends SecurityManager {
 
     public void checkPropertyAccess(final String key) {
         if (CHECKING.get() == TRUE) {
-            super.checkPropertyAccess(key);
+            /*
+             * Here is our expected stack:
+             *   0: this method
+             *   1: java.lang.System.getProperty()
+             *   2: user code   | java.lang.(Boolean|Integer|Long).getXxx()
+             *   3: ???         | user code
+             */
+            Class<?>[] context = getClassContext();
+            if (context.length < 3) {
+                super.checkPropertyAccess(key);
+                return;
+            }
+            Class<?> testClass;
+            if (context[1] == System.class) {
+                if (context.length >= 4 && (context[2] == Boolean.class || context[2] == Integer.class || context[2] == Long.class)) {
+                    testClass = context[3];
+                } else {
+                    testClass = context[2];
+                }
+            } else {
+                super.checkPropertyAccess(key);
+                return;
+            }
+            final ProtectionDomain protectionDomain;
+            final ClassLoader classLoader;
+            final ClassLoader objectClassLoader;
+            ENTERED.set(TRUE);
+            try {
+                protectionDomain = testClass.getProtectionDomain();
+                classLoader = testClass.getClassLoader();
+                objectClassLoader = Object.class.getClassLoader();
+            } finally {
+                ENTERED.set(FALSE);
+            }
+            if (classLoader == objectClassLoader) {
+                // can't trust it, it's gone through more JDK code
+                super.checkPropertyAccess(key);
+                return;
+            }
+            final PropertyPermission permission = new PropertyPermission(key, "read");
+            if (protectionDomain.implies(permission)) {
+                return;
+            }
+            checkPermission(permission, AccessController.getContext());
         }
     }
 
