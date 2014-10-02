@@ -154,25 +154,33 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     private void testDataExchange(final SaslClient client, final SaslServer server) throws SaslException {
         byte[] original = "Some Test Data".getBytes(Charsets.UTF_8);
         byte[] backup = "Some Test Data".getBytes(Charsets.UTF_8);
-        byte[] fromClient = client.wrap(original, 0, original.length);
+
+        byte[] wrappedFromClient = client.wrap(original, 0, original.length);
 
         assertTrue("Original data unmodified", Arrays.equals(backup, original));
 
-        byte[] unwrapped = server.unwrap(fromClient, 0, fromClient.length);
+        byte[] unwrappedFromClient = server.unwrap(wrappedFromClient, 0, wrappedFromClient.length);
 
-        assertTrue("Unwrapped (By Server) matched original", Arrays.equals(unwrapped, original));
+        assertTrue("Unwrapped (By Server) matched original", Arrays.equals(unwrappedFromClient, original));
 
-        byte[] fromServer = server.wrap(original, 0, original.length);
+        byte[] wrappedFromServer = server.wrap(original, 0, original.length);
 
         assertTrue("Original data unmodified", Arrays.equals(backup, original));
 
-        unwrapped = client.unwrap(fromServer, 0, fromServer.length);
+        byte[] unwrappedFromServer = client.unwrap(wrappedFromServer, 0, wrappedFromServer.length);
 
-        assertTrue("Unwrapped (By Client) matched original", Arrays.equals(unwrapped, original));
+        assertTrue("Unwrapped (By Client) matched original", Arrays.equals(unwrappedFromServer, original));
     }
 
+    /**
+     * @param authServer whether the server must authenticate to the client
+     * @param mode quality-of-protection to use
+     */
     protected abstract SaslClient getSaslClient(final boolean authServer, final VerificationMode mode) throws Exception;
 
+    /**
+     * @param mode quality-of-protection to use
+     */
     protected abstract SaslServer getSaslServer(final VerificationMode mode) throws Exception;
 
     /*
@@ -317,7 +325,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
             for (Callback current : callbacks) {
                 if (current instanceof AuthorizeCallback) {
                     AuthorizeCallback ac = (AuthorizeCallback) current;
-                    ac.setAuthorized(ac.getAuthorizationID().equals(ac.getAuthorizationID()));
+                    ac.setAuthorized(ac.getAuthorizationID().equals(ac.getAuthenticationID()));
                 } else {
                     throw new UnsupportedCallbackException(current);
                 }

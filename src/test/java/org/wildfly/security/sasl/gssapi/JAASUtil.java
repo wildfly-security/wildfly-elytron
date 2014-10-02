@@ -42,18 +42,18 @@ import org.jboss.logging.Logger;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class JAASUtil {
+public class JAASUtil {
 
     private static Logger log = Logger.getLogger(JAASUtil.class);
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
-    static Subject loginClient() throws LoginException {
+    public static Subject loginClient() throws LoginException {
         log.debug("loginClient");
         return login("jduke", "theduke".toCharArray(), false);
     }
 
-    static Subject loginServer() throws LoginException {
+    public static Subject loginServer() throws LoginException {
         log.debug("loginServer");
         return login("sasl/test_server_1", "servicepwd".toCharArray(), true);
     }

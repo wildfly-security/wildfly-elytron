@@ -45,7 +45,7 @@ import org.apache.directory.server.protocol.shared.transport.UdpTransport;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class TestKDC {
+public class TestKDC {
 
     private File workingDir;
     private DirectoryService directoryService;
