@@ -21,6 +21,7 @@ package org.wildfly.security.auth;
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collections;
@@ -276,6 +277,31 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
         return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given key store and alias
+     * to acquire the credential required for authentication.
+     *
+     * @param keyStore the key store to use
+     * @param alias the key store alias
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias) {
+        return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, null);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given key store and alias
+     * to acquire the credential required for authentication.
+     *
+     * @param keyStore the key store to use
+     * @param alias the key store alias
+     * @param protectionParameter the protection parameter to use to access the key store entry
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias, KeyStore.ProtectionParameter protectionParameter) {
+        return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, protectionParameter);
     }
 
     /**
