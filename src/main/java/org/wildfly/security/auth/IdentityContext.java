@@ -176,6 +176,28 @@ public final class IdentityContext {
     }
 
     /**
+     * Get a new identity context which is the same as this one, but which replaces the rule and configuration at the given
+     * index with the given rule and configuration.
+     *
+     * @param idx the index at which insertion should be done
+     * @param rule the rule to match
+     * @param configuration the configuration to select when the rule matches
+     * @return the combined identity context
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public IdentityContext replacing(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
+        if (configuration == null || rule == null) return this;
+        final Rule[] rules = this.rules;
+        final int length = rules.length;
+        if (idx < 0 || idx > length) {
+            throw new IndexOutOfBoundsException();
+        }
+        final Rule[] copy = rules.clone();
+        copy[idx] = new Rule(rule, configuration);
+        return new IdentityContext(copy, false);
+    }
+
+    /**
      * Get a new identity context which is the same as this one, but which includes the rules and configurations of the
      * given context inserted at the position of this context's list indicated by the {@code idx} parameter.
      *
