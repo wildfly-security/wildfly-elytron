@@ -156,6 +156,11 @@ public class ScramDigestPasswordTest {
 
     private void performTest(final String algorithm, char[] password, final byte[] decodedDigest, final byte[] decodedSalt, final int iterationCount) throws Exception {
 
+        performTest(algorithm, password, decodedDigest, decodedSalt, iterationCount);
+    }
+
+    private void performTest(final String algorithm, char[] password, final byte[] decodedDigest, final byte[] decodedSalt, final int iterationCount) throws Exception {
+
         // use an encryptable spec to hash the password and compare the results with the expected hash.
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         HashedPasswordAlgorithmSpec algoSpec = new HashedPasswordAlgorithmSpec(iterationCount, decodedSalt);
