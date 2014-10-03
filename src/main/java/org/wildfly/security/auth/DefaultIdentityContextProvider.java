@@ -16,24 +16,28 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.auth;
+
+import static java.security.AccessController.doPrivileged;
+
+import java.security.PrivilegedAction;
 
 /**
- * A privileged action which accepts a parameter and can throw an exception.
- *
- * @param <T> the action result type
- * @param <P> the action parameter type
+ * A lazily-initialized holder for the default identity context.  If an error occurs setting up the default identity
+ * context, the empty context is used.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ParametricPrivilegedExceptionAction<T, P> {
+class DefaultIdentityContextProvider {
 
-    /**
-     * Perform the action.
-     *
-     * @param parameter the passed-in parameter
-     * @return the action result
-     * @throws Exception if the action fails
-     */
-    T run(P parameter) throws Exception;
+    static final IdentityContext DEFAULT;
+
+    static {
+        DEFAULT = doPrivileged(new PrivilegedAction<IdentityContext>() {
+            public IdentityContext run() {
+                // todo: configure from default configuration
+                return IdentityContext.EMPTY;
+            }
+        });
+    }
 }

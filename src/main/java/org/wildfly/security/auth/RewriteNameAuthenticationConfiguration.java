@@ -16,24 +16,27 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.auth;
+
+import org.wildfly.security.auth.util.NameRewriter;
 
 /**
- * A privileged action which accepts a parameter and can throw an exception.
- *
- * @param <T> the action result type
- * @param <P> the action parameter type
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ParametricPrivilegedExceptionAction<T, P> {
+class RewriteNameAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    /**
-     * Perform the action.
-     *
-     * @param parameter the passed-in parameter
-     * @return the action result
-     * @throws Exception if the action fails
-     */
-    T run(P parameter) throws Exception;
+    private final NameRewriter rewriter;
+
+    RewriteNameAuthenticationConfiguration(final AuthenticationConfiguration parent, final NameRewriter rewriter) {
+        super(parent, true);
+        this.rewriter = rewriter;
+    }
+
+    String doRewriteUser(final String original) {
+        return rewriter.rewriteName(super.doRewriteUser(original));
+    }
+
+    AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
+        return new RewriteNameAuthenticationConfiguration(newParent, rewriter);
+    }
 }

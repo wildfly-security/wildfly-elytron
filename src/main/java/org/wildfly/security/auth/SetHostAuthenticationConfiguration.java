@@ -16,24 +16,27 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.auth;
+
+import java.net.URI;
 
 /**
- * A privileged action which accepts a parameter and can throw an exception.
- *
- * @param <T> the action result type
- * @param <P> the action parameter type
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ParametricPrivilegedExceptionAction<T, P> {
+class SetHostAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    /**
-     * Perform the action.
-     *
-     * @param parameter the passed-in parameter
-     * @return the action result
-     * @throws Exception if the action fails
-     */
-    T run(P parameter) throws Exception;
+    private final String hostName;
+
+    SetHostAuthenticationConfiguration(final AuthenticationConfiguration parent, final String hostName) {
+        super(parent);
+        this.hostName = hostName;
+    }
+
+    AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
+        return new SetHostAuthenticationConfiguration(newParent, hostName);
+    }
+
+    String getHost(final URI uri) {
+        return hostName;
+    }
 }
