@@ -101,22 +101,6 @@ public abstract class AuthenticationConfiguration {
         Principal getPrincipal() {
             return AnonymousPrincipal.getInstance();
         }
-
-        <T extends AuthenticationConfiguration> T get(final Class<T> clazz) {
-            return null;
-        }
-
-        String getMatchHost() {
-            return null;
-        }
-
-        String getMatchUser() {
-            return null;
-        }
-
-        public boolean matchersEqual(final AuthenticationConfiguration _this, final AuthenticationConfiguration other) {
-            return other.allMatchersArePresentIn(this);
-        }
     };
 
     private final AuthenticationConfiguration parent;
@@ -326,28 +310,6 @@ public abstract class AuthenticationConfiguration {
         return new SetPortAuthenticationConfiguration(this, port);
     }
 
-    // Comparison
-
-    boolean matchersEqual(AuthenticationConfiguration _this, AuthenticationConfiguration other) {
-        return parent.matchersEqual(_this, other);
-    }
-
-    public final boolean matchersEqual(AuthenticationConfiguration other) {
-        return other != null && matchersEqual(this, other);
-    }
-
-    boolean allMatchersArePresentIn(AuthenticationConfiguration other) {
-        return other.get(getClass()) != null && parent.allMatchersArePresentIn(other);
-    }
-
-    <T extends AuthenticationConfiguration> T get(Class<T> clazz) {
-        if (clazz.isInstance(this)) {
-            return clazz.cast(this);
-        } else {
-            return parent.get(clazz);
-        }
-    }
-
     // SASL
 
     /**
@@ -377,14 +339,6 @@ public abstract class AuthenticationConfiguration {
     static AuthenticationConfiguration fromXml(XMLStreamReader reader) throws XMLStreamException {
         // todo
         return null;
-    }
-
-    String getMatchHost() {
-        return parent.getMatchHost();
-    }
-
-    String getMatchUser() {
-        return parent.getMatchUser();
     }
 
     CallbackHandler getCallbackHandler() {
