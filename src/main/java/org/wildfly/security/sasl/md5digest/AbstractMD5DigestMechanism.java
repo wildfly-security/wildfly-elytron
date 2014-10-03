@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.md5digest;
 
+import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
@@ -33,7 +34,7 @@ import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
-import org.wildfly.security.sasl.util.SaslBase64;
+import org.wildfly.security.util.Base64;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
@@ -133,7 +134,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         random.nextBytes(nonceData);
 
         ByteStringBuilder nonceBase64 = new ByteStringBuilder();
-        SaslBase64.encode(nonceData, nonceBase64);
+        Base64.base64EncodeStandard(nonceBase64, new ByteArrayInputStream(nonceData), true);
 
         return nonceBase64.toArray();
     }
