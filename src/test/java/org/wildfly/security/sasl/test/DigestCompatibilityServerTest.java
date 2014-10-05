@@ -18,7 +18,10 @@
 
 package org.wildfly.security.sasl.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +37,7 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.sasl.util.HexConverter;
 
 /**
  * Test of server side of the Digest mechanism.
@@ -217,6 +221,18 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
 
+        // MAC not corresponds to message and sequence number
+        byte[] incoming3 = new byte[]{(byte)0x01,(byte)0x88,(byte)0x03,(byte)0x4c,(byte)0xe1,(byte)0xb4,(byte)0x14,(byte)0x19,(byte)0x4c,(byte)0x1c,(byte)0x82,(byte)0x2a,(byte)0x55,(byte)0x00,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00,(byte)0x02};
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = new byte[]{(byte)0x01,(byte)0x02,(byte)0x03,(byte)0x2c,(byte)0xf1,(byte)0x2c,(byte)0x67,(byte)0xe4,(byte)0x31,(byte)0x8e,(byte)0xbd,(byte)0x62,(byte)0x4e,(byte)0x00,(byte)0x01,(byte)0x00,(byte)0x00,(byte)0x00,(byte)0x03};
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
+
     }
 
 
@@ -263,6 +279,18 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2 = new byte[]{};
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
+
+        // MAC not corresponds to message and sequence number
+        byte[] incoming3 = HexConverter.convertFromHex("b0acad3c969d091251666f91070166f5000100000002");
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = HexConverter.convertFromHex("2cfa9bced5b960763953c4f9838b7022000100000003");
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
 
     }
 
@@ -311,6 +339,18 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
 
+        // bad message
+        byte[] incoming3 = HexConverter.convertFromHex("84468595614f4ac73fabe47cc4000100000002");
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = HexConverter.convertFromHex("4a206df4178a9b7d091dec3527000100000003");
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
+
     }
 
 
@@ -358,6 +398,17 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
 
+        // bad message
+        byte[] incoming3 = HexConverter.convertFromHex("7022412985dbee1d261ecb8850486c6e000100000002");
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = HexConverter.convertFromHex("3457275b036fa15042e41aeda83a563b000100000003");
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
     }
 
 
@@ -405,6 +456,18 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
 
+        // bad message
+        byte[] incoming3 = HexConverter.convertFromHex("03c8fa9cb28ecf4a99561e5ac3000100000002");
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = HexConverter.convertFromHex("4daa261a6afb77f0b1d1d3d4eb000100000003");
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
+
     }
 
 
@@ -451,6 +514,18 @@ public class DigestCompatibilityServerTest extends BaseTestCase {
         byte[] outcoming2 = new byte[]{};
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
         Assert.assertArrayEquals(new byte[]{}, outcoming2wrapped);
+
+        // bad message
+        byte[] incoming3 = HexConverter.convertFromHex("34968ede3148eb0d3affe15656000100000002");
+        byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
+        Assert.assertArrayEquals(new byte[]{}, incoming3unwrapped);
+
+        // bad sequence number
+        try {
+            byte[] incoming4 = HexConverter.convertFromHex("8e497ee789076071cf3b5bb9e1000100000003");
+            server.unwrap(incoming4, 0, incoming4.length);
+            fail("Out of order sequencing SaslException expected!");
+        } catch(SaslException e){}
 
     }
 
