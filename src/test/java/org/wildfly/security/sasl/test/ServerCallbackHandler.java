@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.sasl.test;
 
+import java.io.IOException;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -24,8 +26,6 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
-
-import java.io.IOException;
 
 import org.wildfly.security.sasl.callback.DigestHashCallback;
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
@@ -36,19 +36,19 @@ import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class ServerCallbackHandler implements CallbackHandler {
+public class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;
     private final char[] expectedPassword;
     private final String hexURPHash;
 
-    ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
+    public ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
         hexURPHash = null;
     }
 
-    ServerCallbackHandler(final String expectedUsername, final String hexURPHash) {
+    public ServerCallbackHandler(final String expectedUsername, final String hexURPHash) {
         this.expectedUsername = expectedUsername;
         this.hexURPHash = hexURPHash;
         expectedPassword = null;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.test;
+package org.wildfly.security.sasl.md5digest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,6 +38,8 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.ClientCallbackHandler;
 import org.wildfly.security.sasl.util.HexConverter;
 
 /**
@@ -47,7 +49,7 @@ import org.wildfly.security.sasl.util.HexConverter;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 @RunWith(BMUnitRunner.class)
-public class DigestCompatibilityClientTest extends BaseTestCase {
+public class CompatibilityClientTest extends BaseTestCase {
 
     //protected static final String NONCE_CLASS = "com.sun.security.sasl.digest.DigestMD5Base";
     protected static final String NONCE_CLASS = "org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism";

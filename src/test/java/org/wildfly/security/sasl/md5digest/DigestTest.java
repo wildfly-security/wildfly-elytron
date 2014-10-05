@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.test;
+package org.wildfly.security.sasl.md5digest;
 
 import static org.junit.Assert.*;
 
@@ -35,6 +35,9 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
+import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.ClientCallbackHandler;
+import org.wildfly.security.sasl.test.ServerCallbackHandler;
 import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
 
 /**
