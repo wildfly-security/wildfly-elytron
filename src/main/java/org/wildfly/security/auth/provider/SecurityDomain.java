@@ -57,8 +57,8 @@ public final class SecurityDomain {
         return new Builder();
     }
 
-    public AuthenticationContext createNewAuthenticationContext() {
-        return new AuthenticationContext(this);
+    public ServerAuthenticationContext createNewAuthenticationContext() {
+        return new ServerAuthenticationContext(this);
     }
 
     /**

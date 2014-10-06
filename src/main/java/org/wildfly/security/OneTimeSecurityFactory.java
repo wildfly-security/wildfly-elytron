@@ -31,7 +31,7 @@ public final class OneTimeSecurityFactory<T> implements SecurityFactory<T> {
         this.factory = factory;
     }
 
-    public final T create() throws GeneralSecurityException {
+    public T create() throws GeneralSecurityException {
         T val = obj;
         if (val == null) {
             if (Thread.holdsLock(this)) {

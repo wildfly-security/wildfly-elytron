@@ -23,20 +23,27 @@ import static java.security.AccessController.doPrivileged;
 import java.security.PrivilegedAction;
 
 /**
- * A lazily-initialized holder for the default identity context.  If an error occurs setting up the default identity
+ * A lazily-initialized holder for the default authentication context.  If an error occurs setting up the default identity
  * context, the empty context is used.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class DefaultIdentityContextProvider {
+class DefaultAuthenticationContextProvider {
 
-    static final IdentityContext DEFAULT;
+    static final AuthenticationContext DEFAULT;
 
     static {
-        DEFAULT = doPrivileged(new PrivilegedAction<IdentityContext>() {
-            public IdentityContext run() {
-                // todo: configure from default configuration
-                return IdentityContext.EMPTY;
+        DEFAULT = doPrivileged(new PrivilegedAction<AuthenticationContext>() {
+            public AuthenticationContext run() {
+                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+                if (classLoader == null) {
+                    classLoader = DefaultAuthenticationContextProvider.class.getClassLoader();
+                }
+                try {
+                    return ElytronXmlParser.parseAuthenticationClientXml(classLoader).create();
+                } catch (Throwable t) {
+                    throw new InvalidAuthenticationConfigurationException(t);
+                }
             }
         });
     }

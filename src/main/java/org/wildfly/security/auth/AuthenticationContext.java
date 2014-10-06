@@ -24,9 +24,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.Version;
@@ -34,39 +31,33 @@ import org.wildfly.security.Version;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class IdentityContext {
+public final class AuthenticationContext {
 
     static {
         Version.getVersion();
     }
 
-    private static final ThreadLocal<IdentityContext> currentIdentityContext = new ThreadLocal<IdentityContext>() {
-        protected IdentityContext initialValue() {
-            return DefaultIdentityContextProvider.DEFAULT;
+    private static final ThreadLocal<AuthenticationContext> currentIdentityContext = new ThreadLocal<AuthenticationContext>() {
+        protected AuthenticationContext initialValue() {
+            try {
+                return DefaultAuthenticationContextProvider.DEFAULT;
+            } catch (ExceptionInInitializerError error) {
+                throw new InvalidAuthenticationConfigurationException(error.getCause());
+            }
         }
     };
 
-    static class Rule {
-        private final MatchRule matchRule;
-        private final AuthenticationConfiguration configuration;
+    private final RuleConfigurationPair[] rules;
 
-        Rule(final MatchRule matchRule, final AuthenticationConfiguration configuration) {
-            this.matchRule = matchRule;
-            this.configuration = configuration;
-        }
-    }
+    private static final RuleConfigurationPair[] NO_RULES = new RuleConfigurationPair[0];
 
-    private final Rule[] rules;
+    static final AuthenticationContext EMPTY = new AuthenticationContext();
 
-    private static final Rule[] NO_RULES = new Rule[0];
-
-    static final IdentityContext EMPTY = new IdentityContext();
-
-    private IdentityContext() {
+    private AuthenticationContext() {
         this(NO_RULES, false);
     }
 
-    IdentityContext(final Rule[] rules, boolean clone) {
+    AuthenticationContext(final RuleConfigurationPair[] rules, boolean clone) {
         if (clone) {
             this.rules = rules.clone();
         } else {
@@ -75,68 +66,55 @@ public final class IdentityContext {
     }
 
     /**
-     * Get a new, empty identity context.
+     * Get a new, empty authentication context.
      *
-     * @return the new identity context
+     * @return the new authentication context
      */
-    public static IdentityContext empty() {
+    public static AuthenticationContext empty() {
         return EMPTY;
     }
 
     /**
-     * Get the current thread's captured identity context.
+     * Get the current thread's captured authentication context.
      *
-     * @return the current thread's captured identity context
+     * @return the current thread's captured authentication context
      */
-    public static IdentityContext captureCurrent() {
+    public static AuthenticationContext captureCurrent() {
         return currentIdentityContext.get();
     }
 
     /**
-     * Parse an identity context from XML.
-     *
-     * @param reader the XML stream reader to use
-     *
-     * @return the identity context
-     *
-     * @throws XMLStreamException if an XML read error has occurred
-     */
-    static IdentityContext fromXML(XMLStreamReader reader) throws XMLStreamException {
-        return null;
-    }
-
-    /**
-     * Get a new identity context which is the same as this one, but which includes the given rule and configuration at
+     * Get a new authentication context which is the same as this one, but which includes the given rule and configuration at
      * the end of its list.
      *
      * @param rule the rule to match
      * @param configuration the configuration to select when the rule matches
-     * @return the combined identity context
+     * @return the combined authentication context
      */
-    public IdentityContext with(MatchRule rule, AuthenticationConfiguration configuration) {
+    public AuthenticationContext with(MatchRule rule, AuthenticationConfiguration configuration) {
         if (configuration == null || rule == null) return this;
-        final Rule[] rules = this.rules;
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (length == 0) {
-            return new IdentityContext(new Rule[] { new Rule(rule, configuration) }, false);
+            return new AuthenticationContext(new RuleConfigurationPair[] { new RuleConfigurationPair(rule, configuration) }, false);
         } else {
-            final Rule[] copy = Arrays.copyOf(rules, length + 1);
-            copy[length] = new Rule(rule, configuration);
-            return new IdentityContext(copy, false);
+            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + 1);
+            copy[length] = new RuleConfigurationPair(rule, configuration);
+            return new AuthenticationContext(copy, false);
         }
     }
 
     /**
-     * Get a new identity context which is the same as this one, but which includes the rules and configurations of the
+     * Get a new authentication context which is the same as this one, but which includes the rules and configurations of the
      * given context at the end of its list.
      *
-     * @param other the other identity context
-     * @return the combined identity context
+     * @param other the other authentication context
+     * @return the combined authentication context
      */
-    public IdentityContext with(IdentityContext other) {
+    public AuthenticationContext with(AuthenticationContext other) {
         if (other == null) return this;
-        final Rule[] rules = this.rules;
-        final Rule[] otherRules = other.rules;
+        final RuleConfigurationPair[] rules = this.rules;
+        final RuleConfigurationPair[] otherRules = other.rules;
         final int length = rules.length;
         final int otherLength = otherRules.length;
         if (length == 0) {
@@ -144,71 +122,71 @@ public final class IdentityContext {
         } else if (otherLength == 0) {
             return this;
         }
-        final Rule[] copy = Arrays.copyOf(rules, length + otherLength);
+        final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + otherLength);
         System.arraycopy(otherRules, 0, copy, length, otherLength);
-        return new IdentityContext(copy, false);
+        return new AuthenticationContext(copy, false);
     }
 
     /**
-     * Get a new identity context which is the same as this one, but which includes the given rule and configuration
+     * Get a new authentication context which is the same as this one, but which includes the given rule and configuration
      * inserted at the position of its list indicated by the {@code idx} parameter.
      *
      * @param idx the index at which insertion should be done
      * @param rule the rule to match
      * @param configuration the configuration to select when the rule matches
-     * @return the combined identity context
+     * @return the combined authentication context
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
-    public IdentityContext with(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
+    public AuthenticationContext with(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
         if (configuration == null || rule == null) return this;
-        final Rule[] rules = this.rules;
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx < 0 || idx > length) {
             throw new IndexOutOfBoundsException();
         }
         if (length == 0) {
-            return new IdentityContext(new Rule[] { new Rule(rule, configuration) }, false);
+            return new AuthenticationContext(new RuleConfigurationPair[] { new RuleConfigurationPair(rule, configuration) }, false);
         } else {
-            final Rule[] copy = Arrays.copyOf(rules, length + 1);
+            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + 1);
             System.arraycopy(copy, idx, copy, idx + 1, length - idx);
-            copy[idx] = new Rule(rule, configuration);
-            return new IdentityContext(copy, false);
+            copy[idx] = new RuleConfigurationPair(rule, configuration);
+            return new AuthenticationContext(copy, false);
         }
     }
 
     /**
-     * Get a new identity context which is the same as this one, but which replaces the rule and configuration at the given
+     * Get a new authentication context which is the same as this one, but which replaces the rule and configuration at the given
      * index with the given rule and configuration.
      *
      * @param idx the index at which insertion should be done
      * @param rule the rule to match
      * @param configuration the configuration to select when the rule matches
-     * @return the combined identity context
+     * @return the combined authentication context
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
-    public IdentityContext replacing(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
+    public AuthenticationContext replacing(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
         if (configuration == null || rule == null) return this;
-        final Rule[] rules = this.rules;
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx < 0 || idx > length) {
             throw new IndexOutOfBoundsException();
         }
-        final Rule[] copy = rules.clone();
-        copy[idx] = new Rule(rule, configuration);
-        return new IdentityContext(copy, false);
+        final RuleConfigurationPair[] copy = rules.clone();
+        copy[idx] = new RuleConfigurationPair(rule, configuration);
+        return new AuthenticationContext(copy, false);
     }
 
     /**
-     * Get a new identity context which is the same as this one, but which includes the rules and configurations of the
+     * Get a new authentication context which is the same as this one, but which includes the rules and configurations of the
      * given context inserted at the position of this context's list indicated by the {@code idx} parameter.
      *
      * @param idx the index at which insertion should be done
-     * @param other the other identity context
-     * @return the combined identity context
+     * @param other the other authentication context
+     * @return the combined authentication context
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
-    public IdentityContext with(int idx, IdentityContext other) throws IndexOutOfBoundsException {
-        final Rule[] rules = this.rules;
+    public AuthenticationContext with(int idx, AuthenticationContext other) throws IndexOutOfBoundsException {
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx == length) return with(other);
         if (idx == 0) return other.with(this);
@@ -216,29 +194,29 @@ public final class IdentityContext {
             throw new IndexOutOfBoundsException();
         }
         if (other == null) return this;
-        final Rule[] otherRules = other.rules;
+        final RuleConfigurationPair[] otherRules = other.rules;
         final int otherLength = otherRules.length;
         if (otherLength == 0) return this;
         if (length == 0) {
             return other;
         } else {
-            final Rule[] copy = Arrays.copyOf(rules, length + otherLength);
+            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + otherLength);
             System.arraycopy(copy, idx, copy, idx + otherLength, length - idx);
             System.arraycopy(otherRules, 0, copy, idx, otherLength);
-            return new IdentityContext(copy, false);
+            return new AuthenticationContext(copy, false);
         }
     }
 
     /**
-     * Get a new identity context which is the same as this one, but without the rule and configuration at the index
+     * Get a new authentication context which is the same as this one, but without the rule and configuration at the index
      * indicated by the {@code idx} parameter.
      *
      * @param idx the index at which removal should be done
-     * @return the modified identity context
+     * @return the modified authentication context
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
-    public IdentityContext without(int idx) throws IndexOutOfBoundsException {
-        final Rule[] rules = this.rules;
+    public AuthenticationContext without(int idx) throws IndexOutOfBoundsException {
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx < 0 || idx >= length) {
             throw new IndexOutOfBoundsException();
@@ -247,7 +225,7 @@ public final class IdentityContext {
             assert idx == 0;
             return EMPTY;
         }
-        final Rule[] copy;
+        final RuleConfigurationPair[] copy;
         if (idx == 0) {
             copy = Arrays.copyOfRange(rules, 1, length - 1);
         } else if (idx == length - 1) {
@@ -256,36 +234,36 @@ public final class IdentityContext {
             copy = Arrays.copyOfRange(rules, 0, length - 1);
             System.arraycopy(rules, idx + 1, copy, idx, length - idx - 1);
         }
-        return new IdentityContext(copy, false);
+        return new AuthenticationContext(copy, false);
     }
 
     int ruleMatching(URI uri) {
         for (int i = 0, rulesLength = rules.length; i < rulesLength; i++) {
-            if (rules[i].matchRule.matches(uri)) return i;
+            if (rules[i].getMatchRule().matches(uri)) return i;
         }
         return -1;
     }
 
     MatchRule getMatchRule(int idx) {
-        final Rule[] rules = this.rules;
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx < 0 || idx >= length) {
             throw new IndexOutOfBoundsException();
         }
-        return rules[idx].matchRule;
+        return rules[idx].getMatchRule();
     }
 
     AuthenticationConfiguration getAuthenticationConfiguration(int idx) {
-        final Rule[] rules = this.rules;
+        final RuleConfigurationPair[] rules = this.rules;
         final int length = rules.length;
         if (idx < 0 || idx >= length) {
             throw new IndexOutOfBoundsException();
         }
-        return rules[idx].configuration;
+        return rules[idx].getConfiguration();
     }
 
     /**
-     * Run a privileged action with this identity context associated for the duration of the task.
+     * Run a privileged action with this authentication context associated for the duration of the task.
      *
      * @param action the action to run under association
      * @param <T> the action return type
@@ -295,7 +273,7 @@ public final class IdentityContext {
         if (action == null) {
             throw new NullPointerException("action is null");
         }
-        final IdentityContext oldSubj = currentIdentityContext.get();
+        final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             return action.run();
         }
@@ -308,7 +286,7 @@ public final class IdentityContext {
     }
 
     /**
-     * Run a privileged action with this identity context associated for the duration of the task.
+     * Run a privileged action with this authentication context associated for the duration of the task.
      *
      * @param action the action to run under association
      * @param <T> the action return type
@@ -319,7 +297,7 @@ public final class IdentityContext {
         if (action == null) {
             throw new NullPointerException("action is null");
         }
-        final IdentityContext oldSubj = currentIdentityContext.get();
+        final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             try {
                 return action.run();
@@ -344,7 +322,7 @@ public final class IdentityContext {
     }
 
     /**
-     * Run a privileged action with this identity context associated for the duration of the task.
+     * Run a privileged action with this authentication context associated for the duration of the task.
      *
      * @param parameter the parameter to pass to the action
      * @param action the action to run under association
@@ -356,7 +334,7 @@ public final class IdentityContext {
         if (action == null) {
             throw new NullPointerException("action is null");
         }
-        final IdentityContext oldSubj = currentIdentityContext.get();
+        final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             return action.run(parameter);
         }
@@ -369,7 +347,7 @@ public final class IdentityContext {
     }
 
     /**
-     * Run a privileged action with this identity context associated for the duration of the task.
+     * Run a privileged action with this authentication context associated for the duration of the task.
      *
      * @param parameter the parameter to pass to the action
      * @param action the action to run under association
@@ -382,7 +360,7 @@ public final class IdentityContext {
         if (action == null) {
             throw new NullPointerException("action is null");
         }
-        final IdentityContext oldSubj = currentIdentityContext.get();
+        final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             try {
                 return action.run(parameter);
