@@ -30,6 +30,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.Version;
 import org.wildfly.security.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.security.sasl.anonymous.AnonymousServerFactory;
 import org.wildfly.security.sasl.gssapi.GssapiClientFactory;
@@ -80,7 +81,6 @@ public class WildFlySaslProvider extends Provider {
      * @return the version string.
      */
     public static String getVersionString() {
-        return "NOT SET";
+        return Version.getVersion();
     }
-
 }

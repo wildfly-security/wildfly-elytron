@@ -29,11 +29,16 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.Version;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class IdentityContext {
+
+    static {
+        Version.getVersion();
+    }
 
     private static final ThreadLocal<IdentityContext> currentIdentityContext = new ThreadLocal<IdentityContext>() {
         protected IdentityContext initialValue() {

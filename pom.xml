@@ -57,22 +57,30 @@
     </properties>
 
     <build>
+        <resources>
+            <resource>
+                <directory>${project.build.sourceDirectory}</directory>
+                <includes>
+                    <include>**/Version.properties</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
         <plugins>
            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.jboss.maven.plugins</groupId>
-                <artifactId>maven-injection-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
             </plugin>
         </plugins>
+
         <pluginManagement>
             <plugins>
+
                 <!-- Surefire -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -89,51 +97,41 @@
                         <printSummary>true</printSummary>
                         <includes>
                             <include>**/*Test.java</include>
+<!-- TODO these tests fail: <include>**/*Tests.java</include> -->
                             <include>**/*TestSuite.java</include>
                         </includes>
                         <forkMode>always</forkMode>
                     </configuration>
                 </plugin>
+
+                <!-- JAR -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>${version.jar.plugin}</version>
                     <configuration>
                         <archive>
-                            <manifestEntries>
-                                <Jar-Version>${project.version}</Jar-Version>
-                                <Jar-Name>${project.artifactId}</Jar-Name>
-                            </manifestEntries>
+                            <manifest>
+                                <mainClass>org.wildfly.security.Version</mainClass>
+                            </manifest>
                         </archive>
                     </configuration>
                 </plugin>
-                <!-- Bytecode plugin for version string in Main -->
+
+                <!-- Javadoc -->
                 <plugin>
-                    <groupId>org.jboss.maven.plugins</groupId>
-                    <artifactId>maven-injection-plugin</artifactId>
-                    <version>${version.injection.plugin}</version>
-                    <executions>
-                        <execution>
-                            <phase>compile</phase>
-                            <goals>
-                                <goal>bytecode</goal>
-                            </goals>
-                        </execution>
-                    </executions>
+                    <artifactId>maven-javadoc-plugin</artifactId>
                     <configuration>
-                        <bytecodeInjections>
-                            <bytecodeInjection>
-                                <expression>${project.version}</expression>
-                                <targetMembers>
-                                    <methodBodyReturn>
-                                        <className>org.wildfly.security.sasl.WildFlySaslProvider</className>
-                                        <methodName>getVersionString</methodName>
-                                    </methodBodyReturn>
-                                </targetMembers>
-                            </bytecodeInjection>
-                        </bytecodeInjections>
+                        <doclet>net.gleamynode.apiviz.APIviz</doclet>
+                        <docletArtifact>
+                            <groupId>org.jboss.apiviz</groupId>
+                            <artifactId>apiviz</artifactId>
+                            <version>1.3.2.GA</version>
+                        </docletArtifact>
+                        <excludePackageNames>org.security.wildfly._private</excludePackageNames>
                     </configuration>
                 </plugin>
+
                 <!-- Checkstyle -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -168,50 +166,6 @@
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
                     <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.jboss.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-injection-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.0.2,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>bytecode</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore/>
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>
-                                            org.jboss.seven2six
-                                        </groupId>
-                                        <artifactId>
-                                            seven2six
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.1.Final,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>transform</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

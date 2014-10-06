@@ -20,10 +20,10 @@ package org.wildfly.security;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.util.Enumeration;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
+import java.io.InputStreamReader;
+import java.util.Properties;
+
+import org.wildfly.security._private.ElytronMessages;
 
 /**
  * The version of this JAR.
@@ -31,59 +31,41 @@ import java.util.jar.Manifest;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class Version {
-    private Version() {}
 
-    private static final String JAR_NAME;
-    private static final String VERSION_STRING;
+    private Version() {
+    }
+
+    private static final String VERSION;
 
     static {
-        final Enumeration<URL> resources;
-        String jarName = "(unknown)";
+        Properties versionProps = new Properties();
         String versionString = "(unknown)";
-        try {
-            final ClassLoader classLoader = Version.class.getClassLoader();
-            resources = classLoader == null ? ClassLoader.getSystemResources("META-INF/MANIFEST.MF") : classLoader.getResources("META-INF/MANIFEST.MF");
-            while (resources.hasMoreElements()) {
-                final URL url = resources.nextElement();
-                try (InputStream stream = url.openStream()) {
-                    final Manifest manifest = new Manifest(stream);
-                    final Attributes mainAttributes = manifest.getMainAttributes();
-                    if (mainAttributes != null && "WildFly Elytron".equals(mainAttributes.getValue("Specification-Title"))) {
-                        jarName = mainAttributes.getValue("Jar-Name");
-                        versionString = mainAttributes.getValue("Jar-Version");
-                    }
-                } catch (IOException ignored) {}
+        try (final InputStream stream = Version.class.getResourceAsStream("Version.properties")) {
+            try (final InputStreamReader reader = new InputStreamReader(stream)) {
+                versionProps.load(reader);
+                versionString = versionProps.getProperty("version", versionString);
             }
-        } catch (IOException ignored) {}
-        JAR_NAME = jarName;
-        VERSION_STRING = versionString;
+        } catch (IOException ignored) {
+        }
+        VERSION = versionString;
+        ElytronMessages.log.logVersion(versionString);
     }
 
     /**
-     * Get the name of the this JAR.
+     * Get the version.
      *
-     * @return the name
+     * @return the version
      */
-    public static String getJarName() {
-        return JAR_NAME;
+    public static String getVersion() {
+        return VERSION;
     }
 
     /**
-     * Get the version string of this JAR.
-     *
-     * @return the version string
-     */
-    public static String getVersionString() {
-        return VERSION_STRING;
-    }
-
-    /**
-     * Print out the current version on {@code System.out}.
+     * Print the version to {@code System.out}.
      *
      * @param args ignored
      */
     public static void main(String[] args) {
-        System.out.printf("WildFly Elytron version %s\n", VERSION_STRING);
+        System.out.print(VERSION);
     }
-
 }

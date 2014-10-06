@@ -15,23 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.sasl.test;
 
-import static org.junit.Assert.*;
+package org.wildfly.security._private;
 
-import org.junit.Test;
-import org.wildfly.security.sasl.WildFlySaslProvider;
+import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
 
-/**
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- */
-public class VersionTest {
+@MessageLogger(projectCode = "ELY", length = 4)
+public interface ElytronMessages extends BasicLogger {
 
-    @Test
-    public void testVersionSet() {
-        assertNotNull(WildFlySaslProvider.getVersionString());
-        assertNotEquals("", WildFlySaslProvider.getVersionString());
-        assertNotEquals("(unknown)", WildFlySaslProvider.getVersionString());
-    }
+    ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
 
+    @LogMessage
+    @Message(id = 1, value = "WildFly Elytron version %s")
+    void logVersion(String versionString);
 }
