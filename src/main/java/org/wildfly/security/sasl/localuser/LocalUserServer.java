@@ -38,8 +38,6 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -57,8 +55,12 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
 
     private static final byte UTF8NUL = 0x00;
 
+    private static final int INITIAL_CHALLENGE_STATE = 1;
+    private static final int PROCESS_RESPONSE_STATE = 2;
+
     private volatile String authorizationId;
     private volatile File challengeFile;
+    private volatile byte[] challengeBytes;
     private final File basePath;
     private final String defaultUser;
     private final boolean useSecureRandom;
@@ -133,8 +135,37 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     public void init() {
-        getContext().setNegotiationState(new SaslState() {
-            public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
+        setNegotiationState(INITIAL_CHALLENGE_STATE);
+    }
+
+    public String getAuthorizationID() {
+        assertComplete();
+
+        return authorizationId;
+    }
+
+    private void deleteChallenge() {
+        if (challengeFile != null) {
+            challengeFile.delete();
+            challengeFile = null;
+        }
+    }
+
+    @Override
+    public void dispose() throws SaslException {
+        super.dispose();
+        deleteChallenge();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        deleteChallenge();
+    }
+
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case INITIAL_CHALLENGE_STATE:
                 if (message.length == 0) {
                     // trigger initial response
                     return NO_BYTES;
@@ -183,82 +214,57 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 final String path = challengeFile.getAbsolutePath();
                 final byte[] response = new byte[Charsets.encodedLengthOf(path)];
                 Charsets.encodeTo(path, response, 0);
-                getContext().setNegotiationState(new SaslState() {
-                    public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-                        deleteChallenge();
-                        final int length = message.length;
-                        if (length < 8) {
-                            throw new SaslException("Invalid response");
-                        }
-                        if (!Arrays.equals(bytes, Arrays.copyOf(message, 8))) {
-                            throw new SaslException("Invalid response");
-                        }
-                        String authenticationRealm;
-                        String authenticationId;
-                        final int firstMarker = Charsets.indexOf(message, 0, 8);
-                        if (firstMarker > -1) {
-                            authenticationId = new String(message, 8, firstMarker - 8, Charsets.UTF_8);
-                            final int secondMarker = Charsets.indexOf(message, 0, firstMarker + 1);
-                            if (secondMarker > -1) {
-                                authenticationRealm = new String(message, firstMarker + 1, secondMarker - firstMarker - 1, Charsets.UTF_8);
-                            } else {
-                                authenticationRealm = null;
-                            }
-                        } else {
-                            authenticationId = null;
-                            authenticationRealm = null;
-                        }
-                        if (authenticationId == null || authenticationId.length() == 0) {
-                            authenticationId = defaultUser;
-                        }
-                        if (authenticationId == null) {
-                            throw new SaslException("No authentication ID given");
-                        }
-                        if (authorizationId == null) {
-                            // If no authorization ID is specifed default to authentication ID
-                            authorizationId = authenticationId;
-                        }
-                        final NameCallback nameCallback = new NameCallback("User name", authenticationId);
-                        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationId, authorizationId);
-                        if (authenticationRealm == null) {
-                            handleCallbacks(nameCallback, authorizeCallback);
-                        } else {
-                            final RealmCallback realmCallback = new RealmCallback("User realm", authenticationRealm);
-                            handleCallbacks(realmCallback, nameCallback, authorizeCallback);
-                        }
-                        if (!authorizeCallback.isAuthorized()) {
-                            throw new SaslException("User " + authorizationId + " is not authorized");
-                        }
-                        context.negotiationComplete();
-                        return null;
-                    }
-                });
+                challengeBytes = bytes;
+                setNegotiationState(PROCESS_RESPONSE_STATE);
                 return response;
-            }
-        });
-    }
-
-    public String getAuthorizationID() {
-        assertComplete();
-
-        return authorizationId;
-    }
-
-    private void deleteChallenge() {
-        if (challengeFile != null) {
-            challengeFile.delete();
-            challengeFile = null;
+            case PROCESS_RESPONSE_STATE:
+                deleteChallenge();
+                final int length = message.length;
+                if (length < 8) {
+                    throw new SaslException("Invalid response");
+                }
+                if (!Arrays.equals(challengeBytes, Arrays.copyOf(message, 8))) {
+                    throw new SaslException("Invalid response");
+                }
+                String authenticationRealm;
+                String authenticationId;
+                final int firstMarker = Charsets.indexOf(message, 0, 8);
+                if (firstMarker > -1) {
+                    authenticationId = new String(message, 8, firstMarker - 8, Charsets.UTF_8);
+                    final int secondMarker = Charsets.indexOf(message, 0, firstMarker + 1);
+                    if (secondMarker > -1) {
+                        authenticationRealm = new String(message, firstMarker + 1, secondMarker - firstMarker - 1, Charsets.UTF_8);
+                    } else {
+                        authenticationRealm = null;
+                    }
+                } else {
+                    authenticationId = null;
+                    authenticationRealm = null;
+                }
+                if (authenticationId == null || authenticationId.length() == 0) {
+                    authenticationId = defaultUser;
+                }
+                if (authenticationId == null) {
+                    throw new SaslException("No authentication ID given");
+                }
+                if (authorizationId == null) {
+                    // If no authorization ID is specifed default to authentication ID
+                    authorizationId = authenticationId;
+                }
+                final NameCallback nameCallback = new NameCallback("User name", authenticationId);
+                final AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationId, authorizationId);
+                if (authenticationRealm == null) {
+                    handleCallbacks(nameCallback, authorizeCallback);
+                } else {
+                    final RealmCallback realmCallback = new RealmCallback("User realm", authenticationRealm);
+                    handleCallbacks(realmCallback, nameCallback, authorizeCallback);
+                }
+                if (!authorizeCallback.isAuthorized()) {
+                    throw new SaslException("User " + authorizationId + " is not authorized");
+                }
+                negotiationComplete();
+                return null;
         }
-    }
-
-    @Override
-    public void dispose() throws SaslException {
-        super.dispose();
-        deleteChallenge();
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        deleteChallenge();
+        throw new SaslException("Invalid state");
     }
 }

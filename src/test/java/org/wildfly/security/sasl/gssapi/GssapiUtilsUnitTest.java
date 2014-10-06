@@ -45,6 +45,11 @@ public class GssapiUtilsUnitTest extends AbstractGssapiMechanism {
         }, Logger.getLogger(GssapiUtilsUnitTest.class));
     }
 
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        return null;
+    }
+
     @Test
     public void testIntToNetworkOrderBytes() throws Exception {
         assertArrayEquals("JDK maxbuf", new byte[]{(byte)0x01,(byte)0x00,(byte)0x00}, intToNetworkOrderBytes(65536));

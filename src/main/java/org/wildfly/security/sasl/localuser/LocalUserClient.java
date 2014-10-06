@@ -26,8 +26,6 @@ import java.util.Map;
 
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -41,6 +39,9 @@ public final class LocalUserClient extends AbstractSaslClient {
 
     public static final String QUIET_AUTH = "wildfly.sasl.local-user.quiet-auth";
     public static final String LEGACY_QUIET_AUTH = "jboss.sasl.local-user.quiet-auth";
+
+    private static final int INITIAL_CHALLENGE_STATE = 1;
+    private static final int CHALLENGE_RESPONSE_STATE = 2;
 
     private final boolean quietAuth;
 
@@ -59,8 +60,13 @@ public final class LocalUserClient extends AbstractSaslClient {
     }
 
     public void init() {
-        getContext().setNegotiationState(new SaslState() {
-            public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
+        setNegotiationState(INITIAL_CHALLENGE_STATE);
+    }
+
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case INITIAL_CHALLENGE_STATE:
                 final String authorizationId = getAuthorizationId();
                 final byte[] bytes;
                 if (authorizationId != null) {
@@ -69,54 +75,52 @@ public final class LocalUserClient extends AbstractSaslClient {
                 } else {
                     bytes = new byte[] { UTF8NUL };
                 }
-                context.setNegotiationState(new SaslState() {
-                    public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-                        final String path = new String(message, Charsets.UTF_8);
-                        final File file = new File(path);
-                        final byte[] challenge = new byte[8];
-                        int t = 0;
-                        try {
-                            final FileInputStream stream = new FileInputStream(file);
-                            try {
-                                while (t < 8) {
-                                    int r = stream.read(challenge, t, 8-t);
-                                    if (r < 0) {
-                                        throw new SaslException("Invalid server challenge");
-                                    } else {
-                                        t += r;
-                                    }
-                                }
-                            } finally {
-                                safeClose(stream);
-                            }
-                        } catch (IOException e) {
-                            throw new SaslException("Failed to read server challenge", e);
-                        }
-                        String authenticationId = getAuthorizationId();
-                        String authenticationRealm = null;
-                        if (quietAuth == false) {
-                            final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name",
-                                    authenticationId) : new NameCallback("User name");
-                            final RealmCallback realmCallback = new RealmCallback("User realm");
-                            handleCallbacks(nameCallback, realmCallback);
-                            authenticationId = nameCallback.getName();
-                            authenticationRealm = realmCallback.getText();
-                        }
-                        if (authenticationId == null) authenticationId = "";
-                        if (authenticationRealm == null) authenticationRealm = "";
-                        final int authenticationIdLength = Charsets.encodedLengthOf(authenticationId);
-                        final int authenticationRealmLength = Charsets.encodedLengthOf(authenticationRealm);
-                        final byte[] response = new byte[8 + 1 + authenticationIdLength + authenticationRealmLength];
-                        System.arraycopy(challenge, 0, response, 0, 8);
-                        Charsets.encodeTo(authenticationId, response, 8);
-                        Charsets.encodeTo(authenticationRealm, response, 8 + 1 + authenticationIdLength);
-                        context.negotiationComplete();
-                        return response;
-                    }
-                });
+                setNegotiationState(CHALLENGE_RESPONSE_STATE);
                 return bytes;
-            }
-        });
+            case CHALLENGE_RESPONSE_STATE:
+                final String path = new String(message, Charsets.UTF_8);
+                final File file = new File(path);
+                final byte[] challenge = new byte[8];
+                int t = 0;
+                try {
+                    final FileInputStream stream = new FileInputStream(file);
+                    try {
+                        while (t < 8) {
+                            int r = stream.read(challenge, t, 8-t);
+                            if (r < 0) {
+                                throw new SaslException("Invalid server challenge");
+                            } else {
+                                t += r;
+                            }
+                        }
+                    } finally {
+                        safeClose(stream);
+                    }
+                } catch (IOException e) {
+                    throw new SaslException("Failed to read server challenge", e);
+                }
+                String authenticationId = getAuthorizationId();
+                String authenticationRealm = null;
+                if (quietAuth == false) {
+                    final NameCallback nameCallback = authenticationId != null ? new NameCallback("User name",
+                            authenticationId) : new NameCallback("User name");
+                    final RealmCallback realmCallback = new RealmCallback("User realm");
+                    handleCallbacks(nameCallback, realmCallback);
+                    authenticationId = nameCallback.getName();
+                    authenticationRealm = realmCallback.getText();
+                }
+                if (authenticationId == null) authenticationId = "";
+                if (authenticationRealm == null) authenticationRealm = "";
+                final int authenticationIdLength = Charsets.encodedLengthOf(authenticationId);
+                final int authenticationRealmLength = Charsets.encodedLengthOf(authenticationRealm);
+                final byte[] response = new byte[8 + 1 + authenticationIdLength + authenticationRealmLength];
+                System.arraycopy(challenge, 0, response, 0, 8);
+                Charsets.encodeTo(authenticationId, response, 8);
+                Charsets.encodeTo(authenticationRealm, response, 8 + 1 + authenticationIdLength);
+                negotiationComplete();
+                return response;
+        }
+        throw new SaslException("Invalid state");
     }
 
     private static void safeClose(Closeable c) {

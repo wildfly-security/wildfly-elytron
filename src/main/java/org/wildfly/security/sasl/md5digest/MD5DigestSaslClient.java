@@ -33,8 +33,6 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 import org.wildfly.security.sasl.util.SaslQuote;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
@@ -45,6 +43,8 @@ import org.wildfly.security.util.TransformationSpec;
  */
 public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements SaslClient {
 
+    private static final int STEP_TWO = 1;
+    private static final int STEP_FOUR = 2;
 
     private String[] realms;
     private byte[] nonce;
@@ -75,33 +75,6 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         this.authorizationId = authorizationId;
         this.demandedCiphers = (ciphers == null ? new String[] {} : ciphers);
     }
-
-
-    private final SaslState STEP_TWO = new SaslState() {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-            HashMap<String, byte[]> parsedChallenge = parseResponse(message);
-            noteChallengeData(parsedChallenge);
-            getContext().setNegotiationState(STEP_FOUR);
-            return createResponse(parsedChallenge);
-        }
-
-    };
-
-    private final SaslState STEP_FOUR = new SaslState() {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-
-            // TODO: check rspauth
-
-            getContext().setNegotiationState(COMPLETE);
-            return null;
-        }
-
-    };
-
 
     private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) {
 
@@ -341,7 +314,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
      */
     @Override
     public void init() {
-        getContext().setNegotiationState(STEP_TWO);
+        setNegotiationState(STEP_TWO);
     }
 
     @Override
@@ -354,4 +327,20 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         return evaluateMessage(challenge);
     }
 
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case STEP_TWO:
+                HashMap<String, byte[]> parsedChallenge = parseResponse(message);
+                noteChallengeData(parsedChallenge);
+                setNegotiationState(STEP_FOUR);
+                return createResponse(parsedChallenge);
+            case STEP_FOUR:
+                // TODO: check rspauth
+
+                negotiationComplete();
+                return null;
+        }
+        throw new SaslException("Invalid state");
+    }
 }

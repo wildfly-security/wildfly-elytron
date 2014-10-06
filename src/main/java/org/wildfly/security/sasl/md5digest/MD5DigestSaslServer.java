@@ -32,8 +32,6 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 import org.wildfly.security.sasl.util.SaslQuote;
 
 
@@ -53,6 +51,9 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
     public static final String[] QOP_VALUES = {"auth", "auth-int", "auth-conf"};
 
+    private static final int STEP_ONE = 1;
+    private static final int STEP_THREE = 2;
+
     private String[] realms;
     private String supportedCiphers;
     private int receivingMaxBuffSize = DEFAULT_MAXBUF;
@@ -60,42 +61,6 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
     private String authorizationId;
     private int nonceCount = -1;
     private byte[] nonce = null;
-
-    private final SaslState STEP_ONE = new SaslState() {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-
-            if (message.length != 0) {
-                throw new SaslException(getMechanismName() + ": When sending challenge message has to be empty.");
-            }
-            getContext().setNegotiationState(STEP_THREE);
-            return generateChallenge();
-        }
-    };
-
-
-    private final SaslState STEP_THREE = new SaslState() {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-
-            if (message == null || message.length == 0) {
-                throw new SaslException(getMechanismName() + ": message cannot be empty nor null");
-            }
-
-            // parse digest response
-            HashMap<String, byte[]> parsedDigestResponse = parseResponse(message);
-            noteDigestResponseData(parsedDigestResponse);
-
-            // validate
-            byte[] response = validateDigestResponse(parsedDigestResponse);
-
-            getContext().setNegotiationState(SaslState.COMPLETE);
-            return response;
-        }
-
-    };
 
     /**
      * Generates a digest challenge
@@ -322,7 +287,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
      */
     @Override
     public void init() {
-        getContext().setNegotiationState(STEP_ONE);
+        setNegotiationState(STEP_ONE);
     }
 
     @Override
@@ -330,5 +295,31 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         return evaluateMessage(response);
     }
 
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case STEP_ONE:
+                if (message.length != 0) {
+                    throw new SaslException(getMechanismName() + ": When sending challenge message has to be empty.");
+                }
+                setNegotiationState(STEP_THREE);
+                return generateChallenge();
+            case STEP_THREE:
+                if (message == null || message.length == 0) {
+                    throw new SaslException(getMechanismName() + ": message cannot be empty nor null");
+                }
+
+                // parse digest response
+                HashMap<String, byte[]> parsedDigestResponse = parseResponse(message);
+                noteDigestResponseData(parsedDigestResponse);
+
+                // validate
+                byte[] response = validateDigestResponse(parsedDigestResponse);
+
+                negotiationComplete();
+                return response;
+        }
+        throw new SaslException("Invalid state");
+    }
 
 }

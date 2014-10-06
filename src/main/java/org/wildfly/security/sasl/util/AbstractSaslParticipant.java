@@ -37,22 +37,22 @@ public abstract class AbstractSaslParticipant {
      */
     public static final byte[] NO_BYTES = new byte[0];
 
-    private final SaslStateContext context = new SaslStateContext() {
-        public void setNegotiationState(final SaslState newState) {
-            state = newState;
-        }
+    /**
+     * The SASL negotiation failure state.
+     */
+    public static final int FAILED_STATE = -1;
 
-        public void negotiationComplete() {
-            state = SaslState.COMPLETE;
-        }
-    };
+    /**
+     * The SASL negotiation completed state.
+     */
+    public static final int COMPLETE_STATE = 0;
 
     private final String mechanismName;
     private final CallbackHandler callbackHandler;
     private final String protocol;
     private final String serverName;
 
-    private SaslState state;
+    private int state = -1;
     private SaslWrapper wrapper;
 
     /**
@@ -149,26 +149,40 @@ public abstract class AbstractSaslParticipant {
     }
 
     /**
-     * Get the current negotiation state context.
+     * Set the state to use for the next incoming message.
      *
-     * @return the context
+     * @param newState the new state
      */
-    public SaslStateContext getContext() {
-        return context;
+    public void setNegotiationState(final int newState) {
+        state = newState;
+    }
+
+    /**
+     * Indicate that negotiation is complete.  To re-initiate negotiation, call {@link #setNegotiationState(int)}.
+     */
+    public void negotiationComplete() {
+        state = COMPLETE_STATE;
     }
 
     protected byte[] evaluateMessage(final byte[] message) throws SaslException {
         boolean ok = false;
         try {
-            byte[] result = state.evaluateMessage(context, message);
+            if (state == COMPLETE_STATE) {
+                throw new SaslException("SASL negotiation already complete");
+            } else if (state == FAILED_STATE) {
+                throw new SaslException("SASL negotiation failed");
+            }
+            byte[] result = evaluateMessage(state, message);
             ok = true;
             return result;
         } finally {
             if (! ok) {
-                state = SaslState.FAILED;
+                state = FAILED_STATE;
             }
         }
     }
+
+    protected abstract byte[] evaluateMessage(int state, final byte[] message) throws SaslException;
 
     /**
      * Set the current configured SASL wrapper, if any.
@@ -221,7 +235,7 @@ public abstract class AbstractSaslParticipant {
      * @return {@code true} if the exchange has completed
      */
     public boolean isComplete() {
-        return state == SaslState.COMPLETE;
+        return state == COMPLETE_STATE;
     }
 
     /**

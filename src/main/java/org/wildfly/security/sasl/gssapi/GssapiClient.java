@@ -36,8 +36,6 @@ import org.ietf.jgss.MessageProp;
 import org.jboss.logging.Logger;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 
 /**
  * SaslClient for the GSSAPI mechanism as defined by RFC 4752
@@ -47,6 +45,10 @@ import org.wildfly.security.sasl.util.SaslStateContext;
 public class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
     private static final Logger log = Logger.getLogger(GssapiClient.class);
+
+    private static final int INITIAL_CHALLENGE_STATE = 1;
+    private static final int CHALLENGE_RESPONSE_STATE = 2;
+    private static final int SECURITY_LAYER_NEGOTIATION_STATE = 3;
 
     private final String authorizationId;
 
@@ -175,7 +177,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
 
     @Override
     public void init() {
-        getContext().setNegotiationState(new InitialChallengeState());
+        setNegotiationState(INITIAL_CHALLENGE_STATE);
     }
 
     @Override
@@ -188,124 +190,106 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
         return evaluateMessage(challenge);
     }
 
-    /**
-     * GSSAPI is a client first mechanism, this state both verifies that requirement is met and provides the first token from
-     * the client.
-     *
-     */
-    private class InitialChallengeState implements SaslState {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-            assert gssContext.isEstablished() == false;
-            if (message.length > 0) {
-                throw new SaslException("GSSAPI is a client first mechanism, unexpected server challenge received.");
-            }
-
-            try {
-                byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
-                if (gssContext.isEstablished()) {
-                    log.trace("GSSContext established, transitioning to negotiate security layer.");
-                    context.setNegotiationState(new SecurityLayerNegotiationState());
-                } else {
-                    log.trace("GSSContext not established, expecting subsequent exchanges.");
-                    context.setNegotiationState(new ChallengeResponseState());
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case INITIAL_CHALLENGE_STATE:
+                // GSSAPI is a client first mechanism, this state both verifies that requirement is met and
+                // provides the first token from the client
+                assert gssContext.isEstablished() == false;
+                if (message.length > 0) {
+                    throw new SaslException("GSSAPI is a client first mechanism, unexpected server challenge received.");
                 }
 
-                return response;
-            } catch (GSSException e) {
-                throw new SaslException("Unable to create output token.", e);
-            }
+                try {
+                    byte[] response = gssContext.initSecContext(NO_BYTES, 0, 0);
+                    if (gssContext.isEstablished()) {
+                        log.trace("GSSContext established, transitioning to negotiate security layer.");
+                        setNegotiationState(SECURITY_LAYER_NEGOTIATION_STATE);
+                    } else {
+                        log.trace("GSSContext not established, expecting subsequent exchanges.");
+                        setNegotiationState(CHALLENGE_RESPONSE_STATE);
+                    }
+
+                    return response;
+                } catch (GSSException e) {
+                    throw new SaslException("Unable to create output token.", e);
+                }
+            case CHALLENGE_RESPONSE_STATE:
+                // This state is to handle the subsequent exchange of tokens up until the point the
+                // GSSContext is established
+                assert gssContext.isEstablished() == false;
+
+                try {
+                    byte[] response = gssContext.initSecContext(message, 0, message.length);
+
+                    if (gssContext.isEstablished()) {
+                        log.trace("GSSContext established, transitioning to negotiate security layer.");
+                        setNegotiationState(SECURITY_LAYER_NEGOTIATION_STATE);
+                        if (response == null) response = NO_BYTES;
+                    } else {
+                        log.trace("GSSContext not established, expecting subsequent exchanges.");
+                    }
+                    return response;
+                } catch (GSSException e) {
+                    throw new SaslException("Unable to handle response from server.", e);
+                }
+            case SECURITY_LAYER_NEGOTIATION_STATE:
+                assert gssContext.isEstablished();
+
+                MessageProp msgProp = new MessageProp(0, false);
+                try {
+                    byte[] unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
+                    if (unwrapped.length != 4) {
+                        throw new SaslException("Bad length of message for negotiating security layer.");
+                    }
+
+                    byte qopByte = unwrapped[0];
+                    selectedQop = findAgreeableQop(qopByte);
+                    maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
+                    log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
+                    if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
+                            && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
+                        throw new SaslException(String.format(
+                                "Invalid message size received when no security layer supported by server '%d'",
+                                maxBuffer));
+                    }
+                    maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    baos.write(selectedQop.getValue());
+                    if (selectedQop == QOP.AUTH) {
+                        // No security layer selected to must set response to 000.
+                        baos.write(new byte[] { 0x00, 0x00, 0x00 });
+                    } else {
+                        actualMaxReceiveBuffer = configuredMaxReceiveBuffer!=0 ? configuredMaxReceiveBuffer : maxBuffer;
+                        log.tracef("Out max buffer %d", actualMaxReceiveBuffer);
+                        baos.write(intToNetworkOrderBytes(actualMaxReceiveBuffer));
+                    }
+
+                    if (authorizationId != null) {
+                        baos.write(authorizationId.getBytes(Charsets.UTF_8));
+                    }
+
+                    byte[] response = baos.toByteArray();
+                    msgProp = new MessageProp(0, false);
+                    response = gssContext.wrap(response, 0, response.length, msgProp);
+
+                    if (selectedQop != QOP.AUTH) {
+                        log.trace("Setting message wrapper.");
+                        setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
+                    }
+
+                    log.trace("Negotiation Complete");
+                    negotiationComplete();
+                    return response;
+                } catch (IOException e) {
+                    throw new SaslException("Unable to construct response for server.", e);
+                } catch (GSSException e) {
+                    throw new SaslException("Unable to unwrap security layer negotiation message.", e);
+                }
         }
-
-    }
-
-    /**
-     * This state is to handle the subsequent exchange of tokens up until the point the GSSContext is established.
-     *
-     */
-    private class ChallengeResponseState implements SaslState {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-            assert gssContext.isEstablished() == false;
-
-            try {
-                byte[] response = gssContext.initSecContext(message, 0, message.length);
-
-                if (gssContext.isEstablished()) {
-                    log.trace("GSSContext established, transitioning to negotiate security layer.");
-                    context.setNegotiationState(new SecurityLayerNegotiationState());
-                    if (response == null) response = NO_BYTES;
-                } else {
-                    log.trace("GSSContext not established, expecting subsequent exchanges.");
-                }
-                return response;
-            } catch (GSSException e) {
-                throw new SaslException("Unable to handle response from server.", e);
-            }
-        }
-
-    }
-
-    private class SecurityLayerNegotiationState implements SaslState {
-
-        @Override
-        public byte[] evaluateMessage(SaslStateContext context, byte[] message) throws SaslException {
-            assert gssContext.isEstablished();
-
-            MessageProp msgProp = new MessageProp(0, false);
-            try {
-                byte[] unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
-                if (unwrapped.length != 4) {
-                    throw new SaslException("Bad length of message for negotiating security layer.");
-                }
-
-                byte qopByte = unwrapped[0];
-                selectedQop = findAgreeableQop(qopByte);
-                maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
-                log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
-                if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
-                        && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
-                    throw new SaslException(String.format(
-                            "Invalid message size received when no security layer supported by server '%d'",
-                            maxBuffer));
-                }
-                maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
-
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                baos.write(selectedQop.getValue());
-                if (selectedQop == QOP.AUTH) {
-                    // No security layer selected to must set response to 000.
-                    baos.write(new byte[] { 0x00, 0x00, 0x00 });
-                } else {
-                    actualMaxReceiveBuffer = configuredMaxReceiveBuffer!=0 ? configuredMaxReceiveBuffer : maxBuffer;
-                    log.tracef("Out max buffer %d", actualMaxReceiveBuffer);
-                    baos.write(intToNetworkOrderBytes(actualMaxReceiveBuffer));
-                }
-
-                if (authorizationId != null) {
-                    baos.write(authorizationId.getBytes(Charsets.UTF_8));
-                }
-
-                byte[] response = baos.toByteArray();
-                msgProp = new MessageProp(0, false);
-                response = gssContext.wrap(response, 0, response.length, msgProp);
-
-                if (selectedQop != QOP.AUTH) {
-                    log.trace("Setting message wrapper.");
-                    setWrapper(new GssapiWrapper(selectedQop == QOP.AUTH_CONF));
-                }
-
-                log.trace("Negotiation Complete");
-                context.negotiationComplete();
-                return response;
-            } catch (IOException e) {
-                throw new SaslException("Unable to construct response for server.", e);
-            } catch (GSSException e) {
-                throw new SaslException("Unable to unwrap security layer negotiation message.", e);
-            }
-        }
+        throw new SaslException("Invalid state");
     }
 
 }

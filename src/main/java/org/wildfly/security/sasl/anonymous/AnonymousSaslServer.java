@@ -22,8 +22,6 @@ import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONY
 
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslState;
-import org.wildfly.security.sasl.util.SaslStateContext;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -35,26 +33,7 @@ import javax.security.sasl.SaslException;
  */
 public final class AnonymousSaslServer extends AbstractSaslServer {
 
-    private static final SaslState INITIAL = new SaslState() {
-        public byte[] evaluateMessage(final SaslStateContext context, final byte[] message) throws SaslException {
-            int length = message.length;
-            if (length == 0) {
-                // need initial challenge
-                return NO_BYTES;
-            } else {
-                // sanity check
-                if (length > 1020) {
-                    throw new SaslException("Authentication name string is too long");
-                }
-                String name = new String(message, Charsets.UTF_8);
-                if (name.length() > 255) {
-                    throw new SaslException("Authentication name string is too long");
-                }
-                context.negotiationComplete();
-                return null;
-            }
-        }
-    };
+    private static final int INITIAL_STATE = 1;
 
     /**
      * Construct a new instance.
@@ -65,11 +44,35 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
      */
     public AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
         super(ANONYMOUS, protocol, serverName, callbackHandler);
-        getContext().setNegotiationState(INITIAL);
+        setNegotiationState(INITIAL_STATE);
     }
 
     /** {@inheritDoc} */
     public String getAuthorizationID() {
         return "anonymous";
+    }
+
+    @Override
+    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        switch (state) {
+            case INITIAL_STATE:
+                int length = message.length;
+                if (length == 0) {
+                    // need initial challenge
+                    return NO_BYTES;
+                } else {
+                    // sanity check
+                    if (length > 1020) {
+                        throw new SaslException("Authentication name string is too long");
+                    }
+                    String name = new String(message, Charsets.UTF_8);
+                    if (name.length() > 255) {
+                        throw new SaslException("Authentication name string is too long");
+                    }
+                    negotiationComplete();
+                    return null;
+                }
+        }
+        throw new SaslException("Invalid state");
     }
 }
