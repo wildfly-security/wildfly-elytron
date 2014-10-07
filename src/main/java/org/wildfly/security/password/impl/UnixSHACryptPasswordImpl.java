@@ -21,18 +21,15 @@ package org.wildfly.security.password.impl;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
-
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.text.Normalizer;
 import java.util.Arrays;
 
+import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
@@ -140,11 +137,6 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         } catch (NoSuchAlgorithmException e) {
             throw new InvalidKeyException("Cannot verify password", e);
         }
-    }
-
-    private static byte[] getNormalizedPasswordBytes(final char[] characters) {
-        // normalize the password for verification - XXX double-check this idea
-        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

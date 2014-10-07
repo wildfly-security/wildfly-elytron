@@ -18,9 +18,11 @@
 
 package org.wildfly.security.password.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.text.Normalizer;
 
 import org.wildfly.security.password.Password;
 
@@ -36,4 +38,8 @@ abstract class AbstractPasswordImpl implements Password {
     abstract boolean verify(final char[] guess) throws InvalidKeyException;
 
     abstract <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType);
+
+    static byte[] getNormalizedPasswordBytes(final char[] characters) {
+        return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
+    }
 }
