@@ -42,7 +42,7 @@ import org.wildfly.security.sasl.util.HexConverter;
 /**
  * Test authentication with confidence and integrity check (auth-conf)
  */
-public class BasicConfidencyTest extends AbstractTest {
+public class BasicConfidenceTest extends AbstractTest {
 
     @Test
     public void testAuthConf() throws Exception {

@@ -116,7 +116,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
 
             boolean mayRequireSecurityLayer = mayRequireSecurityLater(orderedQops);
             boolean requestMutualAuth = serverAuth || mayRequireSecurityLayer;
-            log.trace("Setting requering mutual authentication to "+Boolean.toString(requestMutualAuth));
+            log.tracef("Setting requering mutual authentication to %b", requestMutualAuth);
             gssContext.requestMutualAuth(requestMutualAuth);
 
             // Request sequence detection if a security layer could be requested.
