@@ -45,8 +45,11 @@
         <version.org.jboss.logmanager>1.5.0.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j>1.0.0.GA</version.org.jboss.logmanager.log4j>
         <version.org.jboss.logging.tools>1.2.0.Beta1</version.org.jboss.logging.tools>
+        <version.org.jboss.modules>1.2.0.Final</version.org.jboss.modules>
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
+
+        <test.level>INFO</test.level>
 
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
@@ -99,6 +102,7 @@
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <log4j.defaultInitOverride>true</log4j.defaultInitOverride>
+                        <test.level>${test.level}</test.level>
                     </systemPropertyVariables>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <trimStackTrace>false</trimStackTrace>
@@ -212,6 +216,13 @@
             <artifactId>jboss-logging-processor</artifactId>
             <version>${version.org.jboss.logging.tools}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.modules</groupId>
+            <artifactId>jboss-modules</artifactId>
+            <version>${version.org.jboss.modules}</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.kohsuke.metainf-services</groupId>
