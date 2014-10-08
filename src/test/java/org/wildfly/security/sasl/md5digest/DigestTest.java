@@ -62,7 +62,7 @@ public class DigestTest extends BaseTestCase {
     */
 
     @Test
-    @Ignore
+    @Ignore("ELY-91")
     public void testPolicyIndirect_Server() throws Exception {
         Map<String, Object> props = new HashMap<String, Object>();
 
@@ -73,7 +73,7 @@ public class DigestTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore
+    @Ignore("ELY-91")
     public void testPolicyDirect_Server() {
         //SaslServerFactory factory = obtainSaslServerFactory(DigestMD5ServerFactory.class);
         //assertNotNull("SaslServerFactory not registered", factory);
@@ -140,7 +140,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange using the DIGEST mechanism but with the server side supporting an alternative protocol.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-91")
     public void testSuccessfulExchange_AlternativeProtocol() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -241,7 +241,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange using the DIGEST mechanism with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testSuccessfulExchange_PreHashedServer() throws Exception {
         String urpHexHash = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestRealm", "gpwd".toCharArray());
         CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHash);
@@ -267,7 +267,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange using the DIGEST mechanism but the default realm with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testSuccessfulExchange_DefaultRealm_PreHashedServer() throws Exception {
         String urpHexHash = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestServer", "gpwd".toCharArray());
         CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHash);
@@ -293,7 +293,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad password with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadPassword_PreHashedServer() throws Exception {
         String urpHexHash = new UsernamePasswordHashUtil().generateHashedHexURP("George", "TestServer", "bad".toCharArray());
         CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHash);
@@ -321,7 +321,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad username with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadUsername_PreHashedServer() throws Exception {
         String urpHexHash = new UsernamePasswordHashUtil().generateHashedHexURP("Borris", "TestRealm", "gpwd".toCharArray());
         CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHash);
@@ -348,7 +348,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad realm with a pre-hashed password
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadRealm_PreHashedServer() throws Exception {
         String urpHexHash = new UsernamePasswordHashUtil().generateHashedHexURP("George", "BadRealm", "gpwd".toCharArray());
         CallbackHandler serverCallback = new ServerCallbackHandler("George", urpHexHash);
@@ -379,7 +379,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange using the DIGEST mechanism with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testSuccessfulExchange_PreHashedClient() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -408,7 +408,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange using the DIGEST mechanism but the default realm with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testSuccessfulExchange_DefaultRealm_PreHashedClient() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
 
@@ -433,7 +433,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad password with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadPassword_PreHashedClient() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -464,7 +464,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad username with a pre-hashed password.
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadUsername_PreHashedClient() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -492,7 +492,7 @@ public class DigestTest extends BaseTestCase {
      * Test that verification fails for a bad realm with a pre-hashed password
      */
     @Test
-    @Ignore
+    @Ignore("ELY-68")
     public void testBadRealm_PreHashedClient() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -520,7 +520,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange with integrity check
      */
     @Test
-    @Ignore
+    @Ignore("ELY-89")
     public void testSuccessfulExchangeWithIntegrityCheck() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
@@ -554,7 +554,7 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange with privacy protection
      */
     @Test
-    @Ignore
+    @Ignore("ELY-89")
     public void testSuccessfulExchangeWithPrivacyProtection() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
