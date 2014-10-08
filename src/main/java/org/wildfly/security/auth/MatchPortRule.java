@@ -16,19 +16,39 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.auth;
+
+import java.net.URI;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SingleSecuritySystemSelector implements SecuritySystemSelector {
-    private final SecuritySystem securitySystem;
+class MatchPortRule extends MatchRule {
 
-    public SingleSecuritySystemSelector(final SecuritySystem securitySystem) {
-        this.securitySystem = securitySystem;
+    private final int port;
+
+    MatchPortRule(final MatchRule parent, final int port) {
+        super(parent);
+        this.port = port;
     }
 
-    public SecuritySystem getSecuritySystem() {
-        return securitySystem;
+    public boolean matches(final URI uri) {
+        return uri.getPort() == port && super.matches(uri);
+    }
+
+    MatchRule reparent(final MatchRule newParent) {
+        return new MatchPortRule(newParent, port);
+    }
+
+    boolean halfEqual(final MatchRule other) {
+        return other.getMatchPort() == port && parentHalfEqual(other);
+    }
+
+    public int hashCode() {
+        return 7919 * port + parentHashCode();
+    }
+
+    StringBuilder asString(final StringBuilder b) {
+        return parentAsString(b).append("port=").append(port).append(',');
     }
 }

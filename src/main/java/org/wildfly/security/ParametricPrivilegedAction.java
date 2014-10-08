@@ -19,8 +19,20 @@
 package org.wildfly.security;
 
 /**
+ * A privileged action which accepts a parameter.
+ *
+ * @param <T> the action result type
+ * @param <P> the action parameter type
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface ParametricPrivilegedAction<T, P> {
+
+    /**
+     * Perform the action.
+     *
+     * @param parameter the passed-in parameter
+     * @return the action result
+     */
     T run(P parameter);
 }

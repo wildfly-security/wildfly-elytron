@@ -16,24 +16,37 @@
  * limitations under the License.
  */
 
-package org.wildfly.security;
+package org.wildfly.security.auth;
+
+import java.net.URI;
 
 /**
- * A privileged action which accepts a parameter and can throw an exception.
- *
- * @param <T> the action result type
- * @param <P> the action parameter type
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ParametricPrivilegedExceptionAction<T, P> {
+class MatchNoUserRule extends MatchRule {
 
-    /**
-     * Perform the action.
-     *
-     * @param parameter the passed-in parameter
-     * @return the action result
-     * @throws Exception if the action fails
-     */
-    T run(P parameter) throws Exception;
+    MatchNoUserRule(final MatchRule parent) {
+        super(parent.without(MatchUserRule.class));
+    }
+
+    public boolean matches(final URI uri) {
+        String userInfo = getUserInfo(uri);
+        return userInfo == null && super.matches(uri);
+    }
+
+    MatchRule reparent(final MatchRule newParent) {
+        return new MatchNoUserRule(newParent);
+    }
+
+    boolean halfEqual(final MatchRule other) {
+        return other.getMatchUser() == null && parentHalfEqual(other);
+    }
+
+    public int hashCode() {
+        return 3121 + parentHashCode();
+    }
+
+    StringBuilder asString(final StringBuilder b) {
+        return parentAsString(b).append("no user,");
+    }
 }

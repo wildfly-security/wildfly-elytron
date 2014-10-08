@@ -16,11 +16,28 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.auth;
+
+import static java.security.AccessController.doPrivileged;
+
+import java.security.PrivilegedAction;
 
 /**
+ * A lazily-initialized holder for the default identity context.  If an error occurs setting up the default identity
+ * context, the empty context is used.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface SecuritySystemSelector {
-    SecuritySystem getSecuritySystem();
+class DefaultIdentityContextProvider {
+
+    static final IdentityContext DEFAULT;
+
+    static {
+        DEFAULT = doPrivileged(new PrivilegedAction<IdentityContext>() {
+            public IdentityContext run() {
+                // todo: configure from default configuration
+                return IdentityContext.EMPTY;
+            }
+        });
+    }
 }
