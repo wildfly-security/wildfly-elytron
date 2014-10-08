@@ -121,7 +121,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authorization ID (authzid) of other user
      */
     @Test
-    @Ignore("Permission check to use authorization id not implemented")
+    @Ignore("ELY-90 : Permission check to use authorization id not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -183,7 +183,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity protection (qop=auth-int)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -242,7 +242,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=default=3des)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -301,7 +301,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -360,7 +360,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=des)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -418,7 +418,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-56)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
@@ -477,7 +477,7 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
      */
     @Test
-    @Ignore("Integrity and privacy not implemented")
+    @Ignore("ELY-89 : Integrity and privacy not implemented")
     @BMRule(name = "Static nonce",
             targetClass = NONCE_CLASS,
             targetMethod = "generateNonce",
