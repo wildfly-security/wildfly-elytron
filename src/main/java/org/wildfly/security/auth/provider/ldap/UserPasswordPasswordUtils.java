@@ -168,7 +168,7 @@ class UserPasswordPasswordUtils {
     }
 
     private static void safeClose(Closeable c) {
-        if (c != null) { 
+        if (c != null) {
             try {
                 c.close();
             } catch (Throwable ignored) {}

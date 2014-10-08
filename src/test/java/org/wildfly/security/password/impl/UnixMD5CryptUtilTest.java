@@ -38,7 +38,7 @@ import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 
 /**
  * Tests for UnixMD5CryptUtil.
- * The expected results for these test cases were generated using the 
+ * The expected results for these test cases were generated using the
  * {@code unix_md5_crypt} function from the {@code Crypt::PasswdMD5}
  * Perl module.
  *

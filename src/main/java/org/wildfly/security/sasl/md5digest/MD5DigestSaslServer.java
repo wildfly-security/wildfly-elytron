@@ -30,7 +30,6 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslState;

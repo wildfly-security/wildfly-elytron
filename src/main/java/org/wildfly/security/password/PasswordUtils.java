@@ -365,7 +365,7 @@ public final class PasswordUtils {
             this.interleave = interleave;
         }
 
-        IByteArrayInputStream(final byte buf[], final int offset, final int length, final int[] interleave) {
+        IByteArrayInputStream(final byte[] buf, final int offset, final int length, final int[] interleave) {
             super(buf, offset, length);
             this.interleave = interleave;
         }
@@ -695,7 +695,7 @@ public final class PasswordUtils {
     }
 
     private static void safeClose(Closeable c) {
-        if (c != null) { 
+        if (c != null) {
             try {
                 c.close();
             } catch (Throwable ignored) {}

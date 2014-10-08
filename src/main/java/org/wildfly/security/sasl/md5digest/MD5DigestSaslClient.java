@@ -23,7 +23,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
@@ -32,7 +31,6 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslState;
@@ -44,7 +42,6 @@ import org.wildfly.security.util.TransformationSpec;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
- *
  */
 public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements SaslClient {
 
@@ -63,7 +60,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
 
     /**
-     * @param mechanismName
+     * @param mechanism
      * @param protocol
      * @param serverName
      * @param callbackHandler
@@ -142,10 +139,10 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
 
     private void selectCipher(String ciphersFromServer) {
         if (ciphersFromServer == null) {
-            cipher = ""; 
+            cipher = "";
             return;
-        } 
-        
+        }
+
         TransformationMapper trans = new DefaultTransformationMapper();
         String[] tokensToChooseFrom = ciphersFromServer.split(String.valueOf(DELIMITER));
         for (TransformationSpec ts: trans.getTransformationSpecByStrength(MD5DigestServerFactory.JBOSS_DIGEST_MD5, tokensToChooseFrom)) {
@@ -157,7 +154,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                }
             }
         }
-        
+
         cipher = "";
     }
 
@@ -213,7 +210,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         } else {
             serverHashedURPUsingcharset = Charsets.LATIN_1;
         }
-        
+
         if (Charsets.UTF_8.equals(serverHashedURPUsingcharset)) {
             digestResponse.append("charset=");
             digestResponse.append("utf-8");

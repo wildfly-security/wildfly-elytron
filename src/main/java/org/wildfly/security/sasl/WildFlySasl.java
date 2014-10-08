@@ -18,12 +18,6 @@
 
 package org.wildfly.security.sasl;
 
-import java.security.SecureRandom;
-
-import javax.security.sasl.Sasl;
-
-import org.ietf.jgss.GSSCredential;
-
 /**
  * The core WildFly SASL utilities.
  *
@@ -34,7 +28,7 @@ public final class WildFlySasl {
     /**
      * Property name to specify if the GSSAPI mechanism should support credential delegation. The property contains "true" then
      * the credential should be delegated from the client to the server, "false" otherwise. The default value is "false" unless
-     * a {@link GSSCredential} was already passed in using the {@link Sasl.CREDENTIALS} property in which case the defailt would
+     * a {@link org.ietf.jgss.GSSCredential GSSCredential} was already passed in using the {@link javax.security.sasl.Sasl.CREDENTIALS CREDENTIALS} property in which case the defailt would
      * be "true".
      *
      * Note: This is a client only property and is not used server side.
@@ -60,7 +54,7 @@ public final class WildFlySasl {
     public static final String SCRAM_MAX_ITERATION_COUNT = "wildfly.sasl.scram.max-iteration-count";
 
     /**
-     * Property name for the algorithm name of a {@link SecureRandom} implementation to use.  Using this property can
+     * Property name for the algorithm name of a {@link java.security.SecureRandom SecureRandom} implementation to use.  Using this property can
      * improve security, at the cost of performance.
      */
     public static final String SECURE_RNG = "wildfly.sasl.secure-rng";

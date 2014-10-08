@@ -34,7 +34,6 @@ import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ClientCallbackHandler;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;

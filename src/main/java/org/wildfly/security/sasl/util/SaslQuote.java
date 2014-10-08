@@ -20,16 +20,16 @@ package org.wildfly.security.sasl.util;
 
 /**
  * Utility class used to convert string to SASL quoted strings
- * 
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
 public class SaslQuote {
 
-    private static final char QUOTE = '\\'; 
-    
+    private static final char QUOTE = '\\';
+
     private static boolean quoteNeeded(char ch) {
-        return 
+        return
                 ch == '"' || // escape char
                 ch == QUOTE || // quote
                 ch == 127 || // DEL
@@ -40,7 +40,7 @@ public class SaslQuote {
 
     /**
      * Creates new String quoted by SASL rules.
-     * 
+     *
      * @param inputStr String to be quoted
      * @return
      */
@@ -48,7 +48,7 @@ public class SaslQuote {
         int len = inputStr.length();
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
-            char ch = inputStr.charAt(i); 
+            char ch = inputStr.charAt(i);
             if (quoteNeeded(ch)) {
                 sb.append(QUOTE).append(ch);
             }
@@ -58,7 +58,7 @@ public class SaslQuote {
         }
         return sb.toString();
     }
-    
+
     public static byte[] quote(byte[] input) {
         ByteStringBuilder bsb = new ByteStringBuilder();
         for (int i = 0; i < input.length; i++) {
@@ -72,5 +72,5 @@ public class SaslQuote {
         }
         return bsb.toArray();
     }
-    
+
 }

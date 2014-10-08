@@ -30,7 +30,6 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
-import org.wildfly.security.manager.WildFlySecurityManagerPermission;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 

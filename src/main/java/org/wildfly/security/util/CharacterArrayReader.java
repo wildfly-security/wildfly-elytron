@@ -51,7 +51,7 @@ public class CharacterArrayReader extends CharArrayReader {
     }
 
     @Override
-    public int read(char b[], int off, int len) throws IOException, NoSuchElementException {
+    public int read(char[] b, int off, int len) throws IOException, NoSuchElementException {
         int ch = super.read(b, off, len);
         if (ch == -1) {
             throw new NoSuchElementException();

@@ -27,7 +27,6 @@ import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.sasl.md5digest.MD5DigestSaslServer;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -65,16 +64,15 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
 
         Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
-        
+
         String qopsString = (String)props.get(AbstractMD5DigestMechanism.QOP_PROPERTY);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
         String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
-        
+
         final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
         server.init();
         return server;
     }
-
 }

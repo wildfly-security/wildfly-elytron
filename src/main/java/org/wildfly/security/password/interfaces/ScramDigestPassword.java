@@ -19,21 +19,20 @@
 package org.wildfly.security.password.interfaces;
 
 import org.wildfly.security.password.OneWayPassword;
-import org.wildfly.security.password.Password;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface ScramDigestPassword extends OneWayPassword {
 
-    public static final String ALGORITHM_SCRAM_SHA_1 = "scram-sha-1";
+    String ALGORITHM_SCRAM_SHA_1 = "scram-sha-1";
 
-    public static final String ALGORITHM_SCRAM_SHA_256 = "scram-sha-256";
+    String ALGORITHM_SCRAM_SHA_256 = "scram-sha-256";
 
     /**
-     * Get the digest represented by this {@link Password}.
+     * Get the digest represented by this {@link org.wildfly.security.password.Password password}.
      *
-     * @return the digest represented by this {@link Password}.
+     * @return the digest represented by this {@link org.wildfly.security.password.Password password}.
      */
     byte[] getDigest();
 

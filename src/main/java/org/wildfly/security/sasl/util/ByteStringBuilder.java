@@ -49,7 +49,7 @@ public final class ByteStringBuilder {
         doAppend(b);
         return this;
     }
-    
+
     public ByteStringBuilder append(char c) {
         return appendUtf8Raw((int) c);
     }

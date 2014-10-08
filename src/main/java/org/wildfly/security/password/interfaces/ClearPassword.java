@@ -25,7 +25,7 @@ import org.wildfly.security.password.TwoWayPassword;
  */
 public interface ClearPassword extends TwoWayPassword {
 
-    public static final String ALGORITHM_CLEAR = "clear";
+    String ALGORITHM_CLEAR = "clear";
 
     char[] getPassword() throws IllegalStateException;
 }

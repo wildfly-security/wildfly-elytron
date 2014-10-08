@@ -20,7 +20,6 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
-import org.wildfly.security.auth.IdentityContext;
 import org.wildfly.security.auth.SecurityIdentity;
 import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.verifier.Verifier;
@@ -84,7 +83,7 @@ public interface RealmIdentity {
     <C> C getCredential(Class<C> credentialType);
 
     /**
-     * Create the {@link SecurityIdentity} that will be associated with the {@link IdentityContext}
+     * Create the {@link SecurityIdentity} that will be associated with the {@link org.wildfly.security.auth.IdentityContext IdentityContext}
      *
      * Note: The caller is responsible for ensuring the identity is actually authenticated.
      *

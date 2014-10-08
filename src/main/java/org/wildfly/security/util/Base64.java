@@ -85,7 +85,7 @@ public final class Base64 {
      * @param includePaddingChar whether or not the padding character, {@code '='}, should be included in the lookup table
      * @return a lookup table that can be used for decoding characters from the given alphabet
      */
-    public static final int[] getDecodeAlphabet(char[] alphabet, boolean includePaddingChar) {
+    public static int[] getDecodeAlphabet(char[] alphabet, boolean includePaddingChar) {
         int[] decodeAlphabet = new int[256];
         Arrays.fill(decodeAlphabet, -1);
 
@@ -135,7 +135,7 @@ public final class Base64 {
      *
      * @param reader the character reader
      * @param target the target array
-     * @param decodeAlphabet the lookup table to use when decoding 
+     * @param decodeAlphabet the lookup table to use when decoding
      * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
      * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
      */

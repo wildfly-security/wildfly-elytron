@@ -197,18 +197,18 @@ public final class StringPrep {
             char ch = string.charAt(i++);
             int cp;
             if (Character.isHighSurrogate(ch)) {
-            	if (i == len) {
+                if (i == len) {
                     throw new IllegalArgumentException("Invalid surrogate pair (high at end of string)");
                 }
                 char low = string.charAt(i++);
-                if (! Character.isLowSurrogate(low)) {
+                if (!Character.isLowSurrogate(low)) {
                     throw new IllegalArgumentException("Invalid surrogate pair (second is not low)");
                 }
                 cp = Character.toCodePoint(ch, low);
             } else if (Character.isLowSurrogate(ch)) {
-            	throw new IllegalArgumentException("Invalid surrogate pair (low without high)");
+                throw new IllegalArgumentException("Invalid surrogate pair (low without high)");
             } else {
-            	cp = ch;
+                cp = ch;
             }
 
             if (! Character.isValidCodePoint(cp)) {
@@ -223,8 +223,8 @@ public final class StringPrep {
                 case Character.DIRECTIONALITY_RIGHT_TO_LEFT: // R/AL character
                     if (first) {
                         isRALString = true;
-                    } else if (! isRALString) {
-                    	throw new IllegalArgumentException("Disallowed R/AL directionality character in L string");
+                    } else if (!isRALString) {
+                        throw new IllegalArgumentException("Disallowed R/AL directionality character in L string");
                     }
                     break;
                 case Character.DIRECTIONALITY_LEFT_TO_RIGHT: // L character
@@ -233,12 +233,12 @@ public final class StringPrep {
                     }
                     break;
                 default: // neutral character
-                	if (i == len && isRALString) {
+                    if (i == len && isRALString) {
                         throw new IllegalArgumentException("Missing trailing R/AL directionality character");
                     }
             }
-            if(first){
-            	first = false;
+            if (first) {
+                first = false;
             }
 
             // StringPrep 3 - Mapping

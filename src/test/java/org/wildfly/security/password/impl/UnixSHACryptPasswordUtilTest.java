@@ -18,13 +18,10 @@
 
 package org.wildfly.security.password.impl;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.password.Password;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;

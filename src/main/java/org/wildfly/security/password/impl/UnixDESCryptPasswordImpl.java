@@ -124,10 +124,10 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     // Much of the following code was copied from Apache commons-codec; at some point we may consider just adding
     // a dependency?
 
-    private static final boolean SHIFT2[] = { false, false, true, true, true, true, true, true, false, true, true,
+    private static final boolean[] SHIFT2 = { false, false, true, true, true, true, true, true, false, true, true,
             true, true, true, true, false };
 
-    private static final int SKB[][] = {
+    private static final int[][] SKB = {
             { 0, 16, 0x20000000, 0x20000010, 0x10000, 0x10010, 0x20010000, 0x20010010, 2048, 2064, 0x20000800,
                     0x20000810, 0x10800, 0x10810, 0x20010800, 0x20010810, 32, 48, 0x20000020, 0x20000030, 0x10020,
                     0x10030, 0x20010020, 0x20010030, 2080, 2096, 0x20000820, 0x20000830, 0x10820, 0x10830, 0x20010820,
@@ -186,7 +186,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
                     0x4000822, 0x40822, 0x4040822, 10272, 0x4002820, 0x42820, 0x4042820, 10274, 0x4002822, 0x42822,
                     0x4042822 } };
 
-    private static final int SP_TRANS[][] = {
+    private static final int[][] SP_TRANS = {
             { 0x820200, 0x20000, 0x80800000, 0x80820200, 0x800000, 0x80020200, 0x80020000, 0x80800000, 0x80020200,
                     0x820200, 0x820000, 0x80000200, 0x80800200, 0x800000, 0, 0x80020000, 0x20000, 0x80000000,
                     0x800200, 0x20200, 0x80820200, 0x820000, 0x80000200, 0x800200, 0x80000000, 512, 0x20200,
@@ -292,13 +292,13 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         permOp(right, left, 4, 0xf0f0f0f, results);
         right = results[0];
         left = results[1];
-        final int out[] = new int[2];
+        final int[] out = new int[2];
         out[0] = left;
         out[1] = right;
         return out;
     }
 
-    private static int dEncrypt(int el, final int r, final int s, final int e0, final int e1, final int sArr[]) {
+    private static int dEncrypt(int el, final int r, final int s, final int e0, final int e1, final int[] sArr) {
         int v = r ^ r >>> 16;
         int u = v & e0;
         v &= e1;
@@ -310,11 +310,11 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
                 SP_TRANS[4][u >>> 16 & 0x3f] | SP_TRANS[6][u >>> 24 & 0x3f];
         return el;
     }
-    private static int[] desSetKey(final byte key[]) {
-        final int schedule[] = new int[32];
+    private static int[] desSetKey(final byte[] key) {
+        final int[] schedule = new int[32];
         int c = fourBytesToInt(key, 0);
         int d = fourBytesToInt(key, 4);
-        final int results[] = new int[2];
+        final int[] results = new int[2];
         permOp(d, c, 4, 0xf0f0f0f, results);
         d = results[0];
         c = results[1];
@@ -354,7 +354,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         }
         return schedule;
     }
-    private static int fourBytesToInt(final byte b[], int offset) {
+    private static int fourBytesToInt(final byte[] b, int offset) {
         final byte b4 = b[offset++];
         int value = b4 & 0xff;
         final byte b3 = b[offset++];
@@ -370,13 +370,13 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         a = a ^ t ^ t >>> 16 - n;
         return a;
     }
-    private static void intToFourBytes(final int iValue, final byte b[], int offset) {
+    private static void intToFourBytes(final int iValue, final byte[] b, int offset) {
         b[offset++] = (byte) (iValue & 0xff);
         b[offset++] = (byte) (iValue >>> 8 & 0xff);
         b[offset++] = (byte) (iValue >>> 16 & 0xff);
         b[offset  ] = (byte) (iValue >>> 24 & 0xff);
     }
-    private static void permOp(int a, int b, final int n, final int m, final int results[]) {
+    private static void permOp(int a, int b, final int n, final int m, final int[] results) {
         final int t = (a >>> n ^ b) & m;
         a ^= t << n;
         b ^= t;

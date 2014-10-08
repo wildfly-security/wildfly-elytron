@@ -24,12 +24,12 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface TrivialDigestPassword extends OneWayPassword {
-    public static final String ALGORITHM_DIGEST_MD2 = "digest-md2";
-    public static final String ALGORITHM_DIGEST_MD5 = "digest-md5";
-    public static final String ALGORITHM_DIGEST_SHA_1 = "digest-sha-1";
-    public static final String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
-    public static final String ALGORITHM_DIGEST_SHA_384 = "digest-sha-384";
-    public static final String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
+    String ALGORITHM_DIGEST_MD2 = "digest-md2";
+    String ALGORITHM_DIGEST_MD5 = "digest-md5";
+    String ALGORITHM_DIGEST_SHA_1 = "digest-sha-1";
+    String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
+    String ALGORITHM_DIGEST_SHA_384 = "digest-sha-384";
+    String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
 
     byte[] getDigest();
 }

@@ -34,13 +34,12 @@ import org.junit.Test;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
-import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.util.Base64;
 import org.wildfly.security.util.CharacterArrayReader;
 
 /**
- * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link UnixDESCryptPassword}
+ * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link org.wildfly.security.password.interfaces.UnixDESCryptPassword UnixDESCryptPassword}
  * implemenetation.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>

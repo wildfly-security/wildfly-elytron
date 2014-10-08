@@ -23,14 +23,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordUtils;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
@@ -42,7 +40,7 @@ import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 
 /**
  * Tests for the BSD variant of Unix DES Crypt.
- * The expected results for these test cases were generated using the 
+ * The expected results for these test cases were generated using the
  * {@code crypt} function from the {@code Crypt::UnixCrypt_XS}
  * Perl module.
  *

@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.net.URL;
 
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
-import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
@@ -94,8 +93,7 @@ public class TestKDC {
         directoryService.addPartition(p);
     }
 
-    private static void processLdif(final SchemaManager schemaManager, final CoreSession adminSession, final String ldifName)
-            throws LdapException, IOException {
+    private static void processLdif(final SchemaManager schemaManager, final CoreSession adminSession, final String ldifName) throws Exception {
         InputStream ldifInput = TestKDC.class.getResourceAsStream(ldifName);
         LdifReader ldifReader = new LdifReader(ldifInput);
         for (LdifEntry ldifEntry : ldifReader) {

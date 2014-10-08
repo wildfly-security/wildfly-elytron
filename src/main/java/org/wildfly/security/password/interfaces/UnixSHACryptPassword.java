@@ -24,8 +24,8 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface UnixSHACryptPassword extends OneWayPassword {
-    public static final String ALGORITHM_CRYPT_SHA_256 = "crypt-sha-256";
-    public static final String ALGORITHM_CRYPT_SHA_512 = "crypt-sha-512";
+    String ALGORITHM_CRYPT_SHA_256 = "crypt-sha-256";
+    String ALGORITHM_CRYPT_SHA_512 = "crypt-sha-512";
 
     /**
      * The salt used during the hashing of this password. Should have at most 16 bytes.

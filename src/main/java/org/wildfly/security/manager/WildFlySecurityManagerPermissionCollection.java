@@ -103,6 +103,11 @@ public final class WildFlySecurityManagerPermissionCollection extends Permission
         return obj instanceof WildFlySecurityManagerPermissionCollection && set.get() == ((WildFlySecurityManagerPermissionCollection) obj).set.get();
     }
 
+    @Override
+    public int hashCode() {
+        return set.get() * 3559;
+    }
+
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         final ObjectInputStream.GetField getField = ois.readFields();
         final int value = getField.get("p1", 0);

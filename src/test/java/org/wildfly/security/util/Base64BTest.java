@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;

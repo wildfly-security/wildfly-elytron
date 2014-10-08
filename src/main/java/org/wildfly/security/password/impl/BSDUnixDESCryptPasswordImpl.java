@@ -70,7 +70,6 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         this.salt = saltInt;
         this.iterationCount = spec.getIterationCount();
         this.hash = generateHash(salt, iterationCount, password);
-        
     }
 
     BSDUnixDESCryptPasswordImpl(final BSDUnixDESCryptPassword password) throws InvalidKeyException {
@@ -130,11 +129,11 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
     // Note that the following DES tables and some of the methods below are based on
     // tables and methods from the C implementation of the algorithm that's used by
-    // FreeBSD, NetBSD, and OpenBSD: 
+    // FreeBSD, NetBSD, and OpenBSD:
     // http://svnweb.freebsd.org/base/head/secure/lib/libcrypt/crypt-des.c?view=markup
 
     private static boolean tablesInitialized = false;
-   
+
     private static final byte[] IP = {
         58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
         62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
@@ -148,29 +147,29 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     private static final byte[] initPerm = new byte[64];
     private static final byte[] finalPerm = new byte[64];
 
-    private static final byte keyShifts[] = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 };
+    private static final byte[] keyShifts = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
 
-    private static final byte keyPerm[] = {
+    private static final byte[] keyPerm = {
         57, 49, 41, 33, 25, 17,  9,  1, 58, 50, 42, 34, 26, 18,
         10,  2, 59, 51, 43, 35, 27, 19, 11,  3, 60, 52, 44, 36,
         63, 55, 47, 39, 31, 23, 15,  7, 62, 54, 46, 38, 30, 22,
         14,  6, 61, 53, 45, 37, 29, 21, 13,  5, 28, 20, 12,  4
     };
-    private static final byte invKeyPerm[] = new byte[64];
+    private static final byte[] invKeyPerm = new byte[64];
     private static final int[][] keyPermMaskLeft = new int[8][128];
     private static final int[][] keyPermMaskRight = new int[8][128];
 
-    private static final byte compPerm[] = {
+    private static final byte[] compPerm = {
         14, 17, 11, 24,  1,  5,  3, 28, 15,  6, 21, 10,
         23, 19, 12,  4, 26,  8, 16,  7, 27, 20, 13,  2,
         41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48,
         44, 49, 39, 56, 34, 53, 46, 42, 50, 36, 29, 32
     };
-    private static final int invCompPerm[] = new int[56];
+    private static final int[] invCompPerm = new int[56];
     private static final int[][] compPermMaskLeft = new int[8][128];
     private static final int[][] compPermMaskRight = new int[8][128];
 
-    private static final byte SBox[][] = {
+    private static final byte[][] SBox = {
         {
             14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7,
              0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8,
@@ -220,18 +219,18 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
              2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11
         }
     };
-    private static final int mSBox[][] = new int[4][4096];
-    private static final byte invSBox[][] = new byte[8][64];
+    private static final int[][] mSBox = new int[4][4096];
+    private static final byte[][] invSBox = new byte[8][64];
 
-    private static final byte PBox[] = {
+    private static final byte[] PBox = {
         16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
          2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
     };
-    private static final byte invPBox[] = new byte[32];
+    private static final byte[] invPBox = new byte[32];
 
-    private static final int PSBox[][] = new int[4][256];
+    private static final int[][] PSBox = new int[4][256];
 
-    private static final int bits32[] = {
+    private static final int[] bits32 = {
         0x80000000, 0x40000000, 0x20000000, 0x10000000, 0x08000000, 0x04000000, 0x02000000, 0x01000000,
         0x00800000, 0x00400000, 0x00200000, 0x00100000, 0x00080000, 0x00040000, 0x00020000, 0x00010000,
         0x00008000, 0x00004000, 0x00002000, 0x00001000, 0x00000800, 0x00000400, 0x00000200, 0x00000100,
@@ -266,14 +265,14 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
         // Compute the initial and final permutations and also initialize the inverted key permutation
         for (int i = 0; i < 64; i++) {
-            finalPerm[i] = (byte)(IP[i] - 1);
-            initPerm[finalPerm[i]] = (byte)i;
-            invKeyPerm[i] = (byte)255;
+            finalPerm[i] = (byte) (IP[i] - 1);
+            initPerm[finalPerm[i]] = (byte) i;
+            invKeyPerm[i] = (byte) 255;
         }
 
         // Invert the key permutation and initialize the inverted key compression permutation
         for (int i = 0; i < 56; i++) {
-            invKeyPerm[keyPerm[i] - 1] = (byte)i;
+            invKeyPerm[keyPerm[i] - 1] = (byte) i;
             invCompPerm[i] = 255 & 0xff;
         }
 
@@ -345,7 +344,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
         // Invert the P-box permutation
         for (int i = 0; i < 32; i++) {
-            invPBox[PBox[i] - 1] = (byte)i;
+            invPBox[PBox[i] - 1] = (byte) i;
         }
 
         for (int i = 0; i < 4; i++) {
@@ -378,7 +377,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         if (iterationCount < 1 || iterationCount > 16777215) {
             throw new IllegalArgumentException("Invalid number of rounds. Must be an integer between 1 and 16777215, inclusive");
         }
- 
+
         if (!tablesInitialized) {
             setupTables();
         }
@@ -441,12 +440,12 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
      * @return an {@code int[]} of size 32 containing the key schedule
      */
     private static int[] desSetKey(final byte[] key) {
-        final int schedule[] = new int[32];
+        final int[] schedule = new int[32];
         int key0 = fourBytesToInt(key, 0);
         int key1 = fourBytesToInt(key, 4);
 
         // Permute the key and split it into two 28-bit subkeys
-        int k0 = keyPermMaskLeft[0][key0 >>> 25] | keyPermMaskLeft[1][(key0 >>> 17) & 0x7f] 
+        int k0 = keyPermMaskLeft[0][key0 >>> 25] | keyPermMaskLeft[1][(key0 >>> 17) & 0x7f]
                 | keyPermMaskLeft[2][(key0 >>> 9) & 0x7f] | keyPermMaskLeft[3][(key0 >>> 1) & 0x7f]
                 | keyPermMaskLeft[4][key1 >>> 25] | keyPermMaskLeft[5][(key1 >>> 17) & 0x7f]
                 | keyPermMaskLeft[6][(key1 >>> 9) & 0x7f] | keyPermMaskLeft[7][(key1 >>> 1) & 0x7f];
@@ -467,13 +466,13 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
             // Left half of the subkey
             schedule[j++] = compPermMaskLeft[0][(t0 >>> 21) & 0x7f] | compPermMaskLeft[1][(t0 >>> 14) & 0x7f]
-                    | compPermMaskLeft[2][(t0 >>> 7) & 0x7f] | compPermMaskLeft[3][t0 & 0x7f] 
+                    | compPermMaskLeft[2][(t0 >>> 7) & 0x7f] | compPermMaskLeft[3][t0 & 0x7f]
                     | compPermMaskLeft[4][(t1 >>> 21) & 0x7f] | compPermMaskLeft[5][(t1 >>> 14) & 0x7f]
                     | compPermMaskLeft[6][(t1 >>> 7) & 0x7f] | compPermMaskLeft[7][t1 & 0x7f];
 
             // Right half of the subkey
             schedule[j++] = compPermMaskRight[0][(t0 >>> 21) & 0x7f] | compPermMaskRight[1][(t0 >>> 14) & 0x7f]
-                    | compPermMaskRight[2][(t0 >>> 7) & 0x7f] | compPermMaskRight[3][t0 & 0x7f] 
+                    | compPermMaskRight[2][(t0 >>> 7) & 0x7f] | compPermMaskRight[3][t0 & 0x7f]
                     | compPermMaskRight[4][(t1 >>> 21) & 0x7f] | compPermMaskRight[5][(t1 >>> 14) & 0x7f]
                     | compPermMaskRight[6][(t1 >>> 7) & 0x7f] | compPermMaskRight[7][t1 & 0x7f];
         }
@@ -490,8 +489,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
      * @param iterationCount the number of iterations to use
      * @return a {@code byte[]} containing the hashed password
      */
-    private static byte[] desCipher(final int schedule[], final int leftInput, final int rightInput,
-            final int salt, final int iterationCount) {
+    private static byte[] desCipher(final int[] schedule, final int leftInput, final int rightInput, final int salt, final int iterationCount) {
         int l, r;
         int f = 0;
         final byte[] hash = new byte[8];
@@ -516,7 +514,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
                 // Expand r to 48 bits (simulates the E-box)
                 rLeft = ((r & 0x00000001) << 23) | ((r & 0xf8000000) >>> 9) | ((r & 0x1f800000) >>> 11)
                         | ((r & 0x01f80000) >>> 13) | ((r & 0x001f8000) >>> 15);
-                rRight = ((r & 0x0001f800) << 7) | ((r & 0x00001f80) << 5) | ((r & 0x000001f8) << 3) 
+                rRight = ((r & 0x0001f800) << 7) | ((r & 0x00001f80) << 5) | ((r & 0x000001f8) << 3)
                         | ((r & 0x0000001f) << 1) | ((r & 0x80000000) >>> 31);
 
                 // The salt will flip certain bits
@@ -525,7 +523,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
                 rRight ^= (f ^ schedule[k++]);
 
                 // Perform S-box lookups and do the P-box permutation
-                f = PSBox[0][mSBox[0][rLeft >>> 12]] | PSBox[1][mSBox[1][rLeft & 0xfff]] | PSBox[2][mSBox[2][rRight >>> 12]] 
+                f = PSBox[0][mSBox[0][rLeft >>> 12]] | PSBox[1][mSBox[1][rLeft & 0xfff]] | PSBox[2][mSBox[2][rRight >>> 12]]
                         | PSBox[3][mSBox[3][rRight & 0xfff]];
 
                 f ^= l;
@@ -539,7 +537,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
         // Final permutation
         int leftOutput, rightOutput;
-        leftOutput = fpMaskLeft[0][l >>> 24] | fpMaskLeft[1][(l >>> 16) & 0xff] | fpMaskLeft[2][(l >>> 8) & 0xff] 
+        leftOutput = fpMaskLeft[0][l >>> 24] | fpMaskLeft[1][(l >>> 16) & 0xff] | fpMaskLeft[2][(l >>> 8) & 0xff]
                 | fpMaskLeft[3][l & 0xff] | fpMaskLeft[4][r >>> 24] | fpMaskLeft[5][(r >>> 16) & 0xff]
                 | fpMaskLeft[6][(r >>> 8) & 0xff] | fpMaskLeft[7][r & 0xff];
 
@@ -570,7 +568,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         return result;
     }
 
-    private static int fourBytesToInt(final byte b[], int offset) {
+    private static int fourBytesToInt(final byte[] b, int offset) {
         // Big-endian format
         final byte b4 = b[offset++];
         int value = (b4 & 0xff) << 24;
@@ -583,7 +581,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         return value;
     }
 
-    private static void intToFourBytes(final int iValue, final byte b[], int offset) {
+    private static void intToFourBytes(final int iValue, final byte[] b, int offset) {
         // Big-endian format
         b[offset++] = (byte) (iValue >>> 24 & 0xff);
         b[offset++] = (byte) (iValue >>> 16 & 0xff);
