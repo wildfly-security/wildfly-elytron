@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.sasl.test;
 
+import java.io.IOException;
+
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -27,36 +29,34 @@ import javax.security.sasl.RealmChoiceCallback;
 
 import org.wildfly.security.sasl.callback.DigestHashCallback;
 
-import java.io.IOException;
-
 /**
  * A simple CallbackHandler for testing the client side of the calls.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class ClientCallbackHandler implements CallbackHandler {
+public class ClientCallbackHandler implements CallbackHandler {
 
     private final String username;
     private final char[] password;
     private final String hexURPHash;
     private final String realm;
 
-    ClientCallbackHandler(final String username, final char[] password) {
+    public ClientCallbackHandler(final String username, final char[] password) {
         this(username, password, null);
     }
 
-    ClientCallbackHandler(final String username, final char[] password, final String realm) {
+    public ClientCallbackHandler(final String username, final char[] password, final String realm) {
         this.username = username;
         this.password = password;
         this.hexURPHash = null;
         this.realm = realm;
     }
-    
-    ClientCallbackHandler(final String username, final String hexURPHash) {
+
+    public ClientCallbackHandler(final String username, final String hexURPHash) {
         this(username, hexURPHash, null);
     }
 
-    ClientCallbackHandler(final String username, final String hexURPHash, final String realm) {
+    public ClientCallbackHandler(final String username, final String hexURPHash, final String realm) {
         this.username = username;
         this.password = null;
         this.hexURPHash = hexURPHash;
