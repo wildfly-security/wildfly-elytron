@@ -18,7 +18,6 @@
 package org.wildfly.security.sasl.gssapi;
 
 import org.jboss.logging.Logger;
-import org.jboss.logmanager.log4j.BridgeRepositorySelector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -46,7 +45,6 @@ public class GssapiTestSuite {
     @BeforeClass
     public static void startServers() {
         log.debug("Start");
-        new BridgeRepositorySelector().start();
 
         TestKDC testKdc = new TestKDC();
         testKdc.startDirectoryService();
