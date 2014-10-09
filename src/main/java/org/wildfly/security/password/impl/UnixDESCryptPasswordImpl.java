@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
@@ -47,6 +48,11 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
             throw new InvalidKeySpecException("DES crypt password hash must be 64 bits");
         }
         this.hash = hash.clone();
+    }
+
+    UnixDESCryptPasswordImpl(final ClearPasswordSpec spec) throws InvalidKeySpecException {
+        this.salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
+        this.hash = generateHash(this.salt, spec.getEncodedPassword().clone());
     }
 
     UnixDESCryptPasswordImpl(final EncryptablePasswordSpec spec) throws InvalidParameterSpecException {

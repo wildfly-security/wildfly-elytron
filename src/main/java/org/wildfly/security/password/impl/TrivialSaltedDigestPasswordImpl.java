@@ -26,7 +26,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.PasswordUtils;
 import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
@@ -58,12 +60,22 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
         this(password.getAlgorithm(), password.getSalt().clone(), password.getDigest().clone());
     }
 
+    TrivialSaltedDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
+        this.algorithm = algorithm;
+        this.salt = PasswordUtils.generateRandomSalt(DEFAULT_SALT_SIZE);
+        try {
+            this.digest = digestOf(algorithm, salt, spec.getEncodedPassword());
+        } catch (NoSuchAlgorithmException e) {
+            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+        }
+    }
+
     TrivialSaltedDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
         this(algorithm, spec.getPassword(), (SaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
     }
 
     private TrivialSaltedDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getSalt(), password);
+        this(algorithm, spec.getSalt() == null ? PasswordUtils.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone(), password);
     }
 
     private TrivialSaltedDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password)

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Locale;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
@@ -678,8 +679,6 @@ public final class PasswordUtils {
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
 
-
-
     private static int indexOf(final char[] chars, final char c) {
         for (int i = 0; i < chars.length; i ++) {
             if (chars[i] == c) return i;
@@ -701,4 +700,11 @@ public final class PasswordUtils {
             } catch (Throwable ignored) {}
         }
     }
+
+    public static byte[] generateRandomSalt(int saltSize) {
+        byte[] randomSalt = new byte[saltSize];
+        ThreadLocalRandom.current().nextBytes(randomSalt);
+        return randomSalt;
+    }
+
 }

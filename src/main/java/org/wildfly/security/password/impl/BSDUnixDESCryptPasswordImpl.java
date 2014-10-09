@@ -27,6 +27,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 
@@ -52,6 +53,12 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         this.hash = hash.clone();
     }
 
+    BSDUnixDESCryptPasswordImpl(final ClearPasswordSpec passwordSpec) {
+        this.salt = ThreadLocalRandom.current().nextInt() & 0xffffff;
+        this.iterationCount = DEFAULT_ITERATION_COUNT;
+        this.hash = generateHash(salt, iterationCount, passwordSpec.getEncodedPassword());
+    }
+
     BSDUnixDESCryptPasswordImpl(final EncryptablePasswordSpec encryptableSpec) throws InvalidParameterSpecException {
         this(encryptableSpec.getPassword(), (HashedPasswordAlgorithmSpec) encryptableSpec.getAlgorithmParameterSpec());
     }
@@ -68,7 +75,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
             saltInt = ThreadLocalRandom.current().nextInt() & 0xffffff;
         }
         this.salt = saltInt;
-        this.iterationCount = spec.getIterationCount();
+        this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();
         this.hash = generateHash(salt, iterationCount, password);
     }
 

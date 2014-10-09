@@ -29,6 +29,10 @@ public interface ScramDigestPassword extends OneWayPassword {
 
     String ALGORITHM_SCRAM_SHA_256 = "scram-sha-256";
 
+    int DEFAULT_SALT_SIZE = 12;
+
+    int DEFAULT_ITERATION_COUNT = 20000;
+
     /**
      * Get the digest represented by this {@link org.wildfly.security.password.Password password}.
      *

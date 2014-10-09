@@ -30,6 +30,8 @@ public interface BSDUnixDESCryptPassword extends OneWayPassword {
 
     int BSD_CRYPT_DES_SALT_SIZE = 3;
 
+    int DEFAULT_ITERATION_COUNT = 5001;
+
     int getIterationCount();
 
     int getSalt();

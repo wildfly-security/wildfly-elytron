@@ -31,6 +31,8 @@ public interface BCryptPassword extends OneWayPassword {
 
     int BCRYPT_HASH_SIZE = 23;
 
+    int DEFAULT_ITERATION_COUNT = 10;
+
     byte[] getHash();
 
     byte[] getSalt();

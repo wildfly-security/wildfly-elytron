@@ -27,6 +27,10 @@ public interface UnixSHACryptPassword extends OneWayPassword {
     String ALGORITHM_CRYPT_SHA_256 = "crypt-sha-256";
     String ALGORITHM_CRYPT_SHA_512 = "crypt-sha-512";
 
+    int SALT_SIZE = 16;
+
+    int DEFAULT_ITERATION_COUNT = 5000;
+
     /**
      * The salt used during the hashing of this password. Should have at most 16 bytes.
      * @return the salt

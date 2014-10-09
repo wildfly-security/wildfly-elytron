@@ -24,8 +24,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.PasswordUtils;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 
@@ -56,16 +58,20 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
         this(passwordSpec.getHashBytes().clone(), passwordSpec.getSalt().clone(), passwordSpec.getIterationCount());
     }
 
+    BCryptPasswordImpl(final ClearPasswordSpec clearPasswordSpec) {
+        this.salt = PasswordUtils.generateRandomSalt(BCRYPT_SALT_SIZE);
+        this.iterationCount = DEFAULT_ITERATION_COUNT;
+        this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(clearPasswordSpec.getEncodedPassword()));
+    }
+
     BCryptPasswordImpl(final EncryptablePasswordSpec encryptableSpec) throws InvalidKeySpecException {
         this(encryptableSpec.getPassword(), (HashedPasswordAlgorithmSpec) encryptableSpec.getAlgorithmParameterSpec());
     }
 
     private BCryptPasswordImpl(final char[] password, final HashedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this(password, spec.getSalt().clone(), spec.getIterationCount());
-    }
-
-    private BCryptPasswordImpl(final char[] password, final byte[] salt, final int iterationCount) throws InvalidKeySpecException {
-        this(bcrypt(iterationCount, salt, getNormalizedPasswordBytes(password)), salt, iterationCount);
+        this.salt = spec.getSalt() == null ? PasswordUtils.generateRandomSalt(BCRYPT_SALT_SIZE) : spec.getSalt().clone();
+        this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();
+        this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
     }
 
     @Override

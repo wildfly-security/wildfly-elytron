@@ -27,6 +27,8 @@ public interface UnixMD5CryptPassword extends OneWayPassword {
 
     String ALGORITHM_CRYPT_MD5 = "crypt-md5";
 
+    int SALT_SIZE = 8;
+
     byte[] getSalt();
 
     byte[] getHash();

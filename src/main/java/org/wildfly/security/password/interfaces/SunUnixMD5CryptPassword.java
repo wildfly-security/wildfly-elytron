@@ -28,6 +28,10 @@ public interface SunUnixMD5CryptPassword extends OneWayPassword {
     String ALGORITHM_SUN_CRYPT_MD5 = "sun-crypt-md5";
     String ALGORITHM_SUN_CRYPT_MD5_BARE_SALT = "sun-crypt-md5-bare-salt";
 
+    int DEFAULT_SALT_SIZE = 8;
+
+    int DEFAULT_ITERATION_COUNT = 5500;
+
     byte[] getSalt();
 
     byte[] getHash();

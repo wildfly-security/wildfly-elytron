@@ -26,7 +26,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.PasswordUtils;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
@@ -60,23 +62,25 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this(spec.getHash().clone(), truncatedClone(spec.getSalt()));
     }
 
+    UnixMD5CryptPasswordImpl(final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
+        this.salt = PasswordUtils.generateRandomSalt(SALT_SIZE);
+        this.hash = encode(getNormalizedPasswordBytes(spec.getEncodedPassword()), this.salt);
+    }
+
     UnixMD5CryptPasswordImpl(final EncryptablePasswordSpec spec) throws NoSuchAlgorithmException {
         this(spec.getPassword(), (HashedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
     }
 
     private UnixMD5CryptPasswordImpl(final char[] password, final HashedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(password, truncatedClone(spec.getSalt()));
-    }
-
-    private UnixMD5CryptPasswordImpl(final char[] password, final byte[] clonedSalt) throws NoSuchAlgorithmException {
-        this(encode(getNormalizedPasswordBytes(password), clonedSalt), clonedSalt);
+        this.salt = spec.getSalt() == null ? PasswordUtils.generateRandomSalt(SALT_SIZE) : truncatedClone(spec.getSalt());
+        this.hash = encode(getNormalizedPasswordBytes(password), salt);
     }
 
     private static byte[] truncatedClone(final byte[] salt) {
-        if (salt.length <= 8) {
+        if (salt.length <= SALT_SIZE) {
             return salt.clone();
         } else {
-            return Arrays.copyOf(salt, 8);
+            return Arrays.copyOf(salt, SALT_SIZE);
         }
     }
 
@@ -144,8 +148,8 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         // http://svnweb.freebsd.org/base/head/lib/libcrypt/crypt.c?revision=4246&view=markup (this is
         // the original C implementation of the algorithm)
 
-        if (salt.length > 8) {
-            salt = Arrays.copyOfRange(salt, 0, 8);
+        if (salt.length > SALT_SIZE) {
+            salt = Arrays.copyOfRange(salt, 0, SALT_SIZE);
         }
 
         // Add the password to digest A first since that is what is most unknown, then our magic
