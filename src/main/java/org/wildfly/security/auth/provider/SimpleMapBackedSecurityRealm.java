@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.wildfly.security.auth.SecurityIdentity;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
@@ -119,12 +118,5 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             final Password password = map.get(principal);
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
         }
-
-        @Override
-        public SecurityIdentity createSecurityIdentity() {
-            // TODO Add SecurityIdentity Support ELY-33
-            return null;
-        }
-
     }
 }

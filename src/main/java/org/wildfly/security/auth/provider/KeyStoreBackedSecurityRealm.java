@@ -30,7 +30,6 @@ import java.security.cert.X509Certificate;
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
-import org.wildfly.security.auth.SecurityIdentity;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
@@ -157,12 +156,5 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             }
             return null;
         }
-
-        @Override
-        public SecurityIdentity createSecurityIdentity() {
-            // TODO Add SecurityIdentity Support ELY-33
-            return null;
-        }
-
     }
 }

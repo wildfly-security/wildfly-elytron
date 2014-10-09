@@ -20,8 +20,6 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
-import org.wildfly.security.auth.SecurityIdentity;
-
 /**
  * A representation of a pre-authentication identity.
  *
@@ -35,9 +33,6 @@ public interface RealmIdentity {
 
     /**
      * Get the {@link Principal} for this identity.
-     *
-     * Note: {@link #createSecurityIdentity()} may be sufficient to make this redundant, just retaining as we currently support
-     * early {@link Principal} access.
      *
      * This method can return {@code null} if there is no mapping from the identity to a {@link Principal}
      *
@@ -69,16 +64,4 @@ public interface RealmIdentity {
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
     <C> C getCredential(Class<C> credentialType);
-
-    /**
-     * Create the {@link SecurityIdentity} that will be associated with the {@link org.wildfly.security.auth.AuthenticationContext AuthenticationContex }
-     *
-     * Note: The caller is responsible for ensuring the identity is actually authenticated.
-     *
-     * TODO: Verify where authorization ID is fitting.
-     *
-     * @return The {@link SecurityIdentity} for this identity.
-     */
-    SecurityIdentity createSecurityIdentity();
-
 }
