@@ -31,8 +31,11 @@ import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
 
 import java.security.Provider;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.keystore.PasswordKeyStoreImpl;
 
 @SuppressWarnings("ThisEscapedInObjectConstruction")
 @MetaInfServices
@@ -44,31 +47,37 @@ public final class WildFlyElytronPasswordProvider extends Provider {
 
     public WildFlyElytronPasswordProvider() {
         super("WildFlyElytronPassword", 1.0, "WildFly Elytron Password Provider");
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CLEAR, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SUN_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SUN_CRYPT_MD5_BARE_SALT, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_MD2, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_BSD_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_1, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
-        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), Collections.<String>emptyList(), Collections.<String, String>emptyMap()));
+
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CLEAR, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SUN_CRYPT_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SUN_CRYPT_MD5_BARE_SALT, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_MD2, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_BSD_CRYPT_DES, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+
+        putService(new Service(this, "KeyStore", "PasswordFile", PasswordKeyStoreImpl.class.getName(), emptyList, emptyMap));
     }
 
 }
