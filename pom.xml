@@ -130,7 +130,7 @@
                             <artifactId>apiviz</artifactId>
                             <version>1.3.2.GA</version>
                         </docletArtifact>
-                        <excludePackageNames>org.security.wildfly._private</excludePackageNames>
+                        <excludePackageNames>*._private</excludePackageNames>
                     </configuration>
                 </plugin>
 
