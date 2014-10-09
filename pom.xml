@@ -114,7 +114,7 @@
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>org.wildfly.security.Version</mainClass>
+                                <mainClass>org.wildfly.security._private.Main</mainClass>
                             </manifest>
                         </archive>
                     </configuration>
