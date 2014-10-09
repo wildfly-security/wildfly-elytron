@@ -108,7 +108,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == BCryptPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(BCryptPasswordSpec.class)) {
             return keySpecType.cast(new BCryptPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
         }
         throw new InvalidKeySpecException();
@@ -122,7 +122,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType == BCryptPasswordSpec.class;
+        return keySpecType.isAssignableFrom(BCryptPasswordSpec.class);
     }
 
     private static final int[] Parray = {

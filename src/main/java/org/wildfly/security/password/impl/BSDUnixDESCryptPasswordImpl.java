@@ -83,7 +83,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == BSDUnixDESCryptPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(BSDUnixDESCryptPasswordSpec.class)) {
             return keySpecType.cast(new BSDUnixDESCryptPasswordSpec(hash.clone(), salt, iterationCount));
         }
         throw new InvalidKeySpecException();
@@ -94,7 +94,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType == BSDUnixDESCryptPasswordSpec.class;
+        return keySpecType.isAssignableFrom(BSDUnixDESCryptPasswordSpec.class);
     }
 
     public String getAlgorithm() {

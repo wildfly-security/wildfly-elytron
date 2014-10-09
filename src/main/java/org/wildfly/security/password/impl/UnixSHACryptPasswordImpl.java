@@ -121,7 +121,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == UnixSHACryptPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class)) {
             return keySpecType.cast(new UnixSHACryptPasswordSpec(this.getAlgorithm(), this.getHash(), this.getSalt(), this.getIterationCount()));
         } else {
             throw new InvalidKeySpecException("Expected to get a UnixSHACryptPasswordSpec as spec, got " + keySpecType.getName());
@@ -141,7 +141,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType == UnixSHACryptPasswordSpec.class;
+        return keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class);
     }
 
     static byte[] doEncode(final String algorithm, final byte[] password, final byte[] salt, final int iterationCount) throws NoSuchAlgorithmException {
