@@ -30,7 +30,6 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslQuote;
@@ -52,7 +51,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
 
     private static final int STEP_ONE = 1;
-    private static final int STEP_THREE = 2;
+    private static final int STEP_THREE = 3;
 
     private String[] realms;
     private String supportedCiphers;
@@ -233,7 +232,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             if (!arrayContains(QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
-            if (!qop.equals(QOP_AUTH)) {
+            if (qop != null && qop.equals(QOP_AUTH) == false) {
                 setWrapper(new MD5DigestWrapper(qop.equals(QOP_AUTH_CONF)));
             }
         }
@@ -249,12 +248,15 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         passwordCallback.clearPassword();
 
 
-        byte[] H_A1 = H_A1(md5, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
-        byte[] expectedResponse = digestResponse(md5, H_A1, nonce, nonceCount, cnonce, authzid, qop, digestURI, clientCharset);
+        hA1 = H_A1(md5, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+
+        byte[] expectedResponse = digestResponse(md5, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, clientCharset);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
         }
+
+        createCiphersAndKeys();
 
         if (parsedDigestResponse.get("response") != null) {
             if (Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {

@@ -21,7 +21,7 @@ package org.wildfly.security.util;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class Arrays2 {
+public final class Arrays2 {
 
     private Arrays2() {
     }

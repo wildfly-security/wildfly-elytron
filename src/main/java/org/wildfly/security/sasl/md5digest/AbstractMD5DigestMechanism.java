@@ -22,13 +22,22 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import javax.crypto.Cipher;
 import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+import javax.crypto.spec.DESedeKeySpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -39,6 +48,7 @@ import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.util.Base64;
 import org.wildfly.security.sasl.util.SaslWrapper;
+import org.wildfly.security.util.Arrays2;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
@@ -95,6 +105,18 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
     // H(A1)
     protected byte[] hA1;
 
+    protected SecureRandom secureRandomGenerator;
+
+    protected Cipher wrapCipher = null;
+
+    protected Cipher unwrapCipher = null;
+
+    protected byte[] wrapHmacKeyIntegrity;
+    protected byte[] unwrapHmacKeyIntegrity;
+
+    protected byte[] wrapHmacKeyConfidentiality;
+    protected byte[] unwrapHmacKeyConfidentiality;
+
     /**
      * @param mechanismName
      * @param protocol
@@ -103,6 +125,8 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      */
     public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
+
+        secureRandomGenerator = new SecureRandom();
 
         try {
             this.md5 = MessageDigest.getInstance(HASH_algorithm);
@@ -326,9 +350,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             // parsing keyword
             if (insideKey) {
                 if (b == ',') {
-                    if (key.length() != 0) {
-                        throw new SaslException("DIGEST-MD5 keyword cannot contain ',' " + key.toString());
-                    }
+                    throw new SaslException("DIGEST-MD5 keyword cannot contain ',' " + key.toString());
                 }
                 else if (b == '=') {
                     if (key.length() == 0) {
@@ -481,29 +503,21 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
     }
 
-    private static final String CLIENT_MAGIC = "Digest session key to client-to-server signing key magic constant";
-    private static final String SERVER_MAGIC = "Digest session key to server-to-client signing key magic constant";
+    private static final String CLIENT_MAGIC_INTEGRITY = "Digest session key to client-to-server signing key magic constant";
+    private static final String SERVER_MAGIC_INTEGRITY = "Digest session key to server-to-client signing key magic constant";
 
     private byte[] wrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
         ByteStringBuilder key = new ByteStringBuilder(hA1);
         if (format == FORMAT.CLIENT) {
-            key.append(CLIENT_MAGIC);
+            key.append(CLIENT_MAGIC_INTEGRITY);
         } else {
-            key.append(SERVER_MAGIC);
+            key.append(SERVER_MAGIC_INTEGRITY);
         }
+        md5.reset();
         byte[] ki = md5.digest(key.toArray());
-        Mac mac = getHmac();
-        SecretKeySpec ks = new SecretKeySpec(ki, HMAC_algorithm);
-        try {
-            mac.init(ks);
-        } catch (InvalidKeyException e) {
-            throw new SaslException("Invalid key provided", e);
-        }
-        byte[] buffer = new byte[len + 4];
-        integerByteOrdered(seqNum, buffer, 0, 4);
-        System.arraycopy(message, len, buffer, 4, len);
-        byte[] messageMac = mac.doFinal(buffer);
+
+        byte[] messageMac = computeHMAC(ki, seqNum, message, offset, len);
 
         byte[] result = new byte[len + 16];
         System.arraycopy(message, offset, result, 0, len);
@@ -516,46 +530,233 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
     private byte[] unwrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
+        int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
+        int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
+
+        if (messageType != 1) {
+            throw new SaslException("MessageType must equal to 1, but is different");
+        }
+
         ByteStringBuilder key = new ByteStringBuilder(hA1);
         if (format == FORMAT.CLIENT) {
-            key.append(SERVER_MAGIC);
+            key.append(SERVER_MAGIC_INTEGRITY);
         } else {
-            key.append(CLIENT_MAGIC);
+            key.append(CLIENT_MAGIC_INTEGRITY);
         }
+        md5.reset();
         byte[] ki = md5.digest(key.toArray());
+
+        byte[] extractedMessageMac = new byte[10];
+        byte[] extractedMessage = new byte[len - 16];
+        System.arraycopy(message, offset, extractedMessage, 0, len - 16);
+        System.arraycopy(message, offset + len - 16, extractedMessageMac, 0, 10);
+
+        byte[] expectedHmac = computeHMAC(ki, extractedSeqNum, extractedMessage, 0, extractedMessage.length);
+
+        // validate MAC block
+        if (Arrays2.equals(expectedHmac, 0, extractedMessageMac, 0, 10) == false) {
+            throw new SaslException("MAC validation failed while unwrapping");
+        }
+        return extractedMessage;
+    }
+
+    private static final String CLIENT_MAGIC_CONFIDENTIALITY = "Digest H(A1) to client-to-server sealing key magic constant";
+    private static final String SERVER_MAGIC_CONFIDENTIALITY = "Digest H(A1) to server-to-client sealing key magic constant";
+
+    private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
+
+        byte[] messageMac = computeHMAC(wrapHmacKeyConfidentiality, seqNum, message, offset, len);
+
+        int paddingLength = 0;
+        byte[] pad = null;
+        int blockSize = wrapCipher.getBlockSize();
+        if (blockSize > 0) {
+            paddingLength = blockSize - ((len + 10) % blockSize);
+            pad = new byte[paddingLength];
+            Arrays.fill(pad, (byte)paddingLength);
+        }
+
+        byte[] toCipher = new byte[len + paddingLength + 10];
+        System.arraycopy(message, offset, toCipher, 0, len);
+        if (paddingLength > 0) {
+            System.arraycopy(pad, 0, toCipher, len, paddingLength);
+        }
+        System.arraycopy(messageMac, 0, toCipher, len + paddingLength, 10);
+
+        byte[] cipheredPart = null;
+        try {
+            cipheredPart = wrapCipher.doFinal(toCipher);
+        } catch (Exception e) {
+            throw new SaslException("Problem during crypt.", e);
+        }
+
+        byte[] result = new byte[cipheredPart.length + 6];
+        System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
+        integerByteOrdered(1, result, cipheredPart.length, 2);  // 2-byte message type number in network byte order with value 1
+        integerByteOrdered(seqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
+
+        seqNum++;
+        return result;
+    }
+
+    private byte[] computeHMAC(byte[] kc, int sequenceNumber, byte[] message, int offset, int len) throws SaslException {
         Mac mac = getHmac();
-        SecretKeySpec ks = new SecretKeySpec(ki, HMAC_algorithm);
+        SecretKeySpec ks = new SecretKeySpec(kc, HMAC_algorithm);
         try {
             mac.init(ks);
         } catch (InvalidKeyException e) {
             throw new SaslException("Invalid key provided", e);
         }
-
-        byte[] extractedMessageMac = new byte[16];
-        byte[] extractedMessage = new byte[len];
-        System.arraycopy(message, offset, extractedMessage, 0, len);
-        System.arraycopy(message, offset + len, extractedMessageMac, 0, 16);
-
         byte[] buffer = new byte[len + 4];
-        System.arraycopy(extractedMessageMac, 12, buffer, 0, 4);  // locate seqNum in MAC
-        System.arraycopy(extractedMessage, len, buffer, 4, len);
-        byte[] messageMac = mac.doFinal(buffer);
-
-        // validate MAC block
-        if (Arrays.equals(messageMac, extractedMessageMac) == false) {
-            throw new SaslException("Unwrapped MAC validation failed");
-        }
-        return extractedMessage;
-    }
-
-    private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
-        // TODO: confidentiality support
-        return null;
+        integerByteOrdered(sequenceNumber, buffer, 0, 4);
+        System.arraycopy(message, offset, buffer, 4, len);
+        return mac.doFinal(buffer);
     }
 
     private byte[] unwrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
-        // TODO: confidentiality support
-        return null;
+
+        int messageType = decodeByteOrderedInteger(message, offset + len - 6, 2);
+        int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
+
+        if (messageType != 1) {
+            throw new SaslException("MessageType must equal to 1, but is different");
+        }
+
+        byte[] clearText = null;
+        try {
+            clearText = unwrapCipher.doFinal(message, offset, len - 6);
+        } catch (Exception e) {
+            throw new SaslException("Problem during decrypt.", e);
+        }
+
+        byte[] hmac = new byte[10];
+        System.arraycopy(clearText, clearText.length - 10, hmac, 0, 10);
+
+        byte[] decryptedMessage = null;
+        // strip potential padding
+        if (unwrapCipher.getBlockSize() > 0) {
+            int padSize = clearText[clearText.length - 10 - 1];
+            int decryptedMessageSize = clearText.length - 10;
+            if (padSize < 8) {
+                int i = clearText.length - 10 - 1;
+                while (clearText[i] == padSize) {
+                    i--;
+                }
+                decryptedMessageSize = i + 1;
+            }
+            decryptedMessage = new byte[decryptedMessageSize];
+            System.arraycopy(clearText, 0, decryptedMessage, 0, decryptedMessageSize);
+        } else {
+            decryptedMessage = new byte[clearText.length - 10];
+            System.arraycopy(clearText, 0, decryptedMessage, 0, clearText.length - 10);
+        }
+
+        byte[] expectedHmac = computeHMAC(unwrapHmacKeyConfidentiality, extractedSeqNum, decryptedMessage, 0, decryptedMessage.length);
+
+        // check hmac-s
+        if (Arrays2.equals(expectedHmac, 0, hmac, 0, 10) == false) {
+            throw new SaslException("MAC validation failed after decrypting the message");
+        }
+
+        return decryptedMessage;
+    }
+
+    protected void createCiphersAndKeys() throws SaslException {
+
+        if (cipher == null || cipher.length() == 0) {
+            return;
+        }
+
+        wrapCipher = createCipher(true);
+        unwrapCipher = createCipher(false);
+    }
+
+
+    protected Cipher createCipher(boolean wrap) throws SaslException {
+
+        int n = gethA1PrefixLength(cipher);
+
+        ByteStringBuilder key = new ByteStringBuilder();
+        key.append(hA1, 0, n);
+
+        byte[] hmacKey;
+
+        if (wrap) {
+            if (format == FORMAT.CLIENT) {
+                key.append(CLIENT_MAGIC_CONFIDENTIALITY);
+                wrapHmacKeyConfidentiality = md5.digest(key.toArray());
+                hmacKey = wrapHmacKeyConfidentiality;
+            } else {
+                key.append(SERVER_MAGIC_CONFIDENTIALITY);
+                wrapHmacKeyConfidentiality = md5.digest(key.toArray());
+                hmacKey = wrapHmacKeyConfidentiality;
+            }
+        } else {
+            if (format == FORMAT.CLIENT) {
+                key.append(SERVER_MAGIC_CONFIDENTIALITY);
+                unwrapHmacKeyConfidentiality = md5.digest(key.toArray());
+                hmacKey = unwrapHmacKeyConfidentiality;
+            } else {
+                key.append(CLIENT_MAGIC_CONFIDENTIALITY);
+                unwrapHmacKeyConfidentiality = md5.digest(key.toArray());
+                hmacKey = unwrapHmacKeyConfidentiality;
+            }
+        }
+
+
+        byte[] cipherKeyBytes;
+        byte[] IV = null;                             // Initial Vector
+        if (cipher.startsWith("rc")) {
+            cipherKeyBytes = hmacKey.clone();
+        } else if (cipher.equals("des")) {
+            cipherKeyBytes = Arrays.copyOf(hmacKey, 7);    // first 7 bytes
+            IV = Arrays.copyOfRange(hmacKey, 8, 16);  // last 8 bytes
+        } else if (cipher.equals("3des")) {
+            cipherKeyBytes = Arrays.copyOf(hmacKey, 14);   // first 14 bytes
+            IV = Arrays.copyOfRange(hmacKey, 8, 16);  // last 8 bytes
+        } else {
+            throw new SaslException("Unknown ciper (" + cipher + ")");
+        }
+
+        TransformationMapper trans = new DefaultTransformationMapper();
+        Cipher ciph;
+        SecretKey cipherKey;
+        try {
+            ciph = Cipher.getInstance(trans.getTransformationSpec(MD5DigestServerFactory.JBOSS_DIGEST_MD5, cipher).getTransformation());
+            int slash = ciph.getAlgorithm().indexOf('/');
+            String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
+
+            if (cipher.startsWith("rc")) {
+                cipherKey = new SecretKeySpec(cipherKeyBytes, alg);
+            } else if (cipher.equals("des")) {
+                cipherKey = createDesSecretKey(cipherKeyBytes, 0, cipherKeyBytes.length);
+            } else if (cipher.equals("3des")) {
+                //cipherKey = makeDesKeys(cipherKeyBytes, alg);
+                cipherKey = create3desSecretKey(cipherKeyBytes, 0, cipherKeyBytes.length);
+            } else {
+                throw new SaslException("Unsupported cipher (" + cipher + ")");
+            }
+
+            if (IV != null) {
+                ciph.init((wrap ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE), cipherKey, new IvParameterSpec(IV), secureRandomGenerator);
+            } else {
+                ciph.init((wrap ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE), cipherKey, secureRandomGenerator);
+            }
+        } catch (Exception e) {
+            throw new SaslException("Problem getting required cipher. Check your transformation mapper settings.", e);
+        }
+
+        return ciph;
+    }
+
+    private int gethA1PrefixLength(String cipher) {
+        if (cipher.equals("rc4-40")) {
+            return 5;
+        } else if (cipher.equals("rc4-56")) {
+            return 7;
+        } else {
+            return 16;
+        }
     }
 
     private Mac getHmac() throws SaslException {
@@ -569,13 +770,125 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         }
     }
 
-    protected static final void integerByteOrdered(int num, byte[] buf, int offset, int len) {
-        if (len > 4) {
+    protected static void integerByteOrdered(int num, byte[] buf, int offset, int len) {
+        if (len > 4 || len < 1) {
             throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
         }
         for (int i = len - 1; i >= 0; i--) {
             buf[offset + i] = (byte) (num & 0xff);
             num >>>= 8;
+        }
+    }
+
+    protected static int decodeByteOrderedInteger(byte[] buf, int offset, int len) {
+        if (len > 4 || len < 1) {
+            throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
+        }
+        int result = buf[offset];
+        for (int i = 1; i < len; i++) {
+            result <<= 8;
+            result |= buf[offset + i];
+        }
+        return result;
+    }
+
+    private byte[] create3desSubKey(byte[] keyBits, int offset, int len) {
+        if (len != 7) {
+            throw new InvalidParameterException("Only 7 byte long keyBits are transformable to 3des subkey");
+        }
+        int hiMask = 0x00;
+        int loMask = 0xfe;
+        byte[] subkey = new byte[8];
+
+        subkey[0] = (byte)(keyBits[0] & loMask);
+        subkey[0] = fixParityBit(subkey[0]);   // fix for real parity bit
+        for (int i = offset + 1; i < len; i++) {
+            int bitNumber = i - offset;
+            hiMask |= 2 ^ (bitNumber - 1);
+            loMask &= 2 ^ bitNumber;
+            int hibits = keyBits[i - 1] & hiMask;
+            hibits <<= 8 - i - 1;
+            int lobits = keyBits[i] & loMask;
+            lobits >>= i;
+            subkey[i] = (byte) (hibits | lobits);
+            subkey[i] = fixParityBit(subkey[i]);  // fix real parity bits
+        }
+
+        return subkey;
+    }
+
+    /**
+     * Create DES secret key according to http://www.cryptosys.net/3des.html.
+     *
+     * @param keyBits
+     * @param offset
+     * @param len
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws InvalidKeySpecException
+     */
+    private SecretKey createDesSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        if (len != 7) {
+            throw new InvalidParameterException("Only 7 bytes long keyBits are transformable to des key");
+        }
+
+        KeySpec spec = new DESKeySpec(create3desSubKey(keyBits, 0, 7), 0);
+        SecretKeyFactory desFact = SecretKeyFactory.getInstance("DES");
+
+        return desFact.generateSecret(spec);
+    }
+
+    /**
+     * Create 3des secret key according to http://www.cryptosys.net/3des.html.
+     *
+     * @param keyBits
+     * @param offset
+     * @param len
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws InvalidKeySpecException
+     */
+    private SecretKey create3desSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        if (len != 14) {
+            throw new InvalidParameterException("Only 14 bytes long keyBits are transformable to 3des key option2");
+        }
+
+        byte[] key = new byte[24];
+        System.arraycopy(create3desSubKey(keyBits, 0, 7), 0, key, 0, 8);   // subkey1
+        System.arraycopy(create3desSubKey(keyBits, 7, 7), 0, key, 8, 8);   // subkey2
+        System.arraycopy(key, 0, key, 16, 8);                              // subkey3 == subkey1 (in option2 of 3des key
+
+        KeySpec spec = new DESedeKeySpec(key, 0);
+        SecretKeyFactory desFact = SecretKeyFactory.getInstance("DESede");
+
+        return desFact.generateSecret(spec);
+    }
+
+    /**
+     * Fix the rightmost bit to maintain odd parity for the whole byte.
+     *
+     * @param toFix - byte to fix
+     * @return fixed byte with odd parity
+     */
+    private byte fixParityBit(byte toFix) {
+        int b = toFix;
+        int parity = 0;
+        for (int i = 0; i < 7; i++) {
+            int bit = b & 0xfe;
+            parity += bit;
+            b >>= 1;
+        }
+
+        if (parity % 2 == 0) {
+            if ((toFix & 0xfe) == 1) {
+                return (byte)(toFix & 0xfe);
+            } else {
+                return (byte)(toFix | 0x01);
+            }
+        } else {
+            return toFix;
         }
     }
 }

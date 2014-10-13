@@ -43,8 +43,8 @@ import org.wildfly.security.util.TransformationSpec;
  */
 public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements SaslClient {
 
-    private static final int STEP_TWO = 1;
-    private static final int STEP_FOUR = 2;
+    private static final int STEP_TWO = 2;
+    private static final int STEP_FOUR = 4;
 
     private String[] realms;
     private boolean stale = false;
@@ -101,6 +101,10 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                 cipher_opts = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
                 selectCipher(cipher_opts);
             }
+        }
+
+        if (qop != null && qop.equals(QOP_AUTH) == false) {
+            setWrapper(new MD5DigestWrapper(qop.equals(QOP_AUTH_CONF)));
         }
 
         realms = new String[realmList.size()];
@@ -273,10 +277,9 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
 
-        byte[] H_A1 = H_A1(md5, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
-        hA1 = Arrays.copyOf(H_A1, H_A1.length);
+        hA1 = H_A1(md5, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = digestResponse(md5, H_A1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
+        byte[] response_value = digestResponse(md5, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -294,7 +297,6 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
             digestResponse.append(DELIMITER);
             digestResponse.append("cipher=");
             digestResponse.append(cipher);
-            digestResponse.append(DELIMITER);
         }
 
         // authzid
@@ -304,6 +306,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
             digestResponse.append(SaslQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"");
         }
+
+        createCiphersAndKeys();
 
         return digestResponse.toArray();
     }

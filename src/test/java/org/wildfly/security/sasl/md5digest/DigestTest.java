@@ -520,16 +520,17 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange with integrity check
      */
     @Test
-    @Ignore("ELY-89")
     public void testSuccessfulExchangeWithIntegrityCheck() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-int");
+        serverProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-int");
+        clientProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -554,16 +555,25 @@ public class DigestTest extends BaseTestCase {
      * Test a successful exchange with privacy protection
      */
     @Test
-    @Ignore("ELY-89")
     public void testSuccessfulExchangeWithPrivacyProtection() throws Exception {
+        testSuccessulExchangeWithPrivacyProtection("3des");
+        testSuccessulExchangeWithPrivacyProtection("des");
+        testSuccessulExchangeWithPrivacyProtection("rc4");
+        testSuccessulExchangeWithPrivacyProtection("rc4-40");
+        testSuccessulExchangeWithPrivacyProtection("rc4-56");
+    }
+
+    private void testSuccessulExchangeWithPrivacyProtection(String clientCipher)throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-conf");
+        serverProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
+        clientProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, clientCipher);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -582,5 +592,6 @@ public class DigestTest extends BaseTestCase {
         message = client.wrap(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, 0, 3);
         Assert.assertArrayEquals(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, server.unwrap(message, 0, message.length));
     }
+
 
 }

@@ -54,10 +54,10 @@ public class MD5DigestClientFactory extends AbstractSaslFactory implements SaslC
         Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String supprtedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
-        String[] supportedCipherOpts = (supprtedCipherOpts == null ? null : supprtedCipherOpts.split(","));
+        String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String[] ciphers = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, supportedCipherOpts);
+        final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, ciphers);
         client.init();
         return client;
     }
