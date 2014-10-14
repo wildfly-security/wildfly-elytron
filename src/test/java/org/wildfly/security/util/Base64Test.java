@@ -18,23 +18,21 @@
 
 package org.wildfly.security.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 
 /**
  * Tests of encoding/decoding Base64 B (standard alphabet)
  * implemented in org.wildfly.security.util.Base64
- *
- * Reference output by: http://www.freeformatter.com/base64-encoder.html
- *
- * TODO Tests of other implemented variants of Base64 (A/ACryptLE/B/BCrypt)
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
@@ -43,7 +41,11 @@ public class Base64Test {
     private static final char[] customAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
     private static final int[] decodeCustomAlphabet = Base64.getDecodeAlphabet(customAlphabet, true);
 
-    /* Base64 B Encoding */
+
+    /*
+     * Standard Base64 alphabet encoding
+     * (Expected values by http://www.freeformatter.com/base64-encoder.html)
+     */
 
     @Test
     public void testEncodeBlank() {
@@ -57,7 +59,7 @@ public class Base64Test {
     public void testEncodeWithoutPadding() {
         ByteArrayInputStream in = new ByteArrayInputStream("abc".getBytes(StandardCharsets.UTF_8));
         StringBuilder out = new StringBuilder();
-        Base64.base64EncodeStandard(out, in, false);
+        Base64.base64EncodeStandard(out, in, true);
         assertEquals("YWJj", out.toString());
     }
 
@@ -75,6 +77,14 @@ public class Base64Test {
         StringBuilder out = new StringBuilder();
         Base64.base64EncodeStandard(out, in, true);
         assertEquals("YWJjZA==", out.toString());
+    }
+
+    @Test
+    public void testEncodeWithTurnedOffPadding() {
+        ByteArrayInputStream in = new ByteArrayInputStream("abcd".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeStandard(out, in, false);
+        assertEquals("YWJjZA", out.toString());
     }
 
     @Test
@@ -133,7 +143,26 @@ public class Base64Test {
         assertEquals("Zm9vYmFy", out.toString());
     }
 
-    /* Base64 B Decoding */
+    @Test
+    public void testEncodeAgainstPrecomputedValue() throws Exception {
+
+        byte[] input = "Testing input of base64 function".getBytes("UTF-8");
+        ByteStringBuilder encoded = new ByteStringBuilder();
+        ByteStringBuilder decoded = new ByteStringBuilder();
+
+        Base64.base64EncodeStandard(encoded, new ByteArrayInputStream(input), true);
+        Assert.assertArrayEquals("VGVzdGluZyBpbnB1dCBvZiBiYXNlNjQgZnVuY3Rpb24=".getBytes(), encoded.toArray());
+
+        Base64.base64DecodeStandard(encoded.toArray(), 0, decoded);
+        Assert.assertArrayEquals(input, decoded.toArray());
+
+    }
+
+
+    /*
+     * Standard Base64 alphabet decoding
+     * (Expected values by http://www.freeformatter.com/base64-encoder.html)
+     */
 
     @Test
     public void testDecodeBlank() throws Exception {
@@ -216,8 +245,256 @@ public class Base64Test {
         assertEquals("foobar", new String(out));
     }
 
-    /* Custom Base64 alphabet encoding */
-    // Expected values based on known values from org.apache.commons.codec.binary.Base64Test with a URL safe alphabet
+
+    /*
+     * Bcrypt Base64 alphabet encoding
+     * (Expected values by php-litesec library - https://github.com/Jacques1/php-litesec/blob/master/src/password_hash.php)
+     */
+
+    @Test
+    public void testBcryptEncodeF() {
+        ByteArrayInputStream in = new ByteArrayInputStream("f".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeBCrypt(out, in);
+        assertEquals("Xe", out.toString());
+    }
+
+    @Test
+    public void testBcryptEncodeFoobar() {
+        ByteArrayInputStream in = new ByteArrayInputStream("foobar".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeBCrypt(out, in);
+        assertEquals("Xk7tWkDw", out.toString());
+    }
+
+    @Test
+    public void testBcryptEncodeUnicode() {
+        ByteArrayInputStream in = new ByteArrayInputStream("\u0000\u0054\u0123\u1234\uFEDC\uFFFF".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeBCrypt(out, in);
+        assertEquals(".DRCm8EGrM85lM89tu", out.toString());
+    }
+
+
+    /*
+     * Bcrypt Base64 alphabet decoding
+     * (Expected values by php-litesec library - https://github.com/Jacques1/php-litesec/blob/master/src/password_hash.php)
+     */
+
+    @Test
+    public void testBcryptDecodeF() throws Exception {
+        char[] in = "Xe".toCharArray();
+        assertEquals(1, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[1];
+        Base64.base64DecodeBCrypt(inr, out);
+        inr.close();
+        assertEquals("f", new String(out));
+    }
+
+    @Test
+    public void testBcryptDecodeFoobar() throws Exception {
+        char[] in = "Xk7tWkDw".toCharArray();
+        assertEquals(6, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[6];
+        Base64.base64DecodeBCrypt(inr, out);
+        inr.close();
+        assertEquals("foobar", new String(out));
+    }
+
+    @Test
+    public void testBcryptDecodeUnicode() throws Exception {
+        char[] in = ".DRCm8EGrM85lM89tu".toCharArray();
+        assertEquals(13, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[13];
+        Base64.base64DecodeBCrypt(inr, out);
+        inr.close();
+        assertArrayEquals(new byte[]{(byte)0x00,(byte)0x54,(byte)0xC4,(byte)0xA3,(byte)0xE1,(byte)0x88,(byte)0xB4,(byte)0xEF,(byte)0xBB,(byte)0x9C,(byte)0xEF,(byte)0xBF,(byte)0xBF}, out);
+    }
+
+
+    /*
+     * ModCrypt Base64 alphabet encoding
+     * (Expected values by https://github.com/magthe/sandi/blob/master/test-src/Codec/Binary/XxTest.hs)
+     */
+
+    @Test
+    public void testModCryptEncodeF() {
+        ByteArrayInputStream in = new ByteArrayInputStream("f".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("NU", out.toString());
+    }
+
+    @Test
+    public void testModCryptEncodeFo() {
+        ByteArrayInputStream in = new ByteArrayInputStream("fo".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("Naw", out.toString());
+    }
+
+    @Test
+    public void testModCryptEncodeFoo() {
+        ByteArrayInputStream in = new ByteArrayInputStream("foo".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("Naxj", out.toString());
+    }
+
+    @Test
+    public void testModCryptEncodeFoob() {
+        ByteArrayInputStream in = new ByteArrayInputStream("foob".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("NaxjMU", out.toString());
+    }
+
+    @Test
+    public void testModCryptEncodeFooba() {
+        ByteArrayInputStream in = new ByteArrayInputStream("fooba".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("NaxjMa2", out.toString());
+    }
+
+    @Test
+    public void testModCryptEncodeFoobar() {
+        ByteArrayInputStream in = new ByteArrayInputStream("foobar".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCrypt(out, in);
+        assertEquals("NaxjMa3m", out.toString());
+    }
+
+
+    /*
+     * ModCrypt Base64 alphabet decoding
+     * (Expected values by https://github.com/magthe/sandi/blob/master/test-src/Codec/Binary/XxTest.hs)
+     */
+
+    @Test
+    public void testModCryptDecodeF() throws Exception {
+        char[] in = "NU".toCharArray();
+        assertEquals(1, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[1];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("f", new String(out));
+    }
+
+    @Test
+    public void testModCryptDecodeFo() throws Exception {
+        char[] in = "Naw".toCharArray();
+        assertEquals(2, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[2];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("fo", new String(out));
+    }
+
+    @Test
+    public void testModCryptDecodeFoo() throws Exception {
+        char[] in = "Naxj".toCharArray();
+        assertEquals(3, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[3];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("foo", new String(out));
+    }
+
+    @Test
+    public void testModCryptDecodeFoob() throws Exception {
+        char[] in = "NaxjMU".toCharArray();
+        assertEquals(4, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[4];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("foob", new String(out));
+    }
+
+    @Test
+    public void testModCryptDecodeFooba() throws Exception {
+        char[] in = "NaxjMa2".toCharArray();
+        assertEquals(5, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[5];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("fooba", new String(out));
+    }
+
+    @Test
+    public void testModCryptDecodeFoobar() throws Exception {
+        char[] in = "NaxjMa3m".toCharArray();
+        assertEquals(6, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[6];
+        Base64.base64DecodeModCrypt(inr, out);
+        inr.close();
+        assertEquals("foobar", new String(out));
+    }
+
+
+    /*
+     * ModCrypt LE Base64 alphabet encoding
+     * (Expected values by https://github.com/olethanh/django-phpbb/blob/master/phpbb/password_unittest.py)
+     */
+
+    @Test
+    public void testModCryptLeEncodeF() {
+        ByteArrayInputStream in = new ByteArrayInputStream("f".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCryptLE(out, in);
+        assertEquals("a/", out.toString());
+    }
+
+    @Test
+    public void testModCryptLeEncodeFoobar() {
+        ByteArrayInputStream in = new ByteArrayInputStream("foobar".getBytes(StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        Base64.base64EncodeModCryptLE(out, in);
+        assertEquals("axqPW3aQ", out.toString());
+    }
+
+
+    /*
+     * ModCrypt Base64 alphabet decoding
+     * (Expected values by https://github.com/olethanh/django-phpbb/blob/master/phpbb/password_unittest.py)
+     */
+
+    @Test
+    public void testModCryptLeDecodeF() throws Exception {
+        char[] in = "a/".toCharArray();
+        assertEquals(1, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[1];
+        Base64.base64DecodeModCryptLE(inr, out, new int[]{0});
+        inr.close();
+        assertEquals("f", new String(out));
+    }
+
+    @Test
+    public void testModCryptLeDecodeFoobar() throws Exception {
+        char[] in = "axqPW3aQ".toCharArray();
+        assertEquals(6, Base64.calculateDecodedLength(in, 0, in.length));
+        CharacterArrayReader inr = new CharacterArrayReader(in);
+        byte[] out = new byte[6];
+        Base64.base64DecodeModCryptLE(inr, out, new int[]{0,1,2,3,4,5});
+        inr.close();
+        assertEquals("foobar", new String(out));
+    }
+
+
+    /*
+     * Custom Base64 alphabet encoding
+     * (Expected values based on known values from org.apache.commons.codec.binary.Base64Test with a URL safe alphabet)
+     */
 
     @Test
     public void testEncodeCustomBlank() {
@@ -243,8 +520,11 @@ public class Base64Test {
         assertEquals("ZL4VS2_6QCWNGgEojnwxyg==", out.toString());
     }
 
-    /* Custom Base64 alphabet decoding */
-    // Expected values based on known values from org.apache.commons.codec.binary.Base64Test with a URL safe alphabet
+
+    /*
+     * Custom Base64 alphabet decoding
+     * (Expected values based on known values from org.apache.commons.codec.binary.Base64Test with a URL safe alphabet)
+     */
 
     @Test
     public void testDecodeCustomBlank() throws Exception {
@@ -271,7 +551,60 @@ public class Base64Test {
         assertArrayEquals(new byte[]{ 43, -9, -52, 39, 1, -2, 67, -105, -76, -98, -66, -19, 90, -52, 112, -112 }, out);
     }
 
-    /* SASL Base64 test cases */
+
+    /*
+     * Decoding of invalid input
+     */
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testInvalidInputDecodePadding1() throws Exception {
+        char[] encoded = "=".toCharArray();
+        Base64.base64DecodeStandard(encoded, 0, encoded.length);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testInvalidInputDecodePadding2() throws Exception {
+        char[] encoded = "==".toCharArray();
+        Base64.base64DecodeStandard(encoded, 0, encoded.length);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testInvalidInputDecodePadding3() throws Exception {
+        char[] encoded = "===".toCharArray();
+        Base64.base64DecodeStandard(encoded, 0, encoded.length);
+    }
+
+    @Test(expected=InvalidKeySpecException.class)
+    public void testInvalidInputDecodeNonalphabeticChar() throws Exception {
+        char[] encoded = "áááááááááááá".toCharArray();
+        Base64.base64DecodeStandard(encoded, 0, encoded.length);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void testInvalidInputDecodeTooMuchPadding() throws Exception {
+        char[] encoded = "YWI==".toCharArray();
+        Base64.base64DecodeStandard(encoded, 0, encoded.length);
+    }
+
+
+    /*
+     * General Base64 tests
+     */
+
+    @Test
+    public void testCalculateDecodedLength(){
+        assertEquals(0, Base64.calculateDecodedLength("".toCharArray(), 0, 0));
+        assertEquals(1, Base64.calculateDecodedLength("Zg".toCharArray(), 0, 2));
+        assertEquals(1, Base64.calculateDecodedLength("Zg==".toCharArray(), 0, 4));
+        assertEquals(2, Base64.calculateDecodedLength("Zm8".toCharArray(), 0, 3));
+        assertEquals(2, Base64.calculateDecodedLength("Zm8=".toCharArray(), 0, 4));
+        assertEquals(3, Base64.calculateDecodedLength("Zm9v".toCharArray(), 0, 4));
+        assertEquals(4, Base64.calculateDecodedLength("Zm9vYg".toCharArray(), 0, 6));
+        assertEquals(4, Base64.calculateDecodedLength("Zm9vYg==".toCharArray(), 0, 8));
+        assertEquals(5, Base64.calculateDecodedLength("Zm9vYmE".toCharArray(), 0, 7));
+        assertEquals(5, Base64.calculateDecodedLength("Zm9vYmE=".toCharArray(), 0, 8));
+        assertEquals(6, Base64.calculateDecodedLength("Zm9vYmFy".toCharArray(), 0, 8));
+    }
 
     /**
      * Tests if encoding/decoding works properly.
@@ -279,25 +612,25 @@ public class Base64Test {
      */
     @Test
     public void testEncodeDecodeToByteStringBuilderMod0() throws Exception {
-        doEncodeDecodeTest(generateData(255));
+        doEncodeDecodeTest(generateSequence(255));
     }
 
     /**
      * Tests if encoding/decoding works properly.
-     * (data length) % 3 == 0
+     * (data length) % 3 == 1
      */
     @Test
     public void testEncodeDecodeToByteStringBuilderMod1() throws Exception {
-        doEncodeDecodeTest(generateData(256));
+        doEncodeDecodeTest(generateSequence(256));
     }
 
     /**
      * Tests if encoding/decoding works properly.
-     * (data length) % 3 == 0
+     * (data length) % 3 == 2
      */
     @Test
     public void testEncodeDecodeToByteStringBuilderMod2() throws Exception {
-        doEncodeDecodeTest(generateData(253));
+        doEncodeDecodeTest(generateSequence(257));
     }
 
     private void doEncodeDecodeTest(byte[] inputData) throws Exception {
@@ -315,20 +648,22 @@ public class Base64Test {
     }
 
     private boolean isInRange(byte[] data) {
-        boolean allMembersInRange = true;
         for (int i = 0; i < data.length; i++) {
-            if (data[i] == '=') {
+            if (data[i] == '=') { // padding - can be only at end of string
                 if ((i != data.length - 1) && (i != data.length - 2)) {
-                    allMembersInRange = false;
+                    return false;
                 }
-            } else {
-                if (!((data[i] >= 'A' && data[i] <= 'Z') || (data[i] >= 'a' && data[i] <= 'z')
-                        || (data[i] >= '0' && data[i] <= '9') || data[i] == '+' || data[i] == '/')) {
-                    allMembersInRange = false;
+            } else { // in standard alphabet
+                if (!((data[i] >= 'A' && data[i] <= 'Z') ||
+                      (data[i] >= 'a' && data[i] <= 'z') ||
+                      (data[i] >= '0' && data[i] <= '9') ||
+                      (data[i] == '+') ||
+                      (data[i] == '/') )) {
+                    return false;
                 }
             }
         }
-        return allMembersInRange;
+        return true;
     }
 
     private void assertEncodedLength(int originalLen, int encodedLen) {
@@ -343,7 +678,7 @@ public class Base64Test {
         assertTrue("Encoded data are too long for base64 encoding ", encodedLen <= expectedLen);
     }
 
-    private byte[] generateData(final int len) {
+    private byte[] generateSequence(final int len) {
         byte[] data = new byte[len];
         for (int i = 0; i < len ; i++) {
             data[i] = (byte)i;
@@ -351,18 +686,4 @@ public class Base64Test {
         return data;
     }
 
-    @Test
-    public void testEncodeAgainstPrecomputedValue() throws Exception {
-
-        byte[] input = "Testing input of base64 function".getBytes("UTF-8");
-        ByteStringBuilder encoded = new ByteStringBuilder();
-        ByteStringBuilder decoded = new ByteStringBuilder();
-
-        Base64.base64EncodeStandard(encoded, new ByteArrayInputStream(input), true);
-        Assert.assertArrayEquals("VGVzdGluZyBpbnB1dCBvZiBiYXNlNjQgZnVuY3Rpb24=".getBytes(), encoded.toArray());
-
-        Base64.base64DecodeStandard(encoded.toArray(), 0, decoded);
-        Assert.assertArrayEquals(input, decoded.toArray());
-
-    }
 }

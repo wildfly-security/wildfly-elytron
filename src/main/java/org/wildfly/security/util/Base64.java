@@ -646,7 +646,7 @@ public final class Base64 {
      * @param len the number of characters that will be decoded
      * @return the size of the byte array that will be needed to store the decoded bytes
      */
-    private static int calculateDecodedLength(char[] encoded, int offset, int len) {
+    public static int calculateDecodedLength(char[] encoded, int offset, int len) {
         if (len == 0) {
             return 0;
         }
@@ -654,14 +654,14 @@ public final class Base64 {
         // Determine if padding characters are present
         int numPaddings = 0;
         if (encoded[offset + len - 1] == PAD) {
-            numPaddings += 1;
-            if (encoded[offset + len - 2] == PAD) {
-                numPaddings += 1;
+            numPaddings = 1;
+            if (len >= 2 && encoded[offset + len - 2] == PAD) {
+                numPaddings = 2;
             }
         }
 
         int remainder = len % 4;
-        if ((numPaddings == 0) & (remainder != 0)) {
+        if ((numPaddings == 0) && (remainder != 0)) {
             numPaddings = 4 - remainder;
         }
         return (((len + 3) / 4) * 3) - numPaddings;
