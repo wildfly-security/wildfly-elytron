@@ -38,7 +38,7 @@ import org.wildfly.security.sasl.util.ByteStringBuilder;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class Base64BTest {
+public class Base64Test {
 
     private static final char[] customAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
     private static final int[] decodeCustomAlphabet = Base64.getDecodeAlphabet(customAlphabet, true);
