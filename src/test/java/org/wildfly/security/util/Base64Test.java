@@ -606,6 +606,11 @@ public class Base64Test {
         assertEquals(6, Base64.calculateDecodedLength("Zm9vYmFy".toCharArray(), 0, 8));
     }
 
+    @Test(expected=IllegalArgumentException.class)
+    public void testCalculateDecodedLengthOfTooShort() throws Exception {
+        Base64.calculateDecodedLength("=".toCharArray(), 0, 1);
+    }
+
     /**
      * Tests if encoding/decoding works properly.
      * (data length) % 3 == 0

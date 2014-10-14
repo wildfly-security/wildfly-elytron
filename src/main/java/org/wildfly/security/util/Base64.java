@@ -647,15 +647,15 @@ public final class Base64 {
      * @return the size of the byte array that will be needed to store the decoded bytes
      */
     public static int calculateDecodedLength(char[] encoded, int offset, int len) {
-        if (len == 0) {
-            return 0;
-        }
+        if (len == 0) return 0;
+        if (len < 2) throw truncatedInput();
+
 
         // Determine if padding characters are present
         int numPaddings = 0;
         if (encoded[offset + len - 1] == PAD) {
             numPaddings = 1;
-            if (len >= 2 && encoded[offset + len - 2] == PAD) {
+            if (encoded[offset + len - 2] == PAD) {
                 numPaddings = 2;
             }
         }
