@@ -35,6 +35,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtils;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -261,6 +262,17 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
         return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given key store and alias
+     * to acquire the credential required for authentication.
+     *
+     * @param keyStoreEntry the key store entry to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useKeyStoreCredential(KeyStore.Entry keyStoreEntry) {
+        return keyStoreEntry == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyStoreEntry));
     }
 
     /**

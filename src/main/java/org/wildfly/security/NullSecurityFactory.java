@@ -16,28 +16,26 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth;
+package org.wildfly.security;
 
-import static java.security.AccessController.doPrivileged;
-
-import java.security.PrivilegedAction;
+import java.security.GeneralSecurityException;
 
 /**
- * A lazily-initialized holder for the default identity context.  If an error occurs setting up the default identity
- * context, the empty context is used.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class DefaultIdentityContextProvider {
+public final class NullSecurityFactory<T> implements SecurityFactory<T> {
 
-    static final IdentityContext DEFAULT;
+    static final NullSecurityFactory<Object> INSTANCE = new NullSecurityFactory<>();
 
-    static {
-        DEFAULT = doPrivileged(new PrivilegedAction<IdentityContext>() {
-            public IdentityContext run() {
-                // todo: configure from default configuration
-                return IdentityContext.EMPTY;
-            }
-        });
+    NullSecurityFactory() {
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> NullSecurityFactory<T> getInstance() {
+        return (NullSecurityFactory<T>) INSTANCE;
+    }
+
+    public T create() throws GeneralSecurityException {
+        return null;
     }
 }

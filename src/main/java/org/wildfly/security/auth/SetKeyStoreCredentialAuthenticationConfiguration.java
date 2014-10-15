@@ -19,10 +19,9 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -32,6 +31,8 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.x500.X500PrivateCredential;
 
+import org.wildfly.security.OneTimeSecurityFactory;
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
@@ -43,19 +44,19 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
  */
 class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private final KeyStore keyStore;
-    private final String alias;
-    private final KeyStore.ProtectionParameter protectionParameter;
+    private final SecurityFactory<KeyStore.Entry> entryFactory;
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final KeyStore keyStore, final String alias, final KeyStore.ProtectionParameter protectionParameter) {
+        this(parent, new OneTimeSecurityFactory<>(new KeyStoreEntrySecurityFactory(keyStore, alias, protectionParameter)));
+    }
+
+    SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
         super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class));
-        this.keyStore = keyStore;
-        this.alias = alias;
-        this.protectionParameter = protectionParameter;
+        this.entryFactory = entryFactory;
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SetKeyStoreCredentialAuthenticationConfiguration(newParent, keyStore, alias, protectionParameter);
+        return new SetKeyStoreCredentialAuthenticationConfiguration(newParent, entryFactory);
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
@@ -64,8 +65,8 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             final CredentialCallback credentialCallback = (CredentialCallback) callback;
             final KeyStore.Entry entry;
             try {
-                entry = keyStore.getEntry(alias, protectionParameter);
-            } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableEntryException e) {
+                entry = entryFactory.create();
+            } catch (GeneralSecurityException e) {
                 throw new IOException("Unable to read credential", e);
             }
             if (entry instanceof PasswordEntry) {
@@ -94,8 +95,8 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
         } else if (callback instanceof PasswordCallback) {
             final KeyStore.Entry entry;
             try {
-                entry = keyStore.getEntry(alias, protectionParameter);
-            } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableEntryException e) {
+                entry = entryFactory.create();
+            } catch (GeneralSecurityException e) {
                 throw new IOException("Unable to read credential", e);
             }
             if (entry instanceof PasswordEntry) {

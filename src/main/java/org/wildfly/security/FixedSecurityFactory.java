@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2014 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,21 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.login;
+package org.wildfly.security;
 
-import java.util.Map;
-
-import javax.security.auth.callback.CallbackHandler;
+import java.security.GeneralSecurityException;
 
 /**
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface ClientAuthenticationService {
-    ClientAuthentication login(Map<String, ?> properties, CallbackHandler callbackHandler) throws AuthenticationException;
+public final class FixedSecurityFactory<T> implements SecurityFactory<T> {
+    private final T value;
 
-    ClientAuthentication login(CallbackHandler callbackHandler) throws AuthenticationException;
+    public FixedSecurityFactory(final T value) {
+        this.value = value;
+    }
+
+    public T create() throws GeneralSecurityException {
+        return value;
+    }
 }

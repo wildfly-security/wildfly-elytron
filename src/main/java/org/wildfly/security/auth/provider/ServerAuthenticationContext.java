@@ -29,14 +29,14 @@ import org.wildfly.security.auth.login.AuthenticationException;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class AuthenticationContext {
+public final class ServerAuthenticationContext {
 
     private final SecurityDomain domain;
 
     private String establishedRealmName;
     private RealmIdentity establishedRealmIdentity;
 
-    AuthenticationContext(final SecurityDomain domain) {
+    ServerAuthenticationContext(final SecurityDomain domain) {
         this.domain = domain;
     }
 

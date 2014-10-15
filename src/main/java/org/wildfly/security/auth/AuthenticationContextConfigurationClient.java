@@ -20,26 +20,38 @@ package org.wildfly.security.auth;
 
 import java.net.URI;
 import java.security.Principal;
+import java.security.PrivilegedAction;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.permission.ElytronPermission;
+
 /**
- * A client for consuming identity context configurations.
+ * A client for consuming authentication context configurations.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class IdentityContextConfigurationClient {
+public final class AuthenticationContextConfigurationClient {
 
+    private static final ElytronPermission CREATE_PERMISSION = new ElytronPermission("createAuthenticationContextConfigurationClient");
+
+    /**
+     * A reusable privileged action to create a new configuration client.
+     */
+    public static final PrivilegedAction<AuthenticationContextConfigurationClient> ACTION = new PrivilegedAction<AuthenticationContextConfigurationClient>() {
+        public AuthenticationContextConfigurationClient run() {
+            return new AuthenticationContextConfigurationClient();
+        }
+    };
     /**
      * Construct a new instance.
      *
      * @throws SecurityException if the caller does not have permission to instantiate this class
      */
-    public IdentityContextConfigurationClient() throws SecurityException {
+    public AuthenticationContextConfigurationClient() throws SecurityException {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            // todo
-            //sm.checkPermission(null);
+            sm.checkPermission(CREATE_PERMISSION);
         }
     }
 
@@ -47,13 +59,13 @@ public final class IdentityContextConfigurationClient {
      * Get the authentication configuration which matches the given URI, or {@code null} if there is none.
      *
      * @param uri the URI to match
-     * @param identityContext the identity context to examine
+     * @param authenticationContext the authentication context to examine
      * @return the matching configuration
      */
-    public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, IdentityContext identityContext) {
-        final int idx = identityContext.ruleMatching(uri);
+    public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext) {
+        final int idx = authenticationContext.ruleMatching(uri);
         if (idx == -1) return null;
-        return identityContext.getAuthenticationConfiguration(idx);
+        return authenticationContext.getAuthenticationConfiguration(idx);
     }
 
     /**

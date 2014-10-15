@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2014 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="urn:elytron:1.0"
+            xmlns="urn:elytron:1.0"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            version="1.0">
+
+    <!-- Authentication client elements -->
+
+    <xsd:element name="authentication-client" type="authentication-client-type"/>
+
+    <xsd:complexType name="authentication-client-type">
+        <xsd:all minOccurs="1" maxOccurs="1">
+            <xsd:element name="key-stores" type="key-stores-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="rules" type="authentication-client-rules-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="net-authenticator" type="empty-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="authentication-client-rules-type">
+        <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="rule" type="authentication-client-rule-type" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="authentication-client-rule-type">
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                <xsd:element name="match-no-userinfo" type="empty-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-userinfo" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-protocol" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-host" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-path" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-port" type="port-number-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-urn" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="match-domain" type="name-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                <xsd:element name="set-host" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="set-port" type="port-number-simple-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="set-user-name" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="set-anonymous" type="empty-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="require-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="extends" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="key-stores-type">
+        <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="key-store" type="key-store-type"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:complexType name="key-store-type">
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <!-- Access source type -->
+            <xsd:choice minOccurs="1" maxOccurs="1">
+                <xsd:element name="file" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="load-from" type="uri-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="resource" type="name-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+            <!-- Protection parameter -->
+            <xsd:choice minOccurs="0" maxOccurs="1">
+                <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="type" type="xsd:string" use="required"/>
+        <xsd:attribute name="provider" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="key-store-ref-type">
+        <!-- Protection parameter -->
+        <xsd:choice minOccurs="0" maxOccurs="1">
+            <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+        </xsd:choice>
+        <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
+        <xsd:attribute name="alias" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <!-- Common types -->
+
+    <xsd:complexType name="empty-type"/>
+
+    <xsd:complexType name="name-type">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="port-number-type">
+        <xsd:attribute name="number" type="port-number-simple-type" use="required"/>
+    </xsd:complexType>
+
+    <xsd:simpleType name="port-number-simple-type">
+        <xsd:restriction base="xsd:positiveInteger">
+            <xsd:minInclusive value="1"/>
+            <xsd:maxInclusive value="65535"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:complexType name="regex-substitution-type">
+        <xsd:attribute name="pattern" type="xsd:string" use="required"/>
+        <xsd:attribute name="replacement" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="names-list-type">
+        <xsd:attribute name="names" type="names-list-simple-type" use="required"/>
+    </xsd:complexType>
+
+    <xsd:simpleType name="names-list-simple-type">
+        <xsd:list itemType="xsd:string"/>
+    </xsd:simpleType>
+
+    <xsd:complexType name="uri-type">
+        <xsd:attribute name="uri" type="xsd:anyURI" use="required"/>
+    </xsd:complexType>
+</xsd:schema>

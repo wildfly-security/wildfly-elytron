@@ -83,7 +83,7 @@ public interface RealmIdentity {
     <C> C getCredential(Class<C> credentialType);
 
     /**
-     * Create the {@link SecurityIdentity} that will be associated with the {@link org.wildfly.security.auth.IdentityContext IdentityContext}
+     * Create the {@link SecurityIdentity} that will be associated with the {@link org.wildfly.security.auth.AuthenticationContext AuthenticationContex }
      *
      * Note: The caller is responsible for ensuring the identity is actually authenticated.
      *

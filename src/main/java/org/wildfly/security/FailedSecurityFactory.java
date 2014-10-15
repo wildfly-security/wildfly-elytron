@@ -16,22 +16,21 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl;
+package org.wildfly.security;
 
-import java.util.Map;
-
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-
-import org.wildfly.security.auth.provider.ServerAuthenticationContext;
+import java.security.GeneralSecurityException;
 
 /**
- * A SASL server factory which is compatible with an {@link ServerAuthenticationContext}.
- *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface SaslServerFactory {
-    SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> properties, ServerAuthenticationContext authenticationContext) throws SaslException;
+public final class FailedSecurityFactory<T> implements SecurityFactory<T> {
+    private final GeneralSecurityException exception;
 
-    String[] getMechanismNames(Map<String, ?> properties, ServerAuthenticationContext authenticationContext);
+    public FailedSecurityFactory(final GeneralSecurityException exception) {
+        this.exception = exception;
+    }
+
+    public T create() throws GeneralSecurityException {
+        throw exception;
+    }
 }
