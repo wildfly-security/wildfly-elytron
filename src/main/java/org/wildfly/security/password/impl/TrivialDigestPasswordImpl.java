@@ -62,7 +62,7 @@ class TrivialDigestPasswordImpl extends AbstractPasswordImpl implements TrivialD
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == TrivialDigestPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(TrivialDigestPasswordSpec.class)) {
             return keySpecType.cast(new TrivialDigestPasswordSpec(algorithm, digest.clone()));
         }
         throw new InvalidKeySpecException();
@@ -103,7 +103,7 @@ class TrivialDigestPasswordImpl extends AbstractPasswordImpl implements TrivialD
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType == TrivialDigestPasswordSpec.class;
+        return keySpecType.isAssignableFrom(TrivialDigestPasswordSpec.class);
     }
 
     public String getAlgorithm() {

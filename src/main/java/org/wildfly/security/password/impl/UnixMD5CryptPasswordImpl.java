@@ -107,7 +107,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == UnixMD5CryptPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(UnixMD5CryptPasswordSpec.class)) {
             return keySpecType.cast(new UnixMD5CryptPasswordSpec(getHash(), getSalt()));
         }
         throw new InvalidKeySpecException();
@@ -127,7 +127,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType == UnixMD5CryptPasswordSpec.class;
+        return keySpecType.isAssignableFrom(UnixMD5CryptPasswordSpec.class);
     }
 
     /**

@@ -72,8 +72,8 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        final char[] password = getPassword();
-        if (keySpecType == ClearPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(ClearPasswordSpec.class)) {
+            final char[] password = getPassword();
             return keySpecType.cast(new ClearPasswordSpec(password.clone()));
         }
         throw new InvalidKeySpecException();
@@ -84,6 +84,6 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType == ClearPasswordSpec.class;
+        return keySpecType.isAssignableFrom(ClearPasswordSpec.class);
     }
 }

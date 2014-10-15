@@ -81,7 +81,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == UnixDESCryptPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(UnixDESCryptPasswordSpec.class)) {
             return keySpecType.cast(new UnixDESCryptPasswordSpec(hash.clone(), salt));
         }
         throw new InvalidKeySpecException();
@@ -92,7 +92,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType == UnixDESCryptPasswordSpec.class;
+        return keySpecType.isAssignableFrom(UnixDESCryptPasswordSpec.class);
     }
 
     public String getAlgorithm() {

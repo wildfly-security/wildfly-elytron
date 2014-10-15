@@ -104,7 +104,7 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType == TrivialSaltedDigestPasswordSpec.class) {
+        if (keySpecType.isAssignableFrom(TrivialSaltedDigestPasswordSpec.class)) {
             return keySpecType.cast(new TrivialSaltedDigestPasswordSpec(algorithm, digest.clone(), salt.clone()));
         }
         throw new InvalidKeySpecException();
@@ -121,7 +121,7 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType == TrivialSaltedDigestPasswordSpec.class;
+        return keySpecType.isAssignableFrom(TrivialSaltedDigestPasswordSpec.class);
     }
 
     private static byte[] digestOf(final String algorithm, final byte[] salt, final char[] password)
