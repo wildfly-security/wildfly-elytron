@@ -50,6 +50,7 @@ import org.wildfly.security.sasl.util.HexConverter;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 @RunWith(BMUnitRunner.class)
+@Ignore("ELY-98 byteman test hangs")
 public class CompatibilityClientTest extends BaseTestCase {
 
     //protected static final String NONCE_CLASS = "com.sun.security.sasl.digest.DigestMD5Base";
