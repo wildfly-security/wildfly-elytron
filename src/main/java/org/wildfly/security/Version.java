@@ -36,19 +36,25 @@ public final class Version {
     }
 
     private static final String VERSION;
+    private static final String JAR_NAME;
 
     static {
         Properties versionProps = new Properties();
         String versionString = "(unknown)";
+        String jarName = "(unknown)";
         try (final InputStream stream = Version.class.getResourceAsStream("Version.properties")) {
             try (final InputStreamReader reader = new InputStreamReader(stream)) {
                 versionProps.load(reader);
                 versionString = versionProps.getProperty("version", versionString);
+                jarName = versionProps.getProperty("jarName", jarName);
             }
         } catch (IOException ignored) {
         }
         VERSION = versionString;
-        ElytronMessages.log.logVersion(versionString);
+        JAR_NAME = jarName;
+        try {
+            ElytronMessages.log.logVersion(versionString);
+        } catch (Throwable ignored) {}
     }
 
     /**
@@ -61,11 +67,11 @@ public final class Version {
     }
 
     /**
-     * Print the version to {@code System.out}.
+     * Get the JAR name.
      *
-     * @param args ignored
+     * @return the JAR name
      */
-    public static void main(String[] args) {
-        System.out.print(VERSION);
+    public static String getJarName() {
+        return JAR_NAME;
     }
 }
