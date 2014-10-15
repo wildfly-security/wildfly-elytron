@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.md5digest;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,9 +105,9 @@ public class DigestTest extends BaseTestCase {
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message));
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message));
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
         assertEquals("George", server.getAuthorizationID());
@@ -126,9 +127,9 @@ public class DigestTest extends BaseTestCase {
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message));
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message));
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
@@ -151,9 +152,9 @@ public class DigestTest extends BaseTestCase {
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message));
+        log.debug("Challenge:"+ new String(message, StandardCharsets.UTF_8));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message));
+        log.debug("Client response:"+ new String(message, StandardCharsets.UTF_8));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
@@ -279,9 +280,9 @@ public class DigestTest extends BaseTestCase {
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message));
+        log.debug("Challenge:"+ new String(message, StandardCharsets.UTF_8));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message));
+        log.debug("Client response:"+ new String(message, StandardCharsets.UTF_8));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());

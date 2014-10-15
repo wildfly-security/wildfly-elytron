@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.md5digest;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -146,7 +147,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
     private void noteDigestResponseData(HashMap<String, byte[]> parsedDigestResponse) {
         byte[] data = parsedDigestResponse.get("nc");
         if (data != null) {
-            nonceCount = Integer.valueOf(new String(data));
+            nonceCount = Integer.valueOf(new String(data, StandardCharsets.UTF_8));
         } else {
             nonceCount = -1;
         }
@@ -159,7 +160,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
 
         Charset clientCharset = Charsets.LATIN_1;
         if (parsedDigestResponse.get("charset") != null) {
-            String cCharset = new String(parsedDigestResponse.get("charset"));
+            String cCharset = new String(parsedDigestResponse.get("charset"), StandardCharsets.UTF_8);
             if (Charsets.UTF_8.equals(getCharset()) && cCharset.equals("utf-8")) {
                 clientCharset = Charsets.UTF_8;
             } else {

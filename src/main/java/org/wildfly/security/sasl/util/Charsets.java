@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Character sets used by SASL protocols.
@@ -30,12 +31,12 @@ public final class Charsets {
     /**
      * The {@code UTF-8} character set.
      */
-    public static final Charset UTF_8 = Charset.forName("UTF-8");
+    public static final Charset UTF_8 = StandardCharsets.UTF_8;
 
     /**
      * The {@code 8859_1} character set.
      */
-    public static final Charset LATIN_1 = Charset.forName("8859_1");
+    public static final Charset LATIN_1 = StandardCharsets.ISO_8859_1;
 
     /**
      * Encode a string into UTF-8 (except encoding character zero to its two-byte form).

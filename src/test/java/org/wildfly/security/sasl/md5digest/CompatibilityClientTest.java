@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,12 +75,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=d388dad90d4bbd760a152321f2143af7,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=ea40f60335c427b5527b84dbabcdfffd".getBytes();
+        byte[] message3 = "rspauth=ea40f60335c427b5527b84dbabcdfffd".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -102,12 +103,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=6084c6db3fede7352c551284490fd0fc,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=2f0b3d7c3c2e486600ef710726aa2eae".getBytes();
+        byte[] message3 = "rspauth=2f0b3d7c3c2e486600ef710726aa2eae".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -130,12 +131,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=aa4e81f1c6656350f7bce05d436665de,qop=auth,authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=af3ca83a805d4cfa00675a17315475c4".getBytes();
+        byte[] message3 = "rspauth=af3ca83a805d4cfa00675a17315475c4".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -161,12 +162,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-int\",charset=utf-8,algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-int\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=d8b17f55b410208c6ebb22f89f9d6cbb,qop=auth-int,authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=7a8794654d6d6de607e9143d52b554a8".getBytes();
+        byte[] message3 = "rspauth=7a8794654d6d6de607e9143d52b554a8".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -220,12 +221,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=4520cf48234bb93b95548a25cd56601b,qop=auth-conf,cipher=\"3des\",authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes();
+        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -279,12 +280,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=4520cf48234bb93b95548a25cd56601b,qop=auth-conf,cipher=\"rc4\",authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes();
+        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -338,12 +339,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"des\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"des\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=4520cf48234bb93b95548a25cd56601b,qop=auth-conf,cipher=\"des\",authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes();
+        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -397,12 +398,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4-56\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4-56\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=4520cf48234bb93b95548a25cd56601b,qop=auth-conf,cipher=\"rc4-56\",authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes();
+        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -456,12 +457,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4-40\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"rc4-40\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=4520cf48234bb93b95548a25cd56601b,qop=auth-conf,cipher=\"rc4-40\",authzid=\"chris\"", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes();
+        byte[] message3 = "rspauth=a804fda66588e2d911bbacd1b1163bc1".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -515,7 +516,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"unknown\",algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"unknown\",algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         try{
             client.evaluateChallenge(message1);
             fail("Not thrown SaslException!");
@@ -539,12 +540,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"other-realm\",realm=\"elwood.innosoft.com\",realm=\"next-realm\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "realm=\"other-realm\",realm=\"elwood.innosoft.com\",realm=\"next-realm\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=d388dad90d4bbd760a152321f2143af7,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=ea40f60335c427b5527b84dbabcdfffd".getBytes();
+        byte[] message3 = "rspauth=ea40f60335c427b5527b84dbabcdfffd".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -566,12 +567,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=695dcc815019923b9d438fd28c641aa9,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=ef0a550cd88d926ff426790bef156af3".getBytes();
+        byte[] message3 = "rspauth=ef0a550cd88d926ff426790bef156af3".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -589,7 +590,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         try{
             client.evaluateChallenge(message1);
             fail("Not thrown SaslException!");
@@ -613,12 +614,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "nonce=\"\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes();
+        byte[] message1 = "nonce=\"\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"chris\",nonce=\"\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=c87a63a455fed82d007a7996d49a51bc,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=fa4e5be53f9b154858fb82d96c93a03a".getBytes();
+        byte[] message3 = "rspauth=fa4e5be53f9b154858fb82d96c93a03a".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
@@ -639,12 +640,12 @@ public class CompatibilityClientTest extends BaseTestCase {
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
-        byte[] message1 = "realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",charset=utf-8,algorithm=md5-sess".getBytes();
+        byte[] message1 = "realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"\u0438\u4F60\uD83C\uDCA1\",realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",nc=00000001,cnonce=\"cn\u0438\u4F60\uD83C\uDCA1\",digest-uri=\"\u0438\u4F60\uD83C\uDCA1/realm.\u0438\u4F60\uD83C\uDCA1.com\",maxbuf=65536,response=420939e06d2d748c157c5e33499b41a9,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes();
+        byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());

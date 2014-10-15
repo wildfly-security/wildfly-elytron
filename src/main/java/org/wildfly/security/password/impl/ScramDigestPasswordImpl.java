@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -177,7 +178,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
         // compute U1 (see Hi function description in the javadoc).
         hmac.update(salt);
-        hmac.update("\00\00\00\01".getBytes());
+        hmac.update("\00\00\00\01".getBytes(StandardCharsets.UTF_8));
         byte[] hi = hmac.doFinal();
 
         // compute U2 ... Ui, performing the xor with the previous result as we iterate.

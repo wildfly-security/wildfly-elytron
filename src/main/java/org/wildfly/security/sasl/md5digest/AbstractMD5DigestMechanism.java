@@ -322,7 +322,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
                     }
                 }
                 else {
-                    key.append((char)b);
+                    key.append((char)(b & 0xff));
                     i++;
                 }
             }
@@ -362,11 +362,11 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             }
             // expect separator
             else if (expectSeparator) {
-                String val = new String(value.toArray());
+                String val = new String(value.toArray(), charset);
                 throw new SaslException("Expecting comma or linear whitespace after quoted string: \"" + val + "\"");
             }
             else {
-                value.append((char)b);
+                value.append(b);
                 i++;
             }
         }

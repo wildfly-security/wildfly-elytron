@@ -27,6 +27,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,7 +105,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("George\0George\0gpwd",new String(message));
+        assertEquals("George\0George\0gpwd",new String(message, StandardCharsets.UTF_8));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
@@ -128,7 +129,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("George\0George\0bad",new String(message));
+        assertEquals("George\0George\0bad",new String(message, StandardCharsets.UTF_8));
 
         try {
             server.evaluateResponse(message);
@@ -155,7 +156,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("George\0George\0gpwd",new String(message));
+        assertEquals("George\0George\0gpwd",new String(message, StandardCharsets.UTF_8));
 
         try {
             server.evaluateResponse(message);
@@ -182,7 +183,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("\0George\0gpwd",new String(message));
+        assertEquals("\0George\0gpwd",new String(message, StandardCharsets.UTF_8));
 
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
@@ -206,7 +207,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("Borris\0George\0gpwd",new String(message));
+        assertEquals("Borris\0George\0gpwd",new String(message, StandardCharsets.UTF_8));
 
         try {
             server.evaluateResponse(message);
@@ -234,7 +235,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",new String(message));
+        assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",new String(message, StandardCharsets.UTF_8));
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
         assertTrue(client.isComplete());

@@ -21,6 +21,7 @@ package org.wildfly.security;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 import org.wildfly.security._private.ElytronMessages;
@@ -43,7 +44,7 @@ public final class Version {
         String versionString = "(unknown)";
         String jarName = "(unknown)";
         try (final InputStream stream = Version.class.getResourceAsStream("Version.properties")) {
-            try (final InputStreamReader reader = new InputStreamReader(stream)) {
+            try (final InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 versionProps.load(reader);
                 versionString = versionProps.getProperty("version", versionString);
                 jarName = versionProps.getProperty("jarName", jarName);

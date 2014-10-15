@@ -21,6 +21,7 @@ package org.wildfly.security.password.impl;
 import static org.junit.Assert.*;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Arrays;
@@ -66,16 +67,16 @@ public class ScramDigestPasswordTest {
         ScramDigestPasswordSpec spec;
         ScramDigestPasswordImpl impl;
 
-        digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_1, "password".getBytes(), "salt".getBytes(), 4096);
+        digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_1, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 4096);
         assertEquals("4b007901b765489abead49d926f721d065a429c1", HexConverter.convertToHexString(digest));
-        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_1, digest, "salt".getBytes(), 4096);
+        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_1, digest, "salt".getBytes(StandardCharsets.UTF_8), 4096);
         impl = new ScramDigestPasswordImpl(spec);
         assertTrue(impl.verify("password".toCharArray()));
         assertFalse(impl.verify("bad".toCharArray()));
 
-        digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_256, "password".getBytes(), "salt".getBytes(), 1000);
+        digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_256, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 1000);
         assertEquals("632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3", HexConverter.convertToHexString(digest));
-        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_256, digest, "salt".getBytes(), 1000);
+        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_256, digest, "salt".getBytes(StandardCharsets.UTF_8), 1000);
         impl = new ScramDigestPasswordImpl(spec);
         assertTrue(impl.verify("password".toCharArray()));
         assertFalse(impl.verify("bad".toCharArray()));
@@ -120,10 +121,10 @@ public class ScramDigestPasswordTest {
         byte[] normalized;
 
         normalized = ScramDigestPasswordImpl.getNormalizedPasswordBytes("Password\uFFFF".toCharArray());
-        Assert.assertArrayEquals("Password\uFFFF".getBytes(), normalized);
+        Assert.assertArrayEquals("Password\uFFFF".getBytes(StandardCharsets.UTF_8), normalized);
 
         normalized = ScramDigestPasswordImpl.getNormalizedPasswordBytes("a\u0041\u030Ab".toCharArray());
-        Assert.assertArrayEquals("a\u00C5b".getBytes(), normalized);
+        Assert.assertArrayEquals("a\u00C5b".getBytes(StandardCharsets.UTF_8), normalized);
     }
 
     @Test
@@ -143,7 +144,7 @@ public class ScramDigestPasswordTest {
     }
 
     private void performTest(final String algorithm, String password, String hexDigest, String salt, final int iterationCount) throws Exception {
-        performTest(algorithm, password.toCharArray(), HexConverter.convertFromHex(hexDigest), salt.getBytes(), iterationCount);
+        performTest(algorithm, password.toCharArray(), HexConverter.convertFromHex(hexDigest), salt.getBytes(StandardCharsets.UTF_8), iterationCount);
     }
 
     private void performTest(final String algorithm, char[] password, final char[] base64Digest, final char[] base64Salt, final int iterationCount) throws Exception {

@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.md5digest;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -82,16 +83,16 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         for (String keyWord: parsedChallenge.keySet()) {
 
             if (keyWord.startsWith("realm")) {
-                realmList.add(new String(parsedChallenge.get(keyWord)));
+                realmList.add(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
             }
             else if (keyWord.equals("qop")) {
-                qop = new String(parsedChallenge.get(keyWord));
+                qop = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
             }
             else if (keyWord.equals("stale")) {
-                stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord)));
+                stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
             }
             else if (keyWord.equals("maxbuf")) {
-                int maxbuf = Integer.parseInt(new String(parsedChallenge.get(keyWord)));
+                int maxbuf = Integer.parseInt(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
                 if (maxbuf > 0) {
                     this.maxbuf = maxbuf;
                 }
@@ -100,7 +101,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
                 nonce = parsedChallenge.get(keyWord);
             }
             else if (keyWord.equals("cipher")) {
-                cipher_opts = new String(parsedChallenge.get(keyWord));
+                cipher_opts = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
                 selectCipher(cipher_opts);
             }
         }
@@ -174,7 +175,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         Charset serverHashedURPUsingcharset;
         byte[] chb = parsedChallenge.get("charset");
         if (chb != null) {
-            String chs = new String(chb);
+            String chs = new String(chb, StandardCharsets.UTF_8);
             if ("utf-8".equals(chs)) {
                 serverHashedURPUsingcharset = Charsets.UTF_8;
             } else {
@@ -294,7 +295,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         if (authorizationId != null) {
             digestResponse.append(DELIMITER);
             digestResponse.append("authzid=\"");
-            digestResponse.append(SaslQuote.quote(authorizationId).getBytes(Charsets.UTF_8));
+            digestResponse.append(SaslQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"");
         }
 
