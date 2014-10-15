@@ -22,6 +22,8 @@ import java.io.CharArrayReader;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
+import org.wildfly.security.util._private.Arrays2;
+
 /**
  * This class can be used as a character-input stream.
  *

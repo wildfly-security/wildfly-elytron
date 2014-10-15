@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.util;
+package org.wildfly.security.util._private;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

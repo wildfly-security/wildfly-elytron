@@ -48,10 +48,10 @@ import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.util.Base64;
 import org.wildfly.security.sasl.util.SaslWrapper;
-import org.wildfly.security.util.Arrays2;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
+import org.wildfly.security.util._private.Arrays2;
 
 /**
  *

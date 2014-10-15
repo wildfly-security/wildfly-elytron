@@ -19,7 +19,9 @@
 package org.wildfly.security.util;
 
 import static org.junit.Assert.*;
+
 import org.junit.Test;
+import org.wildfly.security.util._private.Arrays2;
 
 /**
  * Tests of org.wildfly.security.util.Arrays2
