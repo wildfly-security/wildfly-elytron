@@ -50,7 +50,7 @@ public final class CallbackUtils {
      */
     public static void unsupported(Callback callback) throws UnsupportedCallbackException {
         if (! isOptional(callback)) {
-            throw new UnsupportedCallbackException(callback);
+            throw new FastUnsupportedCallbackException(callback);
         }
     }
 }
