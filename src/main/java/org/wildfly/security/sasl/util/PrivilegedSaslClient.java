@@ -38,7 +38,7 @@ public final class PrivilegedSaslClient implements SaslClient, SaslWrapper {
     private final SaslClient delegate;
     private final AccessControlContext accessControlContext;
 
-    public PrivilegedSaslClient(final SaslClient delegate, final AccessControlContext accessControlContext) {
+    PrivilegedSaslClient(final SaslClient delegate, final AccessControlContext accessControlContext) {
         if (delegate == null) {
             throw new IllegalArgumentException("delegate is null");
         }
