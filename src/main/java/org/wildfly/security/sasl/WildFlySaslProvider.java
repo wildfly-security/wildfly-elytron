@@ -49,6 +49,7 @@ import org.wildfly.security.sasl.plain.PlainServerFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestClientFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
 import org.wildfly.security.sasl.scram.ScramSaslClientFactory;
+import org.wildfly.security.sasl.scram.ScramSaslServerFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -90,6 +91,14 @@ public class WildFlySaslProvider extends Provider {
         put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_384_PLUS, ScramSaslClientFactory.class.getName());
         put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_512, ScramSaslClientFactory.class.getName());
         put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_512_PLUS, ScramSaslClientFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_1, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_1_PLUS, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_256, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_256_PLUS, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_384, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_384_PLUS, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_512, ScramSaslServerFactory.class.getName());
+        put(SASL_SERVER_FACTORY + DOT + SCRAM_SHA_512_PLUS, ScramSaslServerFactory.class.getName());
     }
 
     /**
