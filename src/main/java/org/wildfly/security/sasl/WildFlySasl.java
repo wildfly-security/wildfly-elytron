@@ -28,7 +28,7 @@ public final class WildFlySasl {
     /**
      * Property name to specify if the GSSAPI mechanism should support credential delegation. The property contains "true" then
      * the credential should be delegated from the client to the server, "false" otherwise. The default value is "false" unless
-     * a {@link org.ietf.jgss.GSSCredential GSSCredential} was already passed in using the {@link javax.security.sasl.Sasl.CREDENTIALS CREDENTIALS} property in which case the defailt would
+     * a {@link org.ietf.jgss.GSSCredential GSSCredential} was already passed in using the {@link javax.security.sasl.Sasl#CREDENTIALS CREDENTIALS} property in which case the default would
      * be "true".
      *
      * Note: This is a client only property and is not used server side.
@@ -60,38 +60,9 @@ public final class WildFlySasl {
     public static final String SECURE_RNG = "wildfly.sasl.secure-rng";
 
     /**
-     * Property name for indicating a channel binding type to use.  Can also be read as a negotiated property indicating
-     * the type of binding which was negotiated, or {@code null} if no channel binding was negotiated.
+     * A flag indicating that a mechanism which supports channel binding is required.  A value of "true" indicates that
+     * channel binding is required; any other value (or lack of this property) indicates that channel binding is not
+     * required.
      */
-    public static final String CHANNEL_BINDING_TYPE = "wildfly.sasl.channel-binding.type";
-
-    /**
-     * Property name for indicating the channel binding data (specific to a particular channel binding type).
-     */
-    public static final String CHANNEL_BINDING_DATA = "wildfly.sasl.channel-binding.data";
-
-    /**
-     * The channel binding mode to use.  Property value is a {@link String}.  Possible values are:<ul>
-     *     <li>{@code required} - Only mechanisms supporting channel binding should be selected, and authentication
-     *     should fail of channel binding is not performed.</li>
-     *     <li>{@code allowed} - Mechanisms supporting channel binding should be allowed, and channel binding should
-     *     be performed whenever possible.  This is the default if channel binding type and data are provided.</li>
-     *     <li>{@code forbidden} - Channel binding should not be performed.  If no channel binding type and data are
-     *     provided, this mode is always selected regardless of the value of this property.</li>
-     * </ul>
-     */
-    public static final String CHANNEL_BINDING_MODE = "wildfly.sasl.channel-binding.mode";
-
-    /**
-     * Channel binding mode of "required".
-     */
-    public static final String CBM_REQUIRED = "required";
-    /**
-     * Channel binding mode of "allowed".
-     */
-    public static final String CBM_ALLOWED = "allowed";
-    /**
-     * Channel binding mode of "forbidden".
-     */
-    public static final String CBM_FORBIDDEN = "forbidden";
+    public static final String CHANNEL_BINDING_REQUIRED = "wildfly.sasl.channel-binding-required";
 }

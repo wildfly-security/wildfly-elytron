@@ -23,6 +23,14 @@ import static org.wildfly.security.sasl.gssapi.AbstractGssapiFactory.GSSAPI;
 import static org.wildfly.security.sasl.localuser.LocalUserSaslFactory.JBOSS_LOCAL_USER;
 import static org.wildfly.security.sasl.md5digest.MD5DigestServerFactory.JBOSS_DIGEST_MD5;
 import static org.wildfly.security.sasl.plain.PlainServerFactory.PLAIN;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_1;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_1_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_256;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_256_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_384;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_384_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_512;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_512_PLUS;
 
 import java.security.Provider;
 
@@ -40,6 +48,7 @@ import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
 import org.wildfly.security.sasl.plain.PlainServerFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestClientFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
+import org.wildfly.security.sasl.scram.ScramSaslClientFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -73,6 +82,14 @@ public class WildFlySaslProvider extends Provider {
         put(SASL_CLIENT_FACTORY + DOT + GSSAPI, GssapiClientFactory.class.getName());
         put(SASL_CLIENT_FACTORY + DOT + JBOSS_DIGEST_MD5, MD5DigestClientFactory.class.getName());
         put(SASL_SERVER_FACTORY + DOT + JBOSS_DIGEST_MD5, MD5DigestServerFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_1, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_1_PLUS, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_256, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_256_PLUS, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_384, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_384_PLUS, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_512, ScramSaslClientFactory.class.getName());
+        put(SASL_CLIENT_FACTORY + DOT + SCRAM_SHA_512_PLUS, ScramSaslClientFactory.class.getName());
     }
 
     /**

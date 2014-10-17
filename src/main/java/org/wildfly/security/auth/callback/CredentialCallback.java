@@ -68,6 +68,9 @@ public class CredentialCallback implements ExtendedCallback {
      * @param credential the credential, or {@code null} if no credential is available
      */
     public void setCredential(final Object credential) {
+        if (! isCredentialSupported(credential)) {
+            throw new IllegalArgumentException("Invalid credential type specified");
+        }
         this.credential = credential;
     }
 
