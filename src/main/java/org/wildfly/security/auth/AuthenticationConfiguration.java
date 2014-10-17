@@ -161,6 +161,10 @@ public abstract class AuthenticationConfiguration {
         return parent.doRewriteUser(original);
     }
 
+    String getAuthorizationName() {
+        return null;
+    }
+
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
 
     AuthenticationConfiguration without(Class<? extends AuthenticationConfiguration> clazz) {
@@ -217,6 +221,17 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useName(String name) {
         return usePrincipal(new NamePrincipal(name));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which attempts to authorize to the given
+     * name after authentication.
+     *
+     * @param name the name to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useAuthorizationName(String name) {
+        return new SetAuthorizationNameAuthenticationConfiguration(this, name);
     }
 
     /**
