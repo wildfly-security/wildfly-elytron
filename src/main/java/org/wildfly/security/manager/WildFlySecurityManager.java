@@ -270,6 +270,32 @@ public final class WildFlySecurityManager extends SecurityManager {
         }
     }
 
+    void checkPermission(final Permission perm, final Class<?> clazz) throws SecurityException {
+        if (perm.implies(SECURITY_MANAGER_PERMISSION)) {
+            throw access.secMgrChange();
+        }
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            if (ctx.entered) {
+                return;
+            }
+            final ProtectionDomain protectionDomain;
+            ctx.entered = true;
+            try {
+                protectionDomain = clazz.getProtectionDomain();
+                if (protectionDomain != null) {
+                    if (! (protectionDomain.implies(perm))) {
+                        final CodeSource codeSource = protectionDomain.getCodeSource();
+                        final ClassLoader classLoader = protectionDomain.getClassLoader();
+                        throw access.accessControlException(perm, perm, codeSource, classLoader);
+                    }
+                }
+            } finally {
+                ctx.entered = false;
+            }
+        }
+    }
+
     private static ProtectionDomain[] getProtectionDomainStack(final AccessControlContext context) {
         final ProtectionDomain[] stack;
         try {
