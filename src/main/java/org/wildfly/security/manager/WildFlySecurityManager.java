@@ -664,6 +664,118 @@ public final class WildFlySecurityManager extends SecurityManager {
     }
 
     /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     */
+    public static <T, P> T doChecked(P parameter, ParametricPrivilegedAction<T, P> action) {
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            return action.run(parameter);
+        }
+        ctx.checking = true;
+        try {
+            return action.run(parameter);
+        } finally {
+            ctx.checking = false;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T, P> T doChecked(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            try {
+                return action.run(parameter);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
+        ctx.checking = true;
+        try {
+            return action.run(parameter);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        } finally {
+            ctx.checking = false;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     */
+    public static <T, P> T doChecked(P parameter, ParametricPrivilegedAction<T, P> action, AccessControlContext context) {
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            return action.run(parameter);
+        }
+        ctx.checking = true;
+        try {
+            return doPrivilegedWithParameter(parameter, action, context);
+        } finally {
+            ctx.checking = false;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking enabled.  If permission checking is already enabled, the action is
+     * simply run.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T, P> T doChecked(P parameter, ParametricPrivilegedExceptionAction<T, P> action, AccessControlContext context) throws PrivilegedActionException {
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            try {
+                return action.run(parameter);
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
+        ctx.checking = true;
+        try {
+            return doPrivilegedWithParameter(parameter, action, context);
+        } finally {
+            ctx.checking = false;
+        }
+    }
+
+    /**
      * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
      * simply run.  The immediate caller must have the {@code doUnchecked} runtime permission.
      *
@@ -768,6 +880,124 @@ public final class WildFlySecurityManager extends SecurityManager {
                 checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
             }
             return AccessController.doPrivileged(action, context);
+        } finally {
+            ctx.checking = true;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The immediate caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     */
+    public static <T, P> T doUnchecked(P parameter, ParametricPrivilegedAction<T, P> action) {
+        final Context ctx = CTX.get();
+        if (! ctx.checking) {
+            return action.run(parameter);
+        }
+        ctx.checking = false;
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+            }
+            return action.run(parameter);
+        } finally {
+            ctx.checking = true;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T, P> T doUnchecked(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
+        final Context ctx = CTX.get();
+        if (! ctx.checking) {
+            try {
+                return action.run(parameter);
+            } catch (Exception e) {
+                throw new PrivilegedActionException(e);
+            }
+        }
+        ctx.checking = false;
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+            }
+            return action.run(parameter);
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        } finally {
+            ctx.checking = true;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The immediate caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     */
+    public static <T, P> T doUnchecked(P parameter, ParametricPrivilegedAction<T, P> action, AccessControlContext context) {
+        final Context ctx = CTX.get();
+        if (! ctx.checking) {
+            return doPrivilegedWithParameter(parameter, action, context);
+        }
+        ctx.checking = false;
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+            }
+            return doPrivilegedWithParameter(parameter, action, context);
+        } finally {
+            ctx.checking = true;
+        }
+    }
+
+    /**
+     * Perform an action with permission checking disabled.  If permission checking is already disabled, the action is
+     * simply run.  The caller must have the {@code doUnchecked} runtime permission.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to perform
+     * @param context the access control context to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @return the return value of the action
+     * @throws PrivilegedActionException if the action threw an exception
+     */
+    public static <T, P> T doUnchecked(P parameter, ParametricPrivilegedExceptionAction<T, P> action, AccessControlContext context) throws PrivilegedActionException {
+        final Context ctx = CTX.get();
+        if (! ctx.checking) {
+            return doPrivilegedWithParameter(parameter, action, context);
+        }
+        ctx.checking = false;
+        try {
+            final SecurityManager sm = getSecurityManager();
+            if (sm != null) {
+                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+            }
+            return doPrivilegedWithParameter(parameter, action, context);
         } finally {
             ctx.checking = true;
         }
