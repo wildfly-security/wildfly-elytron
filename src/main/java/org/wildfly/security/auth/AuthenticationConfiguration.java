@@ -19,21 +19,25 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import javax.security.sasl.SaslClient;
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtils;
@@ -51,8 +55,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
  */
 public abstract class AuthenticationConfiguration {
     // constants
-
-    private static final Set<String> ONLY_ANONYMOUS = Collections.singleton("ANONYMOUS");
 
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
@@ -74,9 +76,7 @@ public abstract class AuthenticationConfiguration {
         void configureSaslProperties(final Map<String, Object> properties) {
         }
 
-        void filterSaslMechanisms(final Set<String> names) {
-            // apparently no principal has been set; we only allow anonymous
-            names.retainAll(ONLY_ANONYMOUS);
+        void filterSaslMechanisms(final Collection<String> names) {
         }
 
         String doRewriteUser(final String original) {
@@ -102,7 +102,7 @@ public abstract class AuthenticationConfiguration {
         Principal getPrincipal() {
             return AnonymousPrincipal.getInstance();
         }
-    };
+    }.useAnonymous();
 
     private final AuthenticationConfiguration parent;
     private final CallbackHandler callbackHandler = new CallbackHandler() {
@@ -153,7 +153,7 @@ public abstract class AuthenticationConfiguration {
         parent.configureSaslProperties(properties);
     }
 
-    void filterSaslMechanisms(Set<String> names) {
+    void filterSaslMechanisms(Collection<String> names) {
         parent.filterSaslMechanisms(names);
     }
 
@@ -196,7 +196,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useAnonymous() {
-        return without(SetNamePrincipalAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class);
+        return new SetAnonymousAuthenticationConfiguration(this);
     }
 
     /**
@@ -346,14 +346,40 @@ public abstract class AuthenticationConfiguration {
         return names == null || names.length == 0 ? this : new FilterSaslMechanismAuthenticationConfiguration(this, false, new HashSet<String>(Arrays.asList(names)));
     }
 
-    // XML
-
-    static AuthenticationConfiguration fromXml(XMLStreamReader reader) throws XMLStreamException {
-        // todo
-        return null;
-    }
+    // client methods
 
     CallbackHandler getCallbackHandler() {
         return callbackHandler;
+    }
+
+    SaslClient createSaslClient(URI uri, final SocketAddress localAddress, final SocketAddress peerAddress, Iterator<SaslClientFactory> clientFactoryIterator, Collection<String> serverMechanisms) {
+        final HashMap<String, Object> properties = new HashMap<String, Object>();
+        configureSaslProperties(properties);
+        final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
+        filterSaslMechanisms(mechs);
+        final Principal principal = getPrincipal();
+        final CallbackHandler callbackHandler;
+        if (localAddress != null || peerAddress != null) {
+            // todo: wrap with a CBH which calls the delegate one time with the local/peer address(es)
+            callbackHandler = getCallbackHandler();
+        } else {
+            callbackHandler = getCallbackHandler();
+        }
+        // todo: differentiate between authz and auth ID
+        final String authzId = principal.getName();
+        while (clientFactoryIterator.hasNext()) {
+            final SaslClientFactory saslClient = clientFactoryIterator.next();
+            final String[] mechanismNames = saslClient.getMechanismNames(properties);
+            for (String mechanismName : mechanismNames) {
+                if (mechs.contains(mechanismName)) {
+                    try {
+                        return saslClient.createSaslClient(new String[] { mechanismName }, authzId, uri.getScheme(), uri.getHost(), properties, callbackHandler);
+                    } catch (SaslException ignored) {
+                        // try again
+                    }
+                }
+            }
+        }
+        return null;
     }
 }

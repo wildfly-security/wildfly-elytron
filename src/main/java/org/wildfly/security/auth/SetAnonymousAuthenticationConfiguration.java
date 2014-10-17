@@ -18,33 +18,35 @@
 
 package org.wildfly.security.auth;
 
+import java.security.Principal;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
+
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class FilterSaslMechanismAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private final boolean allow;
-    private final Set<String> names;
+    private static final Set<String> ONLY_ANONYMOUS = Collections.singleton("ANONYMOUS");
 
-    FilterSaslMechanismAuthenticationConfiguration(final AuthenticationConfiguration parent, final boolean allow, final Set<String> names) {
-        super(parent, true);
-        this.allow = allow;
-        this.names = names;
+    SetAnonymousAuthenticationConfiguration(final AuthenticationConfiguration parent) {
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetNamePrincipalAuthenticationConfiguration.class));
     }
 
     void filterSaslMechanisms(final Collection<String> names) {
-        if (allow) {
-            names.retainAll(this.names);
-        } else {
-            names.removeAll(this.names);
-        }
+        // apparently no principal has been set; we only allow anonymous
+        names.retainAll(ONLY_ANONYMOUS);
         super.filterSaslMechanisms(names);
     }
 
+    Principal getPrincipal() {
+        return AnonymousPrincipal.getInstance();
+    }
+
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new FilterSaslMechanismAuthenticationConfiguration(newParent, allow, names);
+        return new SetAnonymousAuthenticationConfiguration(newParent);
     }
 }
