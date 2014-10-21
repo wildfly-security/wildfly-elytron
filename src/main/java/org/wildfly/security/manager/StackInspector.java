@@ -43,8 +43,11 @@ public final class StackInspector {
      * @return the singleton {@code StackInspector} instance
      */
     public static StackInspector getInstance() {
-        if (WildFlySecurityManager.isChecking()) {
-            getSecurityManager().checkPermission(GET_STACK_INSPECTOR_PERMISSION);
+        final SecurityManager securityManager = getSecurityManager();
+        if (securityManager instanceof WildFlySecurityManager) {
+            securityManager.checkPermission(GET_STACK_INSPECTOR_PERMISSION, INSTANCE.getCallerClass(1));
+        } else if (securityManager != null) {
+            securityManager.checkPermission(GET_STACK_INSPECTOR_PERMISSION);
         }
         return INSTANCE;
     }
