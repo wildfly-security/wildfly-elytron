@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -124,9 +126,10 @@ public final class SecurityDomain {
         return realm.getCredentialSupport(credentialType);
     }
 
-    // TODO - Any reason to not be fluent?
     public static final class Builder {
         private static final NameRewriter[] NONE = new NameRewriter[0];
+
+        private boolean built = false;
 
         private final ArrayList<NameRewriter> preRealmRewriters = new ArrayList<>();
         private final ArrayList<NameRewriter> postRealmRewriters = new ArrayList<>();
@@ -134,51 +137,76 @@ public final class SecurityDomain {
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
 
-        public void addPreRealmRewriter(NameRewriter rewriter) {
+        public Builder addPreRealmRewriter(NameRewriter rewriter) {
+            assertNotBuilt();
             if (rewriter != null) preRealmRewriters.add(rewriter);
+
+            return this;
         }
 
-        public void addPostRealmRewriter(NameRewriter rewriter) {
+        public Builder addPostRealmRewriter(NameRewriter rewriter) {
+            assertNotBuilt();
             if (rewriter != null) postRealmRewriters.add(rewriter);
+
+            return this;
         }
 
-        public void setRealmMapper(RealmMapper realmMapper) {
+        public Builder setRealmMapper(RealmMapper realmMapper) {
+            assertNotBuilt();
             this.realmMapper = realmMapper == null ? RealmMapper.DEFAULT_REALM_MAPPER : realmMapper;
+
+            return this;
         }
 
-        public void addRealm(String name, SecurityRealm realm) {
+        public Builder addRealm(String name, SecurityRealm realm) {
+            assertNotBuilt();
             if (name == null) {
-                throw new IllegalArgumentException("name is null");
+                throw log.nullParameter("name");
             }
             if (realm == null) {
-                throw new IllegalArgumentException("realm is null");
+                throw log.nullParameter("realm");
             }
             realms.put(name, realm);
+
+            return this;
         }
 
         public String getDefaultRealmName() {
             return defaultRealmName;
         }
 
-        public void setDefaultRealmName(final String defaultRealmName) {
+        public Builder setDefaultRealmName(final String defaultRealmName) {
+            assertNotBuilt();
             if (defaultRealmName == null) {
-                throw new IllegalArgumentException("defaultRealmName is null");
+                throw log.nullParameter("defaultRealmName");
             }
             this.defaultRealmName = defaultRealmName;
+
+            return this;
         }
 
         public SecurityDomain build() {
             final String defaultRealmName = this.defaultRealmName;
             if (defaultRealmName == null) {
-                throw new IllegalArgumentException("defaultRealmName is null");
+                throw log.nullParameter("defaultRealmName");
             }
             final HashMap<String, SecurityRealm> realmMap = new HashMap<>(realms);
             if (! realmMap.containsKey(defaultRealmName)) {
-                throw new IllegalArgumentException("Realm map does not contain mapping for default realm '" + defaultRealmName + "'");
+                throw log.realmMapDoesntContainDefault(defaultRealmName);
             }
+
+            assertNotBuilt();
+            built = true;
+
             NameRewriter[] preRealm = preRealmRewriters.isEmpty() ? NONE : preRealmRewriters.toArray(new NameRewriter[preRealmRewriters.size()]);
             NameRewriter[] postRealm = postRealmRewriters.isEmpty() ? NONE : postRealmRewriters.toArray(new NameRewriter[postRealmRewriters.size()]);
             return new SecurityDomain(realmMap, defaultRealmName, preRealm, realmMapper, postRealm);
+        }
+
+        private void assertNotBuilt() {
+            if (built) {
+                throw log.builderAlreadyBuilt();
+            }
         }
     }
 }
