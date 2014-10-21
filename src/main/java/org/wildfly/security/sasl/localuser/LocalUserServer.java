@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
@@ -36,6 +34,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -114,16 +113,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     }
 
     private static String getProperty(final String name) {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            return AccessController.doPrivileged(new PrivilegedAction<String>() {
-                public String run() {
-                    return System.getProperty(name);
-                }
-            });
-        } else {
-            return System.getProperty(name);
-        }
+        return WildFlySecurityManager.getPropertyPrivileged(name, null);
     }
 
     private Random getRandom() {
