@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.util;
+package org.wildfly.security.sasl.md5digest;
+
+import org.wildfly.security.sasl.util.ByteStringBuilder;
 
 /**
  * Utility class used to convert string to SASL quoted strings
@@ -24,9 +26,12 @@ package org.wildfly.security.sasl.util;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-public class SaslQuote {
+class SaslQuote {
 
     private static final char QUOTE = '\\';
+
+    private SaslQuote() {
+    }
 
     private static boolean quoteNeeded(char ch) {
         return
@@ -44,7 +49,7 @@ public class SaslQuote {
      * @param inputStr String to be quoted
      * @return
      */
-    public static String quote(String inputStr) {
+    static String quote(String inputStr) {
         int len = inputStr.length();
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
@@ -59,7 +64,7 @@ public class SaslQuote {
         return sb.toString();
     }
 
-    public static byte[] quote(byte[] input) {
+    static byte[] quote(byte[] input) {
         ByteStringBuilder bsb = new ByteStringBuilder();
         for (int i = 0; i < input.length; i++) {
             if (quoteNeeded((char)input[i])) {
