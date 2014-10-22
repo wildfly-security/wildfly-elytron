@@ -32,7 +32,6 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslQuote;
 
 
 /**

@@ -33,7 +33,6 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.SaslQuote;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
