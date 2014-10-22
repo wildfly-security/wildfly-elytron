@@ -35,7 +35,7 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
     private final NamePrincipal principal;
 
     SetNamePrincipalAuthenticationConfiguration(final AuthenticationConfiguration parent, final NamePrincipal principal) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class));
         this.principal = principal;
     }
 
