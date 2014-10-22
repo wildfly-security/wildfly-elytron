@@ -30,6 +30,12 @@ import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 import org.wildfly.security.auth.ElytronXMLParseException;
 
+/**
+ * Log messages and exceptions for Elytron.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ */
 @MessageLogger(projectCode = "ELY", length = 5)
 public interface ElytronMessages extends BasicLogger {
 
@@ -69,4 +75,14 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 10, value = "Failed to load configuration file \"%s\"")
     ElytronXMLParseException xmlFailedToLoad(@Cause Throwable cause, String fileName);
+
+    @Message(id = 11, value = "%s is null")
+    IllegalArgumentException nullParameter(String parameter);
+
+    @Message(id = 12, value = "Realm map does not contain mapping for default realm '%s'")
+    IllegalArgumentException realmMapDoesntContainDefault(String defaultRealm);
+
+    @Message(id = 13, value = "This builder has already been built")
+    IllegalStateException builderAlreadyBuilt();
+
 }
