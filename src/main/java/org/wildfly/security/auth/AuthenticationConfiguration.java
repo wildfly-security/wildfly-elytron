@@ -19,6 +19,7 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -373,5 +374,12 @@ public abstract class AuthenticationConfiguration {
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
         return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);
+    }
+
+    InetSocketAddress getDestinationInetAddress(URI uri, int defaultPort) {
+        final String host = getHost(uri);
+        int port = getPort(uri);
+        if (port == -1) port = defaultPort;
+        return new InetSocketAddress(host, port);
     }
 }

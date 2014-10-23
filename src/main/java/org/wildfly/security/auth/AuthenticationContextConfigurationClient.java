@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth;
 
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -130,5 +131,17 @@ public final class AuthenticationContextConfigurationClient {
      */
     public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, SaslClientFactory clientFactory, Collection<String> offeredMechanisms) throws SaslException {
         return configuration.createSaslClient(uri, clientFactory, offeredMechanisms);
+    }
+
+    /**
+     * Get the address of the destination from a URI.  The configuration may rewrite the destination as needed.
+     *
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @return the address of the destination
+     */
+    public InetSocketAddress getDestinationInetSocketAddress(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) {
+        return configuration.getDestinationInetAddress(uri, protocolDefaultPort);
     }
 }
