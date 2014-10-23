@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.md5digest;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.MessageDigest;
@@ -42,10 +41,10 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
-import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.Base64;
 import org.wildfly.security.util.DefaultTransformationMapper;
@@ -68,17 +67,8 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
     public static enum FORMAT {CLIENT, SERVER};
 
     private static final int MAX_PARSED_RESPONSE_SIZE = 13;
-    private static final String HASH_algorithm = "MD5";
     private static final String HMAC_algorithm = "HmacMD5";
-    static String authMethod = "AUTHENTICATE";
-    private static String SECURITY_MARK = "00000000000000000000000000000000";   // 32 zeros
     private static int NONCE_SIZE = 36;
-
-
-    public static final String QOP_AUTH = "auth";
-    public static final String QOP_AUTH_INT = "auth-int";
-    public static final String QOP_AUTH_CONF = "auth-conf";
-    public static final String[] QOP_VALUES = {QOP_AUTH, QOP_AUTH_INT, QOP_AUTH_CONF};
 
     public static final int DEFAULT_MAXBUF = 65536;
     public static final char DELIMITER = ',';
@@ -129,7 +119,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         secureRandomGenerator = new SecureRandom();
 
         try {
-            this.md5 = MessageDigest.getInstance(HASH_algorithm);
+            this.md5 = MessageDigest.getInstance(DigestMD5Utils.HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         }
@@ -196,133 +186,6 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
 
         return nonceBase64.toArray();
     }
-
-    /**
-     * Converts input to HEX and pad it from left with zeros to totalLength.
-     *
-     * @param input to be converted to HEX
-     * @param totalLength length of returned array of bytes
-     * @return
-     */
-    static byte[] convertToHexBytesWithLeftPadding(int input, int totalLength) {
-        byte[] retValue = new byte[totalLength];
-        Arrays.fill(retValue, (byte) '0');
-        byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(Charsets.UTF_8);
-        if (hex.length > totalLength) {
-            throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
-        }
-
-        int from = totalLength - hex.length;
-        for (int i = 0; i < hex.length; i++) {
-            retValue[from + i] = hex[i];
-        }
-        return retValue;
-    }
-
-    /**
-     * Method to produce digest-response:
-     * response-value  =
-     *    HEX( KD ( HEX(H(A1)),
-     *             { nonce-value, ":" nc-value, ":",
-     *               cnonce-value, ":", qop-value, ":", HEX(H(A2)) }))
-     *
-     */
-    static byte[] digestResponse(MessageDigest md5, byte[] H_A1,
-            byte[] nonce, int nonce_count, byte[] cnonce,
-            String authzid, String qop, String digest_uri, Charset responseCharset) {
-
-       // byte[] H_A1 = H_A1(md5, username, realm, password, nonce, cnonce, authzid, responseCharset);
-
-        // QOP
-        String qop_value;
-        if (qop != null && ! "".equals(qop)) {
-            qop_value = qop;
-        } else {
-            qop_value = QOP_AUTH;
-        }
-
-        // A2
-        ByteStringBuilder A2 = new ByteStringBuilder();
-        A2.append(authMethod);
-        A2.append(':');
-        A2.append(digest_uri);
-        if (QOP_AUTH_CONF.equals(qop_value) || QOP_AUTH_INT.equals(qop_value)) {
-            A2.append(':');
-            A2.append(SECURITY_MARK);
-        }
-
-        byte[] digest_A2 = md5.digest(A2.toArray());
-
-        ByteStringBuilder KD = new ByteStringBuilder();
-        KD.append(HexConverter.convertToHexBytes(H_A1));
-        KD.append(':');
-        KD.append(nonce);
-        KD.append(':');
-        KD.append(convertToHexBytesWithLeftPadding(nonce_count, 8));
-        KD.append(':');
-        KD.append(cnonce);
-        KD.append(':');
-        KD.append(qop_value);
-        KD.append(':');
-        KD.append(HexConverter.convertToHexBytes(digest_A2));
-
-        KD.updateDigest(md5);
-        return HexConverter.convertToHexBytes(md5.digest());
-    }
-
-    /**
-     * Calculates H(A1).
-     *
-     * @param md5
-     * @param username
-     * @param realm
-     * @param password
-     * @param nonce
-     * @param cnonce
-     * @param authzid
-     * @param responseCharset
-     * @return
-     */
-    static byte[] H_A1(MessageDigest md5, String username, String realm, char[] password,
-            byte[] nonce, byte[] cnonce, String authzid, Charset responseCharset) {
-
-        CharsetEncoder latin1Encoder = Charsets.LATIN_1.newEncoder();
-        latin1Encoder.reset();
-        boolean bothLatin1 = latin1Encoder.canEncode(username);
-        latin1Encoder.reset();
-        if (bothLatin1) {
-            for (char c: password) {
-                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
-            }
-        }
-
-        ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.append(username.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
-        urp.append(':');
-        if (realm != null) {
-            urp.append(realm.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
-        } else {
-            urp.append("");
-        }
-        urp.append(':');
-        urp.append(new String(password).getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
-
-        byte[] digest_urp = md5.digest(urp.toArray());
-
-        // A1
-        ByteStringBuilder A1 = new ByteStringBuilder();
-        A1.append(digest_urp);
-        A1.append(':');
-        A1.append(nonce);
-        A1.append(':');
-        A1.append(cnonce);
-        if (authzid != null) {
-            A1.append(':');
-            A1.append(authzid);
-        }
-        return md5.digest(A1.toArray());
-    }
-
 
     /**
      * Client side method to parse challenge sent by server.
