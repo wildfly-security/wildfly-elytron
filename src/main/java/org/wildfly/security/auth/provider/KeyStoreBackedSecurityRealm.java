@@ -31,9 +31,7 @@ import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.auth.SecurityIdentity;
-import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 
@@ -158,35 +156,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 }
             }
             return null;
-        }
-
-        @Override
-        public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
-            final KeyStore.Entry entry = getEntry(principal);
-            if (entry == null) {
-                throw new AuthenticationException();
-            }
-            if (entry instanceof PasswordEntry) {
-                return verifier.performVerification(((PasswordEntry) entry).getPassword());
-            } else if (entry instanceof KeyStore.PrivateKeyEntry) {
-                final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                final Certificate certificate = privateKeyEntry.getCertificate();
-                for (Class<?> credentialType : verifier.getSupportedCredentialTypes()) {
-                    if (credentialType.isInstance(privateKey)) {
-                        return verifier.performVerification(privateKey);
-                    } else if (credentialType.isInstance(certificate)) {
-                        return verifier.performVerification(certificate);
-                    } else if (credentialType.isAssignableFrom(X500PrivateCredential.class) && certificate instanceof X509Certificate) {
-                        return verifier.performVerification(new X500PrivateCredential((X509Certificate) certificate, privateKey, principal.getName()));
-                    }
-                }
-            } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                return verifier.performVerification(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate());
-            } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                return verifier.performVerification(((KeyStore.SecretKeyEntry) entry).getSecretKey());
-            }
-            throw new AuthenticationException();
         }
 
         @Override

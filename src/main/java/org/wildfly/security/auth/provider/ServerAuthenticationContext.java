@@ -20,9 +20,6 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
-import org.wildfly.security.auth.verifier.Verifier;
-import org.wildfly.security.auth.login.AuthenticationException;
-
 /**
  * Server-side authentication context.
  *
@@ -104,27 +101,6 @@ public final class ServerAuthenticationContext {
      */
     public String getEstablishedRealmName() {
         return establishedRealmName;
-    }
-
-    /**
-     * Prove authenticity based on evidence which is delivered to the identity store for verification. The proof of verification
-     * is returned. If the mechanism does not support any proof, such as simple password verification, then the proof type
-     * should be {@link Void} and the result will always be {@code null}. Otherwise, if proof is expected but {@code null} is
-     * returned, the authentication should be rejected.
-     *
-     * @param verifier the verifier of the evidence
-     * @param <P> the type of proof
-     *
-     * @return the proof of verification, or {@code null} if no such proof is available
-     *
-     * @throws AuthenticationException if verification failed
-     * @throws IllegalStateException if the realm name and/or principal has not been established
-     */
-    public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
-        if (establishedRealmIdentity == null) {
-            throw new IllegalStateException("No realm identity established");
-        }
-        return establishedRealmIdentity.proveAuthentic(verifier);
     }
 
     /**

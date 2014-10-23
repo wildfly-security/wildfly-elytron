@@ -21,8 +21,6 @@ package org.wildfly.security.auth.provider;
 import java.security.Principal;
 
 import org.wildfly.security.auth.SecurityIdentity;
-import org.wildfly.security.auth.login.AuthenticationException;
-import org.wildfly.security.auth.verifier.Verifier;
 
 /**
  * A representation of a pre-authentication identity.
@@ -62,16 +60,6 @@ public interface RealmIdentity {
      * @return the level of support for this credential type
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType);
-
-    /**
-     * Use a verifier to acquire proof of authentication.
-     *
-     * @param verifier the verifier containing evidence of authenticity
-     * @param <P> the type of proof returned by the verifier, or {@link Void} if the verifier cannot return proof
-     * @return the proof, or {@code null} if the verifier cannot return proof
-     * @throws AuthenticationException if the authentication of the principal cannot be verified based on the evidence
-     */
-    <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException;
 
     /**
      * Acquire a credential of the given type.

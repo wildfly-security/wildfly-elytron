@@ -33,13 +33,11 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.SecurityIdentity;
-import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.provider.RealmIdentity;
 import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
-import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.password.Password;
 
 /**
@@ -201,11 +199,6 @@ class LdapSecurityRealm implements SecurityRealm {
             }
 
             return support;
-        }
-
-        @Override
-        public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
-            throw new AuthenticationException("Method not supported");
         }
 
         @Override

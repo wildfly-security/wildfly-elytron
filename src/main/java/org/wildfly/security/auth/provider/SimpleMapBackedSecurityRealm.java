@@ -25,10 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.wildfly.security.auth.SecurityIdentity;
-import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.util.NameRewriter;
-import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.password.Password;
 
 /**
@@ -114,20 +112,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             final Password password = map.get(principal);
             return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
-        }
-
-        @Override
-        public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
-            final Password password = map.get(principal);
-            if (password != null) {
-                Class<?> clazz = password.getClass();
-                if (! checkType(verifier.getSupportedCredentialTypes(), new HashSet<Class<?>>(), clazz)) {
-                    throw new AuthenticationException("Unsupported credential type");
-                }
-                return verifier.performVerification(password);
-            } else {
-                throw new AuthenticationException("No such user");
-            }
         }
 
         @Override

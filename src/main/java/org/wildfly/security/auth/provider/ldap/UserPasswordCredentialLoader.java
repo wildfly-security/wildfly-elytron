@@ -32,9 +32,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 
-import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.provider.CredentialSupport;
-import org.wildfly.security.auth.verifier.Verifier;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
@@ -128,12 +126,6 @@ class UserPasswordCredentialLoader implements CredentialLoader {
             } finally {
                 contextFactory.returnContext(context);
             }
-        }
-
-        @Override
-        public <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException {
-            // TODO Auto-generated method stub
-            return null;
         }
 
         private String toAlgorithm(PasswordSpec passwordSpec) {

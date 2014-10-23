@@ -18,9 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.login.AuthenticationException;
 import org.wildfly.security.auth.provider.CredentialSupport;
-import org.wildfly.security.auth.verifier.Verifier;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
@@ -48,14 +46,4 @@ interface IdentityCredentialLoader {
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
     <C> C getCredential(Class<C> credentialType);
-
-    /**
-     * Use a verifier to acquire proof of authentication.
-     *
-     * @param verifier the verifier containing evidence of authenticity
-     * @return the proof, or {@code null} if the verifier cannot return proof
-     * @throws AuthenticationException if the authentication of the principal cannot be verified based on the evidence
-     */
-    <P> P proveAuthentic(Verifier<P> verifier) throws AuthenticationException;
-
 }
