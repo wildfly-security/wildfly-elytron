@@ -19,7 +19,6 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -29,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -367,34 +365,13 @@ public abstract class AuthenticationConfiguration {
         return callbackHandler;
     }
 
-    SaslClient createSaslClient(URI uri, final SocketAddress localAddress, final SocketAddress peerAddress, Iterator<SaslClientFactory> clientFactoryIterator, Collection<String> serverMechanisms) {
+    SaslClient createSaslClient(URI uri, SaslClientFactory clientFactory, Collection<String> serverMechanisms) throws SaslException {
         final HashMap<String, Object> properties = new HashMap<String, Object>();
         configureSaslProperties(properties);
         final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
         filterSaslMechanisms(mechs);
-        final Principal principal = getPrincipal();
-        final CallbackHandler callbackHandler;
-        if (localAddress != null || peerAddress != null) {
-            // todo: wrap with a CBH which calls the delegate one time with the local/peer address(es)
-            callbackHandler = getCallbackHandler();
-        } else {
-            callbackHandler = getCallbackHandler();
-        }
-        // todo: differentiate between authz and auth ID
-        final String authzId = principal.getName();
-        while (clientFactoryIterator.hasNext()) {
-            final SaslClientFactory saslClient = clientFactoryIterator.next();
-            final String[] mechanismNames = saslClient.getMechanismNames(properties);
-            for (String mechanismName : mechanismNames) {
-                if (mechs.contains(mechanismName)) {
-                    try {
-                        return saslClient.createSaslClient(new String[] { mechanismName }, authzId, uri.getScheme(), uri.getHost(), properties, callbackHandler);
-                    } catch (SaslException ignored) {
-                        // try again
-                    }
-                }
-            }
-        }
-        return null;
+        final String authorizationName = getAuthorizationName();
+        final CallbackHandler callbackHandler = getCallbackHandler();
+        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);
     }
 }
