@@ -58,6 +58,15 @@ public abstract class PasswordFactorySpi {
     protected abstract <S extends KeySpec> S engineGetKeySpec(String algorithm, Password password, Class<S> keySpecType) throws InvalidKeySpecException;
 
     /**
+     * Determine whether the given password can be translated into one which is consumable by this factory.  If this
+     * method returns {@code true}, then {@link #engineTranslatePassword(String, Password)} must succeed.
+     *
+     * @param password the password object
+     * @return {@code true} if the given password is supported by this algorithm, {@code false} otherwise
+     */
+    protected abstract boolean engineIsTranslatablePassword(final String algorithm, final Password password);
+
+    /**
      * Translate a password object into one which is supported by this engine.
      *
      * @param algorithm the password algorithm
