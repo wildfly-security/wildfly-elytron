@@ -34,8 +34,7 @@ import org.wildfly.security.auth.callback.SecurityLayerDisposedCallback;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class DisposedCallbackSaslServerFactory implements SaslServerFactory {
-    private final SaslServerFactory delegate;
+public final class DisposedCallbackSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
     /**
      * Construct a new instance.
@@ -43,7 +42,7 @@ public final class DisposedCallbackSaslServerFactory implements SaslServerFactor
      * @param delegate the delegate SASL server factory
      */
     public DisposedCallbackSaslServerFactory(final SaslServerFactory delegate) {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
@@ -88,9 +87,5 @@ public final class DisposedCallbackSaslServerFactory implements SaslServerFactor
                 }
             }
         };
-    }
-
-    public String[] getMechanismNames(final Map<String, ?> props) {
-        return delegate.getMechanismNames(props);
     }
 }

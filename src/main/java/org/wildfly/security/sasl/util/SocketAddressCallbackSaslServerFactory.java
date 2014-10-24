@@ -33,8 +33,7 @@ import org.wildfly.security.auth.callback.SocketAddressQueryCallbackHandler;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SocketAddressCallbackSaslServerFactory implements SaslServerFactory {
-    private final SaslServerFactory delegate;
+public final class SocketAddressCallbackSaslServerFactory extends AbstractDelegatingSaslServerFactory {
     private final SocketAddress localAddress;
     private final SocketAddress peerAddress;
 
@@ -46,16 +45,12 @@ public final class SocketAddressCallbackSaslServerFactory implements SaslServerF
      * @param peerAddress the peer socket address, or {@code null} if unknown
      */
     public SocketAddressCallbackSaslServerFactory(final SaslServerFactory delegate, final SocketAddress localAddress, final SocketAddress peerAddress) {
-        this.delegate = delegate;
+        super(delegate);
         this.localAddress = localAddress;
         this.peerAddress = peerAddress;
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         return delegate.createSaslServer(mechanism, protocol, serverName, props, new SocketAddressQueryCallbackHandler(cbh, localAddress, peerAddress));
-    }
-
-    public String[] getMechanismNames(final Map<String, ?> props) {
-        return delegate.getMechanismNames(props);
     }
 }

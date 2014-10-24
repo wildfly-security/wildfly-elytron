@@ -35,8 +35,7 @@ import org.wildfly.security.auth.callback.ChannelBindingCallback;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ChannelBindingSaslClientFactory implements SaslClientFactory {
-    private final SaslClientFactory delegate;
+public final class ChannelBindingSaslClientFactory extends AbstractDelegatingSaslClientFactory {
     private final String bindingType;
     private final byte[] bindingData;
 
@@ -48,7 +47,7 @@ public final class ChannelBindingSaslClientFactory implements SaslClientFactory 
      * @param bindingData the binding data
      */
     public ChannelBindingSaslClientFactory(final SaslClientFactory delegate, final String bindingType, final byte[] bindingData) {
-        this.delegate = delegate;
+        super(delegate);
         this.bindingType = bindingType;
         this.bindingData = bindingData;
     }
@@ -65,9 +64,5 @@ public final class ChannelBindingSaslClientFactory implements SaslClientFactory 
                 cbh.handle(callbacks);
             }
         });
-    }
-
-    public String[] getMechanismNames(final Map<String, ?> props) {
-        return delegate.getMechanismNames(props);
     }
 }

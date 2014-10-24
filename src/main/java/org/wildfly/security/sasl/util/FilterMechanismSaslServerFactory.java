@@ -36,8 +36,7 @@ import javax.security.sasl.SaslException;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class FilterMechanismSaslServerFactory implements SaslServerFactory {
-    private final SaslServerFactory delegate;
+public final class FilterMechanismSaslServerFactory extends AbstractDelegatingSaslServerFactory {
     private final boolean include;
     private final Set<String> mechanisms;
 
@@ -49,13 +48,10 @@ public final class FilterMechanismSaslServerFactory implements SaslServerFactory
      * @param mechanisms the mechanisms to include or exclude
      */
     public FilterMechanismSaslServerFactory(final SaslServerFactory delegate, boolean include, String... mechanisms) {
-        if (delegate == null) {
-            throw new IllegalArgumentException("delegate is null");
-        }
+        super(delegate);
         if (mechanisms == null) {
             throw new IllegalArgumentException("mechanisms is null");
         }
-        this.delegate = delegate;
         this.include = include;
         final HashSet<String> set = new HashSet<String>(mechanisms.length);
         Collections.addAll(set, mechanisms);
@@ -70,13 +66,10 @@ public final class FilterMechanismSaslServerFactory implements SaslServerFactory
      * @param mechanisms the mechanisms to include or exclude
      */
     public FilterMechanismSaslServerFactory(final SaslServerFactory delegate, boolean include, Collection<String> mechanisms) {
-        if (delegate == null) {
-            throw new IllegalArgumentException("delegate is null");
-        }
+        super(delegate);
         if (mechanisms == null) {
             throw new IllegalArgumentException("mechanisms is null");
         }
-        this.delegate = delegate;
         this.include = include;
         this.mechanisms = new HashSet<String>(mechanisms);
     }
