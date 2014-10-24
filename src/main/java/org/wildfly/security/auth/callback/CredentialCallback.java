@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * A callback used to acquire credentials, either for outbound or inbound authentication.  This callback
  * is required only if a default credential was not supplied.  The callback handler is expected to provide
@@ -30,7 +34,7 @@ package org.wildfly.security.auth.callback;
  */
 public class CredentialCallback implements ExtendedCallback {
 
-    private final Class<?>[] allowedTypes;
+    private final Set<Class<?>> allowedTypes;
     private Object credential;
 
     /**
@@ -39,7 +43,15 @@ public class CredentialCallback implements ExtendedCallback {
      * @param allowedTypes the allowed types of credential
      */
     public CredentialCallback(final Class<?>... allowedTypes) {
-        this.allowedTypes = allowedTypes;
+        if (allowedTypes.length == 0) {
+            this.allowedTypes = Collections.emptySet();
+        } else if (allowedTypes.length == 1) {
+            this.allowedTypes = Collections.<Class<?>>singleton(allowedTypes[0]);
+        } else {
+            final Set<Class<?>> set = new LinkedHashSet<>(allowedTypes.length);
+            Collections.addAll(set, allowedTypes);
+            this.allowedTypes = Collections.unmodifiableSet(set);
+        }
     }
 
     /**
@@ -49,7 +61,7 @@ public class CredentialCallback implements ExtendedCallback {
      * @param allowedTypes the allowed types of credential
      */
     public CredentialCallback(final Object credential, final Class<?>... allowedTypes) {
-        this.allowedTypes = allowedTypes;
+        this(allowedTypes);
         this.credential = credential;
     }
 
@@ -81,10 +93,7 @@ public class CredentialCallback implements ExtendedCallback {
      * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
      */
     public boolean isCredentialSupported(final Object credential) {
-        for (final Class<?> allowedType : allowedTypes) {
-            if (allowedType.isInstance(credential)) return true;
-        }
-        return false;
+        return credential != null && allowedTypes.contains(credential.getClass());
     }
 
     /**
@@ -94,10 +103,16 @@ public class CredentialCallback implements ExtendedCallback {
      * @return {@code true} if the credential type is supported, {@code false} otherwise
      */
     public boolean isCredentialTypeSupported(final Class<?> credentialType) {
-        for (final Class<?> allowedType : allowedTypes) {
-            if (allowedType.isAssignableFrom(credentialType)) return true;
-        }
-        return false;
+        return credentialType != null && allowedTypes.contains(credentialType);
+    }
+
+    /**
+     * Get the set of allowed types for this credential.
+     *
+     * @return the (immutable) set of allowed types
+     */
+    public Set<Class<?>> getAllowedTypes() {
+        return allowedTypes;
     }
 
     public boolean isOptional() {

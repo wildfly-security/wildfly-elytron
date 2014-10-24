@@ -268,6 +268,17 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
+     * Create a new configuration which is the same as this configuration, but which uses the given callback handler to
+     * acquire a password with which to authenticate.
+     *
+     * @param callbackHandler the password callback handler
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration usePasswordCallback(CallbackHandler callbackHandler) {
+        return callbackHandler == null ? this : new SetPasswordCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which uses the given callback handler
      * to authenticate.
      *

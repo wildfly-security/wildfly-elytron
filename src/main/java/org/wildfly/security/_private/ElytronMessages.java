@@ -24,7 +24,9 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 
+import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServerFactory;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
 
@@ -172,4 +174,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 40, value = "Proxied SASL authentication failed")
     SaslException saslProxyAuthenticationFailed();
+
+    @Message(id = 41, value = "No SASL client mechanism \"%s\" is available with the current configuration from %s")
+    SaslException saslNoClientMechanism(String mechName, SaslClientFactory clientFactory);
+
+    @Message(id = 42, value = "No SASL server mechanism \"%s\" is available with the current configuration from %s")
+    SaslException saslNoServerMechanism(String mechName, SaslServerFactory serverFactory);
 }

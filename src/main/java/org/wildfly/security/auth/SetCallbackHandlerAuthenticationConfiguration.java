@@ -36,7 +36,7 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
         this.callbackHandler = callbackHandler;
     }
 
-    void handleCallbacks(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+    void handleCallbacks(final AuthenticationConfiguration config, final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
         callbackHandler.handle(callbacks);
     }
 
