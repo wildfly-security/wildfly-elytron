@@ -18,12 +18,37 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.util.Arrays;
+
 import javax.security.sasl.SaslException;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface SaslWrapper {
+
+    /**
+     * The identity wrapper which simply returns the same data that was passed in.  If the data is of a different size
+     * then a copy is made.
+     */
+    SaslWrapper IDENTITY = new SaslWrapper() {
+        public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
+            if (offset == 0 && outgoing.length == len) {
+                return outgoing;
+            } else {
+                return Arrays.copyOfRange(outgoing, offset, len);
+            }
+        }
+
+        public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
+            if (offset == 0 && incoming.length == len) {
+                return incoming;
+            } else {
+                return Arrays.copyOfRange(incoming, offset, len);
+            }
+        }
+    };
+
     byte[] wrap(byte[] outgoing, final int offset, final int len) throws SaslException;
 
     byte[] unwrap(byte[] incoming, final int offset, final int len) throws SaslException;
