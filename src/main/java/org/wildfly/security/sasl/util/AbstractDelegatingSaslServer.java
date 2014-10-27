@@ -26,7 +26,7 @@ import javax.security.sasl.SaslException;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractDelegatingSaslServer implements SaslServer {
+public abstract class AbstractDelegatingSaslServer implements SaslServer, SaslWrapper {
 
     /**
      * The delegate {@code SaslServer}.
