@@ -32,7 +32,6 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.SecurityIdentity;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.provider.RealmIdentity;
@@ -222,13 +221,6 @@ class LdapSecurityRealm implements SecurityRealm {
 
             return null;
         }
-
-        @Override
-        public SecurityIdentity createSecurityIdentity() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
     }
 
     static class PrincipalMapping {
