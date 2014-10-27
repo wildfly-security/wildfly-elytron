@@ -241,6 +241,72 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
     }
 
     @Override
+    protected boolean engineIsTranslatablePassword(final String algorithm, final Password password) {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return true;
+            }
+        }
+
+        /*
+         * When adding or removing an algorithm ensure that the registrations in 'WildFlyElytronPasswordProvider' are also
+         * updated.
+         */
+
+        switch (algorithm) {
+            case ALGORITHM_CLEAR: {
+                return (password instanceof ClearPassword);
+            }
+            case ALGORITHM_BCRYPT: {
+                return (password instanceof BCryptPassword);
+            }
+            case ALGORITHM_CRYPT_MD5: {
+                return (password instanceof UnixMD5CryptPassword);
+            }
+            case ALGORITHM_SUN_CRYPT_MD5:
+            case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
+                return (password instanceof SunUnixMD5CryptPassword);
+            }
+            case ALGORITHM_CRYPT_SHA_256:
+            case ALGORITHM_CRYPT_SHA_512: {
+                return (password instanceof UnixSHACryptPassword);
+            }
+            case ALGORITHM_DIGEST_MD2:
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA_1:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
+            case ALGORITHM_DIGEST_SHA_512: {
+                return (password instanceof TrivialDigestPassword);
+            }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
+                return (password instanceof TrivialSaltedDigestPassword);
+            }
+            case ALGORITHM_CRYPT_DES: {
+                return (password instanceof UnixDESCryptPassword);
+            }
+            case ALGORITHM_BSD_CRYPT_DES: {
+                return (password instanceof BSDUnixDESCryptPassword);
+            }
+            case ALGORITHM_SCRAM_SHA_1:
+            case ALGORITHM_SCRAM_SHA_256: {
+                return (password instanceof ScramDigestPassword);
+            }
+            default: {
+                return false;
+            }
+        }
+    }
+
+    @Override
     protected Password engineTranslatePassword(final String algorithm, final Password password) throws InvalidKeyException {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;

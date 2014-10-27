@@ -147,6 +147,17 @@ public final class PasswordFactory {
     }
 
     /**
+     * Determine whether the given password can be translated into one which is consumable by this factory.  If this
+     * method returns {@code true}, then {@link #translate(Password)} will succeed.
+     *
+     * @param password the password object
+     * @return {@code true} if the given password is supported by this algorithm, {@code false} otherwise
+     */
+    public boolean isTranslatable(Password password) {
+        return spi.engineIsTranslatablePassword(algorithm, password);
+    }
+
+    /**
      * Translate the given password object to one which is consumable by this factory.
      *
      * @param password the password object
