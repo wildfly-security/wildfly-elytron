@@ -18,6 +18,12 @@
 
 package org.wildfly.security._private;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
 
@@ -85,4 +91,24 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 13, value = "This builder has already been built")
     IllegalStateException builderAlreadyBuilt();
 
+    @Message(id = 14, value = "Invalid key store entry password for alias \"%s\"")
+    UnrecoverableKeyException invalidKeyStoreEntryPassword(String alias);
+
+    @Message(id = 15, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
+    KeyStoreException invalidKeyStoreEntryType(String alias, Class<?> expectedClass, Class<?> actualClass);
+
+    @Message(id = 16, value = "Key store key for alias \"%s\" cannot be protected")
+    KeyStoreException keyCannotBeProtected(String alias);
+
+    @Message(id = 17, value = "Key store failed to translate password for alias \"%s\"")
+    IOException keyStoreFailedToTranslate(String alias, @Cause Throwable cause);
+
+    @Message(id = 18, value = "Key store failed to identify a suitable algorithm for alias \"%s\"")
+    NoSuchAlgorithmException noAlgorithmForPassword(String alias);
+
+    @Message(id = 19, value = "Unexpected whitespace in password file")
+    IOException unexpectedWhitespaceInPasswordFile();
+
+    @Message(id = 20, value = "Unexpected end of file")
+    EOFException unexpectedEof();
 }
