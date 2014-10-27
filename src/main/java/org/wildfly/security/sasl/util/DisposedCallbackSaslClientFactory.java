@@ -47,38 +47,10 @@ public final class DisposedCallbackSaslClientFactory extends AbstractDelegatingS
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslClient saslClient = delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
-        return new SaslClient() {
-            public String getMechanismName() {
-                return saslClient.getMechanismName();
-            }
-
-            public boolean hasInitialResponse() {
-                return saslClient.hasInitialResponse();
-            }
-
-            public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
-                return saslClient.evaluateChallenge(challenge);
-            }
-
-            public boolean isComplete() {
-                return saslClient.isComplete();
-            }
-
-            public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-                return saslClient.unwrap(incoming, offset, len);
-            }
-
-            public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-                return saslClient.wrap(outgoing, offset, len);
-            }
-
-            public Object getNegotiatedProperty(final String propName) {
-                return saslClient.getNegotiatedProperty(propName);
-            }
-
+        return new AbstractDelegatingSaslClient(saslClient) {
             public void dispose() throws SaslException {
                 try {
-                    saslClient.dispose();
+                    delegate.dispose();
                 } finally {
                     try {
                         cbh.handle(new Callback[] { SecurityLayerDisposedCallback.getInstance() });
