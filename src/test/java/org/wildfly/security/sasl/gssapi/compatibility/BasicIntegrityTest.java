@@ -75,12 +75,12 @@ public class BasicIntegrityTest extends AbstractTest {
         assertFalse(client.isComplete());
 
         exchange = evaluateByClient(exchange);
-        assertEquals("6082020406092a864886f71201020201006e8201f3308201efa003020105a10302010ea20703050020000000a382010b6182010730820103a003020105a10d1b0b57494c44464c592e4f5247a220301ea003020100a11730151b047361736c1b0d746573745f7365727665725f31a381ca3081c7a003020110a281bf0481bc093d7ffd9e956da2c6f5dabb2b41e5ea0b0fc158da3b4f4258baabbf6eabc23e7fe31a65e09a73bfec3c754ee262af1777b9979d2e22eb9e9d8482b8bd40847667cdaa0d67486d5c88e8c65b26df3c6eda36cb36158ad108a0ed6153ea29e8865a9099b53e2d11e90b8c0dd82e18ea982c0e741bbc0e358fbc677b02dd6c4fa7f196f23d7d48f3f82fcd003164852af47f473e44f394d26cbeed416dab4a5225d23de3d7f8109b1c607c535bf5b128210ab54aa115a306786461ddc8a481ca3081c7a003020110a281bf0481bc417f7d7dbafefd13eb5d70b31fd7fe22c4f11c3805da0bb7232fcabc0fa63071aa7b5f7201aa4221f6314c1d71876d3854ae6c46dc39392977b434817b4ca7efdb28a7e96df0f495a18e926879ecd54e6e681e4a56313b0d70068cf78988e590461540f3535e4cb0baa7c3a8df84d5f8cdf956ac4cbdd51cb6b8d8ab598b5f0bfb53321f2a023dac159e493b396d3205bde177d30bf619c5278859c2832367307b3e29c2ab2b6d1884d3696c9cb7dc12de0c4174d933c361d618f658", HexConverter.convertToHexString(exchange));
+        assertEquals("6082020406092a864886f71201020201006e8201f3308201efa003020105a10302010ea20703050020000000a382010b6182010730820103a003020105a10d1b0b57494c44464c592e4f5247a220301ea003020100a11730151b047361736c1b0d746573745f7365727665725f31a381ca3081c7a003020110a281bf0481bc35c0e8fcda8a25bc04a0f0b15bd2007a8eaf706c6e282746f2520a0df3b2981a5c550647ac08cca70c8591e3e9f85c166f0b64a30af8c77b185cc8c3708e6d113ba90fca1a47e21540fedfc8b92e2427e601ba7d6c304483bf43bc85a8efe9936004c5b0132700426dd4427478338a389f6e0dec8125a7ec571859866349f9604730e45373bd956d86814943d8a1b11c9cf5a84c5722a5a665f7705884fc14b0d74c16547c92ec8b561c7c07f7ea6cdea07286ac4c4a2187a15e775da481ca3081c7a003020110a281bf0481bc7b05b4ad61dc02fb178b29d6aa5d79f05ee5d0c23a99204525c4927824b390f5ebd1cadcaa97ead6c3bdaf8c11d6c6e45c7b9270a9ddc44c52c6fe7ac29456590c3981aedc84aaad551dbcec2b9b930841713bff6d18f7df4e7ef27dafd06a60a7c2eeb1c18dd3d49579f98aca996eefda0741a98f2aa3f43328b29273e0c7984add0ebc10d77e11b099f9414d5c2d7330da9dcb090099f9d4985f924c6b524b97078589c10483df52419e2e0a8782f092705cea03807607c1f7c2d5", HexConverter.convertToHexString(exchange));
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         exchange = evaluateByServer(exchange);
-        assertEquals("606c06092a864886f71201020202006f5d305ba003020105a10302010fa24f304da003020110a2460444cad60460dc79a055e9ed878bd80cb136baec236919258d370a9442465555054f5a09ccce3aeaf1ac6d5ddc3e4b207d06da2c85735410bff2cefa402a7c83501c24148aba", HexConverter.convertToHexString(exchange));
+        assertEquals("606c06092a864886f71201020202006f5d305ba003020105a10302010fa24f304da003020110a246044489951ebd7508eea04bd5eabd787a6a4870454fe146c0ccc9dad0b54981dd53d075f95f6c132f1d44716091a65428f28ed320cb699d1652f8ebbbe56e5fdc7f52ddff5966", HexConverter.convertToHexString(exchange));
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
@@ -90,12 +90,12 @@ public class BasicIntegrityTest extends AbstractTest {
         assertFalse(client.isComplete());
 
         exchange = evaluateByServer(exchange);
-        assertEquals("603f06092a864886f71201020202010400ffffffff30713f88836239ce9b178f16de4d5f82ae6f0bfead460000c1923a8054a3cdbfe27f3ff20200fb4104040404", HexConverter.convertToHexString(exchange));
+        assertEquals("603f06092a864886f71201020202010400ffffffffd81ba0780a9c56021fe68eaae0773020093ba16f79a534ae5ddb7576e687fe8bc940ea4a0200fb4104040404", HexConverter.convertToHexString(exchange));
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         exchange = evaluateByClient(exchange);
-        assertEquals("603f06092a864886f71201020202010400ffffffffede57f84d47cd547ce7096f2b498e4a1574a2a153089812463a7ca7c944635cbec6548270200ef3204040404", HexConverter.convertToHexString(exchange));
+        assertEquals("603f06092a864886f71201020202010400ffffffff935e0a7e1a1642ed9dec1f922ddf3d9534b4e203144b25213bde59019cd068a60d1fd2ad0200ef3204040404", HexConverter.convertToHexString(exchange));
         assertFalse(server.isComplete());
         assertTrue(client.isComplete());
 
@@ -113,14 +113,14 @@ public class BasicIntegrityTest extends AbstractTest {
 
         message = new byte[]{(byte)0x00,(byte)0x12,(byte)0x34,(byte)0x56,(byte)0x78,(byte)0x9A,(byte)0xBC,(byte)0xDE,(byte)0xFF};
         wrappedMessage = server.wrap(message, 0, message.length);
-        assertEquals("604706092a864886f71201020202010400ffffffff2bc1f810d1f8bb2bd678800850e5f7cee7aa5660fc3f71aa72414d105f614c93350494cd00123456789abcdeff07070707070707", HexConverter.convertToHexString(wrappedMessage));
+        assertEquals("604706092a864886f71201020202010400ffffffffc91dc34545ff367848c0e08bb9964a6078ab314cc07ab097588ee37bdd0034311f4ac2c400123456789abcdeff07070707070707", HexConverter.convertToHexString(wrappedMessage));
 
         message = client.unwrap(wrappedMessage, 0, wrappedMessage.length);
         Assert.assertArrayEquals(message, new byte[]{(byte)0x00,(byte)0x12,(byte)0x34,(byte)0x56,(byte)0x78,(byte)0x9A,(byte)0xBC,(byte)0xDE,(byte)0xFF});
 
         message = new byte[]{(byte)0xFF,(byte)0xED,(byte)0xCB,(byte)0xA9,(byte)0x87,(byte)0x65,(byte)0x43,(byte)0x21,(byte)0x00};
         wrappedMessage = client.wrap(message, 0, message.length);
-        assertEquals("604706092a864886f71201020202010400ffffffff80e2e86bdb65006a6daaf732c1ffc61f5ee022a9c84e826ee4f09dfacd2f8705b87d4490ffedcba9876543210007070707070707", HexConverter.convertToHexString(wrappedMessage));
+        assertEquals("604706092a864886f71201020202010400ffffffff0c3fd2064ccc0888c203a8fa13de89b8edd1fd9e782fb5ce39dd9cc618a2ea74e2888d3fffedcba9876543210007070707070707", HexConverter.convertToHexString(wrappedMessage));
 
         message = server.unwrap(wrappedMessage, 0, wrappedMessage.length);
         Assert.assertArrayEquals(message, new byte[]{(byte)0xFF,(byte)0xED,(byte)0xCB,(byte)0xA9,(byte)0x87,(byte)0x65,(byte)0x43,(byte)0x21,(byte)0x00});
