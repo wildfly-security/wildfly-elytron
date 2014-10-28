@@ -7,7 +7,6 @@ org.wildfly.security.auth.principal
 org.wildfly.security.auth.provider
 org.wildfly.security.auth.provider.ldap
 org.wildfly.security.auth.util
-org.wildfly.security.auth.verifier
 org.wildfly.security.keystore
 org.wildfly.security.manager
 org.wildfly.security.manager.action
@@ -22,8 +21,6 @@ org.wildfly.security.sasl.callback
 org.wildfly.security.sasl.gssapi
 org.wildfly.security.sasl.localuser
 org.wildfly.security.sasl.md5digest
-org.wildfly.security.sasl.password.interfaces
-org.wildfly.security.sasl.password.spec
 org.wildfly.security.sasl.plain
 org.wildfly.security.sasl.scram
 org.wildfly.security.sasl.util
