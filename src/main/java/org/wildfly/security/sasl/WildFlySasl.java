@@ -18,12 +18,26 @@
 
 package org.wildfly.security.sasl;
 
+import java.util.Map;
+
+import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslServerFactory;
+
 /**
  * The core WildFly SASL utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class WildFlySasl {
+
+    /*
+     These two properties are to prevent checkstyle from raising a false positive for imports used only in JavaDoc.
+     The checkstyle problem is fixed upstream.
+     TODO: Remove these once checkstyle is updated to 6.1 or later.
+     */
+    private static final Class<?> ssf = SaslServerFactory.class;
+    private static final Class<?> scf = SaslClientFactory.class;
+    private static final Class<?> map = Map.class;
 
     /**
      * Property name to specify if the GSSAPI mechanism should support credential delegation. The property contains "true" then
@@ -65,4 +79,11 @@ public final class WildFlySasl {
      * required.
      */
     public static final String CHANNEL_BINDING_REQUIRED = "wildfly.sasl.channel-binding-required";
+
+    /**
+     * A flag indicating that all possible supported mechanism names should be returned, regardless of the presence
+     * or absence of any other query flags.  This flag is only effective on calls to {@link SaslServerFactory#getMechanismNames(Map)}
+     * or {@link SaslClientFactory#getMechanismNames(Map)} for Elytron-provided SASL factories.
+     */
+    public static final String MECHANISM_QUERY_ALL = "wildfly.sasl.mechanism-query-all";
 }
