@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.gssapi.compatibility;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.security.AccessController;
 import java.security.NoSuchProviderException;
 import java.security.PrivilegedAction;
@@ -28,6 +29,7 @@ import java.security.Provider;
 import java.security.SecureRandom;
 import java.security.Security;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -39,6 +41,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import mockit.Invocation;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
@@ -96,6 +99,7 @@ public abstract class AbstractTest {
     @BeforeClass
     public static void installMockClasses() throws Exception {
         new SystemMock();
+        new RandomMock();
         new SecureRandomMock();
     }
 
@@ -129,10 +133,20 @@ public abstract class AbstractTest {
         }
     }
 
+    public static class RandomMock extends MockUp<Random> {
+        @Mock
+        public void $init(Invocation inv) throws Exception {
+            Field field = Random.class.getDeclaredField("seed");
+            field.setAccessible(true);
+            field.set(inv.getInvokedInstance(), new AtomicLong(7326906125774241L));
+        }
+    }
+
     public static class SecureRandomMock extends MockUp<SecureRandom> {
+        Random random = new Random();
         @Mock
         public void nextBytes(byte[] bytes){
-            new Random().nextBytes(bytes);
+            random.nextBytes(bytes);
         }
     }
 
