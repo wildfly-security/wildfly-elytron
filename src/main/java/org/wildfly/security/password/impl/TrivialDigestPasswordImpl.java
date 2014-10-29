@@ -27,6 +27,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 
@@ -51,6 +52,10 @@ class TrivialDigestPasswordImpl extends AbstractPasswordImpl implements TrivialD
 
     TrivialDigestPasswordImpl(final TrivialDigestPassword password) {
         this(password.getAlgorithm(), password.getDigest().clone());
+    }
+
+    TrivialDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
+        this(algorithm, getDigestOfKS(algorithm, spec.getEncodedPassword()));
     }
 
     TrivialDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {

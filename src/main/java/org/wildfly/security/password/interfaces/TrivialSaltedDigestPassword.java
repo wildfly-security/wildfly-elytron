@@ -68,6 +68,11 @@ public interface TrivialSaltedDigestPassword extends OneWayPassword {
     String ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512 = "salt-password-digest-sha-512";
 
     /**
+     * The default salt size (in bytes), used when generating a random salt.
+     */
+    int DEFAULT_SALT_SIZE = 12;
+
+    /**
      * Get the digest represented by this {@link org.wildfly.security.password.Password password}
      *
      * @return The digest represented by this {@link org.wildfly.security.password.Password password}

@@ -202,7 +202,7 @@ public class BSDUnixDESCryptTest {
         EncryptablePasswordSpec invalidSpec = new EncryptablePasswordSpec("password".toCharArray(), new HashedPasswordAlgorithmSpec(17_777_200, salt));
 
         // An IllegalArgumentException should occur when creating a BSDUnixDESCryptPasswordImpl using the invalid spec
-        exception.expect(IllegalArgumentException.class);
+        exception.expect(InvalidKeySpecException.class);
         exception.expectMessage("Invalid number of rounds. Must be an integer between 1 and 16777215, inclusive");
         BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, invalidSpec);
     }
