@@ -18,22 +18,19 @@
 
 package org.wildfly.security.auth;
 
-import static org.wildfly.security.manager.WildFlySecurityManager.getClassLoaderPrivileged;
-
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Collection;
-import java.util.Iterator;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 
 import org.wildfly.security.manager.StackInspector;
 import org.wildfly.security.permission.ElytronPermission;
-import org.wildfly.security.sasl.util.SaslFactories;
 
 /**
  * A client for consuming authentication context configurations.
@@ -128,47 +125,23 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param uri the target URI
      * @param configuration the authentication configuration
+     * @param clientFactory the SASL client factory to delegate to
      * @param offeredMechanisms the available mechanisms
      * @return the SASL client, or {@code null} if no clients were available or could be configured
      */
-    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, Collection<String> offeredMechanisms) {
-        final Iterator<SaslClientFactory> iterator = SaslFactories.getSaslClientFactories(getClassLoaderPrivileged(STACK_INSPECTOR.getCallerClass(1)), true);
-        return configuration.createSaslClient(uri, null, null, iterator, offeredMechanisms);
+    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, SaslClientFactory clientFactory, Collection<String> offeredMechanisms) throws SaslException {
+        return configuration.createSaslClient(uri, clientFactory, offeredMechanisms);
     }
 
     /**
-     * Create a SASL client using the given URI and configuration, using the given class loader and optionally any globally
-     * installed providers for the purposes of discovering available SASL client implementations.
+     * Get the address of the destination from a URI.  The configuration may rewrite the destination as needed.
      *
-     * @param uri the target URI
-     * @param configuration the authentication configuration
-     * @param offeredMechanisms the available mechanisms
-     * @param classLoader the class loader to search
-     * @param useGlobal {@code true} to fall back to global providers, {@code false} to only use providers from the class loader
-     * @return the SASL client, or {@code null} if no clients were available or could be configured
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @return the address of the destination
      */
-    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, Collection<String> offeredMechanisms, ClassLoader classLoader, boolean useGlobal) {
-        final Iterator<SaslClientFactory> iterator = SaslFactories.getSaslClientFactories(classLoader, useGlobal);
-        return configuration.createSaslClient(uri, null, null, iterator, offeredMechanisms);
+    public InetSocketAddress getDestinationInetSocketAddress(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) {
+        return configuration.getDestinationInetAddress(uri, protocolDefaultPort);
     }
-
-    /**
-     * Create a SASL client using the given URI and configuration, using the given class loader and optionally any globally
-     * installed providers for the purposes of discovering available SASL client implementations.
-     *
-     * @param uri the target URI
-     * @param localAddress the local socket address
-     * @param peerAddress the peer socket address
-     * @param configuration the authentication configuration
-     * @param offeredMechanisms the available mechanisms
-     * @param classLoader the class loader to search
-     * @param useGlobal {@code true} to fall back to global providers, {@code false} to only use providers from the class loader
-     * @return the SASL client, or {@code null} if no clients were available or could be configured
-     */
-    public SaslClient createSaslClient(URI uri, SocketAddress localAddress, SocketAddress peerAddress, AuthenticationConfiguration configuration, Collection<String> offeredMechanisms, ClassLoader classLoader, boolean useGlobal) {
-        final Iterator<SaslClientFactory> iterator = SaslFactories.getSaslClientFactories(classLoader, useGlobal);
-        return configuration.createSaslClient(uri, localAddress, peerAddress, iterator, offeredMechanisms);
-    }
-
-
 }

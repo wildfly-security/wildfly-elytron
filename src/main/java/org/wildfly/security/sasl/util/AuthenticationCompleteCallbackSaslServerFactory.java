@@ -35,8 +35,7 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AuthenticationCompleteCallbackSaslServerFactory implements SaslServerFactory {
-    private final SaslServerFactory delegate;
+public final class AuthenticationCompleteCallbackSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
     /**
      * Construct a new instance.
@@ -44,25 +43,17 @@ public final class AuthenticationCompleteCallbackSaslServerFactory implements Sa
      * @param delegate the delegate {@code SaslServerFactory}
      */
     public AuthenticationCompleteCallbackSaslServerFactory(final SaslServerFactory delegate) {
-        this.delegate = delegate;
+        super(delegate);
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
-        return new SaslServer() {
+        return new AbstractDelegatingSaslServer(delegateSaslServer) {
             private final AtomicBoolean complete = new AtomicBoolean();
-
-            public String getMechanismName() {
-                return delegateSaslServer.getMechanismName();
-            }
-
-            public String getAuthorizationID() {
-                return delegateSaslServer.getAuthorizationID();
-            }
 
             public byte[] evaluateResponse(final byte[] response) throws SaslException {
                 try {
-                    final byte[] challenge = delegateSaslServer.evaluateResponse(response);
+                    final byte[] challenge = delegate.evaluateResponse(response);
                     if (isComplete() && complete.compareAndSet(false, true)) try {
                         cbh.handle(new Callback[] { new AuthenticationCompleteCallback(true) });
                     } catch (Throwable ignored) {
@@ -76,30 +67,6 @@ public final class AuthenticationCompleteCallbackSaslServerFactory implements Sa
                     throw e;
                 }
             }
-
-            public boolean isComplete() {
-                return delegateSaslServer.isComplete();
-            }
-
-            public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-                return delegateSaslServer.unwrap(incoming, offset, len);
-            }
-
-            public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-                return delegateSaslServer.wrap(outgoing, offset, len);
-            }
-
-            public Object getNegotiatedProperty(final String propName) {
-                return delegateSaslServer.getNegotiatedProperty(propName);
-            }
-
-            public void dispose() throws SaslException {
-                delegateSaslServer.dispose();
-            }
         };
-    }
-
-    public String[] getMechanismNames(final Map<String, ?> props) {
-        return delegate.getMechanismNames(props);
     }
 }

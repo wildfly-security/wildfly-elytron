@@ -34,31 +34,22 @@ import javax.security.sasl.SaslException;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PrivilegedSaslClient implements SaslClient, SaslWrapper {
-    private final SaslClient delegate;
+public final class PrivilegedSaslClient extends AbstractDelegatingSaslClient implements SaslWrapper {
     private final AccessControlContext accessControlContext;
 
     PrivilegedSaslClient(final SaslClient delegate, final AccessControlContext accessControlContext) {
+        super(delegate);
         if (delegate == null) {
             throw new IllegalArgumentException("delegate is null");
         }
         if (accessControlContext == null) {
             throw new IllegalArgumentException("accessControlContext is null");
         }
-        this.delegate = delegate;
         this.accessControlContext = accessControlContext;
     }
 
     public PrivilegedSaslClient(final SaslClient delegate) {
         this(delegate, AccessController.getContext());
-    }
-
-    public String getMechanismName() {
-        return delegate.getMechanismName();
-    }
-
-    public boolean hasInitialResponse() {
-        return delegate.hasInitialResponse();
     }
 
     public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
@@ -77,10 +68,6 @@ public final class PrivilegedSaslClient implements SaslClient, SaslWrapper {
                 throw new UndeclaredThrowableException(throwable);
             }
         }
-    }
-
-    public boolean isComplete() {
-        return delegate.isComplete();
     }
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
@@ -117,13 +104,5 @@ public final class PrivilegedSaslClient implements SaslClient, SaslWrapper {
                 throw new UndeclaredThrowableException(throwable);
             }
         }
-    }
-
-    public Object getNegotiatedProperty(final String propName) {
-        return delegate.getNegotiatedProperty(propName);
-    }
-
-    public void dispose() throws SaslException {
-        delegate.dispose();
     }
 }

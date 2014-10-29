@@ -18,19 +18,8 @@
 
 package org.wildfly.security.sasl.util;
 
-import java.security.Provider;
-import java.security.Security;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
-import java.util.Set;
-
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
-
-import org.wildfly.security.manager.WildFlySecurityManager;
 
 /**
  * A utility class for discovering SASL client and server factories.
@@ -42,85 +31,34 @@ public final class SaslFactories {
     private SaslFactories() {
     }
 
-    /**
-     * Returns an iterator of all of the registered {@code SaslServerFactory}s where the order is based on the
-     * order of the Provider registration and/or class path order.  Class path providers are listed before
-     * global providers; in the event of a name conflict, the class path provider is preferred.
-     *
-     * @param classLoader the class loader to use
-     * @param includeGlobal {@code true} to include globally registered providers, {@code false} to exclude them
-     * @return the {@code Iterator} of {@code SaslServerFactory}s
-     */
-    public static Iterator<SaslServerFactory> getSaslServerFactories(ClassLoader classLoader, boolean includeGlobal) {
-        return getFactories(SaslServerFactory.class, classLoader, includeGlobal);
-    }
+    private static final SecurityProviderSaslClientFactory providerSaslClientFactory = new SecurityProviderSaslClientFactory();
+    private static final SecurityProviderSaslServerFactory providerSaslServerFactory = new SecurityProviderSaslServerFactory();
 
     /**
-     * Returns an iterator of all of the registered {@code SaslServerFactory}s where the order is based on the
-     * order of the Provider registration and/or class path order.
+     * Get a standard SASL client factory which uses extended callbacks and searches both installed providers as well as
+     * {@code ServiceLoader}-style factories.
      *
-     * @return the {@code Iterator} of {@code SaslServerFactory}s
+     * @param classLoader the class loader from which to search
+     * @return the SASL client factory
      */
-    public static Iterator<SaslServerFactory> getSaslServerFactories() {
-        return getFactories(SaslServerFactory.class, null, true);
+    public static SaslClientFactory getStandardSaslClientFactory(ClassLoader classLoader) {
+        return new AuthenticationCompleteCallbackSaslClientFactory(new AggregateSaslClientFactory(
+            new ServiceLoaderSaslClientFactory(classLoader),
+            providerSaslClientFactory
+        ));
     }
 
     /**
-     * Returns an iterator of all of the registered {@code SaslClientFactory}s where the order is based on the
-     * order of the Provider registration and/or class path order.  Class path providers are listed before
-     * global providers; in the event of a name conflict, the class path provider is preferred.
+     * Get a standard SASL server factory which uses extended callbacks and searches both installed providers as well as
+     * {@code ServiceLoader}-style factories.
      *
-     * @param classLoader the class loader to use
-     * @param includeGlobal {@code true} to include globally registered providers, {@code false} to exclude them
-     * @return the {@code Iterator} of {@code SaslClientFactory}s
+     * @param classLoader the class loader from which to search
+     * @return the SASL server factory
      */
-    public static Iterator<SaslClientFactory> getSaslClientFactories(ClassLoader classLoader, boolean includeGlobal) {
-        return getFactories(SaslClientFactory.class, classLoader, includeGlobal);
+    public static SaslServerFactory getStandardSaslServerFactory(ClassLoader classLoader) {
+        return new AuthenticationCompleteCallbackSaslServerFactory(new AggregateSaslServerFactory(
+            new ServiceLoaderSaslServerFactory(classLoader),
+            providerSaslServerFactory
+        ));
     }
-
-    /**
-     * Returns an iterator of all of the registered {@code SaslClientFactory}s where the order is based on the
-     * order of the Provider registration and/or class path order.
-     *
-     * @return the {@code Iterator} of {@code SaslClientFactory}s
-     */
-    public static Iterator<SaslClientFactory> getSaslClientFactories() {
-        return getFactories(SaslClientFactory.class, null, true);
-    }
-
-    private static <T> Iterator<T> getFactories(Class<T> type, ClassLoader classLoader, boolean includeGlobal) {
-        Set<T> factories = new LinkedHashSet<T>();
-        final ServiceLoader<T> loader = ServiceLoader.load(type, classLoader);
-        Iterator<T> iterator = loader.iterator();
-        for (;;) try {
-            if (! iterator.hasNext()) {
-                break;
-            }
-            factories.add(iterator.next());
-        } catch (ServiceConfigurationError ignored) {}
-        if (includeGlobal) {
-            Set<String> loadedClasses = new HashSet<String>();
-            final String filter = type.getSimpleName() + ".";
-
-            Provider[] providers = Security.getProviders();
-            for (Provider currentProvider : providers) {
-                final ClassLoader cl = WildFlySecurityManager.getClassLoaderPrivileged(currentProvider.getClass());
-                for (Object currentKey : currentProvider.keySet()) {
-                    if (currentKey instanceof String &&
-                            ((String) currentKey).startsWith(filter) &&
-                            ((String) currentKey).indexOf(' ') < 0) {
-                        String className = currentProvider.getProperty((String) currentKey);
-                        if (className != null && loadedClasses.add(className)) {
-                            try {
-                                factories.add(Class.forName(className, true, cl).asSubclass(type).newInstance());
-                            } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return factories.iterator();
-    }
-
 }

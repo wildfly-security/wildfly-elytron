@@ -30,7 +30,7 @@ import javax.security.sasl.SaslException;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractSaslParticipant {
+public abstract class AbstractSaslParticipant implements SaslWrapper {
 
     /**
      * An empty byte array.
