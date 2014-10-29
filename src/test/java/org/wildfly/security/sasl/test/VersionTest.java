@@ -20,7 +20,7 @@ package org.wildfly.security.sasl.test;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.WildFlySaslProvider;
+import org.wildfly.security.Version;
 
 /**
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
@@ -29,9 +29,9 @@ public class VersionTest {
 
     @Test
     public void testVersionSet() {
-        assertNotNull(WildFlySaslProvider.getVersionString());
-        assertNotEquals("", WildFlySaslProvider.getVersionString());
-        assertNotEquals("(unknown)", WildFlySaslProvider.getVersionString());
+        assertNotNull(Version.getVersion());
+        assertNotEquals("", Version.getVersion());
+        assertNotEquals("(unknown)", Version.getVersion());
     }
 
 }

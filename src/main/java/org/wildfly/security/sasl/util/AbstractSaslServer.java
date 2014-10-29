@@ -45,8 +45,8 @@ public abstract class AbstractSaslServer extends AbstractSaslParticipant impleme
      * Evaluate an authentication response received from the client.
      *
      * @param response the authentication response
-     * @return the response to send to the server
-     * @throws SaslException if there is an error processing the server message
+     * @return the next challenge to send to the client
+     * @throws SaslException if there is an error processing the client message
      */
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         return evaluateMessage(response);

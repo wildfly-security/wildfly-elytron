@@ -23,8 +23,19 @@ import static org.wildfly.security.sasl.gssapi.AbstractGssapiFactory.GSSAPI;
 import static org.wildfly.security.sasl.localuser.LocalUserSaslFactory.JBOSS_LOCAL_USER;
 import static org.wildfly.security.sasl.md5digest.MD5DigestServerFactory.JBOSS_DIGEST_MD5;
 import static org.wildfly.security.sasl.plain.PlainServerFactory.PLAIN;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_1;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_1_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_256;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_256_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_384;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_384_PLUS;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_512;
+import static org.wildfly.security.sasl.scram.Scram.SCRAM_SHA_512_PLUS;
 
 import java.security.Provider;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
@@ -40,6 +51,8 @@ import org.wildfly.security.sasl.localuser.LocalUserServerFactory;
 import org.wildfly.security.sasl.plain.PlainServerFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestClientFactory;
 import org.wildfly.security.sasl.md5digest.MD5DigestServerFactory;
+import org.wildfly.security.sasl.scram.ScramSaslClientFactory;
+import org.wildfly.security.sasl.scram.ScramSaslServerFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -50,13 +63,11 @@ public class WildFlySaslProvider extends Provider {
 
     private static final long serialVersionUID = 2819852358608732038L;
 
-    private static final String INFO = "JBoss SASL Provider " + getVersionString();
+    private static final String INFO = "WildFly Elytron SASL Provider " + Version.getVersion();
 
     private static final String SASL_CLIENT_FACTORY = SaslClientFactory.class.getSimpleName();
 
     private static final String SASL_SERVER_FACTORY = SaslServerFactory.class.getSimpleName();
-
-    private static final String DOT = ".";
 
     /**
      * Construct a new instance.
@@ -64,23 +75,32 @@ public class WildFlySaslProvider extends Provider {
     public WildFlySaslProvider() {
         super("wildfly-sasl", 1.0, INFO);
         // NOTE: make sure that all client and server factories listed here also end up in the META-INF/services files.
-        put(SASL_CLIENT_FACTORY + DOT + ANONYMOUS, AnonymousClientFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + ANONYMOUS, AnonymousServerFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + PLAIN, PlainServerFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserServerFactory.class.getName());
-        put(SASL_CLIENT_FACTORY + DOT + JBOSS_LOCAL_USER, LocalUserClientFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + GSSAPI, GssapiServerFactory.class.getName());
-        put(SASL_CLIENT_FACTORY + DOT + GSSAPI, GssapiClientFactory.class.getName());
-        put(SASL_CLIENT_FACTORY + DOT + JBOSS_DIGEST_MD5, MD5DigestClientFactory.class.getName());
-        put(SASL_SERVER_FACTORY + DOT + JBOSS_DIGEST_MD5, MD5DigestServerFactory.class.getName());
-    }
-
-    /**
-     * Get the version string of the WildFly SASL provider.
-     *
-     * @return the version string.
-     */
-    public static String getVersionString() {
-        return Version.getVersion();
+        final List<String> noAliases = Collections.emptyList();
+        final Map<String, String> noProperties = Collections.emptyMap();
+        putService(new Service(this, SASL_CLIENT_FACTORY, ANONYMOUS, AnonymousClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, ANONYMOUS, AnonymousServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, PLAIN, PlainServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, JBOSS_LOCAL_USER, LocalUserServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, JBOSS_LOCAL_USER, LocalUserClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, GSSAPI, GssapiServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, GSSAPI, GssapiClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, JBOSS_DIGEST_MD5, MD5DigestClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, JBOSS_DIGEST_MD5, MD5DigestServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_1, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_1_PLUS, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_256, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_256_PLUS, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_384, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_384_PLUS, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_512, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_CLIENT_FACTORY, SCRAM_SHA_512_PLUS, ScramSaslClientFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_1, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_1_PLUS, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_256, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_256_PLUS, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_384, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_384_PLUS, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_512, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
+        putService(new Service(this, SASL_SERVER_FACTORY, SCRAM_SHA_512_PLUS, ScramSaslServerFactory.class.getName(), noAliases, noProperties));
     }
 }
