@@ -43,4 +43,6 @@ public interface DigestMD5Password extends OneWayPassword {
     String getDigestURI();
 
     byte[] getDigestResponse();
+
+    boolean isUtf8Encoded();
 }

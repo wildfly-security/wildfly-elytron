@@ -31,8 +31,9 @@ public class DigestMD5PasswordSpec implements PasswordSpec {
     private final String authzid;
     private final String qop;
     private final String digestURI;
+    private final boolean utf8Encoded;
 
-    public DigestMD5PasswordSpec(byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI) {
+    public DigestMD5PasswordSpec(byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
         this.hA1 = hA1;
         this.nonce = nonce;
         this.nonceCount = nonceCount;
@@ -40,6 +41,7 @@ public class DigestMD5PasswordSpec implements PasswordSpec {
         this.authzid = authzid;
         this.qop = qop;
         this.digestURI = digestURI;
+        this.utf8Encoded = utf8Encoded;
     }
 
     public byte[] getHA1() {
@@ -68,5 +70,9 @@ public class DigestMD5PasswordSpec implements PasswordSpec {
 
     public String getDigestURI() {
         return digestURI;
+    }
+
+    public boolean isUtf8Encoded() {
+        return utf8Encoded;
     }
 }
