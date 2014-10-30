@@ -20,6 +20,8 @@ package org.wildfly.security.auth;
 
 import java.net.URI;
 
+import org.wildfly.security.util.URIUtil;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -33,7 +35,7 @@ class MatchUserRule extends MatchRule {
     }
 
     public boolean matches(final URI uri) {
-        String userInfo = getUserInfo(uri);
+        String userInfo = URIUtil.getUserFromURI(uri);
         return userInfo != null && userInfo.equals(userSpec) && super.matches(uri);
     }
 
