@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -574,7 +573,7 @@ public class Base64Test {
         Base64.base64DecodeStandard(encoded, 0, encoded.length);
     }
 
-    @Test(expected=InvalidKeySpecException.class)
+    @Test(expected=IllegalArgumentException.class)
     public void testInvalidInputDecodeNonalphabeticChar() throws Exception {
         char[] encoded = "áááááááááááá".toCharArray();
         Base64.base64DecodeStandard(encoded, 0, encoded.length);

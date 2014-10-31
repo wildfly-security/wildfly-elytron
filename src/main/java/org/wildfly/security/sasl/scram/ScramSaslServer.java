@@ -339,12 +339,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     int channelBindingStart = i;
                     while (response[i++] != ',') {}
                     int channelBindingEnd = i - 1;
-                    try {
-                        Base64.base64DecodeStandard(response, channelBindingStart, channelBindingEnd - channelBindingStart, b);
-                    } catch (InvalidKeySpecException e) {
-                        // todo
-                        throw new IllegalStateException();
-                    }
+                    Base64.base64DecodeStandard(response, channelBindingStart, channelBindingEnd - channelBindingStart, b);
 
                     // -- sub-parse of binding data --
                     final byte[] subResponse = b.toArray();
@@ -508,9 +503,7 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     if (DEBUG) System.out.printf("[S] Client proof string: %s%n", new String(response, s + 3, i - s - 3, StandardCharsets.UTF_8));
                     b.setLength(0);
-                    try {
                     Base64.base64DecodeStandard(response, s + 3, i - s - 3, b);
-                    } catch (InvalidKeySpecException e) { throw new IllegalArgumentException(e); }
                     byte[] recoveredClientProof = b.toArray();
                     if (DEBUG) System.out.printf("[S] Client proof: %s%n", convertToHexString(recoveredClientProof));
 
