@@ -52,7 +52,8 @@
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
-        <version.org.wildfly.checkstyle-config>1.0.0.Final</version.org.wildfly.checkstyle-config>
+        <version.org.wildfly.checkstyle-config>1.0.2.Final</version.org.wildfly.checkstyle-config>
+        <version.com.puppycrawl.tools.checkstyle>6.0</version.com.puppycrawl.tools.checkstyle>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
@@ -163,6 +164,11 @@
                             <groupId>org.wildfly.checkstyle</groupId>
                             <artifactId>wildfly-checkstyle-config</artifactId>
                             <version>${version.org.wildfly.checkstyle-config}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${version.com.puppycrawl.tools.checkstyle}</version>
                         </dependency>
                     </dependencies>
                     <executions>
