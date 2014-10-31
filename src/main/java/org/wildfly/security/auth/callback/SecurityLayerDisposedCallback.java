@@ -42,7 +42,11 @@ public final class SecurityLayerDisposedCallback extends AbstractExtendedCallbac
         return INSTANCE;
     }
 
-    Object readResolve() { return INSTANCE; }
+    Object readResolve() {
+        return INSTANCE;
+    }
 
-    Object writeReplace() { return INSTANCE; }
+    Object writeReplace() {
+        return INSTANCE;
+    }
 }
