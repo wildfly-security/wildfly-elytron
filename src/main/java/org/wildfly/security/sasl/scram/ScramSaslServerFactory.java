@@ -132,7 +132,7 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        if ("true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+        if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return new String[] {
                 Scram.SCRAM_SHA_1_PLUS,
                 Scram.SCRAM_SHA_256_PLUS,

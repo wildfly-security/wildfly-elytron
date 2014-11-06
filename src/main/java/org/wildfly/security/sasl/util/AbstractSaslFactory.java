@@ -22,6 +22,8 @@ import java.util.Map;
 
 import javax.security.sasl.Sasl;
 
+import org.wildfly.security.sasl.WildFlySasl;
+
 /**
  * Abstract SASL factory base class.
  *
@@ -64,7 +66,8 @@ public abstract class AbstractSaslFactory {
      * @return {@code true} if there is a match, {@code false} otherwise
      */
     protected boolean matches(final Map<String, ?> props) {
-        return  ! (getPropertyValue(Sasl.POLICY_NOPLAINTEXT, props, false) && isPlainText()
+        return getPropertyValue(WildFlySasl.MECHANISM_QUERY_ALL, props, false) ||
+                ! (getPropertyValue(Sasl.POLICY_NOPLAINTEXT, props, false) && isPlainText()
                 || getPropertyValue(Sasl.POLICY_NOANONYMOUS, props, false) && isAnonymous()
                 || getPropertyValue(Sasl.POLICY_FORWARD_SECRECY, props, false) && ! isForwardSecrecy()
                 || getPropertyValue(Sasl.POLICY_NOACTIVE, props, false) && isActiveSusceptible()
