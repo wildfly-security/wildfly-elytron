@@ -21,7 +21,6 @@ package org.wildfly.security.util;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
@@ -105,9 +104,9 @@ public final class Base64 {
      * @param reader the character reader
      * @param target the target array
      * @param interleave the interleave table to use
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly
      */
-    public static void base64DecodeModCryptLE(CharacterArrayReader reader, byte[] target, int[] interleave) throws InvalidKeySpecException {
+    public static void base64DecodeModCryptLE(CharacterArrayReader reader, byte[] target, int[] interleave) throws IllegalArgumentException {
         int len = target.length;
         int a, b;
         try {
@@ -123,7 +122,7 @@ public final class Base64 {
                 target[interleave[i]] = (byte) (b << 2 | a >> 4); // b2
             }
         } catch (NoSuchElementException | IOException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
+            throw new IllegalArgumentException("Unexpected end of input string");
         }
     }
 
@@ -136,10 +135,10 @@ public final class Base64 {
      * @param reader the character reader
      * @param target the target array
      * @param decodeAlphabet the lookup table to use when decoding
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or if the
+     *  encoded sequence of characters contains an invalid number of padding characters
      */
-    public static void base64Decode(CharacterArrayReader reader, byte[] target, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+    public static void base64Decode(CharacterArrayReader reader, byte[] target, int[] decodeAlphabet) throws IllegalArgumentException {
         int len = target.length;
         int a, b;
         try{
@@ -165,7 +164,7 @@ public final class Base64 {
                 }
             }
         } catch (NoSuchElementException | IOException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
+            throw new IllegalArgumentException("Unexpected end of input string");
         }
     }
 
@@ -180,10 +179,10 @@ public final class Base64 {
      * @param len the number of characters to decode
      * @param decodeAlphabet the lookup table to use when decoding
      * @return an appropriately-sized byte array containing the decoded bytes
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or
+     *  if the encoded sequence of characters contains an invalid number of padding characters
      */
-    public static byte[] base64Decode(char[] encoded, int offset, int len, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+    public static byte[] base64Decode(char[] encoded, int offset, int len, int[] decodeAlphabet) throws IllegalArgumentException {
         int decodedLen = calculateDecodedLength(encoded, offset, len);
         byte[] target = new byte[decodedLen];
         CharacterArrayReader r = new CharacterArrayReader(encoded, offset, len);
@@ -205,10 +204,10 @@ public final class Base64 {
      * @param offset the offset of the first character to decode
      * @param decodeAlphabet the lookup table to use when decoding
      * @return an appropriately-sized byte array containing the decoded bytes
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or if the
+     *  encoded sequence of characters contains an invalid number of padding characters
      */
-    public static byte[] base64Decode(char[] encoded, int offset, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+    public static byte[] base64Decode(char[] encoded, int offset, int[] decodeAlphabet) throws IllegalArgumentException {
         return base64Decode(encoded, offset, encoded.length - offset, decodeAlphabet);
     }
 
@@ -224,10 +223,10 @@ public final class Base64 {
      * @param target the target byte string builder
      * @param decodeAlphabet the lookup table to use when decoding
      * @return the number of bytes that were decoded
-     * @throws InvalidKeySpecException if the end of the sequence of bytes is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of bytes contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of bytes is reached unexpectedly or
+     *  if the encoded sequence of bytes contains an invalid number of padding characters
      */
-    public static int base64Decode(byte[] encoded, int offset, int len, ByteStringBuilder target, int[] decodeAlphabet) throws InvalidKeySpecException, IllegalArgumentException {
+    public static int base64Decode(byte[] encoded, int offset, int len, ByteStringBuilder target, int[] decodeAlphabet) throws IllegalArgumentException {
         int count = 0;
         int t1, t2;
         while (count < len) {
@@ -273,12 +272,12 @@ public final class Base64 {
      * @param ch the character
      * @param decodeAlphabet the lookup table to use when decoding
      * @return the byte
-     * @throws InvalidKeySpecException if the character is not in the alphabet
+     * @throws IllegalArgumentException if the character is not in the alphabet
      */
-    public static int base64Decode(int ch, int[] decodeAlphabet) throws InvalidKeySpecException {
+    public static int base64Decode(int ch, int[] decodeAlphabet) throws IllegalArgumentException {
         int decoded = decodeAlphabet[ch];
         if (decoded == -1) {
-            throw new InvalidKeySpecException("Invalid character encountered");
+            throw new IllegalArgumentException("Invalid character encountered");
         }
         return decoded;
     }
@@ -289,9 +288,9 @@ public final class Base64 {
      *
      * @param reader the character reader
      * @param target the target array
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly
      */
-    public static void base64DecodeModCrypt(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
+    public static void base64DecodeModCrypt(CharacterArrayReader reader, byte[] target) throws IllegalArgumentException {
         base64Decode(reader, target, FROM_MOD_CRYPT_ALPHABET);
     }
 
@@ -303,10 +302,10 @@ public final class Base64 {
      *
      * @param reader the character reader
      * @param target the target array
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or if the
+     *  encoded sequence of characters contains an invalid number of padding characters
      */
-    public static void base64DecodeStandard(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException, IllegalArgumentException {
+    public static void base64DecodeStandard(CharacterArrayReader reader, byte[] target) throws IllegalArgumentException {
         base64Decode(reader, target, FROM_STANDARD_ALPHABET);
     }
 
@@ -320,10 +319,10 @@ public final class Base64 {
      * @param offset the offset of the first character to decode
      * @param len the number of characters to decode
      * @return an appropriately-sized byte array containing the decoded bytes
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or
+     *  if the encoded sequence of characters contains an invalid number of padding characters
      */
-    public static byte[] base64DecodeStandard(char[] encoded, int offset, int len) throws InvalidKeySpecException, IllegalArgumentException {
+    public static byte[] base64DecodeStandard(char[] encoded, int offset, int len) throws IllegalArgumentException {
         return base64Decode(encoded, offset, len, FROM_STANDARD_ALPHABET);
     }
 
@@ -336,10 +335,10 @@ public final class Base64 {
      * @param encoded the characters to decode
      * @param offset the offset of the first character to decode
      * @return an appropriately-sized byte array containing the decoded bytes
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of characters contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly or
+     *  if the encoded sequence of characters contains an invalid number of padding characters
      */
-    public static byte[] base64DecodeStandard(char[] encoded, int offset) throws InvalidKeySpecException, IllegalArgumentException {
+    public static byte[] base64DecodeStandard(char[] encoded, int offset) throws IllegalArgumentException {
         return base64Decode(encoded, offset, FROM_STANDARD_ALPHABET);
     }
 
@@ -354,10 +353,10 @@ public final class Base64 {
      * @param len the number of bytes to decode
      * @param target the target byte string builder
      * @return the number of bytes that were decoded
-     * @throws InvalidKeySpecException if the end of the sequence of bytes is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of bytes contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of bytes is reached unexpectedly or
+     *  if the encoded sequence of bytes contains an invalid number of padding characters
      */
-    public static int base64DecodeStandard(byte[] encoded, int offset, int len, ByteStringBuilder target) throws InvalidKeySpecException, IllegalArgumentException {
+    public static int base64DecodeStandard(byte[] encoded, int offset, int len, ByteStringBuilder target) throws IllegalArgumentException {
         return base64Decode(encoded, offset, len, target, FROM_STANDARD_ALPHABET);
     }
 
@@ -371,10 +370,10 @@ public final class Base64 {
      * @param offset the offset of the first byte to decode
      * @param target the target byte string builder
      * @return the number of bytes that were decoded
-     * @throws InvalidKeySpecException if the end of the sequence of bytes is reached unexpectedly
-     * @throws IllegalArgumentException if the encoded sequence of bytes contains an invalid number of padding characters
+     * @throws IllegalArgumentException if the end of the sequence of bytes is reached unexpectedly or
+     *  if the encoded sequence of bytes contains an invalid number of padding characters
      */
-    public static int base64DecodeStandard(byte[] encoded, int offset, ByteStringBuilder target) throws InvalidKeySpecException, IllegalArgumentException {
+    public static int base64DecodeStandard(byte[] encoded, int offset, ByteStringBuilder target) throws IllegalArgumentException {
         return base64DecodeStandard(encoded, offset, encoded.length - offset, target);
     }
 
@@ -384,9 +383,9 @@ public final class Base64 {
      *
      * @param reader the character reader
      * @param target the target array
-     * @throws InvalidKeySpecException if the end of the sequence of characters is reached unexpectedly
+     * @throws IllegalArgumentException if the end of the sequence of characters is reached unexpectedly
      */
-    public static void base64DecodeBCrypt(CharacterArrayReader reader, byte[] target) throws InvalidKeySpecException {
+    public static void base64DecodeBCrypt(CharacterArrayReader reader, byte[] target) throws IllegalArgumentException {
         base64Decode(reader, target, FROM_BCRYPT_ALPHABET);
     }
 
@@ -395,9 +394,9 @@ public final class Base64 {
      *
      * @param ch the character
      * @return the byte
-     * @throws InvalidKeySpecException if the character is not in the alphabet
+     * @throws IllegalArgumentException if the character is not in the alphabet
      */
-    public static int base64DecodeModCrypt(int ch) throws InvalidKeySpecException {
+    public static int base64DecodeModCrypt(int ch) throws IllegalArgumentException {
         return base64Decode(ch, FROM_MOD_CRYPT_ALPHABET);
     }
 
@@ -407,9 +406,9 @@ public final class Base64 {
      *
      * @param ch the character
      * @return the byte
-     * @throws InvalidKeySpecException if the character is not in the alphabet
+     * @throws IllegalArgumentException if the character is not in the alphabet
      */
-    private static int base64DecodeStandard(int ch) throws InvalidKeySpecException {
+    private static int base64DecodeStandard(int ch) throws IllegalArgumentException {
         return base64Decode(ch, FROM_STANDARD_ALPHABET);
     }
 
@@ -418,9 +417,9 @@ public final class Base64 {
      *
      * @param ch the character
      * @return the byte
-     * @throws InvalidKeySpecException if the character is not in the alphabet
+     * @throws IllegalArgumentException if the character is not in the alphabet
      */
-    private static int base64DecodeBCrypt(int ch) throws InvalidKeySpecException {
+    private static int base64DecodeBCrypt(int ch) throws IllegalArgumentException{
         return base64Decode(ch, FROM_BCRYPT_ALPHABET);
     }
 

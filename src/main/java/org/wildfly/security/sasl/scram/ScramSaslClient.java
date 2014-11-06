@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
@@ -159,9 +158,7 @@ class ScramSaslClient extends AbstractSaslClient {
                             int start = i;
                             while (challenge[i++] != ',') {}
                             int end = i - 1;
-                            try {
                             Base64.base64DecodeStandard(challenge, start, end - start, b);
-                            } catch (InvalidKeySpecException fixme) { throw new IllegalArgumentException(fixme); }
                             final byte[] salt = b.toArray();
                             if (DEBUG) System.out.printf("[C] Server sent salt: %s%n", convertToHexString(salt));
                             b.setLength(0);
@@ -278,9 +275,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                 break;
                             }
                         }
-                        try {
                         Base64.base64DecodeStandard(challenge, start, end - start, b);
-                        } catch (InvalidKeySpecException fixme) { throw new IllegalArgumentException(fixme); }
                         // verify server signature
                         mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                         byte[] serverKey = mac.doFinal(Scram.SERVER_KEY_BYTES);
