@@ -65,7 +65,14 @@ public final class PasswordKeyStoreImpl extends KeyStoreSpi {
     }
 
     public Key engineGetKey(final String alias, final char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
-        return null;
+        final HashMap<String, PasswordEntry> map = pwRef.get();
+        if (map == null) return null;
+        final PasswordEntry key = map.get(alias);
+        if (key == null) return null;
+        if (password != null) {
+            throw log.invalidKeyStoreEntryPassword(alias);
+        }
+        return key.getPassword();
     }
 
     public KeyStore.Entry engineGetEntry(final String alias, final KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
@@ -116,6 +123,12 @@ public final class PasswordKeyStoreImpl extends KeyStoreSpi {
     }
 
     public void engineSetKeyEntry(final String alias, final Key key, final char[] password, final Certificate[] chain) throws KeyStoreException {
+        if (password != null) {
+            throw new KeyStoreException(log.invalidKeyStoreEntryPassword(alias));
+        }
+        if (key instanceof Password) {
+            engineSetEntry(alias, new PasswordEntry((Password) key), null);
+        }
         throw log.invalidKeyStoreEntryType(alias, PasswordEntry.class, Key.class);
     }
 
