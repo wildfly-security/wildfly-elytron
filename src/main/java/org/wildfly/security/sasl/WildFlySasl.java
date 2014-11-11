@@ -86,4 +86,9 @@ public final class WildFlySasl {
      * or {@link SaslClientFactory#getMechanismNames(Map)} for Elytron-provided SASL factories.
      */
     public static final String MECHANISM_QUERY_ALL = "wildfly.sasl.mechanism-query-all";
+
+    /**
+     * The immutable empty names array.
+     */
+    public static final String[] NO_NAMES = new String[0];
 }

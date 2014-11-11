@@ -24,6 +24,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 
+import javax.security.sasl.SaslException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
 
@@ -111,4 +112,49 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 20, value = "Unexpected end of file")
     EOFException unexpectedEof();
+
+    @Message(id = 21, value = "SASL exchange received a message after authentication was already complete")
+    SaslException saslMessageAfterComplete();
+
+    @Message(id = 22, value = "SASL user name contains an invalid or disallowed character")
+    SaslException saslUserNameContainsInvalidCharacter();
+
+    @Message(id = 23, value = "SASL user name could not be decoded from encoding \"%s\"")
+    SaslException saslUserNameDecodeFailed(String encodingName);
+
+    @Message(id = 24, value = "SASL authorization failed")
+    SaslException saslAuthorizationFailed(@Cause Throwable cause);
+
+    @Message(id = 25, value = "SASL authentication is not yet complete")
+    IllegalStateException saslAuthenticationNotComplete();
+
+    @Message(id = 26, value = "No SASL security layer is currently in force")
+    SaslException saslNoSecurityLayer();
+
+    @Message(id = 27, value = "Invalid SASL negotiation message received")
+    SaslException saslInvalidMessageReceived();
+
+    @Message(id = 28, value = "SASL client-side authentication failed")
+    SaslException saslClientSideAuthenticationFailed(@Cause Exception e);
+
+    @Message(id = 29, value = "No SASL login name was given")
+    SaslException saslNoLoginNameGiven();
+
+    @Message(id = 30, value = "No SASL password was given")
+    SaslException saslNoPasswordGiven();
+
+    @Message(id = 31, value = "SASL authentication failed due to one or more malformed fields")
+    SaslException saslMalformedFields(@Cause IllegalArgumentException ex);
+
+    @Message(id = 32, value = "SASL message is too long")
+    SaslException saslMessageTooLong();
+
+    @Message(id = 33, value = "SASL server-side authentication failed")
+    SaslException saslServerSideAuthenticationFailed(@Cause Exception e);
+
+    @Message(id = 34, value = "SASL password not verified")
+    SaslException saslPasswordNotVerified();
+
+    @Message(id = 35, value = "SASL authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
+    SaslException saslAuthorizationFailed(String loginName, String authorizationId);
 }

@@ -18,189 +18,162 @@
 
 package org.wildfly.security.sasl.plain;
 
-import static org.wildfly.security.sasl.plain.PlainServerFactory.PLAIN;
+import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl.plain.PlainSasl.PLAIN;
 
+import java.io.IOException;
+import java.util.NoSuchElementException;
+
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
-import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.sasl.util.Charsets;
+import org.wildfly.security.sasl.util.SaslWrapper;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PlainSaslServer extends AbstractSaslServer {
+final class PlainSaslServer implements SaslServer, SaslWrapper {
 
-    private static final int INITIAL_STATE = 1;
-
-    private static final byte UTF8NUL = 0x00;
-
-    protected String authorizedId;
+    private final CallbackHandler callbackHandler;
+    private boolean complete;
+    private String authorizedId;
 
     /**
      * Construct a new instance.
      *
-     * @param protocol        the protocol
-     * @param serverName      the server name
      * @param callbackHandler the callback handler
      */
-    public PlainSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
-        super(PLAIN, protocol, serverName, callbackHandler);
-        setNegotiationState(INITIAL_STATE);
+    public PlainSaslServer(final CallbackHandler callbackHandler) {
+        this.callbackHandler = callbackHandler;
     }
 
     public String getAuthorizationID() {
-        assertComplete();
-
+        if (! isComplete()) {
+            throw log.saslAuthenticationNotComplete();
+        }
         return authorizedId;
     }
 
-    @Override
-    protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
-        switch (state) {
-            case INITIAL_STATE:
-                int length = message.length;
-                if (length == 0) {
-                    // need initial challenge
-                    return NO_BYTES;
-                } else {
-                    // Define an upper limit on accepted message so we don't accept overly large messages.
-                    if (length > 65536) {
-                        throw new SaslException("Authentication message is too long");
-                    }
-
-                    String[] parts = split(message);
-                    String authcid;
-                    String authzid;
-                    String passwd;
-                    if (parts.length == 2) {
-                        authcid = parts[0];
-                        authzid = authcid;
-                        passwd = parts[1];
-                    } else if (parts.length == 3) {
-                        authzid = parts[0];
-                        authcid = parts[1];
-                        passwd = parts[2];
-                    } else {
-                        throw new SaslException("Invalid number of message parts (" + parts.length + ")");
-                    }
-
-                    // By this point we have already created the Strings no point checking the length as the
-                    // memory is already allocated.
-
-                    // The message has now been parsed, split and converted to UTF-8 Strings
-                    // now it is time to use the CallbackHandler to validate the supplied credentials.
-
-                    // First verify username and password.
-
-                    NameCallback ncb = new NameCallback("PLAIN authentication identity", authcid);
-                    VerifyPasswordCallback vpc = new VerifyPasswordCallback(passwd);
-
-                    handleCallbacks(ncb, vpc);
-
-                    if (vpc.isVerified() == false) {
-                        throw new SaslException("PLAIN password not verified by CallbackHandler");
-                    }
-
-                    // Now check the authorization id
-
-                    AuthorizeCallback acb = new AuthorizeCallback(authcid, authzid);
-                    handleCallbacks(acb);
-
-                    if (acb.isAuthorized() == true) {
-                        authorizedId = acb.getAuthorizedID();
-                    } else {
-                        throw new SaslException("PLAIN: " + authcid +
-                                " is not authorized to act as " + authzid);
-                    }
-
-                    // negotiationComplete must only be called after the authorizedId is set.
-                    negotiationComplete();
-                    return null;
-                }
-        }
-        throw new SaslException("Invalid state");
+    public String getMechanismName() {
+        return PLAIN;
     }
 
-    private String[] split(byte[] message) throws SaslException {
+    public boolean isComplete() {
+        return complete;
+    }
+
+    public byte[] evaluateResponse(final byte[] response) throws SaslException {
+        if (complete) {
+            throw log.saslMessageAfterComplete();
+        }
+        complete = true;
+        if (response.length >= 65536) {
+            throw log.saslMessageTooLong();
+        }
+        CodePointIterator i = CodePointIterator.ofUtf8Bytes(response);
         String authorizationId = null;
-        String authenticationId;
+        String loginName;
         String password;
+        try {
+            final StringBuilder b = new StringBuilder();
+            int cp;
+            cp = i.next();
+            if (cp != 0) {
+                // authorization ID
+                do {
+                    b.appendCodePoint(cp);
+                    cp = i.next();
+                } while (cp != 0);
+                authorizationId = b.toString();
+                b.setLength(0);
+            }
+            // login name
+            cp = i.next();
+            while (cp != 0) {
+                b.appendCodePoint(cp);
+                cp = i.next();
+            }
+            loginName = b.toString();
+            b.setLength(0);
+            while (i.hasNext()) {
+                cp = i.next();
+                b.appendCodePoint(cp);
+            }
+            password = b.toString();
+            if (authorizationId == null) {
+                authorizationId = loginName;
+            }
+        } catch (NoSuchElementException ignored) {
+            throw log.saslInvalidMessageReceived();
+        }
 
-        int startPos = 0;
+        // The message has now been parsed, split and converted to UTF-8 Strings
+        // now it is time to use the CallbackHandler to validate the supplied credentials.
 
-        int nextNul;
-        int length;
-        // Find the authorization ID
-        nextNul = nextNul(message, startPos, true);
-        if (nextNul > 0) {
-            length = length(nextNul, message.length, startPos);
-            authorizationId = new String(message, startPos, length, Charsets.UTF_8);
-            startPos += length + 1;
+        // First verify username and password.
+
+        NameCallback ncb = new NameCallback("PLAIN authentication identity", loginName);
+        VerifyPasswordCallback vpc = new VerifyPasswordCallback(password);
+
+        try {
+            callbackHandler.handle(new Callback[] { ncb, vpc });
+        } catch (SaslException e) {
+            throw e;
+        } catch (IOException | UnsupportedCallbackException e) {
+            throw log.saslServerSideAuthenticationFailed(e);
+        }
+
+        if (vpc.isVerified() == false) {
+            throw log.saslPasswordNotVerified();
+        }
+
+        // Now check the authorization id
+
+        AuthorizeCallback acb = new AuthorizeCallback(loginName, authorizationId);
+        try {
+            callbackHandler.handle(new Callback[] { acb });
+        } catch (SaslException e) {
+            throw e;
+        } catch (IOException | UnsupportedCallbackException e) {
+            throw log.saslServerSideAuthenticationFailed(e);
+        }
+
+        if (acb.isAuthorized() == true) {
+            authorizedId = acb.getAuthorizedID();
         } else {
-            startPos++;
+            throw log.saslAuthorizationFailed(loginName, authorizationId);
         }
+        return null;
+    }
 
-        // Find the authentication ID
-        nextNul = nextNul(message, startPos, true);
-        length = length(nextNul, message.length, startPos);
-        authenticationId = new String(message, startPos, length, Charsets.UTF_8);
-        startPos += length + 1;
-
-        // Find the password
-        nextNul = nextNul(message, startPos, false);
-        // Verify there is no nul after the password.
-        if (nextNul > -1) {
-            throw new SaslException("PLAIN: Invalid message format. (Too many delimiters)");
-        }
-
-        length = length(nextNul, message.length, startPos);
-        password = new String(message, startPos, length, Charsets.UTF_8);
-        startPos += length + 1;
-
-        if (authorizationId == null) {
-            return new String[] { authenticationId, password };
+    public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
+        if (complete) {
+            throw log.saslAuthenticationNotComplete();
         } else {
-            return new String[] { authorizationId, authenticationId, password };
+            throw log.saslNoSecurityLayer();
         }
     }
 
-    /**
-     * Find the next UTF8 NUL in the message.
-     *
-     * @param message - The message to search.
-     * @param startPos - The point within the message tostart the search from.
-     * @return The position of the next nul byte.
-     */
-    private int nextNul(final byte[] message, final int startPos, final boolean mandatory) throws SaslException {
-        int nulpos = -1;
-
-        for (int i = startPos; i < message.length && nulpos < 0; i++) {
-            if (message[i] == UTF8NUL)
-                nulpos = i;
+    public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
+        if (complete) {
+            throw log.saslAuthenticationNotComplete();
+        } else {
+            throw log.saslNoSecurityLayer();
         }
-
-        if (mandatory && nulpos < 0) {
-            throw new SaslException("PLAIN: Invalid message format. (Missing delimiter)");
-        }
-
-        return nulpos;
     }
 
-    /**
-     * Calculate the length of the field based on the position of the nul, the length of the message
-     * and the starting point.
-     *
-     * @param nulPos
-     * @param messageLength
-     * @param startPos
-     * @return
-     */
-    private int length(final int nulPos, final int messageLength, final int startPos) {
-        return nulPos < 0 ? messageLength - startPos : nulPos - startPos;
+    public Object getNegotiatedProperty(final String propName) {
+        return null;
     }
 
+    public void dispose() throws SaslException {
+    }
 }

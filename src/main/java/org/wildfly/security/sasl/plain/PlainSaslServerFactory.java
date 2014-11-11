@@ -26,49 +26,29 @@ import javax.security.sasl.SaslServerFactory;
 import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.WildFlySasl;
 
 /**
  * The server factory for the plain SASL mechanism.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MetaInfServices(value = SaslServerFactory.class)
-public class PlainServerFactory extends AbstractSaslFactory implements SaslServerFactory {
-
-    /**
-     * The PLAIN mechanism name
-     */
-    public static final String PLAIN = "PLAIN";
+@MetaInfServices(SaslServerFactory.class)
+public class PlainSaslServerFactory implements SaslServerFactory {
 
     /**
      * Default constructor.
      */
-    public PlainServerFactory() {
-        this(PLAIN);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param name the mechanism name
-     */
-    protected PlainServerFactory(final String name) {
-        super(name);
+    public PlainSaslServerFactory() {
     }
 
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure plain is required don't return a SaslServer
-        if (PLAIN.equals(mechanism) == false || matches(props) == false) {
-            return null;
-        }
-
-        return new PlainSaslServer(protocol, serverName, cbh);
+        return PlainSasl.PLAIN.equals(mechanism) && PlainSasl.isMatched(props) ? new PlainSaslServer(cbh) : null;
     }
 
-    @Override
-    protected boolean isAnonymous() {
-        return false;
+    public String[] getMechanismNames(final Map<String, ?> props) {
+        return PlainSasl.isMatched(props) ? PlainSasl.NAMES.clone() : WildFlySasl.NO_NAMES;
     }
-
 }

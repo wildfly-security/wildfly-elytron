@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.sasl.test;
+package org.wildfly.security.sasl.plain;
 
 import static javax.security.sasl.Sasl.POLICY_NOPLAINTEXT;
 import static org.junit.Assert.*;
@@ -33,8 +33,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.plain.PlainSaslServer;
-import org.wildfly.security.sasl.plain.PlainServerFactory;
+import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.ClientCallbackHandler;
+import org.wildfly.security.sasl.test.ServerCallbackHandler;
 
 /**
  * Test the server side of the Plain SASL mechanism.
@@ -62,14 +63,14 @@ public class PlainTest extends BaseTestCase {
 
         // If we specify no plain text even though we specify PLAIN as the mechanism no server should be
         // returned.
-        props.put(Sasl.POLICY_NOPLAINTEXT, true);
+        props.put(Sasl.POLICY_NOPLAINTEXT, Boolean.toString(true));
         server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", props, null);
         assertNull(server);
     }
 
     @Test
     public void testPolicyDirect() {
-        SaslServerFactory factory = obtainSaslServerFactory(PlainServerFactory.class);
+        SaslServerFactory factory = obtainSaslServerFactory(PlainSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
 
         String[] mechanisms;
@@ -80,7 +81,7 @@ public class PlainTest extends BaseTestCase {
         assertSingleMechanism(PLAIN, mechanisms);
 
         // Request No Plain Text
-        props.put(POLICY_NOPLAINTEXT, true);
+        props.put(POLICY_NOPLAINTEXT, Boolean.toString(true));
         mechanisms = factory.getMechanismNames(props);
         assertNoMechanisms(mechanisms);
     }
@@ -136,7 +137,8 @@ public class PlainTest extends BaseTestCase {
             fail("Expection exception not thrown.");
         } catch (IOException e) {}
 
-        assertFalse(server.isComplete());
+        // server is complete even if an exception is thrown.  Ref: JDK
+        assertTrue(server.isComplete());
         assertTrue(client.isComplete());
     }
 
@@ -163,7 +165,8 @@ public class PlainTest extends BaseTestCase {
             fail("Expection exception not thrown.");
         } catch (IOException e) {}
 
-        assertFalse(server.isComplete());
+        // server is complete even if an exception is thrown.  Ref: JDK
+        assertTrue(server.isComplete());
         assertTrue(client.isComplete());
     }
 
@@ -215,7 +218,8 @@ public class PlainTest extends BaseTestCase {
         } catch (IOException e) {
         }
 
-        assertFalse(server.isComplete());
+        // server is complete even if an exception is thrown.  Ref: JDK
+        assertTrue(server.isComplete());
         assertTrue(client.isComplete());
     }
 

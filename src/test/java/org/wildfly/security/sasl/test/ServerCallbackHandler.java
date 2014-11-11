@@ -26,6 +26,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
+import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.callback.DigestHashCallback;
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
@@ -60,7 +61,7 @@ public class ServerCallbackHandler implements CallbackHandler {
             if (current instanceof NameCallback) {
                 String username = ((NameCallback) current).getDefaultName();
                 if (username == null || username.equals(expectedUsername) == false) {
-                    throw new IOException("Invalid username received.");
+                    throw new SaslException("Invalid username received (expected \"" + expectedUsername + "\", received \"" + username + "\"");
                 }
             } else if (current instanceof PasswordCallback && expectedPassword != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
