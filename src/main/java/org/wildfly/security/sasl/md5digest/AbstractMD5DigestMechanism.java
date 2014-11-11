@@ -737,22 +737,6 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @return fixed byte with odd parity
      */
     private byte fixParityBit(byte toFix) {
-        int b = toFix;
-        int parity = 0;
-        for (int i = 0; i < 7; i++) {
-            int bit = b & 0xfe;
-            parity += bit;
-            b >>= 1;
-        }
-
-        if (parity % 2 == 0) {
-            if ((toFix & 0xfe) == 1) {
-                return (byte)(toFix & 0xfe);
-            } else {
-                return (byte)(toFix | 0x01);
-            }
-        } else {
-            return toFix;
-        }
+        return (Integer.bitCount(toFix & 0xff) & 1) == 0 ? (byte) (toFix ^ 1) : toFix;
     }
 }
