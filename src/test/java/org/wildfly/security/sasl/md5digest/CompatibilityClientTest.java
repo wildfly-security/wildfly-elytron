@@ -617,4 +617,27 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test successful authentication with escaped realms delimiters
+     */
+    @Test
+    public void testMoreRealmsWithEscapedDelimiters() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray(), "first realm");
+        client = Sasl.createSaslClient(new String[] { DIGEST }, null, "protocol name", "server name", Collections.<String, Object> emptyMap(), clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"first realm\",realm=\"second\\\\ realm\",realm=\" with spaces \",realm=\" \",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertEquals("charset=utf-8,username=\"chris\",realm=\"first realm\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"protocol name/server name\",maxbuf=65536,response=bf3dd710ee08b05c663456975c156075,qop=auth", new String(message2, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
+        byte[] message4 = client.evaluateChallenge(message3);
+        assertEquals(null, message4);
+        assertTrue(client.isComplete());
+
+    }
+
 }

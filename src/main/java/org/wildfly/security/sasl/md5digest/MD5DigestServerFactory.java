@@ -78,6 +78,9 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
         return server;
     }
 
+    /**
+     * Helper for getting value of REALM_PROPERTY from array of realms
+     */
     public static String realmsArrayToProperty(String[] array){
         StringBuilder realms = new StringBuilder();
         for(int j=0; j<array.length; j++){

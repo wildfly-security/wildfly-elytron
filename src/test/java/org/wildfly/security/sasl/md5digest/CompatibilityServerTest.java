@@ -643,4 +643,29 @@ public class CompatibilityServerTest extends BaseTestCase {
 
     }
 
+    /**
+     * More realms from server (realm="other-realm",realm="elwood.innosoft.com",realm="next-realm" -> elwood.innosoft.com)
+     */
+    @Test
+    public void testMoreRealmsWithEscapedDelimiters() throws Exception {
+        mockNonce("OA9BSXrbuRhWay");
+
+        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(REALM_PROPERTY, "first\\ realm second\\\\\\ realm \\ with\\ spaces\\  \\ ");
+        server = Sasl.createSaslServer(DIGEST, "protocol name", "server name", serverProps, serverCallback);
+        assertFalse(server.isComplete());
+
+        byte[] message1 = server.evaluateResponse(new byte[0]);
+        assertEquals("realm=\"first realm\",realm=\"second\\\\ realm\",realm=\" with spaces \",realm=\" \",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
+        assertFalse(server.isComplete());
+
+        byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"first realm\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"protocol name/server name\",maxbuf=65536,response=bf3dd710ee08b05c663456975c156075,qop=auth".getBytes(StandardCharsets.UTF_8);
+        byte[] message3 = server.evaluateResponse(message2);
+        //assertEquals("rspauth=9c4d137545617ba98c11aaea939b4381", new String(message3, "UTF-8")); // TODO
+        assertTrue(server.isComplete());
+        assertEquals("chris", server.getAuthorizationID());
+
+    }
+
 }
