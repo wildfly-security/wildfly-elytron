@@ -1122,9 +1122,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             if (! ctx.checking) {
                 return getProperty(name, def);
             }
-            checkPropertyReadPermission(getCallerClass(2), name);
             ctx.checking = false;
             try {
+                checkPropertyReadPermission(getCallerClass(2), name);
                 return getProperty(name, def);
             } finally {
                 ctx.checking = true;
@@ -1156,9 +1156,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             if (! ctx.checking) {
                 return def(getenv(name), def);
             }
-            checkEnvPropertyReadPermission(getCallerClass(2), name);
             ctx.checking = false;
             try {
+                checkEnvPropertyReadPermission(getCallerClass(2), name);
                 return def(getenv(name), def);
             } finally {
                 ctx.checking = true;
@@ -1186,9 +1186,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             if (! ctx.checking) {
                 return setProperty(name, value);
             }
-            checkPropertyWritePermission(getCallerClass(2), name);
             ctx.checking = false;
             try {
+                checkPropertyWritePermission(getCallerClass(2), name);
                 return setProperty(name, value);
             } finally {
                 ctx.checking = true;
@@ -1215,9 +1215,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             if (! ctx.checking) {
                 return clearProperty(name);
             }
-            checkPropertyWritePermission(getCallerClass(2), name);
             ctx.checking = false;
             try {
+                checkPropertyWritePermission(getCallerClass(2), name);
                 return clearProperty(name);
             } finally {
                 ctx.checking = true;
