@@ -261,6 +261,12 @@ public final class WildFlySecurityManager extends SecurityManager {
                     if (deniedDomain != null) {
                         final CodeSource codeSource = deniedDomain.getCodeSource();
                         final ClassLoader classLoader = deniedDomain.getClassLoader();
+                        final Principal[] principals = deniedDomain.getPrincipals();
+                        if (principals == null || principals.length == 0) {
+                            access.accessCheckFailed(perm, codeSource, classLoader);
+                        } else {
+                            access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
+                        }
                         throw access.accessControlException(perm, perm, codeSource, classLoader);
                     }
                 }
@@ -287,6 +293,12 @@ public final class WildFlySecurityManager extends SecurityManager {
                     if (! (protectionDomain.implies(perm))) {
                         final CodeSource codeSource = protectionDomain.getCodeSource();
                         final ClassLoader classLoader = protectionDomain.getClassLoader();
+                        final Principal[] principals = protectionDomain.getPrincipals();
+                        if (principals == null || principals.length == 0) {
+                            access.accessCheckFailed(perm, codeSource, classLoader);
+                        } else {
+                            access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
+                        }
                         throw access.accessControlException(perm, perm, codeSource, classLoader);
                     }
                 }
@@ -1046,6 +1058,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         if (protectionDomain.implies(permission)) {
             return;
         }
+        access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
         throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
@@ -1066,6 +1079,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         if (protectionDomain.implies(permission)) {
             return;
         }
+        access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
         throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
@@ -1086,6 +1100,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         if (protectionDomain.implies(permission)) {
             return;
         }
+        access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
         throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
@@ -1102,6 +1117,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         if (protectionDomain.implies(permission)) {
             return;
         }
+        access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
         throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
