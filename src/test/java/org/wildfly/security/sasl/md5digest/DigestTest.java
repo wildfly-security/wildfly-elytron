@@ -18,7 +18,10 @@
 
 package org.wildfly.security.sasl.md5digest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -231,6 +234,30 @@ public class DigestTest extends BaseTestCase {
             fail("Expection exception not thrown.");
         } catch (IOException e) {
         }
+    }
+
+    /**
+     * Test a successful exchange with realm selection.
+     */
+    @Test
+    public void testRealmSelection() throws Exception {
+        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        serverProps.put(REALM_PROPERTY, MD5DigestServerFactory.realmsArrayToProperty(new String[]{"realm1","second realm","last\\ "}));
+        SaslServer server = Sasl.createSaslServer(MD5DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(),"last\\ ");
+        SaslClient client = Sasl.createSaslClient(new String[]{MD5DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+
+        assertFalse(client.hasInitialResponse());
+        byte[] message = server.evaluateResponse(new byte[0]);
+        System.out.println(new String(message));
+        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        message = client.evaluateChallenge(message);
+        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        server.evaluateResponse(message);
+        assertTrue(server.isComplete());
+        assertEquals("George", server.getAuthorizationID());
     }
 
     /*

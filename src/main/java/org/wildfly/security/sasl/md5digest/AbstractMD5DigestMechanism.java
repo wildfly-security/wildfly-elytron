@@ -46,8 +46,8 @@ import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
-import org.wildfly.security.util.Base64;
 import org.wildfly.security.sasl.util.SaslWrapper;
+import org.wildfly.security.util.Base64;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
@@ -392,6 +392,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
                     i++; // skip the escape char
                     if (i < challenge.length) {
                         value.append(challenge[i]);
+                        i++;
                     }
                     else {
                         throw new SaslException("Unmatched quote found for value: " + value.toString());

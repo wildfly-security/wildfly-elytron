@@ -33,8 +33,10 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.jboss.byteman.contrib.bmunit.BMRule;
-import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,17 +46,12 @@ import org.wildfly.security.sasl.util.HexConverter;
 
 /**
  * Test of client side of the Digest mechanism.
- * Byteman allow ensure same generated nonce in every test run.
- * (JMockit cannot be used because generateNonce() is final)
+ * JMockit ensure same generated nonce in every test run.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-@RunWith(BMUnitRunner.class)
-@Ignore("ELY-98 byteman test hangs")
+@RunWith(JMockit.class)
 public class CompatibilityClientTest extends BaseTestCase {
-
-    //protected static final String NONCE_CLASS = "com.sun.security.sasl.digest.DigestMD5Base";
-    protected static final String NONCE_CLASS = "org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism";
 
     protected static final String DIGEST = "DIGEST-MD5";
     protected static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
@@ -62,15 +59,21 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     private SaslClient client;
 
+    private void mockNonce(final String nonce){
+        new MockUp<org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism>(){
+            @Mock
+            byte[] generateNonce(){
+                return nonce.getBytes();
+            }
+        };
+    }
+
     /**
      * Test communication by first example in RFC 2831 [page 18]
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA6MHXh6VqTrRk\".getBytes();")
     public void testRfc2831example1() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -93,11 +96,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test communication by second example in RFC 2831 [page 18]
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testRfc2831example2() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -121,11 +121,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authorization ID (authzid) - authorized
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testAuthorizedAuthorizationId() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -150,11 +147,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthInt() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -209,11 +203,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConf() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -268,11 +259,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConfRc4() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -327,11 +315,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConfDes() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -386,11 +371,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConfRc456() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -445,11 +427,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConfRc440() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -504,11 +483,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      */
     @Test
     @Ignore("ELY-89 : Integrity and privacy not implemented")
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA9BSuZWMSpW8m\".getBytes();")
     public void testQopAuthConfUnknown() throws Exception {
+        mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
@@ -531,11 +507,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      * More realms from server (realm="other-realm",realm="elwood.innosoft.com",realm="next-realm" -> elwood.innosoft.com)
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA6MHXh6VqTrRk\".getBytes();")
     public void testMoreRealmsFromServer() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray(), "elwood.innosoft.com");
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -558,11 +531,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      * No realms from server
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA6MHXh6VqTrRk\".getBytes();")
     public void testNoRealmsFromServer() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -605,11 +575,8 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Blank nonce from server (connection with naughty server)
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"OA6MHXh6VqTrRk\".getBytes();")
     public void testBlankServerNonce() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -631,11 +598,9 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
     @Test
-    @BMRule(name = "Static nonce",
-            targetClass = NONCE_CLASS,
-            targetMethod = "generateNonce",
-            action = "return \"cn\u0438\u4F60\uD83C\uDCA1\".getBytes();")
+    @Ignore("Problem with encoding on Windows")
     public void testUtf8Charset() throws Exception {
+        mockNonce("cn\u0438\u4F60\uD83C\uDCA1");
 
         CallbackHandler clientCallback = new ClientCallbackHandler("\u0438\u4F60\uD83C\uDCA1", "\u0438\u4F60\uD83C\uDCA1".toCharArray());
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", Collections.<String, Object> emptyMap(), clientCallback);
@@ -644,6 +609,29 @@ public class CompatibilityClientTest extends BaseTestCase {
         byte[] message1 = "realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
         assertEquals("charset=utf-8,username=\"\u0438\u4F60\uD83C\uDCA1\",realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",nc=00000001,cnonce=\"cn\u0438\u4F60\uD83C\uDCA1\",digest-uri=\"\u0438\u4F60\uD83C\uDCA1/realm.\u0438\u4F60\uD83C\uDCA1.com\",maxbuf=65536,response=420939e06d2d748c157c5e33499b41a9,qop=auth", new String(message2, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
+        byte[] message4 = client.evaluateChallenge(message3);
+        assertEquals(null, message4);
+        assertTrue(client.isComplete());
+
+    }
+
+    /**
+     * Test successful authentication with escaped realms delimiters
+     */
+    @Test
+    public void testMoreRealmsWithEscapedDelimiters() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray(), "first realm");
+        client = Sasl.createSaslClient(new String[] { DIGEST }, null, "protocol name", "server name", Collections.<String, Object> emptyMap(), clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"first realm\",realm=\"second\\\\ realm\",realm=\" with spaces \",realm=\" \",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertEquals("charset=utf-8,username=\"chris\",realm=\"first realm\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"protocol name/server name\",maxbuf=65536,response=bf3dd710ee08b05c663456975c156075,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
         byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
