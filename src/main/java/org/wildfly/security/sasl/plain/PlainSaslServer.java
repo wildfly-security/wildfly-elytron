@@ -79,35 +79,16 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
             throw log.saslMessageTooLong();
         }
         CodePointIterator i = CodePointIterator.ofUtf8Bytes(response);
-        String authorizationId = null;
+        String authorizationId;
         String loginName;
         String password;
         try {
-            final StringBuilder b = new StringBuilder();
-            int cp;
-            cp = i.next();
-            if (cp != 0) {
-                // authorization ID
-                do {
-                    b.appendCodePoint(cp);
-                    cp = i.next();
-                } while (cp != 0);
-                authorizationId = b.toString();
-                b.setLength(0);
-            }
-            // login name
-            cp = i.next();
-            while (cp != 0) {
-                b.appendCodePoint(cp);
-                cp = i.next();
-            }
-            loginName = b.toString();
-            b.setLength(0);
-            while (i.hasNext()) {
-                cp = i.next();
-                b.appendCodePoint(cp);
-            }
-            password = b.toString();
+            final CodePointIterator delimIter = i.delimitedBy(0);
+            authorizationId = delimIter.hasNext() ? delimIter.drainToString() : null;
+            i.next(); // skip delimiter
+            loginName = delimIter.drainToString();
+            i.next(); // skip delimiter
+            password = delimIter.drainToString();
             if (authorizationId == null) {
                 authorizationId = loginName;
             }

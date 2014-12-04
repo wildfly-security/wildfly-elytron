@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.scram;
 
 import static org.wildfly.security.sasl.util.HexConverter.convertToHexString;
 
-import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -40,7 +39,8 @@ import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
-import org.wildfly.security.util.Base64;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -93,7 +93,7 @@ class ScramSaslClient extends AbstractSaslClient {
         setNegotiationState(ST_NEW);
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     protected byte[] evaluateMessage(final int state, final byte[] challenge) throws SaslException {
         switch (state) {
@@ -134,50 +134,41 @@ class ScramSaslClient extends AbstractSaslClient {
             }
             case ST_R1_SENT: {
                 serverFirstMessage = challenge;
+                final ByteIterator bi = ByteIterator.ofBytes(challenge);
+                final ByteIterator di = bi.delimitedBy(',');
                 if (DEBUG) System.out.printf("[C] Server first message: %s%n", convertToHexString(challenge));
                 final ByteStringBuilder b = new ByteStringBuilder();
-                int i = 0;
                 final Mac mac = ScramSaslClient.this.mac;
                 final MessageDigest messageDigest = ScramSaslClient.this.messageDigest;
                 try {
-                    if (challenge[i++] == 'r' && challenge[i++] == '=') {
+                    if (bi.next() == 'r' && bi.next() == '=') {
                         // nonce
-                        int j = 0;
-                        while (j < nonce.length) {
-                            if (challenge[i++] != nonce[j++]) {
-                                throw new SaslException("Nonces do not match");
-                            }
+                        if (! di.limitedTo(nonce.length).contentEquals(ByteIterator.ofBytes(nonce))) {
+                            throw new SaslException("Nonces do not match");
                         }
-                        final int serverNonceStart = i;
-                        while (challenge[i++] != ',') {}
-                        final int serverNonceLen = (i - 1) - serverNonceStart;
-                        if (serverNonceLen < 18) {
+                        final byte[] serverNonce = di.drain();
+                        if (serverNonce.length < 18) {
                             throw new SaslException("Server nonce is too short");
                         }
-                        if (challenge[i++] == 's' && challenge[i++] == '=') {
-                            int start = i;
-                            while (challenge[i++] != ',') {}
-                            int end = i - 1;
-                            Base64.base64DecodeStandard(challenge, start, end - start, b);
-                            final byte[] salt = b.toArray();
+                        bi.next(); // skip delimiter
+                        if (bi.next() == 's' && bi.next() == '=') {
+                            final byte[] salt = di.base64Decode().drain();
+                            bi.next(); // skip delimiter
                             if (DEBUG) System.out.printf("[C] Server sent salt: %s%n", convertToHexString(salt));
-                            b.setLength(0);
-                            if (challenge[i++] == 'i' && challenge[i++] == '=') {
-                                final int iterationCount = ScramUtils.parsePosInt(challenge, i);
+                            if (bi.next() == 'i' && bi.next() == '=') {
+                                final int iterationCount = ScramUtils.parsePosInt(di);
                                 if (iterationCount < minimumIterationCount) {
                                     throw new SaslException("Iteration count is too low");
                                 } else if (iterationCount > maximumIterationCount) {
                                     throw new SaslException("Iteration count is too high");
                                 }
-                                i += ScramUtils.decimalDigitCount(iterationCount);
-                                if (i < challenge.length) {
-                                    if (challenge[i] == ',') {
+                                if (bi.hasNext()) {
+                                    if (bi.next() == ',') {
                                         throw new SaslException("Extensions unsupported");
                                     } else {
                                         throw new SaslException("Invalid server message");
                                     }
                                 }
-                                b.setLength(0);
                                 // client-final-message
                                 // binding data
                                 b.append('c').append('=');
@@ -198,8 +189,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                     if (plus) {
                                         b2.append(bindingData);
                                     }
-                                    Base64.base64EncodeStandard(b, new ByteArrayInputStream(b2.toArray()), true);
-                                    Base64.base64EncodeStandard(b, new ByteArrayInputStream(bindingData), true);
+                                    b.appendLatin1(b2.iterate().base64Encode());
                                 } else {
                                     b2.append('n');
                                     b2.append(',');
@@ -208,10 +198,10 @@ class ScramSaslClient extends AbstractSaslClient {
                                     }
                                     b2.append(',');
                                     assert !plus;
-                                    Base64.base64EncodeStandard(b, new ByteArrayInputStream(b2.toArray()), true);
+                                    b.appendLatin1(b2.iterate().base64Encode());
                                 }
                                 // nonce
-                                b.append(',').append('r').append('=').append(nonce).append(challenge, serverNonceStart, serverNonceLen);
+                                b.append(',').append('r').append('=').append(nonce).append(serverNonce);
                                 // no extensions
                                 this.saltedPassword = ScramUtils.calculateHi(mac, passwordCallback.getPassword(), salt, 0, salt.length, iterationCount);
                                 if (DEBUG) System.out.printf("[C] Client salted password: %s%n", convertToHexString(saltedPassword));
@@ -236,7 +226,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                 this.proofStart = b.length();
                                 // proof
                                 b.append(',').append('p').append('=');
-                                Base64.base64EncodeStandard(b, new ByteArrayInputStream(clientProof), true);
+                                b.appendLatin1(ByteIterator.ofBytes(clientProof).base64Encode());
                                 setNegotiationState(ST_R2_SENT);
                                 if (DEBUG) System.out.printf("[C] Client final message: %s%n", convertToHexString(b.toArray()));
                                 return clientFinalMessage = b.toArray();
@@ -255,27 +245,17 @@ class ScramSaslClient extends AbstractSaslClient {
                 if (DEBUG) System.out.printf("[C] Server final message: %s%n", new String(challenge, StandardCharsets.UTF_8));
                 final Mac mac = ScramSaslClient.this.mac;
                 final MessageDigest messageDigest = ScramSaslClient.this.messageDigest;
-                int i = 0;
+                final ByteIterator bi = ByteIterator.ofBytes(challenge);
+                final ByteIterator di = bi.delimitedBy(',');
                 int c;
                 try {
-                    c = challenge[i++];
+                    c = bi.next();
                     if (c == 'e') {
-                        if (challenge[i++] == '=') {
-                            while (i < challenge.length && challenge[i++] != ',') {}
-                            throw new SaslException("Server rejected authentication: " + new String(challenge, 2, i - 2, StandardCharsets.UTF_8));
+                        if (bi.next() == '=') {
+                            throw new SaslException("Server rejected authentication: " + CodePointIterator.ofUtf8Bytes(di).drainToString());
                         }
                         throw new SaslException("Server rejected authentication");
-                    } else if (c == 'v' && challenge[i++] == '=') {
-                        final ByteStringBuilder b = new ByteStringBuilder();
-                        int start = i;
-                        int end = challenge.length;
-                        while (i < challenge.length) {
-                            if (challenge[i++] == ',') {
-                                end = i - 1;
-                                break;
-                            }
-                        }
-                        Base64.base64DecodeStandard(challenge, start, end - start, b);
+                    } else if (c == 'v' && bi.next() == '=') {
                         // verify server signature
                         mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                         byte[] serverKey = mac.doFinal(Scram.SERVER_KEY_BYTES);
@@ -288,7 +268,7 @@ class ScramSaslClient extends AbstractSaslClient {
                         mac.update(clientFinalMessage, 0, proofStart);
                         byte[] serverSignature = mac.doFinal();
                         if (DEBUG) System.out.printf("[C] Recovered server signature: %s%n", convertToHexString(serverSignature));
-                        if (!b.contentEquals(serverSignature)) {
+                        if (! di.base64Decode().contentEquals(ByteIterator.ofBytes(serverSignature))) {
                             setNegotiationState(FAILED_STATE);
                             throw new SaslException("Server authenticity cannot be verified");
                         }

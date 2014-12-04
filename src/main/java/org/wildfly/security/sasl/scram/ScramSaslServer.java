@@ -21,7 +21,6 @@ package org.wildfly.security.sasl.scram;
 import static java.util.Arrays.copyOfRange;
 import static org.wildfly.security.sasl.util.HexConverter.convertToHexString;
 
-import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -54,8 +53,8 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.util.Base64;
-import org.wildfly.security.util._private.Arrays2;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -103,7 +102,7 @@ final class ScramSaslServer extends AbstractSaslServer {
         return authorizationID;
     }
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     protected byte[] evaluateMessage(final int state, final byte[] response) throws SaslException {
         boolean ok = false;
@@ -125,29 +124,28 @@ final class ScramSaslServer extends AbstractSaslServer {
                     if (DEBUG) System.out.printf("[S] Client first message: %s%n", convertToHexString(response));
 
                     final ByteStringBuilder b = new ByteStringBuilder();
-                    final StringBuilder sb = new StringBuilder();
-                    int i = 0;
                     int c;
+                    ByteIterator bi = ByteIterator.ofBytes(response);
+                    ByteIterator di = bi.delimitedBy(',');
+                    CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(di);
 
                     // == parse message ==
 
                     // binding type
-                    c = response[i++] & 0xff;
+                    c = bi.next();
                     if (c == 'p' && plus) {
                         assert bindingType != null; // because {@code plus} is true
                         assert bindingData != null;
-                        if (response[i++] != '=') {
+                        if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        i += ScramUtils.parseString(response, i, ',', sb);
-                        i++;
-                        if (! bindingType.equals(sb.toString())) {
+                        if (! bindingType.equals(cpi.drainToString())) {
                             // nope, auth must fail because we cannot acquire the same binding
                             throw new SaslException("Channel binding type mismatch between client and server");
                         }
-                        sb.setLength(0);
+                        bi.next(); // skip delimiter
                     } else if ((c == 'y' || c == 'n') && !plus) {
-                        if (response[i++] != ',') {
+                        if (bi.next() != ',') {
                             throw invalidClientMessage();
                         }
                     } else {
@@ -155,43 +153,38 @@ final class ScramSaslServer extends AbstractSaslServer {
                     }
 
                     // authorization ID
-                    c = response[i++] & 0xff;
+                    c = bi.next();
                     if (c == 'a') {
-                        if (response[i++] != '=') {
+                        if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        i += ScramUtils.parseString(response, i, ',', sb);
-                        authorizationID = sb.toString();
-                        sb.setLength(0);
+                        authorizationID = cpi.drainToString();
+                        bi.next(); // skip delimiter
                     } else if (c != ',') {
                         throw invalidClientMessage();
                     }
 
-                    clientFirstMessageBareStart = i;
+                    clientFirstMessageBareStart = bi.offset();
                     // login name
                     String loginName;
-                    c = response[i++] & 0xff;
-                    if (c == 'n') {
-                        if (response[i++] != '=') {
+                    if (bi.next() == 'n') {
+                        if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        i += ScramUtils.parseString(response, i, ',', sb);
-                        loginName = sb.toString();
-                        sb.setLength(0);
+                        loginName = cpi.drainToString();
+                        bi.next(); // skip delimiter
                     } else {
                         throw invalidClientMessage();
                     }
 
-                    // random nonce (skip over for now)
-                    if (response[i++] != 'r' || response[i++] != '=') {
+                    // random nonce
+                    if (bi.next() != 'r' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
-                    int nonce = i;
-                    while (i < response.length && response[i++] != ',') {}
-                    int nonceEnd = i;
-                    if (DEBUG) System.out.printf("[S] Client nonce: %s%n", convertToHexString(copyOfRange(response, nonce, nonceEnd)));
+                    byte[] nonce = di.drain();
+                    if (DEBUG) System.out.printf("[S] Client nonce: %s%n", convertToHexString(nonce));
 
-                    if (i < response.length) {
+                    if (bi.hasNext()) {
                         throw invalidClientMessage();
                     }
 
@@ -311,13 +304,13 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // nonce (client + server nonce)
                     b.append('r').append('=');
-                    b.append(response, nonce, nonceEnd - nonce);
+                    b.append(nonce);
                     b.append(ScramUtils.generateRandomString(28, getRandom()));
                     b.append(',');
 
                     // salt
                     b.append('s').append('=');
-                    Base64.base64EncodeStandard(b, new ByteArrayInputStream(salt), true);
+                    b.appendLatin1(ByteIterator.ofBytes(salt).base64Encode());
                     b.append(',');
                     b.append('i').append('=');
                     b.append(Integer.toString(iterationCount));
@@ -328,44 +321,37 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
                 case S_FINAL_MESSAGE: {
                     final ByteStringBuilder b = new ByteStringBuilder();
-                    int i = 0;
+
+                    ByteIterator bi = ByteIterator.ofBytes(response);
+                    ByteIterator di = bi.delimitedBy(',');
 
                     // == parse message ==
 
                     // first comes the channel binding
-                    if (response[i++] != 'c' || response[i++] != '=') {
+                    if (bi.next() != 'c' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
-                    int channelBindingStart = i;
-                    while (response[i++] != ',') {}
-                    int channelBindingEnd = i - 1;
-                    Base64.base64DecodeStandard(response, channelBindingStart, channelBindingEnd - channelBindingStart, b);
+                    final ByteIterator bindingIterator = di.base64Decode();
 
                     // -- sub-parse of binding data --
-                    final byte[] subResponse = b.toArray();
-                    int j = 0;
-                    b.setLength(0);
-                    switch (subResponse[j++]) {
+                    switch (bindingIterator.next()) {
                         case 'n': {
                             if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
-                            if (subResponse[j++] != ',') {
+                            if (bindingIterator.next() != ',') {
                                 throw invalidClientMessage();
                             }
-                            switch (subResponse[j++]) {
+                            switch (bindingIterator.next()) {
                                 case ',': break;
                                 case 'a': {
-                                    if (subResponse[j++] != '=') {
+                                    if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    int authzIdStart = j;
-                                    while (subResponse[j++] != ',') {}
-                                    int authzIdEnd = j - 1;
-                                    authorizationID = new String(subResponse, authzIdStart, authzIdEnd - authzIdStart, StandardCharsets.UTF_8);
+                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
                             }
-                            if (j < subResponse.length) {
+                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
                                 // extra data
                                 throw invalidClientMessage();
                             }
@@ -373,24 +359,21 @@ final class ScramSaslServer extends AbstractSaslServer {
                         }
                         case 'y': {
                             if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
-                            if (subResponse[j++] != ',') {
+                            if (bindingIterator.next() != ',') {
                                 throw invalidClientMessage();
                             }
-                            switch (subResponse[j++]) {
+                            switch (bindingIterator.next()) {
                                 case ',': break;
                                 case 'a': {
-                                    if (subResponse[j++] != '=') {
+                                    if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    int authzIdStart = j;
-                                    while (subResponse[j++] != ',') {}
-                                    int authzIdEnd = j - 1;
-                                    authorizationID = new String(subResponse, authzIdStart, authzIdEnd - authzIdStart, StandardCharsets.UTF_8);
+                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
                             }
-                            if (j < subResponse.length) {
+                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
                                 // extra data
                                 throw invalidClientMessage();
                             }
@@ -400,55 +383,56 @@ final class ScramSaslServer extends AbstractSaslServer {
                             if (! plus) {
                                 throw new SaslException("Channel binding not supported for mechanism " + getMechanismName());
                             }
-                            if (subResponse[j++] != '=') {
+                            if (bindingIterator.next() != '=') {
                                 throw invalidClientMessage();
                             }
-                            int btsStart = j;
-                            // next comes the binding type string
-                            while (subResponse[j++] != ',') {}
-                            int btsEnd = j - 1;
-                            if (! bindingType.equals(new String(subResponse, btsStart, btsEnd - btsStart, StandardCharsets.UTF_8))) {
+                            if (! bindingType.equals(bindingIterator.delimitedBy(',').drainToUtf8String())) {
                                 throw new SaslException("Channel binding type mismatch for mechanism " + getMechanismName());
                             }
-                            if (subResponse[j++] != ',') {
+                            if (bindingIterator.next() != ',') {
                                 throw invalidClientMessage();
                             }
-                            switch (subResponse[j++]) {
+                            switch (bindingIterator.next()) {
                                 case ',': break;
                                 case 'a': {
-                                    if (subResponse[j++] != '=') {
+                                    if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    int authzIdStart = j;
-                                    while (subResponse[j++] != ',') {}
-                                    int authzIdEnd = j - 1;
-                                    authorizationID = new String(subResponse, authzIdStart, authzIdEnd - authzIdStart, StandardCharsets.UTF_8);
+                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
                             }
-                            if (DEBUG) System.out.printf("[S] Binding data from client: %s%n", convertToHexString(copyOfRange(subResponse, j, subResponse.length)));
                             // following is the raw channel binding data
-                            if (! Arrays2.equals(subResponse, j, bindingData)) {
+                            if (! bindingIterator.contentEquals(ByteIterator.ofBytes(bindingData))) {
                                 throw new SaslException("Channel binding data mismatch for mechanism " + getMechanismName());
+                            }
+                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
+                                // extra data
+                                throw invalidClientMessage();
                             }
                             // all clear!
                             break;
                         }
                     }
+                    bi.next(); // skip delimiter
 
                     // nonce
-                    if (response[i++] != 'r' || response[i++] != '=') {
+                    if (bi.next() != 'r' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
-                    while (response[i++] != ',') {}
+                    while (di.hasNext()) { di.next(); }
 
                     // proof
-                    int s = i - 1; // start of proof
-                    if (response[i++] != 'p' || response[i++] != '=') {
+                    final int s = bi.offset();
+                    bi.next(); // skip delimiter
+                    if (bi.next() != 'p' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
-                    while (response[i++] != ',' && i < response.length) {}
+                    byte[] recoveredClientProofEncoded = di.drain();
+                    if (bi.hasNext()) {
+                        throw invalidClientMessage();
+                    }
 
                     // == verify proof ==
 
@@ -501,10 +485,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                     serverSignature = mac.doFinal();
                     if (DEBUG) System.out.printf("[S] Server signature: %s%n", convertToHexString(serverSignature));
 
-                    if (DEBUG) System.out.printf("[S] Client proof string: %s%n", new String(response, s + 3, i - s - 3, StandardCharsets.UTF_8));
+                    if (DEBUG) System.out.printf("[S] Client proof string: %s%n", CodePointIterator.ofUtf8Bytes(recoveredClientProofEncoded).drainToString());
                     b.setLength(0);
-                    Base64.base64DecodeStandard(response, s + 3, i - s - 3, b);
-                    byte[] recoveredClientProof = b.toArray();
+                    byte[] recoveredClientProof = ByteIterator.ofBytes(recoveredClientProofEncoded).base64Decode().drain();
                     if (DEBUG) System.out.printf("[S] Client proof: %s%n", convertToHexString(recoveredClientProof));
 
                     // now check the proof
@@ -525,7 +508,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     // == send response ==
                     b.setLength(0);
                     b.append('v').append('=');
-                    Base64.base64EncodeStandard(b, new ByteArrayInputStream(serverSignature), true);
+                    b.appendUtf8(ByteIterator.ofBytes(serverSignature).base64Encode());
 
                     ok = true;
                     return b.toArray();

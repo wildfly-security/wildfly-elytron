@@ -25,6 +25,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -57,6 +58,31 @@ class ScramUtils {
             chars[i] = randomCharDictionary[random.nextInt(93)];
         }
         return chars;
+    }
+
+    public static int parsePosInt(final ByteIterator i) {
+        int a, c;
+        if (! i.hasNext()) {
+            throw new NumberFormatException("Empty number");
+        }
+        c = i.next();
+        if (c >= '1' && c <= '9') {
+            a = c - '0';
+        } else {
+            throw new NumberFormatException("Invalid numeric character");
+        }
+        while (i.hasNext()) {
+            c = i.next();
+            if (c >= '0' && c <= '9') {
+                a = (a << 3) + (a << 1) + (c - '0');
+                if (a < 0) {
+                    throw new NumberFormatException("Too big");
+                }
+            } else {
+                throw new NumberFormatException("Invalid numeric character");
+            }
+        }
+        return a;
     }
 
     public static int parsePosInt(byte[] src, int offset, int len) {

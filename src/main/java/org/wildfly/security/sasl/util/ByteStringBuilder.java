@@ -21,8 +21,12 @@ package org.wildfly.security.sasl.util;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 import javax.crypto.Mac;
+
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -75,6 +79,37 @@ public final class ByteStringBuilder {
             throw new IllegalArgumentException();
         }
         return this;
+    }
+
+    public ByteStringBuilder appendUtf8(CodePointIterator iterator) {
+        while (iterator.hasNext()) {
+            appendUtf8Raw(iterator.next());
+        }
+        return this;
+    }
+
+    public ByteStringBuilder appendLatin1(CodePointIterator iterator) {
+        int cp;
+        while (iterator.hasNext()) {
+            cp = iterator.next();
+            if (cp > 255) throw new IllegalArgumentException();
+            append((byte) cp);
+        }
+        return this;
+    }
+
+    public ByteStringBuilder appendAscii(CodePointIterator iterator) {
+        int cp;
+        while (iterator.hasNext()) {
+            cp = iterator.next();
+            if (cp > 127) throw new IllegalArgumentException();
+            append((byte) cp);
+        }
+        return this;
+    }
+
+    public ByteStringBuilder append(ByteIterator iterator) {
+        return iterator.appendTo(this);
     }
 
     public ByteStringBuilder append(byte[] bytes) {
@@ -324,5 +359,43 @@ public final class ByteStringBuilder {
 
     private void doAppendNoCheck(final byte b) {
         content[length ++] = b;
+    }
+
+    public ByteIterator iterate() {
+        return new ByteIterator() {
+            int idx = 0;
+
+            public boolean hasNext() {
+                return idx < length;
+            }
+
+            public boolean hasPrev() {
+                return idx > 0;
+            }
+
+            public int next() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                return content[idx ++];
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                return content[idx];
+            }
+
+            public int prev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                return content[--idx];
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                return content[idx - 1];
+            }
+
+            public int offset() {
+                return idx;
+            }
+        };
     }
 }
