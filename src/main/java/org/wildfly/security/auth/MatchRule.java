@@ -301,24 +301,6 @@ public abstract class MatchRule {
 
     // internal builder operations
 
-    static String getUserInfo(final URI uri) {
-        if (uri.isOpaque()) {
-            if ("domain".equals(uri.getScheme())) {
-                String ssp = uri.getSchemeSpecificPart();
-                int idx = ssp.indexOf('@');
-                if (idx != -1) {
-                    return ssp.substring(0, idx);
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        } else {
-            return uri.getUserInfo();
-        }
-    }
-
     /**
      * Determine whether this rule matches based on non-empty URI user info.
      *
