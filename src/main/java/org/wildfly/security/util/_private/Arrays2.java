@@ -78,4 +78,9 @@ public final class Arrays2 {
     public static boolean equals(String a1, char[] a2) {
         return equals(a1, 0, a2);
     }
+
+    @SafeVarargs
+    public static <T> T[] of(final T... items) {
+        return items;
+    }
 }
