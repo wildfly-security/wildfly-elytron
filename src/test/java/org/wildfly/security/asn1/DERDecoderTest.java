@@ -222,6 +222,40 @@ public class DERDecoderTest {
         decoder.skipElement();
     }
 
+    @Test
+    public void testDecodeSimpleSetOf() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58});
+        assertEquals(SET_TYPE, decoder.peekType());
+        decoder.startSetOf();
+        assertEquals(OBJECT_IDENTIFIER_TYPE, decoder.peekType());
+        assertEquals("1.2.123.1234", decoder.decodeObjectIdentifier());
+        assertEquals(OBJECT_IDENTIFIER_TYPE, decoder.peekType());
+        assertEquals("2.1.58.5456.36.456", decoder.decodeObjectIdentifier());
+        assertEquals(OBJECT_IDENTIFIER_TYPE, decoder.peekType());
+        assertEquals("1.2.459.14587.225466", decoder.decodeObjectIdentifier());
+        decoder.endSetOf();
+    }
+
+    @Test
+    public void testDecodeComplexSetOf() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114});
+        assertEquals(SET_TYPE, decoder.peekType());
+        decoder.startSetOf();
+        assertEquals(SET_TYPE, decoder.peekType());
+        decoder.startSetOf();
+        assertEquals(IA5_STRING_TYPE, decoder.peekType());
+        decoder.skipElement();
+        assertEquals(IA5_STRING_TYPE, decoder.peekType());
+        decoder.endSetOf();
+        decoder.startSetOf();
+        assertEquals(IA5_STRING_TYPE, decoder.peekType());
+        decoder.skipElement();
+        assertEquals(IA5_STRING_TYPE, decoder.peekType());
+        decoder.endSetOf();
+        decoder.endSetOf();
+        assertFalse(decoder.hasNextElement());
+    }
+
     @Test(expected=ASN1Exception.class)
     public void testDecodeWrongType() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {5, 12});

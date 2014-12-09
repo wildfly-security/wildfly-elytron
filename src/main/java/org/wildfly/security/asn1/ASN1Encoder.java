@@ -56,6 +56,19 @@ public interface ASN1Encoder extends Flushable {
     void endSet() throws IllegalStateException;
 
     /**
+     * Start encoding an ASN.1 "set of" element. All subsequent encode operations will be
+     * part of this set until {@link #endSetOf()} is called.
+     */
+    void startSetOf();
+
+    /**
+     * Finish encoding an ASN.1 "set of" element.
+     *
+     * @throws IllegalStateException if there is no set to end
+     */
+    void endSetOf() throws IllegalStateException;
+
+    /**
      * Encode an ASN.1 octet string value.
      *
      * @param str the octet string to encode

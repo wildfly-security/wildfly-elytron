@@ -101,6 +101,16 @@ public class DERDecoder implements ASN1Decoder {
         states.removeLast();
     }
 
+    @Override
+    public void startSetOf() throws ASN1Exception {
+        startSet();
+    }
+
+    @Override
+    public void endSetOf() throws ASN1Exception {
+        endSet();
+    }
+
     private void endConstructedElement(int nextElementIndex) throws ASN1Exception {
         int pos = bi.offset();
         if (pos < nextElementIndex) {

@@ -25,9 +25,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * A class used to encode ASN.1 values using the Distinguished Encoding Rules (DER), as specified
@@ -39,6 +41,8 @@ public class DEREncoder implements ASN1Encoder {
     private static final int[] BITS = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
     private static final long LARGEST_UNSHIFTED_LONG = Long.MAX_VALUE / 10L;
     private static final byte[] NULL_CONTENTS = new byte[0];
+    private static final TagComparator TAG_COMPARATOR = new TagComparator();
+    private static final LexicographicComparator LEXICOGRAPHIC_COMPARATOR = new LexicographicComparator();
 
     private ArrayDeque<EncoderState> states = new ArrayDeque<EncoderState>();
     private ArrayList<ByteStringBuilder> buffers = new ArrayList<ByteStringBuilder>();
@@ -80,6 +84,11 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void startSetOf() {
+        startSet();
+    }
+
+    @Override
     public void endSequence() throws IllegalStateException {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SEQUENCE_TYPE)) {
@@ -111,13 +120,22 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void endSet() throws IllegalStateException {
+        endSet(TAG_COMPARATOR);
+    }
+
+    @Override
+    public void endSetOf() throws IllegalStateException {
+        endSet(LEXICOGRAPHIC_COMPARATOR);
+    }
+
+    private void endSet(Comparator<EncoderState> comparator) {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SET_TYPE)) {
             throw new IllegalStateException("No set to end");
         }
 
         // The child elements of a set must be encoded in ascending order by tag
-        LinkedList<EncoderState> childElements = lastState.getSortedChildElements();
+        LinkedList<EncoderState> childElements = lastState.getSortedChildElements(comparator);
         int setBufferPos = lastState.getBufferPos();
         ByteStringBuilder dest;
         if (setBufferPos >= 0) {
@@ -144,7 +162,6 @@ public class DEREncoder implements ASN1Encoder {
             lastState.addChildLength(1 + numLengthOctets + childLength);
         }
     }
-
     @Override
     public void encodeOctetString(String str) {
         encodeOctetString(str.getBytes(StandardCharsets.UTF_8));
@@ -508,7 +525,7 @@ public class DEREncoder implements ASN1Encoder {
     /**
      * A class used to maintain state information during DER encoding.
      */
-    private class EncoderState implements Comparable<EncoderState> {
+    private class EncoderState {
         private final int tag;
         private final int bufferPos;
         private LinkedList<EncoderState> childElements = new LinkedList<EncoderState>();
@@ -527,12 +544,16 @@ public class DEREncoder implements ASN1Encoder {
             return bufferPos;
         }
 
+        public ByteStringBuilder getBuffer() {
+            return buffers.get(getBufferPos());
+        }
+
         public int getChildLength() {
             return childLength;
         }
 
-        public LinkedList<EncoderState> getSortedChildElements() {
-            Collections.sort(childElements);
+        public LinkedList<EncoderState> getSortedChildElements(Comparator<EncoderState> comparator) {
+            Collections.sort(childElements, comparator);
             return childElements;
         }
 
@@ -543,11 +564,41 @@ public class DEREncoder implements ASN1Encoder {
         public void addChildLength(int length) {
             childLength += length;
         }
+    }
 
+    /**
+     * A class that compares DER encodings based on their tags.
+     */
+    private static class TagComparator implements Comparator<EncoderState> {
         @Override
-        public int compareTo(EncoderState other) {
+        public int compare(EncoderState state1, EncoderState state2) {
             // Ignore the constructed bit when comparing tags
-            return (tag | CONSTRUCTED_MASK) - (other.getTag() | CONSTRUCTED_MASK);
+            return (state1.getTag() | CONSTRUCTED_MASK) - (state2.getTag() | CONSTRUCTED_MASK);
+        }
+    }
+
+    /**
+     * A class that compares DER encodings using lexicographic order.
+     */
+    private static class LexicographicComparator implements Comparator<EncoderState> {
+        @Override
+        public int compare(EncoderState state1, EncoderState state2) {
+            ByteStringBuilder bytes1 = state1.getBuffer();
+            ByteStringBuilder bytes2 = state2.getBuffer();
+            ByteIterator bi1 = bytes1.iterate();
+            ByteIterator bi2 = bytes2.iterate();
+
+            // Scan the two encodings from left to right until a difference is found
+            int diff;
+            while (bi1.hasNext() && bi2.hasNext()) {
+                diff = (bi1.next() & 0xff) - (bi2.next() & 0xff);
+                if (diff != 0) {
+                    return diff;
+                }
+            }
+
+            // The longer encoding is considered to be the bigger-valued encoding
+            return bytes1.length() - bytes2.length();
         }
     }
 }

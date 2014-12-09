@@ -59,6 +59,22 @@ public interface ASN1Decoder {
     void endSet() throws ASN1Exception;
 
     /**
+     * Starting decoding an ASN.1 "set of" element. All subsequent decode operations will
+     * decode elements from this set until {@link #endSetOf()} is called.
+     *
+     * @throws ASN1Exception if the next element is not a set
+     */
+    void startSetOf() throws ASN1Exception;
+
+    /**
+     * Advance to the end of a "set of" element. If there are any elements in the set that
+     * have not yet been decoded, they will be discarded.
+     *
+     * @throws ASN1Exception if an error occurs while advancing to the end of the set
+     */
+    void endSetOf() throws ASN1Exception;
+
+    /**
      * Decode the next ASN.1 element as an octet string.
      *
      * @return the decoded octet string, as a byte array
