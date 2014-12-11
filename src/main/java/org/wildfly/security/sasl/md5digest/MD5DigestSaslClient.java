@@ -31,6 +31,7 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.util.DefaultTransformationMapper;
@@ -102,8 +103,8 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
             }
         }
 
-        if (qop != null && qop.equals(QOP_AUTH) == false) {
-            setWrapper(new MD5DigestWrapper(qop.equals(QOP_AUTH_CONF)));
+        if (qop != null && qop.equals(DigestMD5Utils.QOP_AUTH) == false) {
+            setWrapper(new MD5DigestWrapper(qop.equals(DigestMD5Utils.QOP_AUTH_CONF)));
         }
 
         realms = new String[realmList.size()];
@@ -114,12 +115,12 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         // TODO: make this configurable
         // for now choose the strongest one
         String[] qops = qopServerOptions.split(String.valueOf(DELIMITER));
-        if (arrayContains(qops, QOP_AUTH_CONF)) {
-            this.qop = QOP_AUTH_CONF;
-        } else if (arrayContains(qops, QOP_AUTH_INT)) {
-            this.qop = QOP_AUTH_INT;
+        if (arrayContains(qops, DigestMD5Utils. QOP_AUTH_CONF)) {
+            this.qop = DigestMD5Utils.QOP_AUTH_CONF;
+        } else if (arrayContains(qops, DigestMD5Utils.QOP_AUTH_INT)) {
+            this.qop = DigestMD5Utils.QOP_AUTH_INT;
         } else {
-            this.qop = QOP_AUTH;
+            this.qop = DigestMD5Utils.QOP_AUTH;
         }
     }
 
@@ -251,7 +252,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         // nc | nonce-count
         digestResponse.append("nc=");
         int nonceCount = getNonceCount();
-        digestResponse.append(convertToHexBytesWithLeftPadding(nonceCount, 8));
+        digestResponse.append(DigestMD5Utils.convertToHexBytesWithLeftPadding(nonceCount, 8));
         digestResponse.append(DELIMITER);
 
         // cnonce
@@ -276,9 +277,9 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
 
-        hA1 = H_A1(md5, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = DigestMD5Utils.H_A1(userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = digestResponse(md5, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, serverHashedURPUsingcharset);
+        byte[] response_value = DigestMD5Utils.digestResponse(hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -289,7 +290,7 @@ public class MD5DigestSaslClient extends AbstractMD5DigestMechanism implements S
         // qop
         digestResponse.append(DELIMITER);
         digestResponse.append("qop=");
-        digestResponse.append(qop !=null ? qop : QOP_AUTH);
+        digestResponse.append(qop !=null ? qop : DigestMD5Utils.QOP_AUTH);
 
         // cipher
         if (cipher != null && cipher.length() != 0) {

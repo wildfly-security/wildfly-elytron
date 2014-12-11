@@ -30,6 +30,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -128,7 +129,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
 
         // cipher
-        if (supportedCiphers != null && qops != null && arrayContains(qops, QOP_AUTH_CONF)) {
+        if (supportedCiphers != null && qops != null && arrayContains(qops, DigestMD5Utils.QOP_AUTH_CONF)) {
             challenge.append("cipher=\"");
             challenge.append(supportedCiphers);
             challenge.append("\"").append(DELIMITER);
@@ -225,14 +226,14 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             throw new SaslException(getMechanismName() + ": digest-uri directive is missing");
         }
 
-        qop = QOP_AUTH;
+        qop = DigestMD5Utils.QOP_AUTH;
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
-            if (!arrayContains(QOP_VALUES, qop)) {
+            if (!arrayContains(DigestMD5Utils.QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
-            if (qop != null && qop.equals(QOP_AUTH) == false) {
-                setWrapper(new MD5DigestWrapper(qop.equals(QOP_AUTH_CONF)));
+            if (qop != null && qop.equals(DigestMD5Utils.QOP_AUTH) == false) {
+                setWrapper(new MD5DigestWrapper(qop.equals(DigestMD5Utils.QOP_AUTH_CONF)));
             }
         }
 
@@ -247,9 +248,9 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         passwordCallback.clearPassword();
 
 
-        hA1 = H_A1(md5, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+        hA1 = DigestMD5Utils.H_A1(userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = digestResponse(md5, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, clientCharset);
+        byte[] expectedResponse = DigestMD5Utils.digestResponse(hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
