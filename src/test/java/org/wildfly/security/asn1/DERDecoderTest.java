@@ -256,6 +256,16 @@ public class DERDecoderTest {
         assertFalse(decoder.hasNextElement());
     }
 
+    @Test
+    public void testDecodeImplicitTag() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109});
+        assertFalse(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 0, false));
+        assertFalse(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 1, true));
+        assertTrue(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, false));
+        decoder.decodeImplicit(2);
+        assertEquals("server1.example.com", decoder.decodeIA5String());
+    }
+
     @Test(expected=ASN1Exception.class)
     public void testDecodeWrongType() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {5, 12});

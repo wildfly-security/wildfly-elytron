@@ -37,6 +37,7 @@ public class DERDecoder implements ASN1Decoder {
 
     private ByteIterator bi;
     private ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
+    private int implicitTag = -1;
 
     /**
      * Create a DER decoder that will decode values from the given byte array.
@@ -299,6 +300,23 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public void decodeImplicit(int number) {
+        decodeImplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void decodeImplicit(int clazz, int number) {
+        if (implicitTag == -1) {
+            implicitTag = clazz | number;
+        }
+    }
+
+    @Override
+    public boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception {
+        return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+    }
+
+    @Override
     public int peekType() throws ASN1Exception {
         int currOffset = bi.offset();
         int tag = readTag();
@@ -345,6 +363,7 @@ public class DERDecoder implements ASN1Decoder {
     private int readTag() throws ASN1Exception {
         try {
             int tag = bi.next();
+            int tagClass = tag & CLASS_MASK;
             int constructed = tag & CONSTRUCTED_MASK;
             int tagNumber = tag & TAG_NUMBER_MASK;
             if (tagNumber == 0x1f) {
@@ -362,13 +381,17 @@ public class DERDecoder implements ASN1Decoder {
                 }
                 tagNumber |= (octet & 0x7f);
             }
-            return (constructed | tagNumber);
+            return (tagClass | constructed | tagNumber);
         } catch (NoSuchElementException e) {
             throw new ASN1Exception("Unexpected end of input");
         }
     }
 
     private void readTag(int expectedTag) throws ASN1Exception {
+        if (implicitTag != -1) {
+            expectedTag = implicitTag | (expectedTag & CONSTRUCTED_MASK);
+            implicitTag = -1;
+        }
         int currOffset = bi.offset();
         int actualTag = readTag();
         if (actualTag != expectedTag) {

@@ -71,6 +71,11 @@ public class ASN1 {
     public static final int CONSTRUCTED_MASK = 0x20;
 
     /**
+     * Mask used to determine if a type tag is context-specific.
+     */
+    public static final int CONTEXT_SPECIFIC_MASK = 0x80;
+
+    /**
      * Mask used to obtain the class bits from a type tag.
      */
     public static final int CLASS_MASK = 0xc0;

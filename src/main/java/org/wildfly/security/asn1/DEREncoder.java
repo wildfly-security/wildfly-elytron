@@ -49,6 +49,7 @@ public class DEREncoder implements ASN1Encoder {
     private ByteStringBuilder currentBuffer;
     private int currentBufferPos = -1;
     private ByteStringBuilder target;
+    private int implicitTag = -1;
 
     /**
      * Create a DER encoder that writes its output to the given {@code ByteStringBuilder}.
@@ -319,6 +320,18 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void encodeImplicit(int number) {
+        encodeImplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void encodeImplicit(int clazz, int number) {
+        if (implicitTag == -1) {
+            implicitTag = clazz | number;
+        }
+    }
+
+    @Override
     public void flush() {
         while (states.size() != 0) {
             EncoderState lastState = states.peekLast();
@@ -427,8 +440,12 @@ public class DEREncoder implements ASN1Encoder {
     };
 
     private void writeTag(int tag, ByteStringBuilder dest) {
-        int tagClass = tag & CLASS_MASK;
         int constructed = tag & CONSTRUCTED_MASK;
+        if (implicitTag != -1) {
+            tag = implicitTag | constructed;
+            implicitTag = -1;
+        }
+        int tagClass = tag & CLASS_MASK;
         int tagNumber = tag & TAG_NUMBER_MASK;
         if (tagNumber < 31) {
             dest.append((byte) (tagClass | constructed | tagNumber));

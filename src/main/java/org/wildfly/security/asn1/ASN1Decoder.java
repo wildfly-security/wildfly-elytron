@@ -147,6 +147,35 @@ public interface ASN1Decoder {
     void decodeNull() throws ASN1Exception;
 
     /**
+     * Indicate that the next ASN.1 element has the given implicit, context-specific tag.
+     *
+     * @param number the tag number for the implicit tag
+     */
+    void decodeImplicit(int number);
+
+    /**
+     * Indicate that the next ASN.1 element has the given implicit tag.
+     *
+     * @param clazz the class for the implicit tag
+     * @param number the tag number for the implicit tag
+     */
+    void decodeImplicit(int clazz, int number);
+
+    /**
+     * Determine if the type of the next ASN.1 element matches the given type without
+     * actually decoding the next element. This method can be used to determine if an
+     * optional ASN.1 value has been included in the encoding or not.
+     *
+     * @param clazz the tag class to match against
+     * @param number the tag number to match against
+     * @param isConstructed whether or not the next element should be constructed
+     * @return {@code true} if the type of the next ASN.1 element matches the given type
+     * and {@code false} otherwise
+     * @throws ASN1Exception if an error occurs while determining the type of the next element
+     */
+    boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception;
+
+    /**
      * Retrieve the type of the next ASN.1 element without actually decoding
      * the next element.
      *

@@ -295,6 +295,16 @@ public class DEREncoderTest {
     }
 
     @Test
+    public void testEncodeImplicit() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.encodeImplicit(2);
+        encoder.encodeIA5String("server1.example.com");
+        byte[] expected = new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
     public void testFlush() throws Exception {
         ByteStringBuilder target = new ByteStringBuilder();
         DEREncoder encoder = new DEREncoder(target);

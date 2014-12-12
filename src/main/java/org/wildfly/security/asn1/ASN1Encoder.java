@@ -146,6 +146,23 @@ public interface ASN1Encoder extends Flushable {
     void encodeNull();
 
     /**
+     * Indicate that the next encode operation should encode an ASN.1 value using
+     * the given implicit, context-specific tag.
+     *
+     * @param number the tag number for the implicit, context-specific tag
+     */
+    void encodeImplicit(int number);
+
+    /**
+     * Indicate that the next encode operation should encode an ASN.1 value using
+     * the given implicit tag.
+     *
+     * @param clazz the class for the implicit tag
+     * @param number the tag number for the implicit tag
+     */
+    void encodeImplicit(int clazz, int number);
+
+    /**
      * Flush the encoder, writing any saved ASN.1 encoded values to the target destination.
      * Any unfinished sequences or sets will be ended.
      */
