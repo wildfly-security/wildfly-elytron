@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -59,7 +59,7 @@ public class CompatibilityServerTest extends BaseTestCase {
     private SaslServer server;
 
     private void mockNonce(final String nonce){
-        new MockUp<org.wildfly.security.sasl.md5digest.AbstractMD5DigestMechanism>(){
+        new MockUp<org.wildfly.security.sasl.digest.AbstractMD5DigestMechanism>(){
             @Mock
             byte[] generateNonce(){
                 return nonce.getBytes();

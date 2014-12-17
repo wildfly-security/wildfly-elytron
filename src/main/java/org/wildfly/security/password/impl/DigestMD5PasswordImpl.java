@@ -19,7 +19,7 @@ package org.wildfly.security.password.impl;
 
 import org.wildfly.security.password.interfaces.DigestMD5Password;
 import org.wildfly.security.password.spec.DigestMD5PasswordSpec;
-import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.Charsets;
 
 import java.security.InvalidKeyException;

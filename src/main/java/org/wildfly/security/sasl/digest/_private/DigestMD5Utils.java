@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.sasl.md5digest._private;
+package org.wildfly.security.sasl.digest._private;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;

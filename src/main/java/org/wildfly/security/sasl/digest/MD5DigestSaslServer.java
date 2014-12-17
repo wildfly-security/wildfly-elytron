@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +30,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 

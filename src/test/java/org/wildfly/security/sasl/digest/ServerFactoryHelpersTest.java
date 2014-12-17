@@ -1,4 +1,4 @@
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import static org.junit.Assert.assertEquals;
 

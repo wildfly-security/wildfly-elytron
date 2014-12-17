@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.util.Map;

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -41,7 +41,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestMD5Utils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
