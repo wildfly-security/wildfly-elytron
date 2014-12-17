@@ -108,6 +108,7 @@ public class DigestSaslServer extends AbstractDigestMechanism implements SaslSer
             boolean first = true;
             for(String qop : qops){
                 if(!first) challenge.append(DELIMITER);
+                first = false;
                 challenge.append(SaslQuote.quote(qop));
             }
             challenge.append("\"").append(DELIMITER);
