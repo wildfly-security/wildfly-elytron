@@ -122,7 +122,7 @@ public class DigestServerFactory extends AbstractSaslFactory implements SaslServ
             }
         }
         array.add(realm.toString());
-        return array.toArray(new String[0]);
+        return array.toArray(new String[array.size()]);
     }
 
 }
