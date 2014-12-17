@@ -59,7 +59,7 @@ public class CompatibilityServerTest extends BaseTestCase {
     private SaslServer server;
 
     private void mockNonce(final String nonce){
-        new MockUp<org.wildfly.security.sasl.digest.AbstractMD5DigestMechanism>(){
+        new MockUp<AbstractDigestMechanism>(){
             @Mock
             byte[] generateNonce(){
                 return nonce.getBytes();

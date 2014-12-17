@@ -30,7 +30,7 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -39,10 +39,9 @@ import org.wildfly.security.sasl.util.Charsets;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements SaslServer {
+public class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
-    public MD5DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName,
-            CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
+    public DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
@@ -129,7 +128,7 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         }
 
         // cipher
-        if (supportedCiphers != null && qops != null && arrayContains(qops, DigestMD5Utils.QOP_AUTH_CONF)) {
+        if (supportedCiphers != null && qops != null && arrayContains(qops, DigestUtils.QOP_AUTH_CONF)) {
             challenge.append("cipher=\"");
             challenge.append(supportedCiphers);
             challenge.append("\"").append(DELIMITER);
@@ -226,14 +225,14 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
             throw new SaslException(getMechanismName() + ": digest-uri directive is missing");
         }
 
-        qop = DigestMD5Utils.QOP_AUTH;
+        qop = DigestUtils.QOP_AUTH;
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
-            if (!arrayContains(DigestMD5Utils.QOP_VALUES, qop)) {
+            if (!arrayContains(DigestUtils.QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
-            if (qop != null && qop.equals(DigestMD5Utils.QOP_AUTH) == false) {
-                setWrapper(new MD5DigestWrapper(qop.equals(DigestMD5Utils.QOP_AUTH_CONF)));
+            if (qop != null && qop.equals(DigestUtils.QOP_AUTH) == false) {
+                setWrapper(new DigestWrapper(qop.equals(DigestUtils.QOP_AUTH_CONF)));
             }
         }
 
@@ -248,9 +247,9 @@ public class MD5DigestSaslServer extends AbstractMD5DigestMechanism implements S
         passwordCallback.clearPassword();
 
 
-        hA1 = DigestMD5Utils.H_A1(userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+        hA1 = DigestUtils.H_A1(userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = DigestMD5Utils.digestResponse(hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        byte[] expectedResponse = DigestUtils.digestResponse(hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);

@@ -24,7 +24,7 @@ import org.wildfly.security.password.OneWayPassword;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-public interface DigestMD5Password extends OneWayPassword {
+public interface DigestPassword extends OneWayPassword {
 
     String ALGORITHM_DIGEST_MD5 = "digest-md5";
 

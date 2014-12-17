@@ -22,7 +22,7 @@ package org.wildfly.security.password.spec;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-public class DigestMD5PasswordSpec implements PasswordSpec {
+public class DigestPasswordSpec implements PasswordSpec {
 
     private final byte[] hA1;
     private final byte[] nonce;
@@ -33,7 +33,7 @@ public class DigestMD5PasswordSpec implements PasswordSpec {
     private final String digestURI;
     private final boolean utf8Encoded;
 
-    public DigestMD5PasswordSpec(byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
+    public DigestPasswordSpec(byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
         this.hA1 = hA1;
         this.nonce = nonce;
         this.nonceCount = nonceCount;

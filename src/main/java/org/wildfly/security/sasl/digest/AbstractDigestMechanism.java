@@ -41,7 +41,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
@@ -57,7 +57,7 @@ import org.wildfly.security.util._private.Arrays2;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
+abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
     public static final String QOP_PROPERTY = "javax.security.sasl.qop";
@@ -113,13 +113,13 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @param serverName
      * @param callbackHandler
      */
-    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
+    public AbstractDigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
 
         secureRandomGenerator = new SecureRandom();
 
         try {
-            this.md5 = MessageDigest.getInstance(DigestMD5Utils.HASH_algorithm);
+            this.md5 = MessageDigest.getInstance(DigestUtils.HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         }
@@ -167,7 +167,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             demandedCiphers = CIPHER_OPTS;
         }
         StringBuilder ciphers = new StringBuilder();
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(MD5DigestServerFactory.JBOSS_DIGEST_MD5, demandedCiphers)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(DigestServerFactory.JBOSS_DIGEST_MD5, demandedCiphers)) {
             if (ciphers.length() > 0) {
                 ciphers.append(DELIMITER);
             }
@@ -330,14 +330,14 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         return charset;
     }
 
-    protected class MD5DigestWrapper implements SaslWrapper {
+    protected class DigestWrapper implements SaslWrapper {
 
         private boolean confidential;
 
         /**
          * @param confidential
          */
-        protected MD5DigestWrapper(boolean confidential) {
+        protected DigestWrapper(boolean confidential) {
             this.confidential = confidential;
         }
 
@@ -347,9 +347,9 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractMD5DigestMechanism.this.wrapConfidentialityProtectedMessage(outgoing, offset, len);
+                return AbstractDigestMechanism.this.wrapConfidentialityProtectedMessage(outgoing, offset, len);
             } else {
-                return AbstractMD5DigestMechanism.this.wrapIntegrityProtectedMessage(outgoing, offset, len);
+                return AbstractDigestMechanism.this.wrapIntegrityProtectedMessage(outgoing, offset, len);
             }
         }
 
@@ -359,9 +359,9 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractMD5DigestMechanism.this.unwrapConfidentialityProtectedMessage(incoming, offset, len);
+                return AbstractDigestMechanism.this.unwrapConfidentialityProtectedMessage(incoming, offset, len);
             } else {
-                return AbstractMD5DigestMechanism.this.unwrapIntegrityProtectedMessage(incoming, offset, len);
+                return AbstractDigestMechanism.this.unwrapIntegrityProtectedMessage(incoming, offset, len);
             }
         }
 
@@ -586,7 +586,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         Cipher ciph;
         SecretKey cipherKey;
         try {
-            ciph = Cipher.getInstance(trans.getTransformationSpec(MD5DigestServerFactory.JBOSS_DIGEST_MD5, cipher).getTransformation());
+            ciph = Cipher.getInstance(trans.getTransformationSpec(DigestServerFactory.JBOSS_DIGEST_MD5, cipher).getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 

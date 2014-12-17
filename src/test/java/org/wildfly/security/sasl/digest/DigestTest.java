@@ -101,10 +101,10 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(MD5DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = Sasl.createSaslServer(DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
-        SaslClient client = Sasl.createSaslClient(new String[]{MD5DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        SaslClient client = Sasl.createSaslClient(new String[]{ DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
@@ -243,11 +243,11 @@ public class DigestTest extends BaseTestCase {
     public void testRealmSelection() throws Exception {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, MD5DigestServerFactory.realmsArrayToProperty(new String[]{"realm1","second realm","last\\ "}));
-        SaslServer server = Sasl.createSaslServer(MD5DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+        serverProps.put(REALM_PROPERTY, DigestServerFactory.realmsArrayToProperty(new String[] { "realm1", "second realm", "last\\ " }));
+        SaslServer server = Sasl.createSaslServer(DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(),"last\\ ");
-        SaslClient client = Sasl.createSaslClient(new String[]{MD5DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        SaslClient client = Sasl.createSaslClient(new String[]{ DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
@@ -551,13 +551,13 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-int");
-        serverProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        serverProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-int");
-        clientProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        clientProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -594,13 +594,13 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        serverProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        serverProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
-        clientProps.put(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY, clientCipher);
+        clientProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, clientCipher);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());

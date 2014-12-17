@@ -36,14 +36,14 @@ import org.wildfly.security.sasl.util.Charsets;
  *
  */
 @MetaInfServices(value = SaslServerFactory.class)
-public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
+public class DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
 
     public static final String JBOSS_DIGEST_MD5 = "DIGEST-MD5";
     public static final char REALM_DELIMITER = ' ';
     public static final char REALM_ESCAPE_CHARACTER = '\\';
 
-    public MD5DigestServerFactory() {
-        super(MD5DigestServerFactory.JBOSS_DIGEST_MD5);
+    public DigestServerFactory() {
+        super(DigestServerFactory.JBOSS_DIGEST_MD5);
     }
 
     /* (non-Javadoc)
@@ -56,7 +56,7 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
             return null;
         }
 
-        String realmList = (String)props.get(AbstractMD5DigestMechanism.REALM_PROPERTY);
+        String realmList = (String)props.get(AbstractDigestMechanism.REALM_PROPERTY);
         String[] realms;
         if (realmList != null) {
             realms = realmsPropertyToArray(realmList);
@@ -64,16 +64,16 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
             realms = new String[] {serverName};
         }
 
-        Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
+        Boolean utf8 = (Boolean)props.get(AbstractDigestMechanism.UTF8_PROPERTY);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String qopsString = (String)props.get(AbstractMD5DigestMechanism.QOP_PROPERTY);
+        String qopsString = (String)props.get(AbstractDigestMechanism.QOP_PROPERTY);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
-        String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String supportedCipherOpts = (String)props.get(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
+        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
         server.init();
         return server;
     }

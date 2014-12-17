@@ -30,7 +30,7 @@ import java.util.Arrays;
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public final class DigestMD5Utils {
+public final class DigestUtils {
 
     public static final String QOP_AUTH = "auth";
     public static final String QOP_AUTH_INT = "auth-int";
