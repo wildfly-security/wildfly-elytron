@@ -37,6 +37,7 @@ import org.wildfly.security.auth.provider.AuthenticatedRealmIdentity;
 import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.provider.RealmIdentity;
 import org.wildfly.security.auth.provider.SecurityRealm;
+import org.wildfly.security.auth.provider.VerificationResult;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
 
@@ -232,6 +233,10 @@ class LdapSecurityRealm implements SecurityRealm {
                 public void dispose() {
                 }
             };
+        }
+
+        public VerificationResult verifyCredential(final Object credential) {
+            return null;
         }
     }
 
