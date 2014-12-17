@@ -39,15 +39,14 @@ import org.wildfly.security.sasl.util.Charsets;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-public class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
+class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
-    public DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
+    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
     }
-
 
     private static final int STEP_ONE = 1;
     private static final int STEP_THREE = 3;

@@ -41,7 +41,7 @@ import org.wildfly.security.util.TransformationSpec;
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
-public class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
+class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
     private static final int STEP_TWO = 2;
     private static final int STEP_FOUR = 4;
@@ -55,16 +55,7 @@ public class DigestSaslClient extends AbstractDigestMechanism implements SaslCli
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
 
-
-    /**
-     * @param mechanism
-     * @param protocol
-     * @param serverName
-     * @param callbackHandler
-     * @param authorizationId
-     * @param hasInitialResponse
-     */
-    public DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) throws SaslException {
+    DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) throws SaslException {
         super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
 
         this.hasInitialResponse = hasInitialResponse;
