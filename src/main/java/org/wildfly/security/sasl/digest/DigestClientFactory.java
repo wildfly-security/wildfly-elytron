@@ -39,7 +39,7 @@ import org.wildfly.security.sasl.util.Charsets;
 public class DigestClientFactory extends AbstractSaslFactory implements SaslClientFactory {
 
     public DigestClientFactory() {
-        super(DigestServerFactory.JBOSS_DIGEST_MD5);
+        super(Digest.DIGEST_MD5);
     }
 
     /* (non-Javadoc)

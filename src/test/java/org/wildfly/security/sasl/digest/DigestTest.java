@@ -102,10 +102,10 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = Sasl.createSaslServer(Digest.DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
-        SaslClient client = Sasl.createSaslClient(new String[]{ DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        SaslClient client = Sasl.createSaslClient(new String[]{ Digest.DIGEST_MD5 }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
@@ -245,10 +245,10 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, DigestServerFactory.realmsArrayToProperty(new String[] { "realm1", "second realm", "last\\ " }));
-        SaslServer server = Sasl.createSaslServer(DigestServerFactory.JBOSS_DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = Sasl.createSaslServer(Digest.DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(),"last\\ ");
-        SaslClient client = Sasl.createSaslClient(new String[]{ DigestServerFactory.JBOSS_DIGEST_MD5}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        SaslClient client = Sasl.createSaslClient(new String[]{ Digest.DIGEST_MD5 }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);

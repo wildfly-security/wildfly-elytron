@@ -122,7 +122,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         TransformationMapper trans = new DefaultTransformationMapper();
         String[] tokensToChooseFrom = ciphersFromServer.split(String.valueOf(DELIMITER));
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(DigestServerFactory.JBOSS_DIGEST_MD5, tokensToChooseFrom)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, tokensToChooseFrom)) {
             // take the strongest cipher
             for (String c: demandedCiphers) {
                if (c.equals(ts.getToken())) {

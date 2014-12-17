@@ -162,7 +162,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             demandedCiphers = CIPHER_OPTS;
         }
         StringBuilder ciphers = new StringBuilder();
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(DigestServerFactory.JBOSS_DIGEST_MD5, demandedCiphers)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, demandedCiphers)) {
             if (ciphers.length() > 0) {
                 ciphers.append(DELIMITER);
             }
@@ -581,7 +581,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         Cipher ciph;
         SecretKey cipherKey;
         try {
-            ciph = Cipher.getInstance(trans.getTransformationSpec(DigestServerFactory.JBOSS_DIGEST_MD5, cipher).getTransformation());
+            ciph = Cipher.getInstance(trans.getTransformationSpec(Digest.DIGEST_MD5, cipher).getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 

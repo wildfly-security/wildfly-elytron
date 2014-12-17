@@ -40,12 +40,11 @@ import org.wildfly.security.sasl.util.Charsets;
 @MetaInfServices(value = SaslServerFactory.class)
 public class DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
 
-    public static final String JBOSS_DIGEST_MD5 = "DIGEST-MD5";
     public static final char REALM_DELIMITER = ' ';
     public static final char REALM_ESCAPE_CHARACTER = '\\';
 
     public DigestServerFactory() {
-        super(DigestServerFactory.JBOSS_DIGEST_MD5);
+        super(Digest.DIGEST_MD5);
     }
 
     /* (non-Javadoc)
