@@ -142,21 +142,21 @@ public class DigestSaslServer extends AbstractDigestMechanism implements SaslSer
     private void noteDigestResponseData(HashMap<String, byte[]> parsedDigestResponse) {
         byte[] data = parsedDigestResponse.get("nc");
         if (data != null) {
-            nonceCount = Integer.valueOf(new String(data, StandardCharsets.UTF_8));
+            nonceCount = Integer.parseInt(new String(data, StandardCharsets.UTF_8));
         } else {
             nonceCount = -1;
         }
 
         data = parsedDigestResponse.get("cipher");
         if (data != null) {
-            cipher = new String(data);
+            cipher = new String(data, StandardCharsets.UTF_8);
         } else {
             cipher = "";
         }
 
         data = parsedDigestResponse.get("authzid");
         if (data != null) {
-            authzid = new String(data);
+            authzid = new String(data, StandardCharsets.UTF_8);
         } else {
             authzid = null;
         }
