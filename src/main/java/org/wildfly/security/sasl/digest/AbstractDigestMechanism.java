@@ -59,11 +59,6 @@ import org.wildfly.security.util._private.Arrays2;
  */
 abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
-    public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
-    public static final String QOP_PROPERTY = "javax.security.sasl.qop";
-    public static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
-    public static final String SUPPORTED_CIPHERS_PROPERTY = "org.jboss.security.sasl.digest.ciphers";
-
     public static enum FORMAT {CLIENT, SERVER};
 
     private static final int MAX_PARSED_RESPONSE_SIZE = 13;

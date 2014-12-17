@@ -31,10 +31,10 @@ import javax.security.sasl.SaslServerFactory;
 public final class WildFlySasl {
 
     /*
-     These two properties are to prevent checkstyle from raising a false positive for imports used only in JavaDoc.
-     The checkstyle problem is fixed upstream.
-     TODO: Remove these once checkstyle is updated to 6.1 or later.
-     */
+         These two properties are to prevent checkstyle from raising a false positive for imports used only in JavaDoc.
+         The checkstyle problem is fixed upstream.
+         TODO: Remove these once checkstyle is updated to 6.1 or later.
+         */
     private static final Class<?> ssf = SaslServerFactory.class;
     private static final Class<?> scf = SaslClientFactory.class;
     private static final Class<?> map = Map.class;
@@ -91,4 +91,24 @@ public final class WildFlySasl {
      * The immutable empty names array.
      */
     public static final String[] NO_NAMES = new String[0];
+
+    /**
+     * A property used by some SASL mechanisms (including the {@code DIGEST-MD5} algorithm supplied with most Oracle JDKs)
+     * to indicate that information exchange should take place using the UTF-8 character encoding instead of the default
+     * Latin-1/ISO-8859-1 encoding.  The default value is "true".
+     */
+    public static final String USE_UTF8 = "com.sun.security.sasl.digest.utf8";
+
+    /**
+     * A property used by some SASL mechanisms (including the {@code DIGEST-MD5} algorithm supplied with most Oracle JDKs)
+     * to provide the list of possible server realms to the mechanism.  Each realm name should be separated by a space
+     * character (U+0020).
+     */
+    public static final String REALM_LIST = "com.sun.security.sasl.digest.realm";
+
+    /**
+     * A property used to directly limit the set of supported ciphers for SASL mechanisms.  The list items should be
+     * separated by a comma character (",").
+     */
+    public static final String SUPPORTED_CIPHER_NAMES = "org.jboss.security.sasl.digest.ciphers";
 }

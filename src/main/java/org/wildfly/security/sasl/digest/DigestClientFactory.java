@@ -27,6 +27,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -51,10 +52,10 @@ public class DigestClientFactory extends AbstractSaslFactory implements SaslClie
         String selectedMech = selectMechanism(mechanisms);
         if (selectedMech == null) return null;
 
-        Boolean utf8 = (Boolean)props.get(AbstractDigestMechanism.UTF8_PROPERTY);
+        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String supportedCipherOpts = (String)props.get(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] ciphers = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
         final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, ciphers);

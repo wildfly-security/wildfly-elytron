@@ -38,6 +38,7 @@ import org.jboss.logging.Logger;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ClientCallbackHandler;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;
@@ -551,13 +552,13 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-int");
-        serverProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        serverProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-int");
-        clientProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        clientProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -594,13 +595,13 @@ public class DigestTest extends BaseTestCase {
         CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        serverProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, "des,3des,rc4,rc4-40,rc4-56");
+        serverProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
         CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
-        clientProps.put(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY, clientCipher);
+        clientProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, clientCipher);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
 
         assertFalse(client.hasInitialResponse());

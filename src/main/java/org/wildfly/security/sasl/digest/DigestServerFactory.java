@@ -23,11 +23,13 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
 
@@ -56,7 +58,7 @@ public class DigestServerFactory extends AbstractSaslFactory implements SaslServ
             return null;
         }
 
-        String realmList = (String)props.get(AbstractDigestMechanism.REALM_PROPERTY);
+        String realmList = (String)props.get(WildFlySasl.REALM_LIST);
         String[] realms;
         if (realmList != null) {
             realms = realmsPropertyToArray(realmList);
@@ -64,13 +66,13 @@ public class DigestServerFactory extends AbstractSaslFactory implements SaslServ
             realms = new String[] {serverName};
         }
 
-        Boolean utf8 = (Boolean)props.get(AbstractDigestMechanism.UTF8_PROPERTY);
+        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String qopsString = (String)props.get(AbstractDigestMechanism.QOP_PROPERTY);
+        String qopsString = (String)props.get(Sasl.QOP);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
-        String supportedCipherOpts = (String)props.get(AbstractDigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
         final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
