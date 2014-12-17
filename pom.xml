@@ -48,6 +48,7 @@
         <version.org.jboss.logging.tools>1.2.0.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.3.4.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
+        <version.org.jboss.spec.org.jboss.spec.javax.net.ssl>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.net.ssl>
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
@@ -63,7 +64,7 @@
             <resource>
                 <directory>${project.build.sourceDirectory}</directory>
                 <includes>
-                    <include>**/Version.properties</include>
+                    <include>**/*.properties</include>
                 </includes>
                 <filtering>true</filtering>
             </resource>
@@ -131,6 +132,17 @@
                             <version>1.3.2.GA</version>
                         </docletArtifact>
                         <excludePackageNames>*._private</excludePackageNames>
+                    </configuration>
+                </plugin>
+
+                <!-- Compiler -->
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <compilerArguments>
+                            <!-- This ugly hack can definitely go away once JDK 8 is required for building -->
+                            <bootclasspath>${settings.localRepository}/org/jboss/spec/javax/net/ssl/jboss-jsse-api_8.0_spec/${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}/jboss-jsse-api_8.0_spec-${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}.jar${path.separator}${sun.boot.class.path}</bootclasspath>
+                        </compilerArguments>
                     </configuration>
                 </plugin>
 
@@ -202,6 +214,12 @@
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.net.ssl</groupId>
+            <artifactId>jboss-jsse-api_8.0_spec</artifactId>
+            <version>${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}</version>
             <scope>provided</scope>
         </dependency>
 

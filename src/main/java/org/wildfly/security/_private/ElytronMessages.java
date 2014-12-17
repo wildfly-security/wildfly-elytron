@@ -157,4 +157,16 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 35, value = "SASL authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
     SaslException saslAuthorizationFailed(String loginName, String authorizationId);
+
+    @Message(id = 36, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, int offset, String string);
+
+    @Message(id = 37, value = "Unrecognized token \"%s\" in mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorUnknownToken(String word, String string);
+
+    @Message(id = 38, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
+
+    @Message(id = 39, value = "Expected token \"%s\" at offset %d of mechanism selection string \"%s\"")
+    IllegalArgumentException mechSelectorTokenExpected(String token, int offset, String string);
 }
