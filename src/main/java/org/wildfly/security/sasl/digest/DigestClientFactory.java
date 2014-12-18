@@ -28,7 +28,6 @@ import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
 
 /**
@@ -36,10 +35,9 @@ import org.wildfly.security.sasl.util.Charsets;
  *
  */
 @MetaInfServices(value = SaslClientFactory.class)
-public class DigestClientFactory extends AbstractSaslFactory implements SaslClientFactory {
+public class DigestClientFactory extends AbstractDigestFactory implements SaslClientFactory {
 
     public DigestClientFactory() {
-        super(Digest.DIGEST_MD5);
     }
 
     /* (non-Javadoc)
@@ -49,7 +47,8 @@ public class DigestClientFactory extends AbstractSaslFactory implements SaslClie
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
             Map<String, ?> props, CallbackHandler cbh) throws SaslException {
 
-        String selectedMech = selectMechanism(mechanisms);
+        if (! matches(props)) return null;
+        String selectedMech = select(mechanisms);
         if (selectedMech == null) return null;
 
         Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
@@ -62,14 +61,4 @@ public class DigestClientFactory extends AbstractSaslFactory implements SaslClie
         client.init();
         return client;
     }
-
-    private String selectMechanism(String[] mechanisms) {
-        for (String mech : mechanisms) {
-            if (isIncluded(mech)) {
-                return mech;
-            }
-        }
-        return null;
-    }
-
 }

@@ -27,6 +27,9 @@ import org.wildfly.security.password.OneWayPassword;
 public interface DigestPassword extends OneWayPassword {
 
     String ALGORITHM_DIGEST_MD5 = "digest-md5";
+    String ALGORITHM_DIGEST_SHA = "digest-sha";
+    String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
+    String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
 
     byte[] getHA1();
 

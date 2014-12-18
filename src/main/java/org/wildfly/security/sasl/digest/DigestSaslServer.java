@@ -20,6 +20,8 @@ package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -41,11 +43,18 @@ import org.wildfly.security.sasl.util.Charsets;
  */
 class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
+    private final MessageDigest messageDigest;
+
     DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
+        try {
+            this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanismName));
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("Expected message digest algorithm is not available", e);
+        }
     }
 
     private static final int STEP_ONE = 1;
@@ -247,9 +256,9 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         passwordCallback.clearPassword();
 
 
-        hA1 = DigestUtils.H_A1(userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+        hA1 = DigestUtils.H_A1(messageDigest, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = DigestUtils.digestResponse(hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        byte[] expectedResponse = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);

@@ -23,6 +23,8 @@ import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.Charsets;
 
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -34,8 +36,9 @@ import java.util.Arrays;
  */
 class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword {
 
-    static final long serialVersionUID = 9129555139213387660L;
+    private static final long serialVersionUID = 9129555139213387660L;
 
+    private final String algorithm;
     private final byte[] hA1;
     private final byte[] nonce;
     private final int nonceCount;
@@ -46,7 +49,8 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     private final byte[] digestResponse;
     private final boolean utf8Encoded;
 
-    DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
+    DigestPasswordImpl(final String algorithm, byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) throws NoSuchAlgorithmException {
+        this.algorithm = algorithm;
         this.hA1 = clonedHA1;
         this.nonce = clonedNonce;
         this.nonceCount = nonceCount;
@@ -55,15 +59,19 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         this.qop = qop;
         this.digestURI = digestURI;
         this.utf8Encoded = utf8Encoded;
-        this.digestResponse = DigestUtils.digestResponse(hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        this.digestResponse = DigestUtils.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
     }
 
-    DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI) {
-        this(clonedHA1, clonedNonce, nonceCount, clonedCnonce, authzid, qop, digestURI, Boolean.FALSE);
+    DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, final String algorithm) throws NoSuchAlgorithmException {
+        this(algorithm, clonedHA1, clonedNonce, nonceCount, clonedCnonce, authzid, qop, digestURI, false);
     }
 
-    DigestPasswordImpl(DigestPasswordSpec spec, byte[] hA1) {
-        this(hA1.clone(), spec.getNonce().clone(), spec.getNonceCount(), spec.getCnonce().clone(), spec.getAuthzid(), spec.getQop(), spec.getDigestURI(), spec.isUtf8Encoded());
+    DigestPasswordImpl(DigestPasswordSpec spec, byte[] hA1) throws NoSuchAlgorithmException {
+        this(spec.getAlgorithm(), hA1.clone(), spec.getNonce().clone(), spec.getNonceCount(), spec.getCnonce().clone(), spec.getAuthzid(), spec.getQop(), spec.getDigestURI(), spec.isUtf8Encoded());
+    }
+
+    private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
+        return MessageDigest.getInstance(DigestUtils.passwordAlgorithm(algorithm));
     }
 
     @Override
@@ -77,11 +85,13 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
             throw new InvalidKeyException("Guess cannot be null");
         }
         byte[] guessedHashA1 = (utf8Encoded ? new String(guess).getBytes(Charsets.UTF_8) : new String(guess).getBytes(Charsets.LATIN_1));
-        return verify(guessedHashA1);
-    }
-
-    boolean verify(byte[] guess) {
-        byte[] guessBasedResponse = DigestUtils.digestResponse(guess, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        final MessageDigest messageDigest;
+        try {
+            messageDigest = getMessageDigest(algorithm);
+        } catch (NoSuchAlgorithmException e) {
+            throw new InvalidKeyException("No matching algorithm", e);
+        }
+        byte[] guessBasedResponse = DigestUtils.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
         try {
             return Arrays.equals(digestResponse, guessBasedResponse);
         } catch (NullPointerException e) {

@@ -20,6 +20,8 @@ package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -54,6 +56,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private final String authorizationId;
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
+    private final MessageDigest messageDigest;
 
     DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) throws SaslException {
         super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
@@ -61,6 +64,11 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
         this.demandedCiphers = (ciphers == null ? new String[] {} : ciphers);
+        try {
+            this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanism));
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("Expected message digest algorithm is not available", e);
+        }
     }
 
     private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) {
@@ -267,9 +275,9 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
 
-        hA1 = DigestUtils.H_A1(userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = DigestUtils.H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = DigestUtils.digestResponse(hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
+        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);

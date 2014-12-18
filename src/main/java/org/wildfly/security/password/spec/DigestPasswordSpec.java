@@ -24,6 +24,7 @@ package org.wildfly.security.password.spec;
  */
 public class DigestPasswordSpec implements PasswordSpec {
 
+    private final String algorithm;
     private final byte[] hA1;
     private final byte[] nonce;
     private final int nonceCount;
@@ -33,7 +34,8 @@ public class DigestPasswordSpec implements PasswordSpec {
     private final String digestURI;
     private final boolean utf8Encoded;
 
-    public DigestPasswordSpec(byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
+    public DigestPasswordSpec(String algorithm, byte[] hA1, byte[] nonce, int nonceCount, byte[] cnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) {
+        this.algorithm = algorithm;
         this.hA1 = hA1;
         this.nonce = nonce;
         this.nonceCount = nonceCount;
@@ -42,6 +44,10 @@ public class DigestPasswordSpec implements PasswordSpec {
         this.qop = qop;
         this.digestURI = digestURI;
         this.utf8Encoded = utf8Encoded;
+    }
+
+    public String getAlgorithm() {
+        return algorithm;
     }
 
     public byte[] getHA1() {

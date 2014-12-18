@@ -30,7 +30,6 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.util.AbstractSaslFactory;
 import org.wildfly.security.sasl.util.Charsets;
 
 /**
@@ -38,13 +37,12 @@ import org.wildfly.security.sasl.util.Charsets;
  *
  */
 @MetaInfServices(value = SaslServerFactory.class)
-public class DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
+public class DigestServerFactory extends AbstractDigestFactory implements SaslServerFactory {
 
     public static final char REALM_DELIMITER = ' ';
     public static final char REALM_ESCAPE_CHARACTER = '\\';
 
     public DigestServerFactory() {
-        super(Digest.DIGEST_MD5);
     }
 
     /* (non-Javadoc)
@@ -53,7 +51,7 @@ public class DigestServerFactory extends AbstractSaslFactory implements SaslServ
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props,
             CallbackHandler cbh) throws SaslException {
-        if (! isIncluded(mechanism)) {
+        if (! matches(props) || ! matchesMech(mechanism)) {
             return null;
         }
 
