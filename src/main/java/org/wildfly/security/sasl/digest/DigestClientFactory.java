@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -27,7 +27,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.Charsets;
 
 /**
@@ -35,10 +35,9 @@ import org.wildfly.security.sasl.util.Charsets;
  *
  */
 @MetaInfServices(value = SaslClientFactory.class)
-public class MD5DigestClientFactory extends AbstractSaslFactory implements SaslClientFactory {
+public class DigestClientFactory extends AbstractDigestFactory implements SaslClientFactory {
 
-    public MD5DigestClientFactory() {
-        super(MD5DigestServerFactory.JBOSS_DIGEST_MD5);
+    public DigestClientFactory() {
     }
 
     /* (non-Javadoc)
@@ -48,27 +47,18 @@ public class MD5DigestClientFactory extends AbstractSaslFactory implements SaslC
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
             Map<String, ?> props, CallbackHandler cbh) throws SaslException {
 
-        String selectedMech = selectMechanism(mechanisms);
+        if (! matches(props)) return null;
+        String selectedMech = select(mechanisms);
         if (selectedMech == null) return null;
 
-        Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
+        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] ciphers = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final MD5DigestSaslClient client = new MD5DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, ciphers);
+        final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, ciphers);
         client.init();
         return client;
     }
-
-    private String selectMechanism(String[] mechanisms) {
-        for (String mech : mechanisms) {
-            if (isIncluded(mech)) {
-                return mech;
-            }
-        }
-        return null;
-    }
-
 }

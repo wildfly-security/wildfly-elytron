@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.sasl.md5digest._private;
+package org.wildfly.security.sasl.digest._private;
 
+import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.digest.Digest;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
@@ -24,13 +26,12 @@ import org.wildfly.security.sasl.util.HexConverter;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public final class DigestMD5Utils {
+public final class DigestUtils {
 
     public static final String QOP_AUTH = "auth";
     public static final String QOP_AUTH_INT = "auth-int";
@@ -42,10 +43,31 @@ public final class DigestMD5Utils {
 
     public static final String HASH_algorithm = "MD5";
 
+    public static String passwordAlgorithm(String digestAlgorithm) {
+        switch (digestAlgorithm) {
+            case Digest.DIGEST_MD5: return DigestPassword.ALGORITHM_DIGEST_MD5;
+            case Digest.DIGEST_SHA: return DigestPassword.ALGORITHM_DIGEST_SHA;
+            case Digest.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case Digest.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            default: return null;
+        }
+    }
+
+    public static String messageDigestAlgorithm(String digestAlgorithm) {
+        switch (digestAlgorithm) {
+            case Digest.DIGEST_MD5: return "MD5";
+            case Digest.DIGEST_SHA: return "SHA";
+            case Digest.DIGEST_SHA_256: return "SHA-256";
+            case Digest.DIGEST_SHA_512: return "SHA-512";
+            default: return null;
+        }
+    }
+
     /**
      * Calculates H(A1).
      *
-     * @param md5
+     *
+     * @param messageDigest
      * @param username
      * @param realm
      * @param password
@@ -55,7 +77,7 @@ public final class DigestMD5Utils {
      * @param responseCharset
      * @return
      */
-    public static byte[] H_A1(String username, String realm, char[] password,
+    public static byte[] H_A1(MessageDigest messageDigest, String username, String realm, char[] password,
                        byte[] nonce, byte[] cnonce, String authzid, Charset responseCharset) {
 
         CharsetEncoder latin1Encoder = Charsets.LATIN_1.newEncoder();
@@ -79,8 +101,7 @@ public final class DigestMD5Utils {
         urp.append(':');
         urp.append(new String(password).getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
 
-        MessageDigest md5 = getMD5MessageDigest();
-        byte[] digest_urp = md5.digest(urp.toArray());
+        byte[] digest_urp = messageDigest.digest(urp.toArray());
 
         // A1
         ByteStringBuilder A1 = new ByteStringBuilder();
@@ -93,7 +114,7 @@ public final class DigestMD5Utils {
             A1.append(':');
             A1.append(authzid);
         }
-        return md5.digest(A1.toArray());
+        return messageDigest.digest(A1.toArray());
     }
 
     /**
@@ -104,7 +125,7 @@ public final class DigestMD5Utils {
      *               cnonce-value, ":", qop-value, ":", HEX(H(A2)) }))
      *
      */
-    public static byte[] digestResponse(byte[] H_A1,
+    public static byte[] digestResponse(MessageDigest messageDigest, byte[] H_A1,
                                  byte[] nonce, int nonce_count, byte[] cnonce,
                                  String authzid, String qop, String digest_uri) {
 
@@ -126,8 +147,7 @@ public final class DigestMD5Utils {
             A2.append(SECURITY_MARK);
         }
 
-        MessageDigest md5 = getMD5MessageDigest();
-        byte[] digest_A2 = md5.digest(A2.toArray());
+        byte[] digest_A2 = messageDigest.digest(A2.toArray());
 
         ByteStringBuilder KD = new ByteStringBuilder();
         KD.append(HexConverter.convertToHexBytes(H_A1));
@@ -142,8 +162,8 @@ public final class DigestMD5Utils {
         KD.append(':');
         KD.append(HexConverter.convertToHexBytes(digest_A2));
 
-        KD.updateDigest(md5);
-        return HexConverter.convertToHexBytes(md5.digest());
+        KD.updateDigest(messageDigest);
+        return HexConverter.convertToHexBytes(messageDigest.digest());
     }
 
     /**
@@ -167,13 +187,4 @@ public final class DigestMD5Utils {
         }
         return retValue;
     }
-
-    private static MessageDigest getMD5MessageDigest() {
-        try {
-            return MessageDigest.getInstance(HASH_algorithm);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
 }

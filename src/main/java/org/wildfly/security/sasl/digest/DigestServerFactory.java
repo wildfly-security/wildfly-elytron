@@ -16,19 +16,20 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.Charsets;
 
 /**
@@ -36,14 +37,12 @@ import org.wildfly.security.sasl.util.Charsets;
  *
  */
 @MetaInfServices(value = SaslServerFactory.class)
-public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslServerFactory {
+public class DigestServerFactory extends AbstractDigestFactory implements SaslServerFactory {
 
-    public static final String JBOSS_DIGEST_MD5 = "DIGEST-MD5";
     public static final char REALM_DELIMITER = ' ';
     public static final char REALM_ESCAPE_CHARACTER = '\\';
 
-    public MD5DigestServerFactory() {
-        super(MD5DigestServerFactory.JBOSS_DIGEST_MD5);
+    public DigestServerFactory() {
     }
 
     /* (non-Javadoc)
@@ -52,11 +51,11 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props,
             CallbackHandler cbh) throws SaslException {
-        if (! isIncluded(mechanism)) {
+        if (! matches(props) || ! matchesMech(mechanism)) {
             return null;
         }
 
-        String realmList = (String)props.get(AbstractMD5DigestMechanism.REALM_PROPERTY);
+        String realmList = (String)props.get(WildFlySasl.REALM_LIST);
         String[] realms;
         if (realmList != null) {
             realms = realmsPropertyToArray(realmList);
@@ -64,16 +63,16 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
             realms = new String[] {serverName};
         }
 
-        Boolean utf8 = (Boolean)props.get(AbstractMD5DigestMechanism.UTF8_PROPERTY);
+        Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
         Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
 
-        String qopsString = (String)props.get(AbstractMD5DigestMechanism.QOP_PROPERTY);
+        String qopsString = (String)props.get(Sasl.QOP);
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
-        String supportedCipherOpts = (String)props.get(AbstractMD5DigestMechanism.SUPPORTED_CIPHERS_PROPERTY);
+        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final MD5DigestSaslServer server = new MD5DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
+        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
         server.init();
         return server;
     }
@@ -122,7 +121,7 @@ public class MD5DigestServerFactory extends AbstractSaslFactory implements SaslS
             }
         }
         array.add(realm.toString());
-        return array.toArray(new String[0]);
+        return array.toArray(new String[array.size()]);
     }
 
 }

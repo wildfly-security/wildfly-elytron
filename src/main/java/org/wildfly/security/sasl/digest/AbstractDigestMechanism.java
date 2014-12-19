@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.md5digest;
+package org.wildfly.security.sasl.digest;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
@@ -41,7 +41,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.md5digest._private.DigestMD5Utils;
+import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.Charsets;
@@ -57,12 +57,7 @@ import org.wildfly.security.util._private.Arrays2;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
-
-    public static final String UTF8_PROPERTY = "com.sun.security.sasl.digest.utf8";
-    public static final String QOP_PROPERTY = "javax.security.sasl.qop";
-    public static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
-    public static final String SUPPORTED_CIPHERS_PROPERTY = "org.jboss.security.sasl.digest.ciphers";
+abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     public static enum FORMAT {CLIENT, SERVER};
 
@@ -113,13 +108,13 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @param serverName
      * @param callbackHandler
      */
-    public AbstractMD5DigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
+    public AbstractDigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
 
         secureRandomGenerator = new SecureRandom();
 
         try {
-            this.md5 = MessageDigest.getInstance(DigestMD5Utils.HASH_algorithm);
+            this.md5 = MessageDigest.getInstance(DigestUtils.HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         }
@@ -167,7 +162,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
             demandedCiphers = CIPHER_OPTS;
         }
         StringBuilder ciphers = new StringBuilder();
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(MD5DigestServerFactory.JBOSS_DIGEST_MD5, demandedCiphers)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, demandedCiphers)) {
             if (ciphers.length() > 0) {
                 ciphers.append(DELIMITER);
             }
@@ -330,14 +325,14 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         return charset;
     }
 
-    protected class MD5DigestWrapper implements SaslWrapper {
+    protected class DigestWrapper implements SaslWrapper {
 
         private boolean confidential;
 
         /**
          * @param confidential
          */
-        protected MD5DigestWrapper(boolean confidential) {
+        protected DigestWrapper(boolean confidential) {
             this.confidential = confidential;
         }
 
@@ -347,9 +342,9 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractMD5DigestMechanism.this.wrapConfidentialityProtectedMessage(outgoing, offset, len);
+                return AbstractDigestMechanism.this.wrapConfidentialityProtectedMessage(outgoing, offset, len);
             } else {
-                return AbstractMD5DigestMechanism.this.wrapIntegrityProtectedMessage(outgoing, offset, len);
+                return AbstractDigestMechanism.this.wrapIntegrityProtectedMessage(outgoing, offset, len);
             }
         }
 
@@ -359,9 +354,9 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         @Override
         public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException {
             if (confidential) {
-                return AbstractMD5DigestMechanism.this.unwrapConfidentialityProtectedMessage(incoming, offset, len);
+                return AbstractDigestMechanism.this.unwrapConfidentialityProtectedMessage(incoming, offset, len);
             } else {
-                return AbstractMD5DigestMechanism.this.unwrapIntegrityProtectedMessage(incoming, offset, len);
+                return AbstractDigestMechanism.this.unwrapIntegrityProtectedMessage(incoming, offset, len);
             }
         }
 
@@ -586,7 +581,7 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
         Cipher ciph;
         SecretKey cipherKey;
         try {
-            ciph = Cipher.getInstance(trans.getTransformationSpec(MD5DigestServerFactory.JBOSS_DIGEST_MD5, cipher).getTransformation());
+            ciph = Cipher.getInstance(trans.getTransformationSpec(Digest.DIGEST_MD5, cipher).getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 
@@ -737,22 +732,6 @@ abstract class AbstractMD5DigestMechanism extends AbstractSaslParticipant {
      * @return fixed byte with odd parity
      */
     private byte fixParityBit(byte toFix) {
-        int b = toFix;
-        int parity = 0;
-        for (int i = 0; i < 7; i++) {
-            int bit = b & 0xfe;
-            parity += bit;
-            b >>= 1;
-        }
-
-        if (parity % 2 == 0) {
-            if ((toFix & 0xfe) == 1) {
-                return (byte)(toFix & 0xfe);
-            } else {
-                return (byte)(toFix | 0x01);
-            }
-        } else {
-            return toFix;
-        }
+        return (Integer.bitCount(toFix & 0xff) & 1) == 0 ? (byte) (toFix ^ 1) : toFix;
     }
 }
