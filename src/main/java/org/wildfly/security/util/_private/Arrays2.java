@@ -83,4 +83,16 @@ public final class Arrays2 {
     public static <T> T[] of(final T... items) {
         return items;
     }
+
+    private static char hex(int v) {
+        return (char) (v < 10 ? '0' + v : 'a' + v - 10);
+    }
+
+    public static String toString(final byte[] bytes) {
+        final StringBuilder b = new StringBuilder(bytes.length * 2);
+        for (byte x : bytes) {
+            b.append(hex((x & 0xf0) >> 4)).append(hex(x & 0x0f));
+        }
+        return b.toString();
+    }
 }
