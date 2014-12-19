@@ -123,23 +123,4 @@ public class HexConverter {
         return convertFromHex(toConvert.toCharArray());
     }
 
-    public static void main(String[] args) {
-        byte[] toConvert = new byte[256];
-        for (int i = 0; i < toConvert.length; i++) {
-            toConvert[i] = (byte) i;
-        }
-
-        String hexValue = convertToHexString(toConvert);
-
-        System.out.println("Converted - " + hexValue);
-
-        byte[] convertedBack = convertFromHex(hexValue);
-
-        StringBuffer sb = new StringBuffer();
-        for (byte current : convertedBack) {
-            sb.append((int)current).append(" ");
-        }
-        System.out.println("Converted Back " + sb.toString());
-    }
-
 }

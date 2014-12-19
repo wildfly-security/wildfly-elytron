@@ -158,27 +158,4 @@ public class UsernamePasswordHashUtil {
         return generateHashedHexURP(userName, realm, password, true);
     }
 
-    public static void main(String[] args) throws NoSuchAlgorithmException {
-        String userName;
-        String realm;
-        char[] password;
-
-        if (args.length == 2) {
-            userName = args[0];
-            realm = "";
-            password = args[1].toCharArray();
-        } else if (args.length == 3) {
-            userName = args[0];
-            realm = args[1];
-            password = args[2].toCharArray();
-        } else {
-            System.out.println("Usage : UsernamePasswordHashUtil UserName [Realm] Password");
-            return;
-        }
-
-        UsernamePasswordHashUtil util = new UsernamePasswordHashUtil();
-
-        System.out.println(userName + "=" + util.generateHashedHexURP(userName, realm, password));
-    }
-
 }
