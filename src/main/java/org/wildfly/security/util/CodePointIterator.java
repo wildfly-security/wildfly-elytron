@@ -82,8 +82,9 @@ public abstract class CodePointIterator extends NumericIterator {
 
     /**
      * Determine if the remaining contents of this iterator are identical to the remaining contents of the other iterator.  If the
-     * contents are not equal, the iterators will be positioned at the location of the first difference.  If the contents
-     * are equal, the iterators will both be positioned at the end of their contents.
+     * contents are not equal, the iterators will be positioned at the location of the first difference (i.e. the code point
+     * returned by {@link #next()} will be the differing code point.  If the contents are equal, the iterators will both be
+     * positioned at the end of their contents.
      *
      * @param other the other byte iterator
      * @return {@code true} if the contents are equal, {@code false} otherwise
@@ -94,9 +95,11 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! other.hasNext()) {
                     return false;
                 }
-                if (next() != other.next()) {
+                if (peekNext() != other.peekNext()) {
                     return false;
                 }
+                next();
+                other.next();
             } else {
                 return ! other.hasNext();
             }
@@ -274,6 +277,47 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Get a byte iterator over the latin-1 encoding of this code point iterator.
+     *
+     * @return the byte iterator
+     */
+    public ByteIterator asLatin1() {
+        return new ByteIterator() {
+            public boolean hasNext() {
+                return CodePointIterator.this.hasNext();
+            }
+
+            public boolean hasPrev() {
+                return CodePointIterator.this.hasPrev();
+            }
+
+            public int next() throws NoSuchElementException {
+                final int v = CodePointIterator.this.next();
+                return v > 255 ? '?' : v;
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                final int v = CodePointIterator.this.peekNext();
+                return v > 255 ? '?' : v;
+            }
+
+            public int prev() throws NoSuchElementException {
+                final int v = CodePointIterator.this.prev();
+                return v > 255 ? '?' : v;
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                final int v = CodePointIterator.this.peekPrev();
+                return v > 255 ? '?' : v;
+            }
+
+            public int offset() {
+                return CodePointIterator.this.offset();
+            }
+        };
+    }
+
+    /**
      * Get a code point iterator for a string.
      *
      * @param string the string
@@ -295,7 +339,6 @@ public abstract class CodePointIterator extends NumericIterator {
         }
         return new CodePointIterator() {
             private int idx = 0;
-            private int current = -1;
             private int offset = 0;
 
             public boolean hasNext() {
@@ -310,7 +353,7 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasNext()) throw new NoSuchElementException();
                 try {
                     offset++;
-                    return current = string.codePointAt(idx + offs);
+                    return string.codePointAt(idx + offs);
                 } finally {
                     idx = string.offsetByCodePoints(idx + offs, 1) - offs;
                 }
@@ -325,7 +368,7 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasPrev()) throw new NoSuchElementException();
                 idx = string.offsetByCodePoints(idx + offs, -1) - offs;
                 offset--;
-                return current = string.codePointAt(idx + offs);
+                return string.codePointAt(idx + offs);
             }
 
             public int peekPrev() throws NoSuchElementException {
@@ -372,6 +415,17 @@ public abstract class CodePointIterator extends NumericIterator {
      *
      * @param chars the array
      * @param offs the array offset
+     * @return the code point iterator
+     */
+    public static CodePointIterator ofChars(final char[] chars, final int offs) {
+        return ofChars(chars, offs, chars.length - offs);
+    }
+
+    /**
+     * Get a code point iterator for a character array.
+     *
+     * @param chars the array
+     * @param offs the array offset
      * @param len the number of characters to include
      * @return the code point iterator
      */
@@ -381,7 +435,6 @@ public abstract class CodePointIterator extends NumericIterator {
         }
         return new CodePointIterator() {
             private int idx = 0;
-            private int current = -1;
             private int offset = 0;
 
             public boolean hasNext() {
@@ -396,9 +449,9 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasNext()) throw new NoSuchElementException();
                 try {
                     offset++;
-                    return current = Character.codePointAt(chars, offs + idx);
+                    return Character.codePointAt(chars, offs + idx);
                 } finally {
-                    idx = Character.offsetByCodePoints(chars, offs, len, idx, 1);
+                    idx = Character.offsetByCodePoints(chars, offs, len, offs + idx, 1) - offs;
                 }
             }
 
@@ -409,9 +462,9 @@ public abstract class CodePointIterator extends NumericIterator {
 
             public int prev() {
                 if (! hasPrev()) throw new NoSuchElementException();
-                idx = Character.offsetByCodePoints(chars, offs, len, idx, -1);
+                idx = Character.offsetByCodePoints(chars, offs, len, offs + idx, -1) - offs;
                 offset--;
-                return current = Character.codePointAt(chars, offs + idx);
+                return Character.codePointAt(chars, offs + idx);
             }
 
             public int peekPrev() throws NoSuchElementException {
@@ -461,7 +514,6 @@ public abstract class CodePointIterator extends NumericIterator {
             return EMPTY;
         }
         return new CodePointIterator() {
-            private int current = -1;
             private int offset = 0;
 
             public boolean hasNext() {
@@ -501,61 +553,61 @@ public abstract class CodePointIterator extends NumericIterator {
                 int a = iterator.next();
                 if ((a & 0b1_0000000) == 0b0_0000000) {
                     // one byte
-                    return current = a;
+                    return a;
                 }
                 if ((a & 0b11_000000) == 0b10_000000) {
                     // first byte is invalid; return � instead
                     seekToNext();
-                    return current = '�';
+                    return '�';
                 }
                 // >= 2 bytes
                 if (! iterator.hasNext()) {
                     // truncated
-                    return current = '�';
+                    return '�';
                 }
                 int b = iterator.next();
                 if ((b & 0b11_000000) != 0b10_000000) {
                     // second byte is invalid; return � instead
                     seekToNext();
-                    return current = '�';
+                    return '�';
                 }
                 if ((a & 0b111_00000) == 0b110_00000) {
                     // two bytes
-                    return current = a & 0b000_11111 << 6 | b & 0b00_111111;
+                    return a & 0b000_11111 << 6 | b & 0b00_111111;
                 }
                 // >= 3 bytes
                 if (! iterator.hasNext()) {
                     // truncated
-                    return current = '�';
+                    return '�';
                 }
                 int c = iterator.next();
                 if ((c & 0b11_000000) != 0b10_000000) {
                     // third byte is invalid; return � instead
                     seekToNext();
-                    return current = '�';
+                    return '�';
                 }
                 if ((a & 0b1111_0000) == 0b1110_0000) {
                     // three bytes
-                    return current = a & 0b0000_1111 << 12 | b & 0b00_111111 << 6 | c & 0b00_111111;
+                    return a & 0b0000_1111 << 12 | b & 0b00_111111 << 6 | c & 0b00_111111;
                 }
                 // >= 4 bytes
                 if (! iterator.hasNext()) {
                     // truncated
-                    return current = '�';
+                    return '�';
                 }
                 int d = iterator.next();
                 if ((d & 0b11_000000) != 0b10_000000) {
                     // fourth byte is invalid; return � instead
                     seekToNext();
-                    return current = '�';
+                    return '�';
                 }
                 if ((a & 0b11111_000) == 0b11110_000) {
                     // four bytes
-                    return current = a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
+                    return a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
                 }
                 // only invalid possibilities are left; return � instead
                 seekToNext();
-                return current = '�';
+                return '�';
             }
 
             public int peekNext() throws NoSuchElementException {
@@ -630,7 +682,7 @@ public abstract class CodePointIterator extends NumericIterator {
                     iterator.prev();
                     iterator.prev();
                     iterator.prev();
-                    return current = a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
+                    return a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
                 }
                 // only invalid possibilities are left; return � instead
                 iterator.prev();
@@ -647,47 +699,47 @@ public abstract class CodePointIterator extends NumericIterator {
                 int a = iterator.prev();
                 if ((a & 0b1_0000000) == 0b0_0000000) {
                     // one byte
-                    return current = a;
+                    return a;
                 }
                 if ((a & 0b11_000000) != 0b10_000000) {
                     // last byte is invalid; return � instead
                     seekToPrev();
-                    return current = '�';
+                    return '�';
                 }
                 int cp = a & 0b00_111111;
                 // >= 2 bytes
                 a = iterator.prev();
                 if ((a & 0b111_00000) == 0b110_00000) {
                     // two bytes
-                    return current = a & 0b000_11111 << 6 | cp;
+                    return a & 0b000_11111 << 6 | cp;
                 }
                 if ((a & 0b11_000000) != 0b10_000000) {
                     // second-to-last byte is invalid; return � instead
                     seekToPrev();
-                    return current = '�';
+                    return '�';
                 }
                 cp |= (a & 0b00_111111) << 6;
                 // >= 3 bytes
                 a = iterator.prev();
                 if ((a & 0b1111_0000) == 0b1110_0000) {
                     // three bytes
-                    return current = a & 0b0000_1111 << 12 | cp;
+                    return a & 0b0000_1111 << 12 | cp;
                 }
                 if ((a & 0b11_000000) != 0b10_000000) {
                     // third-to-last byte is invalid; return � instead
                     seekToPrev();
-                    return current = '�';
+                    return '�';
                 }
                 cp |= (a & 0b00_111111) << 12;
                 // >= 4 bytes
                 a = iterator.prev();
                 if ((a & 0b11111_000) == 0b11110_000) {
                     // four bytes
-                    return current = a & 0b00000_111 << 18 | cp;
+                    return a & 0b00000_111 << 18 | cp;
                 }
                 // only invalid possibilities are left; return � instead
                 seekToPrev();
-                return current = '�';
+                return '�';
             }
 
             public int peekPrev() throws NoSuchElementException {

@@ -561,7 +561,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @param bytes the array
      * @return the byte iterator
      */
-    public static ByteIterator ofBytes(final byte[] bytes) {
+    public static ByteIterator ofBytes(final byte... bytes) {
         return ofBytes(bytes, 0, bytes.length);
     }
 
@@ -678,6 +678,67 @@ public abstract class ByteIterator extends NumericIterator {
                 return builder;
             }
         };
+    }
+
+    /**
+     * Get a byte iterator for a byte array with interleave.
+     *
+     * @param bytes the array
+     * @param offs the array offset
+     * @param len the number of bytes to include
+     * @param interleave the interleave table to use
+     * @return the byte iterator
+     */
+    public static ByteIterator ofBytes(final byte[] bytes, final int offs, final int len, final int[] interleave) {
+        if (len <= 0) {
+            return EMPTY;
+        }
+        return new ByteIterator() {
+            private int idx = 0;
+
+            public boolean hasNext() {
+                return idx < len;
+            }
+
+            public boolean hasPrev() {
+                return idx > 0;
+            }
+
+            public int next() {
+                if (!hasNext()) throw new NoSuchElementException();
+                return bytes[offs + interleave[idx++]] & 0xff;
+            }
+
+            public int prev() {
+                if (!hasPrev()) throw new NoSuchElementException();
+                return bytes[offs + interleave[--idx]] & 0xff;
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (!hasNext()) throw new NoSuchElementException();
+                return bytes[offs + interleave[idx]] & 0xff;
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (!hasPrev()) throw new NoSuchElementException();
+                return bytes[offs + interleave[idx - 1]] & 0xff;
+            }
+
+            public int offset() {
+                return idx;
+            }
+        };
+    }
+
+    /**
+     * Get a byte iterator for a byte array with interleave.
+     *
+     * @param bytes the array
+     * @param interleave the interleave table to use
+     * @return the byte iterator
+     */
+    public static ByteIterator ofBytes(final byte[] bytes, final int[] interleave) {
+        return ofBytes(bytes, 0, bytes.length, interleave);
     }
 
     private static final byte[] NO_BYTES = new byte[0];

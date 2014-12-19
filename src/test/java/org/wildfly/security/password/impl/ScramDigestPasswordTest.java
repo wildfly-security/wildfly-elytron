@@ -36,7 +36,8 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.sasl.util.HexConverter;
-import org.wildfly.security.util.Base64;
+import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * <p>
@@ -149,8 +150,8 @@ public class ScramDigestPasswordTest {
 
     private void performTest(final String algorithm, char[] password, final char[] base64Digest, final char[] base64Salt, final int iterationCount) throws Exception {
 
-        byte[] decodedDigest = Base64.base64DecodeStandard(base64Digest, 0);
-        byte[] decodedSalt = Base64.base64DecodeStandard(base64Salt, 0);
+        byte[] decodedDigest = CodePointIterator.ofChars(base64Digest).base64Decode(Alphabet.STANDARD, false).drain();
+        byte[] decodedSalt = CodePointIterator.ofChars(base64Salt).base64Decode(Alphabet.STANDARD, false).drain();
 
         performTest(algorithm, password, decodedDigest, decodedSalt, iterationCount);
     }
