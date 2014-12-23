@@ -276,6 +276,77 @@ public abstract class ByteIterator extends NumericIterator {
     }
 
     /**
+     * Hex-encode the current stream.
+     *
+     * @return an iterator over the encoded characters
+     */
+    public CodePointIterator hexEncode() {
+        return new CodePointIterator() {
+            int b;
+            boolean lo;
+
+            public boolean hasNext() {
+                return lo || ByteIterator.this.hasNext();
+            }
+
+            public boolean hasPrev() {
+                return lo || ByteIterator.this.hasPrev();
+            }
+
+            private int hex(final int i) {
+                return i < 10 ? '0' + i : 'a' + i - 10;
+            }
+
+            public int next() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                if (lo) {
+                    lo = false;
+                    return hex(b & 0xf);
+                } else {
+                    b = ByteIterator.this.next();
+                    lo = true;
+                    return hex(b >> 4);
+                }
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                if (lo) {
+                    return hex(b & 0xf);
+                } else {
+                    return hex(ByteIterator.this.peekNext() >> 4);
+                }
+            }
+
+            public int prev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                if (lo) {
+                    lo = false;
+                    ByteIterator.this.prev();
+                    return hex(b >> 4);
+                } else {
+                    b = ByteIterator.this.peekPrev();
+                    lo = true;
+                    return hex(b & 0xf);
+                }
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                if (lo) {
+                    return hex(b >> 4);
+                } else {
+                    return hex(ByteIterator.this.peekPrev() & 0xf);
+                }
+            }
+
+            public int offset() {
+                return ByteIterator.this.offset() * 2 + (lo ? 1 : 0);
+            }
+        };
+    }
+
+    /**
      * Get this byte iterator as a UTF-8 string.
      *
      * @return the code point iterator
