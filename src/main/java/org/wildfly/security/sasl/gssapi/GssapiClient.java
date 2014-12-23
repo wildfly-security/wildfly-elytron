@@ -20,6 +20,7 @@ package org.wildfly.security.sasl.gssapi;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -35,7 +36,6 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.jboss.logging.Logger;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * SaslClient for the GSSAPI mechanism as defined by RFC 4752
@@ -268,7 +268,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                     }
 
                     if (authorizationId != null) {
-                        baos.write(authorizationId.getBytes(Charsets.UTF_8));
+                        baos.write(authorizationId.getBytes(StandardCharsets.UTF_8));
                     }
 
                     byte[] response = baos.toByteArray();

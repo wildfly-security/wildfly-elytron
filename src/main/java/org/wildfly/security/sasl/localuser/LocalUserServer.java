@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
@@ -36,7 +37,8 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.sasl.util.Charsets;
+import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.util._private.Arrays2;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -165,7 +167,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 if (message.length == 1 && message[0] == UTF8NUL) {
                     authorizationId = null;
                 } else {
-                    authorizationId = new String(message, Charsets.UTF_8);
+                    authorizationId = new String(message, StandardCharsets.UTF_8);
                 }
                 final Random random = getRandom();
                 try {
@@ -201,10 +203,9 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     } catch (Throwable ignored) {
                     }
                 }
-                final String path = challengeFile.getAbsolutePath();
-                final byte[] response = new byte[Charsets.encodedLengthOf(path)];
-                Charsets.encodeTo(path, response, 0);
                 challengeBytes = bytes;
+                final String path = challengeFile.getAbsolutePath();
+                final byte[] response = CodePointIterator.ofString(path).asUtf8(true).drain();
                 setNegotiationState(PROCESS_RESPONSE_STATE);
                 return response;
             case PROCESS_RESPONSE_STATE:
@@ -218,12 +219,12 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 }
                 String authenticationRealm;
                 String authenticationId;
-                final int firstMarker = Charsets.indexOf(message, 0, 8);
+                final int firstMarker = Arrays2.indexOf(message, 0, 8);
                 if (firstMarker > -1) {
-                    authenticationId = new String(message, 8, firstMarker - 8, Charsets.UTF_8);
-                    final int secondMarker = Charsets.indexOf(message, 0, firstMarker + 1);
+                    authenticationId = new String(message, 8, firstMarker - 8, StandardCharsets.UTF_8);
+                    final int secondMarker = Arrays2.indexOf(message, 0, firstMarker + 1);
                     if (secondMarker > -1) {
-                        authenticationRealm = new String(message, firstMarker + 1, secondMarker - firstMarker - 1, Charsets.UTF_8);
+                        authenticationRealm = new String(message, firstMarker + 1, secondMarker - firstMarker - 1, StandardCharsets.UTF_8);
                     } else {
                         authenticationRealm = null;
                     }

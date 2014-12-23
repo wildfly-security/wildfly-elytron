@@ -22,10 +22,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.sasl.util.Charsets;
+import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.CodePointIterator;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -70,15 +72,14 @@ public final class LocalUserClient extends AbstractSaslClient {
                 final String authorizationId = getAuthorizationId();
                 final byte[] bytes;
                 if (authorizationId != null) {
-                    bytes = new byte[Charsets.encodedLengthOf(authorizationId)];
-                    Charsets.encodeTo(authorizationId, bytes, 0);
+                    bytes = CodePointIterator.ofString(authorizationId).asUtf8(true).drain();
                 } else {
                     bytes = new byte[] { UTF8NUL };
                 }
                 setNegotiationState(CHALLENGE_RESPONSE_STATE);
                 return bytes;
             case CHALLENGE_RESPONSE_STATE:
-                final String path = new String(message, Charsets.UTF_8);
+                final String path = new String(message, StandardCharsets.UTF_8);
                 final File file = new File(path);
                 final byte[] challenge = new byte[8];
                 int t = 0;
@@ -111,12 +112,10 @@ public final class LocalUserClient extends AbstractSaslClient {
                 }
                 if (authenticationId == null) authenticationId = "";
                 if (authenticationRealm == null) authenticationRealm = "";
-                final int authenticationIdLength = Charsets.encodedLengthOf(authenticationId);
-                final int authenticationRealmLength = Charsets.encodedLengthOf(authenticationRealm);
-                final byte[] response = new byte[8 + 1 + authenticationIdLength + authenticationRealmLength];
-                System.arraycopy(challenge, 0, response, 0, 8);
-                Charsets.encodeTo(authenticationId, response, 8);
-                Charsets.encodeTo(authenticationRealm, response, 8 + 1 + authenticationIdLength);
+                ByteStringBuilder b = new ByteStringBuilder();
+                b.append(challenge, 0, 8);
+                b.append(authenticationId).append((byte) 0).append(authenticationRealm);
+                final byte[] response = b.toArray();
                 negotiationComplete();
                 return response;
         }

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.gssapi;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -34,7 +35,6 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
 import org.jboss.logging.Logger;
-import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * SaslServer for the GSSAPI mechanism as defined by RFC 4752
@@ -235,7 +235,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 }
                 final String authorizationId;
                 if (unwrapped.length > 4) {
-                    authorizationId = new String(unwrapped, 4, unwrapped.length - 4, Charsets.UTF_8);
+                    authorizationId = new String(unwrapped, 4, unwrapped.length - 4, StandardCharsets.UTF_8);
                 } else {
                     authorizationId = authenticationId;
                 }

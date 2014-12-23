@@ -325,6 +325,16 @@ public abstract class CodePointIterator extends NumericIterator {
      * @return the byte iterator
      */
     public ByteIterator asUtf8() {
+        return asUtf8(false);
+    }
+
+    /**
+     * Get a byte iterator over the UTF-8 encoding of this code point iterator.
+     *
+     * @param escapeNul {@code true} to escape NUL (0) characters as two bytes, {@code false} to encode them as one byte
+     * @return the byte iterator
+     */
+    public ByteIterator asUtf8(final boolean escapeNul) {
         return new ByteIterator() {
             // state 0 = between code points
             // state 1 = after byte 1 of 2
@@ -352,7 +362,7 @@ public abstract class CodePointIterator extends NumericIterator {
                 switch (st) {
                     case 0: {
                         int cp = CodePointIterator.this.next();
-                        if (cp < 0x80) {
+                        if (cp == 0 && ! escapeNul || cp < 0x80) {
                             return cp;
                         } else if (cp < 0x800) {
                             this.cp = cp;

@@ -95,4 +95,45 @@ public final class Arrays2 {
         }
         return b.toString();
     }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @param offs the offset in the array to start searching
+     * @param len the length of the segment to search
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search, int offs, int len) {
+        for (int i = 0; i < len; i ++) {
+            if (array[offs + i] == (byte) search) {
+                return offs + i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @param offs the offset in the array to start searching
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search, int offs) {
+        return indexOf(array, search, offs, array.length - offs);
+    }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search) {
+        return indexOf(array, search, 0, array.length);
+    }
 }

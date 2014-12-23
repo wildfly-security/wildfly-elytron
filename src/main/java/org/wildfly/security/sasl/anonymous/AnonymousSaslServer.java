@@ -20,8 +20,9 @@ package org.wildfly.security.sasl.anonymous;
 
 import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
+import java.nio.charset.StandardCharsets;
+
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.sasl.util.Charsets;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -65,7 +66,7 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
                     if (length > 1020) {
                         throw new SaslException("Authentication name string is too long");
                     }
-                    String name = new String(message, Charsets.UTF_8);
+                    String name = new String(message, StandardCharsets.UTF_8);
                     if (name.length() > 255) {
                         throw new SaslException("Authentication name string is too long");
                     }

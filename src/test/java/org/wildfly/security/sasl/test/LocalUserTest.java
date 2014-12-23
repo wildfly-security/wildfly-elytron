@@ -19,12 +19,13 @@
 package org.wildfly.security.sasl.test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.util.Charsets;
+import org.wildfly.security.util.CodePointIterator;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -164,8 +165,7 @@ public class LocalUserTest extends BaseTestCase {
 
         File nonExistant = new File("nonExistant.txt");
         String path = nonExistant.getAbsolutePath();
-        challenge = new byte[Charsets.encodedLengthOf(path)];
-        Charsets.encodeTo(path, challenge, 0);
+        challenge = CodePointIterator.ofString(path).asUtf8(true).drain();
 
         try {
             response = client.evaluateChallenge(challenge);
@@ -326,8 +326,7 @@ public class LocalUserTest extends BaseTestCase {
 
         File nonExistant = new File("nonExistant.txt");
         String path = nonExistant.getAbsolutePath();
-        challenge = new byte[Charsets.encodedLengthOf(path)];
-        Charsets.encodeTo(path, challenge, 0);
+        challenge = CodePointIterator.ofString(path).asUtf8(true).drain();
 
         try {
             response = client.evaluateChallenge(challenge);
@@ -384,7 +383,7 @@ public class LocalUserTest extends BaseTestCase {
 
         byte[] challenge = server.evaluateResponse(new byte[0]);
         challenge = server.evaluateResponse(new byte[] { 0 }); // Simulate initial message from client.
-        final String path = new String(challenge, Charsets.UTF_8);
+        final String path = new String(challenge, StandardCharsets.UTF_8);
         final File file = new File(path);
 
         assertTrue("Temporary file was created.", file.exists());

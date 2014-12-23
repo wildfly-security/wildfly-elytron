@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -28,7 +29,6 @@ import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -52,7 +52,7 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         if (selectedMech == null) return null;
 
         Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
-        Charset charset = (utf8==null || utf8.booleanValue()) ? Charsets.UTF_8 : Charsets.LATIN_1;
+        Charset charset = (utf8==null || utf8.booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
 
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] ciphers = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));

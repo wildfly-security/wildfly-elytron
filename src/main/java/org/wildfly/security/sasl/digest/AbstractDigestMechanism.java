@@ -44,7 +44,6 @@ import javax.security.sasl.SaslException;
 import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
-import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.DefaultTransformationMapper;
@@ -71,7 +70,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private FORMAT format;
     protected String digestURI;
-    private Charset charset = Charsets.LATIN_1;
+    private Charset charset = StandardCharsets.ISO_8859_1;
     protected MessageDigest md5;
     protected Mac hmacMD5;
 
@@ -124,7 +123,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         if (charset != null) {
             this.charset = charset;
         } else {
-            this.charset = Charsets.LATIN_1;
+            this.charset = StandardCharsets.ISO_8859_1;
         }
     }
 

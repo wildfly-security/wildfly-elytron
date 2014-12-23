@@ -34,8 +34,6 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
-import org.wildfly.security.sasl.util.Charsets;
-
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -130,7 +128,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         }
 
         // charset
-        if (Charsets.UTF_8.equals(getCharset())) {
+        if (StandardCharsets.UTF_8.equals(getCharset())) {
             challenge.append("charset=");
             challenge.append("utf-8");
             challenge.append(DELIMITER);
@@ -179,11 +177,11 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             throw new SaslException(getMechanismName() + ": nonce-count is not equal to 1");
         }
 
-        Charset clientCharset = Charsets.LATIN_1;
+        Charset clientCharset = StandardCharsets.ISO_8859_1;
         if (parsedDigestResponse.get("charset") != null) {
             String cCharset = new String(parsedDigestResponse.get("charset"), StandardCharsets.UTF_8);
-            if (Charsets.UTF_8.equals(getCharset()) && cCharset.equals("utf-8")) {
-                clientCharset = Charsets.UTF_8;
+            if (StandardCharsets.UTF_8.equals(getCharset()) && cCharset.equals("utf-8")) {
+                clientCharset = StandardCharsets.UTF_8;
             } else {
                 throw new SaslException(getMechanismName() + ": client charset should not be specified as server is using iso 8859-1");
             }

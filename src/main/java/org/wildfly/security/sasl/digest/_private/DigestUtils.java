@@ -20,11 +20,11 @@ package org.wildfly.security.sasl.digest._private;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest.Digest;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
-import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.HexConverter;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
@@ -80,7 +80,7 @@ public final class DigestUtils {
     public static byte[] H_A1(MessageDigest messageDigest, String username, String realm, char[] password,
                        byte[] nonce, byte[] cnonce, String authzid, Charset responseCharset) {
 
-        CharsetEncoder latin1Encoder = Charsets.LATIN_1.newEncoder();
+        CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
         latin1Encoder.reset();
         boolean bothLatin1 = latin1Encoder.canEncode(username);
         latin1Encoder.reset();
@@ -91,15 +91,15 @@ public final class DigestUtils {
         }
 
         ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.append(username.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
+        urp.append(username.getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
         urp.append(':');
         if (realm != null) {
-            urp.append(realm.getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
+            urp.append(realm.getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
         } else {
             urp.append("");
         }
         urp.append(':');
-        urp.append(new String(password).getBytes((bothLatin1 ? Charsets.LATIN_1 : responseCharset)));
+        urp.append(new String(password).getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
 
         byte[] digest_urp = messageDigest.digest(urp.toArray());
 
@@ -176,7 +176,7 @@ public final class DigestUtils {
     public static byte[] convertToHexBytesWithLeftPadding(int input, int totalLength) {
         byte[] retValue = new byte[totalLength];
         Arrays.fill(retValue, (byte) '0');
-        byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(Charsets.UTF_8);
+        byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(StandardCharsets.UTF_8);
         if (hex.length > totalLength) {
             throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
         }
