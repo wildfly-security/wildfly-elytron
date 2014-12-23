@@ -27,8 +27,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 
-import org.wildfly.security.sasl.callback.DigestHashCallback;
-
 /**
  * A simple CallbackHandler for testing the client side of the calls.
  *
@@ -71,9 +69,6 @@ public class ClientCallbackHandler implements CallbackHandler {
             } else if (current instanceof PasswordCallback && password != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(password);
-            } else if (current instanceof DigestHashCallback && hexURPHash != null) {
-                DigestHashCallback dhc = (DigestHashCallback) current;
-                dhc.setHexHash(hexURPHash);
             } else if (current instanceof RealmCallback) {
                 RealmCallback rcb = (RealmCallback) current;
                 if (realm == null) {
