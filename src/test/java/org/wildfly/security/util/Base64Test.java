@@ -123,17 +123,17 @@ public class Base64Test {
 
     @Test
     public void testDecodeWithoutPadding() throws Exception {
-        assertEquals("abc", CodePointIterator.ofString("YWJj").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("abc", CodePointIterator.ofString("YWJj").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeWith1Padding() throws Exception {
-        assertEquals("ab", CodePointIterator.ofString("YWI=").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("ab", CodePointIterator.ofString("YWI=").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeWith2Padding() throws Exception {
-        assertEquals("abcd", CodePointIterator.ofString("YWJjZA==").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("abcd", CodePointIterator.ofString("YWJjZA==").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
@@ -144,32 +144,32 @@ public class Base64Test {
 
     @Test
     public void testDecodeRfc1() throws Exception {
-        assertEquals("f", CodePointIterator.ofString("Zg==").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("f", CodePointIterator.ofString("Zg==").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeRfc2() throws Exception {
-        assertEquals("fo", CodePointIterator.ofString("Zm8=").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("fo", CodePointIterator.ofString("Zm8=").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeRfc3() throws Exception {
-        assertEquals("foo", CodePointIterator.ofString("Zm9v").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("foo", CodePointIterator.ofString("Zm9v").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeRfc4() throws Exception {
-        assertEquals("foob", CodePointIterator.ofString("Zm9vYg==").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("foob", CodePointIterator.ofString("Zm9vYg==").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeRfc5() throws Exception {
-        assertEquals("fooba", CodePointIterator.ofString("Zm9vYmE=").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("fooba", CodePointIterator.ofString("Zm9vYmE=").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testDecodeRfc6() throws Exception {
-        assertEquals("foobar", CodePointIterator.ofString("Zm9vYmFy").base64Decode(Alphabet.STANDARD, false).drainToUtf8String());
+        assertEquals("foobar", CodePointIterator.ofString("Zm9vYmFy").base64Decode(Alphabet.STANDARD, false).asUtf8String().drainToString());
     }
 
 
@@ -189,8 +189,17 @@ public class Base64Test {
     }
 
     @Test
+    public void testUtf8Transcode() {
+        final String str = "abc123xyz987ä³€¼‘’“”";
+        final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        assertArrayEquals(bytes, CodePointIterator.ofString(str).asUtf8().drain());
+        assertEquals(str, ByteIterator.ofBytes(bytes).asUtf8String().drainToString());
+        assertEquals(str, CodePointIterator.ofString(str).asUtf8().asUtf8String().drainToString());
+    }
+
+    @Test
     public void testBcryptEncodeUnicode() {
-        assertEquals(".DRCm8EGrM85lM89tu", ByteIterator.ofBytes("\u0000\u0054\u0123\u1234\uFEDC\uFFFF".getBytes(StandardCharsets.UTF_8)).base64Encode(Alphabet.BCRYPT, false).drainToString());
+        assertEquals(".DRCm8EGrM85lM89tu", CodePointIterator.ofString("\u0000\u0054\u0123\u1234\uFEDC\uFFFF").asUtf8().base64Encode(Alphabet.BCRYPT, false).drainToString());
     }
 
 
@@ -201,12 +210,12 @@ public class Base64Test {
 
     @Test
     public void testBcryptDecodeF() throws Exception {
-        assertEquals("f", CodePointIterator.ofString("Xe").base64Decode(Alphabet.BCRYPT, false).drainToUtf8String());
+        assertEquals("f", CodePointIterator.ofString("Xe").base64Decode(Alphabet.BCRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testBcryptDecodeFoobar() throws Exception {
-        assertEquals("foobar", CodePointIterator.ofString("Xk7tWkDw").base64Decode(Alphabet.BCRYPT, false).drainToUtf8String());
+        assertEquals("foobar", CodePointIterator.ofString("Xk7tWkDw").base64Decode(Alphabet.BCRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
@@ -259,32 +268,32 @@ public class Base64Test {
 
     @Test
     public void testModCryptDecodeF() throws Exception {
-        assertEquals("f", CodePointIterator.ofString("NU").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("f", CodePointIterator.ofString("NU").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptDecodeFo() throws Exception {
-        assertEquals("fo", CodePointIterator.ofString("Naw").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("fo", CodePointIterator.ofString("Naw").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptDecodeFoo() throws Exception {
-        assertEquals("foo", CodePointIterator.ofString("Naxj").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("foo", CodePointIterator.ofString("Naxj").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptDecodeFoob() throws Exception {
-        assertEquals("foob", CodePointIterator.ofString("NaxjMU").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("foob", CodePointIterator.ofString("NaxjMU").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptDecodeFooba() throws Exception {
-        assertEquals("fooba", CodePointIterator.ofString("NaxjMa2").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("fooba", CodePointIterator.ofString("NaxjMa2").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptDecodeFoobar() throws Exception {
-        assertEquals("foobar", CodePointIterator.ofString("NaxjMa3m").base64Decode(Alphabet.MOD_CRYPT, false).drainToUtf8String());
+        assertEquals("foobar", CodePointIterator.ofString("NaxjMa3m").base64Decode(Alphabet.MOD_CRYPT, false).asUtf8String().drainToString());
     }
 
 
@@ -311,12 +320,12 @@ public class Base64Test {
 
     @Test
     public void testModCryptLeDecodeF() throws Exception {
-        assertEquals("f", CodePointIterator.ofChars("a/".toCharArray()).base64Decode(Alphabet.MOD_CRYPT_LE, false).drainToUtf8String());
+        assertEquals("f", CodePointIterator.ofChars("a/".toCharArray()).base64Decode(Alphabet.MOD_CRYPT_LE, false).asUtf8String().drainToString());
     }
 
     @Test
     public void testModCryptLeDecodeFoobar() throws Exception {
-        assertEquals("foobar", CodePointIterator.ofChars("axqPW3aQ".toCharArray()).base64Decode(Alphabet.MOD_CRYPT_LE, false).drainToUtf8String());
+        assertEquals("foobar", CodePointIterator.ofChars("axqPW3aQ".toCharArray()).base64Decode(Alphabet.MOD_CRYPT_LE, false).asUtf8String().drainToString());
     }
 
 

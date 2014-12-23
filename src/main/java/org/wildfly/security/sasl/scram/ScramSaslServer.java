@@ -127,7 +127,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     int c;
                     ByteIterator bi = ByteIterator.ofBytes(response);
                     ByteIterator di = bi.delimitedBy(',');
-                    CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(di);
+                    CodePointIterator cpi = di.asUtf8String();
 
                     // == parse message ==
 
@@ -346,7 +346,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
+                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
@@ -368,7 +368,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
+                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
@@ -386,7 +386,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             if (bindingIterator.next() != '=') {
                                 throw invalidClientMessage();
                             }
-                            if (! bindingType.equals(bindingIterator.delimitedBy(',').drainToUtf8String())) {
+                            if (! bindingType.equals(bindingIterator.delimitedBy(',').asUtf8String().drainToString())) {
                                 throw new SaslException("Channel binding type mismatch for mechanism " + getMechanismName());
                             }
                             if (bindingIterator.next() != ',') {
@@ -398,7 +398,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').drainToUtf8String();
+                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
                                     break;
                                 }
                                 default: throw invalidClientMessage();
