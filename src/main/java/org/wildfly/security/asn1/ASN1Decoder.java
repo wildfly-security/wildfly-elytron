@@ -75,6 +75,36 @@ public interface ASN1Decoder {
     void endSetOf() throws ASN1Exception;
 
     /**
+     * Start decoding an ASN.1 explicitly tagged element. All subsequent decode operations
+     * will decode elements from this explicitly tagged element until {@link #endExplicit()}
+     * is called.
+     *
+     * @param number the tag number for the explicit, context-specific tag
+     * @throws ASN1Exception if the next element's type does not match the given type
+     */
+    void startExplicit(int number) throws ASN1Exception;
+
+    /**
+     * Start decoding an ASN.1 explicitly tagged element. All subsequent decode operations
+     * will decode elements from this explicitly tagged element until {@link #endExplicit()}
+     * is called.
+     *
+     * @param clazz the class for the explicit tag
+     * @param number the tag number for the explicit tag
+     * @throws ASN1Exception if the next element's type does not match the given type
+     */
+    void startExplicit(int clazz, int number) throws ASN1Exception;
+
+    /**
+     * Advance to the end of an explicitly tagged element. If there are any elements within the
+     * explicitly tagged element that have not yet been decoded, they will be discarded.
+     *
+     * @throws ASN1Exception if an error occurs while advancing to the end of the explicitly
+     * tagged element
+     */
+    void endExplicit() throws ASN1Exception;
+
+    /**
      * Decode the next ASN.1 element as an octet string.
      *
      * @return the decoded octet string, as a byte array

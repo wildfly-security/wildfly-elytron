@@ -69,6 +69,30 @@ public interface ASN1Encoder extends Flushable {
     void endSetOf() throws IllegalStateException;
 
     /**
+     * Start encoding an ASN.1 explicitly tagged element. All subsequent encode operations
+     * will be part of this explicitly tagged element until {@link #endExplicit()} is called.
+     *
+     * @param number the tag number for the explicit, context-specific tag
+     */
+    void startExplicit(int number);
+
+    /**
+     * Start encoding an ASN.1 explicitly tagged element. All subsequent encode operations
+     * will be part of this explicitly tagged element until {@link #endExplicit()} is called.
+     *
+     * @param clazz the class for the explicit tag
+     * @param number the tag number for the explicit tag
+     */
+    void startExplicit(int clazz, int number);
+
+    /**
+     * Finish encoding an ASN.1 explicitly tagged element.
+     *
+     * @throws IllegalStateException if there is no explicitly tagged element to end
+     */
+    void endExplicit() throws IllegalStateException;
+
+    /**
      * Encode an ASN.1 octet string value.
      *
      * @param str the octet string to encode

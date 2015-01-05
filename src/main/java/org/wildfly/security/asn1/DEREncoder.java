@@ -63,25 +63,12 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void startSequence() {
-        EncoderState lastState = states.peekLast();
-        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
-            updateCurrentBuffer();
-            lastState.addChildElement(SEQUENCE_TYPE, currentBufferPos);
-        }
-        writeTag(SEQUENCE_TYPE, currentBuffer);
-        updateCurrentBuffer();
-        states.add(new EncoderState(SEQUENCE_TYPE, currentBufferPos));
+        startConstructedElement(SEQUENCE_TYPE);
     }
 
     @Override
     public void startSet() {
-        EncoderState lastState = states.peekLast();
-        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
-            updateCurrentBuffer();
-            lastState.addChildElement(SET_TYPE, currentBufferPos);
-        }
-        writeTag(SET_TYPE, currentBuffer);
-        states.add(new EncoderState(SET_TYPE, currentBufferPos));
+        startConstructedElement(SET_TYPE);
     }
 
     @Override
@@ -90,18 +77,55 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void startExplicit(int number) {
+        startExplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void startExplicit(int clazz, int number) {
+        int explicitTag = clazz | CONSTRUCTED_MASK | number;
+        startConstructedElement(explicitTag);
+    }
+
+    private void startConstructedElement(int tag) {
+        EncoderState lastState = states.peekLast();
+        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
+            updateCurrentBuffer();
+            lastState.addChildElement(tag, currentBufferPos);
+        }
+        writeTag(tag, currentBuffer);
+        if (tag != SET_TYPE) {
+            updateCurrentBuffer();
+        }
+        states.add(new EncoderState(tag, currentBufferPos));
+    }
+
+    @Override
     public void endSequence() throws IllegalStateException {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SEQUENCE_TYPE)) {
             throw new IllegalStateException("No sequence to end");
         }
+        endConstructedElement();
+    }
 
+    @Override
+    public void endExplicit() throws IllegalStateException {
+        EncoderState lastState = states.peekLast();
+        if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
+                || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
+            throw new IllegalStateException("No explicitly tagged element to end");
+        }
+        endConstructedElement();
+    }
+
+    private void endConstructedElement() {
         ByteStringBuilder dest;
         if (currentBufferPos > 0) {
-            // Output the sequence to this element's parent buffer
+            // Output the element to its parent buffer
             dest = buffers.get(currentBufferPos - 1);
         } else {
-            // Output the sequence directly to the target destination
+            // Output the element directly to the target destination
             dest = target;
         }
         int length = currentBuffer.length();
@@ -112,8 +136,8 @@ public class DEREncoder implements ASN1Encoder {
         currentBufferPos -= 1;
         states.removeLast();
 
-        // If this sequence's parent element is a set element, update the parent's accumulated length
-        lastState = states.peekLast();
+        // If this element's parent element is a set element, update the parent's accumulated length
+        EncoderState lastState = states.peekLast();
         if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
             lastState.addChildLength(1 + numLengthOctets + length);
         }
@@ -163,6 +187,7 @@ public class DEREncoder implements ASN1Encoder {
             lastState.addChildLength(1 + numLengthOctets + childLength);
         }
     }
+
     @Override
     public void encodeOctetString(String str) {
         encodeOctetString(str.getBytes(StandardCharsets.UTF_8));

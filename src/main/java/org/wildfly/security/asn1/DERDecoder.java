@@ -112,6 +112,30 @@ public class DERDecoder implements ASN1Decoder {
         endSet();
     }
 
+    @Override
+    public void startExplicit(int number) throws ASN1Exception {
+        startExplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void startExplicit(int clazz, int number) throws ASN1Exception {
+        int explicitTag = clazz | CONSTRUCTED_MASK | number;
+        readTag(explicitTag);
+        int length = readLength();
+        states.add(new DecoderState(explicitTag, bi.offset() + length));
+    }
+
+    @Override
+    public void endExplicit() throws ASN1Exception {
+        DecoderState lastState = states.peekLast();
+        if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
+                || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
+            throw new IllegalStateException("No explicitly tagged element to end");
+        }
+        endConstructedElement(lastState.getNextElementIndex());
+        states.removeLast();
+    }
+
     private void endConstructedElement(int nextElementIndex) throws ASN1Exception {
         int pos = bi.offset();
         if (pos < nextElementIndex) {

@@ -170,6 +170,16 @@ public class DEREncoderTest {
         encoder.endSequence();
     }
 
+    @Test(expected=IllegalStateException.class)
+    public void testEncodeEndExplicitBeforeStart() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startSequence();
+        encoder.encodeIA5String("server1@test.com");
+        encoder.endExplicit();
+        encoder.endSequence();
+    }
+
     @Test
     public void testEncodeSimpleSequence() throws Exception {
         ByteStringBuilder target = new ByteStringBuilder();
@@ -291,6 +301,21 @@ public class DEREncoderTest {
         encoder.endSetOf();
 
         byte[] expected = new byte[] {49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeExplicit() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startExplicit(2);
+        encoder.startSequence();
+        encoder.encodeIA5String("this is a test");
+        encoder.encodeOctetString(new byte[] {1, 35, 69, 103, -119, -85, -51, -17});
+        encoder.encodeIA5String("test1@rsa.com");
+        encoder.endSequence();
+        encoder.endExplicit();
+        byte[] expected = new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
         assertArrayEquals(expected, target.toArray());
     }
 

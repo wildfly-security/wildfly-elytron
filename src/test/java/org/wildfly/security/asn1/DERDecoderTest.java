@@ -148,6 +148,12 @@ public class DERDecoderTest {
         decoder.endSet();
     }
 
+    @Test(expected=IllegalStateException.class)
+    public void testDecodeEndExplicitBeforeStart() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
+        decoder.endExplicit();
+    }
+
     @Test
     public void testDecodeSimpleSequence() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
@@ -253,6 +259,20 @@ public class DERDecoderTest {
         assertEquals(IA5_STRING_TYPE, decoder.peekType());
         decoder.endSetOf();
         decoder.endSetOf();
+        assertFalse(decoder.hasNextElement());
+    }
+
+    @Test
+    public void testDecodeExplicitTag() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
+        assertTrue(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true));
+        decoder.startExplicit(2);
+        decoder.startSequence();
+        assertEquals("this is a test", decoder.decodeIA5String());
+        assertArrayEquals(new byte[] {1, 35, 69, 103, -119, -85, -51, -17}, decoder.decodeOctetString());
+        assertEquals("test1@rsa.com", decoder.decodeIA5String());
+        decoder.endSequence();
+        decoder.endExplicit();
         assertFalse(decoder.hasNextElement());
     }
 
