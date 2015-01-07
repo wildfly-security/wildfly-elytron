@@ -84,7 +84,9 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
                         list.add(m2);
                     }
                 }
-                if (list.size() == 0) { return null; }
+                if (list.size() == 0) {
+                    return null;
+                }
                 return delegate.createSaslClient(list.toArray(new String[list.size()]), authorizationId, protocol, serverName, props, cbh);
             }
         }

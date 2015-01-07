@@ -421,7 +421,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                     if (bi.next() != 'r' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
-                    while (di.hasNext()) { di.next(); }
+                    while (di.hasNext()) {
+                        di.next();
+                    }
 
                     // proof
                     final int s = bi.offset();
