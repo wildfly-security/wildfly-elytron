@@ -20,8 +20,8 @@ package org.wildfly.security.password.impl;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.digest._private.DigestUtils;
-import org.wildfly.security.sasl.util.Charsets;
 
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -84,7 +84,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         if (guess == null) {
             throw new InvalidKeyException("Guess cannot be null");
         }
-        byte[] guessedHashA1 = (utf8Encoded ? new String(guess).getBytes(Charsets.UTF_8) : new String(guess).getBytes(Charsets.LATIN_1));
+        byte[] guessedHashA1 = (utf8Encoded ? new String(guess).getBytes(StandardCharsets.UTF_8) : new String(guess).getBytes(StandardCharsets.ISO_8859_1));
         final MessageDigest messageDigest;
         try {
             messageDigest = getMessageDigest(algorithm);

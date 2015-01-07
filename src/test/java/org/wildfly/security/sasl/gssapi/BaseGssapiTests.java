@@ -25,6 +25,7 @@ import static org.wildfly.security.sasl.gssapi.JAASUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JAASUtil.loginServer;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.Provider;
@@ -49,7 +50,6 @@ import org.jboss.logging.Logger;
 import org.junit.Test;
 import org.wildfly.security.sasl.WildFlySaslProvider;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.util.Charsets;
 
 /**
  * Test case for testing GSSAPI authentication.
@@ -152,8 +152,8 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     }
 
     private void testDataExchange(final SaslClient client, final SaslServer server) throws SaslException {
-        byte[] original = "Some Test Data".getBytes(Charsets.UTF_8);
-        byte[] backup = "Some Test Data".getBytes(Charsets.UTF_8);
+        byte[] original = "Some Test Data".getBytes(StandardCharsets.UTF_8);
+        byte[] backup = "Some Test Data".getBytes(StandardCharsets.UTF_8);
 
         byte[] wrappedFromClient = client.wrap(original, 0, original.length);
 

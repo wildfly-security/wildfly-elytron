@@ -20,6 +20,8 @@ package org.wildfly.security.util;
 
 import java.util.NoSuchElementException;
 
+import org.wildfly.security.sasl.util.ByteStringBuilder;
+
 /**
  * A code point by code point iterator.
  *
@@ -82,8 +84,9 @@ public abstract class CodePointIterator extends NumericIterator {
 
     /**
      * Determine if the remaining contents of this iterator are identical to the remaining contents of the other iterator.  If the
-     * contents are not equal, the iterators will be positioned at the location of the first difference.  If the contents
-     * are equal, the iterators will both be positioned at the end of their contents.
+     * contents are not equal, the iterators will be positioned at the location of the first difference (i.e. the code point
+     * returned by {@link #next()} will be the differing code point.  If the contents are equal, the iterators will both be
+     * positioned at the end of their contents.
      *
      * @param other the other byte iterator
      * @return {@code true} if the contents are equal, {@code false} otherwise
@@ -94,9 +97,11 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! other.hasNext()) {
                     return false;
                 }
-                if (next() != other.next()) {
+                if (peekNext() != other.peekNext()) {
                     return false;
                 }
+                next();
+                other.next();
             } else {
                 return ! other.hasNext();
             }
@@ -274,6 +279,282 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Get a byte iterator over the latin-1 encoding of this code point iterator.
+     *
+     * @return the byte iterator
+     */
+    public ByteIterator asLatin1() {
+        return new ByteIterator() {
+            public boolean hasNext() {
+                return CodePointIterator.this.hasNext();
+            }
+
+            public boolean hasPrev() {
+                return CodePointIterator.this.hasPrev();
+            }
+
+            public int next() throws NoSuchElementException {
+                final int v = CodePointIterator.this.next();
+                return v > 255 ? '?' : v;
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                final int v = CodePointIterator.this.peekNext();
+                return v > 255 ? '?' : v;
+            }
+
+            public int prev() throws NoSuchElementException {
+                final int v = CodePointIterator.this.prev();
+                return v > 255 ? '?' : v;
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                final int v = CodePointIterator.this.peekPrev();
+                return v > 255 ? '?' : v;
+            }
+
+            public int offset() {
+                return CodePointIterator.this.offset();
+            }
+        };
+    }
+
+    /**
+     * Get a byte iterator over the UTF-8 encoding of this code point iterator.
+     *
+     * @return the byte iterator
+     */
+    public ByteIterator asUtf8() {
+        return asUtf8(false);
+    }
+
+    /**
+     * Get a byte iterator over the UTF-8 encoding of this code point iterator.
+     *
+     * @param escapeNul {@code true} to escape NUL (0) characters as two bytes, {@code false} to encode them as one byte
+     * @return the byte iterator
+     */
+    public ByteIterator asUtf8(final boolean escapeNul) {
+        return new ByteIterator() {
+            // state 0 = between code points
+            // state 1 = after byte 1 of 2
+            // state 2 = after byte 1 of 3
+            // state 3 = after byte 2 of 3
+            // state 4 = after byte 1 of 4
+            // state 5 = after byte 2 of 4
+            // state 6 = after byte 3 of 4
+
+            private int st;
+            private int cp = -1;
+            private int offset;
+
+            public boolean hasNext() {
+                return st != 0 || CodePointIterator.this.hasNext();
+            }
+
+            public boolean hasPrev() {
+                return st != 0 || CodePointIterator.this.hasPrev();
+            }
+
+            public int next() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                offset++;
+                switch (st) {
+                    case 0: {
+                        int cp = CodePointIterator.this.next();
+                        if (cp == 0 && ! escapeNul || cp < 0x80) {
+                            return cp;
+                        } else if (cp < 0x800) {
+                            this.cp = cp;
+                            st = 1;
+                            return 0b110_00000 | cp >> 6;
+                        } else if (cp < 0x10000) {
+                            this.cp = cp;
+                            st = 2;
+                            return 0b1110_0000 | cp >> 12;
+                        } else if (cp < 0x110000) {
+                            this.cp = cp;
+                            st = 4;
+                            return 0b11110_000 | cp >> 18;
+                        } else {
+                            this.cp = '�';
+                            st = 2;
+                            return 0b1110_0000 | '�' >> 12;
+                        }
+                    }
+                    case 1:
+                    case 3:
+                    case 6: {
+                        st = 0;
+                        return 0b10_000000 | cp & 0x3f;
+                    }
+                    case 2: {
+                        st = 3;
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    case 4: {
+                        st = 5;
+                        return 0b10_000000 | cp >> 12 & 0x3f;
+                    }
+                    case 5: {
+                        st = 6;
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (! hasNext()) throw new NoSuchElementException();
+                switch (st) {
+                    case 0: {
+                        int cp = CodePointIterator.this.peekNext();
+                        if (cp < 0x80) {
+                            return cp;
+                        } else if (cp < 0x800) {
+                            return 0b110_00000 | cp >> 6;
+                        } else if (cp < 0x10000) {
+                            return 0b1110_0000 | cp >> 12;
+                        } else if (cp < 0x110000) {
+                            return 0b11110_000 | cp >> 18;
+                        } else {
+                            return 0b1110_0000 | '�' >> 12;
+                        }
+                    }
+                    case 1:
+                    case 3:
+                    case 6: {
+                        return 0b10_000000 | cp & 0x3f;
+                    }
+                    case 2:
+                    case 5: {
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    case 4: {
+                        return 0b10_000000 | cp >> 12 & 0x3f;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
+            }
+
+            public int prev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                offset--;
+                switch (st) {
+                    case 0: {
+                        int cp = CodePointIterator.this.prev();
+                        if (cp == 0 && ! escapeNul || cp < 0x80) {
+                            return cp;
+                        } else if (cp < 0x800) {
+                            this.cp = cp;
+                            st = 1;
+                            return 0b10_000000 | cp & 0x3f;
+                        } else if (cp < 0x10000) {
+                            this.cp = cp;
+                            st = 3;
+                            return 0b10_000000 | cp & 0x3f;
+                        } else if (cp < 0x110000) {
+                            this.cp = cp;
+                            st = 6;
+                            return 0b10_000000 | cp & 0x3f;
+                        } else {
+                            this.cp = '�';
+                            st = 3;
+                            return 0b10_000000 | '�' & 0x3f;
+                        }
+                    }
+                    case 1: {
+                        st = 0;
+                        return 0b110_00000 | cp >> 6;
+                    }
+                    case 2: {
+                        st = 0;
+                        return 0b1110_0000 | cp >> 12;
+                    }
+                    case 3: {
+                        st = 2;
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    case 4: {
+                        st = 0;
+                        return 0b11110_000 | cp >> 18;
+                    }
+                    case 5: {
+                        st = 4;
+                        return 0b10_000000 | cp >> 12 & 0x3f;
+                    }
+                    case 6: {
+                        st = 5;
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (! hasPrev()) throw new NoSuchElementException();
+                switch (st) {
+                    case 0: {
+                        int cp = CodePointIterator.this.peekPrev();
+                        if (cp == 0 && ! escapeNul || cp < 0x80) {
+                            return cp;
+                        } else if (cp < 0x800) {
+                            return 0b10_000000 | cp & 0x3f;
+                        } else if (cp < 0x10000) {
+                            return 0b10_000000 | cp & 0x3f;
+                        } else if (cp < 0x110000) {
+                            return 0b10_000000 | cp & 0x3f;
+                        } else {
+                            return 0b10_000000 | '�' & 0x3f;
+                        }
+                    }
+                    case 1: {
+                        return 0b110_00000 | cp >> 6;
+                    }
+                    case 2: {
+                        return 0b1110_0000 | cp >> 12;
+                    }
+                    case 3:
+                    case 6: {
+                        return 0b10_000000 | cp >> 6 & 0x3f;
+                    }
+                    case 4: {
+                        return 0b11110_000 | cp >> 18;
+                    }
+                    case 5: {
+                        return 0b10_000000 | cp >> 12 & 0x3f;
+                    }
+                    default: {
+                        throw new IllegalStateException();
+                    }
+                }
+            }
+
+            public ByteStringBuilder appendTo(final ByteStringBuilder builder) {
+                if (st == 0) {
+                    // this is faster
+                    final int oldLen = builder.length();
+                    builder.appendUtf8(CodePointIterator.this);
+                    offset += builder.length() - oldLen;
+                } else {
+                    super.appendTo(builder);
+                }
+                return builder;
+            }
+
+            public int offset() {
+                return offset;
+            }
+        };
+    }
+
+    /**
      * Get a code point iterator for a string.
      *
      * @param string the string
@@ -295,7 +576,6 @@ public abstract class CodePointIterator extends NumericIterator {
         }
         return new CodePointIterator() {
             private int idx = 0;
-            private int current = -1;
             private int offset = 0;
 
             public boolean hasNext() {
@@ -310,7 +590,7 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasNext()) throw new NoSuchElementException();
                 try {
                     offset++;
-                    return current = string.codePointAt(idx + offs);
+                    return string.codePointAt(idx + offs);
                 } finally {
                     idx = string.offsetByCodePoints(idx + offs, 1) - offs;
                 }
@@ -325,7 +605,7 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasPrev()) throw new NoSuchElementException();
                 idx = string.offsetByCodePoints(idx + offs, -1) - offs;
                 offset--;
-                return current = string.codePointAt(idx + offs);
+                return string.codePointAt(idx + offs);
             }
 
             public int peekPrev() throws NoSuchElementException {
@@ -372,6 +652,17 @@ public abstract class CodePointIterator extends NumericIterator {
      *
      * @param chars the array
      * @param offs the array offset
+     * @return the code point iterator
+     */
+    public static CodePointIterator ofChars(final char[] chars, final int offs) {
+        return ofChars(chars, offs, chars.length - offs);
+    }
+
+    /**
+     * Get a code point iterator for a character array.
+     *
+     * @param chars the array
+     * @param offs the array offset
      * @param len the number of characters to include
      * @return the code point iterator
      */
@@ -381,7 +672,6 @@ public abstract class CodePointIterator extends NumericIterator {
         }
         return new CodePointIterator() {
             private int idx = 0;
-            private int current = -1;
             private int offset = 0;
 
             public boolean hasNext() {
@@ -396,9 +686,9 @@ public abstract class CodePointIterator extends NumericIterator {
                 if (! hasNext()) throw new NoSuchElementException();
                 try {
                     offset++;
-                    return current = Character.codePointAt(chars, offs + idx);
+                    return Character.codePointAt(chars, offs + idx);
                 } finally {
-                    idx = Character.offsetByCodePoints(chars, offs, len, idx, 1);
+                    idx = Character.offsetByCodePoints(chars, offs, len, offs + idx, 1) - offs;
                 }
             }
 
@@ -409,9 +699,9 @@ public abstract class CodePointIterator extends NumericIterator {
 
             public int prev() {
                 if (! hasPrev()) throw new NoSuchElementException();
-                idx = Character.offsetByCodePoints(chars, offs, len, idx, -1);
+                idx = Character.offsetByCodePoints(chars, offs, len, offs + idx, -1) - offs;
                 offset--;
-                return current = Character.codePointAt(chars, offs + idx);
+                return Character.codePointAt(chars, offs + idx);
             }
 
             public int peekPrev() throws NoSuchElementException {
@@ -447,314 +737,7 @@ public abstract class CodePointIterator extends NumericIterator {
         if (len <= 0) {
             return EMPTY;
         }
-        return ofUtf8Bytes(ByteIterator.ofBytes(bytes, offs, len));
-    }
-
-    /**
-     * Get a code point iterator for a UTF-8 encoded byte iterator.
-     *
-     * @param iterator the byte iterator
-     * @return the code point iterator
-     */
-    public static CodePointIterator ofUtf8Bytes(final ByteIterator iterator) {
-        if (! iterator.hasNext()) {
-            return EMPTY;
-        }
-        return new CodePointIterator() {
-            private int current = -1;
-            private int offset = 0;
-
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            public boolean hasPrev() {
-                return offset > 0;
-            }
-
-            private void seekToNext() {
-                int b;
-                while (iterator.hasNext()) {
-                    b = iterator.next();
-                    if ((b & 0b11_000000) != 0b10_000000) {
-                        // back up one spot
-                        iterator.prev();
-                        return;
-                    }
-                }
-            }
-
-            private void seekToPrev() {
-                int b;
-                while (iterator.hasPrev()) {
-                    b = iterator.prev();
-                    if ((b & 0b11_000000) != 0b10_000000) {
-                        return;
-                    }
-                }
-            }
-
-            public int next() {
-                if (! iterator.hasNext()) throw new NoSuchElementException();
-                offset++;
-                // >= 1 byte
-                int a = iterator.next();
-                if ((a & 0b1_0000000) == 0b0_0000000) {
-                    // one byte
-                    return current = a;
-                }
-                if ((a & 0b11_000000) == 0b10_000000) {
-                    // first byte is invalid; return � instead
-                    seekToNext();
-                    return current = '�';
-                }
-                // >= 2 bytes
-                if (! iterator.hasNext()) {
-                    // truncated
-                    return current = '�';
-                }
-                int b = iterator.next();
-                if ((b & 0b11_000000) != 0b10_000000) {
-                    // second byte is invalid; return � instead
-                    seekToNext();
-                    return current = '�';
-                }
-                if ((a & 0b111_00000) == 0b110_00000) {
-                    // two bytes
-                    return current = a & 0b000_11111 << 6 | b & 0b00_111111;
-                }
-                // >= 3 bytes
-                if (! iterator.hasNext()) {
-                    // truncated
-                    return current = '�';
-                }
-                int c = iterator.next();
-                if ((c & 0b11_000000) != 0b10_000000) {
-                    // third byte is invalid; return � instead
-                    seekToNext();
-                    return current = '�';
-                }
-                if ((a & 0b1111_0000) == 0b1110_0000) {
-                    // three bytes
-                    return current = a & 0b0000_1111 << 12 | b & 0b00_111111 << 6 | c & 0b00_111111;
-                }
-                // >= 4 bytes
-                if (! iterator.hasNext()) {
-                    // truncated
-                    return current = '�';
-                }
-                int d = iterator.next();
-                if ((d & 0b11_000000) != 0b10_000000) {
-                    // fourth byte is invalid; return � instead
-                    seekToNext();
-                    return current = '�';
-                }
-                if ((a & 0b11111_000) == 0b11110_000) {
-                    // four bytes
-                    return current = a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
-                }
-                // only invalid possibilities are left; return � instead
-                seekToNext();
-                return current = '�';
-            }
-
-            public int peekNext() throws NoSuchElementException {
-                if (! iterator.hasNext()) throw new NoSuchElementException();
-                int a = iterator.peekNext();
-                if ((a & 0b1_0000000) == 0b0_0000000) {
-                    // one byte
-                    return a;
-                }
-                if ((a & 0b11_000000) == 0b10_000000) {
-                    // first byte is invalid; return � instead
-                    return '�';
-                }
-                // >= 2 bytes
-                iterator.next();
-                if (! iterator.hasNext()) {
-                    iterator.prev();
-                    // truncated
-                    return '�';
-                }
-                int b = iterator.peekNext();
-                if ((b & 0b11_000000) != 0b10_000000) {
-                    // second byte is invalid; return � instead
-                    iterator.prev();
-                    return '�';
-                }
-                if ((a & 0b111_00000) == 0b110_00000) {
-                    // two bytes
-                    iterator.prev();
-                    return a & 0b000_11111 << 6 | b & 0b00_111111;
-                }
-                // >= 3 bytes
-                iterator.next();
-                if (! iterator.hasNext()) {
-                    // truncated
-                    iterator.prev();
-                    iterator.prev();
-                    return '�';
-                }
-                int c = iterator.peekNext();
-                if ((c & 0b11_000000) != 0b10_000000) {
-                    // third byte is invalid; return � instead
-                    iterator.prev();
-                    iterator.prev();
-                    return '�';
-                }
-                if ((a & 0b1111_0000) == 0b1110_0000) {
-                    // three bytes
-                    iterator.prev();
-                    iterator.prev();
-                    return a & 0b0000_1111 << 12 | b & 0b00_111111 << 6 | c & 0b00_111111;
-                }
-                // >= 4 bytes
-                iterator.next();
-                if (! iterator.hasNext()) {
-                    // truncated
-                    iterator.prev();
-                    iterator.prev();
-                    iterator.prev();
-                    return '�';
-                }
-                int d = iterator.peekNext();
-                if ((d & 0b11_000000) != 0b10_000000) {
-                    // fourth byte is invalid; return � instead
-                    iterator.prev();
-                    iterator.prev();
-                    iterator.prev();
-                    return '�';
-                }
-                if ((a & 0b11111_000) == 0b11110_000) {
-                    // four bytes
-                    iterator.prev();
-                    iterator.prev();
-                    iterator.prev();
-                    return current = a & 0b00000_111 << 18 | b & 0b00_111111 << 12 | c & 0b00_111111 << 6 | d & 0b00_111111;
-                }
-                // only invalid possibilities are left; return � instead
-                iterator.prev();
-                iterator.prev();
-                iterator.prev();
-                return '�';
-            }
-
-            public int prev() {
-                // read backwards
-                if (! iterator.hasPrev()) throw new NoSuchElementException();
-                offset--;
-                // >= 1 byte
-                int a = iterator.prev();
-                if ((a & 0b1_0000000) == 0b0_0000000) {
-                    // one byte
-                    return current = a;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // last byte is invalid; return � instead
-                    seekToPrev();
-                    return current = '�';
-                }
-                int cp = a & 0b00_111111;
-                // >= 2 bytes
-                a = iterator.prev();
-                if ((a & 0b111_00000) == 0b110_00000) {
-                    // two bytes
-                    return current = a & 0b000_11111 << 6 | cp;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // second-to-last byte is invalid; return � instead
-                    seekToPrev();
-                    return current = '�';
-                }
-                cp |= (a & 0b00_111111) << 6;
-                // >= 3 bytes
-                a = iterator.prev();
-                if ((a & 0b1111_0000) == 0b1110_0000) {
-                    // three bytes
-                    return current = a & 0b0000_1111 << 12 | cp;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // third-to-last byte is invalid; return � instead
-                    seekToPrev();
-                    return current = '�';
-                }
-                cp |= (a & 0b00_111111) << 12;
-                // >= 4 bytes
-                a = iterator.prev();
-                if ((a & 0b11111_000) == 0b11110_000) {
-                    // four bytes
-                    return current = a & 0b00000_111 << 18 | cp;
-                }
-                // only invalid possibilities are left; return � instead
-                seekToPrev();
-                return current = '�';
-            }
-
-            public int peekPrev() throws NoSuchElementException {
-                // read backwards
-                if (! iterator.hasPrev()) throw new NoSuchElementException();
-                // >= 1 byte
-                int a = iterator.peekPrev();
-                if ((a & 0b1_0000000) == 0b0_0000000) {
-                    // one byte
-                    return a;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // last byte is invalid; return � instead
-                    return '�';
-                }
-                int cp = a & 0b00_111111;
-                // >= 2 bytes
-                iterator.prev();
-                a = iterator.peekPrev();
-                if ((a & 0b111_00000) == 0b110_00000) {
-                    // two bytes
-                    iterator.next();
-                    return a & 0b000_11111 << 6 | cp;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // second-to-last byte is invalid; return � instead
-                    iterator.next();
-                    return '�';
-                }
-                cp |= (a & 0b00_111111) << 6;
-                // >= 3 bytes
-                iterator.prev();
-                a = iterator.peekPrev();
-                if ((a & 0b1111_0000) == 0b1110_0000) {
-                    // three bytes
-                    iterator.next();
-                    iterator.next();
-                    return a & 0b0000_1111 << 12 | cp;
-                }
-                if ((a & 0b11_000000) != 0b10_000000) {
-                    // third-to-last byte is invalid; return � instead
-                    iterator.next();
-                    iterator.next();
-                    return '�';
-                }
-                cp |= (a & 0b00_111111) << 12;
-                // >= 4 bytes
-                iterator.prev();
-                a = iterator.peekPrev();
-                if ((a & 0b11111_000) == 0b11110_000) {
-                    // four bytes
-                    iterator.next();
-                    iterator.next();
-                    iterator.next();
-                    return a & 0b00000_111 << 18 | cp;
-                }
-                // only invalid possibilities are left; return � instead
-                iterator.next();
-                iterator.next();
-                iterator.next();
-                return '�';
-            }
-
-            public int offset() {
-                return offset;
-            }
-        };
+        return ByteIterator.ofBytes(bytes, offs, len).asUtf8String();
     }
 
     /**
@@ -776,85 +759,10 @@ public abstract class CodePointIterator extends NumericIterator {
      * @return the code point iterator
      */
     public static CodePointIterator ofLatin1Bytes(final byte[] bytes, final int offs, final int len) {
-        return new CodePointIterator() {
-            int idx = 0;
-            int current = -1;
-
-            public boolean hasNext() {
-                return idx < len;
-            }
-
-            public boolean hasPrev() {
-                return idx > 0;
-            }
-
-            public int next() {
-                if (! hasNext()) throw new NoSuchElementException();
-                return current = bytes[offs + idx++];
-            }
-
-            public int peekNext() throws NoSuchElementException {
-                if (! hasNext()) throw new NoSuchElementException();
-                return bytes[offs + idx];
-            }
-
-            public int prev() {
-                if (! hasPrev()) throw new NoSuchElementException();
-                return current = bytes[offs + --idx];
-            }
-
-            public int peekPrev() throws NoSuchElementException {
-                if (! hasPrev()) throw new NoSuchElementException();
-                return bytes[offs + idx - 1];
-            }
-
-            public int offset() {
-                return idx;
-            }
-        };
-    }
-
-    /**
-     * Get a code point iterator for a Latin-1 encoded byte iterator.
-     *
-     * @param iterator the byte iterator
-     * @return the code point iterator
-     */
-    public static CodePointIterator ofLatin1Bytes(final ByteIterator iterator) {
-        if (! iterator.hasNext()) {
+        if (len <= 0) {
             return EMPTY;
         }
-        final int offset = iterator.offset();
-        return new CodePointIterator() {
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            public boolean hasPrev() {
-                return offset > 0 && iterator.hasPrev();
-            }
-
-            public int next() {
-                return iterator.next();
-            }
-
-            public int peekNext() throws NoSuchElementException {
-                return iterator.peekNext();
-            }
-
-            public int prev() {
-                if (offset == 0) throw new NoSuchElementException();
-                return iterator.prev();
-            }
-
-            public int peekPrev() throws NoSuchElementException {
-                return iterator.peekPrev();
-            }
-
-            public int offset() {
-                return iterator.offset() - offset;
-            }
-        };
+        return ByteIterator.ofBytes(bytes, offs, len).asLatin1String();
     }
 
     /**

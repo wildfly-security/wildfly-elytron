@@ -35,8 +35,8 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
-import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayReader;
+import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link org.wildfly.security.password.interfaces.UnixDESCryptPassword UnixDESCryptPassword}
@@ -75,10 +75,7 @@ public class CryptCompatibilityTest {
         final int iterationCount = 25;
         final int salt = convertSaltRepresentation(saltBytes);
 
-        byte[] digest = new byte[8];
-        CharacterArrayReader r = new CharacterArrayReader(new String(digestBase64, StandardCharsets.UTF_8).toCharArray());
-        Base64.base64DecodeModCrypt(r, digest);
-        r.close();
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Alphabet.MOD_CRYPT, false).drain();
 
         BSDUnixDESCryptPasswordSpec spec = new BSDUnixDESCryptPasswordSpec(digest, salt, iterationCount);
 
@@ -93,7 +90,7 @@ public class CryptCompatibilityTest {
         int salt = 0;
 
         for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeModCrypt(saltBytes[i]));
+            salt = ( salt << 6 ) | ( 0x00ff & Alphabet.MOD_CRYPT.decode(saltBytes[i]));
         }
 
         return salt;

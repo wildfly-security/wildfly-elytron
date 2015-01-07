@@ -17,11 +17,9 @@
  */
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security.sasl.util.Charsets.LATIN_1;
-import static org.wildfly.security.sasl.util.Charsets.UTF_8;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -83,12 +81,12 @@ public class UsernamePasswordHashUtil {
 
             for (char c : theChars) {
                 if (c > '\u00FF') {
-                    return toConvert.getBytes(UTF_8);
+                    return toConvert.getBytes(StandardCharsets.UTF_8);
                 }
             }
         }
 
-        return toConvert.getBytes(LATIN_1);
+        return toConvert.getBytes(StandardCharsets.ISO_8859_1);
     }
 
     /**
@@ -104,12 +102,12 @@ public class UsernamePasswordHashUtil {
             for (char c : toConvert) {
                 if (c > '\u00FF') {
                     // TODO - Is there a quicker conversion without going to String before to byte[]
-                    return String.valueOf(toConvert).getBytes(UTF_8);
+                    return String.valueOf(toConvert).getBytes(StandardCharsets.UTF_8);
                 }
             }
         }
 
-        return String.valueOf(toConvert).getBytes(LATIN_1);
+        return String.valueOf(toConvert).getBytes(StandardCharsets.ISO_8859_1);
     }
 
     /**

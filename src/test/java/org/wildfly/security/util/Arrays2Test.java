@@ -31,6 +31,30 @@ import org.wildfly.security.util._private.Arrays2;
 public class Arrays2Test {
 
     @Test
+    public void testIndexOf() throws Exception {
+        byte[] array = {0x10, 0x15, (byte) 0x81, 0x00, 0x15, (byte) 0xab};
+
+        assertEquals(0, Arrays2.indexOf(array, 0x10));
+        assertEquals(2, Arrays2.indexOf(array, 0x81));
+        assertEquals(3, Arrays2.indexOf(array, 0x00));
+        assertEquals(5, Arrays2.indexOf(array, 0xab));
+        assertEquals(-1, Arrays2.indexOf(array, 0x16));
+
+        assertEquals(1, Arrays2.indexOf(array, 0x15));
+        assertEquals(1, Arrays2.indexOf(array, 0x15, 0));
+        assertEquals(4, Arrays2.indexOf(array, 0x15, 2));
+        assertEquals(4, Arrays2.indexOf(array, 0x15, 4));
+        assertEquals(-1, Arrays2.indexOf(array, 0x15, 5));
+        assertEquals(-1, Arrays2.indexOf(array, 0x10, 1));
+
+        assertEquals(4, Arrays2.indexOf(array, 0x15, 3, 5));
+        assertEquals(4, Arrays2.indexOf(array, 0x15, 2, 4));
+        assertEquals(4, Arrays2.indexOf(array, 0x15, 4, 5));
+        assertEquals(1, Arrays2.indexOf(array, 0x15, 0, 5));
+        assertEquals(-1, Arrays2.indexOf(array, 0xff, 1, 4));
+    }
+
+    @Test
     public void testEqualsBytesOffset1BytesOffset2Len() throws Exception {
         assertTrue(Arrays2.equals(new byte[]{'x','a','b','c','x'}, 1, new byte[]{'y','y','a','b','c','y'}, 2, 3));
         assertTrue(Arrays2.equals(new byte[]{'a','b','c'}, 0, new byte[]{'a','b','c'}, 0, 3));

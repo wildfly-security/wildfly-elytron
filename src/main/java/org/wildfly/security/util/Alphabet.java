@@ -36,7 +36,7 @@ public abstract class Alphabet {
      * @param val the 6-bit value
      * @return the code point
      */
-    abstract int encode(int val);
+    public abstract int encode(int val);
 
     /**
      * Decode the given code point.  If the code point is not valid, -1 is returned.
@@ -44,13 +44,13 @@ public abstract class Alphabet {
      * @param codePoint the code point
      * @return the decoded 6-bit value or -1
      */
-    abstract int decode(int codePoint);
+    public abstract int decode(int codePoint);
 
     /**
      * The standard <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a> base-64 alphabet.
      */
     public static final Alphabet STANDARD = new Alphabet(false) {
-        int encode(final int val) {
+        public int encode(final int val) {
             if (val <= 25) {
                 return 'A' + val;
             } else if (val <= 51) {
@@ -65,7 +65,7 @@ public abstract class Alphabet {
             }
         }
 
-        int decode(final int codePoint) throws IllegalArgumentException {
+        public int decode(final int codePoint) throws IllegalArgumentException {
             if ('A' <= codePoint && codePoint <= 'Z') {
                 return codePoint - 'A';
             } else if ('a' <= codePoint && codePoint <= 'z') {
@@ -85,23 +85,59 @@ public abstract class Alphabet {
     /**
      * The modular crypt alphabet, used in various modular crypt password types.
      */
-    public static final Alphabet MOD_CRYPT = new Alphabet(true) {
-        int encode(final int val) {
+    public static final Alphabet MOD_CRYPT = new Alphabet(false) {
+        public int encode(final int val) {
             if (val == 0) {
                 return '.';
             } else if (val == 1) {
                 return '/';
-            } else if (val <= 12) {
+            } else if (val <= 11) {
                 return '0' + val - 2;
-            } else if (val <= 48) {
-                return 'A' + val - 22;
+            } else if (val <= 37) {
+                return 'A' + val - 12;
             } else {
                 assert val < 64;
                 return 'a' + val - 38;
             }
         }
 
-        int decode(final int codePoint) throws IllegalArgumentException {
+        public int decode(final int codePoint) throws IllegalArgumentException {
+            if (codePoint == '.') {
+                return 0;
+            } else if (codePoint == '/') {
+                return 1;
+            } else if ('0' <= codePoint && codePoint <= '9') {
+                return codePoint - '0' + 2;
+            } else if ('A' <= codePoint && codePoint <= 'Z') {
+                return codePoint - 'A' + 12;
+            } else if ('a' <= codePoint && codePoint <= 'z') {
+                return codePoint - 'a' + 38;
+            } else {
+                return -1;
+            }
+        }
+    };
+
+    /**
+     * The modular crypt alphabet, used in various modular crypt password types.
+     */
+    public static final Alphabet MOD_CRYPT_LE = new Alphabet(true) {
+        public int encode(final int val) {
+            if (val == 0) {
+                return '.';
+            } else if (val == 1) {
+                return '/';
+            } else if (val <= 11) {
+                return '0' + val - 2;
+            } else if (val <= 37) {
+                return 'A' + val - 12;
+            } else {
+                assert val < 64;
+                return 'a' + val - 38;
+            }
+        }
+
+        public int decode(final int codePoint) throws IllegalArgumentException {
             if (codePoint == '.') {
                 return 0;
             } else if (codePoint == '/') {
@@ -122,14 +158,14 @@ public abstract class Alphabet {
      * The BCrypt alphabet.
      */
     public static final Alphabet BCRYPT = new Alphabet(false) {
-        int encode(final int val) {
+        public int encode(final int val) {
             if (val == 0) {
                 return '.';
             } else if (val == 1) {
                 return '/';
-            } else if (val <= 28) {
+            } else if (val <= 27) {
                 return 'A' + val - 2;
-            } else if (val <= 54) {
+            } else if (val <= 53) {
                 return 'a' + val - 28;
             } else {
                 assert val < 64;
@@ -137,7 +173,7 @@ public abstract class Alphabet {
             }
         }
 
-        int decode(final int codePoint) {
+        public int decode(final int codePoint) {
             if (codePoint == '.') {
                 return 0;
             } else if (codePoint == '/') {

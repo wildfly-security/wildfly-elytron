@@ -83,4 +83,57 @@ public final class Arrays2 {
     public static <T> T[] of(final T... items) {
         return items;
     }
+
+    private static char hex(int v) {
+        return (char) (v < 10 ? '0' + v : 'a' + v - 10);
+    }
+
+    public static String toString(final byte[] bytes) {
+        final StringBuilder b = new StringBuilder(bytes.length * 2);
+        for (byte x : bytes) {
+            b.append(hex((x & 0xf0) >> 4)).append(hex(x & 0x0f));
+        }
+        return b.toString();
+    }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @param offs the offset in the array to start searching
+     * @param len the length of the segment to search
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search, int offs, int len) {
+        for (int i = 0; i < len; i ++) {
+            if (array[offs + i] == (byte) search) {
+                return offs + i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @param offs the offset in the array to start searching
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search, int offs) {
+        return indexOf(array, search, offs, array.length - offs);
+    }
+
+    /**
+     * Find the first occurrence of a byte in a byte array.
+     *
+     * @param array the array to search
+     * @param search the byte to search for
+     * @return the index, or -1 if the byte is not found
+     */
+    public static int indexOf(byte[] array, int search) {
+        return indexOf(array, search, 0, array.length);
+    }
 }

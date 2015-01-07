@@ -40,7 +40,6 @@ import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -252,7 +251,7 @@ class ScramSaslClient extends AbstractSaslClient {
                     c = bi.next();
                     if (c == 'e') {
                         if (bi.next() == '=') {
-                            throw new SaslException("Server rejected authentication: " + CodePointIterator.ofUtf8Bytes(di).drainToString());
+                            throw new SaslException("Server rejected authentication: " + di.asUtf8String().drainToString());
                         }
                         throw new SaslException("Server rejected authentication");
                     } else if (c == 'v' && bi.next() == '=') {

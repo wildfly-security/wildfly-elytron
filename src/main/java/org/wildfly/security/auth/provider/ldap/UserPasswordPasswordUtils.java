@@ -21,9 +21,7 @@ package org.wildfly.security.auth.provider.ldap;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
 
-import java.io.Closeable;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
 
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
@@ -31,8 +29,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
 import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
-import org.wildfly.security.util.Base64;
-import org.wildfly.security.util.CharacterArrayReader;
+import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A password utility for LDAP formatted passwords.
@@ -83,7 +81,7 @@ class UserPasswordPasswordUtils {
                     return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
             } else if (userPassword[1] == 'c' && userPassword[2] == 'r' && userPassword[3] == 'y' && userPassword[4] == 'p' && userPassword[5] == 't' && userPassword[6] == '}') {
-                return createCrypBasedSpec(userPassword);
+                return createCryptBasedSpec(userPassword);
             }
             for (int i = 1; i < userPassword.length - 1; i++) {
                 if (userPassword[i] == '}') {
@@ -101,8 +99,7 @@ class UserPasswordPasswordUtils {
     private static PasswordSpec createTrivialDigestSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
-        char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] digest = Base64.base64DecodeStandard(encodedBase64, 0);
+        byte[] digest = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
 
         return new TrivialDigestPasswordSpec(algorithm, digest);
     }
@@ -110,8 +107,7 @@ class UserPasswordPasswordUtils {
     private static PasswordSpec createTrivialSaltedPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
-        char[] encodedBase64 = new String(userPassword, prefixSize, length, UTF_8).toCharArray();
-        byte[] decoded = Base64.base64DecodeStandard(encodedBase64, 0);
+        byte[] decoded = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
 
         int digestLength = expectedDigestLengthBytes(algorithm);
         int saltLength = decoded.length - digestLength;
@@ -127,27 +123,20 @@ class UserPasswordPasswordUtils {
         return new TrivialSaltedDigestPasswordSpec(algorithm, digest, salt);
     }
 
-    private static PasswordSpec createCrypBasedSpec(byte[] userPassword) throws InvalidKeySpecException {
+    private static PasswordSpec createCryptBasedSpec(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword.length != 20) {
             throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
         }
 
         final int iterationCount = 25; // Apache DS fix this at 25 so not represented in the userPassword value.
 
-        byte[] saltBytes = new byte[2];
-        System.arraycopy(userPassword, 7, saltBytes, 0, 2);
-        int salt = 0;
-        for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Base64.base64DecodeModCrypt(saltBytes[i]));
+        final int lo = Alphabet.MOD_CRYPT.decode(userPassword[7] & 0xff);
+        final int hi = Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
+        if (lo == -1 || hi == -1) {
+            throw new IllegalArgumentException(String.format("Invalid salt (%s%s)", (char) lo, (char) hi));
         }
-
-        byte[] hash = new byte[8];
-        CharacterArrayReader r = new CharacterArrayReader(new String(userPassword, 9, 11, StandardCharsets.UTF_8).toCharArray());
-        try {
-            Base64.base64DecodeModCrypt(r, hash);
-        } finally {
-            safeClose(r);
-        }
+        int salt = lo | hi << 6;
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Alphabet.MOD_CRYPT, false).drain();
 
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
@@ -164,14 +153,6 @@ class UserPasswordPasswordUtils {
                 return 64;
             default:
                 throw new IllegalArgumentException("Unrecognised algorithm.");
-        }
-    }
-
-    private static void safeClose(Closeable c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (Throwable ignored) {}
         }
     }
 }

@@ -35,7 +35,6 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
-import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
@@ -188,15 +187,15 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         if (chb != null) {
             String chs = new String(chb, StandardCharsets.UTF_8);
             if ("utf-8".equals(chs)) {
-                serverHashedURPUsingcharset = Charsets.UTF_8;
+                serverHashedURPUsingcharset = StandardCharsets.UTF_8;
             } else {
-                serverHashedURPUsingcharset = Charsets.LATIN_1;
+                serverHashedURPUsingcharset = StandardCharsets.ISO_8859_1;
             }
         } else {
-            serverHashedURPUsingcharset = Charsets.LATIN_1;
+            serverHashedURPUsingcharset = StandardCharsets.ISO_8859_1;
         }
 
-        if (Charsets.UTF_8.equals(serverHashedURPUsingcharset)) {
+        if (StandardCharsets.UTF_8.equals(serverHashedURPUsingcharset)) {
             digestResponse.append("charset=");
             digestResponse.append("utf-8");
             digestResponse.append(DELIMITER);

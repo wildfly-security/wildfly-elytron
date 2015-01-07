@@ -387,7 +387,7 @@ abstract class NumericIterator {
                     // d2 = r2[1..0] + r1[7..4]
                     // d3 = r2[7..2]
                     if (d2 == -1 || d3 == -1) throw new DecodeException("Invalid base 64 character");
-                    return (d2 << 2 | d3 >> 4) & 0xff;
+                    return (d2 >> 4 | d3 << 2) & 0xff;
                 }
             };
         } else {

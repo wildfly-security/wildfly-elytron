@@ -18,8 +18,8 @@
 
 package org.wildfly.security.sasl.digest;
 
-import java.io.ByteArrayInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.MessageDigest;
@@ -44,9 +44,8 @@ import javax.security.sasl.SaslException;
 import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
-import org.wildfly.security.sasl.util.Charsets;
 import org.wildfly.security.sasl.util.SaslWrapper;
-import org.wildfly.security.util.Base64;
+import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
@@ -71,7 +70,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private FORMAT format;
     protected String digestURI;
-    private Charset charset = Charsets.LATIN_1;
+    private Charset charset = StandardCharsets.ISO_8859_1;
     protected MessageDigest md5;
     protected Mac hmacMD5;
 
@@ -124,7 +123,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         if (charset != null) {
             this.charset = charset;
         } else {
-            this.charset = Charsets.LATIN_1;
+            this.charset = StandardCharsets.ISO_8859_1;
         }
     }
 
@@ -175,11 +174,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         SecureRandom random = new SecureRandom();
         byte[] nonceData = new byte[NONCE_SIZE];
         random.nextBytes(nonceData);
-
-        ByteStringBuilder nonceBase64 = new ByteStringBuilder();
-        Base64.base64EncodeStandard(nonceBase64, new ByteArrayInputStream(nonceData), true);
-
-        return nonceBase64.toArray();
+        return ByteIterator.ofBytes(nonceData).base64Encode().drainToString().getBytes(StandardCharsets.US_ASCII);
     }
 
     /**
