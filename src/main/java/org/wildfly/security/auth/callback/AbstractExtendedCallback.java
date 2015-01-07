@@ -28,5 +28,7 @@ public abstract class AbstractExtendedCallback implements ExtendedCallback, Seri
         return true;
     }
 
-    public boolean needsInformation() { return false; }
+    public boolean needsInformation() {
+        return false;
+    }
 }
