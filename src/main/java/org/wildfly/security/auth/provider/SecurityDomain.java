@@ -105,12 +105,8 @@ public final class SecurityDomain {
             while (iterator.hasNext()) {
                 realm = iterator.next();
                 final CredentialSupport support = realm.getCredentialSupport(credentialType);
-                if (support.compareTo(min) < 0) {
-                    min = support;
-                }
-                if (support.compareTo(max) > 0) {
-                    max = support;
-                }
+                if (support.compareTo(min) < 0) { min = support; }
+                if (support.compareTo(max) > 0) { max = support; }
             }
             if (min == max) return min;
             if (max == CredentialSupport.UNSUPPORTED) {
