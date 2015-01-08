@@ -38,8 +38,8 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.interfaces.TrivialDigestPassword;
-import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -70,8 +70,8 @@ public class UserPasswordTests {
                 .build()
                 .userPassword()
                 .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(TrivialDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(TrivialSaltedDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
                 .build()
                 .build();
@@ -89,12 +89,12 @@ public class UserPasswordTests {
 
     @Test
     public void testSha512User() throws Exception {
-        performSimpleNameTest("sha512User", TrivialDigestPassword.class, TrivialDigestPassword.ALGORITHM_DIGEST_SHA_512, "sha512Password".toCharArray());
+        performSimpleNameTest("sha512User", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_DIGEST_SHA_512, "sha512Password".toCharArray());
     }
 
     @Test
     public void testSsha512User() throws Exception {
-        performSimpleNameTest("ssha512User", TrivialSaltedDigestPassword.class, TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
+        performSimpleNameTest("ssha512User", SaltedSimpleDigestPassword.class, SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
     }
 
     @Test

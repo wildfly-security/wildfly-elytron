@@ -20,12 +20,12 @@ package org.wildfly.security.password.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_MD2;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_MD5;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.ALGORITHM_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_MD2;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_MD5;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_SHA_1;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_SHA_256;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_SHA_384;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_DIGEST_SHA_512;
 
 import java.security.Provider;
 import java.security.Security;
@@ -36,15 +36,15 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.TrivialDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.sasl.util.HexConverter;
 
 /**
- * Test of TrivialDigestPasswordImpl
+ * Test of SimpleDigestPasswordImpl
  */
-public class TrivialDigestPasswordTest {
+public class SimpleDigestPasswordTest {
 
     private static final Provider provider = new WildFlyElytronPasswordProvider();
 
@@ -142,24 +142,24 @@ public class TrivialDigestPasswordTest {
         PasswordFactory factory = PasswordFactory.getInstance(algorithmName);
         EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password, null);
 
-        TrivialDigestPassword trivialPassword = (TrivialDigestPassword) factory.generatePassword(encryptableSpec);
+        SimpleDigestPassword simplePassword = (SimpleDigestPassword) factory.generatePassword(encryptableSpec);
 
-        validatePassword(trivialPassword, password, preDigested, factory);
+        validatePassword(simplePassword, password, preDigested, factory);
 
-        assertTrue("Convertable to key spec", factory.convertibleToKeySpec(trivialPassword, TrivialDigestPasswordSpec.class));
-        TrivialDigestPasswordSpec trivialSpec = factory.getKeySpec(trivialPassword, TrivialDigestPasswordSpec.class);
-        assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, trivialSpec.getDigest()));
+        assertTrue("Convertable to key spec", factory.convertibleToKeySpec(simplePassword, SimpleDigestPasswordSpec.class));
+        SimpleDigestPasswordSpec simpleSpec = factory.getKeySpec(simplePassword, SimpleDigestPasswordSpec.class);
+        assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, simpleSpec.getDigest()));
 
-        trivialSpec = new TrivialDigestPasswordSpec(algorithmName, preDigested);
-        trivialPassword = (TrivialDigestPassword) factory.generatePassword(trivialSpec);
+        simpleSpec = new SimpleDigestPasswordSpec(algorithmName, preDigested);
+        simplePassword = (SimpleDigestPassword) factory.generatePassword(simpleSpec);
 
-        validatePassword(trivialPassword, password, preDigested, factory);
+        validatePassword(simplePassword, password, preDigested, factory);
     }
 
-    private void validatePassword(TrivialDigestPassword trivialPassword, char[] password, byte[] preDigested, PasswordFactory factory) throws Exception {
-        Assert.assertArrayEquals(preDigested, trivialPassword.getDigest());
+    private void validatePassword(SimpleDigestPassword simplePassword, char[] password, byte[] preDigested, PasswordFactory factory) throws Exception {
+        Assert.assertArrayEquals(preDigested, simplePassword.getDigest());
 
-        assertTrue("Password Validation", factory.verify(trivialPassword, password));
-        assertFalse("Bad Password Rejection", factory.verify(trivialPassword, "bad".toCharArray()));
+        assertTrue("Password Validation", factory.verify(simplePassword, password));
+        assertFalse("Bad Password Rejection", factory.verify(simplePassword, "bad".toCharArray()));
     }
 }
