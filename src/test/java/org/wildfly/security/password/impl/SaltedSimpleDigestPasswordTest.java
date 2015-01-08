@@ -20,14 +20,14 @@ package org.wildfly.security.password.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
@@ -38,15 +38,15 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
+import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
- * Test case for the {@link TrivialSaledDigestPassword} implementation.
+ * Test case for the {@link SaltedSimpleDigestPassword} implementation.
  *
  * This test deliberately avoids testing storage representations and parsing capabilities as those are realm specific instead
  * this test focuses on the use of the Elytron APIs for the handling of this password type.
@@ -55,7 +55,7 @@ import org.wildfly.security.util.CodePointIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class TrivialSaltedDigestPasswordTest {
+public class SaltedSimpleDigestPasswordTest {
 
     private static final byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
     private static final char[] password = "password".toCharArray();
@@ -130,29 +130,29 @@ public class TrivialSaltedDigestPasswordTest {
         SaltedPasswordAlgorithmSpec spac = new SaltedPasswordAlgorithmSpec(salt);
         EncryptablePasswordSpec eps = new EncryptablePasswordSpec(password, spac);
 
-        TrivialSaltedDigestPassword tsdp = (TrivialSaltedDigestPassword) pf.generatePassword(eps);
+        SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) pf.generatePassword(eps);
 
         validatePassword(tsdp, preDigested, pf);
 
-        assertTrue("Convertable to key spec", pf.convertibleToKeySpec(tsdp, TrivialSaltedDigestPasswordSpec.class));
-        TrivialSaltedDigestPasswordSpec tsdps = pf.getKeySpec(tsdp, TrivialSaltedDigestPasswordSpec.class);
+        assertTrue("Convertable to key spec", pf.convertibleToKeySpec(tsdp, SaltedSimpleDigestPasswordSpec.class));
+        SaltedSimpleDigestPasswordSpec tsdps = pf.getKeySpec(tsdp, SaltedSimpleDigestPasswordSpec.class);
         assertTrue("Salt Correctly Passed", Arrays.equals(salt, tsdps.getSalt()));
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdps.getDigest()));
 
         // Digest into Spec -> Password
-        tsdps = new TrivialSaltedDigestPasswordSpec(algorithmName, preDigested, salt);
-        tsdp = (TrivialSaltedDigestPassword) pf.generatePassword(tsdps);
+        tsdps = new SaltedSimpleDigestPasswordSpec(algorithmName, preDigested, salt);
+        tsdp = (SaltedSimpleDigestPassword) pf.generatePassword(tsdps);
 
         validatePassword(tsdp, preDigested, pf);
 
-        // Custom TrivialSaltedDigestPassword implementation.
+        // Custom SaltedSimpleDigestPassword implementation.
         TestPasswordImpl tpi = new TestPasswordImpl(algorithmName, salt, preDigested);
-        tsdp = (TrivialSaltedDigestPassword) pf.translate(tpi);
+        tsdp = (SaltedSimpleDigestPassword) pf.translate(tpi);
 
         validatePassword(tsdp, preDigested, pf);
     }
 
-    private void validatePassword(TrivialSaltedDigestPassword tsdp, byte[] preDigested, PasswordFactory pf) throws Exception {
+    private void validatePassword(SaltedSimpleDigestPassword tsdp, byte[] preDigested, PasswordFactory pf) throws Exception {
         assertTrue("Salt Correctly Passed", Arrays.equals(salt, tsdp.getSalt()));
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdp.getDigest()));
 
@@ -160,7 +160,7 @@ public class TrivialSaltedDigestPasswordTest {
         assertFalse("Bad Password Rejection", pf.verify(tsdp, "bad".toCharArray()));
     }
 
-    private class TestPasswordImpl implements TrivialSaltedDigestPassword {
+    private class TestPasswordImpl implements SaltedSimpleDigestPassword {
 
         private final String algorithm;
         private final byte[] salt;

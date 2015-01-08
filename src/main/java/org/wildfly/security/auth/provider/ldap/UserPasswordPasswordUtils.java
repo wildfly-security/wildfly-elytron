@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 
 import java.nio.charset.Charset;
 import java.security.spec.InvalidKeySpecException;
@@ -28,7 +28,7 @@ import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
-import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
+import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -55,30 +55,30 @@ class UserPasswordPasswordUtils {
             if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
-                    return createTrivialDigestSpec(ALGORITHM_DIGEST_SHA_1, 5, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_1, 5, userPassword);
                 } else if (userPassword[4] == '2' && userPassword[5] == '5' && userPassword[6] == '6' && userPassword[7] == '}') {
                     // {sha256}
-                    return createTrivialDigestSpec(ALGORITHM_DIGEST_SHA_256, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_256, 8, userPassword);
                 } else if (userPassword[4] == '3' && userPassword[5] == '8' && userPassword[6] == '4' && userPassword[7] == '}') {
                     // {sha384}
-                    return createTrivialDigestSpec(ALGORITHM_DIGEST_SHA_384, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_384, 8, userPassword);
                 } else if (userPassword[4] == '5' && userPassword[5] == '1' && userPassword[6] == '2' && userPassword[7] == '}') {
                     // {sha512}
-                    return createTrivialDigestSpec(ALGORITHM_DIGEST_SHA_512, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_512, 8, userPassword);
                 }
             } else if (userPassword[1] == 's' && userPassword[2] == 's' && userPassword[3] == 'h' && userPassword[4] == 'a') {
                 if (userPassword[5] == '}') {
                     // {ssha}
-                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
+                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
                 } else if (userPassword[5] == '2' && userPassword[6] == '5' && userPassword[7] == '6' && userPassword[8] == '}') {
                     // {ssha256}
-                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
+                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
                 } else if (userPassword[5] == '3' && userPassword[6] == '8' && userPassword[7] == '4' && userPassword[8] == '}') {
                     // {ssha384}
-                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
+                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
                 } else if (userPassword[5] == '5' && userPassword[6] == '1' && userPassword[7] == '2' && userPassword[8] == '}') {
                     // {ssha512}
-                    return createTrivialSaltedPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
+                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
             } else if (userPassword[1] == 'c' && userPassword[2] == 'r' && userPassword[3] == 'y' && userPassword[4] == 'p' && userPassword[5] == 't' && userPassword[6] == '}') {
                 return createCryptBasedSpec(userPassword);
@@ -96,7 +96,7 @@ class UserPasswordPasswordUtils {
         return new ClearPasswordSpec(new String(userPassword, UTF_8).toCharArray());
     }
 
-    private static PasswordSpec createTrivialDigestSpec(String algorithm, int prefixSize, byte[] userPassword)
+    private static PasswordSpec createSimpleDigestPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         byte[] digest = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
@@ -104,7 +104,7 @@ class UserPasswordPasswordUtils {
         return new TrivialDigestPasswordSpec(algorithm, digest);
     }
 
-    private static PasswordSpec createTrivialSaltedPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
+    private static PasswordSpec createSaltedSimpleDigestPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         byte[] decoded = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
@@ -120,7 +120,7 @@ class UserPasswordPasswordUtils {
         System.arraycopy(decoded, 0, digest, 0, digestLength);
         System.arraycopy(decoded, digestLength, salt, 0, saltLength);
 
-        return new TrivialSaltedDigestPasswordSpec(algorithm, digest, salt);
+        return new SaltedSimpleDigestPasswordSpec(algorithm, digest, salt);
     }
 
     private static PasswordSpec createCryptBasedSpec(byte[] userPassword) throws InvalidKeySpecException {

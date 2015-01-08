@@ -27,18 +27,18 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.PasswordUtils;
-import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
+import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 
 /**
- * A {@link Password} implementation for {@link TrivialSaltedDigestPassword}.
+ * A {@link Password} implementation for {@link SaltedSimpleDigestPassword}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements TrivialSaltedDigestPassword {
+class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements SaltedSimpleDigestPassword {
 
     private static final long serialVersionUID = -6754143875392946386L;
 
@@ -46,21 +46,21 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
     private final byte[] digest;
     private final byte[] salt;
 
-    TrivialSaltedDigestPasswordImpl(final String algorithm, final byte[] salt, final byte[] digest) {
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final byte[] salt, final byte[] digest) {
         this.algorithm = algorithm;
         this.digest = digest;
         this.salt = salt;
     }
 
-    TrivialSaltedDigestPasswordImpl(final TrivialSaltedDigestPasswordSpec spec) {
+    SaltedSimpleDigestPasswordImpl(final SaltedSimpleDigestPasswordSpec spec) {
         this(spec.getAlgorithm(), spec.getSalt().clone(), spec.getDigest().clone());
     }
 
-    TrivialSaltedDigestPasswordImpl(final TrivialSaltedDigestPassword password) {
+    SaltedSimpleDigestPasswordImpl(final SaltedSimpleDigestPassword password) {
         this(password.getAlgorithm(), password.getSalt().clone(), password.getDigest().clone());
     }
 
-    TrivialSaltedDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
         this.algorithm = algorithm;
         this.salt = PasswordUtils.generateRandomSalt(DEFAULT_SALT_SIZE);
         try {
@@ -70,15 +70,15 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
         }
     }
 
-    TrivialSaltedDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
         this(algorithm, spec.getPassword(), (SaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
     }
 
-    private TrivialSaltedDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+    private SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
         this(algorithm, spec.getSalt() == null ? PasswordUtils.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone(), password);
     }
 
-    private TrivialSaltedDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password)
+    private SaltedSimpleDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password)
             throws InvalidKeySpecException {
         this.algorithm = algorithm;
         this.salt = salt;
@@ -116,8 +116,8 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(TrivialSaltedDigestPasswordSpec.class)) {
-            return keySpecType.cast(new TrivialSaltedDigestPasswordSpec(algorithm, digest.clone(), salt.clone()));
+        if (keySpecType.isAssignableFrom(SaltedSimpleDigestPasswordSpec.class)) {
+            return keySpecType.cast(new SaltedSimpleDigestPasswordSpec(algorithm, digest.clone(), salt.clone()));
         }
         throw new InvalidKeySpecException();
     }
@@ -133,7 +133,7 @@ class TrivialSaltedDigestPasswordImpl extends AbstractPasswordImpl implements Tr
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(TrivialSaltedDigestPasswordSpec.class);
+        return keySpecType.isAssignableFrom(SaltedSimpleDigestPasswordSpec.class);
     }
 
     private static byte[] digestOf(final String algorithm, final byte[] salt, final char[] password)

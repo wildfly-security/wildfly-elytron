@@ -19,17 +19,17 @@
 package org.wildfly.security.password.spec;
 
 /**
- * A {@link PasswordSpec} for a password represented by a trivial digest including a salt.
+ * A {@link PasswordSpec} for a password represented by a simple digest including a salt.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class TrivialSaltedDigestPasswordSpec implements PasswordSpec {
+public final class SaltedSimpleDigestPasswordSpec implements PasswordSpec {
 
     private final String algorithm;
     private final byte[] digest;
     private final byte[] salt;
 
-    public TrivialSaltedDigestPasswordSpec(final String algorithm, final byte[] digest, final byte[] salt) {
+    public SaltedSimpleDigestPasswordSpec(final String algorithm, final byte[] digest, final byte[] salt) {
         this.algorithm = algorithm;
         this.digest = digest;
         this.salt = salt;

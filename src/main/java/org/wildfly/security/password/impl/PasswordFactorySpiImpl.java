@@ -24,7 +24,7 @@ import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
-import static org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword.*;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
@@ -43,7 +43,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.TrivialDigestPassword;
-import org.wildfly.security.password.interfaces.TrivialSaltedDigestPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
@@ -53,7 +53,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
-import org.wildfly.security.password.spec.TrivialSaltedDigestPasswordSpec;
+import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -212,21 +212,21 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
-                if (keySpec instanceof TrivialSaltedDigestPasswordSpec) {
+                if (keySpec instanceof SaltedSimpleDigestPasswordSpec) {
                     try {
-                        return new TrivialSaltedDigestPasswordImpl((TrivialSaltedDigestPasswordSpec) keySpec);
+                        return new SaltedSimpleDigestPasswordImpl((SaltedSimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
-                        return new TrivialSaltedDigestPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
+                        return new SaltedSimpleDigestPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
-                        return new TrivialSaltedDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                        return new SaltedSimpleDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -366,7 +366,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
-                return (password instanceof TrivialSaltedDigestPassword);
+                return (password instanceof SaltedSimpleDigestPassword);
             }
             case ALGORITHM_CRYPT_DES: {
                 return (password instanceof UnixDESCryptPassword);
@@ -468,10 +468,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
-                if (password instanceof TrivialSaltedDigestPasswordImpl) {
+                if (password instanceof SaltedSimpleDigestPasswordImpl) {
                     return password;
-                } else if (password instanceof TrivialSaltedDigestPassword) {
-                    return new TrivialSaltedDigestPasswordImpl((TrivialSaltedDigestPassword) password);
+                } else if (password instanceof SaltedSimpleDigestPassword) {
+                    return new SaltedSimpleDigestPasswordImpl((SaltedSimpleDigestPassword) password);
                 }
                 break;
             }

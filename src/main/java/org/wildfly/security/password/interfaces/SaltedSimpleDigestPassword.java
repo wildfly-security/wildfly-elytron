@@ -21,11 +21,11 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
- * A trivial password where the generated digest also includes a salt.
+ * A simple password where the generated digest also includes a salt.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public interface TrivialSaltedDigestPassword extends OneWayPassword {
+public interface SaltedSimpleDigestPassword extends OneWayPassword {
 
     /**
      * Algorithm name for digest created using SHA-1 with the password digested first followed by the salt.
