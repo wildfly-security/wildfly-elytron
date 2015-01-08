@@ -31,13 +31,15 @@ import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 /**
  * Test case to test connectivity to the server, also verifies that the user accounts in use are all correctly registered.
  *
+ * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ConnectionTests {
+public class ConnectionSuiteChild {
 
     @Test
     public void testServer() throws NamingException {
-        testUser(LdapTest.SERVER_DN, LdapTest.SERVER_CREDENTIAL);
+        testUser(LdapTestSuite.SERVER_DN, LdapTestSuite.SERVER_CREDENTIAL);
     }
 
     @Test
@@ -71,7 +73,7 @@ public class ConnectionTests {
 
     private void runTest(final String principal, final String credential) throws NamingException {
         DirContextFactory factory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTest.LDAP_PORT))
+                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
                 .setSecurityPrincipal(principal)
                 .setSecurityCredential(credential)
                 .build();

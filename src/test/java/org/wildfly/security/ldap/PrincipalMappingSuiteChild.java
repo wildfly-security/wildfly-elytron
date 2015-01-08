@@ -39,18 +39,20 @@ import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 /**
  * Test case to test different principal mapping configurations.
  *
+ * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class PrincipalMappingTests {
+public class PrincipalMappingSuiteChild {
 
     private static DirContextFactory dirContextFactory;
 
     @BeforeClass
     public static void beforeClass() {
         dirContextFactory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTest.LDAP_PORT))
-                .setSecurityPrincipal(LdapTest.SERVER_DN)
-                .setSecurityCredential(LdapTest.SERVER_CREDENTIAL)
+                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
+                .setSecurityPrincipal(LdapTestSuite.SERVER_DN)
+                .setSecurityCredential(LdapTestSuite.SERVER_CREDENTIAL)
                 .build();
     }
 

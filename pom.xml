@@ -101,7 +101,6 @@
                         <printSummary>true</printSummary>
                         <includes>
                             <include>**/*Test.java</include>
-<!-- TODO these tests fail: <include>**/*Tests.java</include> -->
                             <include>**/*TestSuite.java</include>
                         </includes>
                         <forkMode>always</forkMode>
