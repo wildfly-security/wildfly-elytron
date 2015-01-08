@@ -23,7 +23,7 @@ import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*
 import static org.wildfly.security.password.interfaces.ClearPassword.*;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;

@@ -38,7 +38,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 
 /**
@@ -131,8 +131,8 @@ class UserPasswordCredentialLoader implements CredentialLoader {
         private String toAlgorithm(PasswordSpec passwordSpec) {
             if (passwordSpec instanceof ClearPasswordSpec) {
                 return ALGORITHM_CLEAR;
-            } else if (passwordSpec instanceof TrivialDigestPasswordSpec) {
-                return ((TrivialDigestPasswordSpec) passwordSpec).getAlgorithm();
+            } else if (passwordSpec instanceof SimpleDigestPasswordSpec) {
+                return ((SimpleDigestPasswordSpec) passwordSpec).getAlgorithm();
             } else if (passwordSpec instanceof SaltedSimpleDigestPasswordSpec) {
                 return ((SaltedSimpleDigestPasswordSpec) passwordSpec).getAlgorithm();
             } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {

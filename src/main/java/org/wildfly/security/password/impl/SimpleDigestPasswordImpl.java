@@ -26,49 +26,49 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import org.wildfly.security.password.interfaces.TrivialDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class TrivialDigestPasswordImpl extends AbstractPasswordImpl implements TrivialDigestPassword {
+class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDigestPassword {
 
     private static final long serialVersionUID = -5673285507422174313L;
 
     private final String algorithm;
     private final byte[] digest;
 
-    TrivialDigestPasswordImpl(final String algorithm, final byte[] digest) {
+    SimpleDigestPasswordImpl(final String algorithm, final byte[] digest) {
         this.algorithm = algorithm;
         this.digest = digest;
     }
 
-    TrivialDigestPasswordImpl(final TrivialDigestPasswordSpec spec) {
+    SimpleDigestPasswordImpl(final SimpleDigestPasswordSpec spec) {
         this(spec.getAlgorithm(), spec.getDigest().clone());
     }
 
-    TrivialDigestPasswordImpl(final TrivialDigestPassword password) {
+    SimpleDigestPasswordImpl(final SimpleDigestPassword password) {
         this(password.getAlgorithm(), password.getDigest().clone());
     }
 
-    TrivialDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
+    SimpleDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
         this(algorithm, getDigestOfKS(algorithm, spec.getEncodedPassword()));
     }
 
-    TrivialDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
+    SimpleDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
         this(algorithm, spec.getPassword());
     }
 
-    private TrivialDigestPasswordImpl(final String algorithm, final char[] chars) throws InvalidKeySpecException {
+    private SimpleDigestPasswordImpl(final String algorithm, final char[] chars) throws InvalidKeySpecException {
         this(algorithm, getDigestOfKS(algorithm, chars));
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(TrivialDigestPasswordSpec.class)) {
-            return keySpecType.cast(new TrivialDigestPasswordSpec(algorithm, digest.clone()));
+        if (keySpecType.isAssignableFrom(SimpleDigestPasswordSpec.class)) {
+            return keySpecType.cast(new SimpleDigestPasswordSpec(algorithm, digest.clone()));
         }
         throw new InvalidKeySpecException();
     }
@@ -108,7 +108,7 @@ class TrivialDigestPasswordImpl extends AbstractPasswordImpl implements TrivialD
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(TrivialDigestPasswordSpec.class);
+        return keySpecType.isAssignableFrom(SimpleDigestPasswordSpec.class);
     }
 
     public String getAlgorithm() {

@@ -23,7 +23,7 @@ import org.wildfly.security.password.OneWayPassword;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface TrivialDigestPassword extends OneWayPassword {
+public interface SimpleDigestPassword extends OneWayPassword {
     String ALGORITHM_DIGEST_MD2 = "digest-md2";
     String ALGORITHM_DIGEST_MD5 = "digest-md5";
     String ALGORITHM_DIGEST_SHA_1 = "digest-sha-1";

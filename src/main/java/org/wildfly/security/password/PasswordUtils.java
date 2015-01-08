@@ -33,7 +33,7 @@ import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
@@ -220,8 +220,8 @@ public final class PasswordUtils {
             b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 12) & 0x3f));
             b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 18) & 0x3f));
             ByteIterator.ofBytes(spec.getHash()).base64Encode(Alphabet.MOD_CRYPT, false).drainTo(b);
-        } else if (passwordSpec instanceof TrivialDigestPasswordSpec) {
-            final TrivialDigestPasswordSpec spec = (TrivialDigestPasswordSpec) passwordSpec;
+        } else if (passwordSpec instanceof SimpleDigestPasswordSpec) {
+            final SimpleDigestPasswordSpec spec = (SimpleDigestPasswordSpec) passwordSpec;
             final String algorithm = spec.getAlgorithm();
             b.append('[').append(algorithm).append(']');
             ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
@@ -350,7 +350,7 @@ public final class PasswordUtils {
             case A_DIGEST_SHA_384:
             case A_DIGEST_SHA_512:
             {
-                return parseTrivialDigestPasswordString(algorithmId, cryptString);
+                return parseSimpleDigestPasswordString(algorithmId, cryptString);
             }
             default: throw new InvalidKeySpecException("Unknown crypt string algorithm");
         }
@@ -474,7 +474,7 @@ public final class PasswordUtils {
 
     private static final int[] SHA_512_IDX_REV = inverse(SHA_512_IDX);
 
-    private static TrivialDigestPasswordSpec parseTrivialDigestPasswordString(final int algorithmId, final char[] cryptString) throws InvalidKeySpecException {
+    private static SimpleDigestPasswordSpec parseSimpleDigestPasswordString(final int algorithmId, final char[] cryptString) throws InvalidKeySpecException {
         final int initialLen;
         switch (algorithmId) {
             case A_DIGEST_MD2:
@@ -486,7 +486,7 @@ public final class PasswordUtils {
             default: throw new IllegalStateException();
         }
         byte[] bytes = CodePointIterator.ofChars(cryptString, 0, initialLen).base64Decode().drain();
-        return new TrivialDigestPasswordSpec(getAlgorithmNameString(algorithmId), bytes);
+        return new SimpleDigestPasswordSpec(getAlgorithmNameString(algorithmId), bytes);
     }
 
     private static UnixSHACryptPasswordSpec parseUnixSHA256CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {

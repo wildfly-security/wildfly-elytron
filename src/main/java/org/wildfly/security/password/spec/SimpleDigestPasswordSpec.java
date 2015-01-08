@@ -18,11 +18,11 @@
 
 package org.wildfly.security.password.spec;
 
-public final class TrivialDigestPasswordSpec implements PasswordSpec {
+public final class SimpleDigestPasswordSpec implements PasswordSpec {
     private final String algorithm;
     private final byte[] digest;
 
-    public TrivialDigestPasswordSpec(final String algorithm, final byte[] digest) {
+    public SimpleDigestPasswordSpec(final String algorithm, final byte[] digest) {
         this.algorithm = algorithm;
         this.digest = digest;
     }

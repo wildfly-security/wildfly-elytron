@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import static org.wildfly.security.password.interfaces.TrivialDigestPassword.*;
+import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 
 import java.nio.charset.Charset;
@@ -27,7 +27,7 @@ import java.security.spec.InvalidKeySpecException;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.TrivialDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.CodePointIterator;
@@ -101,7 +101,7 @@ class UserPasswordPasswordUtils {
         int length = userPassword.length - prefixSize;
         byte[] digest = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
 
-        return new TrivialDigestPasswordSpec(algorithm, digest);
+        return new SimpleDigestPasswordSpec(algorithm, digest);
     }
 
     private static PasswordSpec createSaltedSimpleDigestPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
