@@ -44,20 +44,22 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
  *
- * Note: Verify {@link ConnectionTests} is working first before focusing on errors in this test case.
+ * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
+ *
+ * Note: Verify {@link ConnectionSuiteChild} is working first before focusing on errors in this test case.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class UserPasswordTests {
+public class UserPasswordSuiteChild {
 
     private static SecurityRealm simpleToDnRealm;
 
     @BeforeClass
     public static void createRealm() {
         DirContextFactory dirContextFactory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTest.LDAP_PORT))
-                .setSecurityPrincipal(LdapTest.SERVER_DN)
-                .setSecurityCredential(LdapTest.SERVER_CREDENTIAL)
+                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
+                .setSecurityPrincipal(LdapTestSuite.SERVER_DN)
+                .setSecurityCredential(LdapTestSuite.SERVER_CREDENTIAL)
                 .build();
 
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()

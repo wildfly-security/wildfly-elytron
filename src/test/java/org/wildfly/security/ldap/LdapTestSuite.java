@@ -36,10 +36,10 @@ import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses(
-    {ConnectionTests.class,
-     PrincipalMappingTests.class,
-     UserPasswordTests.class})
-public class LdapTest {
+    {ConnectionSuiteChild.class,
+     PrincipalMappingSuiteChild.class,
+     UserPasswordSuiteChild.class})
+public class LdapTestSuite {
 
     static final String SERVER_DN = "uid=server,dc=elytron,dc=wildfly,dc=org";
     static final String SERVER_CREDENTIAL = "serverPassword";
@@ -56,7 +56,7 @@ public class LdapTest {
             .setWorkingDir(new File("./target/apache-ds/working"))
             .createDirectoryService("Test Service")
             .addPartition("Elytron", "dc=elytron,dc=wildfly,dc=org", 5, "uid")
-            .importLdif(UserPasswordTests.class.getResourceAsStream("/Elytron.ldif"))
+            .importLdif(UserPasswordSuiteChild.class.getResourceAsStream("/Elytron.ldif"))
             .addTcpServer("Default TCP", "localhost", LDAP_PORT)
             .start();
     }
