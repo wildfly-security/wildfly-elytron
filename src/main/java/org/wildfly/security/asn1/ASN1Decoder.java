@@ -43,7 +43,7 @@ public interface ASN1Decoder {
     void endSequence() throws ASN1Exception;
 
     /**
-     * Starting decoding an ASN.1 set. All subsequent decode operations will decode
+     * Start decoding an ASN.1 set. All subsequent decode operations will decode
      * elements from this set until {@link #endSet()} is called.
      *
      * @throws ASN1Exception if the next element is not a set
@@ -59,7 +59,7 @@ public interface ASN1Decoder {
     void endSet() throws ASN1Exception;
 
     /**
-     * Starting decoding an ASN.1 "set of" element. All subsequent decode operations will
+     * Start decoding an ASN.1 "set of" element. All subsequent decode operations will
      * decode elements from this set until {@link #endSetOf()} is called.
      *
      * @throws ASN1Exception if the next element is not a set
