@@ -140,7 +140,7 @@ public interface ASN1Decoder {
     /**
      * Decode the next ASN.1 element as an IA5 string.
      *
-     * @param  the decoded IA5 string, as a byte array
+     * @return the decoded IA5 string, as a byte array
      * @throws ASN1Exception if the next element is not an IA5 string
      */
     byte[] decodeIA5StringAsBytes() throws ASN1Exception;

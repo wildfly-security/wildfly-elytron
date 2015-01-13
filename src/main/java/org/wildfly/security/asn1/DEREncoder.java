@@ -411,12 +411,6 @@ public class DEREncoder implements ASN1Encoder {
         }
     }
 
-    private void checkNumComponents(int numComponents) throws ASN1Exception {
-        if (numComponents < 2) {
-            throw new ASN1Exception("OID must have at least 2 components");
-        }
-    }
-
     private void encodeOIDComponent(long value, ByteStringBuilder contents,
             int numComponents, int first) throws ASN1Exception {
          if (numComponents == 1) {
@@ -500,19 +494,19 @@ public class DEREncoder implements ASN1Encoder {
                 int octet;
                 while (shift > 0) {
                     if (tagNumber >= (1 << shift)) {
-                        octet = (int) ((tagNumber >>> shift) | 0x80);
+                        octet = (tagNumber >>> shift) | 0x80;
                         dest.append((byte) octet);
                     }
                     shift = shift - 7;
                 }
-                octet = (int) (tagNumber & 0x7f);
+                octet = tagNumber & 0x7f;
                 dest.append((byte) octet);
             }
         }
     }
 
     private int writeLength(int length, ByteStringBuilder dest) throws ASN1Exception {
-        int numLengthOctets = 0;
+        int numLengthOctets;
         if (length < 0) {
             throw new ASN1Exception("Invalid length");
         } else if (length <= 127) {
