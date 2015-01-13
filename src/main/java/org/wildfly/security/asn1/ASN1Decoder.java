@@ -222,9 +222,13 @@ public interface ASN1Decoder {
     void skipElement() throws ASN1Exception;
 
     /**
-     * Determine if there is at least one more ASN.1 element that can be read from the input stream.
+     * Determine if there is at least one more ASN.1 element that can be read. If called while
+     * decoding a constructed element (i.e., while decoding a sequence, set, or explictly tagged element),
+     * this method will return whether the constructed element has at least one more ASN.1 element
+     * that can be read. Otherwise, this method will return whether at least one more ASN.1 element
+     * can be read from the input stream.
      *
-     * @return true if there is at least one more ASN.1 element that can be read and false otherwise
+     * @return {@code true} if there is at least one more ASN.1 element that can be read and {@code false} otherwise
      */
     boolean hasNextElement();
 

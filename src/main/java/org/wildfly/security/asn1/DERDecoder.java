@@ -365,6 +365,17 @@ public class DERDecoder implements ASN1Decoder {
 
     @Override
     public boolean hasNextElement() {
+        DecoderState lastState = states.peekLast();
+        boolean hasNext = false;
+        if (lastState != null) {
+            hasNext = ((bi.offset() < lastState.getNextElementIndex()) && hasCompleteElement());
+        } else {
+            hasNext = hasCompleteElement();
+        }
+        return hasNext;
+    }
+
+    private  boolean hasCompleteElement() {
         boolean hasNext = false;
         int currOffset = bi.offset();
         try {
