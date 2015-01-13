@@ -227,4 +227,12 @@ public interface ASN1Decoder {
      * @return true if there is at least one more ASN.1 element that can be read and false otherwise
      */
     boolean hasNextElement();
+
+    /**
+     * Drain the value bytes from the next ASN.1 element.
+     *
+     * @return the value bytes from the next ASN.1 element, as a byte array
+     * @throws ASN1Exception if the value bytes from the next ASN.1 element cannot be obtained
+     */
+    byte[] drainElementValue() throws ASN1Exception;
 }

@@ -357,6 +357,22 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void writeEncoded(byte[] encoded) {
+        EncoderState lastState = states.peekLast();
+        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
+            updateCurrentBuffer();
+            lastState.addChildElement(encoded[0], currentBufferPos);
+        }
+
+        currentBuffer.append(encoded);
+
+        // If this element's parent element is a set element, update the parent's accumulated length
+        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
+            lastState.addChildLength(currentBuffer.length());
+        }
+    }
+
+    @Override
     public void flush() {
         while (states.size() != 0) {
             EncoderState lastState = states.peekLast();

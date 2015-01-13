@@ -330,6 +330,20 @@ public class DEREncoderTest {
     }
 
     @Test
+    public void testWriteEncoded() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startSet();
+        encoder.encodeNull();
+        encoder.writeEncoded(new byte[] {4, 8, 1, 35, 69, 103, -119, -85, -51, -17});
+        encoder.encodeObjectIdentifier("1.2.45684.5447897894");
+        encoder.encodeOctetString(new byte[] {1, 35, 69});
+        encoder.endSet();
+        byte[] expected = new byte[] {49, 28, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 4, 3, 1, 35, 69, 5, 0, 6, 9, 42, -126, -28, 116, -108, -91, -31, -90, 38};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
     public void testFlush() throws Exception {
         ByteStringBuilder target = new ByteStringBuilder();
         DEREncoder encoder = new DEREncoder(target);

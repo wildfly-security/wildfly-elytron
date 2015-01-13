@@ -187,6 +187,13 @@ public interface ASN1Encoder extends Flushable {
     void encodeImplicit(int clazz, int number);
 
     /**
+     * Write an already encoded ASN.1 value to the target destination.
+     *
+     * @param encoded the encoded ASN.1 value to write
+     */
+    void writeEncoded(byte[] encoded);
+
+    /**
      * Flush the encoder, writing any saved ASN.1 encoded values to the target destination.
      * Any unfinished sequences or sets will be ended.
      */

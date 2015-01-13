@@ -303,4 +303,14 @@ public class DERDecoderTest {
             assertEquals("test1@rsa.com", decoder.decodeIA5String());
         }
     }
+
+    @Test
+    public void testDecodeDrainElementValue() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58});
+        assertEquals(SET_TYPE, decoder.peekType());
+        assertTrue(decoder.hasNextElement());
+        byte[] expected = new byte[] {6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58};
+        assertArrayEquals(expected, decoder.drainElementValue());
+        assertFalse(decoder.hasNextElement());
+    }
 }
