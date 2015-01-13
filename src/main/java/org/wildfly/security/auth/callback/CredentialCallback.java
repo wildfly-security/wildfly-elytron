@@ -93,17 +93,27 @@ public class CredentialCallback implements ExtendedCallback {
      * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
      */
     public boolean isCredentialSupported(final Object credential) {
-        return credential != null && allowedTypes.contains(credential.getClass());
+        return credential != null && isCredentialTypeSupported(credential.getClass());
     }
 
     /**
-     * Determine whether a credential type would be supported by the authentication.
+     * Determine whether a credential type would be supported by the authentication.  A credential type is supported if
+     * the given class is equal to, or a subtype of, any of the allowed credential types.
      *
      * @param credentialType the credential type to test
      * @return {@code true} if the credential type is supported, {@code false} otherwise
      */
     public boolean isCredentialTypeSupported(final Class<?> credentialType) {
-        return credentialType != null && allowedTypes.contains(credentialType);
+        return credentialType != null && (allowedTypes.contains(credentialType) || isCredentialTypeSupported(credentialType.getSuperclass()) || isCredentialTypeSupportedArray(credentialType.getInterfaces()));
+    }
+
+    private boolean isCredentialTypeSupportedArray(final Class<?>... credentialTypes) {
+        for (Class<?> credentialType : credentialTypes) {
+            if (isCredentialTypeSupported(credentialType)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
