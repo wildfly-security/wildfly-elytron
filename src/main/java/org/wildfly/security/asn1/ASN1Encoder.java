@@ -135,6 +135,20 @@ public interface ASN1Encoder extends Flushable {
     void encodeIA5String(ByteStringBuilder str);
 
     /**
+     * Encode an ASN.1 printable string value.
+     *
+     * @param str the byte array containing the printable string to encode
+     */
+    void encodePrintableString(byte[] str);
+
+    /**
+     * Encode an ASN.1 printable string value.
+     *
+     * @param str the printable string to encode
+     */
+    void encodePrintableString(String str);
+
+    /**
      * Encode an ASN.1 bit string value.
      *
      * @param str the byte array containing the bit string to encode (all bits in the bit string will be used)

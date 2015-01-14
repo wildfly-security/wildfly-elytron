@@ -162,6 +162,22 @@ public interface ASN1Decoder {
     String decodeBitStringAsString() throws ASN1Exception;
 
     /**
+     * Decode the next ASN.1 element as a printable string.
+     *
+     * @return the decoded printable string as a string
+     * @throws ASN1Exception if the next element is not a printable string
+     */
+    String decodePrintableString() throws ASN1Exception;
+
+    /**
+     * Decode the next ASN.1 element as a printable string.
+     *
+     * @return the decoded printable string as a byte array
+     * @throws ASN1Exception if the next element is not a printable string
+     */
+    byte[] decodePrintableStringAsBytes() throws ASN1Exception;
+
+    /**
      * Decode the next ASN.1 element as an object identifier.
      *
      * @return the object identifier as a string

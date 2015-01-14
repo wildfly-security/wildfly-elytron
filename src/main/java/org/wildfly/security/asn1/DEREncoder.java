@@ -219,6 +219,23 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void encodePrintableString(final byte[] str) {
+        for (byte b : str) {
+            validatePrintableByte(b & 0xff);
+        }
+        writeElement(PRINTABLE_STRING_TYPE, str);
+    }
+
+    @Override
+    public void encodePrintableString(final String str) {
+        int c, i = 0;
+        for (c = str.codePointAt(i); i < str.length(); i = str.offsetByCodePoints(i, 1)) {
+            validatePrintableByte(c);
+        }
+        writeElement(PRINTABLE_STRING_TYPE, str.getBytes(StandardCharsets.US_ASCII));
+    }
+
+    @Override
     public void encodeBitString(byte[] str) {
         encodeBitString(str, 0); // All bits will be used
     }

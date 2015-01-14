@@ -261,6 +261,28 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public String decodePrintableString() throws ASN1Exception {
+        return new String(decodePrintableStringAsBytes(), StandardCharsets.US_ASCII);
+    }
+
+    @Override
+    public byte[] decodePrintableStringAsBytes() throws ASN1Exception {
+        readTag(PRINTABLE_STRING_TYPE);
+        final int length = readLength();
+        int c = 0;
+        byte[] result = new byte[length];
+        while (bi.hasNext() && c < length) {
+            final int b = bi.next();
+            validatePrintableByte(b);
+            result[c++] = (byte) b;
+        }
+        if (c < length) {
+            throw new ASN1Exception("Unexpected end of input");
+        }
+        return result;
+    }
+
+    @Override
     public String decodeObjectIdentifier() throws ASN1Exception {
         readTag(OBJECT_IDENTIFIER_TYPE);
         int length = readLength();
