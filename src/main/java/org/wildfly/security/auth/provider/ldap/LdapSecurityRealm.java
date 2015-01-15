@@ -164,11 +164,6 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public String getRealmName() {
-            return realmName;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definately not supported for a specific principal.
@@ -232,10 +227,6 @@ class LdapSecurityRealm implements SecurityRealm {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
-                }
-
-                public String getRealmName() {
-                    return realmName;
                 }
 
                 public void dispose() {

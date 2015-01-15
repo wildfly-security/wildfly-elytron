@@ -103,11 +103,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public String getRealmName() {
-            return realmName;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             final Password password = map.get(principal);
             return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
@@ -128,10 +123,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
-                }
-
-                public String getRealmName() {
-                    return realmName;
                 }
 
                 public void dispose() {

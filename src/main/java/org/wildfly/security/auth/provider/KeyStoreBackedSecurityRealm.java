@@ -93,11 +93,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public String getRealmName() {
-            return realmName;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             final KeyStore.Entry entry = getEntry(principal);
             if (entry == null) {
@@ -166,10 +161,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
-                }
-
-                public String getRealmName() {
-                    return realmName;
                 }
 
                 public void dispose() {

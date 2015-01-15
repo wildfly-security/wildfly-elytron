@@ -35,13 +35,6 @@ public interface AuthenticatedRealmIdentity {
     Principal getPrincipal();
 
     /**
-     * Obtain the name of the realm this identity is associated with.
-     *
-     * @return the realm name
-     */
-    String getRealmName();
-
-    /**
      * Dispose this realm identity after a completed authentication attempt.
      */
     void dispose();

@@ -41,13 +41,6 @@ public interface RealmIdentity {
     Principal getPrincipal();
 
     /**
-     * Obtain the name of the realm this identity is associated with,
-     *
-     * @return The realm name.
-     */
-    String getRealmName();
-
-    /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
      * identity.
      *
