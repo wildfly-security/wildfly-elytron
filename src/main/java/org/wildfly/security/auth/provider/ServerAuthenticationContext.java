@@ -43,6 +43,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
+import org.wildfly.security.auth.callback.RealmIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -189,6 +190,8 @@ public final class ServerAuthenticationContext {
                         if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
                             // todo: filter by IP address
                         }
+                    } else if (callback instanceof RealmIdentityCallback) {
+                        ((RealmIdentityCallback) callback).setRealmIdentity(identity);
                     } else {
                         CallbackUtils.unsupported(callback);
                     }
