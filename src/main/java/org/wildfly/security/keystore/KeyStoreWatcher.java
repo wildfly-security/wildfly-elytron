@@ -28,13 +28,11 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Central point for watching for modifications to KeyStores.
@@ -43,15 +41,6 @@ import java.util.concurrent.Executors;
  */
 class KeyStoreWatcher {
 
-    /*
-     * Some key points: - - Could have multiple key stores in the same folder. - Could have multiple key store instances
-     * interested in the same underlying store.
-     *
-     * To begin with lest just assume singleton, but maybe this could be replaced with a container specific version.
-     */
-
-
-    private final ExecutorService executor;
     private final FileSystem fileSystem;
 
     private volatile Map<Path, Map<String, List<Store>>> watchedPaths = new HashMap<Path, Map<String, List<Store>>>();
@@ -63,7 +52,6 @@ class KeyStoreWatcher {
 
     private KeyStoreWatcher() {
         fileSystem = FileSystems.getDefault();
-        executor = Executors.newCachedThreadPool();
     }
 
     static KeyStoreWatcher getDefault() {
@@ -84,15 +72,15 @@ class KeyStoreWatcher {
         if (pathRegistration == null) {
             watchRequired = true;
             pathRegistration = new HashMap<String, List<Store>>();
-            pathStores = new LinkedList<Store>();
+            pathStores = new ArrayList<Store>();
         } else {
             pathRegistration = new HashMap<String, List<Store>>(pathRegistration);
             List<Store> tmpStore = pathRegistration.get(fileName);
             if (tmpStore != null) {
                 // Copy the store so we can add to it without affecting any iterator.
-                pathStores = new LinkedList<Store>(tmpStore);
+                pathStores = new ArrayList<Store>(tmpStore);
             } else {
-                pathStores = new LinkedList<Store>();
+                pathStores = new ArrayList<Store>();
             }
         }
 
@@ -105,7 +93,9 @@ class KeyStoreWatcher {
         if (watchRequired) {
             if (watchService == null) {
                 watchService = fileSystem.newWatchService();
-                executor.execute(new EventTaker());
+                Thread pollThread = new Thread(new EventTaker(), "KeyStoreWatcher Daemon");
+                pollThread.setDaemon(true);
+                pollThread.start();
             }
             // We use 'create' in addition to 'modify' as updates could be in the form of replacing a file.
             WatchKey key = dirPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
@@ -121,14 +111,13 @@ class KeyStoreWatcher {
 
         Path dirPath = parentDir.toPath();
 
-        boolean watchRequired = false;
         Map<String, List<Store>> pathRegistration = watchedPaths.get(dirPath);
         List<Store> pathStores = null;
         if (pathRegistration != null) {
             pathRegistration = new HashMap<String, List<Store>>(pathRegistration);
             List<Store> tmpStores = pathRegistration.get(fileName);
             if (tmpStores != null) {
-                pathStores = new LinkedList<Store>(tmpStores);
+                pathStores = new ArrayList<Store>(tmpStores);
                 Iterator<Store> storeIterator = pathStores.iterator();
                 while (storeIterator.hasNext()) {
                     Store current = storeIterator.next();
@@ -173,6 +162,7 @@ class KeyStoreWatcher {
         @Override
         public void run() {
             try {
+                WatchService watchService = KeyStoreWatcher.this.watchService;
                 while (watchService != null) {
                     WatchKey key = watchService.take();
                     Path watchedPath = (Path) key.watchable();
@@ -186,7 +176,7 @@ class KeyStoreWatcher {
                                 List<Store> stores = pathRegistration.get(name);
                                 if (stores != null) {
                                     for (Store current : stores) {
-                                        executor.execute(new Notifier(current));
+                                        current.modified();
                                     }
                                 }
 
@@ -194,7 +184,7 @@ class KeyStoreWatcher {
                                 // No idea what happened so reload them all.
                                 for (List<Store> stores : pathRegistration.values()) {
                                     for (Store current : stores) {
-                                        executor.execute(new Notifier(current));
+                                        current.modified();
                                     }
                                 }
                             }
@@ -209,19 +199,5 @@ class KeyStoreWatcher {
         }
     }
 
-    private class Notifier implements Runnable {
-
-        private final Store store;
-
-        private Notifier(Store store) {
-            this.store = store;
-        }
-
-        @Override
-        public void run() {
-            store.modified();
-        }
-
-    }
 }
 
