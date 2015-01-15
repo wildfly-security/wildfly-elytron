@@ -56,6 +56,43 @@ public interface ASN1Encoder extends Flushable {
     void endSet() throws IllegalStateException;
 
     /**
+     * Start encoding an ASN.1 "set of" element. All subsequent encode operations will be
+     * part of this set until {@link #endSetOf()} is called.
+     */
+    void startSetOf();
+
+    /**
+     * Finish encoding an ASN.1 "set of" element.
+     *
+     * @throws IllegalStateException if there is no set to end
+     */
+    void endSetOf() throws IllegalStateException;
+
+    /**
+     * Start encoding an ASN.1 explicitly tagged element. All subsequent encode operations
+     * will be part of this explicitly tagged element until {@link #endExplicit()} is called.
+     *
+     * @param number the tag number for the explicit, context-specific tag
+     */
+    void startExplicit(int number);
+
+    /**
+     * Start encoding an ASN.1 explicitly tagged element. All subsequent encode operations
+     * will be part of this explicitly tagged element until {@link #endExplicit()} is called.
+     *
+     * @param clazz the class for the explicit tag
+     * @param number the tag number for the explicit tag
+     */
+    void startExplicit(int clazz, int number);
+
+    /**
+     * Finish encoding an ASN.1 explicitly tagged element.
+     *
+     * @throws IllegalStateException if there is no explicitly tagged element to end
+     */
+    void endExplicit() throws IllegalStateException;
+
+    /**
      * Encode an ASN.1 octet string value.
      *
      * @param str the octet string to encode
@@ -131,6 +168,30 @@ public interface ASN1Encoder extends Flushable {
      * Encode an ASN.1 null value.
      */
     void encodeNull();
+
+    /**
+     * Indicate that the next encode operation should encode an ASN.1 value using
+     * the given implicit, context-specific tag.
+     *
+     * @param number the tag number for the implicit, context-specific tag
+     */
+    void encodeImplicit(int number);
+
+    /**
+     * Indicate that the next encode operation should encode an ASN.1 value using
+     * the given implicit tag.
+     *
+     * @param clazz the class for the implicit tag
+     * @param number the tag number for the implicit tag
+     */
+    void encodeImplicit(int clazz, int number);
+
+    /**
+     * Write an already encoded ASN.1 value to the target destination.
+     *
+     * @param encoded the encoded ASN.1 value to write
+     */
+    void writeEncoded(byte[] encoded);
 
     /**
      * Flush the encoder, writing any saved ASN.1 encoded values to the target destination.

@@ -21,6 +21,8 @@ package org.wildfly.security.asn1;
 import static org.junit.Assert.*;
 import static org.wildfly.security.asn1.ASN1.*;
 
+import java.util.ArrayList;
+
 import org.junit.Test;
 
 /**
@@ -126,6 +128,7 @@ public class DERDecoderTest {
     @Test
     public void testDecodeNull() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {5, 0});
+        assertTrue(decoder.hasNextElement());
         decoder.decodeNull();
         assertFalse(decoder.hasNextElement());
     }
@@ -146,6 +149,12 @@ public class DERDecoderTest {
     public void testDecodeEndSetBeforeStart() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {49, 28, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 4, 3, 1, 35, 69, 5, 0, 6, 9, 42, -126, -28, 116, -108, -91, -31, -90, 38});
         decoder.endSet();
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testDecodeEndExplicitBeforeStart() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
+        decoder.endExplicit();
     }
 
     @Test
@@ -222,6 +231,81 @@ public class DERDecoderTest {
         decoder.skipElement();
     }
 
+    @Test
+    public void testDecodeSimpleSetOf() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58});
+        assertEquals(SET_TYPE, decoder.peekType());
+        ArrayList<String> oidList = new ArrayList<String>();
+        decoder.startSetOf();
+        while (decoder.hasNextElement()) {
+            assertEquals(OBJECT_IDENTIFIER_TYPE, decoder.peekType());
+            oidList.add(decoder.decodeObjectIdentifier());
+        }
+        decoder.endSetOf();
+        assertFalse(decoder.hasNextElement());
+        assertEquals(3, oidList.size());
+        assertEquals("1.2.123.1234", oidList.get(0));
+        assertEquals("2.1.58.5456.36.456", oidList.get(1));
+        assertEquals("1.2.459.14587.225466", oidList.get(2));
+    }
+
+    @Test
+    public void testDecodeComplexSetOf() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114});
+        assertEquals(SET_TYPE, decoder.peekType());
+        ArrayList<String> strList = new ArrayList<String>();
+        boolean firstSetSeen = false;
+        decoder.startSetOf();
+        while (decoder.hasNextElement()) {
+            assertEquals(SET_TYPE, decoder.peekType());
+            decoder.startSetOf();
+            while (decoder.hasNextElement()) {
+                assertEquals(IA5_STRING_TYPE, decoder.peekType());
+                strList.add(decoder.decodeIA5String());
+            }
+            if (! firstSetSeen) {
+                assertEquals(2, strList.size());
+                firstSetSeen = true;
+            }
+            decoder.endSetOf();
+        }
+        decoder.endSetOf();
+        assertFalse(decoder.hasNextElement());
+        assertEquals(4, strList.size());
+        assertEquals("abc@rsa.com", strList.get(0));
+        assertEquals("test1@rsa.com", strList.get(1));
+        assertEquals("this is a string", strList.get(2));
+        assertEquals("this is a string that's longer", strList.get(3));
+    }
+
+    @Test
+    public void testDecodeExplicitTag() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
+        assertTrue(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true));
+        decoder.startExplicit(2);
+        assertTrue(decoder.hasNextElement());
+        decoder.startSequence();
+        assertTrue(decoder.hasNextElement());
+        assertEquals("this is a test", decoder.decodeIA5String());
+        assertArrayEquals(new byte[] {1, 35, 69, 103, -119, -85, -51, -17}, decoder.decodeOctetString());
+        assertEquals("test1@rsa.com", decoder.decodeIA5String());
+        assertFalse(decoder.hasNextElement());
+        decoder.endSequence();
+        assertFalse(decoder.hasNextElement());
+        decoder.endExplicit();
+        assertFalse(decoder.hasNextElement());
+    }
+
+    @Test
+    public void testDecodeImplicitTag() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109});
+        assertFalse(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 0, false));
+        assertFalse(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 1, true));
+        assertTrue(decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, false));
+        decoder.decodeImplicit(2);
+        assertEquals("server1.example.com", decoder.decodeIA5String());
+    }
+
     @Test(expected=ASN1Exception.class)
     public void testDecodeWrongType() throws Exception {
         DERDecoder decoder = new DERDecoder(new byte[] {5, 12});
@@ -238,5 +322,15 @@ public class DERDecoderTest {
             assertEquals(IA5_STRING_TYPE, decoder.peekType());
             assertEquals("test1@rsa.com", decoder.decodeIA5String());
         }
+    }
+
+    @Test
+    public void testDecodeDrainElementValue() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58});
+        assertEquals(SET_TYPE, decoder.peekType());
+        assertTrue(decoder.hasNextElement());
+        byte[] expected = new byte[] {6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58};
+        assertArrayEquals(expected, decoder.drainElementValue());
+        assertFalse(decoder.hasNextElement());
     }
 }

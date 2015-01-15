@@ -170,6 +170,16 @@ public class DEREncoderTest {
         encoder.endSequence();
     }
 
+    @Test(expected=IllegalStateException.class)
+    public void testEncodeEndExplicitBeforeStart() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startSequence();
+        encoder.encodeIA5String("server1@test.com");
+        encoder.endExplicit();
+        encoder.endSequence();
+    }
+
     @Test
     public void testEncodeSimpleSequence() throws Exception {
         ByteStringBuilder target = new ByteStringBuilder();
@@ -253,6 +263,83 @@ public class DEREncoderTest {
         encoder.endSet();
 
         byte[] expected = new byte[] { 49, 67, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 6, 4, 42, 123, -119, 82, 49, 34, 4, 3, 1, 35, 69, 5, 0, 6, 5, 81, 58, -86, 80, 36, 49, 18, 5, 0, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109 };
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeSimpleSetOf() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+
+        encoder.startSetOf();
+        encoder.encodeObjectIdentifier("1.2.459.14587.225466");
+        encoder.encodeObjectIdentifier("1.2.123.1234");
+        encoder.encodeObjectIdentifier("2.1.58.5456.36.456");
+        encoder.endSetOf();
+
+        byte[] expected = new byte[] {49, 25, 6, 4, 42, 123, -119, 82, 6, 7, 81, 58, -86, 80, 36, -125, 72, 6, 8, 42, -125, 75, -15, 123, -115, -31, 58};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeComplexSetOf() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+
+        encoder.startSetOf();
+
+        encoder.startSetOf();
+        encoder.encodeIA5String("test1@rsa.com");
+        encoder.encodeIA5String("abc@rsa.com");
+        encoder.endSetOf();
+
+        encoder.startSetOf();
+        encoder.encodeIA5String("this is a string that's longer");
+        encoder.encodeIA5String("this is a string");
+        encoder.endSetOf();
+
+        encoder.endSetOf();
+
+        byte[] expected = new byte[] {49, 82, 49, 28, 22, 11, 97, 98, 99, 64, 114, 115, 97, 46, 99, 111, 109, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109, 49, 50, 22, 16, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 22, 30, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 115, 116, 114, 105, 110, 103, 32, 116, 104, 97, 116, 39, 115, 32, 108, 111, 110, 103, 101, 114};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeExplicit() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startExplicit(2);
+        encoder.startSequence();
+        encoder.encodeIA5String("this is a test");
+        encoder.encodeOctetString(new byte[] {1, 35, 69, 103, -119, -85, -51, -17});
+        encoder.encodeIA5String("test1@rsa.com");
+        encoder.endSequence();
+        encoder.endExplicit();
+        byte[] expected = new byte[] {-94, 43, 48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeImplicit() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.encodeImplicit(2);
+        encoder.encodeIA5String("server1.example.com");
+        byte[] expected = new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testWriteEncoded() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.startSet();
+        encoder.encodeNull();
+        encoder.writeEncoded(new byte[] {4, 8, 1, 35, 69, 103, -119, -85, -51, -17});
+        encoder.encodeObjectIdentifier("1.2.45684.5447897894");
+        encoder.encodeOctetString(new byte[] {1, 35, 69});
+        encoder.endSet();
+        byte[] expected = new byte[] {49, 28, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 4, 3, 1, 35, 69, 5, 0, 6, 9, 42, -126, -28, 116, -108, -91, -31, -90, 38};
         assertArrayEquals(expected, target.toArray());
     }
 

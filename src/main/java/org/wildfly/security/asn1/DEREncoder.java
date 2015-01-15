@@ -25,9 +25,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 
 import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * A class used to encode ASN.1 values using the Distinguished Encoding Rules (DER), as specified
@@ -39,12 +41,15 @@ public class DEREncoder implements ASN1Encoder {
     private static final int[] BITS = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
     private static final long LARGEST_UNSHIFTED_LONG = Long.MAX_VALUE / 10L;
     private static final byte[] NULL_CONTENTS = new byte[0];
+    private static final TagComparator TAG_COMPARATOR = new TagComparator();
+    private static final LexicographicComparator LEXICOGRAPHIC_COMPARATOR = new LexicographicComparator();
 
     private ArrayDeque<EncoderState> states = new ArrayDeque<EncoderState>();
     private ArrayList<ByteStringBuilder> buffers = new ArrayList<ByteStringBuilder>();
     private ByteStringBuilder currentBuffer;
     private int currentBufferPos = -1;
     private ByteStringBuilder target;
+    private int implicitTag = -1;
 
     /**
      * Create a DER encoder that writes its output to the given {@code ByteStringBuilder}.
@@ -58,25 +63,41 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void startSequence() {
-        EncoderState lastState = states.peekLast();
-        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
-            updateCurrentBuffer();
-            lastState.addChildElement(SEQUENCE_TYPE, currentBufferPos);
-        }
-        writeTag(SEQUENCE_TYPE, currentBuffer);
-        updateCurrentBuffer();
-        states.add(new EncoderState(SEQUENCE_TYPE, currentBufferPos));
+        startConstructedElement(SEQUENCE_TYPE);
     }
 
     @Override
     public void startSet() {
+        startConstructedElement(SET_TYPE);
+    }
+
+    @Override
+    public void startSetOf() {
+        startSet();
+    }
+
+    @Override
+    public void startExplicit(int number) {
+        startExplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void startExplicit(int clazz, int number) {
+        int explicitTag = clazz | CONSTRUCTED_MASK | number;
+        startConstructedElement(explicitTag);
+    }
+
+    private void startConstructedElement(int tag) {
         EncoderState lastState = states.peekLast();
         if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
             updateCurrentBuffer();
-            lastState.addChildElement(SET_TYPE, currentBufferPos);
+            lastState.addChildElement(tag, currentBufferPos);
         }
-        writeTag(SET_TYPE, currentBuffer);
-        states.add(new EncoderState(SET_TYPE, currentBufferPos));
+        writeTag(tag, currentBuffer);
+        if (tag != SET_TYPE) {
+            updateCurrentBuffer();
+        }
+        states.add(new EncoderState(tag, currentBufferPos));
     }
 
     @Override
@@ -85,13 +106,26 @@ public class DEREncoder implements ASN1Encoder {
         if ((lastState == null) || (lastState.getTag() != SEQUENCE_TYPE)) {
             throw new IllegalStateException("No sequence to end");
         }
+        endConstructedElement();
+    }
 
+    @Override
+    public void endExplicit() throws IllegalStateException {
+        EncoderState lastState = states.peekLast();
+        if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
+                || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
+            throw new IllegalStateException("No explicitly tagged element to end");
+        }
+        endConstructedElement();
+    }
+
+    private void endConstructedElement() {
         ByteStringBuilder dest;
         if (currentBufferPos > 0) {
-            // Output the sequence to this element's parent buffer
+            // Output the element to its parent buffer
             dest = buffers.get(currentBufferPos - 1);
         } else {
-            // Output the sequence directly to the target destination
+            // Output the element directly to the target destination
             dest = target;
         }
         int length = currentBuffer.length();
@@ -102,8 +136,8 @@ public class DEREncoder implements ASN1Encoder {
         currentBufferPos -= 1;
         states.removeLast();
 
-        // If this sequence's parent element is a set element, update the parent's accumulated length
-        lastState = states.peekLast();
+        // If this element's parent element is a set element, update the parent's accumulated length
+        EncoderState lastState = states.peekLast();
         if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
             lastState.addChildLength(1 + numLengthOctets + length);
         }
@@ -111,13 +145,22 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void endSet() throws IllegalStateException {
+        endSet(TAG_COMPARATOR);
+    }
+
+    @Override
+    public void endSetOf() throws IllegalStateException {
+        endSet(LEXICOGRAPHIC_COMPARATOR);
+    }
+
+    private void endSet(Comparator<EncoderState> comparator) {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SET_TYPE)) {
             throw new IllegalStateException("No set to end");
         }
 
         // The child elements of a set must be encoded in ascending order by tag
-        LinkedList<EncoderState> childElements = lastState.getSortedChildElements();
+        LinkedList<EncoderState> childElements = lastState.getSortedChildElements(comparator);
         int setBufferPos = lastState.getBufferPos();
         ByteStringBuilder dest;
         if (setBufferPos >= 0) {
@@ -302,6 +345,34 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void encodeImplicit(int number) {
+        encodeImplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void encodeImplicit(int clazz, int number) {
+        if (implicitTag == -1) {
+            implicitTag = clazz | number;
+        }
+    }
+
+    @Override
+    public void writeEncoded(byte[] encoded) {
+        EncoderState lastState = states.peekLast();
+        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
+            updateCurrentBuffer();
+            lastState.addChildElement(encoded[0], currentBufferPos);
+        }
+
+        currentBuffer.append(encoded);
+
+        // If this element's parent element is a set element, update the parent's accumulated length
+        if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {
+            lastState.addChildLength(currentBuffer.length());
+        }
+    }
+
+    @Override
     public void flush() {
         while (states.size() != 0) {
             EncoderState lastState = states.peekLast();
@@ -410,8 +481,12 @@ public class DEREncoder implements ASN1Encoder {
     };
 
     private void writeTag(int tag, ByteStringBuilder dest) {
-        int tagClass = tag & CLASS_MASK;
         int constructed = tag & CONSTRUCTED_MASK;
+        if (implicitTag != -1) {
+            tag = implicitTag | constructed;
+            implicitTag = -1;
+        }
+        int tagClass = tag & CLASS_MASK;
         int tagNumber = tag & TAG_NUMBER_MASK;
         if (tagNumber < 31) {
             dest.append((byte) (tagClass | constructed | tagNumber));
@@ -508,7 +583,7 @@ public class DEREncoder implements ASN1Encoder {
     /**
      * A class used to maintain state information during DER encoding.
      */
-    private class EncoderState implements Comparable<EncoderState> {
+    private class EncoderState {
         private final int tag;
         private final int bufferPos;
         private LinkedList<EncoderState> childElements = new LinkedList<EncoderState>();
@@ -527,12 +602,16 @@ public class DEREncoder implements ASN1Encoder {
             return bufferPos;
         }
 
+        public ByteStringBuilder getBuffer() {
+            return buffers.get(getBufferPos());
+        }
+
         public int getChildLength() {
             return childLength;
         }
 
-        public LinkedList<EncoderState> getSortedChildElements() {
-            Collections.sort(childElements);
+        public LinkedList<EncoderState> getSortedChildElements(Comparator<EncoderState> comparator) {
+            Collections.sort(childElements, comparator);
             return childElements;
         }
 
@@ -543,11 +622,41 @@ public class DEREncoder implements ASN1Encoder {
         public void addChildLength(int length) {
             childLength += length;
         }
+    }
 
+    /**
+     * A class that compares DER encodings based on their tags.
+     */
+    private static class TagComparator implements Comparator<EncoderState> {
         @Override
-        public int compareTo(EncoderState other) {
+        public int compare(EncoderState state1, EncoderState state2) {
             // Ignore the constructed bit when comparing tags
-            return (tag | CONSTRUCTED_MASK) - (other.getTag() | CONSTRUCTED_MASK);
+            return (state1.getTag() | CONSTRUCTED_MASK) - (state2.getTag() | CONSTRUCTED_MASK);
+        }
+    }
+
+    /**
+     * A class that compares DER encodings using lexicographic order.
+     */
+    private static class LexicographicComparator implements Comparator<EncoderState> {
+        @Override
+        public int compare(EncoderState state1, EncoderState state2) {
+            ByteStringBuilder bytes1 = state1.getBuffer();
+            ByteStringBuilder bytes2 = state2.getBuffer();
+            ByteIterator bi1 = bytes1.iterate();
+            ByteIterator bi2 = bytes2.iterate();
+
+            // Scan the two encodings from left to right until a difference is found
+            int diff;
+            while (bi1.hasNext() && bi2.hasNext()) {
+                diff = (bi1.next() & 0xff) - (bi2.next() & 0xff);
+                if (diff != 0) {
+                    return diff;
+                }
+            }
+
+            // The longer encoding is considered to be the bigger-valued encoding
+            return bytes1.length() - bytes2.length();
         }
     }
 }

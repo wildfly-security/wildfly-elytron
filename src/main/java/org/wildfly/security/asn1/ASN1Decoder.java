@@ -43,7 +43,7 @@ public interface ASN1Decoder {
     void endSequence() throws ASN1Exception;
 
     /**
-     * Starting decoding an ASN.1 set. All subsequent decode operations will decode
+     * Start decoding an ASN.1 set. All subsequent decode operations will decode
      * elements from this set until {@link #endSet()} is called.
      *
      * @throws ASN1Exception if the next element is not a set
@@ -57,6 +57,52 @@ public interface ASN1Decoder {
      * @throws ASN1Exception if an error occurs while advancing to the end of the set
      */
     void endSet() throws ASN1Exception;
+
+    /**
+     * Start decoding an ASN.1 "set of" element. All subsequent decode operations will
+     * decode elements from this set until {@link #endSetOf()} is called.
+     *
+     * @throws ASN1Exception if the next element is not a set
+     */
+    void startSetOf() throws ASN1Exception;
+
+    /**
+     * Advance to the end of a "set of" element. If there are any elements in the set that
+     * have not yet been decoded, they will be discarded.
+     *
+     * @throws ASN1Exception if an error occurs while advancing to the end of the set
+     */
+    void endSetOf() throws ASN1Exception;
+
+    /**
+     * Start decoding an ASN.1 explicitly tagged element. All subsequent decode operations
+     * will decode elements from this explicitly tagged element until {@link #endExplicit()}
+     * is called.
+     *
+     * @param number the tag number for the explicit, context-specific tag
+     * @throws ASN1Exception if the next element's type does not match the given type
+     */
+    void startExplicit(int number) throws ASN1Exception;
+
+    /**
+     * Start decoding an ASN.1 explicitly tagged element. All subsequent decode operations
+     * will decode elements from this explicitly tagged element until {@link #endExplicit()}
+     * is called.
+     *
+     * @param clazz the class for the explicit tag
+     * @param number the tag number for the explicit tag
+     * @throws ASN1Exception if the next element's type does not match the given type
+     */
+    void startExplicit(int clazz, int number) throws ASN1Exception;
+
+    /**
+     * Advance to the end of an explicitly tagged element. If there are any elements within the
+     * explicitly tagged element that have not yet been decoded, they will be discarded.
+     *
+     * @throws ASN1Exception if an error occurs while advancing to the end of the explicitly
+     * tagged element
+     */
+    void endExplicit() throws ASN1Exception;
 
     /**
      * Decode the next ASN.1 element as an octet string.
@@ -131,6 +177,35 @@ public interface ASN1Decoder {
     void decodeNull() throws ASN1Exception;
 
     /**
+     * Indicate that the next ASN.1 element has the given implicit, context-specific tag.
+     *
+     * @param number the tag number for the implicit tag
+     */
+    void decodeImplicit(int number);
+
+    /**
+     * Indicate that the next ASN.1 element has the given implicit tag.
+     *
+     * @param clazz the class for the implicit tag
+     * @param number the tag number for the implicit tag
+     */
+    void decodeImplicit(int clazz, int number);
+
+    /**
+     * Determine if the type of the next ASN.1 element matches the given type without
+     * actually decoding the next element. This method can be used to determine if an
+     * optional ASN.1 value has been included in the encoding or not.
+     *
+     * @param clazz the tag class to match against
+     * @param number the tag number to match against
+     * @param isConstructed whether or not the next element should be constructed
+     * @return {@code true} if the type of the next ASN.1 element matches the given type
+     * and {@code false} otherwise
+     * @throws ASN1Exception if an error occurs while determining the type of the next element
+     */
+    boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception;
+
+    /**
      * Retrieve the type of the next ASN.1 element without actually decoding
      * the next element.
      *
@@ -147,9 +222,21 @@ public interface ASN1Decoder {
     void skipElement() throws ASN1Exception;
 
     /**
-     * Determine if there is at least one more ASN.1 element that can be read from the input stream.
+     * Determine if there is at least one more ASN.1 element that can be read. If called while
+     * decoding a constructed element (i.e., while decoding a sequence, set, or explictly tagged element),
+     * this method will return whether the constructed element has at least one more ASN.1 element
+     * that can be read. Otherwise, this method will return whether at least one more ASN.1 element
+     * can be read from the input stream.
      *
-     * @return true if there is at least one more ASN.1 element that can be read and false otherwise
+     * @return {@code true} if there is at least one more ASN.1 element that can be read and {@code false} otherwise
      */
     boolean hasNextElement();
+
+    /**
+     * Drain the value bytes from the next ASN.1 element.
+     *
+     * @return the value bytes from the next ASN.1 element, as a byte array
+     * @throws ASN1Exception if the value bytes from the next ASN.1 element cannot be obtained
+     */
+    byte[] drainElementValue() throws ASN1Exception;
 }

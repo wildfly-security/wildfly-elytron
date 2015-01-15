@@ -37,6 +37,7 @@ public class DERDecoder implements ASN1Decoder {
 
     private ByteIterator bi;
     private ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
+    private int implicitTag = -1;
 
     /**
      * Create a DER decoder that will decode values from the given byte array.
@@ -96,6 +97,40 @@ public class DERDecoder implements ASN1Decoder {
         DecoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SET_TYPE)) {
             throw new IllegalStateException("No set to end");
+        }
+        endConstructedElement(lastState.getNextElementIndex());
+        states.removeLast();
+    }
+
+    @Override
+    public void startSetOf() throws ASN1Exception {
+        startSet();
+    }
+
+    @Override
+    public void endSetOf() throws ASN1Exception {
+        endSet();
+    }
+
+    @Override
+    public void startExplicit(int number) throws ASN1Exception {
+        startExplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void startExplicit(int clazz, int number) throws ASN1Exception {
+        int explicitTag = clazz | CONSTRUCTED_MASK | number;
+        readTag(explicitTag);
+        int length = readLength();
+        states.add(new DecoderState(explicitTag, bi.offset() + length));
+    }
+
+    @Override
+    public void endExplicit() throws ASN1Exception {
+        DecoderState lastState = states.peekLast();
+        if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
+                || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
+            throw new IllegalStateException("No explicitly tagged element to end");
         }
         endConstructedElement(lastState.getNextElementIndex());
         states.removeLast();
@@ -289,6 +324,23 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public void decodeImplicit(int number) {
+        decodeImplicit(CONTEXT_SPECIFIC_MASK, number);
+    }
+
+    @Override
+    public void decodeImplicit(int clazz, int number) {
+        if (implicitTag == -1) {
+            implicitTag = clazz | number;
+        }
+    }
+
+    @Override
+    public boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception {
+        return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+    }
+
+    @Override
     public int peekType() throws ASN1Exception {
         int currOffset = bi.offset();
         int tag = readTag();
@@ -313,6 +365,17 @@ public class DERDecoder implements ASN1Decoder {
 
     @Override
     public boolean hasNextElement() {
+        DecoderState lastState = states.peekLast();
+        boolean hasNext = false;
+        if (lastState != null) {
+            hasNext = ((bi.offset() < lastState.getNextElementIndex()) && hasCompleteElement());
+        } else {
+            hasNext = hasCompleteElement();
+        }
+        return hasNext;
+    }
+
+    private  boolean hasCompleteElement() {
         boolean hasNext = false;
         int currOffset = bi.offset();
         try {
@@ -332,9 +395,24 @@ public class DERDecoder implements ASN1Decoder {
         return hasNext;
     }
 
+    @Override
+    public byte[] drainElementValue() throws ASN1Exception {
+        if (implicitTag != -1) {
+            implicitTag = -1;
+        }
+        readTag();
+        int length = readLength();
+        byte[] value = new byte[length];
+        if ((length != 0) && (bi.drain(value) != length)) {
+            throw new ASN1Exception("Unexpected end of input");
+        }
+        return value;
+    }
+
     private int readTag() throws ASN1Exception {
         try {
             int tag = bi.next();
+            int tagClass = tag & CLASS_MASK;
             int constructed = tag & CONSTRUCTED_MASK;
             int tagNumber = tag & TAG_NUMBER_MASK;
             if (tagNumber == 0x1f) {
@@ -352,13 +430,17 @@ public class DERDecoder implements ASN1Decoder {
                 }
                 tagNumber |= (octet & 0x7f);
             }
-            return (constructed | tagNumber);
+            return (tagClass | constructed | tagNumber);
         } catch (NoSuchElementException e) {
             throw new ASN1Exception("Unexpected end of input");
         }
     }
 
     private void readTag(int expectedTag) throws ASN1Exception {
+        if (implicitTag != -1) {
+            expectedTag = implicitTag | (expectedTag & CONSTRUCTED_MASK);
+            implicitTag = -1;
+        }
         int currOffset = bi.offset();
         int actualTag = readTag();
         if (actualTag != expectedTag) {
