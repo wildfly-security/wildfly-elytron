@@ -160,5 +160,21 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         @Override
         public void dispose() {
         }
+
+        @Override
+        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
+            return new AuthenticatedRealmIdentity() {
+                public Principal getPrincipal() {
+                    return principal;
+                }
+
+                public String getRealmName() {
+                    return realmName;
+                }
+
+                public void dispose() {
+                }
+            };
+        }
     }
 }
