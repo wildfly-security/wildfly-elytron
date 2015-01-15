@@ -48,6 +48,7 @@ public final class SecurityDomain {
     private final RealmMapper realmMapper;
     private final NameRewriter[] postRealmRewriters;
     private final boolean anonymousAllowed;
+    private final ThreadLocal<SecurityIdentity> currentSecurityIdentity = new ThreadLocal<>();
 
     SecurityDomain(final Map<String, SecurityRealm> realmMap, final String defaultRealmName, final NameRewriter[] preRealmRewriters, final RealmMapper realmMapper, final NameRewriter[] postRealmRewriters) {
         assert realmMap.containsKey(defaultRealmName);
@@ -172,6 +173,22 @@ public final class SecurityDomain {
     CredentialSupport getCredentialSupport(final String realmName, final Class<?> credentialType) {
         final SecurityRealm realm = getRealm(realmName);
         return realm.getCredentialSupport(credentialType);
+    }
+
+    SecurityIdentity getCurrentSecurityIdentity() {
+        return currentSecurityIdentity.get();
+    }
+
+    SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+        try {
+            return currentSecurityIdentity.get();
+        } finally {
+            currentSecurityIdentity.set(newIdentity);
+        }
+    }
+
+    void setCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+        currentSecurityIdentity.set(newIdentity);
     }
 
     public static final class Builder {
