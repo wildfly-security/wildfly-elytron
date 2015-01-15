@@ -30,9 +30,11 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Central point for watching for modifications to KeyStores.
@@ -98,7 +100,7 @@ class KeyStoreWatcher {
                 pollThread.start();
             }
             // We use 'create' in addition to 'modify' as updates could be in the form of replacing a file.
-            WatchKey key = dirPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
+            WatchKey key = dirPath.register(watchService,  StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
             registrations.put(dirPath, key);
         }
     }
@@ -167,16 +169,18 @@ class KeyStoreWatcher {
                     WatchKey key = watchService.take();
                     Path watchedPath = (Path) key.watchable();
                     Map<String, List<Store>> pathRegistration = watchedPaths.get(watchedPath);
+                    Set<Store> toNotify = new HashSet<Store>();
                     if (pathRegistration != null) {
                         for (WatchEvent<?> event : key.pollEvents()) {
                             if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())
                                     || StandardWatchEventKinds.ENTRY_MODIFY.equals(event.kind())) {
                                 Path context = (Path) event.context();
                                 String name = context.getFileName().toString();
+                                System.out.println("File Name " + name);
                                 List<Store> stores = pathRegistration.get(name);
                                 if (stores != null) {
                                     for (Store current : stores) {
-                                        current.modified();
+                                        toNotify.add(current);
                                     }
                                 }
 
@@ -184,14 +188,16 @@ class KeyStoreWatcher {
                                 // No idea what happened so reload them all.
                                 for (List<Store> stores : pathRegistration.values()) {
                                     for (Store current : stores) {
-                                        current.modified();
+                                        toNotify.add(current);
                                     }
                                 }
                             }
                         }
-
                     }
                     key.reset();
+                    for (Store current : toNotify) {
+                        current.modified();
+                    }
                 }
             } catch (ClosedWatchServiceException | InterruptedException e) {
                 //e.printStackTrace();

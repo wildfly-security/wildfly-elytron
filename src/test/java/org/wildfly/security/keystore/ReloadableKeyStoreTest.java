@@ -24,15 +24,20 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
 import java.security.KeyStore.ProtectionParameter;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.wildfly.security.keystore.ReloadableFileKeyStore.KeyStoreObserver;
 
 import sun.security.x509.CertAndKeyGen;
 import sun.security.x509.X500Name;
@@ -50,6 +55,7 @@ public class ReloadableKeyStoreTest {
     private static final String TEST_ALAIS = "test";
 
     private File workingDir = null;
+    private File tempFile = null;
     private File keystoreFile = null;
 
     /**
@@ -61,6 +67,7 @@ public class ReloadableKeyStoreTest {
     @Before
     public void beforeTest() throws GeneralSecurityException, IOException {
         workingDir = getWorkingDir();
+        tempFile = new File(workingDir, "temp.jks");
         keystoreFile = new File(workingDir, "keystore.jks");
 
         workingKeyStore = emptyKeyStore();
@@ -79,22 +86,29 @@ public class ReloadableKeyStoreTest {
     @Test
     public void verifyStoreUpdates() throws Exception {
         try (ReloadableFileKeyStore testedStore = reloadableKeyStore()) {
+
+            StoreCountDown countDown = new StoreCountDown();
+            testedStore.addObserver(countDown);
+
             assertTrue(testedStore.containsAlias(DEFAULT_ALIAS));
             assertFalse(testedStore.containsAlias(TEST_ALAIS));
 
             addKeyPairAndCert(TEST_ALAIS);
             save();
-            Thread.sleep(1000);
+            countDown.await();
 
             assertTrue(testedStore.containsAlias(DEFAULT_ALIAS));
             assertTrue(testedStore.containsAlias(TEST_ALAIS));
 
             remove(DEFAULT_ALIAS);
+            countDown.reset();
             save();
-            Thread.sleep(1000);
+            countDown.await();
 
             assertFalse(testedStore.containsAlias(DEFAULT_ALIAS));
             assertTrue(testedStore.containsAlias(TEST_ALAIS));
+
+            testedStore.removeObserver(countDown);
         }
     }
 
@@ -130,9 +144,10 @@ public class ReloadableKeyStoreTest {
     }
 
     private void save() throws IOException, GeneralSecurityException {
-        try (FileOutputStream fos = new FileOutputStream(keystoreFile)) {
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             workingKeyStore.store(fos, STORE_PASSWORD);
         }
+        Files.move(tempFile.toPath(), keystoreFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private static File getWorkingDir() {
@@ -142,6 +157,31 @@ public class ReloadableKeyStoreTest {
         }
 
         return workingDir;
+    }
+
+    private static class StoreCountDown implements KeyStoreObserver {
+
+        private volatile CountDownLatch latch = new CountDownLatch(1);
+
+        @Override
+        public void updated() {
+            latch.countDown();
+        }
+
+        void reset() {
+            latch = new CountDownLatch(1);
+        }
+
+        void await() {
+            try {
+                if (latch.await(1, TimeUnit.SECONDS) == false) {
+                    throw new IllegalStateException("Latch never reached '0' but timed out.");
+                }
+            } catch (InterruptedException e) {
+                throw new IllegalStateException("Interrupted waiting for count down.", e);
+            }
+        }
+
     }
 
 }
