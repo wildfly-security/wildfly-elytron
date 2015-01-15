@@ -64,4 +64,9 @@ public interface RealmIdentity {
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
     <C> C getCredential(Class<C> credentialType);
+
+    /**
+     * Dispose this realm identity after a completed authentication attempt.
+     */
+    void dispose();
 }

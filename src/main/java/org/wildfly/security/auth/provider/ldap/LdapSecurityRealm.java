@@ -221,6 +221,10 @@ class LdapSecurityRealm implements SecurityRealm {
 
             return null;
         }
+
+        @Override
+        public void dispose() {
+        }
     }
 
     static class PrincipalMapping {

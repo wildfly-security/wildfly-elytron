@@ -118,5 +118,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             final Password password = map.get(principal);
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
         }
+
+        @Override
+        public void dispose() {
+        }
     }
 }

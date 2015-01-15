@@ -156,5 +156,9 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             }
             return null;
         }
+
+        @Override
+        public void dispose() {
+        }
     }
 }
