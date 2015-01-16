@@ -29,6 +29,7 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,12 +46,12 @@ class KeyStoreWatcher {
 
     private final FileSystem fileSystem;
 
-    private volatile Map<Path, Map<String, List<Store>>> watchedPaths = new HashMap<Path, Map<String, List<Store>>>();
+    private volatile Map<Path, Map<String, List<Store>>> watchedPaths = Collections.emptyMap();
     private final Map<Path, WatchKey> registrations = new HashMap<Path, WatchKey>();
 
     private volatile WatchService watchService;
 
-    private static KeyStoreWatcher theWatcher = new KeyStoreWatcher();
+    private static final KeyStoreWatcher theWatcher = new KeyStoreWatcher();
 
     private KeyStoreWatcher() {
         fileSystem = FileSystems.getDefault();
@@ -87,10 +88,10 @@ class KeyStoreWatcher {
         }
 
         pathStores.add(keyStore);
-        pathRegistration.put(fileName, pathStores);
+        pathRegistration.put(fileName, Collections.unmodifiableList(pathStores));
         Map<Path, Map<String, List<Store>>> newWatchedPaths = new HashMap<Path, Map<String, List<Store>>>(watchedPaths);
-        newWatchedPaths.put(dirPath, pathRegistration);
-        watchedPaths = newWatchedPaths;
+        newWatchedPaths.put(dirPath, Collections.unmodifiableMap(pathRegistration));
+        watchedPaths = Collections.unmodifiableMap(newWatchedPaths);
 
         if (watchRequired) {
             if (watchService == null) {
@@ -130,7 +131,7 @@ class KeyStoreWatcher {
                 if (pathStores.isEmpty()) {
                     pathRegistration.remove(fileName);
                 } else {
-                    pathRegistration.put(fileName, pathStores);
+                    pathRegistration.put(fileName, Collections.unmodifiableList(pathStores));
                 }
             }
 
@@ -146,9 +147,9 @@ class KeyStoreWatcher {
                     watchService = null;
                 }
             } else {
-                newWatchedPaths.put(dirPath, pathRegistration);
+                newWatchedPaths.put(dirPath, Collections.unmodifiableMap(pathRegistration));
             }
-            watchedPaths = newWatchedPaths;
+            watchedPaths = Collections.unmodifiableMap(newWatchedPaths);
         }
 
     }
@@ -164,8 +165,8 @@ class KeyStoreWatcher {
         @Override
         public void run() {
             try {
-                WatchService watchService = KeyStoreWatcher.this.watchService;
-                while (watchService != null) {
+                WatchService watchService = null;
+                while ((watchService = KeyStoreWatcher.this.watchService) != null) {
                     WatchKey key = watchService.take();
                     Path watchedPath = (Path) key.watchable();
                     Map<String, List<Store>> pathRegistration = watchedPaths.get(watchedPath);
