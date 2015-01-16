@@ -18,6 +18,8 @@
 
 package org.wildfly.security.asn1;
 
+import org.wildfly.security.util._private.Arrays2;
+
 /**
  * A class that contains ASN.1 constants.
  *
@@ -49,6 +51,11 @@ public class ASN1 {
      * The universal object identifier type tag.
      */
     public static final int OBJECT_IDENTIFIER_TYPE = 6;
+
+    /**
+     * The universal printable string type tag.
+     */
+    public static final int PRINTABLE_STRING_TYPE = 19;
 
     /**
      * The universal IA5 string type tag.
@@ -84,4 +91,95 @@ public class ASN1 {
      * Mask used to obtain the tag number bits from a type tag.
      */
     public static final int TAG_NUMBER_MASK = 0x1f;
+
+    public static String formatAsn1(ASN1Decoder decoder) {
+        final StringBuilder builder = new StringBuilder();
+        formatAsn1(decoder, builder);
+        return builder.toString();
+    }
+
+    public static void formatAsn1(ASN1Decoder decoder, StringBuilder builder) {
+        while (decoder.hasNextElement()) {
+            final int type = decoder.peekType();
+            switch (type) {
+                case INTEGER_TYPE: {
+                    decoder.decodeOctetString();
+                    builder.append("[int]");
+                    break;
+                }
+                case BIT_STRING_TYPE: {
+                    builder.append("[bits:").append(decoder.decodeBitStringAsString()).append(']');
+                    break;
+                }
+                case OCTET_STRING_TYPE: {
+                    builder.append("[octets:").append(Arrays2.toString(decoder.decodeOctetString())).append(']');
+                    break;
+                }
+                case NULL_TYPE: {
+                    builder.append("[null]");
+                    decoder.decodeNull();
+                    break;
+                }
+                case OBJECT_IDENTIFIER_TYPE: {
+                    builder.append("[oid:").append(decoder.decodeObjectIdentifier()).append(']');
+                    break;
+                }
+                case IA5_STRING_TYPE: {
+                    builder.append("[ia5:").append(decoder.decodeIA5String()).append(']');
+                    break;
+                }
+                case SEQUENCE_TYPE: {
+                    builder.append("[sequence:");
+                    decoder.startSequence();
+                    formatAsn1(decoder, builder);
+                    decoder.endSequence();
+                    builder.append(']');
+                    break;
+                }
+                case SET_TYPE: {
+                    builder.append("[set:");
+                    decoder.startSet();
+                    formatAsn1(decoder, builder);
+                    decoder.endSet();
+                    builder.append(']');
+                    break;
+                }
+                case PRINTABLE_STRING_TYPE: {
+                    builder.append("[printable:").append(decoder.decodePrintableString()).append(']');
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Unknown tag type: " + type);
+//                    builder.append("[unknown(").append(type).append(")]");
+//                    decoder.decodeOctetString();
+//                    break;
+                }
+            }
+        }
+    }
+
+    static void validatePrintableByte(final int b) throws ASN1Exception {
+        switch (b) {
+            case ' ':
+            case '\'':
+            case '(':
+            case ')':
+            case '+':
+            case ',':
+            case '-':
+            case '.':
+            case '/':
+            case ':':
+            case '=':
+            case '?': {
+                return;
+            }
+            default: {
+                if ('A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' || '0' <= b && b <= '9') {
+                    return;
+                }
+                throw new ASN1Exception("Unexpected character byte for printable string");
+            }
+        }
+    }
 }

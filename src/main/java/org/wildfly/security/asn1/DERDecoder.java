@@ -53,7 +53,7 @@ public class DERDecoder implements ASN1Decoder {
      *
      * @param buf the byte array to decode
      * @param offset the offset in the byte array of the first byte to read
-     * @param the maximum number of bytes to read from the byte array
+     * @param length the maximum number of bytes to read from the byte array
      */
     public DERDecoder(byte[] buf, int offset, int length) {
         this.bi = ByteIterator.ofBytes(buf, offset, length);
@@ -62,7 +62,7 @@ public class DERDecoder implements ASN1Decoder {
     /**
      * Create a DER decoder that will decode values from the given {@code ByteIterator}.
      *
-     * @param src the {@code ByteIterator} from which DER encoded values will be decoded
+     * @param bi the {@code ByteIterator} from which DER encoded values will be decoded
      */
     public DERDecoder(ByteIterator bi) {
         this.bi = bi;
@@ -261,6 +261,28 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public String decodePrintableString() throws ASN1Exception {
+        return new String(decodePrintableStringAsBytes(), StandardCharsets.US_ASCII);
+    }
+
+    @Override
+    public byte[] decodePrintableStringAsBytes() throws ASN1Exception {
+        readTag(PRINTABLE_STRING_TYPE);
+        final int length = readLength();
+        int c = 0;
+        byte[] result = new byte[length];
+        while (bi.hasNext() && c < length) {
+            final int b = bi.next();
+            validatePrintableByte(b);
+            result[c++] = (byte) b;
+        }
+        if (c < length) {
+            throw new ASN1Exception("Unexpected end of input");
+        }
+        return result;
+    }
+
+    @Override
     public String decodeObjectIdentifier() throws ASN1Exception {
         readTag(OBJECT_IDENTIFIER_TYPE);
         int length = readLength();
@@ -268,7 +290,7 @@ public class DERDecoder implements ASN1Decoder {
         long value = 0;
         BigInteger bigInt = null;
         boolean processedFirst = false;
-        StringBuffer objectIdentifierStr = new StringBuffer();
+        StringBuilder objectIdentifierStr = new StringBuilder();
 
         for (int i = 0; i < length; i++) {
             octet = bi.next();
@@ -366,7 +388,7 @@ public class DERDecoder implements ASN1Decoder {
     @Override
     public boolean hasNextElement() {
         DecoderState lastState = states.peekLast();
-        boolean hasNext = false;
+        boolean hasNext;
         if (lastState != null) {
             hasNext = ((bi.offset() < lastState.getNextElementIndex()) && hasCompleteElement());
         } else {
@@ -376,10 +398,10 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     private  boolean hasCompleteElement() {
-        boolean hasNext = false;
+        boolean hasNext;
         int currOffset = bi.offset();
         try {
-            int tag = readTag();
+            readTag();
             int length = readLength();
             int i;
             for (i = 0; (i < length) && bi.hasNext(); i++) {

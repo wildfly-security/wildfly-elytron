@@ -140,7 +140,7 @@ public interface ASN1Decoder {
     /**
      * Decode the next ASN.1 element as an IA5 string.
      *
-     * @param  the decoded IA5 string, as a byte array
+     * @return the decoded IA5 string, as a byte array
      * @throws ASN1Exception if the next element is not an IA5 string
      */
     byte[] decodeIA5StringAsBytes() throws ASN1Exception;
@@ -160,6 +160,22 @@ public interface ASN1Decoder {
      * @throws ASN1Exception if the next element is not a bit string
      */
     String decodeBitStringAsString() throws ASN1Exception;
+
+    /**
+     * Decode the next ASN.1 element as a printable string.
+     *
+     * @return the decoded printable string as a string
+     * @throws ASN1Exception if the next element is not a printable string
+     */
+    String decodePrintableString() throws ASN1Exception;
+
+    /**
+     * Decode the next ASN.1 element as a printable string.
+     *
+     * @return the decoded printable string as a byte array
+     * @throws ASN1Exception if the next element is not a printable string
+     */
+    byte[] decodePrintableStringAsBytes() throws ASN1Exception;
 
     /**
      * Decode the next ASN.1 element as an object identifier.
