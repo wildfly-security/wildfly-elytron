@@ -221,6 +221,7 @@ class ReloadableKeyStoreSpiImpl extends KeyStoreSpi implements Store {
 
     @Override
     public void modified() {
+        System.out.println("SPI Modified");
         doLoad(true);
     }
 

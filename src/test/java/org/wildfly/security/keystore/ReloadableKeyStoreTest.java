@@ -142,10 +142,13 @@ public class ReloadableKeyStoreTest {
     }
 
     private void save() throws IOException, GeneralSecurityException {
+        System.out.println("Write to temp file");
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             workingKeyStore.store(fos, STORE_PASSWORD);
         }
+        System.out.println("Delete real file");
         keystoreFile.delete();
+        System.out.println("Rename temp to real");
         if (tempFile.renameTo(keystoreFile) == false) {
             fail("Unable to rename temporary keystore to test keystore.");
         }
@@ -166,6 +169,7 @@ public class ReloadableKeyStoreTest {
 
         @Override
         public void modified() {
+            System.out.println("Test Store modified");
             latch.countDown();
         }
 
@@ -181,6 +185,7 @@ public class ReloadableKeyStoreTest {
             } catch (InterruptedException e) {
                 throw new IllegalStateException("Interrupted waiting for count down.", e);
             }
+            System.out.println("Away done");
         }
 
     }
