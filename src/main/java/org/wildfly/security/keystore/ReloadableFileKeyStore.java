@@ -55,4 +55,17 @@ public class ReloadableFileKeyStore extends KeyStore implements Closeable {
         keyStoreSpi.close();
     }
 
+    public void addObserver(final KeyStoreObserver oberserver) {
+        keyStoreSpi.addObserver(oberserver);
+    }
+
+    public void removeObserver(final KeyStoreObserver oberserver) {
+        keyStoreSpi.removeObserver(oberserver);
+    }
+
+    interface KeyStoreObserver {
+
+        void updated();
+
+    }
 }

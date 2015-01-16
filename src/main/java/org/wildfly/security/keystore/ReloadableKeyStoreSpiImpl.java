@@ -32,11 +32,14 @@ import java.security.Provider;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.wildfly.security.keystore.KeyStoreWatcher.Store;
+import org.wildfly.security.keystore.ReloadableFileKeyStore.KeyStoreObserver;
 
 /**
  * The {@link KeyStoreSpi} to add support for reloading based on modifications.
@@ -49,6 +52,8 @@ class ReloadableKeyStoreSpiImpl extends KeyStoreSpi implements Store {
     private final Provider provider;
     private final File storeLocation;
     private final char[] storePassword;
+
+    private final List<KeyStoreObserver> observers = new ArrayList<KeyStoreObserver>();
 
     private final AtomicReference<KeyStore> currentStore = new AtomicReference<KeyStore>();
 
@@ -199,6 +204,17 @@ class ReloadableKeyStoreSpiImpl extends KeyStoreSpi implements Store {
         }
     }
 
+    void addObserver(final KeyStoreObserver oberserver) {
+        synchronized(observers) {
+            observers.add(oberserver);
+        }
+    }
+
+    void removeObserver(final KeyStoreObserver oberserver) {
+        synchronized(observers) {
+            observers.remove(oberserver);
+        }
+    }
 
     private void doLoad(boolean dontFail) {
         KeyStore theStore;
@@ -212,6 +228,12 @@ class ReloadableKeyStoreSpiImpl extends KeyStoreSpi implements Store {
             theStore.load(fis, storePassword);
 
             currentStore.set(theStore);
+
+            synchronized(observers) {
+                for (KeyStoreObserver current : observers) {
+                    current.updated();
+                }
+            }
         } catch (IOException | NoSuchAlgorithmException | CertificateException e) {
             if (dontFail == false) {
                 throw new IllegalStateException("Unable to load KeyStore", e);

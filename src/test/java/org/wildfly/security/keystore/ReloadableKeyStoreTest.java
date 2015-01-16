@@ -18,9 +18,9 @@
 
 package org.wildfly.security.keystore;
 
-import static org.junit.Assert.fail;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.keystore.KeyStoreWatcher.Store;
+import org.wildfly.security.keystore.ReloadableFileKeyStore.KeyStoreObserver;
 
 import sun.security.x509.CertAndKeyGen;
 import sun.security.x509.X500Name;
@@ -88,7 +88,7 @@ public class ReloadableKeyStoreTest {
             System.out.println("1");
             StoreCountDown countDown = new StoreCountDown();
             System.out.println("2");
-            KeyStoreWatcher.getDefault().register(keystoreFile, countDown);
+            testedStore.addObserver(countDown);
             System.out.println("3");
             assertTrue(testedStore.containsAlias(DEFAULT_ALIAS));
             System.out.println("4");
@@ -116,7 +116,7 @@ public class ReloadableKeyStoreTest {
             System.out.println("15");
             assertTrue(testedStore.containsAlias(TEST_ALAIS));
             System.out.println("16");
-            KeyStoreWatcher.getDefault().deRegister(keystoreFile, countDown);
+            testedStore.removeObserver(countDown);
             System.out.println("17");
         }
     }
@@ -178,12 +178,12 @@ public class ReloadableKeyStoreTest {
         return workingDir;
     }
 
-    private static class StoreCountDown implements Store {
+    private static class StoreCountDown implements KeyStoreObserver {
 
         private volatile CountDownLatch latch = new CountDownLatch(1);
 
         @Override
-        public void modified() {
+        public void updated() {
             System.out.println("Test Store modified");
             latch.countDown();
         }
