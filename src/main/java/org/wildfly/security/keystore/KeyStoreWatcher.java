@@ -98,7 +98,7 @@ class KeyStoreWatcher {
                 pollThread.start();
             }
             // We use 'create' in addition to 'modify' as updates could be in the form of replacing a file.
-            WatchKey key = dirPath.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY);
+            WatchKey key = dirPath.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
             registrations.put(dirPath, key);
         }
     }
