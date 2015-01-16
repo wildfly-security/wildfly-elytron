@@ -158,8 +158,10 @@ public class ReloadableKeyStoreTest {
             workingKeyStore.store(fos, STORE_PASSWORD);
         }
         System.out.println("Delete real file");
-        if (keystoreFile.delete() == false) {
-            fail("Unable to delete KeyStore");
+        if (keystoreFile.exists()) {
+            if (keystoreFile.delete() == false) {
+                fail("Unable to delete KeyStore");
+            }
         }
         System.out.println("Rename temp to real");
         if (tempFile.renameTo(keystoreFile) == false) {
