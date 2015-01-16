@@ -169,4 +169,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 39, value = "Expected token \"%s\" at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenExpected(String token, int offset, String string);
+
+    @Message(id = 40, value = "Proxied SASL authentication failed")
+    SaslException saslProxyAuthenticationFailed();
 }
