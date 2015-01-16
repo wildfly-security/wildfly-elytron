@@ -20,11 +20,12 @@ package org.wildfly.security.keystore;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
@@ -166,9 +167,13 @@ public class ReloadableKeyStoreTest {
         }
         */
         System.out.println("Rename temp to real");
+        Files.move(tempFile.toPath(), keystoreFile.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+
+        /*
         if (tempFile.renameTo(keystoreFile) == false) {
             fail("Unable to rename temporary keystore to test keystore.");
         }
+        */
     }
 
     private static File getWorkingDir() {
