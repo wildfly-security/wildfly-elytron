@@ -18,6 +18,7 @@
 
 package org.wildfly.security.keystore;
 
+import static org.junit.Assert.fail;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -144,7 +145,10 @@ public class ReloadableKeyStoreTest {
         try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             workingKeyStore.store(fos, STORE_PASSWORD);
         }
-        tempFile.renameTo(keystoreFile);
+        keystoreFile.delete();
+        if (tempFile.renameTo(keystoreFile) == false) {
+            fail("Unable to rename temporary keystore to test keystore.");
+        }
     }
 
     private static File getWorkingDir() {
