@@ -85,28 +85,39 @@ public class ReloadableKeyStoreTest {
     @Test
     public void verifyStoreUpdates() throws Exception {
         try (ReloadableFileKeyStore testedStore = reloadableKeyStore()) {
+            System.out.println("1");
             StoreCountDown countDown = new StoreCountDown();
+            System.out.println("2");
             KeyStoreWatcher.getDefault().register(keystoreFile, countDown);
-
+            System.out.println("3");
             assertTrue(testedStore.containsAlias(DEFAULT_ALIAS));
+            System.out.println("4");
             assertFalse(testedStore.containsAlias(TEST_ALAIS));
-
+            System.out.println("5");
             addKeyPairAndCert(TEST_ALAIS);
+            System.out.println("6");
             save();
-
+            System.out.println("7");
             countDown.await();
+            System.out.println("8");
             assertTrue(testedStore.containsAlias(DEFAULT_ALIAS));
+            System.out.println("9");
             assertTrue(testedStore.containsAlias(TEST_ALAIS));
-
+            System.out.println("10");
             remove(DEFAULT_ALIAS);
+            System.out.println("11");
             countDown.reset();
+            System.out.println("12");
             save();
-
+            System.out.println("13");
             countDown.await();
+            System.out.println("14");
             assertFalse(testedStore.containsAlias(DEFAULT_ALIAS));
+            System.out.println("15");
             assertTrue(testedStore.containsAlias(TEST_ALAIS));
-
+            System.out.println("16");
             KeyStoreWatcher.getDefault().deRegister(keystoreFile, countDown);
+            System.out.println("17");
         }
     }
 

@@ -166,13 +166,16 @@ class KeyStoreWatcher {
                 while (watchService != null) {
                     WatchKey key = watchService.take();
                     Path watchedPath = (Path) key.watchable();
+                    System.out.println("Path " + watchedPath.toString());
                     Map<String, List<Store>> pathRegistration = watchedPaths.get(watchedPath);
                     if (pathRegistration != null) {
                         for (WatchEvent<?> event : key.pollEvents()) {
+                            System.out.println("Event Name " + event.kind().name());
                             if (StandardWatchEventKinds.ENTRY_CREATE.equals(event.kind())
                                     || StandardWatchEventKinds.ENTRY_MODIFY.equals(event.kind())) {
                                 Path context = (Path) event.context();
                                 String name = context.getFileName().toString();
+                                System.out.println("File Name " + name);
                                 List<Store> stores = pathRegistration.get(name);
                                 if (stores != null) {
                                     for (Store current : stores) {
