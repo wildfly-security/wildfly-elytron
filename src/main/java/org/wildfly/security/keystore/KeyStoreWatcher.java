@@ -181,12 +181,15 @@ class KeyStoreWatcher {
                                 }
 
                             } else if (StandardWatchEventKinds.OVERFLOW.equals(event.kind())) {
+                                throw new IllegalStateException("OVERFLOW");
                                 // No idea what happened so reload them all.
+                                /*
                                 for (List<Store> stores : pathRegistration.values()) {
                                     for (Store current : stores) {
                                         current.modified();
                                     }
                                 }
+                                */
                             }
                         }
 
