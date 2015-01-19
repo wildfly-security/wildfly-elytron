@@ -71,10 +71,10 @@ public class UserPasswordSuiteChild {
                 .setNameAttribute("uid")
                 .build()
                 .userPassword()
-                .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(ClearPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
                 .build()
                 .build();
     }
@@ -107,7 +107,7 @@ public class UserPasswordSuiteChild {
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
         CredentialSupport support = simpleToDnRealm.getCredentialSupport(credentialType);
-        assertEquals("Pre identity", CredentialSupport.POSSIBLY_SUPPORTED, support);
+        assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
 
         verifyPasswordSupport(realmIdentity, credentialType);
         verifyPassword(realmIdentity, credentialType, algorithm, password);
@@ -115,7 +115,7 @@ public class UserPasswordSuiteChild {
 
     private void verifyPasswordSupport(RealmIdentity identity, Class<?> credentialType) {
         CredentialSupport credentialSupport = identity.getCredentialSupport(credentialType);
-        assertEquals("Identity level support", CredentialSupport.SUPPORTED, credentialSupport);
+        assertEquals("Identity level support", CredentialSupport.FULLY_SUPPORTED, credentialSupport);
     }
 
     private void verifyPassword(RealmIdentity identity, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException {
