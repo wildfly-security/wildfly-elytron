@@ -61,7 +61,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
     @Override
     public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
         if (credentialSupportMap.isEmpty()) {
-            return CredentialSupport.POSSIBLY_SUPPORTED;
+            return CredentialSupport.UNKNOWN;
         }
         CredentialSupport response = credentialSupportMap.get(credentialType);
         if (response == null) {
@@ -91,7 +91,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
             Object credential = getCredential(credentialType);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null && credentialType.isInstance(credential)) {
-                return CredentialSupport.SUPPORTED;
+                return CredentialSupport.FULLY_SUPPORTED;
             }
 
             return CredentialSupport.UNSUPPORTED;

@@ -66,7 +66,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.POSSIBLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+        return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
     private KeyStore.Entry getEntry(Principal principal) {
@@ -103,7 +103,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
                 if (credentialType.isInstance(password)) {
-                    return CredentialSupport.SUPPORTED;
+                    return CredentialSupport.FULLY_SUPPORTED;
                 } else {
                     return CredentialSupport.UNSUPPORTED;
                 }
@@ -111,11 +111,11 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
                 final Certificate certificate = privateKeyEntry.getCertificate();
-                return credentialType.isInstance(privateKey) || credentialType.isInstance(certificate) || certificate instanceof X509Certificate && X500PrivateCredential.class.isAssignableFrom(credentialType) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(privateKey) || credentialType.isInstance(certificate) || certificate instanceof X509Certificate && X500PrivateCredential.class.isAssignableFrom(credentialType) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                return credentialType.isInstance(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate()) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                return credentialType.isInstance(((KeyStore.SecretKeyEntry) entry).getSecretKey()) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(((KeyStore.SecretKeyEntry) entry).getSecretKey()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             }
             return CredentialSupport.UNSUPPORTED;
         }

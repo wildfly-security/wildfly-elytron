@@ -88,7 +88,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.POSSIBLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+        return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
 
@@ -108,7 +108,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             final Password password = map.get(principal);
-            return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+            return credentialType.isInstance(password) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
         @Override

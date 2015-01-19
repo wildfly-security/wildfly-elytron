@@ -146,27 +146,41 @@ public final class SecurityDomain {
     }
 
     CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        CredentialSupport min, max;
+        SupportLevel obtainMin, obtainMax, verifyMin, verifyMax;
         Iterator<SecurityRealm> iterator = realmMap.values().iterator();
         if (iterator.hasNext()) {
             SecurityRealm realm = iterator.next();
-            min = max = realm.getCredentialSupport(credentialType);
+            CredentialSupport realmSupport = realm.getCredentialSupport(credentialType);
+            obtainMin = obtainMax = realmSupport.obtainableSupportLevel();
+            verifyMin = verifyMax = realmSupport.verificationSupportLevel();
             while (iterator.hasNext()) {
                 realm = iterator.next();
                 final CredentialSupport support = realm.getCredentialSupport(credentialType);
-                if (support.compareTo(min) < 0) { min = support; }
-                if (support.compareTo(max) > 0) { max = support; }
+
+                final SupportLevel obtainable = support.obtainableSupportLevel();
+                final SupportLevel verification = support.verificationSupportLevel();
+
+                if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
+                if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
+
+                if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
+                if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
             }
-            if (min == max) return min;
-            if (max == CredentialSupport.UNSUPPORTED) {
-                return CredentialSupport.UNSUPPORTED;
-            } else if (min == CredentialSupport.SUPPORTED) {
-                return CredentialSupport.SUPPORTED;
-            } else {
-                return CredentialSupport.POSSIBLY_SUPPORTED;
-            }
+
+            return CredentialSupport.getCredentialSupport(minMax(obtainMin, obtainMax), minMax(verifyMin, verifyMax));
         } else {
             return CredentialSupport.UNSUPPORTED;
+        }
+    }
+
+    private SupportLevel minMax(SupportLevel min, SupportLevel max) {
+        if (min == max) return min;
+        if (max == SupportLevel.UNSUPPORTED) {
+            return SupportLevel.UNSUPPORTED;
+        } else if (min == SupportLevel.SUPPORTED) {
+            return SupportLevel.SUPPORTED;
+        } else {
+            return SupportLevel.POSSIBLY_SUPPORTED;
         }
     }
 
