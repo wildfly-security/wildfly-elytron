@@ -31,6 +31,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.RealmIdentity;
+import org.wildfly.security.auth.provider.RealmUnavailableException;
 import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -62,7 +63,7 @@ public class PrincipalMappingSuiteChild {
     }
 
     @Test
-    public void testSimpleToDn() {
+    public void testSimpleToDn() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()
@@ -85,7 +86,7 @@ public class PrincipalMappingSuiteChild {
     }
 
     @Test
-    public void testDnToSimple() {
+    public void testDnToSimple() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()
@@ -131,7 +132,7 @@ public class PrincipalMappingSuiteChild {
 //    }
 
     @Test
-    public void testSimpleToSimpleValidate() {
+    public void testSimpleToSimpleValidate() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()
@@ -156,7 +157,7 @@ public class PrincipalMappingSuiteChild {
     }
 
     @Test
-    public void testSimpleToSimpleReload() {
+    public void testSimpleToSimpleReload() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()
@@ -181,7 +182,7 @@ public class PrincipalMappingSuiteChild {
     }
 
     @Test
-    public void testDnToDnNoLookup() {
+    public void testDnToDnNoLookup() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()
@@ -204,7 +205,7 @@ public class PrincipalMappingSuiteChild {
     }
 
     @Test
-    public void testDnToDnVerify() {
+    public void testDnToDnVerify() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping()

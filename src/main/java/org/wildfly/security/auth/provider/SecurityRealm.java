@@ -41,7 +41,7 @@ public interface SecurityRealm {
      * @param name The name to use when creating the {@link RealmIdentity}
      * @return The {@link RealmIdentity} for the provided {@code name} or {@code null}
      */
-    RealmIdentity createRealmIdentity(String name);
+    RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
      * Create a {@link RealmIdentity} from an existing {@link Principal}.
@@ -51,7 +51,7 @@ public interface SecurityRealm {
      * @param principal The principal to use to create the {@link RealmIdentity}
      * @return The {@link RealmIdentity} for the provided {@code principal} or {@code null}
      */
-    RealmIdentity createRealmIdentity(Principal principal);
+    RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException;
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
@@ -60,6 +60,6 @@ public interface SecurityRealm {
      * @param credentialType the credential type
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(Class<?> credentialType);
+    CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
 
 }

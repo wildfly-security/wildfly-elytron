@@ -38,7 +38,7 @@ public interface RealmIdentity {
      *
      * @return The {@link Principal} for this identity.
      */
-    Principal getPrincipal();
+    Principal getPrincipal() throws RealmUnavailableException;
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
@@ -47,7 +47,7 @@ public interface RealmIdentity {
      * @param credentialType the credential type
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(Class<?> credentialType);
+    CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
 
     /**
      * Acquire a credential of the given type.
@@ -56,7 +56,7 @@ public interface RealmIdentity {
      * @param <C> the credential type
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
-    <C> C getCredential(Class<C> credentialType);
+    <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
 
     /**
      * Verify the given credential.  The result is one of the following:
@@ -69,7 +69,7 @@ public interface RealmIdentity {
      * @param credential the credential to verify
      * @return the non-{@code null} verification result
      */
-    VerificationResult verifyCredential(Object credential);
+    boolean verifyCredential(Object credential) throws RealmUnavailableException;
 
     /**
      * Dispose this realm identity after a completed authentication attempt.

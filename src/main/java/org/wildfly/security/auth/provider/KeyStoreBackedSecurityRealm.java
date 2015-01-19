@@ -170,22 +170,22 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             };
         }
 
-        public VerificationResult verifyCredential(final Object credential) {
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(principal);
-            if (entry == null) return VerificationResult.DENIED;
+            if (entry == null) return false;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
                 if (credential instanceof char[]) try {
                     final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                    return passwordFactory.verify(password, (char[]) credential) ? VerificationResult.VERIFIED : VerificationResult.DENIED;
+                    return passwordFactory.verify(password, (char[]) credential) ? true : false;
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                    return VerificationResult.UNVERIFIED;
+                    throw new RealmUnavailableException(e);
                 } else {
-                    return VerificationResult.UNVERIFIED;
+                    return false;
                 }
             } else {
                 // no other known verifiable credential types
-                return VerificationResult.DENIED;
+                return false;
             }
         }
     }

@@ -133,15 +133,15 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             };
         }
 
-        public VerificationResult verifyCredential(final Object credential) {
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             if (credential instanceof char[]) try {
                 final Password password = map.get(principal);
                 final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                return passwordFactory.verify(password, (char[]) credential) ? VerificationResult.VERIFIED : VerificationResult.DENIED;
+                return passwordFactory.verify(password, (char[]) credential) ? true : false;
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                return VerificationResult.UNVERIFIED;
+                throw new RealmUnavailableException(e);
             } else {
-                return VerificationResult.UNVERIFIED;
+                return false;
             }
         }
     }
