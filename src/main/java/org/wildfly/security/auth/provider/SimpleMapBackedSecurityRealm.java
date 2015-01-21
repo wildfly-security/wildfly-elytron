@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,6 +29,7 @@ import java.util.Set;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -117,6 +120,18 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         public <C> C getCredential(Class<C> credentialType) {
             final Password password = map.get(principal);
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
+        }
+
+        public VerificationResult verifyCredential(final Object credential) {
+            if (credential instanceof char[]) try {
+                final Password password = map.get(principal);
+                final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                return passwordFactory.verify(password, (char[]) credential) ? VerificationResult.VERIFIED : VerificationResult.DENIED;
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                return VerificationResult.UNVERIFIED;
+            } else {
+                return VerificationResult.UNVERIFIED;
+            }
         }
     }
 }

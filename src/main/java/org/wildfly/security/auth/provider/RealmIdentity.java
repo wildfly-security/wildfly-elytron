@@ -64,4 +64,17 @@ public interface RealmIdentity {
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
     <C> C getCredential(Class<C> credentialType);
+
+    /**
+     * Verify the given credential.  The result is one of the following:
+     * <ul>
+     *     <li>{@link VerificationResult#DENIED} - the credential is not valid</li>
+     *     <li>{@link VerificationResult#UNVERIFIED} - the credential is not supported or could not be verified; retry with another credential type</li>
+     *     <li>{@link VerificationResult#VERIFIED} - the credential is valid and verified</li>
+     * </ul>
+     *
+     * @param credential the credential to verify
+     * @return the non-{@code null} verification result
+     */
+    VerificationResult verifyCredential(Object credential);
 }

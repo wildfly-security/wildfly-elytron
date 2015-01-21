@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -33,6 +34,8 @@ import javax.security.auth.x500.X500PrivateCredential;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.PasswordSpec;
 
 /**
  * A {@link KeyStore} backed {@link SecurityRealm} implementation.
@@ -155,6 +158,25 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 }
             }
             return null;
+        }
+
+        public VerificationResult verifyCredential(final Object credential) {
+            final KeyStore.Entry entry = getEntry(principal);
+            if (entry == null) return VerificationResult.DENIED;
+            if (entry instanceof PasswordEntry) {
+                final Password password = ((PasswordEntry) entry).getPassword();
+                if (credential instanceof char[]) try {
+                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                    return passwordFactory.verify(password, (char[]) credential) ? VerificationResult.VERIFIED : VerificationResult.DENIED;
+                } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                    return VerificationResult.UNVERIFIED;
+                } else {
+                    return VerificationResult.UNVERIFIED;
+                }
+            } else {
+                // no other known verifiable credential types
+                return VerificationResult.DENIED;
+            }
         }
     }
 }
