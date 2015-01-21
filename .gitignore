@@ -39,3 +39,5 @@ server.log
 hs_err_pid*.log
 # ignore mvn-rpmbuild repo
 /.m2
+settings.xml
+.codenvy
