@@ -837,16 +837,16 @@ public class StringPrepTest {
     // ---------------------- helpers ----------------------
 
     private String codePointToString(int codePoint) {
-        ByteStringBuilder b = new ByteStringBuilder();
-        b.appendUtf8Raw(codePoint);
-        return new String(b.toArray(), StandardCharsets.UTF_8);
+        StringBuffer sb = new StringBuffer();
+        sb.appendCodePoint(codePoint);
+        return sb.toString();
     }
 
     private void testForbidChars(long profile, int codePoint) throws Exception {
         try {
             ByteStringBuilder b = new ByteStringBuilder();
             StringPrep.encode(codePointToString(codePoint), b, profile);
-            throw new Exception("Not throwed IllegalArgumentException for " + Integer.toHexString(codePoint) + "!");
+            Assert.fail("Not throwed IllegalArgumentException for " + Integer.toHexString(codePoint) + "!");
         } catch (IllegalArgumentException e) {}
     }
 

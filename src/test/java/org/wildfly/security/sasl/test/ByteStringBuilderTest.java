@@ -167,7 +167,7 @@ public class ByteStringBuilderTest {
         Assert.assertArrayEquals(new byte[]{(byte) 0x00, (byte) 0x61, (byte) 0x62, (byte) 0x63, (byte) 0xE4, (byte) 0xBD, (byte) 0xA0}, b.toArray());
     }
 
-    @Test // failing
+    @Test
     public void testAppendPartOfString() throws Exception {
         ByteStringBuilder b = new ByteStringBuilder(new byte[]{0x68}); // "h"
         b.append("abcd", 1, 2); // append "bc"

@@ -21,11 +21,13 @@ package org.wildfly.security.sasl.util;
 import java.text.Normalizer;
 
 /**
+ * Preparation of Internationalized Strings ("stringprep") by RFC 3454
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 public final class StringPrep {
-    // these flags must keep their numeric values permanently,, and must not conflict
+    // these flags must keep their numeric values permanently, and must not conflict
 
     // mappings
 
