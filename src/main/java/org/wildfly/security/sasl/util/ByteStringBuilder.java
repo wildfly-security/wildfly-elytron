@@ -40,8 +40,12 @@ public final class ByteStringBuilder {
     }
 
     public ByteStringBuilder(final byte[] content) {
-        this.content = content.clone();
-        this.length = this.content.length;
+        if (content != null && content.length != 0) {
+            this.content = content.clone();
+            this.length = this.content.length;
+        } else {
+            this.content = new byte[16];
+        }
     }
 
     public ByteStringBuilder append(boolean b) {
@@ -351,7 +355,7 @@ public final class ByteStringBuilder {
         final int cl = content.length;
         final int length = this.length;
         if (length == cl) {
-            content = this.content = Arrays.copyOf(content, cl + (cl + 1 >> 1));
+            content = this.content = Arrays.copyOf(content, cl + (cl + 1 >> 1)); // content must not be blank
         }
         content[length] = b;
         this.length = length + 1;

@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.sasl.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
@@ -846,7 +846,7 @@ public class StringPrepTest {
         try {
             ByteStringBuilder b = new ByteStringBuilder();
             StringPrep.encode(codePointToString(codePoint), b, profile);
-            Assert.fail("Not throwed IllegalArgumentException for " + Integer.toHexString(codePoint) + "!");
+            fail("Not throwed IllegalArgumentException for " + Integer.toHexString(codePoint) + "!");
         } catch (IllegalArgumentException e) {}
     }
 
@@ -868,7 +868,7 @@ public class StringPrepTest {
     }
 
     @Test
-    public void testOwnCodePointToStringConversion() throws Exception {
+    public void testHelpersCodePointToStringConversion() throws Exception {
         assertEquals("\uD800", codePointToString(0xD800));
         assertEquals("\uDBB6\uDC00", codePointToString(0xFD800));
         assertEquals("\uDBFF\uDFFF", codePointToString(0x10FFFF));
