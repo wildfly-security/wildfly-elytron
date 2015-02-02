@@ -18,24 +18,22 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.GeneralSecurityException;
+
 /**
  * An exception to indicate a general underlying failure of the realm.
  *
- * Realms should only make use of this exception for general failures within the realm such as being unable to communiucate with
+ * Realms should only make use of this exception for general failures within the realm such as being unable to communicate with
  * a remote store of users rather than to report errors with a specific authentication request.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class RealmUnavailableException extends Exception {
+public class RealmUnavailableException extends GeneralSecurityException {
 
     private static final long serialVersionUID = 5893125522523952643L;
 
     public RealmUnavailableException() {
         super();
-    }
-
-    public RealmUnavailableException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
     }
 
     public RealmUnavailableException(String message, Throwable cause) {
