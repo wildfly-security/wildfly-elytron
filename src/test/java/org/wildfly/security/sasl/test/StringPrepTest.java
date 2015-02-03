@@ -837,9 +837,13 @@ public class StringPrepTest {
     // ---------------------- helpers ----------------------
 
     private String codePointToString(int codePoint) {
-        StringBuffer sb = new StringBuffer();
-        sb.appendCodePoint(codePoint);
-        return sb.toString();
+        if (codePoint <= 0xFFFF) {
+            return new String(new char[]{(char) codePoint}); // allow separated surrogates, but only 2-bytes codepoints
+        } else {
+            ByteStringBuilder b = new ByteStringBuilder();
+            b.appendUtf8Raw(codePoint);
+            return new String(b.toArray(), StandardCharsets.UTF_8); // String(byte[]) not permit separated surrogates
+        }
     }
 
     private void testForbidChars(long profile, int codePoint) throws Exception {
@@ -869,6 +873,7 @@ public class StringPrepTest {
 
     @Test
     public void testHelpersCodePointToStringConversion() throws Exception {
+        assertArrayEquals(new char[]{(char)0xD800}, codePointToString(0xD800).toCharArray());
         assertEquals("\uD800", codePointToString(0xD800));
         assertEquals("\uDBB6\uDC00", codePointToString(0xFD800));
         assertEquals("\uDBFF\uDFFF", codePointToString(0x10FFFF));
