@@ -106,10 +106,10 @@ public final class PermissionActions {
 
     private static final ClassValue<Info<?>> storedInfo = new ClassValue<Info<?>>() {
         protected Info<?> computeValue(final Class<?> type) {
-            return computeReal(type.asSubclass(Enum.class));
+            return computeReal(type);
         }
 
-        private <E extends Enum<E>> Info<E> computeReal(final Class<E> type) {
+        private <E> Info<E> computeReal(final Class<E> type) {
             final TrieNode<E> root = new TrieNode<>();
             final E[] enumConstants = type.getEnumConstants();
             for (E e : enumConstants) {
