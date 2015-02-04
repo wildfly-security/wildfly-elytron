@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,6 +29,7 @@ import java.util.Set;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -85,7 +88,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.POSSIBLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+        return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
 
@@ -105,7 +108,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             final Password password = map.get(principal);
-            return credentialType.isInstance(password) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+            return credentialType.isInstance(password) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
         @Override
@@ -128,6 +131,17 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
                 public void dispose() {
                 }
             };
+        }
+
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            if (credential instanceof char[]) try {
+                final Password password = map.get(principal);
+                return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                throw new RealmUnavailableException(e);
+            } else {
+                return false;
+            }
         }
     }
 }

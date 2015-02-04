@@ -111,6 +111,14 @@ public final class ServerAuthenticationContext {
             RealmIdentity identity;
 
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                try {
+                    innerHandle(callbacks);
+                } catch (RealmUnavailableException e) {
+                    throw new IOException(e);
+                }
+            }
+
+            private void innerHandle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException, RealmUnavailableException {
                 for (Callback callback : callbacks) {
                     if (callback instanceof NameCallback) {
                         // login name
@@ -167,7 +175,7 @@ public final class ServerAuthenticationContext {
                             throw new SaslException("No user identity loaded for credential verification");
                         }
                         for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
-                            if (identity.getCredentialSupport(allowedType).mayBeSupported()) {
+                            if (identity.getCredentialSupport(allowedType).mayBeObtainable()) {
                                 final Object credential = identity.getCredential(allowedType);
                                 if (credential != null) {
                                     credentialCallback.setCredential(credential);

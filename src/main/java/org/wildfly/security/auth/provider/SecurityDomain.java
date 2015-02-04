@@ -79,8 +79,9 @@ public final class SecurityDomain {
      *
      * @param name The name to map.
      * @return The identity for the name.
+     * @throws RealmUnavailableException
      */
-    public RealmIdentity mapName(String name) {
+    public RealmIdentity mapName(String name) throws RealmUnavailableException {
         for (NameRewriter rewriter : preRealmRewriters) {
             name = rewriter.rewriteName(name);
         }
@@ -146,33 +147,61 @@ public final class SecurityDomain {
     }
 
     CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        CredentialSupport min, max;
+        SupportLevel obtainMin, obtainMax, verifyMin, verifyMax;
+        obtainMin = obtainMax = verifyMin = verifyMax = null;
         Iterator<SecurityRealm> iterator = realmMap.values().iterator();
         if (iterator.hasNext()) {
-            SecurityRealm realm = iterator.next();
-            min = max = realm.getCredentialSupport(credentialType);
+
             while (iterator.hasNext()) {
-                realm = iterator.next();
+                SecurityRealm realm = iterator.next();
+                try {
                 final CredentialSupport support = realm.getCredentialSupport(credentialType);
-                if (support.compareTo(min) < 0) { min = support; }
-                if (support.compareTo(max) > 0) { max = support; }
+
+                final SupportLevel obtainable = support.obtainableSupportLevel();
+                final SupportLevel verification = support.verificationSupportLevel();
+
+                if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
+                    obtainMin = obtainMax = obtainable;
+                    verifyMin = verifyMax = verification;
+                } else {
+                    if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
+                    if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
+
+                    if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
+                    if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
+                }
+                } catch (RealmUnavailableException e) {
+                }
             }
-            if (min == max) return min;
-            if (max == CredentialSupport.UNSUPPORTED) {
+
+            if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
                 return CredentialSupport.UNSUPPORTED;
-            } else if (min == CredentialSupport.SUPPORTED) {
-                return CredentialSupport.SUPPORTED;
             } else {
-                return CredentialSupport.POSSIBLY_SUPPORTED;
+                return CredentialSupport.getCredentialSupport(minMax(obtainMin, obtainMax), minMax(verifyMin, verifyMax));
             }
         } else {
             return CredentialSupport.UNSUPPORTED;
         }
     }
 
+    private SupportLevel minMax(SupportLevel min, SupportLevel max) {
+        if (min == max) return min;
+        if (max == SupportLevel.UNSUPPORTED) {
+            return SupportLevel.UNSUPPORTED;
+        } else if (min == SupportLevel.SUPPORTED) {
+            return SupportLevel.SUPPORTED;
+        } else {
+            return SupportLevel.POSSIBLY_SUPPORTED;
+        }
+    }
+
     CredentialSupport getCredentialSupport(final String realmName, final Class<?> credentialType) {
         final SecurityRealm realm = getRealm(realmName);
-        return realm.getCredentialSupport(credentialType);
+        try {
+            return realm.getCredentialSupport(credentialType);
+        } catch (RealmUnavailableException e) {
+            return CredentialSupport.UNSUPPORTED;
+        }
     }
 
     SecurityIdentity getCurrentSecurityIdentity() {

@@ -30,6 +30,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.provider.RealmIdentity;
+import org.wildfly.security.auth.provider.RealmUnavailableException;
 import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -71,10 +72,10 @@ public class UserPasswordSuiteChild {
                 .setNameAttribute("uid")
                 .build()
                 .userPassword()
-                .addCredentialSupport(ClearPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
-                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.POSSIBLY_SUPPORTED)
+                .addCredentialSupport(ClearPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
                 .build()
                 .build();
     }
@@ -104,21 +105,21 @@ public class UserPasswordSuiteChild {
         performSimpleNameTest("cryptUser", BSDUnixDESCryptPassword.class, BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptIt".toCharArray());
     }
 
-    private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException {
+    private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
         CredentialSupport support = simpleToDnRealm.getCredentialSupport(credentialType);
-        assertEquals("Pre identity", CredentialSupport.POSSIBLY_SUPPORTED, support);
+        assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
 
         verifyPasswordSupport(realmIdentity, credentialType);
         verifyPassword(realmIdentity, credentialType, algorithm, password);
     }
 
-    private void verifyPasswordSupport(RealmIdentity identity, Class<?> credentialType) {
+    private void verifyPasswordSupport(RealmIdentity identity, Class<?> credentialType) throws RealmUnavailableException {
         CredentialSupport credentialSupport = identity.getCredentialSupport(credentialType);
-        assertEquals("Identity level support", CredentialSupport.SUPPORTED, credentialSupport);
+        assertEquals("Identity level support", CredentialSupport.FULLY_SUPPORTED, credentialSupport);
     }
 
-    private void verifyPassword(RealmIdentity identity, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException {
+    private void verifyPassword(RealmIdentity identity, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         Password loadedPassword = (Password) identity.getCredential(credentialType);
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);

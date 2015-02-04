@@ -90,7 +90,7 @@ class LdapSecurityRealm implements SecurityRealm {
 
         for (CredentialLoader current : credentialLoaders) {
             CredentialSupport support = current.getCredentialSupport(dirContextFactory, credentialType);
-            if (support.isDefinitelySupported()) {
+            if (support.isDefinitelyObtainable()) {
                 // One claiming it is definitely supported is enough!
                 return support;
             }
@@ -174,11 +174,11 @@ class LdapSecurityRealm implements SecurityRealm {
 
             loadNames();
             for (CredentialLoader current : credentialLoaders) {
-                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeSupported()) {
+                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
                     IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, distinguishedName);
 
                     CredentialSupport temp = icl.getCredentialSupport(credentialType);
-                    if (temp != null && temp.isDefinitelySupported()) {
+                    if (temp != null && temp.isDefinitelyObtainable()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
                     }
@@ -205,7 +205,7 @@ class LdapSecurityRealm implements SecurityRealm {
 
             loadNames();
             for (CredentialLoader current : credentialLoaders) {
-                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeSupported()) {
+                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
                     IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, distinguishedName);
 
                     C credential = icl.getCredential(credentialType);
@@ -232,6 +232,10 @@ class LdapSecurityRealm implements SecurityRealm {
                 public void dispose() {
                 }
             };
+        }
+
+        public boolean verifyCredential(final Object credential) {
+            return false;
         }
     }
 

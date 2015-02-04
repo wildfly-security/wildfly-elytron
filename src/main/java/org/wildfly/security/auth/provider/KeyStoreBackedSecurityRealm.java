@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -33,6 +34,7 @@ import javax.security.auth.x500.X500PrivateCredential;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A {@link KeyStore} backed {@link SecurityRealm} implementation.
@@ -64,7 +66,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
-        return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.POSSIBLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+        return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
     private KeyStore.Entry getEntry(Principal principal) {
@@ -101,7 +103,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
                 if (credentialType.isInstance(password)) {
-                    return CredentialSupport.SUPPORTED;
+                    return CredentialSupport.FULLY_SUPPORTED;
                 } else {
                     return CredentialSupport.UNSUPPORTED;
                 }
@@ -109,11 +111,11 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
                 final Certificate certificate = privateKeyEntry.getCertificate();
-                return credentialType.isInstance(privateKey) || credentialType.isInstance(certificate) || certificate instanceof X509Certificate && X500PrivateCredential.class.isAssignableFrom(credentialType) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(privateKey) || credentialType.isInstance(certificate) || certificate instanceof X509Certificate && X500PrivateCredential.class.isAssignableFrom(credentialType) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                return credentialType.isInstance(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate()) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                return credentialType.isInstance(((KeyStore.SecretKeyEntry) entry).getSecretKey()) ? CredentialSupport.SUPPORTED : CredentialSupport.UNSUPPORTED;
+                return credentialType.isInstance(((KeyStore.SecretKeyEntry) entry).getSecretKey()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
             }
             return CredentialSupport.UNSUPPORTED;
         }
@@ -166,6 +168,24 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 public void dispose() {
                 }
             };
+        }
+
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            final KeyStore.Entry entry = getEntry(principal);
+            if (entry == null) return false;
+            if (entry instanceof PasswordEntry) {
+                final Password password = ((PasswordEntry) entry).getPassword();
+                if (credential instanceof char[]) try {
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                    throw new RealmUnavailableException(e);
+                } else {
+                    return false;
+                }
+            } else {
+                // no other known verifiable credential types
+                return false;
+            }
         }
     }
 }
