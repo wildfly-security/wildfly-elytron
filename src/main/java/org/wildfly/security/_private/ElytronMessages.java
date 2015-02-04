@@ -172,4 +172,5 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 40, value = "Proxied SASL authentication failed")
     SaslException saslProxyAuthenticationFailed();
+
 }
