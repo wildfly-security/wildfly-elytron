@@ -41,13 +41,6 @@ public interface RealmIdentity {
     Principal getPrincipal();
 
     /**
-     * Obtain the name of the realm this identity is associated with,
-     *
-     * @return The realm name.
-     */
-    String getRealmName();
-
-    /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
      * identity.
      *
@@ -64,4 +57,16 @@ public interface RealmIdentity {
      * @return the credential, or {@code null} if the principal has no credential of that type
      */
     <C> C getCredential(Class<C> credentialType);
+
+    /**
+     * Dispose this realm identity after a completed authentication attempt.
+     */
+    void dispose();
+
+    /**
+     * Get an authenticated realm identity for this pre-authenticated identity.
+     *
+     * @return the authenticated realm identity (may not be {@code null})
+     */
+    AuthenticatedRealmIdentity getAuthenticatedRealmIdentity();
 }

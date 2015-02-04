@@ -22,6 +22,7 @@ import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONY
 
 import java.nio.charset.StandardCharsets;
 
+import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -69,6 +70,11 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
                     String name = new String(message, StandardCharsets.UTF_8);
                     if (name.length() > 255) {
                         throw new SaslException("Authentication name string is too long");
+                    }
+                    final AnonymousAuthorizationCallback callback = new AnonymousAuthorizationCallback(name);
+                    handleCallbacks(callback);
+                    if (! callback.isAuthorized()) {
+                        throw new SaslException("Authorization for anonymous access is denied");
                     }
                     negotiationComplete();
                     return null;

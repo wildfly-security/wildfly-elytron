@@ -21,12 +21,19 @@ package org.wildfly.security.auth.provider;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.auth.util.RealmMapper;
+import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.util._private.UnmodifiableArrayList;
 
 /**
  * A security domain.  Security domains encapsulate a set of security policies.
@@ -40,6 +47,8 @@ public final class SecurityDomain {
     private final NameRewriter[] preRealmRewriters;
     private final RealmMapper realmMapper;
     private final NameRewriter[] postRealmRewriters;
+    private final boolean anonymousAllowed;
+    private final ThreadLocal<SecurityIdentity> currentSecurityIdentity = new ThreadLocal<>();
 
     SecurityDomain(final Map<String, SecurityRealm> realmMap, final String defaultRealmName, final NameRewriter[] preRealmRewriters, final RealmMapper realmMapper, final NameRewriter[] postRealmRewriters) {
         assert realmMap.containsKey(defaultRealmName);
@@ -48,6 +57,8 @@ public final class SecurityDomain {
         this.preRealmRewriters = preRealmRewriters;
         this.realmMapper = realmMapper;
         this.postRealmRewriters = postRealmRewriters;
+        // todo configurable
+        anonymousAllowed = false;
     }
 
     /**
@@ -88,6 +99,44 @@ public final class SecurityDomain {
         return securityRealm.createRealmIdentity(name);
     }
 
+    /**
+     * Get an SSL server socket factory that authenticates against this security domain.
+     *
+     * @return the server socket factory
+     */
+    public SSLServerSocketFactory getSslServerSocketFactory() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Get the list of SASL server mechanism names that are provided by the given factory and allowed by this
+     * configuration.
+     *
+     * @param saslServerFactory the SASL server factory
+     * @return the list of mechanism names
+     */
+    public List<String> getSaslServerMechanismNames(SaslServerFactory saslServerFactory) {
+        final String[] names = saslServerFactory.getMechanismNames(Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true"));
+        // todo: filter down based on SASL selection criteria
+        if (names == null || names.length == 0) {
+            return Collections.emptyList();
+        } else if (names.length == 1) {
+            return Collections.singletonList(names[0]);
+        } else {
+            return new UnmodifiableArrayList<>(names);
+        }
+    }
+
+    /**
+     * Determine whether anonymous authorization is allowed.  Note that this applies only to login authentication
+     * protocols and not transport layer security (TLS).
+     *
+     * @return {@code true} if anonymous logins are allowed, {@code false} if anonymous logins are disallowed
+     */
+    public boolean isAnonymousAllowed() {
+        return anonymousAllowed;
+    }
+
     SecurityRealm getRealm(final String realmName) {
         SecurityRealm securityRealm = realmMap.get(realmName);
         if (securityRealm == null) {
@@ -124,6 +173,22 @@ public final class SecurityDomain {
     CredentialSupport getCredentialSupport(final String realmName, final Class<?> credentialType) {
         final SecurityRealm realm = getRealm(realmName);
         return realm.getCredentialSupport(credentialType);
+    }
+
+    SecurityIdentity getCurrentSecurityIdentity() {
+        return currentSecurityIdentity.get();
+    }
+
+    SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+        try {
+            return currentSecurityIdentity.get();
+        } finally {
+            currentSecurityIdentity.set(newIdentity);
+        }
+    }
+
+    void setCurrentSecurityIdentity(SecurityIdentity newIdentity) {
+        currentSecurityIdentity.set(newIdentity);
     }
 
     public static final class Builder {

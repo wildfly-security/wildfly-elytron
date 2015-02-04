@@ -18,7 +18,13 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.util.Map;
+
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 /**
@@ -61,4 +67,32 @@ public final class SaslFactories {
             providerSaslServerFactory
         ));
     }
+
+    private static final String[] NO_STRINGS = new String[0];
+
+    /**
+     * A {@link SaslClientFactory} which does not provide any mechanisms.
+     */
+    public static final SaslClientFactory EMPTY_SASL_CLIENT_FACTORY = new SaslClientFactory() {
+        public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+            return null;
+        }
+
+        public String[] getMechanismNames(final Map<String, ?> props) {
+            return NO_STRINGS;
+        }
+    };
+
+    /**
+     * A {@link SaslServerFactory} which does not provide any mechanisms.
+     */
+    public static final SaslServerFactory EMPTY_SASL_SERVER_FACTORY = new SaslServerFactory() {
+        public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+            return null;
+        }
+
+        public String[] getMechanismNames(final Map<String, ?> props) {
+            return NO_STRINGS;
+        }
+    };
 }

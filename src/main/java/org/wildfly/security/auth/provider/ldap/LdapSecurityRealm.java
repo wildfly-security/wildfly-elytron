@@ -33,6 +33,7 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.provider.AuthenticatedRealmIdentity;
 import org.wildfly.security.auth.provider.CredentialSupport;
 import org.wildfly.security.auth.provider.RealmIdentity;
 import org.wildfly.security.auth.provider.SecurityRealm;
@@ -163,11 +164,6 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public String getRealmName() {
-            return realmName;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definately not supported for a specific principal.
@@ -220,6 +216,22 @@ class LdapSecurityRealm implements SecurityRealm {
             }
 
             return null;
+        }
+
+        @Override
+        public void dispose() {
+        }
+
+        @Override
+        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
+            return new AuthenticatedRealmIdentity() {
+                public Principal getPrincipal() {
+                    return principal;
+                }
+
+                public void dispose() {
+                }
+            };
         }
     }
 

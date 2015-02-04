@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.login;
+package org.wildfly.security.auth;
 
 import java.security.GeneralSecurityException;
 

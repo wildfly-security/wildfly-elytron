@@ -268,6 +268,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                             }
                         }
                         password = (Password) credentialCallback.getCredential();
+                        if (password == null) {
+                            throw new SaslException("No password provided");
+                        }
                         PasswordFactory pf;
                         try {
                             pf = PasswordFactory.getInstance(password.getAlgorithm());
