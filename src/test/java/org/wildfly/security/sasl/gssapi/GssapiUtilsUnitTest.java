@@ -33,7 +33,7 @@ import org.jboss.logging.Logger;
 import org.junit.Test;
 
 /**
- *
+ * Tests of Gssapi helpers (don't require started kerberos server)
  */
 public class GssapiUtilsUnitTest extends AbstractGssapiMechanism {
 

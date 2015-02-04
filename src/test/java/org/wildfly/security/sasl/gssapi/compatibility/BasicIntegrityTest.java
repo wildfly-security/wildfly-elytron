@@ -54,7 +54,7 @@ public class BasicIntegrityTest extends AbstractTest {
                 props.put(Sasl.QOP, "auth-int");
                 props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
                 props.put(Sasl.MAX_BUFFER, Integer.toString(61234));
-                return factory.createSaslClient(new String[]{"GSSAPI"}, null, "sasl", "test_server_1", props, new NoCallbackHandler());
+                return factory.createSaslClient(new String[]{"GSSAPI"}, null, "sasl", TEST_SERVER_1, props, new NoCallbackHandler());
             }
         });
 
@@ -64,7 +64,7 @@ public class BasicIntegrityTest extends AbstractTest {
                 Map<String, String> props = new HashMap<String, String>();
                 props.put(Sasl.QOP, "auth-int");
                 props.put(Sasl.MAX_BUFFER, Integer.toString(64321));
-                return factory.createSaslServer("GSSAPI", "sasl", "test_server_1", props, new AuthorizeOnlyCallbackHandler());
+                return factory.createSaslServer("GSSAPI", "sasl", TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
             }
         });
 

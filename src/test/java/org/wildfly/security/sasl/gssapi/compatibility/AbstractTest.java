@@ -63,7 +63,9 @@ import org.wildfly.security.sasl.gssapi.TestKDC;
 @RunWith(JMockit.class)
 public abstract class AbstractTest {
 
-    protected boolean wildfly = true; // if test should be applied to WildFly or JDK SASL implementation
+    protected boolean wildfly = true; // whether use WildFly or JDK SASL provider
+
+    protected static final String TEST_SERVER_1 = "test_server_1";
 
     protected static TestKDC testKdc;
     protected SaslServer server;

@@ -249,7 +249,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
         Map<String, String> props = new HashMap<String, String>(baseProps);
         props.put(Sasl.QOP, mode.getQop());
 
-        return factory.createSaslServer(GSSAPI, "sasl", "test_server", props, new AuthorizeOnlyCallbackHandler());
+        return factory.createSaslServer(GSSAPI, "sasl", TEST_SERVER_1, props, new AuthorizeOnlyCallbackHandler());
     }
 
     /*
