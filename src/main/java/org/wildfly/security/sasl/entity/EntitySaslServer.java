@@ -36,7 +36,6 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.asn1.ASN1Exception;
@@ -63,16 +62,16 @@ final class EntitySaslServer extends AbstractSaslServer {
 
     private final SecureRandom secureRandom;
     private final Signature signature;
-    private final boolean serverAuth;
+    private final boolean mutual;
     private final String serverName;
     private String authorizationID;
     private byte[] randomB;
 
-    EntitySaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Map<String, ?> props, final Signature signature, final SecureRandom secureRandom) {
+    EntitySaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Map<String, ?> props, final boolean mutual, final Signature signature, final SecureRandom secureRandom) {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.signature = signature;
         this.secureRandom = secureRandom;
-        serverAuth = "true".equals(getStringProperty(props, Sasl.SERVER_AUTH, "false"));
+        this.mutual = mutual;
         this.serverName = serverName;
     }
 
@@ -248,7 +247,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     throw log.saslAuthorizationFailed(clientName, authorizationID);
                 }
 
-                if (serverAuth) {
+                if (mutual) {
                     // Construct TokenBA2, where:
                     // TokenBA2 ::= SEQUENCE {
                     //      randomC     RandomNumber,

@@ -45,14 +45,13 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Signature signature;
         boolean mutual = false;
-        final Object serverAuthValue = props.get(Sasl.SERVER_AUTH);
-        final boolean serverAuth = serverAuthValue instanceof String ? "true".equals((String) serverAuthValue) : false;
+        final boolean serverAuth = Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
         switch (mechanism) {
             case Entity.ENTITY_MUTUAL_RSA_SHA1_ENC:
                 mutual = true;
                 // Fall through
             case Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC:
-                if (serverAuth != mutual) return null;
+                if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_RSA);
                 } catch (NoSuchAlgorithmException e) {
@@ -63,7 +62,7 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                 mutual = true;
                 // Fall through
             case Entity.ENTITY_UNILATERAL_DSA_SHA1:
-                if (serverAuth != mutual) return null;
+                if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_DSA);
                 } catch (NoSuchAlgorithmException e) {
@@ -74,7 +73,7 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                 mutual = true;
                 // Fall through
             case Entity.ENTITY_UNILATERAL_ECDSA_SHA1:
-                if (serverAuth != mutual) return null;
+                if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_ECDSA);
                 } catch (NoSuchAlgorithmException e) {
@@ -94,7 +93,7 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
             } catch (NoSuchAlgorithmException ignored) {
             }
         }
-        final EntitySaslServer server = new EntitySaslServer(mechanism, protocol, serverName, cbh, props, signature, secureRandom);
+        final EntitySaslServer server = new EntitySaslServer(mechanism, protocol, serverName, cbh, props, mutual, signature, secureRandom);
         server.init();
         return server;
     }
@@ -105,12 +104,6 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                 Entity.ENTITY_MUTUAL_RSA_SHA1_ENC,
                 Entity.ENTITY_MUTUAL_DSA_SHA1,
                 Entity.ENTITY_MUTUAL_ECDSA_SHA1,
-            };
-        } else if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "false".equals(props.get(Sasl.SERVER_AUTH))) {
-            return new String[] {
-                Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC,
-                Entity.ENTITY_UNILATERAL_DSA_SHA1,
-                Entity.ENTITY_UNILATERAL_ECDSA_SHA1
             };
         } else {
             return new String[] {

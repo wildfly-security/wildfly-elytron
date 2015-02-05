@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.asn1.ASN1Exception;
@@ -61,18 +60,18 @@ final class EntitySaslClient extends AbstractSaslClient {
 
     private final SecureRandom secureRandom;
     private final Signature signature;
-    private final boolean serverAuth;
+    private final boolean mutual;
     private byte[] randomA;
     private byte[] randomB;
     private X509Certificate[] clientCertChain;
     private String clientCertUrl;
 
-    EntitySaslClient(final String mechanismName, final Signature signature, final SecureRandom secureRandom, final String protocol,
+    EntitySaslClient(final String mechanismName, final boolean mutual, final Signature signature, final SecureRandom secureRandom, final String protocol,
             final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final Map<String, ?> props) {
         super(mechanismName, protocol, serverName, callbackHandler, authorizationId, false);
         this.signature = signature;
         this.secureRandom = secureRandom;
-        serverAuth = "true".equals(getStringProperty(props, Sasl.SERVER_AUTH, "false"));
+        this.mutual = mutual;
     }
 
     @Override
@@ -234,7 +233,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                 return tokenAB.toArray();
             }
             case ST_RESPONSE_SENT: {
-                if (serverAuth) {
+                if (mutual) {
                     final DERDecoder decoder = new DERDecoder(challenge);
                     Collection<List<?>> entityA = null;
                     try {

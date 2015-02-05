@@ -50,8 +50,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
         String name;
         Signature signature;
         boolean mutual;
-        final Object serverAuthValue = props.get(Sasl.SERVER_AUTH);
-        final boolean serverAuth = serverAuthValue instanceof String ? "true".equals((String) serverAuthValue) : false;
+        final boolean serverAuth = Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
         out: {
             for (String mechanism : mechanisms) {
                 mutual = false;
@@ -60,7 +59,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
                         mutual = true;
                         // Fall through
                     case Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC:
-                        if (serverAuth != mutual) break;
+                        if (serverAuth && ! mutual) break;
                         name = mechanism;
                         try {
                             signature = Signature.getInstance(SHA1_WITH_RSA);
@@ -72,7 +71,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
                         mutual = true;
                         // Fall through
                     case Entity.ENTITY_UNILATERAL_DSA_SHA1:
-                        if (serverAuth != mutual) break;
+                        if (serverAuth && ! mutual) break;
                         name = mechanism;
                         try {
                             signature = Signature.getInstance(SHA1_WITH_DSA);
@@ -84,7 +83,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
                         mutual = true;
                         // Fall through
                     case Entity.ENTITY_UNILATERAL_ECDSA_SHA1:
-                        if (serverAuth != mutual) break;
+                        if (serverAuth && ! mutual) break;
                         name = mechanism;
                         try {
                             signature = Signature.getInstance(SHA1_WITH_ECDSA);
@@ -107,7 +106,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
             }
         }
 
-        final EntitySaslClient client = new EntitySaslClient(name, signature, secureRandom, protocol, serverName, cbh, authorizationId, props);
+        final EntitySaslClient client = new EntitySaslClient(name, mutual, signature, secureRandom, protocol, serverName, cbh, authorizationId, props);
         client.init();
         return client;
     }
@@ -118,12 +117,6 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
                 Entity.ENTITY_MUTUAL_RSA_SHA1_ENC,
                 Entity.ENTITY_MUTUAL_DSA_SHA1,
                 Entity.ENTITY_MUTUAL_ECDSA_SHA1,
-            };
-        } else if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "false".equals(props.get(Sasl.SERVER_AUTH))) {
-            return new String[] {
-                Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC,
-                Entity.ENTITY_UNILATERAL_DSA_SHA1,
-                Entity.ENTITY_UNILATERAL_ECDSA_SHA1
             };
         } else {
             return new String[] {
