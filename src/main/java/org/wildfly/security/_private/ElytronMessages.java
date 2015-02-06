@@ -180,4 +180,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 42, value = "No SASL server mechanism \"%s\" is available with the current configuration from %s")
     SaslException saslNoServerMechanism(String mechName, SaslServerFactory serverFactory);
+
+    @Message(id = 43, value = "A revertable load is not possible until the KeyStore has first been initialised")
+    IllegalStateException revertableLoadNotPossible();
+
+    @Message(id = 44, value = "Unable to create a new KeyStore instance")
+    IOException unableToCreateKeyStore(@Cause Exception cause);
 }
