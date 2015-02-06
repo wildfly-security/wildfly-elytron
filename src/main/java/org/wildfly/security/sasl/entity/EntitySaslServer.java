@@ -111,12 +111,12 @@ final class EntitySaslServer extends AbstractSaslServer {
                     encoder.startSequence();
 
                     // randomB
-                    randomB = EntityUtils.encodeRandomNumber(encoder, secureRandom);
+                    randomB = EntityUtil.encodeRandomNumber(encoder, secureRandom);
 
                     // entityB
                     if ((serverName != null) && (! serverName.isEmpty())) {
                         encoder.encodeImplicit(0);
-                        EntityUtils.encodeGeneralNames(encoder, DNS_NAME, serverName);
+                        EntityUtil.encodeGeneralNames(encoder, DNS_NAME, serverName);
                     }
 
                     // certPref
@@ -125,7 +125,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     Collection<TrustedAuthority> trustedAuthorities = trustedAuthoritiesCallback.getTrustedAuthorities();
                     if ((trustedAuthorities != null) && (! trustedAuthorities.isEmpty())) {
                         encoder.encodeImplicit(1);
-                        EntityUtils.encodeTrustedAuthorities(encoder, trustedAuthorities);
+                        EntityUtil.encodeTrustedAuthorities(encoder, trustedAuthorities);
                     }
                     encoder.endSequence();
                 } catch (ASN1Exception e) {
@@ -147,12 +147,12 @@ final class EntitySaslServer extends AbstractSaslServer {
                     randomA = decoder.decodeOctetString();
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 0, true)) {
                         decoder.decodeImplicit(0);
-                        entityB = EntityUtils.decodeGeneralNames(decoder);
+                        entityB = EntityUtil.decodeGeneralNames(decoder);
                     }
 
                     // Get the client's certificate data and verify it
                     decoder.startExplicit(1);
-                    clientCertChain = EntityUtils.decodeCertificateData(decoder);
+                    clientCertChain = EntityUtil.decodeCertificateData(decoder);
                     decoder.endExplicit();
                     clientCert = clientCertChain[0];
 
@@ -168,8 +168,8 @@ final class EntitySaslServer extends AbstractSaslServer {
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);
-                        authID = EntityUtils.decodeGeneralNames(decoder);
-                        authorizationID = EntityUtils.getDistinguishedNameFromGeneralNames(authID);
+                        authID = EntityUtil.decodeGeneralNames(decoder);
+                        authorizationID = EntityUtil.getDistinguishedNameFromGeneralNames(authID);
                     } else {
                         // Use the identity from the client's X.509 certificate
                         authorizationID = clientName;
@@ -188,11 +188,11 @@ final class EntitySaslServer extends AbstractSaslServer {
                     tbsEncoder.encodeOctetString(randomB);
                     if (entityB != null) {
                         tbsEncoder.encodeImplicit(0);
-                        EntityUtils.encodeGeneralNames(tbsEncoder, entityB);
+                        EntityUtil.encodeGeneralNames(tbsEncoder, entityB);
                     }
                     if (authID != null) {
                         tbsEncoder.encodeImplicit(1);
-                        EntityUtils.encodeGeneralNames(tbsEncoder, authID);
+                        EntityUtil.encodeGeneralNames(tbsEncoder, authID);
                     }
                     tbsEncoder.endSequence();
 
@@ -228,7 +228,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     serverCertUrl = (String) credentialCallback.getCredential();
                     if (serverCertUrl != null) {
                         try {
-                            serverCert = EntityUtils.getCertificateFromUrl(serverCertUrl);
+                            serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
                         } catch (IOException e) {
                             throw new SaslException("Unable to obtain server certificate", e);
                         }
@@ -236,7 +236,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         throw new SaslException("Invalid server certificate data");
                     }
                 }
-                if (! EntityUtils.matchGeneralNames(entityB, serverCert)) {
+                if (! EntityUtil.matchGeneralNames(entityB, serverCert)) {
                     throw new SaslException("Server identifier mismatch");
                 }
 
@@ -275,7 +275,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         encoder.startSequence();
 
                         // randomC
-                        byte[] randomC = EntityUtils.encodeRandomNumber(encoder, secureRandom);
+                        byte[] randomC = EntityUtil.encodeRandomNumber(encoder, secureRandom);
 
                         // entityA
                         Collection<List<?>> clientSubjectAltNames = null;
@@ -288,12 +288,12 @@ final class EntitySaslServer extends AbstractSaslServer {
                             }
                         }
                         encoder.encodeImplicit(0);
-                        EntityUtils.encodeGeneralNames(encoder, clientName, clientSubjectAltNames);
+                        EntityUtil.encodeGeneralNames(encoder, clientName, clientSubjectAltNames);
 
                         // certB
                         encoder.startExplicit(1);
                         if ((serverCertChain != null) && (serverCertChain.length > 0)) {
-                            EntityUtils.encodeX509CertificateChain(encoder, serverCertChain);
+                            EntityUtil.encodeX509CertificateChain(encoder, serverCertChain);
                         } else if (serverCertUrl != null) {
                             // Use a certificate URL instead
                             encoder.encodeIA5String(serverCertUrl);
@@ -315,7 +315,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         tbsEncoder.encodeOctetString(randomB);
                         tbsEncoder.encodeOctetString(randomA);
                         tbsEncoder.encodeOctetString(randomC);
-                        EntityUtils.encodeGeneralNames(tbsEncoder, clientName, clientSubjectAltNames);
+                        EntityUtil.encodeGeneralNames(tbsEncoder, clientName, clientSubjectAltNames);
                         tbsEncoder.endSequence();
 
                         // Signature
@@ -329,7 +329,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         }
 
                         encoder.startSequence();
-                        EntityUtils.encodeAlgorithmIdentifier(encoder, signature.getAlgorithm());
+                        EntityUtil.encodeAlgorithmIdentifier(encoder, signature.getAlgorithm());
                         encoder.encodeBitString(signatureBytes);
                         encoder.endSequence();
 

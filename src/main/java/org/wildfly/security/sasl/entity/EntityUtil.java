@@ -55,7 +55,7 @@ import org.wildfly.security.auth.provider.X509CertificateCredentialDecoder;
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class EntityUtils {
+class EntityUtil {
 
     private static final byte[] randomCharDictionary;
 
