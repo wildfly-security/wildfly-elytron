@@ -20,6 +20,8 @@ package org.wildfly.security.sasl.util;
 
 import java.text.Normalizer;
 
+import org.wildfly.security.util.ByteStringBuilder;
+
 /**
  * Preparation of Internationalized Strings ("stringprep") by RFC 3454
  *

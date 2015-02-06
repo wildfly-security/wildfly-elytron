@@ -33,7 +33,8 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.digest._private.DigestUtil;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
+
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>

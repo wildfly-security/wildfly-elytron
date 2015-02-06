@@ -20,7 +20,7 @@ package org.wildfly.security.asn1;
 
 import java.io.Flushable;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * An interface for encoding ASN.1 values.

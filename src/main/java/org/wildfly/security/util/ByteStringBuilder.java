@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.util;
+package org.wildfly.security.util;
 
 import java.security.DigestException;
 import java.security.MessageDigest;
@@ -24,9 +24,6 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import javax.crypto.Mac;
-
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

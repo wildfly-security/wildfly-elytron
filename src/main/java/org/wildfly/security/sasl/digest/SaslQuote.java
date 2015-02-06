@@ -18,7 +18,7 @@
 
 package org.wildfly.security.sasl.digest;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * Utility class used to convert string to SASL quoted strings

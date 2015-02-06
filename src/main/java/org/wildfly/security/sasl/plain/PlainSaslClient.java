@@ -30,9 +30,9 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.sasl.util.StringPrep;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * The {@code PLAIN} SASL client implementation.

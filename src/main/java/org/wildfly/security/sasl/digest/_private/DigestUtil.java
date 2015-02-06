@@ -19,8 +19,8 @@ package org.wildfly.security.sasl.digest._private;
 
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest.Digest;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteStringBuilder;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;

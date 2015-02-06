@@ -25,8 +25,8 @@ import java.text.Normalizer;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * Tests of org.wildfly.security.sasl.util.StringPrep by RFC 3454

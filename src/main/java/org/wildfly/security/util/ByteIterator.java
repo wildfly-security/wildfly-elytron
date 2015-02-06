@@ -27,8 +27,6 @@ import java.util.NoSuchElementException;
 
 import javax.crypto.Mac;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
-
 /**
  * A byte iterator.
  *
