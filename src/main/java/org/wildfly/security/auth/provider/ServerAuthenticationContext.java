@@ -38,7 +38,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
-import org.wildfly.security.auth.callback.CallbackUtils;
+import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
@@ -201,7 +201,7 @@ public final class ServerAuthenticationContext {
                     } else if (callback instanceof RealmIdentityCallback) {
                         ((RealmIdentityCallback) callback).setRealmIdentity(identity);
                     } else {
-                        CallbackUtils.unsupported(callback);
+                        CallbackUtil.unsupported(callback);
                     }
                 }
             }

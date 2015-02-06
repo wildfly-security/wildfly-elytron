@@ -24,7 +24,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -59,7 +59,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     }
 
     BCryptPasswordImpl(final ClearPasswordSpec clearPasswordSpec) {
-        this.salt = PasswordUtils.generateRandomSalt(BCRYPT_SALT_SIZE);
+        this.salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
         this.iterationCount = DEFAULT_ITERATION_COUNT;
         this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(clearPasswordSpec.getEncodedPassword()));
     }
@@ -69,7 +69,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     }
 
     private BCryptPasswordImpl(final char[] password, final HashedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this.salt = spec.getSalt() == null ? PasswordUtils.generateRandomSalt(BCRYPT_SALT_SIZE) : spec.getSalt().clone();
+        this.salt = spec.getSalt() == null ? PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE) : spec.getSalt().clone();
         this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();
         this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
     }
@@ -293,7 +293,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      * </p>
      * <p>
      * This implementation differs from the above algorithm in that it returns the encrypted ctext in its raw form. The
-     * {@link org.wildfly.security.password.PasswordUtils} class can be used to obtain the hashed password in its crypt
+     * {@link org.wildfly.security.password.PasswordUtil} class can be used to obtain the hashed password in its crypt
      * string format (i.e. $2a$cost$encodedSaltencodedPassword).
      * </p>
      * <p>

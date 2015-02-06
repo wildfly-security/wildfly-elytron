@@ -29,7 +29,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -73,7 +73,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     UnixSHACryptPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
         this.algorithm = algorithm;
-        this.salt = PasswordUtils.generateRandomSalt(SALT_SIZE);
+        this.salt = PasswordUtil.generateRandomSalt(SALT_SIZE);
         this.iterationCount = DEFAULT_ITERATION_COUNT;
         this.hash = doEncode(algorithm, getNormalizedPasswordBytes(spec.getEncodedPassword()), this.salt, this.iterationCount);
     }
@@ -83,7 +83,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final HashedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, parameterSpec.getSalt() ==  null ? PasswordUtils.generateRandomSalt(SALT_SIZE) : truncatedClone(parameterSpec.getSalt()),
+        this(algorithm, parameterSpec.getSalt() ==  null ? PasswordUtil.generateRandomSalt(SALT_SIZE) : truncatedClone(parameterSpec.getSalt()),
                 min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
     }
 

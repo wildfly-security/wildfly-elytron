@@ -41,7 +41,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.digest._private.DigestUtils;
+import org.wildfly.security.sasl.digest._private.DigestUtil;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.SaslWrapper;
@@ -113,7 +113,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         secureRandomGenerator = new SecureRandom();
 
         try {
-            this.md5 = MessageDigest.getInstance(DigestUtils.HASH_algorithm);
+            this.md5 = MessageDigest.getInstance(DigestUtil.HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Algorithm not supported", e);
         }

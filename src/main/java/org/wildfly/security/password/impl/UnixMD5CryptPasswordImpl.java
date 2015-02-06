@@ -26,7 +26,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -63,7 +63,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     UnixMD5CryptPasswordImpl(final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
-        this.salt = PasswordUtils.generateRandomSalt(SALT_SIZE);
+        this.salt = PasswordUtil.generateRandomSalt(SALT_SIZE);
         this.hash = encode(getNormalizedPasswordBytes(spec.getEncodedPassword()), this.salt);
     }
 
@@ -72,7 +72,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     private UnixMD5CryptPasswordImpl(final char[] password, final HashedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this.salt = spec.getSalt() == null ? PasswordUtils.generateRandomSalt(SALT_SIZE) : truncatedClone(spec.getSalt());
+        this.salt = spec.getSalt() == null ? PasswordUtil.generateRandomSalt(SALT_SIZE) : truncatedClone(spec.getSalt());
         this.hash = encode(getNormalizedPasswordBytes(password), salt);
     }
 

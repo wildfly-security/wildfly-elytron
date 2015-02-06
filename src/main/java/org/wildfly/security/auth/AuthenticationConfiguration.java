@@ -39,7 +39,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.FixedSecurityFactory;
-import org.wildfly.security.auth.callback.CallbackUtils;
+import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.util.NameRewriter;
@@ -62,7 +62,7 @@ public abstract class AuthenticationConfiguration {
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration() {
 
         void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException {
-            CallbackUtils.unsupported(callbacks[index]);
+            CallbackUtil.unsupported(callbacks[index]);
         }
 
         void handleCallbacks(final AuthenticationConfiguration config, final Callback[] callbacks) throws IOException, UnsupportedCallbackException {

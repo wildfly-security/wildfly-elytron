@@ -298,7 +298,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             throw new SaslException("Salt must be specified");
                         }
                         try {
-                            saltedPassword = ScramUtils.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
+                            saltedPassword = ScramUtil.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
                             if (DEBUG) System.out.printf("[S] Salted password: %s%n", convertToHexString(saltedPassword));
                         } catch (InvalidKeyException e) {
                             throw new SaslException("Invalid MAC initialization key");
@@ -308,7 +308,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     // nonce (client + server nonce)
                     b.append('r').append('=');
                     b.append(nonce);
-                    b.append(ScramUtils.generateRandomString(28, getRandom()));
+                    b.append(ScramUtil.generateRandomString(28, getRandom()));
                     b.append(',');
 
                     // salt
@@ -495,7 +495,7 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // now check the proof
                     byte[] recoveredClientKey = clientSignature.clone();
-                    ScramUtils.xor(recoveredClientKey, recoveredClientProof);
+                    ScramUtil.xor(recoveredClientKey, recoveredClientProof);
                     if (DEBUG) System.out.printf("[S] Recovered client key: %s%n", convertToHexString(recoveredClientKey));
                     if (! Arrays.equals(recoveredClientKey, clientKey)) {
                         // bad auth, send error

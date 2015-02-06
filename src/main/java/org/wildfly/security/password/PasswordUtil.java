@@ -42,13 +42,13 @@ import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
- * General password utilities.
+ * Helper utility methods for operations on passwords.
  *
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PasswordUtils {
-    private PasswordUtils() {}
+public final class PasswordUtil {
+    private PasswordUtil() {}
 
     // the order or value of these numbers is not important, just their uniqueness
 

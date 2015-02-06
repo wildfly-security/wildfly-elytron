@@ -125,7 +125,7 @@ class ScramSaslClient extends AbstractSaslClient {
                 StringPrep.encode(nameCallback.getName(), b, StringPrep.PROFILE_SASL_STORED | StringPrep.MAP_SCRAM_LOGIN_CHARS);
                 b.append(',').append('r').append('=');
                 Random random = secureRandom != null ? secureRandom : ThreadLocalRandom.current();
-                b.append(nonce = ScramUtils.generateRandomString(48, random));
+                b.append(nonce = ScramUtil.generateRandomString(48, random));
                 if (DEBUG) System.out.printf("[C] Client nonce: %s%n", convertToHexString(nonce));
                 setNegotiationState(ST_R1_SENT);
                 if (DEBUG) System.out.printf("[C] Client first message: %s%n", convertToHexString(b.toArray()));
@@ -155,7 +155,7 @@ class ScramSaslClient extends AbstractSaslClient {
                             bi.next(); // skip delimiter
                             if (DEBUG) System.out.printf("[C] Server sent salt: %s%n", convertToHexString(salt));
                             if (bi.next() == 'i' && bi.next() == '=') {
-                                final int iterationCount = ScramUtils.parsePosInt(di);
+                                final int iterationCount = ScramUtil.parsePosInt(di);
                                 if (iterationCount < minimumIterationCount) {
                                     throw new SaslException("Iteration count is too low");
                                 } else if (iterationCount > maximumIterationCount) {
@@ -202,7 +202,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                 // nonce
                                 b.append(',').append('r').append('=').append(nonce).append(serverNonce);
                                 // no extensions
-                                this.saltedPassword = ScramUtils.calculateHi(mac, passwordCallback.getPassword(), salt, 0, salt.length, iterationCount);
+                                this.saltedPassword = ScramUtil.calculateHi(mac, passwordCallback.getPassword(), salt, 0, salt.length, iterationCount);
                                 if (DEBUG) System.out.printf("[C] Client salted password: %s%n", convertToHexString(saltedPassword));
                                 mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                                 final byte[] clientKey = mac.doFinal(Scram.CLIENT_KEY_BYTES);
@@ -220,7 +220,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                 if (DEBUG) System.out.printf("[C] Using client final message without proof: %s%n", convertToHexString(b.toArray()));
                                 final byte[] clientProof = mac.doFinal();
                                 if (DEBUG) System.out.printf("[C] Client signature: %s%n", convertToHexString(clientProof));
-                                ScramUtils.xor(clientProof, clientKey);
+                                ScramUtil.xor(clientProof, clientKey);
                                 if (DEBUG) System.out.printf("[C] Client proof: %s%n", convertToHexString(clientProof));
                                 this.proofStart = b.length();
                                 // proof

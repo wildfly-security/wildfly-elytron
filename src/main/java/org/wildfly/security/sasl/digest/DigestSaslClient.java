@@ -33,7 +33,7 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.digest._private.DigestUtils;
+import org.wildfly.security.sasl.digest._private.DigestUtil;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
@@ -64,7 +64,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         this.authorizationId = authorizationId;
         this.demandedCiphers = (ciphers == null ? new String[] {} : ciphers);
         try {
-            this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanism));
+            this.messageDigest = MessageDigest.getInstance(DigestUtil.messageDigestAlgorithm(mechanism));
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("Expected message digest algorithm is not available", e);
         }
@@ -100,8 +100,8 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
         }
 
-        if (qop != null && qop.equals(DigestUtils.QOP_AUTH) == false) {
-            setWrapper(new DigestWrapper(qop.equals(DigestUtils.QOP_AUTH_CONF)));
+        if (qop != null && qop.equals(DigestUtil.QOP_AUTH) == false) {
+            setWrapper(new DigestWrapper(qop.equals(DigestUtil.QOP_AUTH_CONF)));
         }
 
         realms = new String[realmList.size()];
@@ -112,12 +112,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // TODO: make this configurable
         // for now choose the strongest one
         String[] qops = qopServerOptions.split(String.valueOf(DELIMITER));
-        if (arrayContains(qops, DigestUtils. QOP_AUTH_CONF)) {
-            this.qop = DigestUtils.QOP_AUTH_CONF;
-        } else if (arrayContains(qops, DigestUtils.QOP_AUTH_INT)) {
-            this.qop = DigestUtils.QOP_AUTH_INT;
+        if (arrayContains(qops, DigestUtil. QOP_AUTH_CONF)) {
+            this.qop = DigestUtil.QOP_AUTH_CONF;
+        } else if (arrayContains(qops, DigestUtil.QOP_AUTH_INT)) {
+            this.qop = DigestUtil.QOP_AUTH_INT;
         } else {
-            this.qop = DigestUtils.QOP_AUTH;
+            this.qop = DigestUtil.QOP_AUTH;
         }
     }
 
@@ -249,7 +249,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // nc | nonce-count
         digestResponse.append("nc=");
         int nonceCount = getNonceCount();
-        digestResponse.append(DigestUtils.convertToHexBytesWithLeftPadding(nonceCount, 8));
+        digestResponse.append(DigestUtil.convertToHexBytesWithLeftPadding(nonceCount, 8));
         digestResponse.append(DELIMITER);
 
         // cnonce
@@ -274,9 +274,9 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
 
-        hA1 = DigestUtils.H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = DigestUtil.H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
+        byte[] response_value = DigestUtil.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -287,7 +287,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // qop
         digestResponse.append(DELIMITER);
         digestResponse.append("qop=");
-        digestResponse.append(qop !=null ? qop : DigestUtils.QOP_AUTH);
+        digestResponse.append(qop !=null ? qop : DigestUtil.QOP_AUTH);
 
         // cipher
         if (cipher != null && cipher.length() != 0) {

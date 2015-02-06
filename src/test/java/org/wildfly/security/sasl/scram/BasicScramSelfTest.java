@@ -40,7 +40,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.auth.callback.CallbackUtils;
+import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -97,7 +97,7 @@ public class BasicScramSelfTest extends BaseTestCase {
                             credentialCallback.setCredential(password);
                         }
                     } else {
-                        CallbackUtils.unsupported(callback);
+                        CallbackUtil.unsupported(callback);
                     }
                 }
             }
@@ -117,7 +117,7 @@ public class BasicScramSelfTest extends BaseTestCase {
                     } else if (callback instanceof PasswordCallback) {
                         ((PasswordCallback) callback).setPassword(passwordChars);
                     } else {
-                        CallbackUtils.unsupported(callback);
+                        CallbackUtil.unsupported(callback);
                     }
                 }
             }

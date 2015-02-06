@@ -37,11 +37,11 @@ import org.wildfly.security.util.CodePointIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class UserPasswordPasswordUtils {
+class UserPasswordPasswordUtil {
 
     static final Charset UTF_8 = Charset.forName("UTF-8");
 
-    private UserPasswordPasswordUtils() {
+    private UserPasswordPasswordUtil() {
     }
 
     public static PasswordSpec parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
