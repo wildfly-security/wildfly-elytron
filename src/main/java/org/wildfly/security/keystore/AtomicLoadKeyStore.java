@@ -54,13 +54,7 @@ public class AtomicLoadKeyStore extends KeyStore {
      * @throws NoSuchProviderException if the provider specified can not be found.
      */
     public static AtomicLoadKeyStore newInstance(final String type, final String provider) throws KeyStoreException, NoSuchProviderException {
-        AtomicLoadKeyStoreSPI keyStoreSpi = new AtomicLoadKeyStoreSPI(new KeyStoreFactory() {
-
-            @Override
-            public KeyStore getInstance() throws KeyStoreException, NoSuchProviderException {
-                return provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
-            }
-        });
+        AtomicLoadKeyStoreSPI keyStoreSpi = new AtomicLoadKeyStoreSPI(() -> provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type));
 
         return new AtomicLoadKeyStore(keyStoreSpi, keyStoreSpi.getProvider(), type);
     }

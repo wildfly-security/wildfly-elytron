@@ -27,6 +27,7 @@ import java.security.NoSuchProviderException;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@FunctionalInterface
 interface KeyStoreFactory {
 
     KeyStore getInstance() throws KeyStoreException, NoSuchProviderException;
