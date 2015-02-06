@@ -20,6 +20,7 @@ package org.wildfly.security.sasl.entity;
 
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -297,7 +298,7 @@ class EntityUtils {
 
     /**
      * <p>
-     * Encode a {@code TrustedAuth} element using the given hash and DER encoder,
+     * Encode a {@code TrustedAuth} element using the given trusted authority and DER encoder,
      * where {@code TrustedAuth} is defined as:
      *
      * <pre>
@@ -317,81 +318,27 @@ class EntityUtils {
      * </p>
      *
      * @param encoder the DER encoder
-     * @param type the trusted authority hash type, must be one of {@link Entity#ISSUER_NAME_HASH},
-     * {@link Entity#ISSUER_KEY_HASH}, or {@link Entity#PKCS_15_KEY_HASH}
-     * @param hash the hash that identifies the trusted authority
-     * @throws ASN1Exception if the trusted authority hash type is not one of {@link Entity#ISSUER_NAME_HASH},
-     * {@link Entity#ISSUER_KEY_HASH}, or {@link Entity#PKCS_15_KEY_HASH}
+     * @param trustedAuthority a trusted authority, must be a {@link NameTrustedAuthority},
+     * a {@link CertificateTrustedAuthority}, or a {@link HashTrustedAuthority}
+     * @throws ASN1Exception if any of the trusted authorities are invalid
      */
-    public static void encodeTrustedAuthority(final DEREncoder encoder, int type, byte[] hash) throws ASN1Exception {
-        switch (type) {
-            case ISSUER_NAME_HASH:
-            case ISSUER_KEY_HASH:
-            case PKCS_15_KEY_HASH:
-                encoder.encodeImplicit(type);
-                encoder.encodeOctetString(hash);
-                break;
-            default: throw new ASN1Exception("Invalid trusted authority type for a hash identifier");
-        }
-    }
-
-    /**
-     * Encode a {@code TrustedAuth} element using the given X.509 certificate and DER encoder.
-     *
-     * @param encoder the DER encoder
-     * @param cert the X.509 certificate that identifies the trusted authority
-     * @throws ASN1Exception if an error occurs while encoding the given certificate
-     */
-    public static void encodeTrustedAuthority(final DEREncoder encoder, X509Certificate cert) throws ASN1Exception {
-        encoder.encodeImplicit(AUTHORITY_CERTIFICATE);
-        try {
-            encoder.writeEncoded(cert.getEncoded());
-        } catch (CertificateEncodingException e) {
-            throw new ASN1Exception(e.getMessage());
-        }
-    }
-
-    /**
-     * <p>
-     * Encode a {@code TrustedAuth} element using the given {@code String} identifier
-     * and DER encoder, where {@code TrustedAuth} is defined as:
-     *
-     * <pre>
-     *      TrustedAuth ::= CHOICE {
-     *          authorityName         [0] Name,
-     *              -- SubjectName from CA certificate
-     *          issuerNameHash        [1] OCTET STRING,
-     *              -- SHA-1 hash of Authority's DN
-     *          issuerKeyHash         [2] OCTET STRING,
-     *              -- SHA-1 hash of Authority's public key
-     *          authorityCertificate  [3] Certificate,
-     *              -- CA certificate
-     *          pkcs15KeyHash         [4] OCTET STRING
-     *              -- PKCS #15 key hash
-     *      }
-     * </pre>
-     * </p>
-     *
-     * @param encoder the DER encoder
-     * @param type the trusted authority type, must be one of {@link Entity#AUTHORITY_NAME},
-     * {@link Entity#ISSUER_NAME_HASH},
-     * {@link Entity#ISSUER_KEY_HASH}, and {@link Entity#PKCS_15_KEY_HASH}
-     * @param identifier the identifier for the trusted authority, as a {@code String}
-     */
-    public static void encodeTrustedAuthority(final DEREncoder encoder, int type, String identifier) throws ASN1Exception {
-        switch (type) {
-            case AUTHORITY_NAME:
-                encoder.startExplicit(type);
-                encoder.writeEncoded((new X500Principal(identifier)).getEncoded());
-                encoder.endExplicit();
-                break;
-            case ISSUER_NAME_HASH:
-            case ISSUER_KEY_HASH:
-            case PKCS_15_KEY_HASH:
-                encoder.encodeImplicit(type);
-                encoder.encodeOctetString(identifier);
-                break;
-            default: throw new ASN1Exception("Invalid type for a string trusted authority identifier");
+    public static void encodeTrustedAuthority(final DEREncoder encoder, TrustedAuthority trustedAuthority) throws ASN1Exception {
+        if (trustedAuthority instanceof NameTrustedAuthority) {
+            encoder.startExplicit(trustedAuthority.getType());
+            encoder.writeEncoded((new X500Principal(((NameTrustedAuthority) trustedAuthority).getIdentifier())).getEncoded());
+            encoder.endExplicit();
+        } else if (trustedAuthority instanceof HashTrustedAuthority) {
+            encoder.encodeImplicit(trustedAuthority.getType());
+            encoder.encodeOctetString(((HashTrustedAuthority) trustedAuthority).getIdentifier());
+        } else if (trustedAuthority instanceof CertificateTrustedAuthority) {
+            encoder.encodeImplicit(trustedAuthority.getType());
+            try {
+                encoder.writeEncoded(((CertificateTrustedAuthority) trustedAuthority).getIdentifier().getEncoded());
+            } catch (CertificateEncodingException e) {
+                throw new ASN1Exception(e.getMessage());
+            }
+        } else {
+            throw new ASN1Exception("Invalid trusted authority type");
         }
     }
 
@@ -399,27 +346,15 @@ class EntityUtils {
      * Encode an ASN.1 sequence of trusted authorities using the given DER encoder.
      *
      * @param encoder the DER encoder
-     * @param trustedAuthorities the trusted authorities, given as a {@code Collection} of
-     * {@code List} entries where the first entry of each {@code List} is an {@code Integer}
-     * (the trusted authority type, 0-4) and the second entry is a {@code String}, {@code X509Certificate},
-     * or a byte array representing the identifier for the trusted authority
+     * @param trustedAuthorities the trusted authorities as a {@code Collection} where each entry must
+     * be a {@link NameTrustedAuthority}, a {@link CertificateTrustedAuthority}, or a {@link HashTrustedAuthority}
      * @throws ASN1Exception if any of the trusted authorities are invalid
      */
     public static void encodeTrustedAuthorities(final DEREncoder encoder,
-            Collection<List<?>> trustedAuthorities) throws ASN1Exception {
+            Collection<TrustedAuthority> trustedAuthorities) throws ASN1Exception {
         encoder.startSequence();
-        for (List<?> trustedAuthority : trustedAuthorities) {
-            int type = ((Integer) trustedAuthority.get(0)).intValue();
-            Object value = trustedAuthority.get(1);
-            if (value instanceof String) {
-                encodeTrustedAuthority(encoder, type, (String) value);
-            } else if (value instanceof X509Certificate) {
-                encodeTrustedAuthority(encoder, (X509Certificate) value);
-            } else if (value instanceof byte[]) {
-                encodeTrustedAuthority(encoder, type, (byte[]) value);
-            } else {
-                throw new ASN1Exception("Invalid trusted authority value");
-            }
+        for (TrustedAuthority trustedAuthority : trustedAuthorities) {
+            encodeTrustedAuthority(encoder, trustedAuthority);
         }
         encoder.endSequence();
     }
@@ -570,40 +505,32 @@ class EntityUtils {
      * Decode the next element from the given DER decoder as a trusted authorities element.
      *
      * @param decoder the DER decoder
-     * @return the trusted authorities, given as a {@code Collection} of {@code List} entries
-     * where the first entry of each {@code List} is an {@code Integer} (the trusted authority
-     * type, 0-4) and the second entry is a {@code String}, {@code X509Certificate}, or a byte array
-     * representing the identifier for the trusted authority
+     * @return the trusted authorities
      * @throws ASN1Exception if the next element from the given decoder is not a trusted authorities
      * element or if an error occurs while decoding the trusted authorities element
      */
-    public static Collection<List<?>> decodeTrustedAuthorities(final DERDecoder decoder) throws ASN1Exception {
-        Set<List<?>> trustedAuthorities = new HashSet<List<?>>();
-        List<Object> trustedAuthority;
-        int type = -1;
-        Object identifier = null;
+    public static Collection<TrustedAuthority> decodeTrustedAuthorities(final DERDecoder decoder) throws ASN1Exception {
+        List<TrustedAuthority> trustedAuthorities = new ArrayList<TrustedAuthority>();
+        TrustedAuthority trustedAuthority = null;
         decoder.startSequence();
         while (decoder.hasNextElement()) {
-            trustedAuthority = new ArrayList<Object>();
             out: {
                 for (int trustedAuthorityType = 0; trustedAuthorityType <= 4; trustedAuthorityType++) {
                     switch (trustedAuthorityType) {
                         case AUTHORITY_NAME:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, true)) {
-                                type = trustedAuthorityType;
                                 byte[] encodedName = decoder.drainElementValue();
-                                identifier = (new X500Principal(encodedName)).getName(X500Principal.CANONICAL);
+                                trustedAuthority = new NameTrustedAuthority((new X500Principal(encodedName)).getName(X500Principal.CANONICAL));
                                 break out;
                             }
                             break;
                         case AUTHORITY_CERTIFICATE:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, true)) {
-                                type = trustedAuthorityType;
-                                decoder.decodeImplicit(type);
+                                decoder.decodeImplicit(trustedAuthorityType);
                                 byte[] cert = decoder.drainElementValue();
                                 try {
                                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                                    identifier = (X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert));
+                                    trustedAuthority = new CertificateTrustedAuthority((X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert)));
                                 } catch (CertificateException e) {
                                     throw new ASN1Exception(e.getMessage());
                                 }
@@ -611,12 +538,23 @@ class EntityUtils {
                             }
                             break;
                         case ISSUER_NAME_HASH:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, false)) {
+                                decoder.decodeImplicit(trustedAuthorityType);
+                                trustedAuthority = new IssuerNameHashTrustedAuthority(decoder.decodeOctetString());
+                                break out;
+                            }
+                            break;
                         case ISSUER_KEY_HASH:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, false)) {
+                                decoder.decodeImplicit(trustedAuthorityType);
+                                trustedAuthority = new IssuerKeyHashTrustedAuthority(decoder.decodeOctetString());
+                                break out;
+                            }
+                            break;
                         case PKCS_15_KEY_HASH:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, false)) {
-                                type = trustedAuthorityType;
-                                decoder.decodeImplicit(type);
-                                identifier = decoder.decodeOctetString();
+                                decoder.decodeImplicit(trustedAuthorityType);
+                                trustedAuthority = new PKCS15KeyHashTrustedAuthority(decoder.decodeOctetString());
                                 break out;
                             }
                             break;
@@ -624,8 +562,6 @@ class EntityUtils {
                     }
                 }
             }
-            trustedAuthority.add(type);
-            trustedAuthority.add(identifier);
             trustedAuthorities.add(trustedAuthority);
         }
         decoder.endSequence();

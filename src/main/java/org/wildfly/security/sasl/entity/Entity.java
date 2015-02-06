@@ -63,11 +63,4 @@ public final class Entity {
     public static final int DIRECTORY_NAME = 4;
     public static final int URI_NAME = 6;
     public static final int REGISTERED_ID = 8;
-
-    // Trusted authority types
-    public static final int AUTHORITY_NAME = 0;
-    public static final int ISSUER_NAME_HASH = 1;
-    public static final int ISSUER_KEY_HASH = 2;
-    public static final int AUTHORITY_CERTIFICATE = 3;
-    public static final int PKCS_15_KEY_HASH = 4;
 }

@@ -19,7 +19,8 @@
 package org.wildfly.security.auth.callback;
 
 import java.util.Collection;
-import java.util.List;
+
+import org.wildfly.security.sasl.entity.TrustedAuthority;
 
 /**
  * An optional callback used to retrieve information about trusted certificate authorities
@@ -31,7 +32,7 @@ public final class TrustedAuthoritiesCallback extends AbstractExtendedCallback {
 
     private static final long serialVersionUID = 1212562522733770963L;
 
-    private Collection<List<?>> trustedAuthorities;
+    private Collection<TrustedAuthority> trustedAuthorities;
 
     /**
      * Construct a new instance.
@@ -44,21 +45,16 @@ public final class TrustedAuthoritiesCallback extends AbstractExtendedCallback {
      *
      * @return the retrieved trusted authorities (may be {@code null})
      */
-    public Collection<List<?>> getTrustedAuthorities() {
+    public Collection<TrustedAuthority> getTrustedAuthorities() {
         return trustedAuthorities;
     }
 
     /**
-     * Set the retrieved trusted authorities. The trusted authorities should be a {@code Collection}
-     * of {@code List} entries where the first entry of each {@code List} is an {@code Integer}
-     * (the trusted authority type, one of {@link Entity#AUTHORITY_NAME}, {@link Entity#ISSUER_NAME_HASH},
-     * {@link Entity#ISSUER_KEY_HASH}, {@link Entity#AUTHORITY_CERTIFICATE} and {@link Entity#PKCS_15_KEY_HASH})
-     * and the second entry is a {@code String} (the name of the trusted authority), an {@code X509Certificate}
-     * (the trusted authority's certificate), or a byte array (a hash that identifies the trusted authority).
+     * Set the retrieved trusted authorities.
      *
      * @param trustedAuthorities the retrieved trusted authorities (may be {@code null})
      */
-    public void setTrustedAuthorities(final Collection<List<?>> trustedAuthorities) {
+    public void setTrustedAuthorities(final Collection<TrustedAuthority> trustedAuthorities) {
         this.trustedAuthorities = trustedAuthorities;
     }
 

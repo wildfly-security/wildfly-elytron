@@ -122,7 +122,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     // certPref
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     handleCallbacks(trustedAuthoritiesCallback);
-                    Collection<List<?>> trustedAuthorities = trustedAuthoritiesCallback.getTrustedAuthorities();
+                    Collection<TrustedAuthority> trustedAuthorities = trustedAuthoritiesCallback.getTrustedAuthorities();
                     if ((trustedAuthorities != null) && (! trustedAuthorities.isEmpty())) {
                         encoder.encodeImplicit(1);
                         EntityUtils.encodeTrustedAuthorities(encoder, trustedAuthorities);

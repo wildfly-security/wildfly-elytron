@@ -84,7 +84,7 @@ final class EntitySaslClient extends AbstractSaslClient {
         switch (state) {
             case ST_CHALLENGE_RESPONSE: {
                 final DERDecoder decoder = new DERDecoder(challenge);
-                Collection<List<?>> trustedAuthorities = null;
+                Collection<TrustedAuthority> trustedAuthorities = null;
                 Collection<List<?>> entityB;
                 try {
                     // == Parse message ==
