@@ -254,7 +254,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // cnonce
         digestResponse.append("cnonce=\"");
-        byte[] cnonce = generateNonce();
+        cnonce = generateNonce();
         digestResponse.append(cnonce);
         digestResponse.append("\"").append(DELIMITER);
 
@@ -276,7 +276,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         hA1 = DigestUtils.H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI);
+        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, true);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -317,6 +317,13 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         return 1;
     }
 
+    private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
+        byte[] expected = DigestUtils.digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
+        if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
+            throw new SaslException("Invalid rspauth from server");
+        }
+    }
+
     /* (non-Javadoc)
      * @see org.wildfly.sasl.util.AbstractSaslParticipant#init()
      */
@@ -337,15 +344,14 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
     @Override
     protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
+        HashMap<String, byte[]> parsedChallenge = parseResponse(message);
         switch (state) {
             case STEP_TWO:
-                HashMap<String, byte[]> parsedChallenge = parseResponse(message);
                 noteChallengeData(parsedChallenge);
                 setNegotiationState(STEP_FOUR);
                 return createResponse(parsedChallenge);
             case STEP_FOUR:
-                // TODO: check rspauth
-
+                checkResponseAuth(parsedChallenge);
                 negotiationComplete();
                 return null;
         }

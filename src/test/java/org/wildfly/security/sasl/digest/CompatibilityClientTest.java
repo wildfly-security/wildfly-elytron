@@ -634,11 +634,35 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertEquals("charset=utf-8,username=\"chris\",realm=\"first realm\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"protocol name/server name\",maxbuf=65536,response=bf3dd710ee08b05c663456975c156075,qop=auth", new String(message2, "UTF-8"));
         assertFalse(client.isComplete());
 
-        byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
+        byte[] message3 = "rspauth=05a18aff49b22e373bb91af7396ce345".getBytes(StandardCharsets.UTF_8);
         byte[] message4 = client.evaluateChallenge(message3);
         assertEquals(null, message4);
         assertTrue(client.isComplete());
 
     }
 
+    /**
+     * Test with wrong step three rspauth
+     */
+    @Test
+    public void testWrongStepThreeRspauth() throws Exception {
+        mockNonce("OA6MHXh6VqTrRk");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",qop=\"auth\",algorithm=md5-sess,charset=utf-8".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertEquals("charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",maxbuf=65536,response=d388dad90d4bbd760a152321f2143af7,qop=auth", new String(message2, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "rspauth=ab66f60335c427b5527b84dbabcdaacc".getBytes(StandardCharsets.UTF_8);
+        try{
+            client.evaluateChallenge(message3);
+            fail("Not thrown SaslException!");
+        } catch (SaslException e) {}
+        assertFalse(client.isComplete());
+
+    }
 }

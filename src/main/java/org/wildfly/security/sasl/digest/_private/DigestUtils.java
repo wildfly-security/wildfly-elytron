@@ -127,7 +127,7 @@ public final class DigestUtils {
      */
     public static byte[] digestResponse(MessageDigest messageDigest, byte[] H_A1,
                                  byte[] nonce, int nonce_count, byte[] cnonce,
-                                 String authzid, String qop, String digest_uri) {
+                                 String authzid, String qop, String digest_uri, boolean auth) {
 
         // QOP
         String qop_value;
@@ -139,7 +139,7 @@ public final class DigestUtils {
 
         // A2
         ByteStringBuilder A2 = new ByteStringBuilder();
-        A2.append(AUTH_METHOD);
+        if(auth) A2.append(AUTH_METHOD); // for "response", but not for "rspauth"
         A2.append(':');
         A2.append(digest_uri);
         if (QOP_AUTH_CONF.equals(qop_value) || QOP_AUTH_INT.equals(qop_value)) {
