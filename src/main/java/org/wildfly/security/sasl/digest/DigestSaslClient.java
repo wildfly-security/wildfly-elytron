@@ -98,7 +98,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
             else if (keyWord.equals("cipher")) {
                 cipher_opts = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
-                selectCipher(cipher_opts);
+                cipher = selectCipher(cipher_opts);
             }
         }
 
@@ -120,10 +120,9 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         throw new SaslException(getMechanismName() + ": No common protection layer between client and server");
     }
 
-    private void selectCipher(String ciphersFromServer) {
+    private String selectCipher(String ciphersFromServer) throws SaslException {
         if (ciphersFromServer == null) {
-            cipher = "";
-            return;
+            throw new SaslException(getMechanismName() + ": No ciphers offered by server");
         }
 
         TransformationMapper trans = new DefaultTransformationMapper();
@@ -131,14 +130,13 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, tokensToChooseFrom)) {
             // take the strongest cipher
             for (String c: demandedCiphers) {
-               if (c.equals(ts.getToken())) {
-                   cipher = ts.getToken();
-                   return;
+                if (c.equals(ts.getToken())) {
+                   return ts.getToken();
                }
             }
         }
 
-        cipher = "";
+        throw new SaslException(getMechanismName() + ": No common cipher between client and server");
     }
 
 
@@ -291,8 +289,9 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // cipher
         if (cipher != null && cipher.length() != 0) {
             digestResponse.append(DELIMITER);
-            digestResponse.append("cipher=");
+            digestResponse.append("cipher=\"");
             digestResponse.append(cipher);
+            digestResponse.append("\"");
         }
 
         // authzid

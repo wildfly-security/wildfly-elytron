@@ -208,6 +208,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         if (wrapper == null) {
             throw new IllegalStateException("Wrapping is not configured");
         }
+        if(len == 0) {
+            return NO_BYTES;
+        }
         return wrapper.wrap(outgoing, offset, len);
     }
 
@@ -225,6 +228,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
             throw new IllegalStateException("Wrapping is not configured");
+        }
+        if(len == 0) {
+            return NO_BYTES;
         }
         return wrapper.unwrap(incoming, offset, len);
     }

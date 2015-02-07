@@ -146,7 +146,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity protection (qop=auth-int)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthInt() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 

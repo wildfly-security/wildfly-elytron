@@ -38,6 +38,8 @@ import org.wildfly.security.sasl.WildFlySasl;
 @MetaInfServices(value = SaslClientFactory.class)
 public class DigestClientFactory extends AbstractDigestFactory implements SaslClientFactory {
 
+    public static final String[] DEFAULT_CIPHERS = new String[]{ "3des", "rc4", "des", "rc4-56", "rc4-40" };
+
     public DigestClientFactory() {
     }
 
@@ -59,7 +61,7 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         String[] qops = qopsString==null ? null : qopsString.split(",");
 
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
-        String[] ciphers = supportedCipherOpts == null ? null : supportedCipherOpts.split(",");
+        String[] ciphers = supportedCipherOpts == null ? DEFAULT_CIPHERS : supportedCipherOpts.split(",");
 
         final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, qops, ciphers);
         client.init();

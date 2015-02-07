@@ -79,7 +79,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     // selected qop
     protected String qop;
     // wrap message sequence number
-    protected int seqNum;
+    protected int wrapSeqNum;
+    // unwrap message sequence number
+    protected int unwrapSeqNum;
     // nonce
     protected byte[] nonce;
     // cnonce
@@ -371,14 +373,14 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         md5.reset();
         byte[] ki = md5.digest(key.toArray());
 
-        byte[] messageMac = computeHMAC(ki, seqNum, message, offset, len);
+        byte[] messageMac = computeHMAC(ki, wrapSeqNum, message, offset, len);
 
         byte[] result = new byte[len + 16];
         System.arraycopy(message, offset, result, 0, len);
         System.arraycopy(messageMac, 0, result, len, 10);
         integerByteOrdered(1, result, len + 10, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(seqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
-        seqNum++;
+        integerByteOrdered(wrapSeqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
+        wrapSeqNum++;
         return result;
     }
 
@@ -389,6 +391,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         if (messageType != 1) {
             throw new SaslException("MessageType must equal to 1, but is different");
+        }
+
+        if (extractedSeqNum != unwrapSeqNum) {
+            throw new SaslException("Bad sequence number while unwrapping");
         }
 
         ByteStringBuilder key = new ByteStringBuilder(hA1);
@@ -409,8 +415,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         // validate MAC block
         if (Arrays2.equals(expectedHmac, 0, extractedMessageMac, 0, 10) == false) {
-            throw new SaslException("MAC validation failed while unwrapping");
+            return NO_BYTES; // packet by attacker should be ignored, should not interrupt user communication
         }
+
+        unwrapSeqNum++; // increment only if MAC is valid
         return extractedMessage;
     }
 
@@ -419,7 +427,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-        byte[] messageMac = computeHMAC(wrapHmacKeyConfidentiality, seqNum, message, offset, len);
+        byte[] messageMac = computeHMAC(wrapHmacKeyConfidentiality, wrapSeqNum, message, offset, len);
 
         int paddingLength = 0;
         byte[] pad = null;
@@ -447,9 +455,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         byte[] result = new byte[cipheredPart.length + 6];
         System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
         integerByteOrdered(1, result, cipheredPart.length, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(seqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
+        integerByteOrdered(wrapSeqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
 
-        seqNum++;
+        wrapSeqNum++;
         return result;
     }
 
@@ -474,6 +482,10 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         if (messageType != 1) {
             throw new SaslException("MessageType must equal to 1, but is different");
+        }
+
+        if (extractedSeqNum != unwrapSeqNum) {
+            throw new SaslException("Bad sequence number while unwrapping");
         }
 
         byte[] clearText = null;
@@ -512,6 +524,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             throw new SaslException("MAC validation failed after decrypting the message");
         }
 
+        unwrapSeqNum++; // increment only if MAC is valid
         return decryptedMessage;
     }
 
