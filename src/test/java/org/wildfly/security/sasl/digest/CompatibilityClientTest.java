@@ -665,4 +665,78 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.isComplete());
 
     }
+
+    /**
+     * Test QOP selection by client (Server allow auth, auth-int, client want 1.auth-conf, 2.auth-int, 3.auth)
+     */
+    @Test
+    public void testQopSelection1() throws Exception {
+        mockNonce("+7HQhcJThEsqZ3gor1hThC5on8hQ3DRP2esrw+km");
+
+        Map<String, Object> clientProps = new HashMap<String, Object>();
+        clientProps.put(QOP_PROPERTY, "auth-conf,auth-int,auth");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"TestServer\",nonce=\"288HcNYUg60jN/kEFYT/HklRVjZA6opb2if8tsja\",qop=\"auth,auth-int\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertEquals("charset=utf-8,username=\"user\",realm=\"TestServer\",nonce=\"288HcNYUg60jN/kEFYT/HklRVjZA6opb2if8tsja\",nc=00000001,cnonce=\"+7HQhcJThEsqZ3gor1hThC5on8hQ3DRP2esrw+km\",digest-uri=\"TestProtocol/TestServer\",maxbuf=65536,response=663997cd2a9dc34c84240430fb1be16c,qop=auth-int,authzid=\"user\"", new String(message2, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "rspauth=b3d6f9165b0bb0972adaa5778b840c3a".getBytes(StandardCharsets.UTF_8);
+        byte[] message4 = client.evaluateChallenge(message3);
+        assertEquals(null, message4);
+        assertTrue(client.isComplete());
+
+    }
+
+    /**
+     * Test QOP selection by client (Server allow auth-int, auth, client want 1.auth-conf, 2.auth, 3.auth-int)
+     */
+    @Test
+    public void testQopSelection2() throws Exception {
+        mockNonce("a7YfTdcWo4L0OeurbYrT9G+01rZiNe6LSWuCSo73");
+
+        Map<String, Object> clientProps = new HashMap<String, Object>();
+        clientProps.put(QOP_PROPERTY, "auth-conf,auth,auth-int");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"TestServer\",nonce=\"QduN0itdkfbx8VqlrWt56ZS7uRhI2Rt3P8bqfsM/\",qop=\"auth-int,auth\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
+        byte[] message2 = client.evaluateChallenge(message1);
+        assertEquals("charset=utf-8,username=\"user\",realm=\"TestServer\",nonce=\"QduN0itdkfbx8VqlrWt56ZS7uRhI2Rt3P8bqfsM/\",nc=00000001,cnonce=\"a7YfTdcWo4L0OeurbYrT9G+01rZiNe6LSWuCSo73\",digest-uri=\"TestProtocol/TestServer\",maxbuf=65536,response=636d1e3c3d73e1bfb15f85957720ce35,qop=auth,authzid=\"user\"", new String(message2, "UTF-8"));
+        assertFalse(client.isComplete());
+
+        byte[] message3 = "rspauth=a77854059f533745d50abb064b7df938".getBytes(StandardCharsets.UTF_8);
+        byte[] message4 = client.evaluateChallenge(message3);
+        assertEquals(null, message4);
+        assertTrue(client.isComplete());
+
+    }
+
+    /**
+     * Test unsuccessful QOP selection by client (no common QOP)
+     */
+    @Test
+    public void testQopSelectionFail() throws Exception {
+
+        Map<String, Object> clientProps = new HashMap<String, Object>();
+        clientProps.put(QOP_PROPERTY, "auth-conf");
+
+        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
+        assertFalse(client.isComplete());
+
+        byte[] message1 = "realm=\"TestServer\",nonce=\"QduN0itdkfbx8VqlrWt56ZS7uRhI2Rt3P8bqfsM/\",qop=\"auth-int,auth\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
+        try{
+            client.evaluateChallenge(message1);
+            fail("Not thrown SaslException!");
+        } catch (SaslException e) {}
+        assertFalse(client.isComplete());
+
+    }
 }

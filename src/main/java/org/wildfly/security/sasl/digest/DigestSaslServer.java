@@ -52,12 +52,12 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         try {
             this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanismName));
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Expected message digest algorithm is not available", e);
+            throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
         }
     }
 
-    private static final int STEP_ONE = 1;
-    private static final int STEP_THREE = 3;
+    private static final byte STEP_ONE = 1;
+    private static final byte STEP_THREE = 3;
 
     private String[] realms;
     private String supportedCiphers;

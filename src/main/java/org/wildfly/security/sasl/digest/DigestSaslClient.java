@@ -44,10 +44,11 @@ import org.wildfly.security.util.TransformationSpec;
  */
 class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
-    private static final int STEP_TWO = 2;
-    private static final int STEP_FOUR = 4;
+    private static final byte STEP_TWO = 2;
+    private static final byte STEP_FOUR = 4;
 
     private String[] realms;
+    private String[] clientQops;
     private boolean stale = false;
     private int maxbuf = DEFAULT_MAXBUF;
     private String cipher_opts;
@@ -57,20 +58,21 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private final String[] demandedCiphers;
     private final MessageDigest messageDigest;
 
-    DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] ciphers) throws SaslException {
+    DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
-        this.demandedCiphers = (ciphers == null ? new String[] {} : ciphers);
+        this.clientQops = qops == null ? new String[] {DigestUtils.QOP_AUTH} : qops;
+        this.demandedCiphers = ciphers == null ? new String[] {} : ciphers;
         try {
             this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanism));
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Expected message digest algorithm is not available", e);
+            throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
         }
     }
 
-    private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) {
+    private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) throws SaslException {
 
         LinkedList<String> realmList = new LinkedList<String>();
         for (String keyWord: parsedChallenge.keySet()) {
@@ -79,8 +81,8 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                 realmList.add(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
             }
             else if (keyWord.equals("qop")) {
-                String qopServerOptions = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
-                selectQop(qopServerOptions);
+                String serverQops = new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8);
+                this.qop = selectQop(serverQops.split(String.valueOf(DELIMITER)), clientQops);
             }
             else if (keyWord.equals("stale")) {
                 stale = Boolean.parseBoolean(new String(parsedChallenge.get(keyWord), StandardCharsets.UTF_8));
@@ -108,17 +110,14 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         realmList.toArray(realms);
     }
 
-    private void selectQop(String qopServerOptions) {
-        // TODO: make this configurable
-        // for now choose the strongest one
-        String[] qops = qopServerOptions.split(String.valueOf(DELIMITER));
-        if (arrayContains(qops, DigestUtils. QOP_AUTH_CONF)) {
-            this.qop = DigestUtils.QOP_AUTH_CONF;
-        } else if (arrayContains(qops, DigestUtils.QOP_AUTH_INT)) {
-            this.qop = DigestUtils.QOP_AUTH_INT;
-        } else {
-            this.qop = DigestUtils.QOP_AUTH;
+    private String selectQop(String[] serverQops, String[] clientQops) throws SaslException {
+        // select by client preferences
+        for(String clientQop : clientQops){
+            if (arrayContains(serverQops, clientQop)) {
+                return clientQop;
+            }
         }
+        throw new SaslException(getMechanismName() + ": No common protection layer between client and server");
     }
 
     private void selectCipher(String ciphersFromServer) {
@@ -240,7 +239,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // nonce
         if(nonce == null){
-            throw new SaslException("Nonce not provided by server");
+            throw new SaslException(getMechanismName() + ": Nonce not provided by server");
         }
         digestResponse.append("nonce=\"");
         digestResponse.append(nonce);
@@ -320,7 +319,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
         byte[] expected = DigestUtils.digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
-            throw new SaslException("Invalid rspauth from server");
+            throw new SaslException(getMechanismName() + ": Invalid rspauth from server");
         }
     }
 
