@@ -36,7 +36,6 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -233,7 +232,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=default=3des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -289,7 +287,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc4() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -345,7 +342,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -400,7 +396,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-56)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -456,7 +451,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc440() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -618,11 +612,11 @@ public class CompatibilityServerTest extends BaseTestCase {
 
     }
 
+
     /**
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
     @Test
-    @Ignore("Problem with encoding on Windows")
     public void testUtf8Charset() throws Exception {
         mockNonce("sn\u0438\u4F60\uD83C\uDCA1");
 
@@ -641,6 +635,7 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("\u0438\u4F60\uD83C\uDCA1", server.getAuthorizationID());
 
     }
+
 
     /**
      * More realms from server (realm="other-realm",realm="elwood.innosoft.com",realm="next-realm" -> elwood.innosoft.com)

@@ -183,14 +183,14 @@ public final class DigestUtils {
     /**
      * Converts input to HEX and pad it from left with zeros to totalLength.
      *
-     * @param input to be converted to HEX
+     * @param input to be converted
      * @param totalLength length of returned array of bytes
-     * @return
+     * @return input converted into LHEX (8LHEX for totalLength=8)
      */
     public static byte[] convertToHexBytesWithLeftPadding(int input, int totalLength) {
         byte[] retValue = new byte[totalLength];
         Arrays.fill(retValue, (byte) '0');
-        byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(StandardCharsets.UTF_8);
+        byte[] hex = Integer.toString(input, 16).getBytes(StandardCharsets.UTF_8);
         if (hex.length > totalLength) {
             throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
         }
@@ -212,7 +212,9 @@ public final class DigestUtils {
         byte[] buffer = new byte[len + 4];
         integerByteOrdered(sequenceNumber, buffer, 0, 4);
         System.arraycopy(message, offset, buffer, 4, len);
-        return mac.doFinal(buffer);
+        byte[] macBuffer = new byte[10];
+        System.arraycopy(mac.doFinal(buffer), 0, macBuffer, 0, 10);
+        return macBuffer;
     }
 
     public static void integerByteOrdered(int num, byte[] buf, int offset, int len) {
@@ -241,23 +243,28 @@ public final class DigestUtils {
         if (len != 7) {
             throw new InvalidParameterException("Only 7 byte long keyBits are transformable to 3des subkey");
         }
+        int bit = 0x01;
         int hiMask = 0x00;
         int loMask = 0xfe;
         byte[] subkey = new byte[8];
 
-        subkey[0] = (byte)(keyBits[0] & loMask);
+        subkey[0] = (byte)(keyBits[offset] & loMask);
         subkey[0] = fixParityBit(subkey[0]);   // fix for real parity bit
-        for (int i = offset + 1; i < len; i++) {
-            int bitNumber = i - offset;
-            hiMask |= 2 ^ (bitNumber - 1);
-            loMask &= 2 ^ bitNumber;
-            int hibits = keyBits[i - 1] & hiMask;
-            hibits <<= 8 - i - 1;
-            int lobits = keyBits[i] & loMask;
+        for (int i = 1; i < 7; i++) {
+            hiMask |= bit;
+            bit <<= 1;
+            loMask -= bit;
+            int hibits = keyBits[offset + i - 1] & hiMask;
+            hibits <<= 8 - i;
+            int lobits = keyBits[offset + i] & loMask;
             lobits >>= i;
             subkey[i] = (byte) (hibits | lobits);
             subkey[i] = fixParityBit(subkey[i]);  // fix real parity bits
         }
+        hiMask |= bit;
+        subkey[7] = (byte)(keyBits[offset + 6] & hiMask);
+        subkey[7] <<= 1;
+        subkey[7] = fixParityBit(subkey[7]);   // fix for real parity bit
 
         return subkey;
     }

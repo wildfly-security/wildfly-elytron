@@ -26,7 +26,6 @@ import java.security.MessageDigest;
 import javax.crypto.Mac;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.sasl.digest.Digest;
 import org.wildfly.security.sasl.util.HexConverter;
@@ -79,7 +78,6 @@ public class DigestUtilsTest {
     }
 
     @Test
-    @Ignore("Fix of convertToHexBytesWithLeftPadding() required")
     /* LHEX = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "a" | "b" | "c" | "d" | "e" | "f" */
     public void testConvertToHexBytesWithLeftPadding() throws Exception {
         assertEquals("00000001", new String(DigestUtils.convertToHexBytesWithLeftPadding(1, 8)));
@@ -89,7 +87,6 @@ public class DigestUtilsTest {
     }
 
     @Test
-    @Ignore("Fix of create3desSubKey() required")
     public void testCreate3desSubKey() throws Exception {
         byte[] input1 = HexConverter.convertFromHex("FFFFFFFFFFFFFF");
         byte[] output1 = DigestUtils.create3desSubKey(input1, 0, 7);
@@ -105,7 +102,6 @@ public class DigestUtilsTest {
     }
 
     @Test
-    @Ignore("Fix of computeHMAC() required")
     public void testComputeHmac() throws Exception {
         Mac mac = Mac.getInstance("HmacMD5");
         byte[] message = HexConverter.convertFromHex("11223344");

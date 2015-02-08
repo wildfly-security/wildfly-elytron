@@ -201,7 +201,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=default=3des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -257,7 +256,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc4() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -313,7 +311,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -369,7 +366,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-56)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -425,7 +421,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc440() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -481,7 +476,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=unknown)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfUnknown() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
@@ -593,6 +587,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+
     /**
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
@@ -617,6 +612,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+
     /**
      * Test successful authentication with escaped realms delimiters
      */
@@ -639,6 +635,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertTrue(client.isComplete());
 
     }
+
 
     /**
      * Test with wrong step three rspauth
@@ -664,6 +661,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertFalse(client.isComplete());
 
     }
+
 
     /**
      * Test QOP selection by client (Server allow auth, auth-int, client want 1.auth-conf, 2.auth-int, 3.auth)
@@ -691,6 +689,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+
     /**
      * Test QOP selection by client (Server allow auth-int, auth, client want 1.auth-conf, 2.auth, 3.auth-int)
      */
@@ -716,6 +715,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         assertTrue(client.isComplete());
 
     }
+
 
     /**
      * Test unsuccessful QOP selection by client (no common QOP)
