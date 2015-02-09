@@ -18,8 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
-import java.util.Map;
-import java.util.HashMap;
+import static org.wildfly.security.asn1.ASN1.*;
 
 /**
  * Constants for the ISO/IEC 9798-3 authentication SASL mechanism.
@@ -41,20 +40,36 @@ public final class Entity {
     public static final String SHA1_WITH_DSA = "SHA1withDSA";
     public static final String SHA1_WITH_ECDSA = "SHA1withECDSA";
 
-    // Map signature algorithms to object identifiers
-    public static final Map<String, String> oidMap = new HashMap<String, String>();
-    static {
-        oidMap.put(SHA1_WITH_RSA, "1.2.840.113549.1.1.5");
-        oidMap.put(SHA1_WITH_DSA, "1.2.840.10040.4.3");
-        oidMap.put(SHA1_WITH_ECDSA, "1.2.840.10045.4.1");
+    /**
+     * Get the object identifier for the given signature algorithm.
+     *
+     * @param algorithm the signature algorithm name
+     * @return the object identifier that corresponds to the given algorithm or
+     * {@code null} if the given algorithm name is invalid
+     */
+    public static String algorithmOid(String signatureAlgorithm) {
+        switch (signatureAlgorithm) {
+            case SHA1_WITH_RSA: return OID_SHA1_WITH_RSA;
+            case SHA1_WITH_DSA: return OID_SHA1_WITH_DSA;
+            case SHA1_WITH_ECDSA: return OID_SHA1_WITH_ECDSA;
+            default: return null;
+        }
     }
 
-    // Map signature algorithms to key types
-    public static final Map<String, String> keyTypesMap = new HashMap<String, String>();
-    static {
-        keyTypesMap.put(SHA1_WITH_RSA, "RSA");
-        keyTypesMap.put(SHA1_WITH_DSA, "DSA");
-        keyTypesMap.put(SHA1_WITH_ECDSA, "EC_EC");
+    /**
+     * Get the key type for the given signature algorithm.
+     *
+     * @param algorithm the signature algorithm name
+     * @return the key type that corresponds to the given algorithm or {@code null}
+     * if the given algorithm name is invalid
+     */
+    public static String keyType(String signatureAlgorithm) {
+        switch (signatureAlgorithm) {
+            case SHA1_WITH_RSA: return "RSA";
+            case SHA1_WITH_DSA: return "DSA";
+            case SHA1_WITH_ECDSA: return "EC_EC";
+            default: return null;
+        }
     }
 
     // General name types (TODO: look into adding support for the remaining general name types: x400Address, ediPartyName, iPAddress, and otherName)

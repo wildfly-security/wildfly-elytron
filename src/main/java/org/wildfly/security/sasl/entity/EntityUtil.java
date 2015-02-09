@@ -157,7 +157,7 @@ class EntityUtil {
             }
             default: throw new ASN1Exception("Unrecognised algorithm");
         }
-        encodeAlgorithmIdentifier(encoder, oidMap.get(algorithm), omitParametersField);
+        encodeAlgorithmIdentifier(encoder, algorithmOid(algorithm), omitParametersField);
     }
 
     /**

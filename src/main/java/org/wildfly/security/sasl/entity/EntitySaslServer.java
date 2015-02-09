@@ -212,7 +212,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                 }
 
                 // Get the server's certificate data and verify that entityB matches the server's distinguishing identifier
-                KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyTypesMap.get(signature.getAlgorithm()));
+                KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyType(signature.getAlgorithm()));
                 CredentialCallback credentialCallback = new CredentialCallback(X509Certificate[].class);
                 CredentialCallback privateKeyCallback = new CredentialCallback(PrivateKey.class);
                 handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
