@@ -20,7 +20,6 @@ package org.wildfly.security.keystore;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.NoSuchProviderException;
 
 /**
  * A factory for creating {@link KeyStore} instances.
@@ -30,6 +29,6 @@ import java.security.NoSuchProviderException;
 @FunctionalInterface
 interface KeyStoreFactory {
 
-    KeyStore getInstance() throws KeyStoreException, NoSuchProviderException;
+    KeyStore getInstance() throws KeyStoreException;
 
 }

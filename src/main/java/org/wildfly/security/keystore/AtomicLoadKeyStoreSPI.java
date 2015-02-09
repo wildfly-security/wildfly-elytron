@@ -28,8 +28,6 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.KeyStoreSpi;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.Provider;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -46,16 +44,10 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
 
     private final KeyStoreFactory keyStoreFactory;
 
-    private boolean initialised = false;
     private final AtomicReference<KeyStore> currentStore = new AtomicReference<KeyStore>();
 
-    AtomicLoadKeyStoreSPI(KeyStoreFactory keyStoreFactory) throws KeyStoreException, NoSuchProviderException {
+    AtomicLoadKeyStoreSPI(KeyStoreFactory keyStoreFactory) {
         this.keyStoreFactory = keyStoreFactory;
-        currentStore.set(keyStoreFactory.getInstance());
-    }
-
-    Provider getProvider() {
-        return currentStore.get().getProvider();
     }
 
     @Override
@@ -182,19 +174,12 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
             CertificateException {
         try {
-            KeyStore keyStore = initialised ? keyStoreFactory.getInstance() : currentStore.get();
+            KeyStore keyStore = keyStoreFactory.getInstance();
             keyStore.load(stream, password);
-            if (initialised) {
-                currentStore.set(keyStore);
-            }
-            initialised = true;
-        } catch (NoSuchProviderException | KeyStoreException e) {
+            currentStore.set(keyStore);
+        } catch (KeyStoreException e) {
             throw log.unableToCreateKeyStore(e);
         }
-    }
-
-    boolean isInitialised() {
-        return initialised;
     }
 
     KeyStore getCurrentKeyStore() {

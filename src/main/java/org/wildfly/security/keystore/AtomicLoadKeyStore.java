@@ -54,9 +54,12 @@ public class AtomicLoadKeyStore extends KeyStore {
      * @throws NoSuchProviderException if the provider specified can not be found.
      */
     public static AtomicLoadKeyStore newInstance(final String type, final String provider) throws KeyStoreException, NoSuchProviderException {
-        AtomicLoadKeyStoreSPI keyStoreSpi = new AtomicLoadKeyStoreSPI(() -> provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type));
+        KeyStore keyStore = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
+        final Provider resolvedProvider = keyStore.getProvider();
 
-        return new AtomicLoadKeyStore(keyStoreSpi, keyStoreSpi.getProvider(), type);
+        AtomicLoadKeyStoreSPI keyStoreSpi = new AtomicLoadKeyStoreSPI(() -> KeyStore.getInstance(type, resolvedProvider));
+
+        return new AtomicLoadKeyStore(keyStoreSpi, resolvedProvider, type);
     }
 
     /**
@@ -85,11 +88,11 @@ public class AtomicLoadKeyStore extends KeyStore {
      * @throws IOException
      */
     public LoadKey revertableload(final InputStream inputStream, final char[] password) throws NoSuchAlgorithmException, CertificateException, IOException {
-        if (keyStoreSpi.isInitialised() == false) {
+        KeyStore current = keyStoreSpi.getCurrentKeyStore();
+        if (current == null) {
             throw log.revertableLoadNotPossible();
         }
 
-        KeyStore current = keyStoreSpi.getCurrentKeyStore();
         load(inputStream, password);
 
         return new LoadKey(current);
