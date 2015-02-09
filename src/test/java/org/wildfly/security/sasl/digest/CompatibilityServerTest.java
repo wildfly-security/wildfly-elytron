@@ -36,7 +36,6 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -86,7 +85,7 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"imap/elwood.innosoft.com\",response=d388dad90d4bbd760a152321f2143af7,qop=auth".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=ea40f60335c427b5527b84dbabcdfffd", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=ea40f60335c427b5527b84dbabcdfffd", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
@@ -112,7 +111,7 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",response=6084c6db3fede7352c551284490fd0fc,qop=auth".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=2f0b3d7c3c2e486600ef710726aa2eae", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=2f0b3d7c3c2e486600ef710726aa2eae", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
@@ -123,7 +122,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authorization ID (authzid) of other user
      */
     @Test
-    @Ignore("ELY-90 : Permission check to use authorization id not implemented")
     public void testUnauthorizedAuthorizationId() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -168,7 +166,7 @@ public class CompatibilityServerTest extends BaseTestCase {
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",response=aa4e81f1c6656350f7bce05d436665de,qop=auth,authzid=\"chris\"".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
 
-        //assertEquals("rspauth=af3ca83a805d4cfa00675a17315475c4", new String(message3, "UTF-8"));
+        assertEquals("rspauth=af3ca83a805d4cfa00675a17315475c4", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
@@ -179,7 +177,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity protection (qop=auth-int)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthInt() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -196,7 +193,7 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA9BSuZWMSpW8m\",digest-uri=\"acap/elwood.innosoft.com\",maxbuf=65536,response=d8b17f55b410208c6ebb22f89f9d6cbb,qop=auth-int,authzid=\"chris\"".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=7a8794654d6d6de607e9143d52b554a8", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=7a8794654d6d6de607e9143d52b554a8", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
@@ -235,7 +232,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=default=3des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -291,7 +287,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc4() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -347,7 +342,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=des)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -402,7 +396,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-56)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -458,7 +451,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
      */
     @Test
-    @Ignore("ELY-89 : Integrity and privacy not implemented")
     public void testQopAuthConfRc440() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
@@ -614,17 +606,17 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"\",digest-uri=\"acap/elwood.innosoft.com\",response=0ca21eafddf586f954909d2fd95b1ee7,qop=auth".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=2bf631e48acb9863e9f5518ccc804b3b", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=2bf631e48acb9863e9f5518ccc804b3b", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
     }
 
+
     /**
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
     @Test
-    @Ignore("Problem with encoding on Windows")
     public void testUtf8Charset() throws Exception {
         mockNonce("sn\u0438\u4F60\uD83C\uDCA1");
 
@@ -638,11 +630,12 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"\u0438\u4F60\uD83C\uDCA1\",realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",nc=00000001,cnonce=\"cn\u0438\u4F60\uD83C\uDCA1\",digest-uri=\"\u0438\u4F60\uD83C\uDCA1/realm.\u0438\u4F60\uD83C\uDCA1.com\",maxbuf=65536,response=420939e06d2d748c157c5e33499b41a9,qop=auth".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=9c4d137545617ba98c11aaea939b4381", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=9c4d137545617ba98c11aaea939b4381", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("\u0438\u4F60\uD83C\uDCA1", server.getAuthorizationID());
 
     }
+
 
     /**
      * More realms from server (realm="other-realm",realm="elwood.innosoft.com",realm="next-realm" -> elwood.innosoft.com)
@@ -663,7 +656,7 @@ public class CompatibilityServerTest extends BaseTestCase {
 
         byte[] message2 = "charset=utf-8,username=\"chris\",realm=\"first realm\",nonce=\"OA9BSXrbuRhWay\",nc=00000001,cnonce=\"OA6MHXh6VqTrRk\",digest-uri=\"protocol name/server name\",maxbuf=65536,response=bf3dd710ee08b05c663456975c156075,qop=auth".getBytes(StandardCharsets.UTF_8);
         byte[] message3 = server.evaluateResponse(message2);
-        //assertEquals("rspauth=9c4d137545617ba98c11aaea939b4381", new String(message3, "UTF-8")); // TODO
+        assertEquals("rspauth=05a18aff49b22e373bb91af7396ce345", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 

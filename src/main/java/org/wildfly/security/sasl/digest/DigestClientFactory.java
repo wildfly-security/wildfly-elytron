@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -36,6 +37,8 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 @MetaInfServices(value = SaslClientFactory.class)
 public class DigestClientFactory extends AbstractDigestFactory implements SaslClientFactory {
+
+    public static final String[] DEFAULT_CIPHERS = new String[]{ "3des", "rc4", "des", "rc4-56", "rc4-40" };
 
     public DigestClientFactory() {
     }
@@ -54,10 +57,13 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);
         Charset charset = (utf8==null || utf8.booleanValue()) ? StandardCharsets.UTF_8 : StandardCharsets.ISO_8859_1;
 
-        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
-        String[] ciphers = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
+        String qopsString = (String)props.get(Sasl.QOP);
+        String[] qops = qopsString==null ? null : qopsString.split(",");
 
-        final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, ciphers);
+        String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
+        String[] ciphers = supportedCipherOpts == null ? DEFAULT_CIPHERS : supportedCipherOpts.split(",");
+
+        final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, qops, ciphers);
         client.init();
         return client;
     }

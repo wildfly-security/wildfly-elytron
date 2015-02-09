@@ -28,6 +28,7 @@ import java.util.HashMap;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -51,12 +52,12 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         try {
             this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanismName));
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Expected message digest algorithm is not available", e);
+            throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
         }
     }
 
-    private static final int STEP_ONE = 1;
-    private static final int STEP_THREE = 3;
+    private static final byte STEP_ONE = 1;
+    private static final byte STEP_THREE = 3;
 
     private String[] realms;
     private String supportedCiphers;
@@ -167,9 +168,6 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         } else {
             authzid = null;
         }
-
-
-
     }
 
     private byte[] validateDigestResponse(HashMap<String, byte[]> parsedDigestResponse) throws SaslException {
@@ -216,7 +214,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         if (parsedDigestResponse.get("cnonce") == null) {
             throw new SaslException(getMechanismName() + ": missing cnonce");
         }
-        byte[] cnonce = parsedDigestResponse.get("cnonce");
+        cnonce = parsedDigestResponse.get("cnonce");
 
         if (parsedDigestResponse.get("nc") == null) {
             throw new SaslException(getMechanismName() + ": missing nonce-count");
@@ -247,8 +245,9 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         final NameCallback nameCallback = new NameCallback("User name", userName);
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         final RealmCallback realmCallback = new RealmCallback("User realm");
+        final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authzid==null ? userName : authzid);
 
-        handleCallbacks(realmCallback, nameCallback, passwordCallback);
+        handleCallbacks(realmCallback, nameCallback, passwordCallback, authorizeCallback);
 
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
@@ -256,7 +255,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         hA1 = DigestUtils.H_A1(messageDigest, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        byte[] expectedResponse = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -266,8 +265,10 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         if (parsedDigestResponse.get("response") != null) {
             if (Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {
-                if (authzid == null) {
-                    authzid = userName; // TODO: Check permission use given authzid!
+                if (authorizeCallback.isAuthorized()) {
+                    authzid = authorizeCallback.getAuthorizedID();
+                } else {
+                    throw new SaslException(getMechanismName() + ": " + userName + " not authorized to act as " + authzid);
                 }
                 return createResponseAuth(parsedDigestResponse);
             } else {
@@ -277,15 +278,13 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         } else {
             throw new SaslException(getMechanismName() + ": missing response directive");
         }
-
     }
 
     private byte[] createResponseAuth(HashMap<String, byte[]> parsedDigestResponse) {
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
 
-        // TODO
-        byte[] response_value = new byte[0];
+        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, false);
 
         responseAuth.append(response_value);
         return responseAuth.toArray();
