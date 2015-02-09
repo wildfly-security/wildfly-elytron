@@ -28,6 +28,11 @@ import org.wildfly.security.password.OneWayPassword;
 public interface SaltedSimpleDigestPassword extends OneWayPassword {
 
     /**
+     * Algorithm name for digest created using MD5 with the password digested first followed by the salt.
+     */
+    String ALGORITHM_PASSWORD_SALT_DIGEST_MD5 = "password-salt-digest-md5";
+
+    /**
      * Algorithm name for digest created using SHA-1 with the password digested first followed by the salt.
      */
     String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1 = "password-salt-digest-sha-1";
@@ -46,6 +51,11 @@ public interface SaltedSimpleDigestPassword extends OneWayPassword {
      * Algorithm name for digest created using SHA-512 with the password digested first followed by the salt.
      */
     String ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512 = "password-salt-digest-sha-512";
+
+    /**
+     * Algorithm name for digest created using MD5 with the salt digested first followed by the password.
+     */
+    String ALGORITHM_SALT_PASSWORD_DIGEST_MD5 = "salt-password-digest-md5";
 
     /**
      * Algorithm name for digest created using SHA-1 with the salt digested first followed by the password.
