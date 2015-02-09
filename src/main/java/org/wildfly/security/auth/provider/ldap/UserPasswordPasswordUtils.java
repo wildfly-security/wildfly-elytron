@@ -52,7 +52,10 @@ class UserPasswordPasswordUtils {
         if (userPassword[0] != '{') {
             return createClearPasswordSpec(userPassword);
         } else {
-            if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
+            if (userPassword[1] == 'm' && userPassword[2] == 'd' && userPassword[3] == '5' && userPassword[4] == '}') {
+                // {md5}
+                return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_MD5, 5, userPassword);
+            } else if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
                     return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_1, 5, userPassword);
@@ -66,6 +69,9 @@ class UserPasswordPasswordUtils {
                     // {sha512}
                     return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_512, 8, userPassword);
                 }
+            } else if (userPassword[1] == 's' && userPassword[2] == 'm' && userPassword[3] == 'd' && userPassword[4] == '5' && userPassword[5] == '}') {
+                // {smd5}
+                return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_MD5, 6, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 's' && userPassword[3] == 'h' && userPassword[4] == 'a') {
                 if (userPassword[5] == '}') {
                     // {ssha}
@@ -143,6 +149,8 @@ class UserPasswordPasswordUtils {
 
     private static int expectedDigestLengthBytes(final String algorithm) {
         switch (algorithm) {
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
+                return 16;
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
                 return 20;
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:

@@ -204,10 +204,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
@@ -358,10 +360,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA_512: {
                 return (password instanceof SimpleDigestPassword);
             }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
@@ -460,10 +464,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:

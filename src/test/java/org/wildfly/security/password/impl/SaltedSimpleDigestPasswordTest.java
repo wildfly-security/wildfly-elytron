@@ -20,10 +20,12 @@ package org.wildfly.security.password.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
@@ -73,6 +75,11 @@ public class SaltedSimpleDigestPasswordTest {
     }
 
     @Test
+    public void testPasswordSaltMd5() throws Exception {
+        performTest(ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "swXK27O85U86pZxk/sAN6g==".toCharArray());
+    }
+
+    @Test
     public void testPasswordSaltSha1() throws Exception {
         performTest(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, "yI6cZwQadOA1e+/f+T+H3eCQQhQ".toCharArray());
     }
@@ -92,6 +99,11 @@ public class SaltedSimpleDigestPasswordTest {
     public void testPasswordSaltSha512() throws Exception {
         performTest(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512,
                 "+mohhbPgqahe9B/7Z+88H7b3SYD46/lw5OcuNT7ZU31ZMIPCAd/W5D4cinqsK8jbsRnH37fUuPExEROVvXDpfw".toCharArray());
+    }
+
+    @Test
+    public void testSaltPasswordMd5() throws Exception {
+        performTest(ALGORITHM_SALT_PASSWORD_DIGEST_MD5, "Z6Hgm7H4P1AH3BGcFNZjqg==".toCharArray());
     }
 
     @Test
@@ -119,7 +131,7 @@ public class SaltedSimpleDigestPasswordTest {
     /**
      * Perform a test for the specified algorithm with the pre-prepared digest for that algorithm.
      *
-     * @param algorithmName the agorithm to use to perform a test.
+     * @param algorithmName the algorithm to use to perform a test.
      * @param base64Digest the Base64 representation of the expected digest for this algorithm.
      */
     private void performTest(final String algorithmName, final char[] base64Digest) throws Exception {
@@ -161,6 +173,8 @@ public class SaltedSimpleDigestPasswordTest {
     }
 
     private class TestPasswordImpl implements SaltedSimpleDigestPassword {
+
+        private static final long serialVersionUID = 1L;
 
         private final String algorithm;
         private final byte[] salt;
