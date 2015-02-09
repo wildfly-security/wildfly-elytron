@@ -33,11 +33,12 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
+
+import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -63,10 +64,10 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
-        this.clientQops = qops == null ? new String[] {DigestUtils.QOP_AUTH} : qops;
+        this.clientQops = qops == null ? new String[] {QOP_AUTH} : qops;
         this.demandedCiphers = ciphers == null ? new String[] {} : ciphers;
         try {
-            this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanism));
+            this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanism));
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
         }
@@ -102,8 +103,8 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
         }
 
-        if (qop != null && qop.equals(DigestUtils.QOP_AUTH) == false) {
-            setWrapper(new DigestWrapper(qop.equals(DigestUtils.QOP_AUTH_CONF)));
+        if (qop != null && qop.equals(QOP_AUTH) == false) {
+            setWrapper(new DigestWrapper(qop.equals(QOP_AUTH_CONF)));
         }
 
         realms = new String[realmList.size()];
@@ -246,7 +247,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // nc | nonce-count
         digestResponse.append("nc=");
         int nonceCount = getNonceCount();
-        digestResponse.append(DigestUtils.convertToHexBytesWithLeftPadding(nonceCount, 8));
+        digestResponse.append(convertToHexBytesWithLeftPadding(nonceCount, 8));
         digestResponse.append(DELIMITER);
 
         // cnonce
@@ -271,9 +272,9 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         char[] passwd = passwordCallback.getPassword();
         passwordCallback.clearPassword();
 
-        hA1 = DigestUtils.H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
 
-        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, true);
+        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, true);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -284,7 +285,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         // qop
         digestResponse.append(DELIMITER);
         digestResponse.append("qop=");
-        digestResponse.append(qop !=null ? qop : DigestUtils.QOP_AUTH);
+        digestResponse.append(qop !=null ? qop : QOP_AUTH);
 
         // cipher
         if (cipher != null && cipher.length() != 0) {
@@ -316,7 +317,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     }
 
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
-        byte[] expected = DigestUtils.digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
+        byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
             throw new SaslException(getMechanismName() + ": Invalid rspauth from server");
         }

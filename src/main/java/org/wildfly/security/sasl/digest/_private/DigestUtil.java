@@ -44,7 +44,7 @@ import javax.security.sasl.SaslException;
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public final class DigestUtils {
+public final class DigestUtil {
 
     public static final String QOP_AUTH = "auth";
     public static final String QOP_AUTH_INT = "auth-int";

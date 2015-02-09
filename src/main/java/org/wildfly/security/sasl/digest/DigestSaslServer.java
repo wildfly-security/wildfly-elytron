@@ -33,8 +33,9 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.digest._private.DigestUtils;
 import org.wildfly.security.sasl.util.ByteStringBuilder;
+
+import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -50,7 +51,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;
         try {
-            this.messageDigest = MessageDigest.getInstance(DigestUtils.messageDigestAlgorithm(mechanismName));
+            this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanismName));
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
         }
@@ -136,7 +137,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         }
 
         // cipher
-        if (supportedCiphers != null && qops != null && arrayContains(qops, DigestUtils.QOP_AUTH_CONF)) {
+        if (supportedCiphers != null && qops != null && arrayContains(qops, QOP_AUTH_CONF)) {
             challenge.append("cipher=\"");
             challenge.append(supportedCiphers);
             challenge.append("\"").append(DELIMITER);
@@ -230,14 +231,14 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             throw new SaslException(getMechanismName() + ": digest-uri directive is missing");
         }
 
-        qop = DigestUtils.QOP_AUTH;
+        qop = QOP_AUTH;
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
-            if (!arrayContains(DigestUtils.QOP_VALUES, qop)) {
+            if (!arrayContains(QOP_VALUES, qop)) {
                 throw new SaslException(getMechanismName() + ": qop directive unexpected value " + qop);
             }
-            if (qop != null && qop.equals(DigestUtils.QOP_AUTH) == false) {
-                setWrapper(new DigestWrapper(qop.equals(DigestUtils.QOP_AUTH_CONF)));
+            if (qop != null && qop.equals(QOP_AUTH) == false) {
+                setWrapper(new DigestWrapper(qop.equals(QOP_AUTH_CONF)));
             }
         }
 
@@ -253,9 +254,9 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         passwordCallback.clearPassword();
 
 
-        hA1 = DigestUtils.H_A1(messageDigest, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+        hA1 = H_A1(messageDigest, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
 
-        byte[] expectedResponse = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
+        byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
         // wipe out the password
         if (passwd != null) {
             Arrays.fill(passwd, (char)0);
@@ -284,7 +285,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         ByteStringBuilder responseAuth = new ByteStringBuilder();
         responseAuth.append("rspauth=");
 
-        byte[] response_value = DigestUtils.digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, false);
+        byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, false);
 
         responseAuth.append(response_value);
         return responseAuth.toArray();
