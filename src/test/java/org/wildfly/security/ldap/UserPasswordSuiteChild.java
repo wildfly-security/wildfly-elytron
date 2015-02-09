@@ -92,7 +92,12 @@ public class UserPasswordSuiteChild {
 
     @Test
     public void testMd5User() throws Exception {
-        performSimpleNameTest("md5USer", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_DIGEST_MD5, "md5Password".toCharArray());
+        performSimpleNameTest("md5User", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_DIGEST_MD5, "md5Password".toCharArray());
+    }
+
+    @Test
+    public void testSmd5User() throws Exception {
+        performSimpleNameTest("smd5User", SaltedSimpleDigestPassword.class, SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "smd5Password".toCharArray());
     }
 
     @Test
