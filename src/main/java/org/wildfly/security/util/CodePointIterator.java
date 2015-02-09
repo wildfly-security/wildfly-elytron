@@ -20,8 +20,6 @@ package org.wildfly.security.util;
 
 import java.util.NoSuchElementException;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
-
 /**
  * A code point by code point iterator.
  *

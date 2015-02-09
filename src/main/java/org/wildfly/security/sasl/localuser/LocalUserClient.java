@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 
 import javax.security.auth.callback.CallbackHandler;

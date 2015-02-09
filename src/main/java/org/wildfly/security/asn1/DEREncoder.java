@@ -28,8 +28,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A class used to encode ASN.1 values using the Distinguished Encoding Rules (DER), as specified

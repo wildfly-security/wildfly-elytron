@@ -23,9 +23,10 @@ import java.util.Random;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

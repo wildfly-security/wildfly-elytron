@@ -21,7 +21,7 @@ package org.wildfly.security.asn1;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * Tests for DER encoding. The expected results for these test cases were generated using

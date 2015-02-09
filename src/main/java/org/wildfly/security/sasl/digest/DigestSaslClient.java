@@ -25,6 +25,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
@@ -34,7 +35,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.digest._private.DigestUtil;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
+import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;

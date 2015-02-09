@@ -25,8 +25,8 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * A client implementation of the RFC 4505 {@code ANONYMOUS} mechanism.

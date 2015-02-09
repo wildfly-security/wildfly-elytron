@@ -47,13 +47,13 @@ import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
-import org.wildfly.security.sasl.util.ByteStringBuilder;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
