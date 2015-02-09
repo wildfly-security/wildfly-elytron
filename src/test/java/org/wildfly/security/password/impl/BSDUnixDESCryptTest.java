@@ -29,7 +29,7 @@ import java.security.spec.InvalidKeySpecException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
@@ -121,21 +121,21 @@ public class BSDUnixDESCryptTest {
         String cryptString = "_rH..saltodLocONXC9c";
 
         // Get the spec by parsing the crypt string
-        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
         assertEquals(1_271, spec.getIterationCount());
         assertEquals(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE, spec.getHash().length);
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws InvalidKeyException, InvalidKeySpecException {
-        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
 
         // Use the spec to generate a BSDUnixDESCryptPasswordImpl and then verify the hash
         // using the correct password
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(PasswordUtils.identifyAlgorithm(cryptString), spec);
+        BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(PasswordUtil.identifyAlgorithm(cryptString), spec);
         final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
@@ -153,8 +153,8 @@ public class BSDUnixDESCryptTest {
 
         // Use the new password to obtain a spec and then check if this spec yields the same
         // crypt string
-        spec = spi.engineGetKeySpec(PasswordUtils.identifyAlgorithm(cryptString), password2, BSDUnixDESCryptPasswordSpec.class);
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        spec = spi.engineGetKeySpec(PasswordUtil.identifyAlgorithm(cryptString), password2, BSDUnixDESCryptPasswordSpec.class);
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     @Test

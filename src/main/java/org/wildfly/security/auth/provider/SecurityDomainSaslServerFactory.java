@@ -37,7 +37,7 @@ import org.wildfly.security.auth.AuthenticationConfiguration;
 import org.wildfly.security.auth.AuthenticationContext;
 import org.wildfly.security.auth.MatchRule;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
-import org.wildfly.security.auth.callback.CallbackUtils;
+import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
@@ -175,7 +175,7 @@ class SecurityDomainSaslServerFactory extends AbstractDelegatingSaslServerFactor
                         // todo: filter by IP address
                     }
                 } else {
-                    CallbackUtils.unsupported(callback);
+                    CallbackUtil.unsupported(callback);
                 }
             }
         }

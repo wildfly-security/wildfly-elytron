@@ -19,7 +19,7 @@ package org.wildfly.security.password.impl;
 
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
-import org.wildfly.security.sasl.digest._private.DigestUtils;
+import org.wildfly.security.sasl.digest._private.DigestUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -59,7 +59,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         this.qop = qop;
         this.digestURI = digestURI;
         this.utf8Encoded = utf8Encoded;
-        this.digestResponse = DigestUtils.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        this.digestResponse = DigestUtil.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
     }
 
     DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, final String algorithm) throws NoSuchAlgorithmException {
@@ -71,7 +71,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     }
 
     private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
-        return MessageDigest.getInstance(DigestUtils.passwordAlgorithm(algorithm));
+        return MessageDigest.getInstance(DigestUtil.passwordAlgorithm(algorithm));
     }
 
     @Override
@@ -91,7 +91,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         } catch (NoSuchAlgorithmException e) {
             throw new InvalidKeyException("No matching algorithm", e);
         }
-        byte[] guessBasedResponse = DigestUtils.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        byte[] guessBasedResponse = DigestUtil.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
         try {
             return Arrays.equals(digestResponse, guessBasedResponse);
         } catch (NullPointerException e) {

@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.spec.PasswordSpec;
 
 /**
@@ -197,7 +197,7 @@ public final class PasswordKeyStoreImpl extends KeyStoreSpi {
                 final String alias = entry.getKey();
                 try {
                     passwordSpec = factory.getKeySpec(pw, PasswordSpec.class);
-                    chars = PasswordUtils.getCryptStringChars(passwordSpec);
+                    chars = PasswordUtil.getCryptStringChars(passwordSpec);
                 } catch (InvalidKeySpecException e) {
                     throw log.keyStoreFailedToTranslate(alias, e);
                 }
@@ -266,13 +266,13 @@ public final class PasswordKeyStoreImpl extends KeyStoreSpi {
                             // finished
                             char[] c = new char[b.length()];
                             b.getChars(0, b.length(), c, 0);
-                            final String algorithm = PasswordUtils.identifyAlgorithm(c);
+                            final String algorithm = PasswordUtil.identifyAlgorithm(c);
                             if (algorithm == null) {
                                 throw log.noAlgorithmForPassword(alias);
                             }
                             final Password pw;
                             try {
-                                final PasswordSpec passwordSpec = PasswordUtils.parseCryptString(c);
+                                final PasswordSpec passwordSpec = PasswordUtil.parseCryptString(c);
                                 final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                                 pw = passwordFactory.generatePassword(passwordSpec);
                             } catch (InvalidKeySpecException e) {

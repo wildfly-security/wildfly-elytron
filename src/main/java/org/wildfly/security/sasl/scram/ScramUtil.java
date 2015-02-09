@@ -30,7 +30,7 @@ import org.wildfly.security.util.ByteIterator;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class ScramUtils {
+class ScramUtil {
     private static final byte[] randomCharDictionary;
 
     static {

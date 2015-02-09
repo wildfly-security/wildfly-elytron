@@ -26,9 +26,9 @@ import javax.security.auth.callback.UnsupportedCallbackException;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class CallbackUtils {
+public final class CallbackUtil {
 
-    private CallbackUtils() {
+    private CallbackUtil() {
     }
 
     /**

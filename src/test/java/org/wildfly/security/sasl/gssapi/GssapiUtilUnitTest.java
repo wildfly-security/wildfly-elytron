@@ -35,14 +35,14 @@ import org.junit.Test;
 /**
  * Tests of Gssapi helpers (don't require started kerberos server)
  */
-public class GssapiUtilsUnitTest extends AbstractGssapiMechanism {
+public class GssapiUtilUnitTest extends AbstractGssapiMechanism {
 
-    public GssapiUtilsUnitTest() throws SaslException {
+    public GssapiUtilUnitTest() throws SaslException {
         super("sasl", "imap", "test_server_1", new HashMap<String, String>(), new CallbackHandler(){
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 throw new UnsupportedCallbackException(callbacks[0]);
             }
-        }, Logger.getLogger(GssapiUtilsUnitTest.class));
+        }, Logger.getLogger(GssapiUtilUnitTest.class));
     }
 
     @Override

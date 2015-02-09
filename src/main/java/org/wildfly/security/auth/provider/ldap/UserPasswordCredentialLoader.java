@@ -18,8 +18,8 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtils.UTF_8;
-import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtils.parseUserPassword;
+import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.UTF_8;
+import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.parseUserPassword;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 

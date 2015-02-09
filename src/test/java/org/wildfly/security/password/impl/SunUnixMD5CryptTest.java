@@ -28,7 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Test;
-import org.wildfly.security.password.PasswordUtils;
+import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
@@ -47,11 +47,11 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
         assertEquals(0, spec.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     @Test
@@ -59,11 +59,11 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
         assertEquals(1_000, spec.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     @Test
@@ -71,19 +71,19 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
         assertEquals(1_500, spec.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
-        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtils.parseCryptString(cryptString);
+        SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
 
         // Use the spec to generate a SunUnixMD5CryptPasswordImpl and then verify the hash using the correct password
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        SunUnixMD5CryptPasswordImpl password = (SunUnixMD5CryptPasswordImpl) spi.engineGeneratePassword(PasswordUtils.identifyAlgorithm(cryptString), spec);
+        SunUnixMD5CryptPasswordImpl password = (SunUnixMD5CryptPasswordImpl) spi.engineGeneratePassword(PasswordUtil.identifyAlgorithm(cryptString), spec);
         final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
@@ -94,8 +94,8 @@ public class SunUnixMD5CryptTest {
         assertArrayEquals(spec.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same crypt string
-        spec = spi.engineGetKeySpec(PasswordUtils.identifyAlgorithm(cryptString), password2, SunUnixMD5CryptPasswordSpec.class);
-        assertEquals(cryptString, PasswordUtils.getCryptString(spec));
+        spec = spi.engineGetKeySpec(PasswordUtil.identifyAlgorithm(cryptString), password2, SunUnixMD5CryptPasswordSpec.class);
+        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
     }
 
     @Test
