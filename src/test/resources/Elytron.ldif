@@ -27,6 +27,17 @@ uid: plainUser
 userPassword:: cGxhaW5QYXNzd29yZA==
 # Password plainPassword
 
+dn: uid=md5User,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+cn: md5User
+sn: md5User
+uid: md5User
+userPassword:: e21kNX1IdWpYRmlxTFl0Q1g5RURIUUF6bytRPT0=
+# Password md5Password
+
 dn: uid=sha512User,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: inetOrgPerson

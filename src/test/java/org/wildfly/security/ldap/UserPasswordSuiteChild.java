@@ -91,6 +91,11 @@ public class UserPasswordSuiteChild {
     }
 
     @Test
+    public void testMd5User() throws Exception {
+        performSimpleNameTest("md5USer", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_DIGEST_MD5, "md5Password".toCharArray());
+    }
+
+    @Test
     public void testSha512User() throws Exception {
         performSimpleNameTest("sha512User", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_DIGEST_SHA_512, "sha512Password".toCharArray());
     }
