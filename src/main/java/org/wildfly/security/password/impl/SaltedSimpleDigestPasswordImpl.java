@@ -153,6 +153,9 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
 
     private static MessageDigest getMessageDigest(final String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
+            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
+                return MessageDigest.getInstance("MD5");
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
                 return MessageDigest.getInstance("SHA-1");
@@ -172,11 +175,13 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
 
     private static boolean isSaltFirst(final String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
                 return false;
+            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
