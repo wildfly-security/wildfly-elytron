@@ -52,7 +52,9 @@ class UserPasswordPasswordUtils {
         if (userPassword[0] != '{') {
             return createClearPasswordSpec(userPassword);
         } else {
-            if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
+            if (userPassword[1] == 'm' && userPassword[2] == 'd' && userPassword[3] == '5') {
+                return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_MD5, 5, userPassword);
+            } else if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
                     return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_1, 5, userPassword);
