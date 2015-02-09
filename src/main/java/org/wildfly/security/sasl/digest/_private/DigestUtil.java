@@ -243,29 +243,15 @@ public final class DigestUtil {
         if (len != 7) {
             throw new InvalidParameterException("Only 7 byte long keyBits are transformable to 3des subkey");
         }
-        int bit = 0x01;
-        int hiMask = 0x00;
-        int loMask = 0xfe;
         byte[] subkey = new byte[8];
-
-        subkey[0] = (byte)(keyBits[offset] & loMask);
-        subkey[0] = fixParityBit(subkey[0]);   // fix for real parity bit
-        for (int i = 1; i < 7; i++) {
-            hiMask |= bit;
-            bit <<= 1;
-            loMask -= bit;
-            int hibits = keyBits[offset + i - 1] & hiMask;
-            hibits <<= 8 - i;
-            int lobits = keyBits[offset + i] & loMask;
-            lobits >>= i;
-            subkey[i] = (byte) (hibits | lobits);
-            subkey[i] = fixParityBit(subkey[i]);  // fix real parity bits
-        }
-        hiMask |= bit;
-        subkey[7] = (byte)(keyBits[offset + 6] & hiMask);
-        subkey[7] <<= 1;
-        subkey[7] = fixParityBit(subkey[7]);   // fix for real parity bit
-
+        subkey[0] = fixParityBit((byte)                          (keyBits[offset]   & 0xFF));
+        subkey[1] = fixParityBit((byte)(keyBits[offset]   << 7 | (keyBits[offset+1] & 0xFF) >> 1));
+        subkey[2] = fixParityBit((byte)(keyBits[offset+1] << 6 | (keyBits[offset+2] & 0xFF) >> 2));
+        subkey[3] = fixParityBit((byte)(keyBits[offset+2] << 5 | (keyBits[offset+3] & 0xFF) >> 3));
+        subkey[4] = fixParityBit((byte)(keyBits[offset+3] << 4 | (keyBits[offset+4] & 0xFF) >> 4));
+        subkey[5] = fixParityBit((byte)(keyBits[offset+4] << 3 | (keyBits[offset+5] & 0xFF) >> 5));
+        subkey[6] = fixParityBit((byte)(keyBits[offset+5] << 2 | (keyBits[offset+6] & 0xFF) >> 6));
+        subkey[7] = fixParityBit((byte)(keyBits[offset+6] << 1));
         return subkey;
     }
 
