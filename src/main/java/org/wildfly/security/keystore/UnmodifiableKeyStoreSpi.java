@@ -37,7 +37,7 @@ import java.util.Enumeration;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class UnmodifiableKeyStoreSpi extends KeyStoreSpi {
+class UnmodifiableKeyStoreSpi extends KeyStoreSpi {
 
     private final KeyStore keyStore;
     private boolean loaded = false;
