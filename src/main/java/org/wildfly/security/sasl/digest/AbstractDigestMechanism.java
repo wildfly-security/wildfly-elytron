@@ -65,14 +65,15 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     protected String digestURI;
     private Charset charset = StandardCharsets.ISO_8859_1;
     protected MessageDigest md5;
-    protected Mac hmacMD5;
 
     // selected cipher
     protected String cipher;
     // selected qop
     protected String qop;
     // wrap message sequence number
-    protected int seqNum;
+    protected int wrapSeqNum;
+    // unwrap message sequence number
+    protected int unwrapSeqNum;
     // nonce
     protected byte[] nonce;
     // cnonce
@@ -83,16 +84,13 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     protected byte[] hA1;
 
     protected SecureRandom secureRandomGenerator;
+    protected Mac hmacMD5;
 
     protected Cipher wrapCipher = null;
-
     protected Cipher unwrapCipher = null;
 
     protected byte[] wrapHmacKeyIntegrity;
     protected byte[] unwrapHmacKeyIntegrity;
-
-    protected byte[] wrapHmacKeyConfidentiality;
-    protected byte[] unwrapHmacKeyConfidentiality;
 
     /**
      * @param mechanismName
@@ -122,7 +120,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
 
-    public static int skipWhiteSpace(byte[] buffer, int startPoint) {
+    protected static int skipWhiteSpace(byte[] buffer, int startPoint) {
         int i = startPoint;
         while (i < buffer.length && isWhiteSpace(buffer[i])) {
             i++;
@@ -130,7 +128,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         return i;
     }
 
-    public static boolean isWhiteSpace(byte b) {
+    protected static boolean isWhiteSpace(byte b) {
         if (b == 13)   // CR
             return true;
         else if (b == 10) // LF
@@ -356,23 +354,14 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private byte[] wrapIntegrityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-        ByteStringBuilder key = new ByteStringBuilder(hA1);
-        if (format == FORMAT.CLIENT) {
-            key.append(CLIENT_MAGIC_INTEGRITY);
-        } else {
-            key.append(SERVER_MAGIC_INTEGRITY);
-        }
-        md5.reset();
-        byte[] ki = md5.digest(key.toArray());
-
-        byte[] messageMac = computeHMAC(ki, seqNum, hmacMD5, message, offset, len);
+        byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
 
         byte[] result = new byte[len + 16];
         System.arraycopy(message, offset, result, 0, len);
         System.arraycopy(messageMac, 0, result, len, 10);
         integerByteOrdered(1, result, len + 10, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(seqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
-        seqNum++;
+        integerByteOrdered(wrapSeqNum, result, len + 12, 4); // 4-byte sequence number in network byte order
+        wrapSeqNum++;
         return result;
     }
 
@@ -385,35 +374,29 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             throw new SaslException("MessageType must equal to 1, but is different");
         }
 
-        ByteStringBuilder key = new ByteStringBuilder(hA1);
-        if (format == FORMAT.CLIENT) {
-            key.append(SERVER_MAGIC_INTEGRITY);
-        } else {
-            key.append(CLIENT_MAGIC_INTEGRITY);
+        if (extractedSeqNum != unwrapSeqNum) {
+            throw new SaslException("Bad sequence number while unwrapping");
         }
-        md5.reset();
-        byte[] ki = md5.digest(key.toArray());
 
         byte[] extractedMessageMac = new byte[10];
         byte[] extractedMessage = new byte[len - 16];
         System.arraycopy(message, offset, extractedMessage, 0, len - 16);
         System.arraycopy(message, offset + len - 16, extractedMessageMac, 0, 10);
 
-        byte[] expectedHmac = computeHMAC(ki, extractedSeqNum, hmacMD5, extractedMessage, 0, extractedMessage.length);
+        byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, extractedMessage, 0, extractedMessage.length);
 
         // validate MAC block
         if (Arrays2.equals(expectedHmac, 0, extractedMessageMac, 0, 10) == false) {
-            throw new SaslException("MAC validation failed while unwrapping");
+            return NO_BYTES;
         }
+
+        unwrapSeqNum++; // increment only if MAC is valid
         return extractedMessage;
     }
 
-    private static final String CLIENT_MAGIC_CONFIDENTIALITY = "Digest H(A1) to client-to-server sealing key magic constant";
-    private static final String SERVER_MAGIC_CONFIDENTIALITY = "Digest H(A1) to server-to-client sealing key magic constant";
-
     private byte[] wrapConfidentialityProtectedMessage(byte[] message, int offset, int len) throws SaslException {
 
-        byte[] messageMac = computeHMAC(wrapHmacKeyConfidentiality, seqNum, hmacMD5, message, offset, len);
+        byte[] messageMac = computeHMAC(wrapHmacKeyIntegrity, wrapSeqNum, hmacMD5, message, offset, len);
 
         int paddingLength = 0;
         byte[] pad = null;
@@ -433,7 +416,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         byte[] cipheredPart = null;
         try {
-            cipheredPart = wrapCipher.doFinal(toCipher);
+            cipheredPart = wrapCipher.update(toCipher);
         } catch (Exception e) {
             throw new SaslException("Problem during crypt.", e);
         }
@@ -441,9 +424,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         byte[] result = new byte[cipheredPart.length + 6];
         System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
         integerByteOrdered(1, result, cipheredPart.length, 2);  // 2-byte message type number in network byte order with value 1
-        integerByteOrdered(seqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
+        integerByteOrdered(wrapSeqNum, result, cipheredPart.length + 2, 4); // 4-byte sequence number in network byte order
 
-        seqNum++;
+        wrapSeqNum++;
         return result;
     }
 
@@ -456,9 +439,13 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             throw new SaslException("MessageType must equal to 1, but is different");
         }
 
+        if (extractedSeqNum != unwrapSeqNum) {
+            throw new SaslException("Bad sequence number while unwrapping");
+        }
+
         byte[] clearText = null;
         try {
-            clearText = unwrapCipher.doFinal(message, offset, len - 6);
+            clearText = unwrapCipher.update(message, offset, len - 6);
         } catch (Exception e) {
             throw new SaslException("Problem during decrypt.", e);
         }
@@ -485,17 +472,21 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             System.arraycopy(clearText, 0, decryptedMessage, 0, clearText.length - 10);
         }
 
-        byte[] expectedHmac = computeHMAC(unwrapHmacKeyConfidentiality, extractedSeqNum, hmacMD5, decryptedMessage, 0, decryptedMessage.length);
+        byte[] expectedHmac = computeHMAC(unwrapHmacKeyIntegrity, extractedSeqNum, hmacMD5, decryptedMessage, 0, decryptedMessage.length);
 
         // check hmac-s
         if (Arrays2.equals(expectedHmac, 0, hmac, 0, 10) == false) {
-            throw new SaslException("MAC validation failed after decrypting the message");
+            return NO_BYTES;
         }
 
+        unwrapSeqNum++; // increment only if MAC is valid
         return decryptedMessage;
     }
 
     protected void createCiphersAndKeys() throws SaslException {
+
+        wrapHmacKeyIntegrity = createIntegrityKey(true);
+        unwrapHmacKeyIntegrity = createIntegrityKey(false);
 
         if (cipher == null || cipher.length() == 0) {
             return;
@@ -505,6 +496,19 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         unwrapCipher = createCipher(false);
     }
 
+    protected byte[] createIntegrityKey(boolean wrap){
+        ByteStringBuilder key = new ByteStringBuilder(hA1);
+        if (wrap) {
+            key.append(format == FORMAT.CLIENT ? CLIENT_MAGIC_INTEGRITY : SERVER_MAGIC_INTEGRITY);
+        } else {
+            key.append(format == FORMAT.CLIENT ? SERVER_MAGIC_INTEGRITY : CLIENT_MAGIC_INTEGRITY);
+        }
+        md5.reset();
+        return md5.digest(key.toArray());
+    }
+
+    private static final String CLIENT_MAGIC_CONFIDENTIALITY = "Digest H(A1) to client-to-server sealing key magic constant";
+    private static final String SERVER_MAGIC_CONFIDENTIALITY = "Digest H(A1) to server-to-client sealing key magic constant";
 
     protected Cipher createCipher(boolean wrap) throws SaslException {
 
@@ -516,25 +520,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         byte[] hmacKey;
 
         if (wrap) {
-            if (format == FORMAT.CLIENT) {
-                key.append(CLIENT_MAGIC_CONFIDENTIALITY);
-                wrapHmacKeyConfidentiality = md5.digest(key.toArray());
-                hmacKey = wrapHmacKeyConfidentiality;
-            } else {
-                key.append(SERVER_MAGIC_CONFIDENTIALITY);
-                wrapHmacKeyConfidentiality = md5.digest(key.toArray());
-                hmacKey = wrapHmacKeyConfidentiality;
-            }
+            key.append(format == FORMAT.CLIENT ? CLIENT_MAGIC_CONFIDENTIALITY : SERVER_MAGIC_CONFIDENTIALITY);
+            hmacKey = md5.digest(key.toArray());
         } else {
-            if (format == FORMAT.CLIENT) {
-                key.append(SERVER_MAGIC_CONFIDENTIALITY);
-                unwrapHmacKeyConfidentiality = md5.digest(key.toArray());
-                hmacKey = unwrapHmacKeyConfidentiality;
-            } else {
-                key.append(CLIENT_MAGIC_CONFIDENTIALITY);
-                unwrapHmacKeyConfidentiality = md5.digest(key.toArray());
-                hmacKey = unwrapHmacKeyConfidentiality;
-            }
+            key.append(format == FORMAT.CLIENT ? SERVER_MAGIC_CONFIDENTIALITY : CLIENT_MAGIC_CONFIDENTIALITY);
+            hmacKey = md5.digest(key.toArray());
         }
 
 
@@ -594,10 +584,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private Mac getHmac() throws SaslException {
         try {
-          if (hmacMD5 == null) {
-              hmacMD5 = Mac.getInstance(HMAC_algorithm);
-          }
-          return hmacMD5;
+          return Mac.getInstance(HMAC_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw new SaslException("", e);
         }

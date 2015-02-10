@@ -59,7 +59,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         this.qop = qop;
         this.digestURI = digestURI;
         this.utf8Encoded = utf8Encoded;
-        this.digestResponse = DigestUtil.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        this.digestResponse = DigestUtil.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
     }
 
     DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, final String algorithm) throws NoSuchAlgorithmException {
@@ -91,7 +91,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         } catch (NoSuchAlgorithmException e) {
             throw new InvalidKeyException("No matching algorithm", e);
         }
-        byte[] guessBasedResponse = DigestUtil.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI);
+        byte[] guessBasedResponse = DigestUtil.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
         try {
             return Arrays.equals(digestResponse, guessBasedResponse);
         } catch (NullPointerException e) {
