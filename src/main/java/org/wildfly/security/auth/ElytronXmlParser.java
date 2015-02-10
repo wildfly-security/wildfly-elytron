@@ -21,19 +21,18 @@ package org.wildfly.security.auth;
 import static javax.xml.stream.XMLStreamConstants.*;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +41,10 @@ import java.util.regex.Pattern;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
+import org.wildfly.client.config.ClientConfiguration;
+import org.wildfly.client.config.ConfigXMLParseException;
+import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
@@ -64,94 +63,31 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
  */
 public final class ElytronXmlParser {
 
-    private static final String AUTHENTICATION_CLIENT_XML = "authentication-client.xml";
-
-    private static InputStream getStreamFromClassLoader(ClassLoader classLoader, String name) throws XMLStreamException {
-        final InputStream stream;
-        stream = classLoader == null ? ClassLoader.getSystemResourceAsStream(name) : classLoader.getResourceAsStream(name);
-        if (stream == null) {
-            throw xmlLog.xmlFileNotFound(name);
-        }
-        return stream;
-    }
+    private static final String NS_ELYTRON_1_0 = "urn:elytron:1.0";
 
     // authentication client document
 
     /**
-     * Parse an {@code authentication-client.xml} file from a resource in the given class loader.
+     * Parse a Elytron authentication client configuration from a resource in the given class loader.
      *
-     * @param classLoader the class loader (may be {@code null})
      * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientXml(ClassLoader classLoader) throws XMLStreamException {
-        return parseAuthenticationClientXml(classLoader, AUTHENTICATION_CLIENT_XML);
-    }
-
-    /**
-     * Parse an {@code authentication-client.xml} file from a resource in the given class loader.
-     *
-     * @param classLoader the class loader (may be {@code null})
-     * @param name an alternative name to search for instead of {@code authentication-client.xml}
-     * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
-     */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientXml(ClassLoader classLoader, String name) throws XMLStreamException {
-        try (InputStream stream = getStreamFromClassLoader(classLoader, name)) {
-            final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
-            final XMLStreamReader streamReader = FileAwareXMLStreamReader.from(xmlInputFactory.createXMLStreamReader(stream), name);
-            return parseAuthenticationClientXml(streamReader);
-        } catch (IOException e) {
-            throw xmlLog.xmlFailedToLoad(e, name);
+    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration() throws ConfigXMLParseException {
+        final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
+        try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
+            return parseAuthenticationClientConfiguration(streamReader);
         }
     }
 
     /**
-     * Parse an {@code authentication-client.xml} file.
-     *
-     * @param file the file to read
-     * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
-     */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientXml(File file) throws XMLStreamException {
-        try (InputStream stream = new FileInputStream(file)) {
-            final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
-            final XMLStreamReader streamReader = FileAwareXMLStreamReader.from(xmlInputFactory.createXMLStreamReader(stream), file.getName());
-            return parseAuthenticationClientXml(streamReader);
-        } catch (FileNotFoundException e) {
-            throw xmlLog.xmlFileNotFound(file.getName());
-        } catch (IOException e) {
-            throw xmlLog.xmlFailedToLoad(e, file.getName());
-        }
-    }
-
-    /**
-     * Parse an {@code authentication-client.xml} file from a stream.
-     *
-     * @param fileName the file name that the stream corresponds to
-     * @param inputStream the input stream to read from (will be closed after reading)
-     * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
-     */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientXml(String fileName, InputStream inputStream) throws XMLStreamException {
-        try (InputStream stream = inputStream) {
-            final XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
-            final XMLStreamReader streamReader = FileAwareXMLStreamReader.from(xmlInputFactory.createXMLStreamReader(stream), fileName);
-            return parseAuthenticationClientXml(streamReader);
-        } catch (IOException e) {
-            throw xmlLog.xmlFailedToLoad(e, fileName);
-        }
-    }
-
-    /**
-     * Parse an {@code authentication-client.xml} file from an XML reader.
+     * Parse a Elytron authentication client configuration from a configuration XML reader.
      *
      * @param reader the XML stream reader
      * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientXml(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         while (reader.hasNext()) {
             switch (reader.next()) {
                 case COMMENT:
@@ -164,8 +100,8 @@ public final class ElytronXmlParser {
                 }
                 case START_ELEMENT: {
                     switch (reader.getNamespaceURI()) {
-                        case "urn:elytron:1.0": break;
-                        default: throw unexpectedContent(reader);
+                        case NS_ELYTRON_1_0: break;
+                        default: throw reader.unexpectedElement();
                     }
                     switch (reader.getLocalName()) {
                         case "authentication-client": {
@@ -181,24 +117,24 @@ public final class ElytronXmlParser {
                                     }
                                     default: {
                                         if (reader.isWhiteSpace()) break;
-                                        throw unexpectedContent(reader);
+                                        throw reader.unexpectedElement();
                                     }
                                 }
                             }
                             return futureContext;
                         }
                         default: {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                     }
                 }
                 default: {
                     if (reader.isWhiteSpace()) break;
-                    throw unexpectedContent(reader);
+                    throw reader.unexpectedContent();
                 }
             }
         }
-        throw emptyDocument(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     // authentication client types
@@ -208,14 +144,13 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         SecurityFactory<AuthenticationContext> futureContext = null;
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
-            throw unexpectedAttribute(reader, 0);
+            throw reader.unexpectedAttribute(0);
         }
         boolean rules = false;
         boolean keyStores = false;
@@ -226,12 +161,12 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     case "rules": {
                         if (rules) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         rules = true;
                         futureContext = parseAuthenticationClientRulesType(reader, keyStoresMap);
@@ -239,7 +174,7 @@ public final class ElytronXmlParser {
                     }
                     case "key-stores": {
                         if (keyStores) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         keyStores = true;
                         parseKeyStoresType(reader, keyStoresMap);
@@ -247,13 +182,13 @@ public final class ElytronXmlParser {
                     }
                     case "net-authenticator": {
                         if (netAuthenticator) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         netAuthenticator = true;
                         parseEmptyType(reader);
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 if (netAuthenticator) {
@@ -261,10 +196,10 @@ public final class ElytronXmlParser {
                 }
                 return futureContext == null ? new FixedSecurityFactory<>(AuthenticationContext.EMPTY) : futureContext;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -273,13 +208,12 @@ public final class ElytronXmlParser {
      * @param reader the XML stream reader
      * @param keyStoresMap the map of key stores to use
      * @return the authentication context factory
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientRulesType(XMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientRulesType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
-            throw unexpectedAttribute(reader, 0);
+            throw reader.unexpectedAttribute(0);
         }
         final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap = new HashMap<>();
         final List<SecurityFactory<RuleConfigurationPair>> rulesList = new ArrayList<>();
@@ -288,14 +222,14 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     case "rule": {
                         parseAuthenticationClientRuleType(reader, rulesList, rulesMap, keyStoresMap);
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 return new OneTimeSecurityFactory<>(new SecurityFactory<AuthenticationContext>() {
@@ -309,10 +243,10 @@ public final class ElytronXmlParser {
                     }
                 });
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -321,30 +255,30 @@ public final class ElytronXmlParser {
      * @param reader the XML stream reader
      * @param rulesList the list to which rule-configuration pairs should be appended
      * @param keyStoresMap the map of key stores to use
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseAuthenticationClientRuleType(XMLStreamReader reader, final List<SecurityFactory<RuleConfigurationPair>> rulesList, final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static void parseAuthenticationClientRuleType(ConfigurationXMLStreamReader reader, final List<SecurityFactory<RuleConfigurationPair>> rulesList, final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String _extends = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             switch (reader.getAttributeLocalName(i)) {
                 case "extends": {
-                    if (_extends != null) throw unexpectedAttribute(reader, i);
+                    if (_extends != null) throw reader.unexpectedAttribute(i);
                     _extends = reader.getAttributeValue(i);
                     break;
                 }
                 case "name": {
-                    if (name != null) throw unexpectedAttribute(reader, i);
+                    if (name != null) throw reader.unexpectedAttribute(i);
                     name = reader.getAttributeValue(i);
                     break;
                 }
-                default: throw unexpectedAttribute(reader, i);
+                default:
+                    throw reader.unexpectedAttribute(i);
             }
         }
         SecurityFactory<MatchRule> rule;
@@ -375,12 +309,12 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     // -- match --
                     case "match-no-userinfo": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         parseEmptyType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -391,7 +325,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-userinfo": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String userName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -402,7 +336,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-protocol": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String protoName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -413,7 +347,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-host": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String hostName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -424,7 +358,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-path": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String pathName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -435,7 +369,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-port": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final int port = parsePortType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -446,7 +380,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-urn": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String urnString = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -457,7 +391,7 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "match-domain": {
-                        if (gotConfig) throw unexpectedContent(reader);
+                        if (gotConfig) throw reader.unexpectedElement();
                         final String domainName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
                         rule = new SecurityFactory<MatchRule>() {
@@ -557,7 +491,7 @@ public final class ElytronXmlParser {
                         };
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 final OneTimeSecurityFactory<MatchRule> finalRule = new OneTimeSecurityFactory<MatchRule>(rule);
@@ -573,7 +507,7 @@ public final class ElytronXmlParser {
                 }
                 return;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
     }
@@ -583,35 +517,34 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @param keyStoresMap the map of key stores to use
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseKeyStoresType(XMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static void parseKeyStoresType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
-            throw unexpectedAttribute(reader, 0);
+            throw reader.unexpectedAttribute(0);
         }
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     case "key-store": {
                         parseKeyStoreType(reader, keyStoresMap);
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 return;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -619,10 +552,9 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @param keyStoresMap the map of key stores to use
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseKeyStoreType(XMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
@@ -630,25 +562,26 @@ public final class ElytronXmlParser {
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             switch (reader.getAttributeLocalName(i)) {
                 case "type": {
-                    if (type != null) throw unexpectedAttribute(reader, i);
+                    if (type != null) throw reader.unexpectedAttribute(i);
                     type = reader.getAttributeValue(i);
                     break;
                 }
                 case "provider": {
-                    if (provider != null) throw unexpectedAttribute(reader, i);
+                    if (provider != null) throw reader.unexpectedAttribute(i);
                     provider = reader.getAttributeValue(i);
                     break;
                 }
                 case "name": {
-                    if (name != null) throw unexpectedAttribute(reader, i);
+                    if (name != null) throw reader.unexpectedAttribute(i);
                     name = reader.getAttributeValue(i);
                     break;
                 }
-                default: throw unexpectedAttribute(reader, i);
+                default:
+                    throw reader.unexpectedAttribute(i);
             }
         }
         if (type == null) {
@@ -670,13 +603,13 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     case "key-store-credential": {
                         // group 2
                         if (! gotSource || gotCredential) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         gotCredential = true;
                         final SecurityFactory<KeyStore.Entry> entryFactory = parseKeyStoreRefType(reader, keyStoresMap);
@@ -697,7 +630,7 @@ public final class ElytronXmlParser {
                     case "file": {
                         // group 1
                         if (gotSource) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         gotSource = true;
                         fileSource = parseNameType(reader);
@@ -706,7 +639,7 @@ public final class ElytronXmlParser {
                     case "resource": {
                         // group 1
                         if (gotSource) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         gotSource = true;
                         resourceSource = parseNameType(reader);
@@ -715,13 +648,13 @@ public final class ElytronXmlParser {
                     case "uri": {
                         // group 1
                         if (gotSource) {
-                            throw unexpectedContent(reader);
+                            throw reader.unexpectedElement();
                         }
                         gotSource = true;
                         uriSource = parseUriType(reader);
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 if (fileSource != null) {
@@ -736,10 +669,10 @@ public final class ElytronXmlParser {
                 }
                 return;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -748,30 +681,30 @@ public final class ElytronXmlParser {
      * @param reader the XML stream reader
      * @param keyStoresMap the map of key stores to use
      * @return the key store entry factory
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<KeyStore.Entry> parseKeyStoreRefType(XMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static SecurityFactory<KeyStore.Entry> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String keyStoreName = null;
         String alias = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             switch (reader.getAttributeLocalName(i)) {
                 case "key-store-name": {
-                    if (keyStoreName != null) throw unexpectedAttribute(reader, i);
+                    if (keyStoreName != null) throw reader.unexpectedAttribute(i);
                     keyStoreName = reader.getAttributeValue(i);
                     break;
                 }
                 case "alias": {
-                    if (alias != null) throw unexpectedAttribute(reader, i);
+                    if (alias != null) throw reader.unexpectedAttribute(i);
                     alias = reader.getAttributeValue(i);
                     break;
                 }
-                default: throw unexpectedAttribute(reader, i);
+                default:
+                    throw reader.unexpectedAttribute(i);
             }
         }
         if (keyStoreName == null) {
@@ -786,15 +719,15 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
                     case "urn:elytron:1.0": break;
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
                     case "key-store-credential": {
-                        if (keyStoreCredential != null) throw unexpectedContent(reader);
+                        if (keyStoreCredential != null) throw reader.unexpectedElement();
                         keyStoreCredential = parseKeyStoreRefType(reader, keyStoresMap);
                         break;
                     }
-                    default: throw unexpectedContent(reader);
+                    default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 final SecurityFactory<KeyStore.Entry> finalKeyStoreCredential = keyStoreCredential;
@@ -827,7 +760,7 @@ public final class ElytronXmlParser {
                     }
                 });
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
         return null;
@@ -839,25 +772,24 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code empty-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseEmptyType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static void parseEmptyType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
-            throw unexpectedAttribute(reader, 0);
+            throw reader.unexpectedAttribute(0);
         }
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -865,21 +797,20 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the parsed name
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static String parseNameType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static String parseNameType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             if (reader.getAttributeLocalName(i).equals("name")) {
                 name = reader.getAttributeValue(i);
             } else {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
         }
         if (name == null) {
@@ -888,14 +819,14 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return name;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -903,16 +834,15 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the port number (1-65535 inclusive)
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static int parsePortType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static int parsePortType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         int number = -1;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             if (reader.getAttributeLocalName(i).equals("number")) {
                 String s = reader.getAttributeValue(i);
@@ -925,7 +855,7 @@ public final class ElytronXmlParser {
                     throw invalidPortNumber(reader, i);
                 }
             } else {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
         }
         if (number == -1) {
@@ -934,14 +864,14 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return number;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -949,24 +879,23 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the regular expression based name rewriter
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static NameRewriter parseRegexSubstitutionType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static NameRewriter parseRegexSubstitutionType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         Pattern pattern = null;
         String replacement = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             if (reader.getAttributeLocalName(i).equals("pattern")) {
                 pattern = Pattern.compile(reader.getAttributeValue(i));
             } else if (reader.getAttributeLocalName(i).equals("replacement")) {
                 replacement = reader.getAttributeValue(i);
             } else {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
         }
         if (pattern == null) {
@@ -978,14 +907,14 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return new RegexNameRewriter(pattern, replacement, true);
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -993,22 +922,21 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the array of parsed names
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static String[] parseNamesType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static String[] parseNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String[] names = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             if (reader.getAttributeLocalName(i).equals("names")) {
                 String s = reader.getAttributeValue(i);
                 names = s.trim().split("\\s+");
             } else {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
         }
         if (names == null) {
@@ -1017,14 +945,14 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return names;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     /**
@@ -1032,25 +960,20 @@ public final class ElytronXmlParser {
      *
      * @param reader the XML stream reader
      * @return the parsed URI
-     * @throws XMLStreamException if the resource failed to be parsed
+     * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static URI parseUriType(XMLStreamReader reader) throws XMLStreamException {
-        reader = FileAwareXMLStreamReader.from(reader);
+    public static URI parseUriType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         URI uri = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
             if (reader.getAttributeLocalName(i).equals("uri")) {
-                try {
-                    uri = new URI(reader.getAttributeValue(i));
-                } catch (URISyntaxException e) {
-                    throw invalidUri(reader, i);
-                }
+                uri = reader.getURIAttributeValue(i);
             } else {
-                throw unexpectedAttribute(reader, i);
+                throw reader.unexpectedAttribute(i);
             }
         }
         if (uri == null) {
@@ -1059,44 +982,24 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
                 return uri;
             } else {
-                throw unexpectedContent(reader);
+                throw reader.unexpectedContent();
             }
         }
-        throw unexpectedDocumentEnd(reader);
+        throw reader.unexpectedDocumentEnd();
     }
 
     // util
 
-    private static XMLStreamException invalidUri(final XMLStreamReader reader, final int index) {
-        return xmlLog.xmlInvalidUri(reader, reader.getAttributeValue(index), reader.getAttributeLocalName(index), reader.getName());
+    private static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
+        return reader.missingRequiredAttribute(null, name);
     }
 
-    private static XMLStreamException missingAttribute(final XMLStreamReader reader, final String name) {
-        return xmlLog.xmlMissingRequiredAttribute(reader, name, reader.getName());
-    }
-
-    private static XMLStreamException unexpectedDocumentEnd(final XMLStreamReader reader) {
-        return xmlLog.xmlUnexpectedDocumentEnd(reader);
-    }
-
-    private static XMLStreamException unexpectedContent(final XMLStreamReader reader) {
-        return xmlLog.xmlUnexpectedContent(reader);
-    }
-
-    private static XMLStreamException emptyDocument(final XMLStreamReader reader) {
-        return xmlLog.xmlEmptyDocument(reader);
-    }
-
-    private static XMLStreamException invalidPortNumber(final XMLStreamReader reader, final int index) {
+    private static ConfigXMLParseException invalidPortNumber(final ConfigurationXMLStreamReader reader, final int index) {
         return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValue(index), reader.getAttributeLocalName(index), reader.getName());
-    }
-
-    private static XMLStreamException unexpectedAttribute(final XMLStreamReader reader, final int index) {
-        return xmlLog.xmlUnexpectedAttribute(reader, reader.getAttributeLocalName(index), reader.getName());
     }
 
     abstract static class AbstractKeyStoreFactory implements SecurityFactory<KeyStore> {
