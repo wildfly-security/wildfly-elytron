@@ -36,7 +36,6 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -62,7 +61,7 @@ public class CompatibilityServerTest extends BaseTestCase {
         new MockUp<AbstractDigestMechanism>(){
             @Mock
             byte[] generateNonce(){
-                return nonce.getBytes();
+                return nonce.getBytes(StandardCharsets.UTF_8);
             }
         };
     }
@@ -618,7 +617,6 @@ public class CompatibilityServerTest extends BaseTestCase {
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
     @Test
-    @Ignore("Problem with encoding on Windows")
     public void testUtf8Charset() throws Exception {
         mockNonce("sn\u0438\u4F60\uD83C\uDCA1");
 
