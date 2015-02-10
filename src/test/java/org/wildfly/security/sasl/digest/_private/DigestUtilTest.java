@@ -56,6 +56,10 @@ public class DigestUtilTest {
                 H_A1(md, "chris", "elwood.innosoft.com", "secret".toCharArray(),
                 "OA9BSXrbuRhWay".getBytes(), "OA9BSuZWMSpW8m".getBytes(), "chris", StandardCharsets.UTF_8)));
 
+        assertEquals("4e863a809aa7f7cc191be93705967394", HexConverter.convertToHexString(
+                H_A1(md, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", "\u0438\u4F60\uD83C\uDCA1".toCharArray(),
+                "sn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), "cn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), null, StandardCharsets.UTF_8)));
+
     }
 
     @Test

@@ -37,7 +37,6 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -63,7 +62,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         new MockUp<AbstractDigestMechanism>(){
             @Mock
             byte[] generateNonce(){
-                return nonce.getBytes();
+                return nonce.getBytes(StandardCharsets.UTF_8);
             }
         };
     }
@@ -592,7 +591,6 @@ public class CompatibilityClientTest extends BaseTestCase {
      * Test successful authentication with Unicode chars (UTF-8 encoding)
      */
     @Test
-    @Ignore("Problem with encoding on Windows")
     public void testUtf8Charset() throws Exception {
         mockNonce("cn\u0438\u4F60\uD83C\uDCA1");
 
@@ -602,7 +600,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
         byte[] message1 = "realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",charset=utf-8,algorithm=md5-sess".getBytes(StandardCharsets.UTF_8);
         byte[] message2 = client.evaluateChallenge(message1);
-        assertEquals("charset=utf-8,username=\"\u0438\u4F60\uD83C\uDCA1\",realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",nc=00000001,cnonce=\"cn\u0438\u4F60\uD83C\uDCA1\",digest-uri=\"\u0438\u4F60\uD83C\uDCA1/realm.\u0438\u4F60\uD83C\uDCA1.com\",maxbuf=65536,response=420939e06d2d748c157c5e33499b41a9,qop=auth", new String(message2, "UTF-8"));
+        assertEquals("charset=utf-8,username=\"\u0438\u4F60\uD83C\uDCA1\",realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",nc=00000001,cnonce=\"cn\u0438\u4F60\uD83C\uDCA1\",digest-uri=\"\u0438\u4F60\uD83C\uDCA1/realm.\u0438\u4F60\uD83C\uDCA1.com\",maxbuf=65536,response=420939e06d2d748c157c5e33499b41a9,qop=auth", new String(message2, StandardCharsets.UTF_8));
         assertFalse(client.isComplete());
 
         byte[] message3 = "rspauth=9c4d137545617ba98c11aaea939b4381".getBytes(StandardCharsets.UTF_8);
