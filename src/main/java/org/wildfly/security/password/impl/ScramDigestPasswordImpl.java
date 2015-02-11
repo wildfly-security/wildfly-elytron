@@ -94,16 +94,6 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     }
 
     @Override
-    public byte[] getEncoded() {
-        return new byte[0];
-    }
-
-    @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
     public String getAlgorithm() {
         return this.algorithm;
     }

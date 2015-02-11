@@ -42,4 +42,16 @@ abstract class AbstractPasswordImpl implements Password {
     static byte[] getNormalizedPasswordBytes(final char[] characters) {
         return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
+
+    @Override
+    public String getFormat() {
+        return null;
+    }
+
+    @Override
+    public byte[] getEncoded() {
+        return null;
+    }
+
+
 }

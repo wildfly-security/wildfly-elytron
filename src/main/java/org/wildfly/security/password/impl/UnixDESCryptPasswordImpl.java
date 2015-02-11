@@ -105,14 +105,6 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         return UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
     }
 
-    public String getFormat() {
-        return null;
-    }
-
-    public byte[] getEncoded() {
-        return null;
-    }
-
     public short getSalt() {
         return salt;
     }

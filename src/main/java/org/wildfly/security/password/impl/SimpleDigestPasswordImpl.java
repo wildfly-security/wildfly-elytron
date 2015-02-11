@@ -115,14 +115,6 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         return algorithm;
     }
 
-    public String getFormat() {
-        return null;
-    }
-
-    public byte[] getEncoded() {
-        return new byte[0];
-    }
-
     public byte[] getDigest() {
         return digest.clone();
     }

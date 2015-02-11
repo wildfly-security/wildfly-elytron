@@ -45,14 +45,6 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
         return "clear";
     }
 
-    public String getFormat() {
-        return null;
-    }
-
-    public byte[] getEncoded() {
-        return null;
-    }
-
     public char[] getPassword() throws IllegalStateException {
         try {
             return password.clone();

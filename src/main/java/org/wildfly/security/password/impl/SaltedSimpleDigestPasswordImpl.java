@@ -95,16 +95,6 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     }
 
     @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public byte[] getEncoded() {
-        return new byte[0];
-    }
-
-    @Override
     public byte[] getDigest() {
         return digest.clone();
     }
