@@ -177,12 +177,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
-            case ALGORITHM_DIGEST_MD2:
-            case ALGORITHM_DIGEST_MD5:
-            case ALGORITHM_DIGEST_SHA_1:
-            case ALGORITHM_DIGEST_SHA_256:
-            case ALGORITHM_DIGEST_SHA_384:
-            case ALGORITHM_DIGEST_SHA_512: {
+            case ALGORITHM_SIMPLE_DIGEST_MD2:
+            case ALGORITHM_SIMPLE_DIGEST_MD5:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_1:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_256:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_384:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
                 if (keySpec instanceof SimpleDigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
                     try {
                         return new SimpleDigestPasswordImpl((SimpleDigestPasswordSpec) keySpec);
@@ -357,12 +357,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_CRYPT_SHA_512: {
                 return (password instanceof UnixSHACryptPassword && algorithm.equals(password.getAlgorithm()));
             }
-            case ALGORITHM_DIGEST_MD2:
-            case ALGORITHM_DIGEST_MD5:
-            case ALGORITHM_DIGEST_SHA_1:
-            case ALGORITHM_DIGEST_SHA_256:
-            case ALGORITHM_DIGEST_SHA_384:
-            case ALGORITHM_DIGEST_SHA_512: {
+            case ALGORITHM_SIMPLE_DIGEST_MD2:
+            case ALGORITHM_SIMPLE_DIGEST_MD5:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_1:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_256:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_384:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
                 return (password instanceof SimpleDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
@@ -452,12 +452,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
                 break;
             }
-            case ALGORITHM_DIGEST_MD2:
-            case ALGORITHM_DIGEST_MD5:
-            case ALGORITHM_DIGEST_SHA_1:
-            case ALGORITHM_DIGEST_SHA_256:
-            case ALGORITHM_DIGEST_SHA_384:
-            case ALGORITHM_DIGEST_SHA_512: {
+            case ALGORITHM_SIMPLE_DIGEST_MD2:
+            case ALGORITHM_SIMPLE_DIGEST_MD5:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_1:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_256:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_384:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
                 if (password instanceof SimpleDigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
                 } else if (password instanceof SimpleDigestPassword  && algorithm.equals(password.getAlgorithm())) {
