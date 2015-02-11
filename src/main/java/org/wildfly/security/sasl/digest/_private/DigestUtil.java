@@ -25,8 +25,21 @@ import org.wildfly.security.util.ByteStringBuilder;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 import java.util.Arrays;
+
+import javax.crypto.Mac;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+import javax.crypto.spec.DESedeKeySpec;
+import javax.crypto.spec.SecretKeySpec;
+import javax.security.sasl.SaslException;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
@@ -42,6 +55,7 @@ public final class DigestUtil {
     public static final String SECURITY_MARK = "00000000000000000000000000000000";   // 32 zeros
 
     public static final String HASH_algorithm = "MD5";
+    public static final String HMAC_algorithm = "HmacMD5";
 
     public static String passwordAlgorithm(String digestAlgorithm) {
         switch (digestAlgorithm) {
@@ -127,7 +141,7 @@ public final class DigestUtil {
      */
     public static byte[] digestResponse(MessageDigest messageDigest, byte[] H_A1,
                                  byte[] nonce, int nonce_count, byte[] cnonce,
-                                 String authzid, String qop, String digest_uri) {
+                                 String authzid, String qop, String digest_uri, boolean auth) {
 
         // QOP
         String qop_value;
@@ -139,7 +153,7 @@ public final class DigestUtil {
 
         // A2
         ByteStringBuilder A2 = new ByteStringBuilder();
-        A2.append(AUTH_METHOD);
+        if(auth) A2.append(AUTH_METHOD); // for "response", but not for "rspauth"
         A2.append(':');
         A2.append(digest_uri);
         if (QOP_AUTH_CONF.equals(qop_value) || QOP_AUTH_INT.equals(qop_value)) {
@@ -176,7 +190,7 @@ public final class DigestUtil {
     public static byte[] convertToHexBytesWithLeftPadding(int input, int totalLength) {
         byte[] retValue = new byte[totalLength];
         Arrays.fill(retValue, (byte) '0');
-        byte[] hex = Integer.valueOf(String.valueOf(input), 16).toString().getBytes(StandardCharsets.UTF_8);
+        byte[] hex = Integer.toString(input, 16).getBytes(StandardCharsets.UTF_8);
         if (hex.length > totalLength) {
             throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
         }
@@ -187,4 +201,117 @@ public final class DigestUtil {
         }
         return retValue;
     }
+
+    public static byte[] computeHMAC(byte[] kc, int sequenceNumber, Mac mac, byte[] message, int offset, int len) throws SaslException {
+        SecretKeySpec ks = new SecretKeySpec(kc, HMAC_algorithm);
+        try {
+            mac.init(ks);
+        } catch (InvalidKeyException e) {
+            throw new SaslException("Invalid key provided", e);
+        }
+        byte[] buffer = new byte[len + 4];
+        integerByteOrdered(sequenceNumber, buffer, 0, 4);
+        System.arraycopy(message, offset, buffer, 4, len);
+        byte[] macBuffer = new byte[10];
+        System.arraycopy(mac.doFinal(buffer), 0, macBuffer, 0, 10);
+        return macBuffer;
+    }
+
+    public static void integerByteOrdered(int num, byte[] buf, int offset, int len) {
+        if (len > 4 || len < 1) {
+            throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
+        }
+        for (int i = len - 1; i >= 0; i--) {
+            buf[offset + i] = (byte) (num & 0xff);
+            num >>>= 8;
+        }
+    }
+
+    public static int decodeByteOrderedInteger(byte[] buf, int offset, int len) {
+        if (len > 4 || len < 1) {
+            throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
+        }
+        int result = buf[offset];
+        for (int i = 1; i < len; i++) {
+            result <<= 8;
+            result |= buf[offset + i];
+        }
+        return result;
+    }
+
+    static byte[] create3desSubKey(byte[] keyBits, int offset, int len) {
+        if (len != 7) {
+            throw new InvalidParameterException("Only 7 byte long keyBits are transformable to 3des subkey");
+        }
+        byte[] subkey = new byte[8];
+        subkey[0] = fixParityBit((byte)                          (keyBits[offset]   & 0xFF));
+        subkey[1] = fixParityBit((byte)(keyBits[offset]   << 7 | (keyBits[offset+1] & 0xFF) >> 1));
+        subkey[2] = fixParityBit((byte)(keyBits[offset+1] << 6 | (keyBits[offset+2] & 0xFF) >> 2));
+        subkey[3] = fixParityBit((byte)(keyBits[offset+2] << 5 | (keyBits[offset+3] & 0xFF) >> 3));
+        subkey[4] = fixParityBit((byte)(keyBits[offset+3] << 4 | (keyBits[offset+4] & 0xFF) >> 4));
+        subkey[5] = fixParityBit((byte)(keyBits[offset+4] << 3 | (keyBits[offset+5] & 0xFF) >> 5));
+        subkey[6] = fixParityBit((byte)(keyBits[offset+5] << 2 | (keyBits[offset+6] & 0xFF) >> 6));
+        subkey[7] = fixParityBit((byte)(keyBits[offset+6] << 1));
+        return subkey;
+    }
+
+    /**
+     * Create DES secret key according to http://www.cryptosys.net/3des.html.
+     *
+     * @param keyBits
+     * @param offset
+     * @param len
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws InvalidKeySpecException
+     */
+    public static SecretKey createDesSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        if (len != 7) {
+            throw new InvalidParameterException("Only 7 bytes long keyBits are transformable to des key");
+        }
+
+        KeySpec spec = new DESKeySpec(create3desSubKey(keyBits, 0, 7), 0);
+        SecretKeyFactory desFact = SecretKeyFactory.getInstance("DES");
+
+        return desFact.generateSecret(spec);
+    }
+
+    /**
+     * Create 3des secret key according to http://www.cryptosys.net/3des.html.
+     *
+     * @param keyBits
+     * @param offset
+     * @param len
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws InvalidKeySpecException
+     */
+    public static SecretKey create3desSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        if (len != 14) {
+            throw new InvalidParameterException("Only 14 bytes long keyBits are transformable to 3des key option2");
+        }
+
+        byte[] key = new byte[24];
+        System.arraycopy(create3desSubKey(keyBits, 0, 7), 0, key, 0, 8);   // subkey1
+        System.arraycopy(create3desSubKey(keyBits, 7, 7), 0, key, 8, 8);   // subkey2
+        System.arraycopy(key, 0, key, 16, 8);                              // subkey3 == subkey1 (in option2 of 3des key
+
+        KeySpec spec = new DESedeKeySpec(key, 0);
+        SecretKeyFactory desFact = SecretKeyFactory.getInstance("DESede");
+
+        return desFact.generateSecret(spec);
+    }
+
+    /**
+     * Fix the rightmost bit to maintain odd parity for the whole byte.
+     *
+     * @param toFix - byte to fix
+     * @return fixed byte with odd parity
+     */
+    private static byte fixParityBit(byte toFix) {
+        return (Integer.bitCount(toFix & 0xff) & 1) == 0 ? (byte) (toFix ^ 1) : toFix;
+    }
+
 }
