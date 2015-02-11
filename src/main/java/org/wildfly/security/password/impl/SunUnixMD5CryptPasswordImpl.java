@@ -139,16 +139,6 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
     }
 
     @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public byte[] getEncoded() {
-        return null;
-    }
-
-    @Override
     public byte[] getHash() {
         return hash.clone();
     }

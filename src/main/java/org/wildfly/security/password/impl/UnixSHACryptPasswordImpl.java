@@ -110,16 +110,6 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public byte[] getEncoded() {
-        return null;
-    }
-
-    @Override
     public byte[] getHash() {
         return hash.clone();
     }

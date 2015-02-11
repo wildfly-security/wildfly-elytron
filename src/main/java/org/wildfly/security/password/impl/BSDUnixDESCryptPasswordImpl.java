@@ -108,14 +108,6 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         return BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
     }
 
-    public String getFormat() {
-        return null;
-    }
-
-    public byte[] getEncoded() {
-        return null;
-    }
-
     @Override
     public int getIterationCount() {
         return iterationCount;

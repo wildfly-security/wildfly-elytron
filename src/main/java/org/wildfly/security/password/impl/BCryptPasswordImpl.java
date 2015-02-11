@@ -80,16 +80,6 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     }
 
     @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public byte[] getEncoded() {
-        return null;
-    }
-
-    @Override
     public byte[] getHash() {
         try {
             return this.hash.clone();

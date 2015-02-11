@@ -109,16 +109,6 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         return ALGORITHM_DIGEST_MD5;
     }
 
-    @Override
-    public String getFormat() {
-        return null;
-    }
-
-    @Override
-    public byte[] getEncoded() {
-        return new byte[0];
-    }
-
     public byte[] getHA1() {
         return hA1;
     }
