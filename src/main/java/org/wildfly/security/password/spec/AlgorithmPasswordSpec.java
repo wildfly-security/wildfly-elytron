@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,21 +18,18 @@
 
 package org.wildfly.security.password.spec;
 
-public final class SimpleDigestPasswordSpec implements AlgorithmPasswordSpec {
-    private final String algorithm;
-    private final byte[] digest;
+/**
+ * An extension of {@link PasswordSpec} where the spec is tied to a specific algorithm.
+ *
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ */
+public interface AlgorithmPasswordSpec extends PasswordSpec {
 
-    public SimpleDigestPasswordSpec(final String algorithm, final byte[] digest) {
-        this.algorithm = algorithm;
-        this.digest = digest;
-    }
+    /**
+     * Get the algorithm this spec instance is for.
+     *
+     * @return the algorithm this spec instance is for.
+     */
+    String getAlgorithm();
 
-    @Override
-    public String getAlgorithm() {
-        return algorithm;
-    }
-
-    public byte[] getDigest() {
-        return digest;
-    }
 }

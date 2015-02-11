@@ -47,6 +47,7 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
+import org.wildfly.security.password.spec.AlgorithmPasswordSpec;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -130,7 +131,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SUN_CRYPT_MD5:
             case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                if (keySpec instanceof SunUnixMD5CryptPasswordSpec) {
+                if (keySpec instanceof SunUnixMD5CryptPasswordSpec && algorithmEquals(algorithm, keySpec)) {
                     try {
                         return new SunUnixMD5CryptPasswordImpl((SunUnixMD5CryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
@@ -154,7 +155,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_CRYPT_SHA_256:
             case ALGORITHM_CRYPT_SHA_512: {
-                if (keySpec instanceof UnixSHACryptPasswordSpec) {
+                if (keySpec instanceof UnixSHACryptPasswordSpec && algorithmEquals(algorithm, keySpec)) {
                     try {
                         return new UnixSHACryptPasswordImpl((UnixSHACryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
@@ -182,7 +183,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512: {
-                if (keySpec instanceof SimpleDigestPasswordSpec) {
+                if (keySpec instanceof SimpleDigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
                     try {
                         return new SimpleDigestPasswordImpl((SimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
@@ -214,7 +215,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
-                if (keySpec instanceof SaltedSimpleDigestPasswordSpec) {
+                if (keySpec instanceof SaltedSimpleDigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
                     try {
                         return new SaltedSimpleDigestPasswordImpl((SaltedSimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
@@ -306,7 +307,11 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
         }
-        throw new InvalidKeySpecException("Unknown algorithm");
+        throw new InvalidKeySpecException("Unknown algorithm or incompatible PasswordSpec");
+    }
+
+    private boolean algorithmEquals(String algorithm, KeySpec keySpec) {
+        return keySpec instanceof AlgorithmPasswordSpec ? algorithm.equals(((AlgorithmPasswordSpec)keySpec).getAlgorithm()) : false;
     }
 
     @Override
@@ -346,11 +351,11 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SUN_CRYPT_MD5:
             case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                return (password instanceof SunUnixMD5CryptPassword);
+                return (password instanceof SunUnixMD5CryptPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_CRYPT_SHA_256:
             case ALGORITHM_CRYPT_SHA_512: {
-                return (password instanceof UnixSHACryptPassword);
+                return (password instanceof UnixSHACryptPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_DIGEST_MD2:
             case ALGORITHM_DIGEST_MD5:
@@ -358,7 +363,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512: {
-                return (password instanceof SimpleDigestPassword);
+                return (password instanceof SimpleDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
@@ -370,7 +375,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
-                return (password instanceof SaltedSimpleDigestPassword);
+                return (password instanceof SaltedSimpleDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             case ALGORITHM_CRYPT_DES: {
                 return (password instanceof UnixDESCryptPassword);
@@ -380,7 +385,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SCRAM_SHA_1:
             case ALGORITHM_SCRAM_SHA_256: {
-                return (password instanceof ScramDigestPassword);
+                return (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm()));
             }
             default: {
                 return false;
@@ -408,18 +413,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof ClearPassword) {
                     return new ClearPasswordImpl((ClearPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_BCRYPT: {
                 if (password instanceof BCryptPasswordImpl) {
                     return password;
                 } else if (password instanceof BCryptPassword) {
                     return new BCryptPasswordImpl((BCryptPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_CRYPT_MD5: {
                 if (password instanceof UnixMD5CryptPasswordImpl) {
@@ -432,9 +435,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SUN_CRYPT_MD5:
             case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                if (password instanceof SunUnixMD5CryptPasswordImpl) {
+                if (password instanceof SunUnixMD5CryptPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
-                } else if (password instanceof SunUnixMD5CryptPassword) {
+                } else if (password instanceof SunUnixMD5CryptPassword && algorithm.equals(password.getAlgorithm())) {
                     return new SunUnixMD5CryptPasswordImpl((SunUnixMD5CryptPassword) password);
                 } else {
                     break;
@@ -442,13 +445,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_CRYPT_SHA_256:
             case ALGORITHM_CRYPT_SHA_512: {
-                if (password instanceof UnixSHACryptPasswordImpl) {
+                if (password instanceof UnixSHACryptPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
-                } else if (password instanceof UnixSHACryptPassword) {
+                } else if (password instanceof UnixSHACryptPassword  && algorithm.equals(password.getAlgorithm())) {
                     return new UnixSHACryptPasswordImpl((UnixSHACryptPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_DIGEST_MD2:
             case ALGORITHM_DIGEST_MD5:
@@ -456,13 +458,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512: {
-                if (password instanceof SimpleDigestPasswordImpl) {
+                if (password instanceof SimpleDigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
-                } else if (password instanceof SimpleDigestPassword) {
+                } else if (password instanceof SimpleDigestPassword  && algorithm.equals(password.getAlgorithm())) {
                     return new SimpleDigestPasswordImpl((SimpleDigestPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
@@ -474,9 +475,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
-                if (password instanceof SaltedSimpleDigestPasswordImpl) {
+                if (password instanceof SaltedSimpleDigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
-                } else if (password instanceof SaltedSimpleDigestPassword) {
+                } else if (password instanceof SaltedSimpleDigestPassword && algorithm.equals(password.getAlgorithm())) {
                     return new SaltedSimpleDigestPasswordImpl((SaltedSimpleDigestPassword) password);
                 }
                 break;
@@ -486,28 +487,25 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof UnixDESCryptPassword) {
                     return new UnixDESCryptPasswordImpl((UnixDESCryptPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_BSD_CRYPT_DES: {
                 if (password instanceof BSDUnixDESCryptPasswordImpl) {
                     return password;
                 } else if (password instanceof BSDUnixDESCryptPassword) {
                     return new BSDUnixDESCryptPasswordImpl((BSDUnixDESCryptPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
             case ALGORITHM_SCRAM_SHA_1:
             case ALGORITHM_SCRAM_SHA_256: {
-                if (password instanceof ScramDigestPasswordImpl) {
+                if (password instanceof ScramDigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
                     return password;
-                } else if (password instanceof ScramDigestPassword) {
+                } else if (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm())) {
                     return new ScramDigestPasswordImpl((ScramDigestPassword) password);
-                } else {
-                    break;
                 }
+                break;
             }
         }
         throw new InvalidKeyException("Unknown password type or algorithm");
