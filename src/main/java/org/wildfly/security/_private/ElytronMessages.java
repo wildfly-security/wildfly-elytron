@@ -46,6 +46,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
+import org.wildfly.security.vault.VaultURIParser;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ConfigXMLParseException;
@@ -1140,4 +1141,30 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
     IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
+
+    /* vault package */
+
+    @Message(id = 9500, value = "Supposed Vault URI has no scheme or different from \"" + VaultURIParser.VAULT_SCHEME + "\" (\"%s\")")
+    IllegalArgumentException vaultURIWrongScheme(String uri);
+
+    @Message(id = 9501, value = "Vault URI has to be absolute \"%s\"")
+    IllegalArgumentException vaultNotAbsoluteURI(String uri);
+
+    @Message(id = 9502, value = "Vault name has to be defined \"%s\"")
+    IllegalArgumentException vaultHasNoName(String uri);
+
+    @Message(id = 9503, value = "Attribute name is defined, but empty \"%s\"")
+    IllegalArgumentException vaultAttributeNameEmpty(String uri);
+
+    @Message(id = 9504, value = "Opening quote has to be the first character in parameter value \"%s\"")
+    IllegalArgumentException vaultParameterOpeningQuote(String uri);
+
+    @Message(id = 95058, value = "Closing quote has to be the last character of parameter value \"%s\"")
+    IllegalArgumentException vaultParameterClosingQuote(String uri);
+
+    @Message(id = 9506, value = "Unexpected end of parameter part of \"%s\"")
+    IllegalArgumentException vaultParameterUnexpectedEnd(String uri);
+
+    @Message(id = 9507, value = "Parameter name expected, but is missing \"%s\"")
+    IllegalArgumentException vaultParameterNameExpected(String uri);
 }
