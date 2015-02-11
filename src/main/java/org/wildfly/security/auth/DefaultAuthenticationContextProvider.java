@@ -40,7 +40,7 @@ class DefaultAuthenticationContextProvider {
                     classLoader = DefaultAuthenticationContextProvider.class.getClassLoader();
                 }
                 try {
-                    return ElytronXmlParser.parseAuthenticationClientXml(classLoader).create();
+                    return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
                 } catch (Throwable t) {
                     throw new InvalidAuthenticationConfigurationException(t);
                 }

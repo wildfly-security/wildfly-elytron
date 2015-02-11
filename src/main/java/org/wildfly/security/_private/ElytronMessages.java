@@ -37,7 +37,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
-import org.wildfly.security.auth.ElytronXMLParseException;
+import org.wildfly.client.config.ConfigXMLParseException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -58,32 +58,24 @@ public interface ElytronMessages extends BasicLogger {
     @Message(value = "Parse error")
     String parseError();
 
-    @Message(id = 2, value = "Invalid URI \"%s\" specified for attribute \"%s\" of element \"%s\"")
-    ElytronXMLParseException xmlInvalidUri(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
+    // id = 2
 
-    @Message(id = 3, value = "Missing required attribute \"%s\" of element \"%s\"")
-    ElytronXMLParseException xmlMissingRequiredAttribute(@Param XMLStreamReader reader, String attributeName, QName name);
+    // id = 3
 
-    @Message(id = 4, value = "Unexpected end of XML document")
-    ElytronXMLParseException xmlUnexpectedDocumentEnd(@Param XMLStreamReader reader);
+    // id = 4
 
-    @Message(id = 5, value = "Unexpected content")
-    ElytronXMLParseException xmlUnexpectedContent(@Param XMLStreamReader reader);
+    // id = 5
 
-    @Message(id = 6, value = "Unexpected empty document")
-    ElytronXMLParseException xmlEmptyDocument(@Param XMLStreamReader reader);
+    // id = 6
 
     @Message(id = 7, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
-    ElytronXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
+    ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
-    @Message(id = 8, value = "Unexpected attribute \"%s\" encountered in element \"%s\"")
-    ElytronXMLParseException xmlUnexpectedAttribute(@Param XMLStreamReader reader, String attributeName, QName elementName);
+    // id = 8
 
-    @Message(id = 9, value = "Configuration file \"%s\" not found")
-    ElytronXMLParseException xmlFileNotFound(String file);
+    // id = 9
 
-    @Message(id = 10, value = "Failed to load configuration file \"%s\"")
-    ElytronXMLParseException xmlFailedToLoad(@Cause Throwable cause, String fileName);
+    // id = 10
 
     @Message(id = 11, value = "%s is null")
     IllegalArgumentException nullParameter(String parameter);

@@ -53,6 +53,7 @@
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
         <version.org.wildfly.checkstyle-config>1.0.2.Final</version.org.wildfly.checkstyle-config>
+        <version.org.wildfly.client.config>1.0.0.Alpha2</version.org.wildfly.client.config>
         <version.com.puppycrawl.tools.checkstyle>6.0</version.com.puppycrawl.tools.checkstyle>
 
         <test.level>INFO</test.level>
@@ -228,6 +229,12 @@
             <groupId>org.jboss.spec.javax.net.ssl</groupId>
             <artifactId>jboss-jsse-api_8.0_spec</artifactId>
             <version>${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.client</groupId>
+            <artifactId>wildfly-client-config</artifactId>
+            <version>${version.org.wildfly.client.config}</version>
             <scope>provided</scope>
         </dependency>
 
