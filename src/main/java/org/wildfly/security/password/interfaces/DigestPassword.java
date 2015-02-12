@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * Copyright 2014 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import org.wildfly.security.password.OneWayPassword;
  * Digest MD5 (pre-digested) password.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public interface DigestPassword extends OneWayPassword {
 
@@ -31,21 +32,31 @@ public interface DigestPassword extends OneWayPassword {
     String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
     String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
 
-    byte[] getHA1();
+    /**
+     * Get the username this {@link Password} is associated with.
+     *
+     * Generally a {@link Password} should not need to know this information but this is an integral part of how the
+     * representation of this {@link Password} is created.
+     *
+     * @return The username this {@link Password} is associated with.
+     */
+    String getUsername();
 
-    byte[] getNonce();
+    /**
+     * Get the realm this {@link Password} is associated with.
+     *
+     * Note: This is independent of the name of the realm used to obtain the {@link Password} representation, this is the value
+     * used to generate the digest.
+     *
+     * @return the realm this {@link Password} is associated with.
+     */
+    String getRealm();
 
-    int getNonceCount();
+    /**
+     * Get the digest represented by this {@link Password}
+     *
+     * @return The digest represented by this {@link Password}
+     */
+    byte[] getDigest();
 
-    byte[] getCnonce();
-
-    String getAuthzid();
-
-    String getQop();
-
-    String getDigestURI();
-
-    byte[] getDigestResponse();
-
-    boolean isUtf8Encoded();
 }

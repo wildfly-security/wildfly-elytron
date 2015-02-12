@@ -18,9 +18,10 @@
 
 package org.wildfly.security.password.impl;
 
-import static org.wildfly.security.password.interfaces.ClearPassword.*;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
+import static org.wildfly.security.password.interfaces.ClearPassword.*;
+import static org.wildfly.security.password.interfaces.DigestPassword.*;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
@@ -40,6 +41,7 @@ import org.wildfly.security.password.PasswordFactorySpi;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
@@ -51,6 +53,7 @@ import org.wildfly.security.password.spec.AlgorithmPasswordSpec;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
@@ -177,6 +180,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_512:
+                if (keySpec instanceof DigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
+                    return new DigestPasswordImpl((DigestPasswordSpec) keySpec);
+                } else if (keySpec instanceof EncryptablePasswordSpec) {
+                    return new DigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
+                }
+                break;
             case ALGORITHM_SIMPLE_DIGEST_MD2:
             case ALGORITHM_SIMPLE_DIGEST_MD5:
             case ALGORITHM_SIMPLE_DIGEST_SHA_1:
@@ -357,6 +370,12 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_CRYPT_SHA_512: {
                 return (password instanceof UnixSHACryptPassword && algorithm.equals(password.getAlgorithm()));
             }
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_512:{
+                return (password instanceof DigestPassword && algorithm.equals(password.getAlgorithm()));
+            }
             case ALGORITHM_SIMPLE_DIGEST_MD2:
             case ALGORITHM_SIMPLE_DIGEST_MD5:
             case ALGORITHM_SIMPLE_DIGEST_SHA_1:
@@ -449,6 +468,17 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof UnixSHACryptPassword  && algorithm.equals(password.getAlgorithm())) {
                     return new UnixSHACryptPasswordImpl((UnixSHACryptPassword) password);
+                }
+                break;
+            }
+            case ALGORITHM_DIGEST_MD5:
+            case ALGORITHM_DIGEST_SHA:
+            case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_512: {
+                if (password instanceof DigestPasswordImpl && algorithm.equals(password.getAlgorithm())) {
+                    return password;
+                } else if (password instanceof DigestPassword  && algorithm.equals(password.getAlgorithm())) {
+                    return new SimpleDigestPasswordImpl((SimpleDigestPassword) password);
                 }
                 break;
             }

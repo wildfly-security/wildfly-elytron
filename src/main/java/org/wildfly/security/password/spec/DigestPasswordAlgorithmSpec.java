@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.wildfly.security.password.spec;
 
+import java.io.Serializable;
+import java.security.spec.AlgorithmParameterSpec;
+
 /**
- * A {@link PasswordSpec} for a password represented by a Digest Response as seen in DigestMD5 SASL mechanism.
+ * A {@link PasswordSpec} for a password represented by digesting it with a username and realm as defined by RFC2617 and
+ * RFC2831.
  *
- * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class DigestPasswordSpec implements AlgorithmPasswordSpec {
+public final class DigestPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable  {
+
+    private static final long serialVersionUID = 4925821569951433413L;
 
     private final String algorithm;
     private final String username;
     private final String realm;
-    private final byte[] digest;
 
-    public DigestPasswordSpec(String algorithm, String username, String realm, byte[] digest) {
+    public DigestPasswordAlgorithmSpec(String algorithm, String username, String realm) {
         this.algorithm = algorithm;
         this.username = username;
         this.realm = realm;
-        this.digest = digest;
     }
 
-    @Override
     public String getAlgorithm() {
         return algorithm;
     }
@@ -48,10 +51,6 @@ public final class DigestPasswordSpec implements AlgorithmPasswordSpec {
 
     public String getRealm() {
         return realm;
-    }
-
-    public byte[] getDigest() {
-        return digest;
     }
 
 }
