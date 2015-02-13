@@ -333,4 +333,16 @@ public class DERDecoderTest {
         assertArrayEquals(expected, decoder.drainElementValue());
         assertFalse(decoder.hasNextElement());
     }
+
+    @Test
+    public void testDecodeDrainElement() throws Exception {
+        DERDecoder decoder = new DERDecoder(new byte[] {48, 26, -126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109, -124, 3, 42, 3, 4});
+        decoder.startSequence();
+        byte[] expected = new byte[] {-126, 19, 115, 101, 114, 118, 101, 114, 49, 46, 101, 120, 97, 109, 112, 108, 101, 46, 99, 111, 109};
+        assertArrayEquals(expected, decoder.drainElement());
+        expected = new byte[] {-124, 3, 42, 3, 4};
+        assertArrayEquals(expected, decoder.drainElement());
+        decoder.endSequence();
+        assertFalse(decoder.hasNextElement());
+    }
 }

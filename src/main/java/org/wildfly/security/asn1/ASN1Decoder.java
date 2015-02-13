@@ -255,4 +255,12 @@ public interface ASN1Decoder {
      * @throws ASN1Exception if the value bytes from the next ASN.1 element cannot be obtained
      */
     byte[] drainElementValue() throws ASN1Exception;
+
+    /**
+     * Drain all of the bytes from the next ASN.1 element.
+     *
+     * @return all of the bytes from the next ASN.1 element
+     * @throws ASN1Exception if the bytes from the next ASN.1 element cannot be obtained
+     */
+    byte[] drainElement() throws ASN1Exception;
 }

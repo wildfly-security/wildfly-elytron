@@ -431,6 +431,25 @@ public class DERDecoder implements ASN1Decoder {
         return value;
     }
 
+    @Override
+    public byte[] drainElement() throws ASN1Exception {
+        if (implicitTag != -1) {
+            implicitTag = -1;
+        }
+        int currOffset = bi.offset();
+        readTag();
+        int valueLength = readLength();
+        int length = (bi.offset() - currOffset) + valueLength;
+        while ((bi.offset() != currOffset) && bi.hasPrev()) {
+            bi.prev();
+        }
+        byte[] element = new byte[length];
+        if ((length != 0) && (bi.drain(element) != length)) {
+            throw new ASN1Exception("Unexpected end of input");
+        }
+        return element;
+    }
+
     private int readTag() throws ASN1Exception {
         try {
             int tag = bi.next();
