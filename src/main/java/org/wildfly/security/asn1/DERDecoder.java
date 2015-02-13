@@ -358,8 +358,12 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
-    public boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception {
-        return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+    public boolean isNextType(int clazz, int number, boolean isConstructed) {
+        try {
+            return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+        } catch (ASN1Exception e) {
+            return false;
+        }
     }
 
     @Override

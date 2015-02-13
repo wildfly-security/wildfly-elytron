@@ -217,9 +217,8 @@ public interface ASN1Decoder {
      * @param isConstructed whether or not the next element should be constructed
      * @return {@code true} if the type of the next ASN.1 element matches the given type
      * and {@code false} otherwise
-     * @throws ASN1Exception if an error occurs while determining the type of the next element
      */
-    boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception;
+    boolean isNextType(int clazz, int number, boolean isConstructed);
 
     /**
      * Retrieve the type of the next ASN.1 element without actually decoding
