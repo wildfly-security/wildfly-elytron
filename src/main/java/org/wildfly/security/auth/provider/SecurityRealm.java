@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
+import javax.security.auth.callback.CallbackHandler;
+
 
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
@@ -40,6 +42,7 @@ public interface SecurityRealm {
      *
      * @param name The name to use when creating the {@link RealmIdentity}
      * @return The {@link RealmIdentity} for the provided {@code name} or {@code null}
+     * @throws RealmUnavailableException if this realm is currently unable to handle requests.
      */
     RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
@@ -50,6 +53,7 @@ public interface SecurityRealm {
      *
      * @param principal The principal to use to create the {@link RealmIdentity}
      * @return The {@link RealmIdentity} for the provided {@code principal} or {@code null}
+     * @throws RealmUnavailableException if this realm is currently unable to handle requests.
      */
     RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException;
 
@@ -59,7 +63,23 @@ public interface SecurityRealm {
      *
      * @param credentialType the credential type
      * @return the level of support for this credential type
+     * @throws RealmUnavailableException if this realm is currently unable to handle requests.
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
+
+    /**
+     * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
+     * supported.
+     *
+     * By default if a realm does not implement this method {@link #getCredentialSupport(Class)} will be called instead and the supplied {@link CallbackHandler} ignored.
+     *
+     * @param credentialType the credential type.
+     * @param callbackHandler the {@link CallbackHandler} that can supply additional information to the realm.
+     * @return the level of support for this credential type.
+     * @throws RealmUnavailableException if this realm is currently unable to handle requests.
+     */
+    default CredentialSupport getCredentialSupport(Class<?> credentialType, CallbackHandler callbackHandler) throws RealmUnavailableException {
+        return getCredentialSupport(credentialType);
+    }
 
 }

@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
+import javax.security.auth.callback.CallbackHandler;
+
 /**
  * A representation of a pre-authentication identity.
  *
@@ -52,6 +54,26 @@ public interface RealmIdentity {
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
 
     /**
+     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
+     * identity.
+     *
+     * By default if a realm does not implement this method {@link #getCredentialSupport(Class)} will be called instead and the
+     * supplied {@link CallbackHandler} ignored.
+     *
+     * Note: Where the {@link CallbackHandler} supplies information to the realm it should not be assumed that information is
+     * permanently valid, i.e. the client of the {@link SecurityRealm} and this {@link RealmIdentity} may be querying if a
+     * specific capability is supported and subsequently decide not to use that capability.
+     *
+     * @param credentialType the credential type
+     * @param callbackHandler the {@link CallbackHandler} that can supply additional information to the realm.
+     * @return the level of support for this credential type
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     */
+    default CredentialSupport getCredentialSupport(Class<?> credentialType, CallbackHandler callbackHandler) throws RealmUnavailableException {
+        return getCredentialSupport(credentialType);
+    }
+
+    /**
      * Acquire a credential of the given type.
      *
      * @param credentialType the credential type class
@@ -60,6 +82,26 @@ public interface RealmIdentity {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
      */
     <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
+
+    /**
+     * Acquire a credential of the given type.
+     *
+     * By default if a realm does not implement this method {@link #getCredential(Class)} will be called instead and the
+     * supplied {@link CallbackHandler} ignored.
+     *
+     * Note: Where the {@link CallbackHandler} supplies information to the realm it should not be assumed that information is
+     * permanently valid, i.e. the client of the {@link SecurityRealm} and this {@link RealmIdentity} may be querying if a
+     * specific capability is supported and subsequently decide not to use that capability.
+     *
+     * @param credentialType the credential type class
+     * @param <C> the credential type
+     * @param callbackHandler the {@link CallbackHandler} that can supply additional information to the realm.
+     * @return the credential, or {@code null} if the principal has no credential of that type
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     */
+    default <C> C getCredential(Class<C> credentialType, CallbackHandler callbackHandler) throws RealmUnavailableException {
+        return getCredential(credentialType);
+    }
 
     /**
      * Verify the given credential.
