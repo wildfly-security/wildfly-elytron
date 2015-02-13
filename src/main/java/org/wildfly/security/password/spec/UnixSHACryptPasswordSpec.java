@@ -18,7 +18,7 @@
 
 package org.wildfly.security.password.spec;
 
-public final class UnixSHACryptPasswordSpec implements PasswordSpec {
+public final class UnixSHACryptPasswordSpec implements AlgorithmPasswordSpec {
     private final byte[] hashBytes;
     private final byte[] salt;
     private final int iterationCount;
@@ -52,6 +52,7 @@ public final class UnixSHACryptPasswordSpec implements PasswordSpec {
         return iterationCount;
     }
 
+    @Override
     public String getAlgorithm() {
         return algorithm;
     }

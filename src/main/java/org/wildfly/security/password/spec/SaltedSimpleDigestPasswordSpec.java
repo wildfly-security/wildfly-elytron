@@ -23,7 +23,7 @@ package org.wildfly.security.password.spec;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class SaltedSimpleDigestPasswordSpec implements PasswordSpec {
+public final class SaltedSimpleDigestPasswordSpec implements AlgorithmPasswordSpec {
 
     private final String algorithm;
     private final byte[] digest;
@@ -35,6 +35,7 @@ public final class SaltedSimpleDigestPasswordSpec implements PasswordSpec {
         this.salt = salt;
     }
 
+    @Override
     public String getAlgorithm() {
         return algorithm;
     }

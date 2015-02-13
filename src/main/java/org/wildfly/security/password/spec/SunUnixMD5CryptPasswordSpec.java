@@ -21,7 +21,7 @@ package org.wildfly.security.password.spec;
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public final class SunUnixMD5CryptPasswordSpec implements PasswordSpec {
+public final class SunUnixMD5CryptPasswordSpec implements AlgorithmPasswordSpec {
     private final String algorithm;
     private final byte[] hash;
     private final byte[] salt;
@@ -34,6 +34,7 @@ public final class SunUnixMD5CryptPasswordSpec implements PasswordSpec {
         this.iterationCount = iterationCount;
     }
 
+    @Override
     public String getAlgorithm() {
         return algorithm;
     }
