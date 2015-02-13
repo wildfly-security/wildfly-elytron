@@ -29,7 +29,6 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
-import org.wildfly.security.sasl.callback.DigestHashCallback;
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
 
 /**
@@ -70,9 +69,6 @@ public class ServerCallbackHandler implements CallbackHandler {
             } else if (current instanceof VerifyPasswordCallback && expectedPassword != null) {
                 VerifyPasswordCallback vcb = (VerifyPasswordCallback) current;
                 vcb.setVerified(String.valueOf(expectedPassword).equals(vcb.getPassword()));
-            } else if (current instanceof DigestHashCallback && hexURPHash != null) {
-                DigestHashCallback dhc = (DigestHashCallback) current;
-                dhc.setHexHash(hexURPHash);
             } else if (current instanceof AnonymousAuthorizationCallback) {
                 ((AnonymousAuthorizationCallback) current).setAuthorized(true);
             } else if (current instanceof AuthorizeCallback) {
