@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.entity;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
+import static org.wildfly.security.sasl.entity.GeneralName.*;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -116,7 +117,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     // entityB
                     if ((serverName != null) && (! serverName.isEmpty())) {
                         encoder.encodeImplicit(0);
-                        EntityUtil.encodeGeneralNames(encoder, DNS_NAME, serverName);
+                        EntityUtil.encodeGeneralNames(encoder, new DNSName(serverName));
                     }
 
                     // certPref
@@ -140,8 +141,8 @@ final class EntitySaslServer extends AbstractSaslServer {
                 X509Certificate[] clientCertChain;
                 X509Certificate clientCert;
                 String clientName;
-                Collection<List<?>> entityB = null;
-                Collection<List<?>> authID = null;
+                Collection<GeneralName> entityB = null;
+                Collection<GeneralName> authID = null;
                 try {
                     decoder.startSequence();
                     randomA = decoder.decodeOctetString();

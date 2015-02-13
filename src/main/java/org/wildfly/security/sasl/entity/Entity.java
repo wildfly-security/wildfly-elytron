@@ -72,10 +72,4 @@ public final class Entity {
         }
     }
 
-    // General name types (TODO: look into adding support for the remaining general name types: x400Address, ediPartyName, iPAddress, and otherName)
-    public static final int RFC_822_NAME = 1;
-    public static final int DNS_NAME = 2;
-    public static final int DIRECTORY_NAME = 4;
-    public static final int URI_NAME = 6;
-    public static final int REGISTERED_ID = 8;
 }

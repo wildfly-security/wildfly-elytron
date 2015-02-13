@@ -20,14 +20,13 @@ package org.wildfly.security.sasl.entity;
 
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
+import static org.wildfly.security.sasl.entity.GeneralName.*;
 import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
@@ -181,31 +180,43 @@ class EntityUtil {
      * </p>
      *
      * @param encoder the DER encoder
-     * @param generalName the general name, as a {@code List} where the first entry
-     * is an {@code Integer} (the name type, 0-8) and the second entry is a {@code String} (the name)
+     * @param generalName the general name
      * @throws ASN1Exception if the general name is invalid
      */
-    public static void encodeGeneralName(final DEREncoder encoder, List<?> generalName) throws ASN1Exception {
-        int type = ((Integer) generalName.get(0)).intValue();
-        String name = (String) generalName.get(1);
-        switch (type) {
-            case RFC_822_NAME:
-            case DNS_NAME:
-            case URI_NAME:
-                encoder.encodeImplicit(type);
-                encoder.encodeIA5String(name);
-                break;
-            case DIRECTORY_NAME:
-                encoder.startExplicit(type);
-                encoder.writeEncoded(new X500Principal(name).getEncoded());
-                encoder.endExplicit();
-                break;
-            case REGISTERED_ID:
-                encoder.encodeImplicit(type);
-                encoder.encodeObjectIdentifier(name);
-                break;
-            // TODO: look into adding support for the remaining general name types
-            default: throw new ASN1Exception("Invalid general name type");
+    public static void encodeGeneralName(final DEREncoder encoder, GeneralName generalName) throws ASN1Exception {
+        if (generalName instanceof OtherName) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.startSequence();
+            encoder.encodeObjectIdentifier(((OtherName) generalName).getObjectIdentifier());
+            encoder.writeEncoded(((OtherName) generalName).getEncodedValue());
+            encoder.endSequence();
+        } else if (generalName instanceof RFC822Name) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.encodeIA5String(((RFC822Name) generalName).getName());
+        } else if (generalName instanceof DNSName) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.encodeIA5String(((DNSName) generalName).getName());
+        } else if (generalName instanceof X400Address) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.writeEncoded(((X400Address) generalName).getName());
+        } else if (generalName instanceof DirectoryName) {
+            encoder.startExplicit(generalName.getType());
+            encoder.writeEncoded((new X500Principal(((DirectoryName) generalName).getName())).getEncoded());
+            encoder.endExplicit();
+        } else if (generalName instanceof EDIPartyName) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.writeEncoded(((EDIPartyName) generalName).getName());
+        } else if (generalName instanceof URIName) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.encodeIA5String(((URIName) generalName).getName());
+        } else if (generalName instanceof IPAddress) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.encodeOctetString(((IPAddress) generalName).getName());
+        } else if (generalName instanceof RegisteredID) {
+            encoder.encodeImplicit(generalName.getType());
+            encoder.encodeObjectIdentifier(((RegisteredID) generalName).getName());
+        } else {
+            throw new ASN1Exception("Invalid general name type");
         }
     }
 
@@ -220,14 +231,12 @@ class EntityUtil {
      * </p>
      *
      * @param encoder the DER encoder
-     * @param generalNames the general names, given as a {@code Collection} of {@code List}
-     * entries where the first entry of each {@code List} is an {@code Integer} (the name type, 0-8)
-     * and the second entry is a {@code String} (the name)
+     * @param generalNames the general names, as a {@code Collection} where each entry is a {@link GeneralName}
      * @throws ASN1Exception if any of the general names are invalid
      */
-    public static void encodeGeneralNames(final DEREncoder encoder, Collection<List<?>> generalNames) throws ASN1Exception {
+    public static void encodeGeneralNames(final DEREncoder encoder, Collection<GeneralName> generalNames) throws ASN1Exception {
         encoder.startSequence();
-        for (List generalName : generalNames) {
+        for (GeneralName generalName : generalNames) {
             encodeGeneralName(encoder, generalName);
         }
         encoder.endSequence();
@@ -238,15 +247,11 @@ class EntityUtil {
      * the given DER encoder.
      *
      * @param encoder the DER encoder
-     * @param type the general name type, an {@code Integer} between 0 and 8
-     * @param name the general name, as a {@code String}
-     * @throws ASN1Exception if the type or name is invalid
+     * @param generalName the general name
+     * @throws ASN1Exception if the general name is invalid
      */
-    public static void encodeGeneralNames(final DEREncoder encoder, int type, String name) throws ASN1Exception {
-        Set<List<?>> generalNames = new HashSet<List<?>>(1);
-        List<Object> generalName = new ArrayList<Object>(2);
-        generalName.add(type);
-        generalName.add(name);
+    public static void encodeGeneralNames(final DEREncoder encoder, GeneralName generalName) throws ASN1Exception {
+        Set<GeneralName> generalNames = new HashSet<GeneralName>(1);
         generalNames.add(generalName);
         encodeGeneralNames(encoder, generalNames);
     }
@@ -255,14 +260,11 @@ class EntityUtil {
             Collection<List<?>> subjectAltNames) throws ASN1Exception {
         encoder.startSequence();
         if (! subjectName.isEmpty()) {
-            List<Object> directoryName = new ArrayList<Object>(2);
-            directoryName.add(DIRECTORY_NAME);
-            directoryName.add(subjectName);
-            encodeGeneralName(encoder, directoryName);
+            encodeGeneralName(encoder, new DirectoryName(subjectName));
         }
         if (subjectAltNames != null) {
             for (List altName : subjectAltNames) {
-                encodeGeneralName(encoder, altName);
+                encodeGeneralName(encoder, convertToGeneralName(altName));
             }
         }
         encoder.endSequence();
@@ -365,45 +367,81 @@ class EntityUtil {
      * Decode the next element from the given DER decoder as a {@code GeneralNames} element.
      *
      * @param decoder the DER decoder
-     * @return the general names, given as a {@code Collection} of {@code List} entries
-     * where the first entry of each {@code List} is an {@code Integer} (the name type, 0-8)
-     * and the second entry is a {@code String} (the name)
+     * @return the general names
      * @throws ASN1Exception if the next element from the given decoder is not a general names element
      */
-    public static Collection<List<?>> decodeGeneralNames(final DERDecoder decoder) throws ASN1Exception {
-        Set<List<?>> generalNames = new HashSet<List<?>>();
-        List<Object> generalName;
-        int type = -1;
-        String name = null;
+    public static Collection<GeneralName> decodeGeneralNames(final DERDecoder decoder) throws ASN1Exception {
+        Set<GeneralName> generalNames = new HashSet<GeneralName>();
+        GeneralName generalName = null;
         decoder.startSequence();
         while (decoder.hasNextElement()) {
-            generalName = new ArrayList<Object>();
             out: {
                 for (int generalNameType = 0; generalNameType <= 8; generalNameType++) {
                     switch (generalNameType) {
+                        case OTHER_NAME:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, true)) {
+                                decoder.decodeImplicit(generalNameType);
+                                decoder.startSequence();
+                                String typeId = decoder.decodeObjectIdentifier();
+                                byte[] encodedValue = decoder.drainElement();
+                                decoder.endSequence();
+                                generalName = new OtherName(typeId, encodedValue);
+                                break out;
+                            }
+                            break;
                         case RFC_822_NAME:
-                        case DNS_NAME:
-                        case URI_NAME:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, false)) {
-                                type = generalNameType;
-                                decoder.decodeImplicit(type);
-                                name = decoder.decodeIA5String();
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new RFC822Name(decoder.decodeIA5String());
+                                break out;
+                            }
+                            break;
+                        case DNS_NAME:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, false)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new DNSName(decoder.decodeIA5String());
+                                break out;
+                            }
+                            break;
+                        case X400_ADDRESS:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, true)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new X400Address(decoder.drainElementValue(), true);
                                 break out;
                             }
                             break;
                         case DIRECTORY_NAME:
-                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, DIRECTORY_NAME, true)) {
-                                type = generalNameType;
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, true)) {
                                 byte[] encodedName = decoder.drainElementValue();
-                                name = (new X500Principal(encodedName)).getName(X500Principal.CANONICAL);
+                                generalName = new DirectoryName((new X500Principal(encodedName)).getName(X500Principal.CANONICAL));
+                                break out;
+                            }
+                            break;
+                        case EDI_PARTY_NAME:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, true)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new EDIPartyName(decoder.drainElementValue(), true);
+                                break out;
+                            }
+                            break;
+                        case URI_NAME:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, false)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new URIName(decoder.decodeIA5String());
+                                break out;
+                            }
+                            break;
+                        case IP_ADDRESS:
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, false)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new IPAddress(decoder.decodeOctetString());
                                 break out;
                             }
                             break;
                         case REGISTERED_ID:
-                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, REGISTERED_ID, false)) {
-                                type = generalNameType;
-                                decoder.decodeImplicit(type);
-                                name = decoder.decodeObjectIdentifier();
+                            if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, generalNameType, false)) {
+                                decoder.decodeImplicit(generalNameType);
+                                generalName = new RegisteredID(decoder.decodeObjectIdentifier());
                                 break out;
                             }
                             break;
@@ -411,8 +449,6 @@ class EntityUtil {
                     }
                 }
             }
-            generalName.add(type);
-            generalName.add(name);
             generalNames.add(generalName);
         }
         decoder.endSequence();
@@ -568,17 +604,17 @@ class EntityUtil {
         return trustedAuthorities;
     }
 
-    public static boolean matchGeneralNames(Collection<List<?>> generalNames,
-            Collection<List<?>> otherGeneralNames) {
+    public static boolean matchGeneralNames(Collection<GeneralName> generalNames,
+            Collection<GeneralName> otherGeneralNames) {
         if (generalNames.size() > otherGeneralNames.size()) {
             // Place smaller collection in generalNames
-            Collection<List<?>> tmp = generalNames;
+            Collection<GeneralName> tmp = generalNames;
             generalNames = otherGeneralNames;
             otherGeneralNames = tmp;
         }
-        for (List<?> generalName : generalNames) {
-            for (List<?> otherGeneralName : otherGeneralNames) {
-                if (matchGeneralName(generalName, otherGeneralName)) {
+        for (GeneralName generalName : generalNames) {
+            for (GeneralName otherGeneralName : otherGeneralNames) {
+                if (generalName.equals(otherGeneralName)) {
                     return true;
                 }
             }
@@ -586,23 +622,19 @@ class EntityUtil {
         return false;
     }
 
-    public static boolean matchGeneralNames(Collection<List<?>> generalNames, X509Certificate cert) {
-        Collection<List<?>> certNames;
+    public static boolean matchGeneralNames(Collection<GeneralName> generalNames, X509Certificate cert) {
+        Collection<GeneralName> certNames;
         final X509CertificateCredentialDecoder certCredentialDecoder = new X509CertificateCredentialDecoder();
         String certSubjectName = certCredentialDecoder.getNameFromCredential(cert);
         if (! certSubjectName.isEmpty()) {
-            certNames = new HashSet<List<?>>(1);
-            List<Object> certDirectoryName = new ArrayList<Object>(2);
-            certDirectoryName.add(DIRECTORY_NAME);
-            certDirectoryName.add(certSubjectName);
-            certNames.add(certDirectoryName);
+            certNames = new HashSet<GeneralName>(1);
+            certNames.add(new DirectoryName(certSubjectName));
             if (matchGeneralNames(certNames, generalNames)) {
                 return true;
             }
         }
         try {
-            certNames = cert.getSubjectAlternativeNames();
-            return matchGeneralNames(certNames, generalNames);
+            return matchGeneralNames(convertToGeneralNames(cert.getSubjectAlternativeNames()), generalNames);
         } catch (CertificateParsingException e) {
             // Ingore unless the subject name is empty
             if (certSubjectName.isEmpty()) {
@@ -612,39 +644,47 @@ class EntityUtil {
         return false;
     }
 
-    public static boolean matchGeneralName(List<?> generalName, List<?> otherGeneralName) {
-        int type = ((Integer) generalName.get(0)).intValue();
-        int otherType = ((Integer) otherGeneralName.get(0)).intValue();
-        if (type != otherType) {
-            return false;
+    public static String getDistinguishedNameFromGeneralNames(Collection<GeneralName> generalNames) {
+        for (GeneralName generalName : generalNames) {
+            if (generalName instanceof DirectoryName) {
+                return ((DirectoryName) generalName).getName();
+            }
         }
-        String name = (String) generalName.get(1);
-        String otherName = (String) otherGeneralName.get(1);
+        return null;
+    }
+
+    private static GeneralName convertToGeneralName(List<?> generalName) throws ASN1Exception {
+        int type = ((Integer) generalName.get(0)).intValue();
+        Object name = generalName.get(1);
         switch (type) {
+            case OTHER_NAME:
+                return new OtherName((byte[]) name);
             case RFC_822_NAME:
+                return new RFC822Name((String) name);
             case DNS_NAME:
-                return name.equalsIgnoreCase(otherName);
-            case URI_NAME:
-                try {
-                    return (new URI(name)).equals(new URI(otherName));
-                } catch (URISyntaxException e) {
-                    throw new ASN1Exception("Invalid general name for URI type");
-                }
+                return new DNSName((String) name);
+            case X400_ADDRESS:
+                return new X400Address((byte[]) name);
             case DIRECTORY_NAME:
-                return (new X500Principal(name)).equals(new X500Principal(otherName));
+                return new DirectoryName((String) name);
+            case EDI_PARTY_NAME:
+                return new EDIPartyName((byte[]) name);
+            case URI_NAME:
+                return new URIName((String) name);
+            case IP_ADDRESS:
+                return new IPAddress((String) name);
             case REGISTERED_ID:
-                return name.equals(otherName);
+                return new RegisteredID((String) name);
             default: throw new ASN1Exception("Invalid general name type");
         }
     }
 
-    public static String getDistinguishedNameFromGeneralNames(Collection<List<?>> generalNames) {
+    private static Collection<GeneralName> convertToGeneralNames(Collection<List<?>> generalNames) throws ASN1Exception {
+        Collection<GeneralName> convertedGeneralNames = new HashSet<GeneralName>();
         for (List<?> generalName : generalNames) {
-            if (((Integer) generalName.get(0)).intValue() == DIRECTORY_NAME) {
-                return (String) generalName.get(1);
-            }
+            convertedGeneralNames.add(convertToGeneralName(generalName));
         }
-        return null;
+        return convertedGeneralNames;
     }
 
     private static void safeClose(Closeable c) {
