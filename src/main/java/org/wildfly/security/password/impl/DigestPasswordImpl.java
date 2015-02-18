@@ -16,12 +16,8 @@
  * limitations under the License.
  */
 package org.wildfly.security.password.impl;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
 
-import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.password.spec.DigestPasswordSpec;
-import org.wildfly.security.sasl.digest._private.DigestUtil;
-
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -29,120 +25,113 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+
 /**
  * Pre-digested (DigestMD5) credential type implementation.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword {
 
-    private static final long serialVersionUID = 9129555139213387660L;
-
     private final String algorithm;
-    private final byte[] hA1;
-    private final byte[] nonce;
-    private final int nonceCount;
-    private final byte[] cnonce;
-    private final String authzid;
-    private final String qop;
-    private final String digestURI;
-    private final byte[] digestResponse;
-    private final boolean utf8Encoded;
+    private final String username;
+    private final String realm;
+    private final byte[] digest;
 
-    DigestPasswordImpl(final String algorithm, byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, boolean utf8Encoded) throws NoSuchAlgorithmException {
+    DigestPasswordImpl(final String algorithm, final String username, final String realm, final byte[] digest) {
         this.algorithm = algorithm;
-        this.hA1 = clonedHA1;
-        this.nonce = clonedNonce;
-        this.nonceCount = nonceCount;
-        this.cnonce = clonedCnonce;
-        this.authzid = authzid;
-        this.qop = qop;
-        this.digestURI = digestURI;
-        this.utf8Encoded = utf8Encoded;
-        this.digestResponse = DigestUtil.digestResponse(getMessageDigest(this.algorithm), hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
+        this.username = username;
+        this.realm = realm;
+        this.digest = digest;
     }
 
-    DigestPasswordImpl(byte[] clonedHA1, byte[] clonedNonce, int nonceCount, byte[] clonedCnonce, String authzid, String qop, String digestURI, final String algorithm) throws NoSuchAlgorithmException {
-        this(algorithm, clonedHA1, clonedNonce, nonceCount, clonedCnonce, authzid, qop, digestURI, false);
+    DigestPasswordImpl(final DigestPasswordSpec spec) {
+        this(spec.getAlgorithm(), spec.getUsername(), spec.getRealm(),  spec.getDigest().clone());
     }
 
-    DigestPasswordImpl(DigestPasswordSpec spec, byte[] hA1) throws NoSuchAlgorithmException {
-        this(spec.getAlgorithm(), hA1.clone(), spec.getNonce().clone(), spec.getNonceCount(), spec.getCnonce().clone(), spec.getAuthzid(), spec.getQop(), spec.getDigestURI(), spec.isUtf8Encoded());
+    DigestPasswordImpl(final DigestPassword password) {
+        this(password.getAlgorithm(), password.getUsername(), password.getRealm(), password.getDigest().clone());
     }
 
-    private static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
-        return MessageDigest.getInstance(DigestUtil.passwordAlgorithm(algorithm));
+    // We can not support conversion from ClearPasswordSpec as we require additional
+    // information we can not generate ourselves.
+
+    DigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
+        this(algorithm, spec.getPassword(), (DigestPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+    }
+
+    DigestPasswordImpl(final String algorithm, final char[] password, final DigestPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+        this.algorithm = algorithm;
+        this.username = spec.getUsername();
+        this.realm = spec.getRealm();
+        try {
+            this.digest = userRealmPasswordDigest(getMessageDigest(algorithm), spec.getUsername(), spec.getRealm(), password);
+        } catch (NoSuchAlgorithmException e) {
+            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+        }
+    }
+
+    @Override
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public String getRealm() {
+        return realm;
+    }
+
+    @Override
+    public byte[] getDigest() {
+        return digest.clone();
     }
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        return null;
+        if (keySpecType.isAssignableFrom(DigestPasswordSpec.class)) {
+            return keySpecType.cast(new DigestPasswordSpec(algorithm, username, realm, digest.clone()));
+        }
+        throw new InvalidKeySpecException();
     }
 
     @Override
     boolean verify(char[] guess) throws InvalidKeyException {
-        if (guess == null) {
-            throw new InvalidKeyException("Guess cannot be null");
-        }
-        byte[] guessedHashA1 = (utf8Encoded ? new String(guess).getBytes(StandardCharsets.UTF_8) : new String(guess).getBytes(StandardCharsets.ISO_8859_1));
-        final MessageDigest messageDigest;
         try {
-            messageDigest = getMessageDigest(algorithm);
+            byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
+            return Arrays.equals(digest, guessDigest);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No matching algorithm", e);
-        }
-        byte[] guessBasedResponse = DigestUtil.digestResponse(messageDigest, guessedHashA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
-        try {
-            return Arrays.equals(digestResponse, guessBasedResponse);
-        } catch (NullPointerException e) {
-            throw new IllegalStateException("digestResponse cannot be null");
+            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
         }
     }
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return false;
+        return keySpecType.isAssignableFrom(DigestPasswordSpec.class);
     }
 
-    @Override
-    public String getAlgorithm() {
-        return ALGORITHM_DIGEST_MD5;
-    }
-
-    public byte[] getHA1() {
-        return hA1;
-    }
-
-    public byte[] getNonce() {
-        return nonce;
-    }
-
-    public int getNonceCount() {
-        return nonceCount;
-    }
-
-    public byte[] getCnonce() {
-        return cnonce;
-    }
-
-    public String getAuthzid() {
-        return authzid;
-    }
-
-    public String getQop() {
-        return qop;
-    }
-
-    public String getDigestURI() {
-        return digestURI;
-    }
-
-    public byte[] getDigestResponse() {
-        return digestResponse;
-    }
-
-    public boolean isUtf8Encoded() {
-        return utf8Encoded;
+    private static MessageDigest getMessageDigest(final String algorithm) throws NoSuchAlgorithmException {
+        switch (algorithm) {
+            case ALGORITHM_DIGEST_MD5:
+                return MessageDigest.getInstance("MD5");
+            case ALGORITHM_DIGEST_SHA:
+                return MessageDigest.getInstance("SHA-1");
+            case ALGORITHM_DIGEST_SHA_256:
+                return MessageDigest.getInstance("SHA-256");
+            case ALGORITHM_DIGEST_SHA_512:
+                return MessageDigest.getInstance("SHA-512");
+            default:
+                throw new NoSuchAlgorithmException("Invalid algorithm " + algorithm);
+        }
     }
 
 }

@@ -89,12 +89,12 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
 
     static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
-            case ALGORITHM_DIGEST_MD2:     return MessageDigest.getInstance("MD2");
-            case ALGORITHM_DIGEST_MD5:     return MessageDigest.getInstance("MD5");
-            case ALGORITHM_DIGEST_SHA_1:   return MessageDigest.getInstance("SHA-1");
-            case ALGORITHM_DIGEST_SHA_256: return MessageDigest.getInstance("SHA-256");
-            case ALGORITHM_DIGEST_SHA_384: return MessageDigest.getInstance("SHA-384");
-            case ALGORITHM_DIGEST_SHA_512: return MessageDigest.getInstance("SHA-512");
+            case ALGORITHM_SIMPLE_DIGEST_MD2:     return MessageDigest.getInstance("MD2");
+            case ALGORITHM_SIMPLE_DIGEST_MD5:     return MessageDigest.getInstance("MD5");
+            case ALGORITHM_SIMPLE_DIGEST_SHA_1:   return MessageDigest.getInstance("SHA-1");
+            case ALGORITHM_SIMPLE_DIGEST_SHA_256: return MessageDigest.getInstance("SHA-256");
+            case ALGORITHM_SIMPLE_DIGEST_SHA_384: return MessageDigest.getInstance("SHA-384");
+            case ALGORITHM_SIMPLE_DIGEST_SHA_512: return MessageDigest.getInstance("SHA-512");
             default: throw new NoSuchAlgorithmException();
         }
     }

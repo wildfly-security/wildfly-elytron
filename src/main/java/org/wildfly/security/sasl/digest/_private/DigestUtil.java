@@ -77,6 +77,33 @@ public final class DigestUtil {
         }
     }
 
+    public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password) {
+        CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
+        latin1Encoder.reset();
+        boolean bothLatin1 = latin1Encoder.canEncode(username);
+        latin1Encoder.reset();
+        if (bothLatin1) {
+            for (char c: password) {
+                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
+            }
+        }
+
+        Charset chosenCharset = bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
+
+        ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
+        urp.append(username.getBytes(chosenCharset));
+        urp.append(':');
+        if (realm != null) {
+            urp.append(realm.getBytes((chosenCharset)));
+        } else {
+            urp.append("");
+        }
+        urp.append(':');
+        urp.append(new String(password).getBytes((chosenCharset)));
+
+        return messageDigest.digest(urp.toArray());
+    }
+
     /**
      * Calculates H(A1).
      *
@@ -93,29 +120,7 @@ public final class DigestUtil {
      */
     public static byte[] H_A1(MessageDigest messageDigest, String username, String realm, char[] password,
                        byte[] nonce, byte[] cnonce, String authzid, Charset responseCharset) {
-
-        CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
-        latin1Encoder.reset();
-        boolean bothLatin1 = latin1Encoder.canEncode(username);
-        latin1Encoder.reset();
-        if (bothLatin1) {
-            for (char c: password) {
-                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
-            }
-        }
-
-        ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.append(username.getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
-        urp.append(':');
-        if (realm != null) {
-            urp.append(realm.getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
-        } else {
-            urp.append("");
-        }
-        urp.append(':');
-        urp.append(new String(password).getBytes((bothLatin1 ? StandardCharsets.ISO_8859_1 : responseCharset)));
-
-        byte[] digest_urp = messageDigest.digest(urp.toArray());
+        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, password);
 
         // A1
         ByteStringBuilder A1 = new ByteStringBuilder();

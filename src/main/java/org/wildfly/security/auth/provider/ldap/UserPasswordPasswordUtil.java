@@ -54,20 +54,20 @@ class UserPasswordPasswordUtil {
         } else {
             if (userPassword[1] == 'm' && userPassword[2] == 'd' && userPassword[3] == '5' && userPassword[4] == '}') {
                 // {md5}
-                return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_MD5, 5, userPassword);
+                return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_MD5, 5, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_1, 5, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_1, 5, userPassword);
                 } else if (userPassword[4] == '2' && userPassword[5] == '5' && userPassword[6] == '6' && userPassword[7] == '}') {
                     // {sha256}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_256, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_256, 8, userPassword);
                 } else if (userPassword[4] == '3' && userPassword[5] == '8' && userPassword[6] == '4' && userPassword[7] == '}') {
                     // {sha384}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_384, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_384, 8, userPassword);
                 } else if (userPassword[4] == '5' && userPassword[5] == '1' && userPassword[6] == '2' && userPassword[7] == '}') {
                     // {sha512}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_DIGEST_SHA_512, 8, userPassword);
+                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_512, 8, userPassword);
                 }
             } else if (userPassword[1] == 's' && userPassword[2] == 'm' && userPassword[3] == 'd' && userPassword[4] == '5' && userPassword[5] == '}') {
                 // {smd5}
