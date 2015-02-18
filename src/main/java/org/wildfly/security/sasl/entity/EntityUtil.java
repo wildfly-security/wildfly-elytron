@@ -50,6 +50,8 @@ import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.auth.provider.X509CertificateCredentialDecoder;
+import org.wildfly.security.x500.X500;
+import org.wildfly.security.x500.X500PrincipalUtil;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -605,16 +607,13 @@ class EntityUtil {
     }
 
     public static boolean matchGeneralNames(Collection<GeneralName> generalNames,
-            Collection<GeneralName> otherGeneralNames) {
-        if (generalNames.size() > otherGeneralNames.size()) {
-            // Place smaller collection in generalNames
-            Collection<GeneralName> tmp = generalNames;
-            generalNames = otherGeneralNames;
-            otherGeneralNames = tmp;
+            Collection<GeneralName> actualGeneralNames) {
+        if ((generalNames == null) || (actualGeneralNames == null)) {
+            return false;
         }
         for (GeneralName generalName : generalNames) {
-            for (GeneralName otherGeneralName : otherGeneralNames) {
-                if (generalName.equals(otherGeneralName)) {
+            for (GeneralName actualGeneralName : actualGeneralNames) {
+                if (matchGeneralName(generalName, actualGeneralName)) {
                     return true;
                 }
             }
@@ -622,23 +621,38 @@ class EntityUtil {
         return false;
     }
 
+    public static boolean matchGeneralName(GeneralName generalName, GeneralName actualGeneralName) {
+        if ((generalName instanceof DNSName) && (actualGeneralName instanceof DirectoryName)) {
+            // Check if the DNSName matches the DirectoryName's (most specific) Common Name field.
+            // Although specifying a DNS name using the Common Name field has been deprecated, it is
+            // still used in practice (e.g., see http://tools.ietf.org/html/rfc2818).
+            String[] cnValues = X500PrincipalUtil.getAttributeValues(new X500Principal(((DirectoryName) actualGeneralName).getName()), X500.OID_CN);
+            String dnsName = ((DNSName) generalName).getName();
+            return dnsName.equalsIgnoreCase(cnValues[0]);
+        } else {
+            return generalName.equals(actualGeneralName);
+        }
+    }
+
     public static boolean matchGeneralNames(Collection<GeneralName> generalNames, X509Certificate cert) {
-        Collection<GeneralName> certNames;
         final X509CertificateCredentialDecoder certCredentialDecoder = new X509CertificateCredentialDecoder();
         String certSubjectName = certCredentialDecoder.getNameFromCredential(cert);
-        if (! certSubjectName.isEmpty()) {
-            certNames = new HashSet<GeneralName>(1);
-            certNames.add(new DirectoryName(certSubjectName));
-            if (matchGeneralNames(certNames, generalNames)) {
+        try {
+            if (matchGeneralNames(generalNames, convertToGeneralNames(cert.getSubjectAlternativeNames()))) {
                 return true;
             }
-        }
-        try {
-            return matchGeneralNames(convertToGeneralNames(cert.getSubjectAlternativeNames()), generalNames);
         } catch (CertificateParsingException e) {
             // Ingore unless the subject name is empty
             if (certSubjectName.isEmpty()) {
                 throw new IllegalStateException("Unable to determine name", e);
+            }
+        }
+        Collection<GeneralName> certNames;
+        if (! certSubjectName.isEmpty()) {
+            certNames = new HashSet<GeneralName>(1);
+            certNames.add(new DirectoryName(certSubjectName));
+            if (matchGeneralNames(generalNames, certNames)) {
+                return true;
             }
         }
         return false;
@@ -680,6 +694,9 @@ class EntityUtil {
     }
 
     private static Collection<GeneralName> convertToGeneralNames(Collection<List<?>> generalNames) throws ASN1Exception {
+        if (generalNames == null) {
+            return null;
+        }
         Collection<GeneralName> convertedGeneralNames = new HashSet<GeneralName>();
         for (List<?> generalName : generalNames) {
             convertedGeneralNames.add(convertToGeneralName(generalName));
