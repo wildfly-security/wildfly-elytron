@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 
@@ -32,7 +32,7 @@ public final class TrustedAuthoritiesCallback extends AbstractExtendedCallback {
 
     private static final long serialVersionUID = 1212562522733770963L;
 
-    private Collection<TrustedAuthority> trustedAuthorities;
+    private List<TrustedAuthority> trustedAuthorities;
 
     /**
      * Construct a new instance.
@@ -45,7 +45,7 @@ public final class TrustedAuthoritiesCallback extends AbstractExtendedCallback {
      *
      * @return the retrieved trusted authorities (may be {@code null})
      */
-    public Collection<TrustedAuthority> getTrustedAuthorities() {
+    public List<TrustedAuthority> getTrustedAuthorities() {
         return trustedAuthorities;
     }
 
@@ -54,7 +54,7 @@ public final class TrustedAuthoritiesCallback extends AbstractExtendedCallback {
      *
      * @param trustedAuthorities the retrieved trusted authorities (may be {@code null})
      */
-    public void setTrustedAuthorities(final Collection<TrustedAuthority> trustedAuthorities) {
+    public void setTrustedAuthorities(final List<TrustedAuthority> trustedAuthorities) {
         this.trustedAuthorities = trustedAuthorities;
     }
 

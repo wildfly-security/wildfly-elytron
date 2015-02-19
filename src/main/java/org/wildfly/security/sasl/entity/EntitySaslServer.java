@@ -123,7 +123,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     // certPref
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     handleCallbacks(trustedAuthoritiesCallback);
-                    Collection<TrustedAuthority> trustedAuthorities = trustedAuthoritiesCallback.getTrustedAuthorities();
+                    List<TrustedAuthority> trustedAuthorities = trustedAuthoritiesCallback.getTrustedAuthorities();
                     if ((trustedAuthorities != null) && (! trustedAuthorities.isEmpty())) {
                         encoder.encodeImplicit(1);
                         EntityUtil.encodeTrustedAuthorities(encoder, trustedAuthorities);
@@ -141,8 +141,8 @@ final class EntitySaslServer extends AbstractSaslServer {
                 X509Certificate[] clientCertChain;
                 X509Certificate clientCert;
                 String clientName;
-                Collection<GeneralName> entityB = null;
-                Collection<GeneralName> authID = null;
+                List<GeneralName> entityB = null;
+                List<GeneralName> authID = null;
                 try {
                     decoder.startSequence();
                     randomA = decoder.decodeOctetString();

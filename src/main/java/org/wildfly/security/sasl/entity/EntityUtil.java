@@ -38,10 +38,8 @@ import java.security.cert.CertPath;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.security.auth.x500.X500Principal;
@@ -233,10 +231,10 @@ class EntityUtil {
      * </p>
      *
      * @param encoder the DER encoder
-     * @param generalNames the general names, as a {@code Collection} where each entry is a {@link GeneralName}
+     * @param generalNames the general names, as a {@code List} where each entry is a {@link GeneralName}
      * @throws ASN1Exception if any of the general names are invalid
      */
-    public static void encodeGeneralNames(final DEREncoder encoder, Collection<GeneralName> generalNames) throws ASN1Exception {
+    public static void encodeGeneralNames(final DEREncoder encoder, List<GeneralName> generalNames) throws ASN1Exception {
         encoder.startSequence();
         for (GeneralName generalName : generalNames) {
             encodeGeneralName(encoder, generalName);
@@ -253,7 +251,7 @@ class EntityUtil {
      * @throws ASN1Exception if the general name is invalid
      */
     public static void encodeGeneralNames(final DEREncoder encoder, GeneralName generalName) throws ASN1Exception {
-        Set<GeneralName> generalNames = new HashSet<GeneralName>(1);
+        List<GeneralName> generalNames = new ArrayList<GeneralName>(1);
         generalNames.add(generalName);
         encodeGeneralNames(encoder, generalNames);
     }
@@ -350,12 +348,12 @@ class EntityUtil {
      * Encode an ASN.1 sequence of trusted authorities using the given DER encoder.
      *
      * @param encoder the DER encoder
-     * @param trustedAuthorities the trusted authorities as a {@code Collection} where each entry must
+     * @param trustedAuthorities the trusted authorities as a {@code List} where each entry must
      * be a {@link NameTrustedAuthority}, a {@link CertificateTrustedAuthority}, or a {@link HashTrustedAuthority}
      * @throws ASN1Exception if any of the trusted authorities are invalid
      */
     public static void encodeTrustedAuthorities(final DEREncoder encoder,
-            Collection<TrustedAuthority> trustedAuthorities) throws ASN1Exception {
+            List<TrustedAuthority> trustedAuthorities) throws ASN1Exception {
         encoder.startSequence();
         for (TrustedAuthority trustedAuthority : trustedAuthorities) {
             encodeTrustedAuthority(encoder, trustedAuthority);
@@ -372,8 +370,8 @@ class EntityUtil {
      * @return the general names
      * @throws ASN1Exception if the next element from the given decoder is not a general names element
      */
-    public static Collection<GeneralName> decodeGeneralNames(final DERDecoder decoder) throws ASN1Exception {
-        Set<GeneralName> generalNames = new HashSet<GeneralName>();
+    public static List<GeneralName> decodeGeneralNames(final DERDecoder decoder) throws ASN1Exception {
+        List<GeneralName> generalNames = new ArrayList<GeneralName>();
         GeneralName generalName = null;
         decoder.startSequence();
         while (decoder.hasNextElement()) {
@@ -547,7 +545,7 @@ class EntityUtil {
      * @throws ASN1Exception if the next element from the given decoder is not a trusted authorities
      * element or if an error occurs while decoding the trusted authorities element
      */
-    public static Collection<TrustedAuthority> decodeTrustedAuthorities(final DERDecoder decoder) throws ASN1Exception {
+    public static List<TrustedAuthority> decodeTrustedAuthorities(final DERDecoder decoder) throws ASN1Exception {
         List<TrustedAuthority> trustedAuthorities = new ArrayList<TrustedAuthority>();
         TrustedAuthority trustedAuthority = null;
         decoder.startSequence();
@@ -606,8 +604,8 @@ class EntityUtil {
         return trustedAuthorities;
     }
 
-    public static boolean matchGeneralNames(Collection<GeneralName> generalNames,
-            Collection<GeneralName> actualGeneralNames) {
+    public static boolean matchGeneralNames(List<GeneralName> generalNames,
+            List<GeneralName> actualGeneralNames) {
         if ((generalNames == null) || (actualGeneralNames == null)) {
             return false;
         }
@@ -634,7 +632,7 @@ class EntityUtil {
         }
     }
 
-    public static boolean matchGeneralNames(Collection<GeneralName> generalNames, X509Certificate cert) {
+    public static boolean matchGeneralNames(List<GeneralName> generalNames, X509Certificate cert) {
         final X509CertificateCredentialDecoder certCredentialDecoder = new X509CertificateCredentialDecoder();
         String certSubjectName = certCredentialDecoder.getNameFromCredential(cert);
         try {
@@ -647,9 +645,9 @@ class EntityUtil {
                 throw new IllegalStateException("Unable to determine name", e);
             }
         }
-        Collection<GeneralName> certNames;
+        List<GeneralName> certNames;
         if (! certSubjectName.isEmpty()) {
-            certNames = new HashSet<GeneralName>(1);
+            certNames = new ArrayList<GeneralName>(1);
             certNames.add(new DirectoryName(certSubjectName));
             if (matchGeneralNames(generalNames, certNames)) {
                 return true;
@@ -658,7 +656,7 @@ class EntityUtil {
         return false;
     }
 
-    public static String getDistinguishedNameFromGeneralNames(Collection<GeneralName> generalNames) {
+    public static String getDistinguishedNameFromGeneralNames(List<GeneralName> generalNames) {
         for (GeneralName generalName : generalNames) {
             if (generalName instanceof DirectoryName) {
                 return ((DirectoryName) generalName).getName();
@@ -693,11 +691,11 @@ class EntityUtil {
         }
     }
 
-    private static Collection<GeneralName> convertToGeneralNames(Collection<List<?>> generalNames) throws ASN1Exception {
+    private static List<GeneralName> convertToGeneralNames(Collection<List<?>> generalNames) throws ASN1Exception {
         if (generalNames == null) {
             return null;
         }
-        Collection<GeneralName> convertedGeneralNames = new HashSet<GeneralName>();
+        List<GeneralName> convertedGeneralNames = new ArrayList<GeneralName>();
         for (List<?> generalName : generalNames) {
             convertedGeneralNames.add(convertToGeneralName(generalName));
         }

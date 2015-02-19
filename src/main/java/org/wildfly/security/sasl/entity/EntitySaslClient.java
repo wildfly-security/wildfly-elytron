@@ -29,8 +29,8 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -83,8 +83,8 @@ final class EntitySaslClient extends AbstractSaslClient {
         switch (state) {
             case ST_CHALLENGE_RESPONSE: {
                 final DERDecoder decoder = new DERDecoder(challenge);
-                Collection<TrustedAuthority> trustedAuthorities = null;
-                Collection<GeneralName> entityB;
+                List<TrustedAuthority> trustedAuthorities = null;
+                List<GeneralName> entityB;
                 try {
                     // == Parse message ==
                     decoder.startSequence();
@@ -93,7 +93,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     randomB = decoder.decodeOctetString();
 
                     // entityB
-                    entityB = new HashSet<GeneralName>(1);
+                    entityB = new ArrayList<GeneralName>(1);
                     entityB.add(new DNSName(getServerName()));
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 0, true)) {
                         decoder.decodeImplicit(0);
@@ -173,12 +173,12 @@ final class EntitySaslClient extends AbstractSaslClient {
 
                     // authId
                     final String authorizationId = getAuthorizationId();
-                    Collection<GeneralName> authId = null;
+                    List<GeneralName> authId = null;
                     if (authorizationId != null) {
                         encoder.encodeImplicit(2);
                         // TODO: Will authorizationId be a distinguished name or is a callback needed to
                         // determine the appropriate GeneralName type to use?
-                        authId = new HashSet<GeneralName>(1);
+                        authId = new ArrayList<GeneralName>(1);
                         authId.add(new DirectoryName(authorizationId));
                         EntityUtil.encodeGeneralNames(encoder, authId);
                     }
@@ -228,7 +228,7 @@ final class EntitySaslClient extends AbstractSaslClient {
             case ST_RESPONSE_SENT: {
                 if (mutual) {
                     final DERDecoder decoder = new DERDecoder(challenge);
-                    Collection<GeneralName> entityA = null;
+                    List<GeneralName> entityA = null;
                     try {
                         decoder.startSequence();
                         byte[] randomC = decoder.decodeOctetString();
