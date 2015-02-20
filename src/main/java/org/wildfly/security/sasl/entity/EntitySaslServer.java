@@ -140,6 +140,10 @@ final class EntitySaslServer extends AbstractSaslServer {
                 byte[] randomA;
                 X509Certificate[] clientCertChain;
                 X509Certificate clientCert;
+                X509Certificate[] serverCertChain = null;
+                X509Certificate serverCert = null;
+                String serverCertUrl = null;
+                PrivateKey privateKey = null;
                 String clientName;
                 List<GeneralName> entityB = null;
                 List<GeneralName> authID = null;
@@ -212,32 +216,35 @@ final class EntitySaslServer extends AbstractSaslServer {
                     throw new SaslException("Invalid client message", e);
                 }
 
-                // Get the server's certificate data and verify that entityB matches the server's distinguishing identifier
-                KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyType(signature.getAlgorithm()));
-                CredentialCallback credentialCallback = new CredentialCallback(X509Certificate[].class);
-                CredentialCallback privateKeyCallback = new CredentialCallback(PrivateKey.class);
-                handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
-                X509Certificate[] serverCertChain = (X509Certificate[]) credentialCallback.getCredential();
-                X509Certificate serverCert;
-                String serverCertUrl = null;
-                if ((serverCertChain != null) && (serverCertChain.length > 0)) {
-                    serverCert = serverCertChain[0];
-                } else {
-                    // Try obtaining a certificate URL instead
-                    credentialCallback = new CredentialCallback(String.class);
+                // Get the server's certificate data, if necessary
+                if ((entityB != null) || mutual) {
+                    KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyType(signature.getAlgorithm()));
+                    CredentialCallback credentialCallback = new CredentialCallback(X509Certificate[].class);
+                    CredentialCallback privateKeyCallback = new CredentialCallback(PrivateKey.class);
                     handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
-                    serverCertUrl = (String) credentialCallback.getCredential();
-                    if (serverCertUrl != null) {
-                        try {
-                            serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
-                        } catch (IOException e) {
-                            throw new SaslException("Unable to obtain server certificate", e);
-                        }
+                    serverCertChain = (X509Certificate[]) credentialCallback.getCredential();
+                    if ((serverCertChain != null) && (serverCertChain.length > 0)) {
+                        serverCert = serverCertChain[0];
                     } else {
-                        throw new SaslException("Invalid server certificate data");
+                        // Try obtaining a certificate URL instead
+                        credentialCallback = new CredentialCallback(String.class);
+                        handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
+                        serverCertUrl = (String) credentialCallback.getCredential();
+                        if (serverCertUrl != null) {
+                            try {
+                                serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
+                            } catch (IOException e) {
+                                throw new SaslException("Unable to obtain server certificate from URL", e);
+                            }
+                        } else {
+                            throw new SaslException("Invalid server certificate data");
+                        }
                     }
+                    privateKey = (PrivateKey) privateKeyCallback.getCredential();
                 }
-                if (! EntityUtil.matchGeneralNames(entityB, serverCert)) {
+
+                // Verify that entityB matches the server's distinguishing identifier
+                if ((entityB != null) && (! EntityUtil.matchGeneralNames(entityB, serverCert))) {
                     throw new SaslException("Server identifier mismatch");
                 }
 
@@ -304,7 +311,6 @@ final class EntitySaslServer extends AbstractSaslServer {
                         encoder.endExplicit();
 
                         // Private key
-                        PrivateKey privateKey = (PrivateKey) privateKeyCallback.getCredential();
                         if (privateKey == null) {
                             throw new SaslException("Private key is null");
                         }

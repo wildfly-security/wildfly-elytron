@@ -60,6 +60,7 @@ final class EntitySaslClient extends AbstractSaslClient {
     private final SecureRandom secureRandom;
     private final Signature signature;
     private final boolean mutual;
+    private final String serverName;
     private byte[] randomA;
     private byte[] randomB;
     private X509Certificate[] clientCertChain;
@@ -71,6 +72,7 @@ final class EntitySaslClient extends AbstractSaslClient {
         this.signature = signature;
         this.secureRandom = secureRandom;
         this.mutual = mutual;
+        this.serverName = serverName;
     }
 
     @Override
@@ -84,7 +86,7 @@ final class EntitySaslClient extends AbstractSaslClient {
             case ST_CHALLENGE_RESPONSE: {
                 final DERDecoder decoder = new DERDecoder(challenge);
                 List<TrustedAuthority> trustedAuthorities = null;
-                List<GeneralName> entityB;
+                List<GeneralName> entityB = null;
                 try {
                     // == Parse message ==
                     decoder.startSequence();
@@ -93,11 +95,14 @@ final class EntitySaslClient extends AbstractSaslClient {
                     randomB = decoder.decodeOctetString();
 
                     // entityB
-                    entityB = new ArrayList<GeneralName>(1);
-                    entityB.add(new DNSName(getServerName()));
+                    if ((serverName != null) && (! serverName.isEmpty())) {
+                        entityB = new ArrayList<GeneralName>(1);
+                        entityB.add(new DNSName(serverName));
+                    }
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 0, true)) {
                         decoder.decodeImplicit(0);
-                        if (! EntityUtil.matchGeneralNames(EntityUtil.decodeGeneralNames(decoder), entityB)) {
+                        List<GeneralName> decodedEntityB = EntityUtil.decodeGeneralNames(decoder);
+                        if ((entityB != null) && (! EntityUtil.matchGeneralNames(decodedEntityB, entityB))) {
                             throw new SaslException("Server identifier mismatch");
                         }
                     }
@@ -145,8 +150,10 @@ final class EntitySaslClient extends AbstractSaslClient {
                     randomA = EntityUtil.encodeRandomNumber(encoder, secureRandom);
 
                     // entityB
-                    encoder.encodeImplicit(0);
-                    EntityUtil.encodeGeneralNames(encoder, entityB);
+                    if (entityB != null) {
+                        encoder.encodeImplicit(0);
+                        EntityUtil.encodeGeneralNames(encoder, entityB);
+                    }
 
                     // certA (try obtaining a certificate chain first)
                     encoder.startExplicit(1);
@@ -195,8 +202,10 @@ final class EntitySaslClient extends AbstractSaslClient {
                     tbsEncoder.startSequence();
                     tbsEncoder.encodeOctetString(randomA);
                     tbsEncoder.encodeOctetString(randomB);
-                    tbsEncoder.encodeImplicit(0);
-                    EntityUtil.encodeGeneralNames(tbsEncoder, entityB);
+                    if (entityB != null) {
+                        tbsEncoder.encodeImplicit(0);
+                        EntityUtil.encodeGeneralNames(tbsEncoder, entityB);
+                    }
                     if (authId != null) {
                         tbsEncoder.encodeImplicit(1);
                         EntityUtil.encodeGeneralNames(tbsEncoder, authId);
