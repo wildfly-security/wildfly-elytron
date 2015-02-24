@@ -37,6 +37,7 @@ import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.keystore.PasswordKeyStoreImpl;
+import org.wildfly.security.keystore.PropertiesKeyStoreImpl;
 
 @SuppressWarnings("ThisEscapedInObjectConstruction")
 @MetaInfServices
@@ -85,6 +86,7 @@ public final class WildFlyElytronPasswordProvider extends Provider {
         putService(new Service(this, FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
 
         putService(new Service(this, "KeyStore", "PasswordFile", PasswordKeyStoreImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, "KeyStore", "PropertiesFile", PropertiesKeyStoreImpl.class.getName(), emptyList, emptyMap));
     }
 
 }

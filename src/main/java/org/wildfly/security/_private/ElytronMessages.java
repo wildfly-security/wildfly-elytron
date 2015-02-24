@@ -178,4 +178,17 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 44, value = "Unable to create a new KeyStore instance")
     IOException unableToCreateKeyStore(@Cause Exception cause);
+
+    @Message(id = 45, value = "Invalid password type for alias %s (expected %s, got %s)")
+    KeyStoreException invalidPasswordType(String alias, Class<?> expectedClass, Class<?> actualClass);
+
+    @Message(id = 46, value = "The password entry must contain a non null realm name")
+    KeyStoreException invalidNullRealmInPasswordEntry();
+
+    @Message(id = 47, value = "The password entry realm for alias %s must match the properties-based keystore realm. (expected %s, got %s)")
+    KeyStoreException invalidRealmNameInPasswordEntry(String alias, String keyStoreRealm, String actualRealm);
+
+    @Message(id = 48, value = "Invalid algorithm found in password entry for alias %s (expected %s, got %s)")
+    KeyStoreException invalidAlgorithmInPasswordEntry(String alias, String expectedAlgorithm, String actualAlgorithm);
+
 }
