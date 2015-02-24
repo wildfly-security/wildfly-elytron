@@ -344,6 +344,16 @@ public class DEREncoderTest {
     }
 
     @Test
+    public void testImplicitWriteEncoded() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.encodeImplicit(3);
+        encoder.writeEncoded(new byte[] {48, 41, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109});
+        byte[] expected = new byte[] {-93,41,22,14,116,104,105,115,32,105,115,32,97,32,116,101,115,116,4,8,1,35,69,103,-119,-85,-51,-17,22,13,116,101,115,116,49,64,114,115,97,46,99,111,109};
+        assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
     public void testFlush() throws Exception {
         ByteStringBuilder target = new ByteStringBuilder();
         DEREncoder encoder = new DEREncoder(target);
