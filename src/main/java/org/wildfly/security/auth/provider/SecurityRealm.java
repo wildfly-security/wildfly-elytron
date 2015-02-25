@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
+import org.wildfly.security.password.AugmentedPassword;
+
 
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
@@ -61,5 +63,9 @@ public interface SecurityRealm {
      * @return the level of support for this credential type
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
+
+    default <M> CredentialSupport getCredentialSupport(Class<? extends AugmentedPassword<M>> credentialType, M metaData) throws RealmUnavailableException {
+        return getCredentialSupport(credentialType);
+    }
 
 }

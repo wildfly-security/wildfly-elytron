@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider;
 
 import java.security.Principal;
 
+import org.wildfly.security.password.AugmentedPassword;
+
 /**
  * A representation of a pre-authentication identity.
  *
@@ -42,14 +44,25 @@ public interface RealmIdentity {
     Principal getPrincipal() throws RealmUnavailableException;
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
-     * identity.
+     * Determine level of credential support for this identity.
      *
      * @param credentialType the credential type
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
+
+    /**
+     * Determine level of credential support for this identity.
+     *
+     * @param credentialType the credential type
+     * @param metaData additional credential specific meta-data.
+     * @return the level of support for this credential type
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     */
+    default <M> CredentialSupport getCredentialSupport(Class<? extends AugmentedPassword<M>> credentialType, M metaData) throws RealmUnavailableException {
+        return getCredentialSupport(credentialType);
+    }
 
     /**
      * Acquire a credential of the given type.
@@ -60,6 +73,19 @@ public interface RealmIdentity {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
      */
     <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
+
+    /**
+     * Acquire a credential of the given type.
+     *
+     * @param credentialType the credential type class
+     * @param <C> the credential type
+     * @param metaData additional credential specific meta-data.
+     * @return the credential, or {@code null} if the principal has no credential of that type
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     */
+    default <C extends AugmentedPassword<M>, M> C getCredential(Class<C> credentialType, M metaData) throws RealmUnavailableException {
+        return getCredential(credentialType);
+    }
 
     /**
      * Verify the given credential.
