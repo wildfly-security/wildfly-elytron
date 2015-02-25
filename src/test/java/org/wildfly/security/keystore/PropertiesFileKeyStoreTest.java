@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -66,7 +66,7 @@ public class PropertiesFileKeyStoreTest {
     }
 
     @Test
-    public void testGetAndSet() throws Exception {
+    public void testGetSetDelete() throws Exception {
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5);
         final Password dukePassword = passwordFactory.generatePassword
@@ -82,11 +82,11 @@ public class PropertiesFileKeyStoreTest {
         }, null);
 
         // add an entry to the new keystore and check if the entry was correctly added.
-        keyStore.setEntry("testuser", new PasswordEntry(dukePassword), null);
+        keyStore.setEntry("testuser", new EnablingPasswordEntry(dukePassword), null);
         final KeyStore.Entry entry = keyStore.getEntry("testuser", null);
         assertNotNull("Missing entry", entry);
-        assertTrue("Wrong entry type", entry instanceof PasswordEntry);
-        final Password storedPassword = ((PasswordEntry) entry).getPassword();
+        assertTrue("Wrong entry type", entry instanceof EnablingPasswordEntry);
+        final Password storedPassword = ((EnablingPasswordEntry) entry).getPassword();
         assertNotNull(storedPassword);
         assertTrue("Wrong password type", storedPassword instanceof DigestPassword);
         assertSame(dukePassword, storedPassword);
@@ -101,33 +101,42 @@ public class PropertiesFileKeyStoreTest {
         ThreadLocalRandom.current().nextBytes(b);
         Password wrongPassword = passwordFactory.generatePassword(new EncryptablePasswordSpec("swordfish".toCharArray(), new HashedPasswordAlgorithmSpec(16, b)));
         try {
-            keyStore.setEntry("anotheruser", new PasswordEntry(wrongPassword), null);
+            keyStore.setEntry("anotheruser", new EnablingPasswordEntry(wrongPassword), null);
             fail("Wrong password type should have been rejected");
         } catch (KeyStoreException e) {
             assertTrue(e.getMessage().startsWith("ELY00045"));
         }
 
-        // now try adding an entry with the right type but the wrong realm.
+        // now try adding an entry with the right type but wrong algorithm.
+        passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_256);
+        wrongPassword = passwordFactory.generatePassword(new EncryptablePasswordSpec("anotherpasswd".toCharArray(),
+                new DigestPasswordAlgorithmSpec(DigestPassword.ALGORITHM_DIGEST_SHA_256, "anotheruser", "testrealm")));
+        try {
+            keyStore.setEntry("anotheruser", new EnablingPasswordEntry(wrongPassword), null);
+            fail("Wrong password algorithm should have been rejected");
+        } catch (KeyStoreException e) {
+            assertTrue(e.getMessage().startsWith("ELY00048"));
+        }
+
+        // finally try adding an entry with the right type but the wrong realm.
         passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5);
         wrongPassword = passwordFactory.generatePassword(new EncryptablePasswordSpec("anotherpasswd".toCharArray(),
                 new DigestPasswordAlgorithmSpec(DigestPassword.ALGORITHM_DIGEST_MD5, "anotheruser", "anotherrealm")));
         try {
-            keyStore.setEntry("anotheruser", new PasswordEntry(wrongPassword), null);
+            keyStore.setEntry("anotheruser", new EnablingPasswordEntry(wrongPassword), null);
             fail("Wrong password realm should have been rejected");
         } catch (KeyStoreException e) {
             assertTrue(e.getMessage().startsWith("ELY00047"));
         }
 
-        // finally try adding an entry with the right type but wrong algorithm.
-        passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_SHA_256);
-        wrongPassword = passwordFactory.generatePassword(new EncryptablePasswordSpec("anotherpasswd".toCharArray(),
-                new DigestPasswordAlgorithmSpec(DigestPassword.ALGORITHM_DIGEST_SHA_256, "anotheruser", "testrealm")));
-        try {
-            keyStore.setEntry("anotheruser", new PasswordEntry(wrongPassword), null);
-            fail("Wrong password algorithm should have been rejected");
-        } catch (KeyStoreException e) {
-            assertTrue(e.getMessage().startsWith("ELY00048"));
-        }
+        // delete the entry that was originally added - the keystore should now be empty.
+        keyStore.deleteEntry("testuser");
+        Enumeration aliases = keyStore.aliases();
+        assertFalse(aliases.hasMoreElements());
+
+        // when deleting the last entry, the realm should have been reset - we must be able now to set an entry with a different realm.
+        keyStore.setEntry("anotheruser", new EnablingPasswordEntry(wrongPassword), null);
+        assertNotNull("Missing entry", keyStore.getEntry("anotheruser", null));
     }
 
     @Test
@@ -149,34 +158,35 @@ public class PropertiesFileKeyStoreTest {
             aliases.add(ksAliases.nextElement());
         }
         assertEquals("Unexpected number of entries", 2, aliases.size());
-        assertTrue("Expected alias not found", aliases.contains(testUsers[0]));
-        assertTrue("Expected alias not found", aliases.contains(testUsers[1] + "!disable"));
+        assertTrue("Expected alias not found", keyStore.containsAlias(testUsers[0]));
+        assertTrue("Expected alias not found", keyStore.containsAlias(testUsers[1]));
 
         // check the contents of each entry.
-        PasswordEntry passwordEntry = (PasswordEntry) keyStore.getEntry(testUsers[0], null);
+        EnablingPasswordEntry passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[0], null);
         assertNotNull("Missing entry", passwordEntry);
+        assertTrue(passwordEntry.isEnabled());
         DigestPassword digestPassword = (DigestPassword) passwordEntry.getPassword();
         assertEquals("Invalid username in password", testUsers[0], digestPassword.getUsername());
         assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
         assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[0].toCharArray()));
 
-        passwordEntry = (PasswordEntry) keyStore.getEntry(testUsers[1] + "!disable", null);
+        passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[1], null);
         assertNotNull("Missing entry", passwordEntry);
+        assertFalse(passwordEntry.isEnabled());
         digestPassword = (DigestPassword) passwordEntry.getPassword();
         assertEquals("Invalid username in password", testUsers[1], digestPassword.getUsername());
         assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
         assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[1].toCharArray()));
 
-        // re-enable javajoe by removing its entry and then re-adding it without the !disable suffix in the alias.
-        keyStore.deleteEntry(testUsers[1] + "!disable");
-        keyStore.setEntry(testUsers[1], passwordEntry, null);
+        // re-enable javajoe.
+        passwordEntry.enable();
 
-        // add a new entry to the keystore and then write it back to a file.
+        // add a new disabled entry to the keystore and then write it back to a file.
         final PasswordFactory passwordFactory = PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5);
         final Password dukePassword = passwordFactory.generatePassword
                 (new EncryptablePasswordSpec(testPasswords[2].toCharArray(),
                         new DigestPasswordAlgorithmSpec(DigestPassword.ALGORITHM_DIGEST_MD5, testUsers[2], realmName)));
-        keyStore.setEntry(testUsers[2], new PasswordEntry(dukePassword), null);
+        keyStore.setEntry(testUsers[2], new EnablingPasswordEntry(dukePassword, false), null);
 
         final File file = new File(System.getProperty("java.io.tmpdir") + "/changed.properties");
         try {
@@ -194,22 +204,25 @@ public class PropertiesFileKeyStoreTest {
                 assertTrue("Expected alias not found", aliases.contains(username));
             }
 
-            passwordEntry = (PasswordEntry) keyStore.getEntry(testUsers[0], null);
+            passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[0], null);
             assertNotNull("Missing entry", passwordEntry);
+            assertTrue(passwordEntry.isEnabled());
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[0], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
             assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[0].toCharArray()));
 
-            passwordEntry = (PasswordEntry) keyStore.getEntry(testUsers[1], null);
+            passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[1], null);
             assertNotNull("Missing entry", passwordEntry);
+            assertTrue(passwordEntry.isEnabled());
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[1], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
             assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[1].toCharArray()));
 
-            passwordEntry = (PasswordEntry) keyStore.getEntry(testUsers[2], null);
+            passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[2], null);
             assertNotNull("Missing entry", passwordEntry);
+            assertFalse(passwordEntry.isEnabled());
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[2], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());

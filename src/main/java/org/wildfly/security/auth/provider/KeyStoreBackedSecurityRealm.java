@@ -32,6 +32,7 @@ import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.keystore.EnablingPasswordEntry;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -107,6 +108,13 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 } else {
                     return CredentialSupport.UNSUPPORTED;
                 }
+            } else if (entry instanceof EnablingPasswordEntry) {
+                final EnablingPasswordEntry pwdEntry = (EnablingPasswordEntry) entry;
+                if (credentialType.isInstance(pwdEntry.getPassword()) && pwdEntry.isEnabled()) {
+                    return CredentialSupport.FULLY_SUPPORTED;
+                } else {
+                    return CredentialSupport.UNSUPPORTED;
+                }
             } else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
@@ -129,7 +137,13 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 if (credentialType.isInstance(password)) {
                     return credentialType.cast(password);
                 }
-            } else if (entry instanceof KeyStore.PrivateKeyEntry) {
+            } else if (entry instanceof EnablingPasswordEntry) {
+                final EnablingPasswordEntry pwdEntry = (EnablingPasswordEntry) entry;
+                final Password password = pwdEntry.getPassword();
+                if (credentialType.isInstance(password) && pwdEntry.isEnabled()) {
+                    return credentialType.cast(password);
+                }
+            }else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
                 final Certificate certificate = privateKeyEntry.getCertificate();
@@ -176,6 +190,16 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
                 if (credential instanceof char[]) try {
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                    throw new RealmUnavailableException(e);
+                } else {
+                    return false;
+                }
+            } else if (entry instanceof EnablingPasswordEntry) {
+                final EnablingPasswordEntry pwdEntry = (EnablingPasswordEntry) entry;
+                final Password password = pwdEntry.getPassword();
+                if (pwdEntry.isEnabled() && credential instanceof char[]) try {
                     return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                     throw new RealmUnavailableException(e);

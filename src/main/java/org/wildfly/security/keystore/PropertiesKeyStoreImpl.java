@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -78,9 +78,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     static final Pattern PROPERTY_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
-    static final String DISABLE_SUFFIX_KEY = "!disable";
-
-    private final AtomicReference<HashMap<String, PasswordEntry>> pwRef = new AtomicReference<>();
+    private final AtomicReference<HashMap<String, EnablingPasswordEntry>> pwRef = new AtomicReference<>();
     /** The realmName as read from the properties file (or as set by the first entry added to the keystore) **/
     private final AtomicReference<String> realmName = new AtomicReference<>();
     /** Store the original file so we can write commented lines, preserving the original structure. **/
@@ -91,9 +89,9 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         if (map == null) return null;
-        final PasswordEntry entry = map.get(alias);
+        final EnablingPasswordEntry entry = map.get(alias);
         if (entry == null) return null;
         if (password != null) {
             throw log.invalidKeyStoreEntryPassword(alias);
@@ -122,7 +120,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
             throw new KeyStoreException(log.invalidKeyStoreEntryPassword(alias));
         }
         if (key instanceof Password) {
-            engineSetEntry(alias, new PasswordEntry((Password) key), null);
+            engineSetEntry(alias, new EnablingPasswordEntry((Password) key), null);
         }
         throw log.invalidKeyStoreEntryType(alias, Password.class, key.getClass());
     }
@@ -139,7 +137,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
-        HashMap<String, PasswordEntry> map, newMap;
+        HashMap<String, EnablingPasswordEntry> map, newMap;
         do {
             map = pwRef.get();
             if (map == null || !map.containsKey(alias)) {
@@ -159,19 +157,19 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public Enumeration<String> engineAliases() {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         return Collections.enumeration(map == null ? Collections.<String>emptySet() : map.keySet());
     }
 
     @Override
     public boolean engineContainsAlias(String alias) {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         return map != null && map.containsKey(alias);
     }
 
     @Override
     public int engineSize() {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         return map == null ? 0 : map.size();
     }
 
@@ -192,12 +190,12 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         final String realmName = this.realmName.get();
         final List<String> fileLines = new ArrayList<>(this.fileContents);
 
         // we copy the current state - further changes made to the entries will not be written until store is invoked again.
-        final HashMap<String, PasswordEntry> toWrite = map != null ? new HashMap<>(map) : new HashMap<>();
+        final HashMap<String, EnablingPasswordEntry> toWrite = map != null ? new HashMap<>(map) : new HashMap<>();
         final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stream));
 
         // iterate through the original file contents, then write each line applying the changes made to user entries.
@@ -211,19 +209,17 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
                 if (matcher.matches()) {
                     // this is an user entry line - write the in-memory version of the entry.
                     final String username = matcher.group(1);
-                    if (toWrite.containsKey(username) || toWrite.containsKey(username + DISABLE_SUFFIX_KEY)) {
-                        final boolean disabledEntry = toWrite.containsKey(username + DISABLE_SUFFIX_KEY);
+                    if (toWrite.containsKey(username)) {
                         // the entry was not removed, so we write it.
                         final String escapedUsername = escapeString(username, ESCAPE_ARRAY);
-                        final PasswordEntry pwdEntry = disabledEntry ? toWrite.get(username + DISABLE_SUFFIX_KEY) : toWrite.get(username);
-                        DigestPassword digestPwd = (DigestPassword) pwdEntry.getPassword();
-                        if (disabledEntry) {
-                            writer.write(COMMENT_PREFIX + escapedUsername + "=" + HexConverter.convertToHexString(digestPwd.getDigest()));
-                            toWrite.remove(username + DISABLE_SUFFIX_KEY);
-                        } else {
-                            writer.write(escapedUsername + "=" + HexConverter.convertToHexString(digestPwd.getDigest()));
-                            toWrite.remove(username);
+                        final EnablingPasswordEntry pwdEntry = toWrite.get(username);
+                        final DigestPassword digestPwd = (DigestPassword) pwdEntry.getPassword();
+                        final String property = escapedUsername + "=" + HexConverter.convertToHexString(digestPwd.getDigest());
+                        if (!pwdEntry.isEnabled()) {
+                            writer.write(COMMENT_PREFIX);
                         }
+                        toWrite.remove(username);
+                        writer.write(property);
                         writer.newLine();
                     }
                 } else {
@@ -235,12 +231,13 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
         // write any additional entries to the end of the properties file.
         for (String username : toWrite.keySet()) {
-            final DigestPassword digestPwd = (DigestPassword) toWrite.get(username).getPassword();
-            if (username.contains(DISABLE_SUFFIX_KEY)) {
-                writer.write(COMMENT_PREFIX + username + "=" + HexConverter.convertToHexString(digestPwd.getDigest()));
-            } else {
-                writer.write(username + "=" + HexConverter.convertToHexString(digestPwd.getDigest()));
+            final EnablingPasswordEntry pwdEntry = toWrite.get(username);
+            final DigestPassword digestPwd = (DigestPassword) pwdEntry.getPassword();
+            final String property = escapeString(username, ESCAPE_ARRAY) + "=" + HexConverter.convertToHexString(digestPwd.getDigest());
+            if (!pwdEntry.isEnabled()) {
+                writer.write(COMMENT_PREFIX);
             }
+            writer.write(property);
             writer.newLine();
         }
 
@@ -254,7 +251,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
     @Override
     public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
         // load the properties file, reading the realmName and all users (enabled and disabled).
-        final HashMap<String, PasswordEntry> map = new LinkedHashMap<>();
+        final HashMap<String, EnablingPasswordEntry> map = new LinkedHashMap<>();
         String realmName = null;
 
         // TODO charset ISO_8859_1 or UTF-8?
@@ -288,20 +285,19 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
         }
 
         if (userEntries.size() > 0 && realmName == null) {
-            throw new IOException("Properties file doesn't have a line that identifies the realm name");
+            throw log.noRealmFoundInProperties();
         }
 
         // by now we should have read all entries and the realm. We can now build the password instances.
         for (UserEntry entry : userEntries) {
             final Password pwd;
-            final String alias = entry.isDisabled ? entry.username + DISABLE_SUFFIX_KEY : entry.username;
             try {
                 pwd = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5).generatePassword(
                         new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, entry.username, realmName, HexConverter.convertFromHex(entry.hexDigest)));
             } catch (InvalidKeySpecException ikse) {
-                throw log.noAlgorithmForPassword(alias);
+                throw log.noAlgorithmForPassword(entry.username);
             }
-            map.put(alias, new PasswordEntry(pwd));
+            map.put(entry.username, new EnablingPasswordEntry(pwd, !entry.isDisabled));
         }
         this.pwRef.set(map.size() > 0 ? map : null);
         this.realmName.set(realmName);
@@ -310,9 +306,9 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public KeyStore.Entry engineGetEntry(String alias, KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         if (map == null) return null;
-        final PasswordEntry key = map.get(alias);
+        final EnablingPasswordEntry key = map.get(alias);
         if (key == null) return null;
         if (protParam != null) {
             throw log.invalidKeyStoreEntryPassword(alias);
@@ -322,15 +318,15 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
 
     @Override
     public void engineSetEntry(String alias, KeyStore.Entry entry, KeyStore.ProtectionParameter protParam) throws KeyStoreException {
-        if (!(entry instanceof PasswordEntry)) {
-            throw log.invalidKeyStoreEntryType(alias, PasswordEntry.class, entry != null ? entry.getClass() : null);
+        if (!(entry instanceof EnablingPasswordEntry)) {
+            throw log.invalidKeyStoreEntryType(alias, EnablingPasswordEntry.class, entry != null ? entry.getClass() : null);
         }
         if (protParam != null) {
             throw log.keyCannotBeProtected(alias);
         }
 
         // validate the type of the password being added - currently only MD5 digest passwords are supported.
-        final Password password = ((PasswordEntry) entry).getPassword();
+        final Password password = ((EnablingPasswordEntry) entry).getPassword();
         if (!(password instanceof DigestPassword)) {
             throw log.invalidPasswordType(alias, DigestPassword.class, password != null ? password.getClass() : null);
         }
@@ -359,7 +355,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
         }
 
         // set the new entry atomically.
-        HashMap<String, PasswordEntry> map, newMap;
+        HashMap<String, EnablingPasswordEntry> map, newMap;
         do {
             map = pwRef.get();
             if (map == null) {
@@ -367,13 +363,13 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
             } else {
                 newMap = new LinkedHashMap<>(map);
             }
-            newMap.put(alias, (PasswordEntry) entry);
+            newMap.put(alias, (EnablingPasswordEntry) entry);
         } while (! pwRef.compareAndSet(map, newMap));
     }
 
     @Override
     public boolean engineEntryInstanceOf(String alias, Class<? extends KeyStore.Entry> entryClass) {
-        final HashMap<String, PasswordEntry> map = pwRef.get();
+        final HashMap<String, EnablingPasswordEntry> map = pwRef.get();
         return map != null && entryClass.isInstance(map.get(alias));
     }
 

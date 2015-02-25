@@ -191,4 +191,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 48, value = "Invalid algorithm found in password entry for alias %s (expected %s, got %s)")
     KeyStoreException invalidAlgorithmInPasswordEntry(String alias, String expectedAlgorithm, String actualAlgorithm);
 
+    @Message(id = 49, value = "No realm name found in properties file")
+    IOException noRealmFoundInProperties();
+
 }
