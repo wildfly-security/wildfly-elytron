@@ -38,6 +38,8 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
  */
 class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword {
 
+    private static final long serialVersionUID = -6865263194048232853L;
+
     private final String algorithm;
     private final String username;
     private final String realm;

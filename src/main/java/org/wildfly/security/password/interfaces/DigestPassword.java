@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.security.password.AugmentedPassword;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
@@ -25,7 +26,7 @@ import org.wildfly.security.password.OneWayPassword;
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public interface DigestPassword extends OneWayPassword {
+public interface DigestPassword extends OneWayPassword, AugmentedPassword<DigestPassword.MetaData> {
 
     String ALGORITHM_DIGEST_MD5 = "digest-md5";
     String ALGORITHM_DIGEST_SHA = "digest-sha";
@@ -58,5 +59,29 @@ public interface DigestPassword extends OneWayPassword {
      * @return The digest represented by this {@link Password}
      */
     byte[] getDigest();
+
+    /**
+     * Additional MetaData that can be specified when querying support for a credential type or obtaining the credential type.
+     *
+     * In the case of the {@link DigestPassword} the realm and or algorithm can be specified.
+     */
+    static class MetaData {
+        private final String realm;
+        private final String algorithm;
+
+        public MetaData(final String realm, final String algorithm) {
+            this.realm = realm;
+            this.algorithm = algorithm;
+        }
+
+        public String getRealm() {
+            return realm;
+        }
+
+        public String getAlgorithm() {
+            return algorithm;
+        }
+
+    }
 
 }
