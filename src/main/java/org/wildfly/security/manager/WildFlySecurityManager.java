@@ -529,6 +529,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         return false;
     }
 
+    @Deprecated
     public void checkMemberAccess(final Class<?> clazz, final int which) {
         final Context ctx = CTX.get();
         if (doCheck(ctx)) {

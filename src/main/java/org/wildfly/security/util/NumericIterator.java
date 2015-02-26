@@ -362,7 +362,7 @@ abstract class NumericIterator {
     public ByteIterator base64Decode(final Alphabet alphabet, boolean requirePadding) {
         if (! hasNext()) return ByteIterator.EMPTY;
         if (alphabet.littleEndian) {
-            return new Base64ByteIterator(requirePadding) {
+            return this.new Base64ByteIterator(requirePadding) {
                 int calc0(final int b0, final int b1) {
                     final int d0 = alphabet.decode(b0);
                     final int d1 = alphabet.decode(b1);
@@ -391,7 +391,7 @@ abstract class NumericIterator {
                 }
             };
         } else {
-            return new Base64ByteIterator(requirePadding) {
+            return this.new Base64ByteIterator(requirePadding) {
                 int calc0(final int b0, final int b1) {
                     final int d0 = alphabet.decode(b0);
                     final int d1 = alphabet.decode(b1);
