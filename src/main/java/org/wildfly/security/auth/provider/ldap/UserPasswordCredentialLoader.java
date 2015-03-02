@@ -22,6 +22,7 @@ import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.U
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.parseUserPassword;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
+import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -40,6 +41,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
@@ -137,6 +139,8 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                 return ((SaltedSimpleDigestPasswordSpec) passwordSpec).getAlgorithm();
             } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
                 return ALGORITHM_BSD_CRYPT_DES;
+            } else if (passwordSpec instanceof UnixDESCryptPasswordSpec) {
+                return ALGORITHM_CRYPT_DES;
             }
 
             return null;

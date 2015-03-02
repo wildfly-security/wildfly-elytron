@@ -41,6 +41,7 @@ import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -76,6 +77,7 @@ public class UserPasswordSuiteChild {
                 .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.UNKNOWN)
                 .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN)
                 .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
+                .addCredentialSupport(UnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
                 .build()
                 .build();
     }
@@ -112,7 +114,17 @@ public class UserPasswordSuiteChild {
 
     @Test
     public void testCryptUser() throws Exception {
-        performSimpleNameTest("cryptUser", BSDUnixDESCryptPassword.class, BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptIt".toCharArray());
+        performSimpleNameTest("cryptUser", UnixDESCryptPassword.class, UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptIt".toCharArray());
+    }
+
+    @Test
+    public void testCryptUserLongPassword() throws Exception {
+        performSimpleNameTest("cryptUserLong", UnixDESCryptPassword.class, UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptPassword".toCharArray());
+    }
+
+    @Test
+    public void testBsdCryptUser() throws Exception {
+        performSimpleNameTest("bsdCryptUser", BSDUnixDESCryptPassword.class, BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
     }
 
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
