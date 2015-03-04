@@ -110,6 +110,7 @@ public class DigestRealmSelectionTest {
     /**
      * Test case where users have multiple credentials, each for a different realm but all users share the same set.
      */
+    @Test
     public void testMultipleConsistentRealms() throws GeneralSecurityException {
         SecurityRealm realm = RealmBuilder.newInstance()
                 .addUser("user1").addPassword(digestPassword("user1", "realm1", "password")).addPassword(digestPassword("user1", "realm2", "password")).build()
@@ -126,7 +127,7 @@ public class DigestRealmSelectionTest {
         assertEquals("General Credential Support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class));
         assertEquals("realm1 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm1", null)));
         assertEquals("realm2 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm2", null)));
-        assertEquals("realm3 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm3", null)));
+        assertEquals("realm3 support", CredentialSupport.UNSUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm3", null)));
 
         DigestPassword digestPassword = identity2.getCredential(DigestPassword.class);
         assertEquals("user2", digestPassword.getUsername());
@@ -146,6 +147,7 @@ public class DigestRealmSelectionTest {
      *
      * For this test there will be one common realm in addition.
      */
+    @Test
     public void testRealmVariety() throws GeneralSecurityException {
         SecurityRealm realm = RealmBuilder.newInstance()
                 .addUser("user1").addPassword(digestPassword("user1", "realm1", "password")).addPassword(digestPassword("user1", "realm2", "password")).build()
@@ -163,7 +165,7 @@ public class DigestRealmSelectionTest {
         assertEquals("General Credential Support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class));
         assertEquals("realm1 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm1", null)));
         assertEquals("realm2 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm2", null)));
-        assertEquals("realm3 support", CredentialSupport.FULLY_SUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm3", null)));
+        assertEquals("realm3 support", CredentialSupport.UNSUPPORTED, identity2.getCredentialSupport(DigestPassword.class, new MetaData("realm3", null)));
 
         DigestPassword digestPassword = identity2.getCredential(DigestPassword.class);
         assertEquals("user2", digestPassword.getUsername());
