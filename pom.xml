@@ -139,17 +139,6 @@
                     </configuration>
                 </plugin>
 
-                <!-- Compiler -->
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <compilerArguments>
-                            <!-- This ugly hack can definitely go away once JDK 8 is required for building -->
-                            <bootclasspath>${settings.localRepository}/org/jboss/spec/javax/net/ssl/jboss-jsse-api_8.0_spec/${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}/jboss-jsse-api_8.0_spec-${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}.jar${path.separator}${sun.boot.class.path}</bootclasspath>
-                        </compilerArguments>
-                    </configuration>
-                </plugin>
-
                 <!-- Checkstyle -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
