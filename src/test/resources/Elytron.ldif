@@ -80,7 +80,28 @@ cn: cryptUser
 sn: cryptUser
 uid: cryptUser
 userPassword:: e2NyeXB0fWI0Ym5OZVI4VmVjNkk=
+# Password cryptIt
+
+dn: uid=cryptUserLong,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+cn: cryptUserLong
+sn: cryptUserLong
+uid: cryptUserLong
+userPassword:: e2NyeXB0fUZjb3B0aG9ybUlBcE0=
 # Password cryptPassword
 
+dn: uid=bsdCryptUser,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+cn: bsdCryptUser
+sn: bsdCryptUser
+uid: bsdCryptUser
+userPassword:: e2NyeXB0fV9OLi4uL1RUcHlCeVRWdmRtV0dv
+# Password cryptPassword
 
 

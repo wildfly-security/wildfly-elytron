@@ -33,14 +33,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
-import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
-import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
+import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
+import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.util.Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A simple test case to verify that we can use an Apache DS generated {crypt} value with our {@link org.wildfly.security.password.interfaces.UnixDESCryptPassword UnixDESCryptPassword}
- * implemenetation.
+ * implementation. Note that Apache DS uses the standard Unix DES Crypt algorithm.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -59,6 +59,7 @@ public class CryptCompatibilityTest {
     }
 
     private static final String PASSWORD = "cryptIt";
+    private static final String LONG_PASSWORD = "cryptPassword"; // more than 8 characters
 
     @Test
     public void testComparison() throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
@@ -72,18 +73,41 @@ public class CryptCompatibilityTest {
         System.arraycopy(forStorage, 7, saltBytes, 0, 2);
         System.arraycopy(forStorage, 9, digestBase64, 0, digestBase64.length);
 
-        final int iterationCount = 25;
-        final int salt = convertSaltRepresentation(saltBytes);
+        final short salt = (short) convertSaltRepresentation(saltBytes);
 
         byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Alphabet.MOD_CRYPT, false).drain();
 
-        BSDUnixDESCryptPasswordSpec spec = new BSDUnixDESCryptPasswordSpec(digest, salt, iterationCount);
+        UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
 
-        PasswordFactory pf = PasswordFactory.getInstance(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES);
-        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) pf.generatePassword(spec);
+        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
+        UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
 
         assertTrue(pf.verify(password, (PASSWORD).toCharArray()));
         System.out.println("Have something split out.");
+    }
+
+    @Test
+    public void testComparisonWithLongPassword() throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        byte[] forStorage = PasswordUtil.createStoragePassword(LONG_PASSWORD.getBytes(StandardCharsets.UTF_8), LdapSecurityConstants.HASH_METHOD_CRYPT);
+
+        System.out.println(new String(forStorage, StandardCharsets.UTF_8));
+
+        byte[] saltBytes = new byte[2];
+        byte[] digestBase64 = new byte[forStorage.length - 9];
+
+        System.arraycopy(forStorage, 7, saltBytes, 0, 2);
+        System.arraycopy(forStorage, 9, digestBase64, 0, digestBase64.length);
+
+        final short salt = (short) convertSaltRepresentation(saltBytes);
+
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Alphabet.MOD_CRYPT, false).drain();
+
+        UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
+
+        PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
+        UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
+
+        assertTrue(pf.verify(password, (LONG_PASSWORD).toCharArray()));
     }
 
     private static int convertSaltRepresentation(final byte[] saltBytes) throws InvalidKeySpecException {
