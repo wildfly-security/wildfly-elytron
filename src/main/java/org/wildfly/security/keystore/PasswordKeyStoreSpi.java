@@ -58,10 +58,10 @@ import org.wildfly.security.password.spec.PasswordSpec;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PasswordKeyStoreImpl extends KeyStoreSpi {
+public final class PasswordKeyStoreSpi extends KeyStoreSpi {
     private final AtomicReference<HashMap<String, PasswordEntry>> pwRef = new AtomicReference<>();
 
-    public PasswordKeyStoreImpl() {
+    public PasswordKeyStoreSpi() {
     }
 
     public Key engineGetKey(final String alias, final char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {

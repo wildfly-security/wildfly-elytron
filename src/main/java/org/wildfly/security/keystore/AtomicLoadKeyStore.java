@@ -37,9 +37,9 @@ import java.security.cert.CertificateException;
  */
 public class AtomicLoadKeyStore extends KeyStore {
 
-    private final AtomicLoadKeyStoreSPI keyStoreSpi;
+    private final AtomicLoadKeyStoreSpi keyStoreSpi;
 
-    private AtomicLoadKeyStore(AtomicLoadKeyStoreSPI keyStoreSpi, Provider provider, String type) {
+    private AtomicLoadKeyStore(AtomicLoadKeyStoreSpi keyStoreSpi, Provider provider, String type) {
         super(keyStoreSpi, provider, type);
         this.keyStoreSpi = keyStoreSpi;
     }
@@ -57,7 +57,7 @@ public class AtomicLoadKeyStore extends KeyStore {
         KeyStore keyStore = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
         final Provider resolvedProvider = keyStore.getProvider();
 
-        AtomicLoadKeyStoreSPI keyStoreSpi = new AtomicLoadKeyStoreSPI(() -> KeyStore.getInstance(type, resolvedProvider));
+        AtomicLoadKeyStoreSpi keyStoreSpi = new AtomicLoadKeyStoreSpi(() -> KeyStore.getInstance(type, resolvedProvider));
 
         return new AtomicLoadKeyStore(keyStoreSpi, resolvedProvider, type);
     }

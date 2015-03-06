@@ -47,7 +47,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 
 /**
- * Testsuite for the {@link PropertiesKeyStoreImpl}.
+ * Testsuite for the {@link PropertiesKeyStoreSpi}.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */

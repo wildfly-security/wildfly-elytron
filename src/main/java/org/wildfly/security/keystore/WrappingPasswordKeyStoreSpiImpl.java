@@ -18,22 +18,15 @@
 
 package org.wildfly.security.keystore;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.KeyStoreSpi;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Date;
-import java.util.Enumeration;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -42,7 +35,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
-final class WrappingPasswordKeyStoreSpiImpl extends KeyStoreSpi {
+final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
     private final KeyStore delegate;
 
     WrappingPasswordKeyStoreSpiImpl(final KeyStore delegate) {
@@ -66,14 +59,6 @@ final class WrappingPasswordKeyStoreSpiImpl extends KeyStoreSpi {
         return null;
     }
 
-    public Date engineGetCreationDate(final String alias) {
-        try {
-            return delegate.getCreationDate(alias);
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     public void engineSetKeyEntry(final String alias, final Key key, final char[] password, final Certificate[] chain) throws KeyStoreException {
         if (key instanceof Password) {
             engineSetEntry(alias, new PasswordEntry((Password) key), password == null ? null : new KeyStore.PasswordProtection(password));
@@ -88,34 +73,6 @@ final class WrappingPasswordKeyStoreSpiImpl extends KeyStoreSpi {
 
     public void engineSetCertificateEntry(final String alias, final Certificate cert) throws KeyStoreException {
         throw new KeyStoreException("Direct key storage not supported");
-    }
-
-    public void engineDeleteEntry(final String alias) throws KeyStoreException {
-        delegate.deleteEntry(alias);
-    }
-
-    public Enumeration<String> engineAliases() {
-        try {
-            return delegate.aliases();
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public boolean engineContainsAlias(final String alias) {
-        try {
-            return delegate.containsAlias(alias);
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public int engineSize() {
-        try {
-            return delegate.size();
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     public KeyStore.Entry engineGetEntry(final String alias, final KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
@@ -145,44 +102,12 @@ final class WrappingPasswordKeyStoreSpiImpl extends KeyStoreSpi {
         }
     }
 
-    public boolean engineIsKeyEntry(final String alias) {
-        try {
-            return delegate.isKeyEntry(alias);
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     public boolean engineIsCertificateEntry(final String alias) {
         return false;
     }
 
     public String engineGetCertificateAlias(final Certificate cert) {
         return null;
-    }
-
-    public void engineStore(final OutputStream stream, final char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-        try {
-            delegate.store(stream, password);
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public void engineStore(final KeyStore.LoadStoreParameter param) throws IOException, NoSuchAlgorithmException, CertificateException {
-        try {
-            delegate.store(param);
-        } catch (KeyStoreException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    public void engineLoad(final InputStream stream, final char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
-        delegate.load(stream, password);
-    }
-
-    public void engineLoad(final KeyStore.LoadStoreParameter param) throws IOException, NoSuchAlgorithmException, CertificateException {
-        delegate.load(param);
     }
 
     private static Password decoded(final SecretKey key) throws NoSuchAlgorithmException, KeyStoreException {
@@ -199,5 +124,10 @@ final class WrappingPasswordKeyStoreSpiImpl extends KeyStoreSpi {
         final ClearPasswordSpec spec = factory.getKeySpec(password, ClearPasswordSpec.class);
         final char[] encodedPassword = spec.getEncodedPassword();
         return new SecretKeySpec(new String(encodedPassword).getBytes(StandardCharsets.UTF_8), "password");
+    }
+
+    @Override
+    protected KeyStore getKeyStore() {
+        return delegate;
     }
 }
