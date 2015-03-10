@@ -18,8 +18,6 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,28 +31,21 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * The {@link KeyStoreSpi} to add support atomic loading of the {@link KeyStore}
+ * A {@link KeyStoreSpi} implementation to delegate all calls to an underlying {@link KeyStore}
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
-
-    private final KeyStoreFactory keyStoreFactory;
-
-    private final AtomicReference<KeyStore> currentStore = new AtomicReference<KeyStore>();
-
-    AtomicLoadKeyStoreSPI(KeyStoreFactory keyStoreFactory) {
-        this.keyStoreFactory = keyStoreFactory;
-    }
+abstract class DelegatingKeyStoreSpi extends KeyStoreSpi {
 
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
         try {
-            return currentStore.get().getKey(alias, password);
+            return getKeyStore().getKey(alias, password);
         } catch (KeyStoreException e) {
+            exception(e, NoSuchAlgorithmException.class);
+            exception(e, UnrecoverableKeyException.class);
             throw new IllegalStateException(e);
         }
     }
@@ -62,7 +53,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public Certificate[] engineGetCertificateChain(String alias) {
         try {
-            return currentStore.get().getCertificateChain(alias);
+            return getKeyStore().getCertificateChain(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -71,7 +62,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public Certificate engineGetCertificate(String alias) {
         try {
-            return currentStore.get().getCertificate(alias);
+            return getKeyStore().getCertificate(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -80,7 +71,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public Date engineGetCreationDate(String alias) {
         try {
-            return currentStore.get().getCreationDate(alias);
+            return getKeyStore().getCreationDate(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -88,28 +79,28 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
 
     @Override
     public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] chain) throws KeyStoreException {
-        currentStore.get().setKeyEntry(alias, key, password, chain);
+        getKeyStore().setKeyEntry(alias, key, password, chain);
     }
 
     @Override
     public void engineSetKeyEntry(String alias, byte[] key, Certificate[] chain) throws KeyStoreException {
-        currentStore.get().setKeyEntry(alias, key, chain);
+        getKeyStore().setKeyEntry(alias, key, chain);
     }
 
     @Override
     public void engineSetCertificateEntry(String alias, Certificate cert) throws KeyStoreException {
-        currentStore.get().setCertificateEntry(alias, cert);
+        getKeyStore().setCertificateEntry(alias, cert);
     }
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
-        currentStore.get().deleteEntry(alias);
+        getKeyStore().deleteEntry(alias);
     }
 
     @Override
     public Enumeration<String> engineAliases() {
         try {
-            return currentStore.get().aliases();
+            return getKeyStore().aliases();
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -118,7 +109,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public boolean engineContainsAlias(String alias) {
         try {
-            return currentStore.get().containsAlias(alias);
+            return getKeyStore().containsAlias(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -127,7 +118,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public int engineSize() {
         try {
-            return currentStore.get().size();
+            return getKeyStore().size();
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -136,7 +127,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public boolean engineIsKeyEntry(String alias) {
         try {
-            return currentStore.get().isKeyEntry(alias);
+            return getKeyStore().isKeyEntry(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -145,7 +136,7 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public boolean engineIsCertificateEntry(String alias) {
         try {
-            return currentStore.get().isCertificateEntry(alias);
+            return getKeyStore().isCertificateEntry(alias);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
@@ -154,40 +145,37 @@ class AtomicLoadKeyStoreSPI extends KeyStoreSpi {
     @Override
     public String engineGetCertificateAlias(Certificate cert) {
         try {
-            return currentStore.get().getCertificateAlias(cert);
+            return getKeyStore().getCertificateAlias(cert);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
     }
 
     @Override
-    public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
-            CertificateException {
+    public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
         try {
-            currentStore.get().store(stream, password);
+            getKeyStore().store(stream, password);
         } catch (KeyStoreException e) {
+            exception(e, IOException.class);
+            exception(e, NoSuchAlgorithmException.class);
+            exception(e, CertificateException.class);
             throw new IllegalStateException(e);
         }
     }
 
     @Override
-    public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
-            CertificateException {
-        try {
-            KeyStore keyStore = keyStoreFactory.getInstance();
-            keyStore.load(stream, password);
-            currentStore.set(keyStore);
-        } catch (KeyStoreException e) {
-            throw log.unableToCreateKeyStore(e);
+    public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+        getKeyStore().load(stream, password);
+    }
+
+    protected abstract KeyStore getKeyStore();
+
+    private static <T extends Throwable> void exception(Throwable exception, Class<T> exceptionType) throws T {
+        Throwable cause = exception.getCause();
+        if (exceptionType.isInstance(cause)) {
+            throw exceptionType.cast(cause);
         }
     }
 
-    KeyStore getCurrentKeyStore() {
-        return currentStore.get();
-    }
-
-    void restoreKeyStore(final KeyStore keyStore) {
-        currentStore.set(keyStore);
-    }
 
 }

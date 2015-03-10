@@ -64,7 +64,7 @@ import org.wildfly.security.sasl.util.HexConverter;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public class PropertiesKeyStoreImpl extends KeyStoreSpi {
+public class PropertiesKeyStoreSpi extends KeyStoreSpi {
 
     static final char[] ESCAPE_ARRAY = new char[] { '=', '\\'};
 
@@ -84,7 +84,7 @@ public class PropertiesKeyStoreImpl extends KeyStoreSpi {
     /** Store the original file so we can write commented lines, preserving the original structure. **/
     private List<String> fileContents = new ArrayList<>();
 
-    public PropertiesKeyStoreImpl() {
+    public PropertiesKeyStoreSpi() {
     }
 
     @Override

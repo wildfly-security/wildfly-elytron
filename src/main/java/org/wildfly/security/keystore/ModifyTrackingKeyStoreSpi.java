@@ -20,6 +20,7 @@ package org.wildfly.security.keystore;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -29,51 +30,82 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 
 /**
- * A wrapper {@link KeyStoreSpi} implementation around a {@link KeyStore} to make it unmodifiable.
+ * The {@link KeyStoreSpi} implementation to track modifications.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class UnmodifiableKeyStoreSpi extends DelegatingKeyStoreSpi {
+public class ModifyTrackingKeyStoreSpi extends DelegatingKeyStoreSpi {
 
-    private final KeyStore keyStore;
-    private boolean loaded = false;
+    private final KeyStore delegate;
+    private volatile boolean initialised = false;
+    private volatile boolean modified = false;
 
-    UnmodifiableKeyStoreSpi(KeyStore keyStore) {
-        this.keyStore = keyStore;
+
+    ModifyTrackingKeyStoreSpi(KeyStore delegate) {
+        this.delegate = delegate;
     }
 
     @Override
     public void engineSetKeyEntry(String alias, Key key, char[] password, Certificate[] chain) throws KeyStoreException {
-        throw new UnsupportedOperationException();
+        super.engineSetKeyEntry(alias, key, password, chain);
+        modified = true;
     }
 
     @Override
     public void engineSetKeyEntry(String alias, byte[] key, Certificate[] chain) throws KeyStoreException {
-        throw new UnsupportedOperationException();
+        super.engineSetKeyEntry(alias, key, chain);
+        modified = true;
     }
 
     @Override
     public void engineSetCertificateEntry(String alias, Certificate cert) throws KeyStoreException {
-        throw new UnsupportedOperationException();
+        super.engineSetCertificateEntry(alias, cert);
+        modified = true;
     }
 
     @Override
     public void engineDeleteEntry(String alias) throws KeyStoreException {
-        throw new UnsupportedOperationException();
+        super.engineDeleteEntry(alias);
+        modified = true;
     }
 
     @Override
-    public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
+    public void engineStore(OutputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
             CertificateException {
-        if (loaded) {
-            throw new UnsupportedOperationException();
+        super.engineStore(stream, password);
+        modified = false;
+    }
+
+    @Override
+    public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+        if (initialised) {
+            super.engineLoad(stream, password);
+            modified = false;
+        } else {
+            // Skip the first initialisation as we are deliberately getting initialised flags set.
+            initialised = true;
         }
-        loaded = true;
+    }
+
+    /**
+     * Identify if the KeyStore has been modified through this implementation since the last call to save or load.
+     *
+     * @return {@code true} if the {@link KeyStore} has been modified, {@code false} otherwise.
+     */
+    boolean isModified() {
+        return modified;
+    }
+
+    /**
+     * Set the modified flag for this {@link KeyStore}
+     */
+    void setModified(final boolean modified) {
+        this.modified = modified;
     }
 
     @Override
     protected KeyStore getKeyStore() {
-        return keyStore;
+        return delegate;
     }
 
 }
