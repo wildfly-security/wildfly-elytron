@@ -21,6 +21,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class provides parsing for URIs with scheme "vault".
@@ -59,10 +61,10 @@ public class VaultURIParser {
 
     public static final String VAULT_SCHEME = "vault";
 
-    private final String name;
-    private final String storageFile;
+    private String name;
+    private String storageFile;
     private final HashMap<String, String> options = new HashMap<>();
-    private final String attribute;
+    private String attribute;
 
     /**
      * Constructor to create this class based on {@code String}
@@ -71,7 +73,24 @@ public class VaultURIParser {
      * @throws java.net.URISyntaxException in case of problems parsing given URI
      */
     public VaultURIParser(final String uri) throws URISyntaxException {
-        this(new URI(uri));
+        int schemeInd = 0;
+        if (uri.startsWith(VAULT_SCHEME + ":")) {
+            schemeInd = 6;  // "vault:".length()
+        }
+        int fragmentInd = uri.indexOf('#');
+        URI uriToParse;
+        if (fragmentInd == 0) {
+            throw log.vaultHasNoName(safeVaultURI(uri));
+        } else if (fragmentInd > -1) {
+            String fragment = uri.substring(fragmentInd + 1);
+            if (fragment.indexOf('#') > -1) {
+                throw new URISyntaxException(uri, log.moreThanOneFragmentDefined(), fragmentInd + fragment.indexOf('#'));
+            }
+            uriToParse = new URI(VAULT_SCHEME, uri.substring(schemeInd, fragmentInd), fragment);
+        } else {
+            uriToParse = new URI(VAULT_SCHEME, uri.substring(schemeInd), null);
+        }
+        parse(uriToParse);
     }
 
     /**
@@ -80,7 +99,10 @@ public class VaultURIParser {
      * @param uri URI to parse
      */
     public VaultURIParser(final URI uri) {
+        parse(uri);
+    }
 
+    private void parse(final URI uri) {
         if (! uri.isAbsolute()) {
             throw log.vaultNotAbsoluteURI(safeVaultURI(uri.toString()));
         }
@@ -113,9 +135,7 @@ public class VaultURIParser {
         } else {
             attribute = null;
         }
-
     }
-
 
     /**
      * Parses and creates {@code options} map with all vault URI query parameters separated.
@@ -193,7 +213,6 @@ public class VaultURIParser {
 
     }
 
-
     /**
      * Returns parsed vault name.
      *
@@ -252,4 +271,21 @@ public class VaultURIParser {
     public String getParameter(final String param) {
         return options.get(param);
     }
+
+    /**
+     * Returns {@code Set<String>} parameters specified in the vault URI.
+     * @return set of parameter names
+     */
+    public Set<String> getParameters() {
+        return options.keySet();
+    }
+
+    /**
+     * Returns new {@code Map<String, Object>} for use in {@link org.wildfly.security.vault.VaultSpi} to initialize the vault.
+     * @return Map of options parsed from the vault URI
+     */
+    public Map<String, Object> getOptionsMap() {
+        return new HashMap<>(options);
+    }
+
 }

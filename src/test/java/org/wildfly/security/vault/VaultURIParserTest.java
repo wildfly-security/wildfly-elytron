@@ -70,6 +70,10 @@ public class VaultURIParserTest {
                 "vault", "myvault", null, "db-password"
         );
 
+        vaultURITestHelper("vault://myvault",
+                "vault", "myvault", null, null
+        );
+
         vaultURITestHelper("vault://myvault/file:///root#db-password",
                 "vault", "myvault", "file:///root", "db-password"
         );
@@ -101,13 +105,13 @@ public class VaultURIParserTest {
         new VaultURIParser("vault://myvault/vault_keystore.jceks?VAULT_PASSWORD='secret2';SALT='20'#db-password#another-attribute"); // two fragments
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = URISyntaxException.class)
     public void testMalforormedVaultURI_0() throws Exception {
         new VaultURIParser("");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testMalforormedVaultURI_1() throws Exception {
+    @Test
+    public void testNameVaultReference() throws Exception {
         new VaultURIParser("//myvault");
     }
 

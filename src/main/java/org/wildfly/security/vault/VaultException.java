@@ -24,46 +24,46 @@ import java.security.GeneralSecurityException;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class SecurityVaultException extends GeneralSecurityException {
+public class VaultException extends GeneralSecurityException {
 
     private static final long serialVersionUID = 7665963403131682557L;
 
     /**
-     * Constructs a new {@code org.wildfly.security.vault.SecurityVaultException} instance.  The message is left blank
+     * Constructs a new {@code VaultException} instance.  The message is left blank
      * ({@code null}), and no cause is specified.
      */
-    public SecurityVaultException() {
+    public VaultException() {
     }
 
     /**
-     * Constructs a new {@code org.wildfly.security.vault.SecurityVaultException} instance with an initial message.  No
+     * Constructs a new {@code VaultException} instance with an initial message.  No
      * cause is specified.
      *
      * @param msg the message
      */
-    public SecurityVaultException(String msg) {
+    public VaultException(String msg) {
         super(msg);
     }
 
     /**
-     * Constructs a new {@code org.wildfly.security.vault.SecurityVaultException} instance with an initial message and
+     * Constructs a new {@code VaultException} instance with an initial message and
      * cause.
      *
      * @param message the message
      * @param cause the cause
      */
-    public SecurityVaultException(String message, Throwable cause) {
+    public VaultException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Constructs a new {@code org.wildfly.security.vault.SecurityVaultException} instance with an initial cause.  If a
+     * Constructs a new {@code VaultException} instance with an initial cause.  If a
      * non-{@code null} cause is specified, its message is used to initialize the message of this {@code
-     * org.wildfly.security.vault.SecurityVaultException}; otherwise the message is left blank ({@code null}).
+     * Exception}; otherwise the message is left blank ({@code null}).
      *
      * @param cause the cause
      */
-    public SecurityVaultException(Throwable cause) {
+    public VaultException(Throwable cause) {
         super(cause);
     }
 }
