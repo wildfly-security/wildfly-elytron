@@ -118,10 +118,8 @@ public final class DigestUtil {
      * @param responseCharset
      * @return
      */
-    public static byte[] H_A1(MessageDigest messageDigest, String username, String realm, char[] password,
+    public static byte[] H_A1(MessageDigest messageDigest, byte[] digest_urp,
                        byte[] nonce, byte[] cnonce, String authzid, Charset responseCharset) {
-        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, password);
-
         // A1
         ByteStringBuilder A1 = new ByteStringBuilder();
         A1.append(digest_urp);

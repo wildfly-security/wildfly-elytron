@@ -28,11 +28,14 @@ import java.util.HashMap;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteStringBuilder;
 
 import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
@@ -244,23 +247,43 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         // get password
         final NameCallback nameCallback = new NameCallback("User name", userName);
+        final CredentialCallback credentialCallback = new CredentialCallback(DigestPassword.class);
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         final RealmCallback realmCallback = new RealmCallback("User realm");
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authzid==null ? userName : authzid);
 
-        handleCallbacks(realmCallback, nameCallback, passwordCallback, authorizeCallback);
+        byte[] digest_urp;
+        try {
 
-        char[] passwd = passwordCallback.getPassword();
-        passwordCallback.clearPassword();
+            // first try pre-digested credential
+            tryHandleCallbacks(realmCallback, nameCallback, authorizeCallback, credentialCallback);
+            DigestPassword password = (DigestPassword) credentialCallback.getCredential();
+            digest_urp = password.getDigest();
 
+        } catch (UnsupportedCallbackException e) {
 
-        hA1 = H_A1(messageDigest, userName, clientRealm, passwd, nonce, cnonce, authzid, clientCharset);
+            // clear password if pre-digested not supported
+            if(e.getCallback() == credentialCallback){
+                handleCallbacks(realmCallback, nameCallback, passwordCallback, authorizeCallback);
+
+                char[] clearPassword = passwordCallback.getPassword();
+                passwordCallback.clearPassword();
+
+                digest_urp = userRealmPasswordDigest(messageDigest, userName, clientRealm, clearPassword);
+
+                if (clearPassword != null) Arrays.fill(clearPassword, (char)0); // wipe out the password
+
+            }else{
+                throw new SaslException("Callback handler failed", e);
+            }
+
+        }
+
+        if(digest_urp == null) throw new SaslException(getMechanismName() + ": authentication failed - null digest URP");
+
+        hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authzid, clientCharset);
 
         byte[] expectedResponse = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authzid, qop, digestURI, true);
-        // wipe out the password
-        if (passwd != null) {
-            Arrays.fill(passwd, (char)0);
-        }
 
         createCiphersAndKeys();
 

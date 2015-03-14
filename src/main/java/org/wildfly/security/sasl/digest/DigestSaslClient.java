@@ -29,11 +29,14 @@ import java.util.LinkedList;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
@@ -208,25 +211,69 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             nameCallback = new NameCallback("User name");
         }
 
+        final CredentialCallback credentialCallback = new CredentialCallback(DigestPassword.class);
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
 
 
+        String userName = null;
         String realm = null;
-        if (realms != null && realms.length > 1) {
-            final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
-            handleCallbacks(realmChoiceCallBack, nameCallback, passwordCallback);
-            realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
-        } else if (realms != null && realms.length == 1) {
-            final RealmCallback realmCallback = new RealmCallback("User realm", realms[0]);
-            handleCallbacks(realmCallback, nameCallback, passwordCallback);
-            realm = realmCallback.getText();
-        } else {
-            handleCallbacks(nameCallback, passwordCallback);
+        byte[] digestURP;
+        try {
+
+            // first try pre-digested credential
+            if (realms != null && realms.length > 1) {
+                final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
+                tryHandleCallbacks(realmChoiceCallBack, nameCallback, credentialCallback);
+                realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
+            } else if (realms != null && realms.length == 1) {
+                final RealmCallback realmCallback = new RealmCallback("User realm", realms[0]);
+                tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+                realm = realmCallback.getText();
+            } else {
+                tryHandleCallbacks(nameCallback, credentialCallback);
+            }
+            userName = nameCallback.getName();
+            DigestPassword digestedPassword = (DigestPassword) credentialCallback.getCredential();
+            digestURP = digestedPassword.getDigest();
+
+            if(userName == null) throw new SaslException("No username provided");
+            if(digestURP == null) throw new SaslException("No pre-digested password provided");
+
+        } catch (UnsupportedCallbackException e) {
+
+            // clear password if pre-digested not supported
+            if (e.getCallback() == credentialCallback) {
+
+                if (realms != null && realms.length > 1) {
+                    final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
+                    handleCallbacks(realmChoiceCallBack, nameCallback, passwordCallback);
+                    realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
+                } else if (realms != null && realms.length == 1) {
+                    final RealmCallback realmCallback = new RealmCallback("User realm", realms[0]);
+                    handleCallbacks(realmCallback, nameCallback, passwordCallback);
+                    realm = realmCallback.getText();
+                } else {
+                    handleCallbacks(nameCallback, passwordCallback);
+                }
+                userName = nameCallback.getName();
+                char[] clearPassword = passwordCallback.getPassword();
+                passwordCallback.clearPassword();
+
+                if(userName == null) throw new SaslException("No username provided");
+                if(clearPassword == null) throw new SaslException("No clear password provided");
+
+                digestURP = userRealmPasswordDigest(messageDigest, userName, realm, clearPassword);
+                if (clearPassword != null) Arrays.fill(clearPassword, (char)0); // wipe out the password
+
+            } else {
+                throw new SaslException("Callback handler failed", e);
+            }
+
         }
+
 
         // username
         digestResponse.append("username=\"");
-        String userName = nameCallback.getName();
         digestResponse.append(SaslQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
         digestResponse.append("\"").append(DELIMITER);
 
@@ -263,23 +310,13 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         digestResponse.append("\"").append(DELIMITER);
 
         // maxbuf
-        //if (maxbuf != DEFAULT_MAXBUF) {
-            digestResponse.append("maxbuf=");
-            digestResponse.append(String.valueOf(maxbuf));
-            digestResponse.append(DELIMITER);
-        //}
+        digestResponse.append("maxbuf=");
+        digestResponse.append(String.valueOf(maxbuf));
+        digestResponse.append(DELIMITER);
 
         // response
-        char[] passwd = passwordCallback.getPassword();
-        passwordCallback.clearPassword();
-
-        hA1 = H_A1(messageDigest, userName, realm, passwd, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
-
+        hA1 = H_A1(messageDigest, digestURP, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
         byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, true);
-        // wipe out the password
-        if (passwd != null) {
-            Arrays.fill(passwd, (char)0);
-        }
         digestResponse.append("response=");
         digestResponse.append(response_value);
 
