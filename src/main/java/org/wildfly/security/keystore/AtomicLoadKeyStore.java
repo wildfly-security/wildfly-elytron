@@ -45,6 +45,19 @@ public class AtomicLoadKeyStore extends KeyStore {
     }
 
     /**
+     * Create a new {@code AtomicLoadKeyStore} wrapping a {@link KeyStore} or the specified type, obtained from the supplied {@link Provider}.
+     *
+     * @param type the type of the {@link KeyStore} to wrap.
+     * @param provider the {@link Provider} to use to create the {@link KeyStore} instance.
+     * @return the new {@link AtomicLoadKeyStore} instance.
+     */
+    public static AtomicLoadKeyStore newInstance(final String type, final Provider provider) {
+        AtomicLoadKeyStoreSpi keyStoreSpi = new AtomicLoadKeyStoreSpi(() -> KeyStore.getInstance(type, provider));
+
+        return new AtomicLoadKeyStore(keyStoreSpi, provider, type);
+    }
+
+    /**
      * Create a new {@code AtomicLoadKeyStore} wrapping a {@link KeyStore} of the type specified.
      *
      * @param type the type of {@link KeyStore} to be wrapped.
@@ -57,9 +70,7 @@ public class AtomicLoadKeyStore extends KeyStore {
         KeyStore keyStore = provider != null ? KeyStore.getInstance(type, provider) : KeyStore.getInstance(type);
         final Provider resolvedProvider = keyStore.getProvider();
 
-        AtomicLoadKeyStoreSpi keyStoreSpi = new AtomicLoadKeyStoreSpi(() -> KeyStore.getInstance(type, resolvedProvider));
-
-        return new AtomicLoadKeyStore(keyStoreSpi, resolvedProvider, type);
+        return newInstance(type, resolvedProvider);
     }
 
     /**
@@ -71,7 +82,7 @@ public class AtomicLoadKeyStore extends KeyStore {
      */
     public static AtomicLoadKeyStore newInstance(final String type) throws KeyStoreException {
         try {
-            return newInstance(type, null);
+            return newInstance(type, (String) null);
         } catch (NoSuchProviderException e) {
             throw new KeyStoreException(e);
         }
