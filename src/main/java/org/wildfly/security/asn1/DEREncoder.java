@@ -381,7 +381,12 @@ public class DEREncoder implements ASN1Encoder {
             lastState.addChildElement(encoded[0], currentBufferPos);
         }
 
-        currentBuffer.append(encoded);
+        if (implicitTag != -1) {
+            writeTag(encoded[0], currentBuffer);
+            currentBuffer.append(encoded, 1, encoded.length - 1);
+        } else {
+            currentBuffer.append(encoded);
+        }
 
         // If this element's parent element is a set element, update the parent's accumulated length
         if ((lastState != null) && (lastState.getTag() == SET_TYPE)) {

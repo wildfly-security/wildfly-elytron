@@ -18,11 +18,13 @@
 package org.wildfly.security.sasl.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.security.sasl.Sasl;
@@ -125,5 +127,14 @@ public class BaseTestCase {
         assertEquals(mechanismName, mechanisms[0]);
     }
 
-
+    /**
+     * Verify the array of mechanisms.
+     *
+     * @param expectedMechanisms the expected array of mechanisms
+     * @param mechanisms the array of mechanisms to verify
+     */
+    protected void assertMechanisms(final String[] expectedMechanisms, final String[] mechanisms) {
+        assertEquals(expectedMechanisms.length, mechanisms.length);
+        assertTrue(Arrays.asList(expectedMechanisms).containsAll(Arrays.asList(mechanisms)));
+    }
 }

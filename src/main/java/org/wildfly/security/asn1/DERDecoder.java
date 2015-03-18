@@ -358,8 +358,12 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
-    public boolean isNextType(int clazz, int number, boolean isConstructed) throws ASN1Exception {
-        return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+    public boolean isNextType(int clazz, int number, boolean isConstructed) {
+        try {
+            return peekType() == (clazz | (isConstructed ? CONSTRUCTED_MASK : 0x00) | number);
+        } catch (ASN1Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -429,6 +433,25 @@ public class DERDecoder implements ASN1Decoder {
             throw new ASN1Exception("Unexpected end of input");
         }
         return value;
+    }
+
+    @Override
+    public byte[] drainElement() throws ASN1Exception {
+        if (implicitTag != -1) {
+            implicitTag = -1;
+        }
+        int currOffset = bi.offset();
+        readTag();
+        int valueLength = readLength();
+        int length = (bi.offset() - currOffset) + valueLength;
+        while ((bi.offset() != currOffset) && bi.hasPrev()) {
+            bi.prev();
+        }
+        byte[] element = new byte[length];
+        if ((length != 0) && (bi.drain(element) != length)) {
+            throw new ASN1Exception("Unexpected end of input");
+        }
+        return element;
     }
 
     private int readTag() throws ASN1Exception {

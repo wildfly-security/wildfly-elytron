@@ -92,6 +92,21 @@ public class ASN1 {
      */
     public static final int TAG_NUMBER_MASK = 0x1f;
 
+    /**
+     * Object identifier for the SHA1 with RSA signature algorithm.
+     */
+    public static final String OID_SHA1_WITH_RSA = "1.2.840.113549.1.1.5";
+
+    /**
+     * Object identifier for the SHA1 with DSA signature algorithm.
+     */
+    public static final String OID_SHA1_WITH_DSA = "1.2.840.10040.4.3";
+
+    /**
+     * Object identifier for the SHA1 with ECDSA signature algorithm.
+     */
+    public static final String OID_SHA1_WITH_ECDSA = "1.2.840.10045.4.1";
+
     public static String formatAsn1(ASN1Decoder decoder) {
         final StringBuilder builder = new StringBuilder();
         formatAsn1(decoder, builder);
