@@ -18,7 +18,9 @@
 
 package org.wildfly.security.password.impl;
 
-import static org.wildfly.security.password.interfaces.BCryptPassword.*;
+import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
+import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SALT_SIZE;
+import static org.wildfly.security.password.interfaces.BCryptPassword.DEFAULT_ITERATION_COUNT;
 
 import java.security.Provider;
 import java.security.Security;
@@ -27,6 +29,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -45,7 +48,7 @@ import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
  */
 public class BCryptPasswordTest {
 
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void setup() {

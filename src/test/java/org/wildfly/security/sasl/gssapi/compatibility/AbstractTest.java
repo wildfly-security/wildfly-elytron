@@ -51,7 +51,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
-import org.wildfly.security.sasl.WildFlySaslProvider;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.sasl.gssapi.BaseGssapiTests;
 import org.wildfly.security.sasl.gssapi.JAASUtil;
 import org.wildfly.security.sasl.gssapi.TestKDC;
@@ -77,13 +77,13 @@ public abstract class AbstractTest {
     protected byte[] wrappedMessage;
     protected byte[] badMessage;
 
-    private static final Provider wildFlySaslProvider = new WildFlySaslProvider();
+    private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void registerProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Integer>() {
             public Integer run() {
-                return Security.insertProviderAt(wildFlySaslProvider, 1);
+                return Security.insertProviderAt(wildFlyElytronProvider, 1);
             }
         });
     }
@@ -92,7 +92,7 @@ public abstract class AbstractTest {
     public static void removeProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
-                Security.removeProvider(wildFlySaslProvider.getName());
+                Security.removeProvider(wildFlyElytronProvider.getName());
                 return null;
             }
         });
@@ -183,10 +183,10 @@ public abstract class AbstractTest {
     protected Provider findProvider(final String filter, final boolean wildFlyProvider) throws Exception {
         Provider[] providers = Security.getProviders(filter);
         for (Provider current : providers) {
-            if (wildFlyProvider && current instanceof WildFlySaslProvider) {
+            if (wildFlyProvider && current instanceof WildFlyElytronProvider) {
                 return current;
             }
-            if (!wildFlyProvider && !(current instanceof WildFlySaslProvider)) {
+            if (!wildFlyProvider && !(current instanceof WildFlyElytronProvider)) {
                 return current;
             }
         }

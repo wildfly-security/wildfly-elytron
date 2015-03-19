@@ -48,7 +48,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.jboss.logging.Logger;
 import org.junit.Test;
-import org.wildfly.security.sasl.WildFlySaslProvider;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.sasl.test.BaseTestCase;
 
 /**
@@ -283,7 +283,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     private Provider findProvider(final String filter, final boolean wildFlyProvider) {
         Provider[] providers = Security.getProviders(filter);
         for (Provider current : providers) {
-            if (current instanceof WildFlySaslProvider) {
+            if (current instanceof WildFlyElytronProvider) {
                 if (wildFlyProvider) {
                     return current;
                 }

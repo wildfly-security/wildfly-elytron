@@ -18,7 +18,9 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -40,11 +42,11 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
@@ -54,13 +56,13 @@ import org.wildfly.security.sasl.util.AbstractSaslParticipant;
  */
 public class BasicScramSelfTest extends BaseTestCase {
 
-    private static final Provider passwordProvider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void registerPasswordProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
-                Security.insertProviderAt(passwordProvider, 2);
+                Security.insertProviderAt(provider, 2);
                 return null;
             }
         });
@@ -70,7 +72,7 @@ public class BasicScramSelfTest extends BaseTestCase {
     public static void removePasswordProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
-                Security.removeProvider(passwordProvider.getName());
+                Security.removeProvider(provider.getName());
                 return null;
             }
         });

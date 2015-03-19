@@ -18,7 +18,12 @@
 
 package org.wildfly.security.keystore;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,9 +42,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
@@ -53,7 +58,7 @@ import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
  */
 public class PropertiesFileKeyStoreTest {
 
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void register() {

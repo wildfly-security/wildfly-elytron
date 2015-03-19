@@ -18,8 +18,11 @@
 
 package org.wildfly.security.password.impl;
 
-import static org.junit.Assert.*;
-import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_256;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
@@ -30,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -50,7 +54,7 @@ import org.wildfly.security.util.CodePointIterator;
 
 public class ScramDigestPasswordTest {
 
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void registerProvider() {

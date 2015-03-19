@@ -26,8 +26,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.apacheds.LdapService;
-import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 
 /**
  * Suite for running a set of LDAP tests against a single server.
@@ -46,7 +46,7 @@ public class LdapTestSuite {
     static final int LDAP_PORT = 11390;
 
     private static LdapService ldapService;
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void beforeClass() throws Exception {

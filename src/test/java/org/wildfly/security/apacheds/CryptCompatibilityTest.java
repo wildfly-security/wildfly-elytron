@@ -19,6 +19,7 @@
 package org.wildfly.security.apacheds;
 
 import static org.junit.Assert.assertTrue;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -31,8 +32,8 @@ import org.apache.directory.api.ldap.model.password.PasswordUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.impl.WildFlyElytronPasswordProvider;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.util.Alphabet;
@@ -46,7 +47,7 @@ import org.wildfly.security.util.CodePointIterator;
  */
 public class CryptCompatibilityTest {
 
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void register() {

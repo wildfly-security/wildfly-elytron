@@ -33,7 +33,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.wildfly.security.sasl.WildFlySaslProvider;
+import org.wildfly.security.WildFlyElytronProvider;
 
 /**
  * A base for the test cases to ensure the provider is registered before the test
@@ -43,13 +43,13 @@ import org.wildfly.security.sasl.WildFlySaslProvider;
  */
 public class BaseTestCase {
 
-    private static final Provider wildFlySaslProvider = new WildFlySaslProvider();
+    private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void registerProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Integer>() {
             public Integer run() {
-                return Security.insertProviderAt(wildFlySaslProvider, 1);
+                return Security.insertProviderAt(wildFlyElytronProvider, 1);
             }
         });
     }
@@ -58,7 +58,7 @@ public class BaseTestCase {
     public static void removeProvider() {
         AccessController.doPrivileged(new PrivilegedAction<Void>() {
             public Void run() {
-                Security.removeProvider(wildFlySaslProvider.getName());
+                Security.removeProvider(wildFlyElytronProvider.getName());
 
                 return null;
             }
