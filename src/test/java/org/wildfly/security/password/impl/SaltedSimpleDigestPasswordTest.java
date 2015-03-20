@@ -39,6 +39,7 @@ import java.util.Arrays;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -62,7 +63,7 @@ public class SaltedSimpleDigestPasswordTest {
     private static final byte[] salt = "salt".getBytes(StandardCharsets.UTF_8);
     private static final char[] password = "password".toCharArray();
 
-    private static final Provider provider = new WildFlyElytronPasswordProvider();
+    private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void registerProvider() {
