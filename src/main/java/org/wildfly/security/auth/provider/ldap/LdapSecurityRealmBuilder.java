@@ -34,7 +34,6 @@ import org.wildfly.security.auth.util.NameRewriter;
 public class LdapSecurityRealmBuilder {
 
     private boolean built = false;
-    private String realmName = null;
     private DirContextFactory dirContextFactory;
     private List<NameRewriter> nameRewriters = new LinkedList<NameRewriter>();
     private LdapSecurityRealm.PrincipalMapping principalMapping;
@@ -47,12 +46,6 @@ public class LdapSecurityRealmBuilder {
         return new LdapSecurityRealmBuilder();
     }
 
-    public LdapSecurityRealmBuilder setRealmName(final String realmName) {
-        assertNotBuilt();
-        this.realmName = realmName;
-
-        return this;
-    }
 
     public LdapSecurityRealmBuilder setDirContextFactory(final DirContextFactory dirContextFactory) {
         assertNotBuilt();
@@ -90,7 +83,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(realmName, dirContextFactory, nameRewriters, principalMapping, credentialLoaders);
+        return new LdapSecurityRealm(dirContextFactory, nameRewriters, principalMapping, credentialLoaders);
     }
 
     private void assertNotBuilt() {

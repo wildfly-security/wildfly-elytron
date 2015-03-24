@@ -40,12 +40,10 @@ import org.wildfly.security.password.PasswordFactory;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
-    private final String realmName;
     private final NameRewriter[] rewriters;
     private volatile Map<NamePrincipal, Password> map = Collections.emptyMap();
 
-    public SimpleMapBackedSecurityRealm(final String realmName, final NameRewriter... rewriters) {
-        this.realmName = realmName;
+    public SimpleMapBackedSecurityRealm(final NameRewriter... rewriters) {
         this.rewriters = rewriters.clone();
     }
 
