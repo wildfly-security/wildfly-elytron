@@ -44,11 +44,9 @@ import org.wildfly.security.password.PasswordFactory;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class KeyStoreBackedSecurityRealm implements SecurityRealm {
-    private final String realmName;
     private final KeyStore keyStore;
 
-    public KeyStoreBackedSecurityRealm(final String realmName, final KeyStore keyStore) {
-        this.realmName = realmName;
+    public KeyStoreBackedSecurityRealm(final KeyStore keyStore) {
         this.keyStore = keyStore;
     }
 

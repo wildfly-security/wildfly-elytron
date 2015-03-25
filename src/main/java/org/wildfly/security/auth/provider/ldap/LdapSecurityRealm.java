@@ -47,16 +47,14 @@ import org.wildfly.security.password.Password;
  */
 class LdapSecurityRealm implements SecurityRealm {
 
-    private final String realmName;
     private final DirContextFactory dirContextFactory;
     private final List<NameRewriter> nameRewriters;
     private final PrincipalMapping principalMapping;
 
     private final Collection<CredentialLoader> credentialLoaders;
 
-    LdapSecurityRealm(final String realmName, final DirContextFactory dirContextFactory, final List<NameRewriter> nameRewriters,
+    LdapSecurityRealm(final DirContextFactory dirContextFactory, final List<NameRewriter> nameRewriters,
             final PrincipalMapping principalMapping, final Collection<CredentialLoader> credentialLoaders) {
-        this.realmName = realmName;
         this.dirContextFactory = dirContextFactory;
         this.nameRewriters = nameRewriters;
         this.principalMapping = principalMapping;
