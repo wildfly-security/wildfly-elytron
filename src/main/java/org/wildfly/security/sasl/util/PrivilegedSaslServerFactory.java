@@ -52,6 +52,7 @@ public final class PrivilegedSaslServerFactory extends AbstractDelegatingSaslSer
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return new PrivilegedSaslServer(delegate.createSaslServer(mechanism, protocol, serverName, props, cbh), context);
+        final SaslServer saslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
+        return saslServer == null ? null : new PrivilegedSaslServer(saslServer, context);
     }
 }

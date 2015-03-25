@@ -48,7 +48,7 @@ public final class AuthenticationCompleteCallbackSaslServerFactory extends Abstr
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
-        return new AbstractDelegatingSaslServer(delegateSaslServer) {
+        return delegateSaslServer == null ? null : new AbstractDelegatingSaslServer(delegateSaslServer) {
             private final AtomicBoolean complete = new AtomicBoolean();
 
             public byte[] evaluateResponse(final byte[] response) throws SaslException {
