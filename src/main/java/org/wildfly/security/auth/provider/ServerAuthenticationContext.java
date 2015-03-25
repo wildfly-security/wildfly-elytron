@@ -45,8 +45,10 @@ import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.RealmIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
@@ -112,97 +114,133 @@ public final class ServerAuthenticationContext {
 
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 try {
-                    innerHandle(callbacks);
+                    handleOne(callbacks, 0);
                 } catch (RealmUnavailableException e) {
                     throw new IOException(e);
                 }
             }
 
-            private void innerHandle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException, RealmUnavailableException {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof NameCallback) {
-                        // login name
-                        if (identity != null) {
-                            throw new SaslException("Mechanism supplied multiple login names");
-                        }
-                        final String name = ((NameCallback) callback).getName();
-                        final RealmIdentity realmIdentity = domain.mapName(name);
-                        if (realmIdentity == null) {
-                            throw new SaslException("Unknown user name");
-                        }
-                        identity = realmIdentity;
-                    } else if (callback instanceof PeerPrincipalCallback) {
-                        // login name
-                        if (identity != null) {
-                            throw new SaslException("Mechanism supplied multiple login names");
-                        }
-                        final Principal principal = ((PeerPrincipalCallback) callback).getPrincipal();
-                        // todo: handle X500 properly
-                        final RealmIdentity realmIdentity = domain.mapName(principal.getName());
-                        if (realmIdentity == null) {
-                            throw new SaslException("Unknown user name");
-                        }
-                        identity = realmIdentity;
-                    } else if (callback instanceof PasswordCallback) {
-                        final PasswordCallback passwordCallback = (PasswordCallback) callback;
-                        // need a plain password
-                        if (identity == null) {
-                            throw new SaslException("No user identity loaded for credential verification");
-                        }
-                        final char[] providedPassword = passwordCallback.getPassword();
-                        if (providedPassword != null) {
-                            // todo: verification API, fall back to acquiring any Password
-                            throw new IllegalStateException("At this point we would verify the password instead of acquiring it");
-                        } else {
-                            final TwoWayPassword credential = identity.getCredential(TwoWayPassword.class);
-                            if (credential == null) {
-                                // there's a slight hope that we could get a proper credential callback
-                                throw new FastUnsupportedCallbackException(callback);
-                            }
-                            final ClearPasswordSpec clearPasswordSpec;
-                            try {
-                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
-                                clearPasswordSpec = passwordFactory.getKeySpec(credential, ClearPasswordSpec.class);
-                            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                                // try to fall back to another credential type
-                                throw new FastUnsupportedCallbackException(callback);
-                            }
-                            passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
-                        }
-                    } else if (callback instanceof CredentialCallback) {
-                        final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                        if (identity == null) {
-                            throw new SaslException("No user identity loaded for credential verification");
-                        }
-                        for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
-                            if (identity.getCredentialSupport(allowedType).mayBeObtainable()) {
-                                final Object credential = identity.getCredential(allowedType);
-                                if (credential != null) {
-                                    credentialCallback.setCredential(credential);
-                                    break;
-                                }
-                            }
-                        }
-                        // otherwise just fall out; some mechanisms will try again with different credentials
-                    } else if (callback instanceof CredentialParameterCallback) {
-                        // ignore for now
-                    } else if (callback instanceof AnonymousAuthorizationCallback) {
-                        // todo: check configuration to see if anonymous login is allowed
-                        ((AnonymousAuthorizationCallback) callback).setAuthorized(domain.isAnonymousAllowed());
-                    } else if (callback instanceof AuthenticationCompleteCallback) {
-                        // todo: clean up authentication-time resources
+            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException, RealmUnavailableException {
+                if (idx == callbacks.length) {
+                    return;
+                }
+                Callback callback = callbacks[idx];
+                if (callback instanceof NameCallback) {
+                    // login name
+                    if (identity != null) {
+                        identity.dispose();
                         identity = null;
-                        done = true;
-                    } else if (callback instanceof SocketAddressCallback) {
-                        final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
-                        if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
-                            // todo: filter by IP address
-                        }
-                    } else if (callback instanceof RealmIdentityCallback) {
-                        ((RealmIdentityCallback) callback).setRealmIdentity(identity);
-                    } else {
-                        CallbackUtil.unsupported(callback);
                     }
+                    final String name = ((NameCallback) callback).getName();
+                    final RealmIdentity realmIdentity = domain.mapName(name);
+                    if (realmIdentity == null) {
+                        throw new SaslException("Unknown user name");
+                    }
+                    identity = realmIdentity;
+                    try {
+                        handleOne(callbacks, idx + 1);
+                    } catch (Throwable t) {
+                        identity = null;
+                        throw t;
+                    }
+                } else if (callback instanceof PeerPrincipalCallback) {
+                    // login name
+                    if (identity != null) {
+                        throw new SaslException("Mechanism supplied multiple login names");
+                    }
+                    final Principal principal = ((PeerPrincipalCallback) callback).getPrincipal();
+                    // todo: handle X500 properly
+                    final RealmIdentity realmIdentity = domain.mapName(principal.getName());
+                    if (realmIdentity == null) {
+                        throw new SaslException("Unknown user name");
+                    }
+                    identity = realmIdentity;
+                    try {
+                        handleOne(callbacks, idx + 1);
+                    } catch (Throwable t) {
+                        identity = null;
+                        throw t;
+                    }
+                } else if (callback instanceof PasswordCallback) {
+                    final PasswordCallback passwordCallback = (PasswordCallback) callback;
+                    // need a plain password
+                    RealmIdentity identity = this.identity;
+                    if (identity == null) {
+                        throw new SaslException("No user identity loaded for credential verification");
+                    }
+                    final char[] providedPassword = passwordCallback.getPassword();
+                    if (providedPassword != null) {
+                        if (identity.getCredentialSupport(char[].class).isDefinitelyVerifiable() && ! identity.verifyCredential(providedPassword)) {
+                            throw new SaslException("Invalid password");
+                        } else if (identity.getCredentialSupport(TwoWayPassword.class).isDefinitelyVerifiable()) {
+                            try {
+                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                                final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
+                                if (! identity.verifyCredential(password)) {
+                                    throw new SaslException("Invalid password");
+                                }
+                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                                throw new SaslException("Password verification not supported", e);
+                            }
+                        } else {
+                            throw new SaslException("Password verification not supported");
+                        }
+                    } else {
+                        final TwoWayPassword credential = identity.getCredential(TwoWayPassword.class);
+                        if (credential == null) {
+                            // there's a slight hope that we could get a proper credential callback
+                            throw new FastUnsupportedCallbackException(callback);
+                        }
+                        final ClearPasswordSpec clearPasswordSpec;
+                        try {
+                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
+                            clearPasswordSpec = passwordFactory.getKeySpec(credential, ClearPasswordSpec.class);
+                        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                            // try to fall back to another credential type
+                            throw new FastUnsupportedCallbackException(callback);
+                        }
+                        passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof CredentialCallback) {
+                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    if (identity == null) {
+                        throw new SaslException("No user identity loaded for credential verification");
+                    }
+                    for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
+                        if (identity.getCredentialSupport(allowedType).mayBeObtainable()) {
+                            final Object credential = identity.getCredential(allowedType);
+                            if (credential != null) {
+                                credentialCallback.setCredential(credential);
+                                break;
+                            }
+                        }
+                    }
+                    // otherwise just fall out; some mechanisms will try again with different credentials
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof CredentialParameterCallback) {
+                    // ignore for now
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof AnonymousAuthorizationCallback) {
+                    // todo: check configuration to see if anonymous login is allowed
+                    ((AnonymousAuthorizationCallback) callback).setAuthorized(domain.isAnonymousAllowed());
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof AuthenticationCompleteCallback) {
+                    // todo: clean up authentication-time resources
+                    identity = null;
+                    done = true;
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SocketAddressCallback) {
+                    final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
+                    if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
+                        // todo: filter by IP address
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof RealmIdentityCallback) {
+                    ((RealmIdentityCallback) callback).setRealmIdentity(identity);
+                    handleOne(callbacks, idx + 1);
+                } else {
+                    CallbackUtil.unsupported(callback);
                 }
             }
         };
