@@ -65,7 +65,7 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
-     * Get the authentication configuration which matches the given URI, or {@code null} if there is none.
+     * Get the authentication configuration which matches the given URI, or {@link AuthenticationConfiguration#EMPTY} if there is none.
      *
      * @param uri the URI to match
      * @param authenticationContext the authentication context to examine
@@ -73,7 +73,7 @@ public final class AuthenticationContextConfigurationClient {
      */
     public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext) {
         final int idx = authenticationContext.ruleMatching(uri);
-        if (idx == -1) return null;
+        if (idx == -1) return AuthenticationConfiguration.EMPTY;
         return authenticationContext.getAuthenticationConfiguration(idx);
     }
 
