@@ -74,7 +74,6 @@ final class ScramSaslServer extends AbstractSaslServer {
     private final String bindingType;
     private final byte[] bindingData;
 
-    private int state;
     private String authorizationID;
     private byte[] clientFirstMessage;
     private byte[] serverFirstMessage;
@@ -513,6 +512,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     b.append('v').append('=');
                     b.appendUtf8(ByteIterator.ofBytes(serverSignature).base64Encode());
 
+                    setNegotiationState(COMPLETE_STATE);
                     ok = true;
                     return b.toArray();
                 }
@@ -546,13 +546,9 @@ final class ScramSaslServer extends AbstractSaslServer {
     public void dispose() throws SaslException {
         clientFirstMessage = null;
         serverFirstMessage = null;
-        state = FAILED_STATE;
+        setNegotiationState(FAILED_STATE);
         mac.reset();
         messageDigest.reset();
-    }
-
-    public boolean isComplete() {
-        return state == COMPLETE_STATE;
     }
 
     static SaslException invalidClientMessage() {
