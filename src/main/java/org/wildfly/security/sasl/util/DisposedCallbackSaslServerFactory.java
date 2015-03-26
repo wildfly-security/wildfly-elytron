@@ -47,7 +47,7 @@ public final class DisposedCallbackSaslServerFactory extends AbstractDelegatingS
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslServer saslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
-        return new AbstractDelegatingSaslServer(saslServer) {
+        return saslServer == null ? null : new AbstractDelegatingSaslServer(saslServer) {
             public void dispose() throws SaslException {
                 try {
                     delegate.dispose();

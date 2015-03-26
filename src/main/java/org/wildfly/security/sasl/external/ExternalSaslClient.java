@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslWrapper;
 
 final class ExternalSaslClient implements SaslClient, SaslWrapper {
@@ -34,7 +35,7 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
     private boolean complete;
 
     ExternalSaslClient(final String authorizationId) {
-        this.authorizationId = authorizationId.getBytes(StandardCharsets.UTF_8);
+        this.authorizationId = authorizationId == null ? AbstractSaslParticipant.NO_BYTES : authorizationId.getBytes(StandardCharsets.UTF_8);
     }
 
     public String getMechanismName() {

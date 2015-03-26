@@ -52,6 +52,7 @@ public final class PrivilegedSaslClientFactory extends AbstractDelegatingSaslCli
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return new PrivilegedSaslClient(delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh), context);
+        final SaslClient saslClient = delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
+        return saslClient == null ? null : new PrivilegedSaslClient(saslClient, context);
     }
 }

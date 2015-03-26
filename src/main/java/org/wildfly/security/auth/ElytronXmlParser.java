@@ -75,8 +75,10 @@ public final class ElytronXmlParser {
      */
     public static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration() throws ConfigXMLParseException {
         final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance();
-        try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
+        if (clientConfiguration != null) try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
             return parseAuthenticationClientConfiguration(streamReader);
+        } else {
+            return new FixedSecurityFactory<>(AuthenticationContext.EMPTY);
         }
     }
 
