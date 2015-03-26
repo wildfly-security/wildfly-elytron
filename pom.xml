@@ -326,6 +326,7 @@
             <groupId>org.apache.directory.mavibot</groupId>
             <artifactId>mavibot</artifactId>
             <version>${version.org.apache.directory.mavibot}</version>
+            <scope>test</scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -366,6 +367,7 @@
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <version>${version.jmockit}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
