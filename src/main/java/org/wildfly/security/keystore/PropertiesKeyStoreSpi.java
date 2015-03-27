@@ -76,7 +76,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
 
     static final String REALM_COMMENT_COMMENT = " This line is used by the add-user utility to identify the realm name already used in this file.";
 
-    static final Pattern PROPERTY_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
+    static final Pattern PROPERTY_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
 
     private final AtomicReference<HashMap<String, EnablingPasswordEntry>> pwRef = new AtomicReference<>();
     /** The realmName as read from the properties file (or as set by the first entry added to the keystore) **/
@@ -285,8 +285,11 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
             } else {
                 final Matcher matcher = PROPERTY_PATTERN.matcher(trimmed);
                 if (matcher.matches()) {
+                    String userName = matcher.group(1);
+                    String hexDigest = matcher.group(2);
+                    boolean commented = trimmed.startsWith(COMMENT_PREFIX);
                     // this is a line that contains an user entry (either enabled or disabled).
-                    userEntries.add(new UserEntry(matcher.group(1), matcher.group(2), trimmed.startsWith(COMMENT_PREFIX)));
+                    userEntries.add(new UserEntry(userName, hexDigest, commented));
                 }
             }
             // ignore all the other lines (comments) - those are just added to the file contents collection.
