@@ -84,7 +84,15 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
     /** Store the original file so we can write commented lines, preserving the original structure. **/
     private List<String> fileContents = new ArrayList<>();
 
+    private final PasswordFactory passwordFactory;
+
     public PropertiesKeyStoreSpi() {
+        try {
+            passwordFactory = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5);
+        } catch (NoSuchAlgorithmException e) {
+            // Should be impossible to reach this as all registered by the same provider.
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -292,7 +300,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
         for (UserEntry entry : userEntries) {
             final Password pwd;
             try {
-                pwd = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5).generatePassword(
+                pwd = passwordFactory.generatePassword(
                         new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, entry.username, realmName, HexConverter.convertFromHex(entry.hexDigest)));
             } catch (InvalidKeySpecException ikse) {
                 throw log.noAlgorithmForPassword(entry.username);
