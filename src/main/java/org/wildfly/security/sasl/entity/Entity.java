@@ -43,7 +43,7 @@ public final class Entity {
     /**
      * Get the object identifier for the given signature algorithm.
      *
-     * @param algorithm the signature algorithm name
+     * @param signatureAlgorithm the signature algorithm name
      * @return the object identifier that corresponds to the given algorithm or
      * {@code null} if the given algorithm name is invalid
      */
@@ -59,7 +59,7 @@ public final class Entity {
     /**
      * Get the key type for the given signature algorithm.
      *
-     * @param algorithm the signature algorithm name
+     * @param signatureAlgorithm the signature algorithm name
      * @return the key type that corresponds to the given algorithm or {@code null}
      * if the given algorithm name is invalid
      */

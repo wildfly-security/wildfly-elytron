@@ -22,6 +22,6 @@
 
 /**
  * The WildFly security manager implementation and supporting utilities.  To install
- * the security manager, see {@link WildFlySecurityManager#install()}.
+ * the security manager, see {@link org.wildfly.security.manager.WildFlySecurityManager#install()}.
  */
 package org.wildfly.security.manager;

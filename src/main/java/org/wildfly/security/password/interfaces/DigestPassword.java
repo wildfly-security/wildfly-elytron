@@ -18,6 +18,7 @@
 package org.wildfly.security.password.interfaces;
 
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
 
 /**
  * Digest MD5 (pre-digested) password.

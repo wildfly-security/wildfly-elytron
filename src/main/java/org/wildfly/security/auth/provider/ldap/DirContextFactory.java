@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 
 /**
  * Factory for obtaining connected DirContext instances.
