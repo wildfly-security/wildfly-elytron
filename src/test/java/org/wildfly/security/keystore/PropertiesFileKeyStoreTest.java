@@ -152,7 +152,7 @@ public class PropertiesFileKeyStoreTest {
         final String[] testPasswords = new String[] {"passwd12#$", "$#21pass", "dukepass!@34"};
 
         // initialize the keystore, this time loading the users from a test properties file.
-        final InputStream stream = this.getClass().getResourceAsStream("/users.properties");
+        final InputStream stream = this.getClass().getResourceAsStream("users.properties");
         final KeyStore keyStore = KeyStore.getInstance("PropertiesFile");
         keyStore.load(stream, null);
 
@@ -236,4 +236,16 @@ public class PropertiesFileKeyStoreTest {
             file.delete();
         }
     }
+
+    /**
+     * Test case to verify that the default (empty apart from comments) properties file can be loaded.
+     */
+    @Test
+    public void testDefaultProperties() throws Exception {
+        try (InputStream stream = this.getClass().getResourceAsStream("empty.properties")) {
+            final KeyStore keyStore = KeyStore.getInstance("PropertiesFile");
+            keyStore.load(stream, null);
+        }
+    }
+
 }

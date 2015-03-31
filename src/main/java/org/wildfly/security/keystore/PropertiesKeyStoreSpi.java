@@ -76,7 +76,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
 
     static final String REALM_COMMENT_COMMENT = " This line is used by the add-user utility to identify the realm name already used in this file.";
 
-    static final Pattern PROPERTY_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
+    static final Pattern PROPERTY_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
 
     private final AtomicReference<HashMap<String, EnablingPasswordEntry>> pwRef = new AtomicReference<>();
     /** The realmName as read from the properties file (or as set by the first entry added to the keystore) **/
@@ -84,7 +84,15 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
     /** Store the original file so we can write commented lines, preserving the original structure. **/
     private List<String> fileContents = new ArrayList<>();
 
+    private final PasswordFactory passwordFactory;
+
     public PropertiesKeyStoreSpi() {
+        try {
+            passwordFactory = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5);
+        } catch (NoSuchAlgorithmException e) {
+            // Should be impossible to reach this as all registered by the same provider.
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -277,8 +285,11 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
             } else {
                 final Matcher matcher = PROPERTY_PATTERN.matcher(trimmed);
                 if (matcher.matches()) {
+                    String userName = matcher.group(1);
+                    String hexDigest = matcher.group(2);
+                    boolean commented = trimmed.startsWith(COMMENT_PREFIX);
                     // this is a line that contains an user entry (either enabled or disabled).
-                    userEntries.add(new UserEntry(matcher.group(1), matcher.group(2), trimmed.startsWith(COMMENT_PREFIX)));
+                    userEntries.add(new UserEntry(userName, hexDigest, commented));
                 }
             }
             // ignore all the other lines (comments) - those are just added to the file contents collection.
@@ -292,7 +303,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
         for (UserEntry entry : userEntries) {
             final Password pwd;
             try {
-                pwd = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5).generatePassword(
+                pwd = passwordFactory.generatePassword(
                         new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, entry.username, realmName, HexConverter.convertFromHex(entry.hexDigest)));
             } catch (InvalidKeySpecException ikse) {
                 throw log.noAlgorithmForPassword(entry.username);
