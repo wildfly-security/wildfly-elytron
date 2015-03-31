@@ -1,7 +1,7 @@
 org.wildfly.security
+org.wildfly.security.asn1
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
-org.wildfly.security.auth.login
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
 org.wildfly.security.auth.provider
@@ -18,10 +18,15 @@ org.wildfly.security.permission
 org.wildfly.security.sasl
 org.wildfly.security.sasl.anonymous
 org.wildfly.security.sasl.callback
+org.wildfly.security.sasl.digest
+org.wildfly.security.sasl.entity
+org.wildfly.security.sasl.external
 org.wildfly.security.sasl.gssapi
 org.wildfly.security.sasl.localuser
-org.wildfly.security.sasl.md5digest
 org.wildfly.security.sasl.plain
+org.wildfly.security.sasl.proxy
 org.wildfly.security.sasl.scram
 org.wildfly.security.sasl.util
+org.wildfly.security.ssl
 org.wildfly.security.util
+org.wildfly.security.x500
