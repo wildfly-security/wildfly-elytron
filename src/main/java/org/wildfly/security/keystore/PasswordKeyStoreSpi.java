@@ -282,13 +282,18 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
                             while (ch != '\n') {
                                 ch = forceReadCP(br);
                             }
+                            b.setLength(0);
                             continue outer;
+                        }
+                        else {
+                            b.appendCodePoint(ch);
                         }
                     }
                 } else if (Character.isWhitespace(ch)) {
                     throw log.unexpectedWhitespaceInPasswordFile();
                 } else {
                     b.appendCodePoint(ch);
+                    continue outer;
                 }
             }
         }
