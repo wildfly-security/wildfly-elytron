@@ -19,7 +19,7 @@
 package org.wildfly.security.util;
 
 /**
- * A base-64 alphabet.
+ * An alphabet.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -31,9 +31,9 @@ public abstract class Alphabet {
     }
 
     /**
-     * Encode the given 6-bit value to a code point.
+     * Encode the given value to a code point.
      *
-     * @param val the 6-bit value
+     * @param val the value
      * @return the code point
      */
     public abstract int encode(int val);
@@ -42,151 +42,231 @@ public abstract class Alphabet {
      * Decode the given code point.  If the code point is not valid, -1 is returned.
      *
      * @param codePoint the code point
-     * @return the decoded 6-bit value or -1
+     * @return the decoded value or -1
      */
     public abstract int decode(int codePoint);
 
     /**
-     * The standard <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a> base-64 alphabet.
+     * A base-64 alphabet.
+     *
+     * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
      */
-    public static final Alphabet STANDARD = new Alphabet(false) {
-        public int encode(final int val) {
-            if (val <= 25) {
-                return 'A' + val;
-            } else if (val <= 51) {
-                return 'a' + val - 26;
-            } else if (val <= 61) {
-                return '0' + val - 52;
-            } else if (val == 62) {
-                return '+';
-            } else {
-                assert val == 63;
-                return '/';
-            }
+    public abstract static class Base64Alphabet extends Alphabet {
+
+        Base64Alphabet(final boolean littleEndian) {
+            super(littleEndian);
         }
 
-        public int decode(final int codePoint) throws IllegalArgumentException {
-            if ('A' <= codePoint && codePoint <= 'Z') {
-                return codePoint - 'A';
-            } else if ('a' <= codePoint && codePoint <= 'z') {
-                return codePoint - 'a' + 26;
-            } else if ('0' <= codePoint && codePoint <= '9') {
-                return codePoint - '0' + 52;
-            } else if (codePoint == '+') {
-                return 62;
-            } else if (codePoint == '/') {
-                return 63;
-            } else {
-                return -1;
+        /**
+         * Encode the given 6-bit value to a code point.
+         *
+         * @param val the 6-bit value
+         * @return the code point
+         */
+        public abstract int encode(int val);
+
+        /**
+         * Decode the given code point.  If the code point is not valid, -1 is returned.
+         *
+         * @param codePoint the code point
+         * @return the decoded 6-bit value or -1
+         */
+        public abstract int decode(int codePoint);
+
+        /**
+         * The standard <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a> base-64 alphabet.
+         */
+        public static final Base64Alphabet STANDARD = new Base64Alphabet(false) {
+            public int encode(final int val) {
+                if (val <= 25) {
+                    return 'A' + val;
+                } else if (val <= 51) {
+                    return 'a' + val - 26;
+                } else if (val <= 61) {
+                    return '0' + val - 52;
+                } else if (val == 62) {
+                    return '+';
+                } else {
+                    assert val == 63;
+                    return '/';
+                }
             }
-        }
-    };
+
+            public int decode(final int codePoint) throws IllegalArgumentException {
+                if ('A' <= codePoint && codePoint <= 'Z') {
+                    return codePoint - 'A';
+                } else if ('a' <= codePoint && codePoint <= 'z') {
+                    return codePoint - 'a' + 26;
+                } else if ('0' <= codePoint && codePoint <= '9') {
+                    return codePoint - '0' + 52;
+                } else if (codePoint == '+') {
+                    return 62;
+                } else if (codePoint == '/') {
+                    return 63;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
+        /**
+         * The modular crypt alphabet, used in various modular crypt password types.
+         */
+        public static final Base64Alphabet MOD_CRYPT = new Base64Alphabet(false) {
+            public int encode(final int val) {
+                if (val == 0) {
+                    return '.';
+                } else if (val == 1) {
+                    return '/';
+                } else if (val <= 11) {
+                    return '0' + val - 2;
+                } else if (val <= 37) {
+                    return 'A' + val - 12;
+                } else {
+                    assert val < 64;
+                    return 'a' + val - 38;
+                }
+            }
+
+            public int decode(final int codePoint) throws IllegalArgumentException {
+                if (codePoint == '.') {
+                    return 0;
+                } else if (codePoint == '/') {
+                    return 1;
+                } else if ('0' <= codePoint && codePoint <= '9') {
+                    return codePoint - '0' + 2;
+                } else if ('A' <= codePoint && codePoint <= 'Z') {
+                    return codePoint - 'A' + 12;
+                } else if ('a' <= codePoint && codePoint <= 'z') {
+                    return codePoint - 'a' + 38;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
+        /**
+         * The modular crypt alphabet, used in various modular crypt password types.
+         */
+        public static final Base64Alphabet MOD_CRYPT_LE = new Base64Alphabet(true) {
+            public int encode(final int val) {
+                if (val == 0) {
+                    return '.';
+                } else if (val == 1) {
+                    return '/';
+                } else if (val <= 11) {
+                    return '0' + val - 2;
+                } else if (val <= 37) {
+                    return 'A' + val - 12;
+                } else {
+                    assert val < 64;
+                    return 'a' + val - 38;
+                }
+            }
+
+            public int decode(final int codePoint) throws IllegalArgumentException {
+                if (codePoint == '.') {
+                    return 0;
+                } else if (codePoint == '/') {
+                    return 1;
+                } else if ('0' <= codePoint && codePoint <= '9') {
+                    return codePoint - '0' + 2;
+                } else if ('A' <= codePoint && codePoint <= 'Z') {
+                    return codePoint - 'A' + 12;
+                } else if ('a' <= codePoint && codePoint <= 'z') {
+                    return codePoint - 'a' + 38;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
+        /**
+         * The BCrypt alphabet.
+         */
+        public static final Base64Alphabet BCRYPT = new Base64Alphabet(false) {
+            public int encode(final int val) {
+                if (val == 0) {
+                    return '.';
+                } else if (val == 1) {
+                    return '/';
+                } else if (val <= 27) {
+                    return 'A' + val - 2;
+                } else if (val <= 53) {
+                    return 'a' + val - 28;
+                } else {
+                    assert val < 64;
+                    return '0' + val - 54;
+                }
+            }
+
+            public int decode(final int codePoint) {
+                if (codePoint == '.') {
+                    return 0;
+                } else if (codePoint == '/') {
+                    return 1;
+                } else if ('A' <= codePoint && codePoint <= 'Z') {
+                    return codePoint - 'A' + 2;
+                } else if ('a' <= codePoint && codePoint <= 'z') {
+                    return codePoint - 'a' + 28;
+                } else if ('0' <= codePoint && codePoint <= '9') {
+                    return codePoint - '0' + 54;
+                } else {
+                    return -1;
+                }
+            }
+        };
+    }
 
     /**
-     * The modular crypt alphabet, used in various modular crypt password types.
+     * A base-32 alphabet.
+     *
+     * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
      */
-    public static final Alphabet MOD_CRYPT = new Alphabet(false) {
-        public int encode(final int val) {
-            if (val == 0) {
-                return '.';
-            } else if (val == 1) {
-                return '/';
-            } else if (val <= 11) {
-                return '0' + val - 2;
-            } else if (val <= 37) {
-                return 'A' + val - 12;
-            } else {
-                assert val < 64;
-                return 'a' + val - 38;
-            }
+    public abstract static class Base32Alphabet extends Alphabet {
+
+        Base32Alphabet(final boolean littleEndian) {
+            super(littleEndian);
         }
 
-        public int decode(final int codePoint) throws IllegalArgumentException {
-            if (codePoint == '.') {
-                return 0;
-            } else if (codePoint == '/') {
-                return 1;
-            } else if ('0' <= codePoint && codePoint <= '9') {
-                return codePoint - '0' + 2;
-            } else if ('A' <= codePoint && codePoint <= 'Z') {
-                return codePoint - 'A' + 12;
-            } else if ('a' <= codePoint && codePoint <= 'z') {
-                return codePoint - 'a' + 38;
-            } else {
-                return -1;
-            }
-        }
-    };
+        /**
+         * Encode the given 5-bit value to a code point.
+         *
+         * @param val the 5-bit value
+         * @return the code point
+         */
+        public abstract int encode(int val);
 
-    /**
-     * The modular crypt alphabet, used in various modular crypt password types.
-     */
-    public static final Alphabet MOD_CRYPT_LE = new Alphabet(true) {
-        public int encode(final int val) {
-            if (val == 0) {
-                return '.';
-            } else if (val == 1) {
-                return '/';
-            } else if (val <= 11) {
-                return '0' + val - 2;
-            } else if (val <= 37) {
-                return 'A' + val - 12;
-            } else {
-                assert val < 64;
-                return 'a' + val - 38;
-            }
-        }
+        /**
+         * Decode the given code point.  If the code point is not valid, -1 is returned.
+         *
+         * @param codePoint the code point
+         * @return the decoded 5-bit value or -1
+         */
+        public abstract int decode(int codePoint);
 
-        public int decode(final int codePoint) throws IllegalArgumentException {
-            if (codePoint == '.') {
-                return 0;
-            } else if (codePoint == '/') {
-                return 1;
-            } else if ('0' <= codePoint && codePoint <= '9') {
-                return codePoint - '0' + 2;
-            } else if ('A' <= codePoint && codePoint <= 'Z') {
-                return codePoint - 'A' + 12;
-            } else if ('a' <= codePoint && codePoint <= 'z') {
-                return codePoint - 'a' + 38;
-            } else {
-                return -1;
+        /**
+         * The standard <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a> base-32 alphabet.
+         */
+        public static final Base32Alphabet STANDARD = new Base32Alphabet(false) {
+            public int encode(final int val) {
+                if (val <= 25) {
+                    return 'A' + val;
+                } else {
+                    assert val < 32;
+                    return '2' + val - 26;
+                }
             }
-        }
-    };
 
-    /**
-     * The BCrypt alphabet.
-     */
-    public static final Alphabet BCRYPT = new Alphabet(false) {
-        public int encode(final int val) {
-            if (val == 0) {
-                return '.';
-            } else if (val == 1) {
-                return '/';
-            } else if (val <= 27) {
-                return 'A' + val - 2;
-            } else if (val <= 53) {
-                return 'a' + val - 28;
-            } else {
-                assert val < 64;
-                return '0' + val - 54;
+            public int decode(final int codePoint) {
+                if ('A' <= codePoint && codePoint <= 'Z') {
+                    return codePoint - 'A';
+                } else if ('2' <= codePoint && codePoint <= '7') {
+                    return codePoint - '2' + 26;
+                } else {
+                    return -1;
+                }
             }
-        }
-
-        public int decode(final int codePoint) {
-            if (codePoint == '.') {
-                return 0;
-            } else if (codePoint == '/') {
-                return 1;
-            } else if ('A' <= codePoint && codePoint <= 'Z') {
-                return codePoint - 'A' + 2;
-            } else if ('a' <= codePoint && codePoint <= 'z') {
-                return codePoint - 'a' + 28;
-            } else if ('0' <= codePoint && codePoint <= '9') {
-                return codePoint - '0' + 54;
-            } else {
-                return -1;
-            }
-        }
-    };
+        };
+    }
 }

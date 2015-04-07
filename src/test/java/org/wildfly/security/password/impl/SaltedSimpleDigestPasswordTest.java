@@ -45,7 +45,7 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
-import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -136,7 +136,7 @@ public class SaltedSimpleDigestPasswordTest {
      * @param base64Digest the Base64 representation of the expected digest for this algorithm.
      */
     private void performTest(final String algorithmName, final char[] base64Digest) throws Exception {
-        byte[] preDigested = CodePointIterator.ofChars(base64Digest, 0).base64Decode(Alphabet.STANDARD, false).drain();
+        byte[] preDigested = CodePointIterator.ofChars(base64Digest, 0).base64Decode(Base64Alphabet.STANDARD, false).drain();
 
         PasswordFactory pf = PasswordFactory.getInstance(algorithmName);
         // Encryptable Spec -> Password

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security.util.Alphabet.*;
+
 import java.util.NoSuchElementException;
 
 /**
@@ -359,7 +361,7 @@ abstract class NumericIterator {
         }
     }
 
-    public ByteIterator base64Decode(final Alphabet alphabet, boolean requirePadding) {
+    public ByteIterator base64Decode(final Base64Alphabet alphabet, boolean requirePadding) {
         if (! hasNext()) return ByteIterator.EMPTY;
         if (alphabet.littleEndian) {
             return this.new Base64ByteIterator(requirePadding) {
