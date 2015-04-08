@@ -143,4 +143,127 @@ public class Base32Test {
             assertEquals(encoded.charAt(i), ci.prev());
         }
     }
+
+    @Test
+    public void testDecodeEmpty() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecode6Padding() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MY======").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("f", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MY").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("f", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecode4Padding() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MZXQ====").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("fo", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MZXQ").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("fo", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecode3Padding() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MZXW6===").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("foo", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MZXW6").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("foo", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecode1Padding() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MZXW6YQ=").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("foob", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MZXW6YQ").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("foob", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecodeNoPadding() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MZXW6YTB").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("fooba", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MZXW6YTB").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("fooba", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test
+    public void testDecodeMoreThan5Characters() throws Exception {
+        // With the padding characters included
+        ByteIterator bi = CodePointIterator.ofString("MZXW6YTBOJTG633CMFZGM33PMJQXE===").base32Decode();
+        String decoded = bi.asUtf8String().drainToString();
+        assertEquals("foobarfoobarfoobar", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+
+        // Without the padding characters
+        bi = CodePointIterator.ofString("MZXW6YTBOJTG633CMFZGM33PMJQXE").base32Decode(Base32Alphabet.STANDARD, false);
+        decoded = bi.asUtf8String().drainToString();
+        assertEquals("foobarfoobarfoobar", decoded);
+        verifyBackwardIterationOfDecodedBytes(bi, decoded);
+    }
+
+    @Test(expected=DecodeException.class)
+    public void testDecodeInvalidCharacter() throws Exception {
+        CodePointIterator.ofString("MZXW6YTBOá").base32Decode().drain();
+    }
+
+    @Test(expected=DecodeException.class)
+    public void testDecodeInvalidPadding() throws Exception {
+        CodePointIterator.ofString("M====").base32Decode().drain();
+    }
+
+    private void verifyBackwardIterationOfDecodedBytes(ByteIterator bi, String decoded) {
+        int decodedSize = decoded.length();
+        for (int i = decodedSize - 1; i >= 0; i--) {
+            assertTrue(bi.hasPrev());
+            assertEquals(decoded.charAt(i), bi.prev());
+        }
+    }
 }

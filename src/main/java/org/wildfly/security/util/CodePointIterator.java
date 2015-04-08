@@ -279,6 +279,36 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Base32-decode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @param requirePadding {@code true} to require padding, {@code false} if padding is optional
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet, boolean requirePadding) {
+        return super.base32Decode(alphabet, requirePadding);
+    }
+
+    /**
+     * Base32-decode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet) {
+        return super.base32Decode(alphabet, true);
+    }
+
+    /**
+     * Base32-decode the current stream.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode() {
+        return super.base32Decode(Base32Alphabet.STANDARD, true);
+    }
+
+    /**
      * Get a byte iterator over the latin-1 encoding of this code point iterator.
      *
      * @return the byte iterator
