@@ -18,6 +18,8 @@
 package org.wildfly.security.sasl.test;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -29,6 +31,10 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
 
 /**
@@ -41,22 +47,27 @@ public class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;
     private final char[] expectedPassword;
-    private final String hexURPHash;
+    private final byte[] urpHash;
+    private final String realm;
+    private final String algorithm;
 
     public ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
-        hexURPHash = null;
+        urpHash = null;
+        realm = null;
+        algorithm = null;
     }
 
-    public ServerCallbackHandler(final String expectedUsername, final String hexURPHash) {
+    public ServerCallbackHandler(final String expectedUsername, final String realm, final String algorithm, final byte[] urpHash) {
         this.expectedUsername = expectedUsername;
-        this.hexURPHash = hexURPHash;
+        this.realm = realm;
+        this.algorithm = algorithm;
+        this.urpHash = urpHash;
         expectedPassword = null;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-
         for (Callback current : callbacks) {
             if (current instanceof NameCallback) {
                 String username = ((NameCallback) current).getDefaultName();
@@ -75,6 +86,15 @@ public class ServerCallbackHandler implements CallbackHandler {
                 AuthorizeCallback acb = (AuthorizeCallback) current;
                 acb.setAuthorized(acb.getAuthenticationID().equals(acb.getAuthorizationID()));
             } else if (current instanceof RealmCallback) {
+            } else if (current instanceof CredentialCallback && algorithm != null && urpHash != null) {
+                CredentialCallback ccb = (CredentialCallback) current;
+                try {
+                    PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                    Password password = passwordFactory.generatePassword(new DigestPasswordSpec(algorithm, expectedUsername, realm, urpHash));
+                    ccb.setCredential(password);
+                } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                    throw new IOException("Password object generation failed", e);
+                }
             } else {
                 throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");
             }

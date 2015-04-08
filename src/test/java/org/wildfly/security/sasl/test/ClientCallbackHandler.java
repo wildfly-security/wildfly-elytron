@@ -18,6 +18,8 @@
 package org.wildfly.security.sasl.test;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -26,6 +28,11 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
+
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.DigestPasswordSpec;
 
 /**
  * A simple CallbackHandler for testing the client side of the calls.
@@ -36,8 +43,9 @@ public class ClientCallbackHandler implements CallbackHandler {
 
     private final String username;
     private final char[] password;
-    private final String hexURPHash;
+    private final byte[] urpHash;
     private final String realm;
+    private final String algorithm;
 
     public ClientCallbackHandler(final String username, final char[] password) {
         this(username, password, null);
@@ -46,19 +54,17 @@ public class ClientCallbackHandler implements CallbackHandler {
     public ClientCallbackHandler(final String username, final char[] password, final String realm) {
         this.username = username;
         this.password = password;
-        this.hexURPHash = null;
+        this.urpHash = null;
         this.realm = realm;
+        this.algorithm = null;
     }
 
-    public ClientCallbackHandler(final String username, final String hexURPHash) {
-        this(username, hexURPHash, null);
-    }
-
-    public ClientCallbackHandler(final String username, final String hexURPHash, final String realm) {
+    public ClientCallbackHandler(final String username, final String realm, final String algorithm, final byte[] urpHash) {
         this.username = username;
-        this.password = null;
-        this.hexURPHash = hexURPHash;
         this.realm = realm;
+        this.password = null;
+        this.algorithm = algorithm;
+        this.urpHash = urpHash;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -79,7 +85,7 @@ public class ClientCallbackHandler implements CallbackHandler {
                 } else {
                     rcb.setText(realm);
                 }
-            } else if (current instanceof RealmChoiceCallback || realm != null) {
+            } else if (current instanceof RealmChoiceCallback && realm != null) {
                 RealmChoiceCallback rcb = (RealmChoiceCallback) current;
                 boolean selected = false;
                 String[] choices = rcb.getChoices();
@@ -91,6 +97,15 @@ public class ClientCallbackHandler implements CallbackHandler {
                 }
                 if(!selected){
                     throw new UnsupportedCallbackException(current, "Realm which should be selected is not in choices.");
+                }
+            } else if (current instanceof CredentialCallback && algorithm != null && urpHash != null) {
+                CredentialCallback ccb = (CredentialCallback) current;
+                try {
+                    PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                    Password password = passwordFactory.generatePassword(new DigestPasswordSpec(algorithm, username, realm, urpHash));
+                    ccb.setCredential(password);
+                } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                    throw new IOException("Password object generation failed", e);
                 }
             } else {
                 throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");

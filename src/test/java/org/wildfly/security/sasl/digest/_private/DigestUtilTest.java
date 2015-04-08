@@ -49,15 +49,15 @@ public class DigestUtilTest {
     public void testH_A1() throws Exception {
 
         assertEquals("a2549853149b0536f01f0b850c643c57", HexConverter.convertToHexString(
-                H_A1(md, "chris", "elwood.innosoft.com", "secret".toCharArray(),
+                H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
                 "OA6MG9tEQGm2hh".getBytes(), "OA6MHXh6VqTrRk".getBytes(), null, StandardCharsets.UTF_8)));
 
         assertEquals("7f94ea5b1eb1b0573cca321e2b517b63", HexConverter.convertToHexString(
-                H_A1(md, "chris", "elwood.innosoft.com", "secret".toCharArray(),
+                H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
                 "OA9BSXrbuRhWay".getBytes(), "OA9BSuZWMSpW8m".getBytes(), "chris", StandardCharsets.UTF_8)));
 
         assertEquals("4e863a809aa7f7cc191be93705967394", HexConverter.convertToHexString(
-                H_A1(md, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", "\u0438\u4F60\uD83C\uDCA1".toCharArray(),
+                H_A1(md, userRealmPasswordDigest(md, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", "\u0438\u4F60\uD83C\uDCA1".toCharArray()),
                 "sn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), "cn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), null, StandardCharsets.UTF_8)));
 
     }
