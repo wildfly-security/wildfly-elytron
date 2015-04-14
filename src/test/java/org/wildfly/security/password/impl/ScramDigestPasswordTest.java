@@ -39,8 +39,8 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
-import org.wildfly.security.sasl.util.HexConverter;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
+import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -73,14 +73,14 @@ public class ScramDigestPasswordTest {
         ScramDigestPasswordImpl impl;
 
         digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_1, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 4096);
-        assertEquals("4b007901b765489abead49d926f721d065a429c1", HexConverter.convertToHexString(digest));
+        assertEquals("4b007901b765489abead49d926f721d065a429c1", ByteIterator.ofBytes(digest).hexEncode().drainToString());
         spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_1, digest, "salt".getBytes(StandardCharsets.UTF_8), 4096);
         impl = new ScramDigestPasswordImpl(spec);
         assertTrue(impl.verify("password".toCharArray()));
         assertFalse(impl.verify("bad".toCharArray()));
 
         digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_256, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 1000);
-        assertEquals("632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3", HexConverter.convertToHexString(digest));
+        assertEquals("632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3", ByteIterator.ofBytes(digest).hexEncode().drainToString());
         spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_256, digest, "salt".getBytes(StandardCharsets.UTF_8), 1000);
         impl = new ScramDigestPasswordImpl(spec);
         assertTrue(impl.verify("password".toCharArray()));
@@ -149,7 +149,7 @@ public class ScramDigestPasswordTest {
     }
 
     private void performTest(final String algorithm, String password, String hexDigest, String salt, final int iterationCount) throws Exception {
-        performTest(algorithm, password.toCharArray(), HexConverter.convertFromHex(hexDigest), salt.getBytes(StandardCharsets.UTF_8), iterationCount);
+        performTest(algorithm, password.toCharArray(), CodePointIterator.ofString(hexDigest).hexDecode().drain(), salt.getBytes(StandardCharsets.UTF_8), iterationCount);
     }
 
     private void performTest(final String algorithm, char[] password, final char[] base64Digest, final char[] base64Salt, final int iterationCount) throws Exception {

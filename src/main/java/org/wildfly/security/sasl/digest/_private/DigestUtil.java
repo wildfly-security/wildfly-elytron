@@ -19,7 +19,7 @@ package org.wildfly.security.sasl.digest._private;
 
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest.Digest;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
 import java.nio.charset.Charset;
@@ -167,7 +167,7 @@ public final class DigestUtil {
         byte[] digest_A2 = messageDigest.digest(A2.toArray());
 
         ByteStringBuilder KD = new ByteStringBuilder();
-        KD.append(HexConverter.convertToHexBytes(H_A1));
+        KD.append(ByteIterator.ofBytes(H_A1).hexEncode().drainToString().getBytes(StandardCharsets.US_ASCII));
         KD.append(':');
         KD.append(nonce);
         KD.append(':');
@@ -177,10 +177,10 @@ public final class DigestUtil {
         KD.append(':');
         KD.append(qop_value);
         KD.append(':');
-        KD.append(HexConverter.convertToHexBytes(digest_A2));
+        KD.append(ByteIterator.ofBytes(digest_A2).hexEncode().drainToString().getBytes(StandardCharsets.US_ASCII));
 
         KD.updateDigest(messageDigest);
-        return HexConverter.convertToHexBytes(messageDigest.digest());
+        return ByteIterator.ofBytes(messageDigest.digest()).hexEncode().drainToString().getBytes(StandardCharsets.US_ASCII);
     }
 
     /**

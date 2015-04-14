@@ -23,7 +23,8 @@ import static org.junit.Assert.*;
 import javax.crypto.Mac;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of SCRAM mechanism utils.
@@ -36,11 +37,11 @@ public class ScramUtilTest {
     public void testCalculateHi() throws Exception {
         Mac mac = Mac.getInstance("HmacSHA1");
         char[] password = "pencil".toCharArray();
-        byte[] salt = HexConverter.convertFromHex("4125C247E43AB1E93C6DFF76");
+        byte[] salt = CodePointIterator.ofString("4125C247E43AB1E93C6DFF76").hexDecode().drain();
 
         byte[] saltedPassword = ScramUtil.calculateHi(mac, password, salt, 0, salt.length, 4096);
 
-        assertEquals("1d96ee3a529b5a5f9e47c01f229a2cb8a6e15f7d", HexConverter.convertToHexString(saltedPassword));
+        assertEquals("1d96ee3a529b5a5f9e47c01f229a2cb8a6e15f7d", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
     }
 
 }

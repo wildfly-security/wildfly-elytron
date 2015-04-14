@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.wildfly.security.util.ByteIterator;
+
 /**
  * A utility class for generating both the {user-name : realm-value : passwd } hash
  * and the hex encoded version of the hash.
@@ -149,7 +151,7 @@ public class UsernamePasswordHashUtil {
                                        final boolean utf8StringConversion) {
         byte[] hashedURP = generateHashedURP(userName, realm, password, utf8StringConversion);
 
-        return HexConverter.convertToHexString(hashedURP);
+        return ByteIterator.ofBytes(hashedURP).hexEncode().drainToString();
     }
 
     public String generateHashedHexURP(final String userName, final String realm, final char[] password) {

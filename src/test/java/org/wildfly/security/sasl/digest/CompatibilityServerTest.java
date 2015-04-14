@@ -40,7 +40,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of server side of the Digest mechanism.
@@ -197,30 +198,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("1122334499191be7952a49d8549b000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("1122334499191be7952a49d8549b000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("55667788cf5e02ad15987d9076b8000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("55667788cf5e02ad15987d9076b8000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("aabbcc7e845ed48b0474447543000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("aabbcc7e845ed48b0474447543000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // MAC not corresponds to message and sequence number
-        byte[] incoming3 = HexConverter.convertFromHex("0188034ce1b414194c1c822a55000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("0188034ce1b414194c1c822a55000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("0102032cf12c67e4318ebd624e000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("0102032cf12c67e4318ebd624e000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
@@ -252,30 +253,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("13f7644f8c783501177522c1a455cb1f000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("13f7644f8c783501177522c1a455cb1f000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("93ce33409e0fe5187e07c16fc3041f64000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("93ce33409e0fe5187e07c16fc3041f64000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("ec426d9cd3276f22285ab5da8df8f26b000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("ec426d9cd3276f22285ab5da8df8f26b000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // MAC not corresponds to message and sequence number
-        byte[] incoming3 = HexConverter.convertFromHex("b0acad3c969d091251666f91070166f5000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("b0acad3c969d091251666f91070166f5000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("2cfa9bced5b960763953c4f9838b7022000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("2cfa9bced5b960763953c4f9838b7022000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
@@ -307,30 +308,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("6a9328ca634e47c8d1ecc3c3f6e6000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("6a9328ca634e47c8d1ecc3c3f6e6000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("9fc7eb1c3c9e04b52df6e347a389000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("9fc7eb1c3c9e04b52df6e347a389000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("7e15b940fccbb58a5612f54da7000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("7e15b940fccbb58a5612f54da7000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // bad message
-        byte[] incoming3 = HexConverter.convertFromHex("84468595614f4ac73fabe47cc4000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("84468595614f4ac73fabe47cc4000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("4a206df4178a9b7d091dec3527000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("4a206df4178a9b7d091dec3527000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
@@ -362,30 +363,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("b2a12ba8ccd1030e7da4bac57a224197000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("b2a12ba8ccd1030e7da4bac57a224197000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("8bc1267e71a769456f0c60f030e13f32000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("8bc1267e71a769456f0c60f030e13f32000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("13144fc90ca65d3838d3547cca43e8ad000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("13144fc90ca65d3838d3547cca43e8ad000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // bad message
-        byte[] incoming3 = HexConverter.convertFromHex("7022412985dbee1d261ecb8850486c6e000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("7022412985dbee1d261ecb8850486c6e000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("3457275b036fa15042e41aeda83a563b000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("3457275b036fa15042e41aeda83a563b000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
@@ -416,30 +417,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("7a77c4b8b20208e502e5dc09bbfc000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("7a77c4b8b20208e502e5dc09bbfc000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("c10acbf737cdebf2298df53417bc000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("c10acbf737cdebf2298df53417bc000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("efcb8662925427788b0ffeab2c000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("efcb8662925427788b0ffeab2c000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // bad message
-        byte[] incoming3 = HexConverter.convertFromHex("03c8fa9cb28ecf4a99561e5ac3000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("03c8fa9cb28ecf4a99561e5ac3000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("4daa261a6afb77f0b1d1d3d4eb000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("4daa261a6afb77f0b1d1d3d4eb000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
@@ -471,30 +472,30 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
 
-        byte[] incoming1 = HexConverter.convertFromHex("ed46c6b0d38acb719aad661f9625000100000000");
+        byte[] incoming1 = CodePointIterator.ofString("ed46c6b0d38acb719aad661f9625000100000000").hexDecode().drain();
         byte[] incoming1unwrapped = server.unwrap(incoming1, 0, incoming1.length);
-        assertEquals("11223344", HexConverter.convertToHexString(incoming1unwrapped));
+        assertEquals("11223344", ByteIterator.ofBytes(incoming1unwrapped).hexEncode().drainToString());
 
-        byte[] outcoming1 = HexConverter.convertFromHex("55667788");
+        byte[] outcoming1 = CodePointIterator.ofString("55667788").hexDecode().drain();
         byte[] outcoming1wrapped = server.wrap(outcoming1, 0, outcoming1.length);
-        assertEquals("44aca6145a89353d26258e524724000100000000", HexConverter.convertToHexString(outcoming1wrapped));
+        assertEquals("44aca6145a89353d26258e524724000100000000", ByteIterator.ofBytes(outcoming1wrapped).hexEncode().drainToString());
 
-        byte[] incoming2 = HexConverter.convertFromHex("b7bdc8f08733182154289e7f3d000100000001");
+        byte[] incoming2 = CodePointIterator.ofString("b7bdc8f08733182154289e7f3d000100000001").hexDecode().drain();
         byte[] incoming2unwrapped = server.unwrap(incoming2, 0, incoming2.length);
-        assertEquals("aabbcc", HexConverter.convertToHexString(incoming2unwrapped));
+        assertEquals("aabbcc", ByteIterator.ofBytes(incoming2unwrapped).hexEncode().drainToString());
 
         byte[] outcoming2 = new byte[0];
         byte[] outcoming2wrapped = server.wrap(outcoming2, 0, outcoming2.length);
-        assertEquals("", HexConverter.convertToHexString(outcoming2wrapped));
+        assertEquals("", ByteIterator.ofBytes(outcoming2wrapped).hexEncode().drainToString());
 
         // bad message
-        byte[] incoming3 = HexConverter.convertFromHex("34968ede3148eb0d3affe15656000100000002");
+        byte[] incoming3 = CodePointIterator.ofString("34968ede3148eb0d3affe15656000100000002").hexDecode().drain();
         byte[] incoming3unwrapped = server.unwrap(incoming3, 0, incoming3.length);
-        assertEquals("", HexConverter.convertToHexString(incoming3unwrapped));
+        assertEquals("", ByteIterator.ofBytes(incoming3unwrapped).hexEncode().drainToString());
 
         // bad sequence number
         try {
-            byte[] incoming4 = HexConverter.convertFromHex("8e497ee789076071cf3b5bb9e1000100000003");
+            byte[] incoming4 = CodePointIterator.ofString("8e497ee789076071cf3b5bb9e1000100000003").hexDecode().drain();
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}

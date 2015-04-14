@@ -40,7 +40,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of SimpleDigestPasswordImpl
@@ -138,7 +138,7 @@ public class SimpleDigestPasswordTest {
      * @param hexDigest hexadecimal representation of expected password digest
      */
     private void performTest(final String algorithmName, char[] password, String hexDigest) throws Exception {
-        byte[] preDigested = HexConverter.convertFromHex(hexDigest);
+        byte[] preDigested = CodePointIterator.ofString(hexDigest).hexDecode().drain();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithmName);
         EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(password, null);
