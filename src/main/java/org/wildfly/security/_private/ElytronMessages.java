@@ -210,4 +210,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 54, value = "Invalid base 32 character")
     DecodeException invalidBase32Character();
 
+    @Message(id = 55, value = "Expected an even number of hex characters")
+    DecodeException expectedEvenNumberOfHexCharacters();
+
+    @Message(id = 56, value = "Invalid hex character")
+    DecodeException invalidHexCharacter();
 }

@@ -420,11 +420,22 @@ public abstract class ByteIterator extends NumericIterator {
     }
 
     /**
+     * Hex-decode the current stream, assuming that the byte data is encoded in an ASCII-derived encoding.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator hexDecode() {
+        return super.hexDecode();
+    }
+
+    /**
      * Hex-encode the current stream.
      *
+     * @param toUpperCase {@code true} to use upper case characters when encoding,
+     * {@code false} to use lower case characters
      * @return an iterator over the encoded characters
      */
-    public CodePointIterator hexEncode() {
+    public CodePointIterator hexEncode(boolean toUpperCase) {
         return new CodePointIterator() {
             int b;
             boolean lo;
@@ -438,7 +449,12 @@ public abstract class ByteIterator extends NumericIterator {
             }
 
             private int hex(final int i) {
-                return i < 10 ? '0' + i : 'a' + i - 10;
+                if (i < 10) {
+                    return '0' + i;
+                } else {
+                    assert i < 16;
+                    return (toUpperCase ? 'A' : 'a') + i - 10;
+                }
             }
 
             public int next() throws NoSuchElementException {
@@ -488,6 +504,15 @@ public abstract class ByteIterator extends NumericIterator {
                 return ByteIterator.this.offset() * 2 + (lo ? 1 : 0);
             }
         };
+    }
+
+    /**
+     * Hex-encode the current stream.
+     *
+     * @return an iterator over the encoded characters
+     */
+    public CodePointIterator hexEncode() {
+        return hexEncode(false);
     }
 
     /**

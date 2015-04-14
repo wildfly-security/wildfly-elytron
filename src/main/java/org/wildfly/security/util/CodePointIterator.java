@@ -309,6 +309,15 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Hex-decode the current stream.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator hexDecode() {
+        return super.hexDecode();
+    }
+
+    /**
      * Get a byte iterator over the latin-1 encoding of this code point iterator.
      *
      * @return the byte iterator

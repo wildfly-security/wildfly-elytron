@@ -1060,4 +1060,83 @@ abstract class NumericIterator {
             };
         }
     }
+
+    public ByteIterator hexDecode() {
+        if (! hasNext()) return ByteIterator.EMPTY;
+        return new ByteIterator() {
+            private int b;
+            private int offset;
+            private boolean havePair;
+
+            private int calc(final int b0, final int b1) {
+                int d0 = Character.digit(b0, 16);
+                int d1 = Character.digit(b1, 16);
+                if (d0 == -1 || d1 == -1) throw log.invalidHexCharacter();
+                return ((d0 << 4) | d1) & 0xff;
+            }
+
+            public boolean hasNext() {
+                if (havePair) {
+                    return true;
+                }
+                if (! NumericIterator.this.hasNext()) {
+                    return false;
+                }
+                int b0 = NumericIterator.this.next();
+                if (! NumericIterator.this.hasNext()) {
+                    throw log.expectedEvenNumberOfHexCharacters();
+                }
+                int b1 = NumericIterator.this.next();
+                b = calc(b0, b1);
+                havePair = true;
+                return true;
+            }
+
+            public boolean hasPrev() {
+                return offset > 0;
+            }
+
+            public int next() throws NoSuchElementException {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                offset ++;
+                havePair = false;
+                return b;
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                return b;
+            }
+
+            public int prev() throws NoSuchElementException {
+                if (! hasPrev()) {
+                    throw new NoSuchElementException();
+                }
+                int b1 = NumericIterator.this.prev();
+                int b0 = NumericIterator.this.prev();
+                b = calc(b0, b1);
+                offset --;
+                havePair = true;
+                return b;
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (! hasPrev()) {
+                    throw new NoSuchElementException();
+                }
+                int b1 = NumericIterator.this.prev();
+                int b0 = NumericIterator.this.peekPrev();
+                NumericIterator.this.next();
+                return calc(b0, b1);
+            }
+
+            public int offset() {
+                return offset;
+            }
+        };
+    }
 }
