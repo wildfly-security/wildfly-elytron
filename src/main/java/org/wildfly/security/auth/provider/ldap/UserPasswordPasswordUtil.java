@@ -30,7 +30,7 @@ import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
-import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -141,13 +141,13 @@ class UserPasswordPasswordUtil {
             throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
         }
 
-        final int lo = Alphabet.MOD_CRYPT.decode(userPassword[7] & 0xff);
-        final int hi = Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
+        final int lo = Base64Alphabet.MOD_CRYPT.decode(userPassword[7] & 0xff);
+        final int hi = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
         if (lo == -1 || hi == -1) {
             throw new IllegalArgumentException(String.format("Invalid salt (%s%s)", (char) lo, (char) hi));
         }
         short salt = (short) (lo | hi << 6);
-        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Alphabet.MOD_CRYPT, false).drain();
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
         return new UnixDESCryptPasswordSpec(hash, salt); // Uses a fixed iteration count of 25
     }
@@ -157,25 +157,25 @@ class UserPasswordPasswordUtil {
             throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
         }
 
-        int b0 = Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
-        int b1 = Alphabet.MOD_CRYPT.decode(userPassword[9] & 0xff);
-        int b2 = Alphabet.MOD_CRYPT.decode(userPassword[10] & 0xff);
-        int b3 = Alphabet.MOD_CRYPT.decode(userPassword[11] & 0xff);
+        int b0 = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
+        int b1 = Base64Alphabet.MOD_CRYPT.decode(userPassword[9] & 0xff);
+        int b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[10] & 0xff);
+        int b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[11] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
             throw new IllegalArgumentException(String.format("Invalid rounds (%s%s%s%s)", (char) b0, (char) b1, (char) b2, (char) b3));
         }
         int iterationCount = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
-        b0 = Alphabet.MOD_CRYPT.decode(userPassword[12] & 0xff);
-        b1 = Alphabet.MOD_CRYPT.decode(userPassword[13] & 0xff);
-        b2 = Alphabet.MOD_CRYPT.decode(userPassword[14] & 0xff);
-        b3 = Alphabet.MOD_CRYPT.decode(userPassword[15] & 0xff);
+        b0 = Base64Alphabet.MOD_CRYPT.decode(userPassword[12] & 0xff);
+        b1 = Base64Alphabet.MOD_CRYPT.decode(userPassword[13] & 0xff);
+        b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[14] & 0xff);
+        b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[15] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
             throw new IllegalArgumentException(String.format("Invalid salt (%s%s%s%s)", (char) b0, (char) b1, (char) b2, (char) b3));
         }
         int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
-        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(Alphabet.MOD_CRYPT, false).drain();
+        byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
 

@@ -36,7 +36,7 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
-import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -76,7 +76,7 @@ public class CryptCompatibilityTest {
 
         final short salt = (short) convertSaltRepresentation(saltBytes);
 
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Alphabet.MOD_CRYPT, false).drain();
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
         UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
 
@@ -101,7 +101,7 @@ public class CryptCompatibilityTest {
 
         final short salt = (short) convertSaltRepresentation(saltBytes);
 
-        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Alphabet.MOD_CRYPT, false).drain();
+        byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
         UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
 
@@ -115,7 +115,7 @@ public class CryptCompatibilityTest {
         int salt = 0;
 
         for (int i = 1; i >= 0; i--) {
-            salt = ( salt << 6 ) | ( 0x00ff & Alphabet.MOD_CRYPT.decode(saltBytes[i]));
+            salt = ( salt << 6 ) | ( 0x00ff & Base64Alphabet.MOD_CRYPT.decode(saltBytes[i]));
         }
 
         return salt;

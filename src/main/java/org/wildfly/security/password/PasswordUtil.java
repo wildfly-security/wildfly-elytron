@@ -37,7 +37,7 @@ import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
-import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -204,22 +204,22 @@ public final class PasswordUtil {
                 b.append(0);
             b.append(spec.getIterationCount());
             b.append("$");
-            ByteIterator.ofBytes(spec.getSalt()).base64Encode(Alphabet.BCRYPT, false).drainTo(b);
-            ByteIterator.ofBytes(spec.getHashBytes()).base64Encode(Alphabet.BCRYPT, false).drainTo(b);
+            ByteIterator.ofBytes(spec.getSalt()).base64Encode(Base64Alphabet.BCRYPT, false).drainTo(b);
+            ByteIterator.ofBytes(spec.getHashBytes()).base64Encode(Base64Alphabet.BCRYPT, false).drainTo(b);
         } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
             b.append('_');
             final BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) passwordSpec;
             final int iterationCount = spec.getIterationCount();
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode(iterationCount & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((iterationCount >> 6) & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((iterationCount >> 12) & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((iterationCount >> 18) & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode(iterationCount & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((iterationCount >> 6) & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((iterationCount >> 12) & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((iterationCount >> 18) & 0x3f));
             final int salt = spec.getSalt();
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode(salt & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 6) & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 12) & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 18) & 0x3f));
-            ByteIterator.ofBytes(spec.getHash()).base64Encode(Alphabet.MOD_CRYPT, false).drainTo(b);
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode(salt & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 6) & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 12) & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 18) & 0x3f));
+            ByteIterator.ofBytes(spec.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).drainTo(b);
         } else if (passwordSpec instanceof SimpleDigestPasswordSpec) {
             final SimpleDigestPasswordSpec spec = (SimpleDigestPasswordSpec) passwordSpec;
             final String algorithm = spec.getAlgorithm();
@@ -228,9 +228,9 @@ public final class PasswordUtil {
         } else if (passwordSpec instanceof UnixDESCryptPasswordSpec) {
             final UnixDESCryptPasswordSpec spec = (UnixDESCryptPasswordSpec) passwordSpec;
             final short salt = spec.getSalt();
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode(salt & 0x3f));
-            b.appendCodePoint(Alphabet.MOD_CRYPT.encode((salt >> 6) & 0x3f));
-            ByteIterator.ofBytes(spec.getHash()).base64Encode(Alphabet.MOD_CRYPT, false).drainTo(b);
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode(salt & 0x3f));
+            b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 6) & 0x3f));
+            ByteIterator.ofBytes(spec.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).drainTo(b);
         } else if (passwordSpec instanceof UnixMD5CryptPasswordSpec) {
             b.append("$1$");
             final UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) passwordSpec;
@@ -239,7 +239,7 @@ public final class PasswordUtil {
                 b.append((char) (sb & 0xff));
             }
             b.append('$');
-            ByteIterator.ofBytes(spec.getHash(), MD5_IDX).base64Encode(Alphabet.MOD_CRYPT_LE, false).drainTo(b);
+            ByteIterator.ofBytes(spec.getHash(), MD5_IDX).base64Encode(Base64Alphabet.MOD_CRYPT_LE, false).drainTo(b);
         } else if (passwordSpec instanceof SunUnixMD5CryptPasswordSpec) {
             final SunUnixMD5CryptPasswordSpec spec = (SunUnixMD5CryptPasswordSpec) passwordSpec;
             final int iterationCount = spec.getIterationCount();
@@ -265,7 +265,7 @@ public final class PasswordUtil {
                     throw new InvalidKeySpecException("Unrecognized key spec algorithm");
                 }
             }
-            ByteIterator.ofBytes(spec.getHash(), MD5_IDX).base64Encode(Alphabet.MOD_CRYPT_LE, false).drainTo(b);
+            ByteIterator.ofBytes(spec.getHash(), MD5_IDX).base64Encode(Base64Alphabet.MOD_CRYPT_LE, false).drainTo(b);
         } else if (passwordSpec instanceof UnixSHACryptPasswordSpec) {
             final UnixSHACryptPasswordSpec spec = (UnixSHACryptPasswordSpec) passwordSpec;
             final int[] interleave;
@@ -293,7 +293,7 @@ public final class PasswordUtil {
                 b.append((char) (sb & 0xff));
             }
             b.append('$');
-            ByteIterator.ofBytes(spec.getHash(), interleave).base64Encode(Alphabet.MOD_CRYPT_LE, false).drainTo(b);
+            ByteIterator.ofBytes(spec.getHash(), interleave).base64Encode(Base64Alphabet.MOD_CRYPT_LE, false).drainTo(b);
         } else {
             throw new InvalidKeySpecException("Password spec cannot be rendered as a string");
         }
@@ -516,7 +516,7 @@ public final class PasswordUtil {
                 throw new InvalidKeySpecException("No salt terminator given");
             }
             r.next(); // skip $
-            final byte[] decoded = r.base64Decode(Alphabet.MOD_CRYPT_LE, false).limitedTo(table.length).drain();
+            final byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(table.length).drain();
             if (decoded.length != table.length) {
                 throw new IllegalArgumentException("Invalid hash length");
             }
@@ -538,7 +538,7 @@ public final class PasswordUtil {
                 throw new InvalidKeySpecException("No salt terminator given");
             }
             r.next(); // skip $
-            final byte[] decoded = r.base64Decode(Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
+            final byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
             if (decoded.length != MD5_IDX.length) {
                 throw new IllegalArgumentException("Invalid hash length");
             }
@@ -581,7 +581,7 @@ public final class PasswordUtil {
                 r.next(); // discard $
             }
 
-            byte[] decoded = r.base64Decode(Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
+            byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
             if (decoded.length != MD5_IDX.length) {
                 throw new IllegalArgumentException("Invalid hash length");
             }
@@ -619,10 +619,10 @@ public final class PasswordUtil {
             r.next();
 
             // the next 22 characters correspond to the encoded salt - it is mapped to a 16-byte array after decoding.
-            byte[] decodedSalt = r.limitedTo(22).base64Decode(Alphabet.BCRYPT, false).drain();
+            byte[] decodedSalt = r.limitedTo(22).base64Decode(Base64Alphabet.BCRYPT, false).drain();
 
             // the final 31 characters correspond to the encoded password - it is mapped to a 23-byte array after decoding.
-            byte[] decodedPassword = r.limitedTo(31).base64Decode(Alphabet.BCRYPT, false).drain();
+            byte[] decodedPassword = r.limitedTo(31).base64Decode(Base64Alphabet.BCRYPT, false).drain();
 
             return new BCryptPasswordSpec(decodedPassword, decodedSalt, cost);
         } catch (NoSuchElementException ignored) {
@@ -634,11 +634,11 @@ public final class PasswordUtil {
         assert cryptString.length == 13; // previously tested by doIdentifyAlgorithm
         CodePointIterator r = CodePointIterator.ofChars(cryptString);
         // 12 bit salt
-        int s0 = Alphabet.MOD_CRYPT.decode(r.next());
-        int s1 = Alphabet.MOD_CRYPT.decode(r.next());
+        int s0 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        int s1 = Base64Alphabet.MOD_CRYPT.decode(r.next());
         short salt = (short) (s0 | s1 << 6);
         // 64 bit hash
-        byte[] hash = r.base64Decode(Alphabet.MOD_CRYPT, false).limitedTo(8).drain();
+        byte[] hash = r.base64Decode(Base64Alphabet.MOD_CRYPT, false).limitedTo(8).drain();
         return new UnixDESCryptPasswordSpec(hash, salt);
     }
 
@@ -652,21 +652,21 @@ public final class PasswordUtil {
         CodePointIterator r = CodePointIterator.ofChars(cryptString, 1);
 
         // The next 4 characters correspond to the encoded number of rounds - this is decoded to a 24-bit integer
-        int s0 = Alphabet.MOD_CRYPT.decode(r.next());
-        int s1 = Alphabet.MOD_CRYPT.decode(r.next());
-        int s2 = Alphabet.MOD_CRYPT.decode(r.next());
-        int s3 = Alphabet.MOD_CRYPT.decode(r.next());
+        int s0 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        int s1 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        int s2 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        int s3 = Base64Alphabet.MOD_CRYPT.decode(r.next());
         int iterationCount = s0 | s1 << 6 | s2 << 12 | s3 << 18;
 
         // The next 4 characters correspond to the encoded salt - this is decoded to a 24-bit integer
-        s0 = Alphabet.MOD_CRYPT.decode(r.next());
-        s1 = Alphabet.MOD_CRYPT.decode(r.next());
-        s2 = Alphabet.MOD_CRYPT.decode(r.next());
-        s3 = Alphabet.MOD_CRYPT.decode(r.next());
+        s0 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        s1 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        s2 = Base64Alphabet.MOD_CRYPT.decode(r.next());
+        s3 = Base64Alphabet.MOD_CRYPT.decode(r.next());
         int salt = s0 | s1 << 6 | s2 << 12 | s3 << 18;
 
         // The final 11 characters correspond to the encoded password - this is decoded to a 64-bit hash
-        byte[] hash = r.base64Decode(Alphabet.MOD_CRYPT, false).limitedTo(11).drain();
+        byte[] hash = r.base64Decode(Base64Alphabet.MOD_CRYPT, false).limitedTo(11).drain();
         return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
     }
 

@@ -38,6 +38,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 import org.wildfly.client.config.ConfigXMLParseException;
+import org.wildfly.security.util.DecodeException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -193,5 +194,20 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 49, value = "No realm name found in properties file")
     IOException noRealmFoundInProperties();
+
+    @Message(id = 50, value = "Unexpected padding")
+    DecodeException unexpectedPadding();
+
+    @Message(id = 51, value = "Expected padding")
+    DecodeException expectedPadding();
+
+    @Message(id = 52, value = "Incomplete decode")
+    DecodeException incompleteDecode();
+
+    @Message(id = 53, value = "Expected %d padding characters")
+    DecodeException expectedPaddingCharacters(int numExpected);
+
+    @Message(id = 54, value = "Invalid base 32 character")
+    DecodeException invalidBase32Character();
 
 }

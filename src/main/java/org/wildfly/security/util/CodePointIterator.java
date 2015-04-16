@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security.util.Alphabet.*;
+
 import java.util.NoSuchElementException;
 
 /**
@@ -253,7 +255,7 @@ public abstract class CodePointIterator extends NumericIterator {
      * @param requirePadding {@code true} to require padding, {@code false} if padding is optional
      * @return an iterator over the decoded bytes
      */
-    public ByteIterator base64Decode(final Alphabet alphabet, boolean requirePadding) {
+    public ByteIterator base64Decode(final Base64Alphabet alphabet, boolean requirePadding) {
         return super.base64Decode(alphabet, requirePadding);
     }
 
@@ -263,7 +265,7 @@ public abstract class CodePointIterator extends NumericIterator {
      * @param alphabet the alphabet to use
      * @return an iterator over the decoded bytes
      */
-    public ByteIterator base64Decode(final Alphabet alphabet) {
+    public ByteIterator base64Decode(final Base64Alphabet alphabet) {
         return super.base64Decode(alphabet, true);
     }
 
@@ -273,7 +275,37 @@ public abstract class CodePointIterator extends NumericIterator {
      * @return an iterator over the decoded bytes
      */
     public ByteIterator base64Decode() {
-        return super.base64Decode(Alphabet.STANDARD, true);
+        return super.base64Decode(Base64Alphabet.STANDARD, true);
+    }
+
+    /**
+     * Base32-decode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @param requirePadding {@code true} to require padding, {@code false} if padding is optional
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet, boolean requirePadding) {
+        return super.base32Decode(alphabet, requirePadding);
+    }
+
+    /**
+     * Base32-decode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet) {
+        return super.base32Decode(alphabet, true);
+    }
+
+    /**
+     * Base32-decode the current stream.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode() {
+        return super.base32Decode(Base32Alphabet.STANDARD, true);
     }
 
     /**
@@ -795,7 +827,7 @@ public abstract class CodePointIterator extends NumericIterator {
             return 0;
         }
 
-        public ByteIterator base64Decode(final Alphabet alphabet, final boolean requirePadding) {
+        public ByteIterator base64Decode(final Base64Alphabet alphabet, final boolean requirePadding) {
             return ByteIterator.EMPTY;
         }
 

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security.util.Alphabet.*;
+
 import java.io.ByteArrayOutputStream;
 import java.security.MessageDigest;
 import java.security.Signature;
@@ -176,7 +178,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @param requirePadding {@code true} to require padding, {@code false} if padding is optional
      * @return an iterator over the decoded bytes
      */
-    public ByteIterator base64Decode(final Alphabet alphabet, boolean requirePadding) {
+    public ByteIterator base64Decode(final Base64Alphabet alphabet, boolean requirePadding) {
         return super.base64Decode(alphabet, requirePadding);
     }
 
@@ -186,7 +188,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @param alphabet the alphabet to use
      * @return an iterator over the decoded bytes
      */
-    public ByteIterator base64Decode(final Alphabet alphabet) {
+    public ByteIterator base64Decode(final Base64Alphabet alphabet) {
         return super.base64Decode(alphabet, true);
     }
 
@@ -196,7 +198,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @return an iterator over the decoded bytes
      */
     public ByteIterator base64Decode() {
-        return super.base64Decode(Alphabet.STANDARD, true);
+        return super.base64Decode(Base64Alphabet.STANDARD, true);
     }
 
     /**
@@ -206,7 +208,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @param addPadding {@code true} to add trailing padding, {@code false} to leave it off
      * @return an iterator over the encoded characters
      */
-    public CodePointIterator base64Encode(final Alphabet alphabet, final boolean addPadding) {
+    public CodePointIterator base64Encode(final Base64Alphabet alphabet, final boolean addPadding) {
         if (alphabet.littleEndian) {
             return new Base64EncodingCodePointIterator(addPadding) {
                 int calc0(final int b0) {
@@ -260,7 +262,7 @@ public abstract class ByteIterator extends NumericIterator {
      * @param alphabet the alphabet to use
      * @return an iterator over the encoded characters
      */
-    public CodePointIterator base64Encode(final Alphabet alphabet) {
+    public CodePointIterator base64Encode(final Base64Alphabet alphabet) {
         return base64Encode(alphabet, true);
     }
 
@@ -270,7 +272,151 @@ public abstract class ByteIterator extends NumericIterator {
      * @return an iterator over the encoded characters
      */
     public CodePointIterator base64Encode() {
-        return base64Encode(Alphabet.STANDARD, true);
+        return base64Encode(Base64Alphabet.STANDARD, true);
+    }
+
+    /**
+     * Base32-decode the current stream, assuming that the byte data is encoded in an ASCII-derived encoding.
+     *
+     * @param alphabet the alphabet to use
+     * @param requirePadding {@code true} to require padding, {@code false} if padding is optional
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet, boolean requirePadding) {
+        return super.base32Decode(alphabet, requirePadding);
+    }
+
+    /**
+     * Base32-decode the current stream, assuming that the byte data is encoded in an ASCII-derived encoding.
+     *
+     * @param alphabet the alphabet to use
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode(final Base32Alphabet alphabet) {
+        return super.base32Decode(alphabet, true);
+    }
+
+    /**
+     * Base32-decode the current stream, assuming that the byte data is encoded in an ASCII-derived encoding.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator base32Decode() {
+        return super.base32Decode(Base32Alphabet.STANDARD, true);
+    }
+
+    /**
+     * Base32-encode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @param addPadding {@code true} to add trailing padding, {@code false} to leave it off
+     * @return an iterator over the encoded characters
+     */
+    public CodePointIterator base32Encode(final Base32Alphabet alphabet, final boolean addPadding) {
+        if (alphabet.littleEndian) {
+            return new Base32EncodingCodePointIterator(addPadding) {
+                int calc0(final int b0) {
+                    // d0 = r0[4..0]
+                    return alphabet.encode(b0 & 0x1f);
+                }
+
+                int calc1(final int b0, final int b1) {
+                    // d1 = r1[1..0] + r0[7..5]
+                    return alphabet.encode((b1 << 3 | b0 >> 5) & 0x1f);
+                }
+
+                int calc2(final int b1) {
+                    // d2 = r1[6..2]
+                    return alphabet.encode((b1 >> 2) & 0x1f);
+                }
+
+                int calc3(final int b1, final int b2) {
+                    // d3 = r2[3..0] + r1[7]
+                    return alphabet.encode((b2 << 1 | b1 >> 7) & 0x1f);
+                }
+
+                int calc4(final int b2, final int b3) {
+                    // d4 = r3[0] + r2[7..4]
+                    return alphabet.encode((b3 << 4 | b2 >> 4) & 0x1f);
+                }
+
+                int calc5(final int b3) {
+                    // d5 = r3[5..1]
+                    return alphabet.encode((b3 >> 1) & 0x1f);
+                }
+
+                int calc6(final int b3, final int b4) {
+                    // d6 = r4[2..0] + r3[7..6]
+                    return alphabet.encode((b4 << 2 | b3 >> 6) & 0x1f);
+                }
+
+                int calc7(final int b4) {
+                    // d7 = r4[7..3]
+                    return alphabet.encode((b4 >> 3) & 0x1f);
+                }
+            };
+        } else {
+            return new Base32EncodingCodePointIterator(addPadding) {
+                int calc0(final int b0) {
+                    // d0 = r0[7..3]
+                    return alphabet.encode((b0 >> 3) & 0x1f);
+                }
+
+                int calc1(final int b0, final int b1) {
+                    // d1 = r0[2..0] + r1[7..6]
+                    return alphabet.encode((b0 << 2 | b1 >> 6) & 0x1f);
+                }
+
+                int calc2(final int b1) {
+                    // d2 = r1[5..1]
+                    return alphabet.encode((b1 >> 1) & 0x1f);
+                }
+
+                int calc3(final int b1, final int b2) {
+                    // d3 = r1[0] + r2[7..4]
+                    return alphabet.encode((b1 << 4 | b2 >> 4) & 0x1f);
+                }
+
+                int calc4(final int b2, final int b3) {
+                    // d4 = r2[3..0] + r3[7]
+                    return alphabet.encode((b2 << 1 | b3 >> 7) & 0x1f);
+                }
+
+                int calc5(final int b3) {
+                    // d5 = r3[6..2]
+                    return alphabet.encode((b3 >> 2) & 0x1f);
+                }
+
+                int calc6(final int b3, final int b4) {
+                    // d6 = r3[1..0] + r4[7..5]
+                    return alphabet.encode((b3 << 3 | b4 >> 5) & 0x1f);
+                }
+
+                int calc7(final int b4) {
+                    // d7 = r4[4..0]
+                    return alphabet.encode(b4 & 0x1f);
+                }
+            };
+        }
+    }
+
+    /**
+     * Base32-encode the current stream.
+     *
+     * @param alphabet the alphabet to use
+     * @return an iterator over the encoded characters
+     */
+    public CodePointIterator base32Encode(final Base32Alphabet alphabet) {
+        return base32Encode(alphabet, true);
+    }
+
+    /**
+     * Base32-encode the current stream.
+     *
+     * @return an iterator over the encoded characters
+     */
+    public CodePointIterator base32Encode() {
+        return base32Encode(Base32Alphabet.STANDARD, true);
     }
 
     /**
@@ -1483,6 +1629,571 @@ public abstract class ByteIterator extends NumericIterator {
                 }
                 case 0xe: {
                     return '=';
+                }
+                default: throw new IllegalStateException();
+            }
+        }
+
+        public int offset() {
+            return offset;
+        }
+    }
+
+    abstract class Base32EncodingCodePointIterator extends CodePointIterator {
+
+        private final boolean addPadding;
+        private int c0, c1, c2, c3, c4, c5, c6, c7;
+        private int state;
+        private int offset;
+
+        public Base32EncodingCodePointIterator(final boolean addPadding) {
+            this.addPadding = addPadding;
+        }
+
+        // states:
+        // 0x00 - need another five data bytes
+        // 0x01 - 8 characters to read
+        // 0x02 - 7 characters to read
+        // 0x03 - 6 characters to read
+        // 0x04 - 5 characters to read
+        // 0x05 - 4 characters to read
+        // 0x06 - 3 characters to read
+        // 0x07 - 2 characters to read
+        // 0x08 - 1 character to read
+        // 0x09 - 2 characters + ====== to read
+        // 0x0a - 1 character (c1) + ====== to read
+        // 0x0b - ====== to read
+        // 0x0c - ===== to read
+        // 0x0d - ==== to read
+        // 0x0e - === to read
+        // 0x0f - == to read
+        // 0x10 - = to read
+        // 0x11 - 4 characters + ==== to read
+        // 0x12 - 3 characters (c1, c2, c3) + ==== to read
+        // 0x13 - 2 characters (c2, c3) + ==== to read
+        // 0x14 - 1 character (c3) + ==== to read
+        // 0x15 - ==== to read
+        // 0x16 - === to read
+        // 0x17 - == to read
+        // 0x18 - = to read
+        // 0x19 - 5 characters + === to read
+        // 0x1a - 4 characters (c1, c2, c3, c4) + === to read
+        // 0x1b - 3 characters (c2, c3, c4) + === to read
+        // 0x1c - 2 characters (c3, c4) + === to read
+        // 0x1d - 1 character (c4) + === to read
+        // 0x1e - === to read
+        // 0x1f - == to read
+        // 0x20 - = to read
+        // 0x21 - 7 characters + = to read
+        // 0x22 - 6 characters (c1, c2, c3, c4, c5, c6) + = to read
+        // 0x23 - 5 characters (c2, c3, c4, c5, c6) + = to read
+        // 0x24 - 4 characters (c3, c4, c5, c6) + = to read
+        // 0x25 - 3 characters (c4, c5, c6) + = to read
+        // 0x26 - 2 characters (c5, c6) + = to read
+        // 0x27 - 1 characters (c6) + = to read
+        // 0x28 - = to read
+        // 0x29 - after ======
+        // 0x2a - after ====
+        // 0x2b - after ===
+        // 0x2c - after =
+        // 0x2d - end
+
+        public boolean hasNext() {
+            return state == 0 && ByteIterator.this.hasNext() || state > 0 && state < 0x29;
+        }
+
+        public boolean hasPrev() {
+            return offset > 0;
+        }
+
+        abstract int calc0(int b0);
+
+        abstract int calc1(int b0, int b1);
+
+        abstract int calc2(final int b1);
+
+        abstract int calc3(final int b1, final int b2);
+
+        abstract int calc4(final int b2, final int b3);
+
+        abstract int calc5(final int b3);
+
+        abstract int calc6(final int b3, final int b4);
+
+        abstract int calc7(final int b4);
+
+        public int next() throws NoSuchElementException {
+            if (! hasNext()) throw new NoSuchElementException();
+            offset++;
+            switch (state) {
+                case 0: {
+                    assert ByteIterator.this.hasNext();
+                    int b0 = ByteIterator.this.next();
+                    c0 = calc0(b0);
+                    if (!ByteIterator.this.hasNext()) {
+                        c1 = calc1(b0, 0);
+                        state = 0x0a;
+                        return c0;
+                    }
+                    int b1 = ByteIterator.this.next();
+                    c1 = calc1(b0, b1);
+                    c2 = calc2(b1);
+                    if (!ByteIterator.this.hasNext()) {
+                        c3 = calc3(b1, 0);
+                        state = 0x12;
+                        return c0;
+                    }
+                    int b2 = ByteIterator.this.next();
+                    c3 = calc3(b1, b2);
+                    if (!ByteIterator.this.hasNext()) {
+                        c4 = calc4(b2, 0);
+                        state = 0x1a;
+                        return c0;
+                    }
+                    int b3 = ByteIterator.this.next();
+                    c4 = calc4(b2, b3);
+                    c5 = calc5(b3);
+                    if (!ByteIterator.this.hasNext()) {
+                        c6 = calc6(b3, 0);
+                        state = 0x22;
+                        return c0;
+                    }
+                    int b4 = ByteIterator.this.next();
+                    c6 = calc6(b3, b4);
+                    c7 = calc7(b4);
+                    state = 2;
+                    return c0;
+                }
+                case 1:
+                case 9:
+                case 0x11:
+                case 0x19:
+                case 0x21: {
+                    state ++;
+                    return c0;
+                }
+                case 2:
+                case 0x12:
+                case 0x1a:
+                case 0x22: {
+                    state ++;
+                    return c1;
+                }
+                case 3:
+                case 0x13:
+                case 0x1b:
+                case 0x23: {
+                    state ++;
+                    return c2;
+                }
+                case 4:
+                case 0x1c:
+                case 0x24: {
+                    state ++;
+                    return c3;
+                }
+                case 5:
+                case 0x25: {
+                    state ++;
+                    return c4;
+                }
+                case 6:
+                case 0x26: {
+                    state ++;
+                    return c5;
+                }
+                case 7: {
+                    state = 8;
+                    return c6;
+                }
+                case 8: {
+                    state = 0;
+                    return c7;
+                }
+                case 0x0a: {
+                    state = addPadding ? 0x0b : 0x29;
+                    return c1;
+                }
+                case 0x14: {
+                    state = addPadding ? 0x15 : 0x2a;
+                    return c3;
+                }
+                case 0x1d: {
+                    state = addPadding ? 0x1e : 0x2b;
+                    return c4;
+                }
+                case 0x27: {
+                    state = addPadding ? 0x28 : 0x2c;
+                    return c6;
+                }
+                case 0x0b:
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x1e:
+                case 0x1f: {
+                    state ++;
+                    return '=';
+                }
+                case 0x10: {
+                    state = 0x29;
+                    return '=';
+                }
+                case 0x18: {
+                    state = 0x2a;
+                    return '=';
+                }
+                case 0x20: {
+                    state = 0x2b;
+                    return '=';
+                }
+                case 0x28: {
+                    state = 0x2c;
+                    return '=';
+                }
+                default: {
+                    throw new IllegalStateException();
+                }
+            }
+        }
+
+        public int peekNext() throws NoSuchElementException {
+            if (! hasNext()) throw new NoSuchElementException();
+            switch (state) {
+                case 0: {
+                    assert ByteIterator.this.hasNext();
+                    int b0 = ByteIterator.this.next();
+                    c0 = calc0(b0);
+                    if (!ByteIterator.this.hasNext()) {
+                        c1 = calc1(b0, 0);
+                        state = 9;
+                        return c0;
+                    }
+                    int b1 = ByteIterator.this.next();
+                    c1 = calc1(b0, b1);
+                    c2 = calc2(b1);
+                    if (!ByteIterator.this.hasNext()) {
+                        c3 = calc3(b1, 0);
+                        state = 0x11;
+                        return c0;
+                    }
+                    int b2 = ByteIterator.this.next();
+                    c3 = calc3(b1, b2);
+                    if (!ByteIterator.this.hasNext()) {
+                        c4 = calc4(b2, 0);
+                        state = 0x19;
+                        return c0;
+                    }
+                    int b3 = ByteIterator.this.next();
+                    c4 = calc4(b2, b3);
+                    c5 = calc5(b3);
+                    if (!ByteIterator.this.hasNext()) {
+                        c6 = calc6(b3, 0);
+                        state = 0x21;
+                        return c0;
+                    }
+                    int b4 = ByteIterator.this.next();
+                    c6 = calc6(b3, b4);
+                    c7 = calc7(b4);
+                    state = 1;
+                    return c0;
+                }
+                case 1:
+                case 9:
+                case 0x11:
+                case 0x19:
+                case 0x21: {
+                    return c0;
+                }
+                case 2:
+                case 0x0a:
+                case 0x12:
+                case 0x1a:
+                case 0x22: {
+                    return c1;
+                }
+                case 3:
+                case 0x13:
+                case 0x1b:
+                case 0x23: {
+                    return c2;
+                }
+                case 4:
+                case 0x14:
+                case 0x1c:
+                case 0x24: {
+                    return c3;
+                }
+                case 5:
+                case 0x1d:
+                case 0x25: {
+                    return c4;
+                }
+                case 6:
+                case 0x26: {
+                    return c5;
+                }
+                case 7:
+                case 0x27: {
+                    return c6;
+                }
+                case 8: {
+                    return c7;
+                }
+                case 0x0b:
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x15:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x1e:
+                case 0x1f:
+                case 0x20:
+                case 0x28: {
+                    return '=';
+                }
+                default: {
+                    throw new IllegalStateException();
+                }
+            }
+        }
+
+        public int prev() throws NoSuchElementException {
+            if (! hasPrev()) throw new NoSuchElementException();
+            offset--;
+            switch (state) {
+                case 0x21: {
+                    ByteIterator.this.prev(); // skip and fall through
+                }
+                case 0x19: {
+                    ByteIterator.this.prev(); // skip and fall through
+                }
+                case 0x11: {
+                    ByteIterator.this.prev(); // skip and fall through
+                }
+                case 9: {
+                    ByteIterator.this.prev(); // skip and fall through
+                }
+                case 0:
+                case 1:
+                case 0x2d: {
+                    int b4 = ByteIterator.this.prev();
+                    int b3 = ByteIterator.this.prev();
+                    int b2 = ByteIterator.this.prev();
+                    int b1 = ByteIterator.this.prev();
+                    int b0 = ByteIterator.this.prev();
+                    c0 = calc0(b0);
+                    c1 = calc1(b0, b1);
+                    c2 = calc2(b1);
+                    c3 = calc3(b1, b2);
+                    c4 = calc4(b2, b3);
+                    c5 = calc5(b3);
+                    c6 = calc6(b3, b4);
+                    c7 = calc7(b4);
+                    state = 8;
+                    return c7;
+                }
+                case 2:
+                case 0x0a:
+                case 0x1a:
+                case 0x12:
+                case 0x22: {
+                    state --;
+                    return c0;
+                }
+                case 3:
+                case 0x0b:
+                case 0x13:
+                case 0x1b:
+                case 0x23: {
+                    state --;
+                    return c1;
+                }
+                case 4:
+                case 0x14:
+                case 0x1c:
+                case 0x24: {
+                    state --;
+                    return c2;
+                }
+                case 5:
+                case 0x15:
+                case 0x1d:
+                case 0x25: {
+                    state --;
+                    return c3;
+                }
+                case 6:
+                case 0x1e:
+                case 0x26: {
+                    state --;
+                    return c4;
+                }
+                case 7:
+                case 0x27: {
+                    state --;
+                    return c5;
+                }
+                case 8:
+                case 0x28: {
+                    state --;
+                    return c6;
+                }
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x1f:
+                case 0x20: {
+                    state --;
+                    return '=';
+                }
+                case 0x29: {
+                    if (addPadding) {
+                        state = 0x10;
+                        return '=';
+                    } else {
+                        state = 0x0a;
+                        return c1;
+                    }
+                }
+                case 0x2a: {
+                    if (addPadding) {
+                        state = 0x18;
+                        return '=';
+                    } else {
+                        state = 0x14;
+                        return c3;
+                    }
+                }
+                case 0x2b: {
+                    if (addPadding) {
+                        state = 0x20;
+                        return '=';
+                    } else {
+                        state = 0x1d;
+                        return c4;
+                    }
+                }
+                case 0x2c: {
+                    if (addPadding) {
+                        state = 0x28;
+                        return '=';
+                    } else {
+                        state = 0x27;
+                        return c6;
+                    }
+                }
+                default: throw new IllegalStateException();
+            }
+        }
+
+        public int peekPrev() throws NoSuchElementException {
+            if (! hasPrev()) throw new NoSuchElementException();
+            switch (state) {
+                case 0x21:
+                    ByteIterator.this.prev(); // skip and fall through
+                case 0x19:
+                    ByteIterator.this.prev(); // skip and fall through
+                case 0x11:
+                    ByteIterator.this.prev(); // skip and fall through
+                case 9:
+                    ByteIterator.this.prev(); // skip and fall through
+                case 0:
+                case 1:
+                case 0x2d: {
+                    int result = calc7(ByteIterator.this.peekPrev());
+                    if (state == 9) {
+                        ByteIterator.this.next();
+                    } else if (state == 0x11) {
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                    } else if (state == 0x19) {
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                    } else if (state == 0x21) {
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                        ByteIterator.this.next();
+                    }
+                    return result;
+                }
+                case 2:
+                case 0x0a:
+                case 0x1a:
+                case 0x12:
+                case 0x22: {
+                    return c0;
+                }
+                case 3:
+                case 0x0b:
+                case 0x13:
+                case 0x1b:
+                case 0x23: {
+                    return c1;
+                }
+                case 4:
+                case 0x14:
+                case 0x1c:
+                case 0x24: {
+                    return c2;
+                }
+                case 5:
+                case 0x15:
+                case 0x1d:
+                case 0x25: {
+                    return c3;
+                }
+                case 6:
+                case 0x1e:
+                case 0x26: {
+                    return c4;
+                }
+                case 7:
+                case 0x27: {
+                    return c5;
+                }
+                case 8:
+                case 0x28: {
+                    return c6;
+                }
+                case 0x0c:
+                case 0x0d:
+                case 0x0e:
+                case 0x0f:
+                case 0x10:
+                case 0x16:
+                case 0x17:
+                case 0x18:
+                case 0x1f:
+                case 0x20: {
+                    return '=';
+                }
+                case 0x29: {
+                    return addPadding ? '=' : c1;
+                }
+                case 0x2a: {
+                    return addPadding ? '=' : c3;
+                }
+                case 0x2b: {
+                    return addPadding ? '=' : c4;
+                }
+                case 0x2c: {
+                    return addPadding ? '=' : c6;
                 }
                 default: throw new IllegalStateException();
             }
