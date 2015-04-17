@@ -50,7 +50,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
     private void mockNonce(final String nonce){
         new MockUp<ScramUtil>(){
             @Mock
-            public byte[] generateRandomString(int length, Random random){
+            public byte[] generateNonce(int length, Random random){
                 return nonce.getBytes(StandardCharsets.UTF_8);
             }
         };

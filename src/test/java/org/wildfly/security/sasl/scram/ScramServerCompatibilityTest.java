@@ -35,11 +35,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     private void mockNonceSalt(final String nonce, final String salt){
         new MockUp<ScramUtil>(){
             @Mock
-            public byte[] generateRandomString(int length, Random random){
+            public byte[] generateNonce(int length, Random random){
                 return nonce.getBytes(StandardCharsets.UTF_8);
             }
             @Mock
-            public byte[] generateRandomBytes(int length, Random random){
+            public byte[] generateSalt(int length, Random random){
                 return HexConverter.convertFromHex(salt);
             }
         };

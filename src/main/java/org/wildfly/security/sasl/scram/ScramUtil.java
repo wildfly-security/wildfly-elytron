@@ -47,13 +47,7 @@ class ScramUtil {
         randomCharDictionary = dict;
     }
 
-    public static void generateRandomString(StringBuilder b, int length, Random random) {
-        for (int i = 0; i < length; i ++) {
-            b.append(randomCharDictionary[random.nextInt(93)]);
-        }
-    }
-
-    public static byte[] generateRandomString(int length, Random random) {
+    public static byte[] generateNonce(int length, Random random) {
         final byte[] chars = new byte[length];
         for (int i = 0; i < length; i ++) {
             chars[i] = randomCharDictionary[random.nextInt(93)];
@@ -61,7 +55,7 @@ class ScramUtil {
         return chars;
     }
 
-    public static byte[] generateRandomBytes(int length, Random random){
+    public static byte[] generateSalt(int length, Random random){
         byte[] bytes = new byte[length];
         random.nextBytes(bytes);
         return bytes;

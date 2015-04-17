@@ -245,7 +245,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                                 throw new SaslException("Callback handler does not support credential acquisition", e);
                             } else if (callback == parameterCallback) {
                                 // one more try, with default parameters
-                                salt = ScramUtil.generateRandomBytes(16, getRandom());
+                                salt = ScramUtil.generateSalt(16, getRandom());
                                 if (DEBUG) System.out.printf("[S] Salt (random): %s%n", convertToHexString(salt));
                                 algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
                                 try {
@@ -305,7 +305,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     // nonce (client + server nonce)
                     b.append('r').append('=');
                     b.append(nonce);
-                    b.append(ScramUtil.generateRandomString(28, getRandom()));
+                    b.append(ScramUtil.generateNonce(28, getRandom()));
                     b.append(',');
 
                     // salt

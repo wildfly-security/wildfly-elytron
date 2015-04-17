@@ -126,7 +126,7 @@ class ScramSaslClient extends AbstractSaslClient {
                 StringPrep.encode(nameCallback.getName(), b, StringPrep.PROFILE_SASL_STORED | StringPrep.MAP_SCRAM_LOGIN_CHARS);
                 b.append(',').append('r').append('=');
                 Random random = secureRandom != null ? secureRandom : ThreadLocalRandom.current();
-                b.append(nonce = ScramUtil.generateRandomString(48, random));
+                b.append(nonce = ScramUtil.generateNonce(48, random));
                 if (DEBUG) System.out.printf("[C] Client nonce: %s%n", convertToHexString(nonce));
                 setNegotiationState(ST_R1_SENT);
                 if (DEBUG) System.out.printf("[C] Client first message: %s%n", convertToHexString(b.toArray()));
