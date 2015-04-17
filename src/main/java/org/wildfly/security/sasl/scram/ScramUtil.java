@@ -61,6 +61,12 @@ class ScramUtil {
         return chars;
     }
 
+    public static byte[] generateRandomBytes(int length, Random random){
+        byte[] bytes = new byte[length];
+        random.nextBytes(bytes);
+        return bytes;
+    }
+
     public static int parsePosInt(final ByteIterator i) {
         int a, c;
         if (! i.hasNext()) {
@@ -217,10 +223,10 @@ class ScramUtil {
             StringPrep.encode(password, b, StringPrep.PROFILE_SASL_QUERY);
             mac.init(new SecretKeySpec(b.toArray(), mac.getAlgorithm()));
             mac.update(salt, saltOffs, saltLen);
+            mac.update((byte) 0);
+            mac.update((byte) 0);
+            mac.update((byte) 0);
             mac.update((byte) 1);
-            mac.update((byte) 0);
-            mac.update((byte) 0);
-            mac.update((byte) 0);
             byte[] h = mac.doFinal();
             byte[] u = h;
             for (int i = 2; i <= iterationCount; i ++) {

@@ -91,7 +91,7 @@ public class BasicScramSelfTest extends BaseTestCase {
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
                     if (callback instanceof NameCallback) {
-                        final String loginName = ((NameCallback) callback).getName();
+                        final String loginName = ((NameCallback) callback).getDefaultName();
                         assertEquals("Wrong login name", "login-name", loginName);
                     } else if (callback instanceof CredentialCallback) {
                         final CredentialCallback credentialCallback = (CredentialCallback) callback;
