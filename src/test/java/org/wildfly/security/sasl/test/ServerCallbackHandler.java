@@ -20,6 +20,7 @@ package org.wildfly.security.sasl.test;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -34,7 +35,6 @@ import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
 
 /**
@@ -47,23 +47,20 @@ public class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;
     private final char[] expectedPassword;
-    private final byte[] urpHash;
-    private final String realm;
+    private final KeySpec keySpec;
     private final String algorithm;
 
     public ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
-        urpHash = null;
-        realm = null;
+        keySpec = null;
         algorithm = null;
     }
 
-    public ServerCallbackHandler(final String expectedUsername, final String realm, final String algorithm, final byte[] urpHash) {
+    public ServerCallbackHandler(final String expectedUsername, final String algorithm, KeySpec keyspec) {
         this.expectedUsername = expectedUsername;
-        this.realm = realm;
         this.algorithm = algorithm;
-        this.urpHash = urpHash;
+        this.keySpec = keyspec;
         expectedPassword = null;
     }
 
@@ -86,12 +83,14 @@ public class ServerCallbackHandler implements CallbackHandler {
                 AuthorizeCallback acb = (AuthorizeCallback) current;
                 acb.setAuthorized(acb.getAuthenticationID().equals(acb.getAuthorizationID()));
             } else if (current instanceof RealmCallback) {
-            } else if (current instanceof CredentialCallback && algorithm != null && urpHash != null) {
+            } else if (current instanceof CredentialCallback && algorithm != null && keySpec != null) {
                 CredentialCallback ccb = (CredentialCallback) current;
                 try {
                     PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-                    Password password = passwordFactory.generatePassword(new DigestPasswordSpec(algorithm, expectedUsername, realm, urpHash));
-                    ccb.setCredential(password);
+                    Password password = passwordFactory.generatePassword(keySpec);
+                    if (ccb.isCredentialSupported(password)) {
+                        ccb.setCredential(password);
+                    }
                 } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                     throw new IOException("Password object generation failed", e);
                 }
