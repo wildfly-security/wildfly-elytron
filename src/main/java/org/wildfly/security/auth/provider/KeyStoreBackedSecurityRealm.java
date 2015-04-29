@@ -31,6 +31,7 @@ import java.security.cert.X509Certificate;
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -58,7 +59,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     @Override
     public RealmIdentity createRealmIdentity(Principal principal) {
         if (principal instanceof NamePrincipal == false) {
-            throw new IllegalArgumentException("Invalid Principal type");
+            throw ElytronMessages.log.invalidPrincipalType(NamePrincipal.class, principal == null ? null : principal.getClass());
         }
         return new KeyStoreRealmIdentity(principal);
     }

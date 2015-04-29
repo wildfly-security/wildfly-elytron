@@ -22,8 +22,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.UnrecoverableKeyException;
 
+import javax.security.auth.callback.Callback;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServerFactory;
@@ -38,6 +40,8 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jboss.logging.annotations.Param;
 import org.wildfly.client.config.ConfigXMLParseException;
+import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -215,4 +219,23 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 56, value = "Invalid hex character")
     DecodeException invalidHexCharacter();
+
+    @LogMessage(level = Logger.Level.DEBUG)
+    @Message(id = 57, value = "JAAS authentication failed for principal %s")
+    void debugJAASAuthenticationFailure(Principal principal, @Cause Throwable cause);
+
+    @Message(id = 58, value = "Invalid principal type (expected %s, got %s)")
+    IllegalArgumentException invalidPrincipalType(Class<?> expectedType, Class<?> actualType);
+
+    @Message(id = 59, value = "Failed to create login context")
+    RealmUnavailableException failedToCreateLoginContext(@Cause Throwable cause);
+
+    @Message(id = 60, value = "Failed to instantiate custom CallbackHandler")
+    RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
+
+    @Message(id = 61, value = "The Callback array cannot be null")
+    IllegalArgumentException invalidNullCallbackArray();
+
+    @Message(id = 62, value = "Credential cannot be converted to a password")
+    FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
 }

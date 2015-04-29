@@ -80,7 +80,7 @@ public class KeyStoreBackedSecurityRealmTest {
         RealmIdentity realmIdentity = realm.createRealmIdentity("javaduke");
         assertNotNull("Unexpected null realm identity", realmIdentity);
         Principal realmPrincipal = realmIdentity.getPrincipal();
-        assertNotNull("Unexpecteed null realm principal", realmPrincipal);
+        assertNotNull("Unexpected null realm principal", realmPrincipal);
         assertTrue("Invalid realm principal type", realmPrincipal instanceof NamePrincipal);
         assertEquals("Invalid realm principal name", "javaduke", realmPrincipal.getName());
 
