@@ -268,4 +268,25 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 72, value = "Unable to set GSSContext request flags")
     SaslException saslUnableToSetGssContextRequestFlags(@Cause Exception e);
+
+    @Message(id = 73, value = "Unable to accept SASL client message")
+    SaslException saslUnableToAcceptClientMessage(@Cause Exception e);
+
+    @Message(id = 74, value = "GSS-API mechanism mismatch between SASL client and server")
+    SaslException saslGssApiMechanismMismatch();
+
+    @Message(id = 75, value = "Channel binding not supported for SASL mechanism \"%s\"")
+    SaslException saslChannelBindingNotSupported(String mechName);
+
+    @Message(id = 76, value = "Channel binding type mismatch between SASL client and server")
+    SaslException saslChannelBindingTypeMismatch();
+
+    @Message(id = 77, value = "Channel binding not provided by client for SASL mechanism \"%s\"")
+    SaslException saslChannelBindingNotProvided(String mechName);
+
+    @Message(id = 78, value = "Unable to determine peer name")
+    SaslException saslUnableToDeterminePeerName(@Cause Exception e);
+
+    @Message(id = 79, value = "SASL client refuses to initiate authentication")
+    SaslException saslClientRefusesToInitiateAuthentication();
 }
