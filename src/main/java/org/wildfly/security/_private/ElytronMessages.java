@@ -238,4 +238,34 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 62, value = "Credential cannot be converted to a password")
     FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
+
+    @Message(id = 63, value = "Initial challenge must be empty")
+    SaslException saslInitialChallengeMustBeEmpty();
+
+    @Message(id = 64, value = "Unable to create response token")
+    SaslException saslUnableToCreateResponseToken(@Cause Exception e);
+
+    @Message(id = 65, value = "Unable to set channel binding")
+    SaslException saslUnableToSetChannelBinding(@Cause Exception e);
+
+    @Message(id = 66, value = "Failed to determine channel binding status")
+    SaslException saslFailedToDetermineChannelBindingStatus(@Cause Exception e);
+
+    @Message(id = 67, value = "Mutual authentication not enabled")
+    SaslException saslMutualAuthenticationNotEnabled();
+
+    @Message(id = 68, value = "Unable to map SASL mechanism name to a GSS-API OID")
+    SaslException saslMechanismToOidMappingFailed(@Cause Exception e);
+
+    @Message(id = 69, value = "Unable to dispose of GSSContext")
+    SaslException saslUnableToDisposeGssContext(@Cause Exception e);
+
+    @Message(id = 70, value = "Unable to create name for acceptor")
+    SaslException saslUnableToCreateNameForAcceptor(@Cause Exception e);
+
+    @Message(id = 71, value = "Unable to create GSSContext")
+    SaslException saslUnableToCreateGssContext(@Cause Exception e);
+
+    @Message(id = 72, value = "Unable to set GSSContext request flags")
+    SaslException saslUnableToSetGssContextRequestFlags(@Cause Exception e);
 }

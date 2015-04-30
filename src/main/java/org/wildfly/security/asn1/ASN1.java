@@ -78,6 +78,11 @@ public class ASN1 {
     public static final int CONSTRUCTED_MASK = 0x20;
 
     /**
+     * Mask used to determine if a type tag is application-specific.
+     */
+    public static final int APPLICATION_SPECIFIC_MASK = 0x40;
+
+    /**
      * Mask used to determine if a type tag is context-specific.
      */
     public static final int CONTEXT_SPECIFIC_MASK = 0x80;
