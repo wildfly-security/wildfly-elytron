@@ -33,10 +33,10 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.provider.AuthenticatedRealmIdentity;
-import org.wildfly.security.auth.provider.CredentialSupport;
-import org.wildfly.security.auth.provider.RealmIdentity;
-import org.wildfly.security.auth.provider.SecurityRealm;
+import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
 

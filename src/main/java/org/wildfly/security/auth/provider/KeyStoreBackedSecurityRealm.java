@@ -32,6 +32,11 @@ import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
+import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.keystore.EnablingPasswordEntry;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;

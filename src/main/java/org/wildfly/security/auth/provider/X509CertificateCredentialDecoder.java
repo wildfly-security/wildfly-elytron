@@ -22,6 +22,8 @@ import java.security.cert.X509Certificate;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.security.auth.spi.CredentialDecoder;
+
 /**
  * A credential decoder which can decode an {@link X509Certificate}.  The decoded name is the subject DN as a
  * string in {@link X500Principal#CANONICAL} format.

@@ -23,7 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.wildfly.security.auth.provider.CredentialSupport;
+import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.util.NameRewriter;
 
 /**
