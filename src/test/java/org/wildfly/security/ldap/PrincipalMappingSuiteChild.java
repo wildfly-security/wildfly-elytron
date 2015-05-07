@@ -30,12 +30,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.provider.RealmIdentity;
-import org.wildfly.security.auth.provider.RealmUnavailableException;
-import org.wildfly.security.auth.provider.SecurityRealm;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
+import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
+import org.wildfly.security.auth.spi.SecurityRealm;
 
 /**
  * Test case to test different principal mapping configurations.

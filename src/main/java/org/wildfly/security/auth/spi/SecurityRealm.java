@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.auth.spi;
 
 import java.security.Principal;
 

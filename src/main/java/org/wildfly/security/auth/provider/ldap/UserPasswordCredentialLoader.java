@@ -33,7 +33,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 
-import org.wildfly.security.auth.provider.CredentialSupport;
+import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;

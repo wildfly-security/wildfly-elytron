@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
-import org.wildfly.security.auth.provider.RealmIdentity;
+import org.wildfly.security.auth.spi.RealmIdentity;
 
 /**
  * A server-side callback used to pass a realm identity from the callback handler to the authentication mechanism.  If

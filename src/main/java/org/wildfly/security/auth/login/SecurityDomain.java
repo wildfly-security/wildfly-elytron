@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.auth.login;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -30,6 +30,11 @@ import java.util.Map;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
+import org.wildfly.security.auth.spi.SecurityRealm;
+import org.wildfly.security.auth.spi.SupportLevel;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.auth.util.RealmMapper;
 import org.wildfly.security.sasl.WildFlySasl;

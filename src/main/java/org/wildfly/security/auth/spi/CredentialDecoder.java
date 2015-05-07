@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.auth.spi;
 
 /**
  * A decoder which acquires an authentication name from a credential.  Implementations may indicate that the credential
