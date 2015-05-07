@@ -59,7 +59,7 @@
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
         <linkXRef>false</linkXRef>
-        <checkstyle.skip>false</checkstyle.skip>
+
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
