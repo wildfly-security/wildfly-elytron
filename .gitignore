@@ -6,6 +6,7 @@ target
 # ignore eclipse files
 .project
 .classpath
+.checkstyle
 .settings
 .metadata
 # ignore m2e annotation processing files
