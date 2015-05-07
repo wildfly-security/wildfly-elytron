@@ -22,6 +22,7 @@ import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
 import org.wildfly.security.vault.VaultException;
+import org.wildfly.security.vault.VaultPermission;
 import org.wildfly.security.vault.VaultRuntimeException;
 import org.wildfly.security.vault.VaultSpi;
 import org.wildfly.security.vault.VaultURIParser;
@@ -99,6 +100,10 @@ public final class VaultManager {
         if (vaultInfo.vault != null) {
             return vaultInfo.vault;
         } else {
+            final SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(VaultPermission.LOAD_NEW_VAULT);
+            }
             VaultURIParser parser = new VaultURIParser(vaultInfo.vaultUri);
             String vaultName = parser.getName();
             Map<String, Object> options = parser.getOptionsMap();
@@ -183,18 +188,30 @@ public final class VaultManager {
     }
 
     public void store(final String attributeQueryUri, final char[] value) throws VaultException, URISyntaxException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(VaultPermission.MODIFY_VAULT);
+        }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
         VaultSpi v = getVault(p.getName());
         v.store(p.getAttribute(), value);
     }
 
     public char[] retrieve(final String attributeQueryUri) throws VaultException, URISyntaxException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
+        }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
         VaultSpi v = getVault(p.getName());
         return v.retrieve(p.getAttribute());
     }
 
     public void remove(final String attributeQueryUri) throws VaultException, URISyntaxException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(VaultPermission.MODIFY_VAULT);
+        }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
         VaultSpi v = getVault(p.getName());
         v.remove(p.getAttribute());
@@ -207,6 +224,10 @@ public final class VaultManager {
      * @return {@code List<String>} attribute names
      */
     public Set<String> getAttributes(final String vaultUri) throws VaultException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
+        }
         return getVault(getVaultUri(vaultUri)).getAttributes();
     }
 
@@ -219,6 +240,10 @@ public final class VaultManager {
      * @throws URISyntaxException in case of badly formed {@code attributeQueryUri}
      */
     public boolean exists(final String attributeQueryUri) throws URISyntaxException, VaultException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
+        }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
         return getVault(p.getName()).exists(p.getAttribute());
     }

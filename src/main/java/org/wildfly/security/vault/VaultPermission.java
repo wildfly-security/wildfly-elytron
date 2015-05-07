@@ -37,7 +37,7 @@ public class VaultPermission extends BasicPermission {
         loadNewVault,
         loadExternalStoragePassword,
         retrieveSecuredAttribute,
-        storeSecuredAttribute
+        modifyVault
         ;
 
         private final VaultPermission permission;
@@ -75,7 +75,7 @@ public class VaultPermission extends BasicPermission {
     /**
      * Store secured attribute (password) from vault permission.
      */
-    public static final VaultPermission STORE_SECURED_ATTRIBUTE = Name.storeSecuredAttribute.getPermission();
+    public static final VaultPermission MODIFY_VAULT = Name.modifyVault.getPermission();
 
 
     /**
