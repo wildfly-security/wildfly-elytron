@@ -62,7 +62,7 @@ public final class ClassModuleSpec {
         if (module == null) {
             return className;
         } else {
-            return new StringBuilder(className).append('@').append(module).toString();
+            return className + "@" + module;
         }
     }
 

@@ -24,6 +24,8 @@ package org.wildfly.security.vault;
  */
 public class VaultRuntimeException extends RuntimeException {
 
+    private static final long serialVersionUID = 754018172682318096L;
+
     /**
      * Default constructor.
      */
