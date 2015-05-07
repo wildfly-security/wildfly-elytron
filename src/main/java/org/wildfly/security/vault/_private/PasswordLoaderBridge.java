@@ -144,7 +144,7 @@ public class PasswordLoaderBridge {
             throws Exception {
         byte[] encoding;
         try {
-            encoding = ByteIterator.ofBytes(secret.getBytes(StandardCharsets.UTF_8)).base64Decode(Alphabet.PICKETBOX_BASE_64).drain();
+            encoding = ByteIterator.ofBytes(secret.getBytes(StandardCharsets.UTF_8)).base64Decode(Alphabet.Base64Alphabet.PICKETBOX_BASE_64).drain();
         } catch (IllegalArgumentException e) {
             // fallback when original string is was created with faulty version of Base64
             String fallBack = "0" + secret;

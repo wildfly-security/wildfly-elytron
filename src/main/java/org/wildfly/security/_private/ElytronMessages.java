@@ -1226,14 +1226,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 82, value = "Callback \"%s\" is not supported by VaultManager. Use supported types or make your Callback implement org.wildfly.security.vault.Parametrized.")
     VaultException callbackNotSupported(String callbackName);
 
-    @Message(id = 82, value = "More than one fragment defined for Vault URI")
+    @Message(id = 83, value = "More than one fragment defined for Vault URI")
     String moreThanOneFragmentDefined();
 
-    @Message(id = 83, value = "Password cache for external commands not supported")
+    @Message(id = 84, value = "Password cache for external commands not supported")
     VaultException cacheForExternalCommandsNotSupported();
 
     @LogMessage
-    @Message(id = 84, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    @Message(id = 85, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
     void warnWrongBase64EncodedString(String base64);
 
 }
