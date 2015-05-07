@@ -20,8 +20,17 @@ package org.wildfly.security.vault;
 import javax.security.auth.callback.CallbackHandler;
 
 /**
+ * Interface to implement when custom callback handler is needed. Implementation has to be specified in Vault configuration {@code URI}.
+ * This gives the user ability to influence callback interpretation.
+ * Callback handler can receive configuration parameters through {@link #initialize(String[])} method which will be called automatically
+ * by {@link org.wildfly.security.vault._private.VaultManager}.
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public interface ParametrizedCallbackHandler extends CallbackHandler {
+    /**
+     * Initialize callback handler with parameters.
+     * @param parameters to initialize the callback handler
+     */
     void initialize(String[] parameters);
 }

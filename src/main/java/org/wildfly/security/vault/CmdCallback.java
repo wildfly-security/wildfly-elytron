@@ -26,18 +26,35 @@ public final class CmdCallback extends VaultPasswordCallback {
 
     private final String[] args;
 
+    /**
+     * Constructor based on already parsed arguments
+     * @param args parsed arguments
+     */
     public CmdCallback(final String[] args) {
         this.args = args;
     }
 
+    /**
+     * Constructor based on non-parsed {@code String} of arguments (comma separated).
+     * @param argLine comma separated arguments
+     */
     public CmdCallback(final String argLine) {
         this(parseCommand(argLine));
     }
 
+    /**
+     * Returns arguments
+     * @return array of {@code String} arguments
+     */
     public String[] getArgs() {
         return args;
     }
 
+    /**
+     * Parses given command line
+     * @param command comma separated command line
+     * @return array of {@code String} arguments
+     */
     private static String[] parseCommand(String command) {
         // comma can be back slashed
         final String[] parsedCommand = command.split("(?<!\\\\),");

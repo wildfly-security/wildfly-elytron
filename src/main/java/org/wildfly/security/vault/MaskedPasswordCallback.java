@@ -18,6 +18,8 @@
 package org.wildfly.security.vault;
 
 /**
+ * Callback work with PBE masked passwords.
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public final class MaskedPasswordCallback extends VaultPasswordCallback {
@@ -28,10 +30,24 @@ public final class MaskedPasswordCallback extends VaultPasswordCallback {
     private final String PBEAlgorithm;
     private final String initialKeyMaterial;
 
+    /**
+     * Creates {@code MaskedPasswordCallback} based on arguments
+     * @param maskedPasswordString masked password, could be prefixed with "MASK-"
+     * @param salt salt PBE parameter
+     * @param iterationCount iteration count PBE parameter
+     */
     public MaskedPasswordCallback(String maskedPasswordString, String salt, int iterationCount) {
         this(maskedPasswordString, salt, iterationCount, null, null);
     }
 
+    /**
+     * Creates {@code MaskedPasswordCallback} based on arguments
+     * @param maskedPasswordString masked password, could be prefixed with "MASK-"
+     * @param salt salt PBE parameter
+     * @param iterationCount iteration count PBE parameter
+     * @param PBEAlgorithm PBE algorithm to use (could be {@code null} for default)
+     * @param initialKeyMaterial initial key for the PBE algorithm (could be {@code null} for default)
+     */
     public MaskedPasswordCallback(String maskedPasswordString, String salt, int iterationCount, String PBEAlgorithm, String initialKeyMaterial) {
         this.maskedPasswordString = maskedPasswordString;
         this.salt = salt;
@@ -40,22 +56,42 @@ public final class MaskedPasswordCallback extends VaultPasswordCallback {
         this.initialKeyMaterial = initialKeyMaterial;
     }
 
+    /**
+     * Returns the masked password {@code String}
+     * @return the parameter
+     */
     public String getMaskedPasswordString() {
         return maskedPasswordString;
     }
 
+    /**
+     * Returns the salt
+     * @return the parameter
+     */
     public String getSalt() {
         return salt;
     }
 
+    /**
+     * Returns the iteration count
+     * @return the parameter
+     */
     public int getIterationCount() {
         return iterationCount;
     }
 
+    /**
+     * Returns the PBE algorithm
+     * @return the parameter
+     */
     public String getPBEAlgorithm() {
         return PBEAlgorithm;
     }
 
+    /**
+     * Returns initial key material
+     * @return the parameter
+     */
     public String getInitialKeyMaterial() {
         return initialKeyMaterial;
     }

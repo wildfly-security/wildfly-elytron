@@ -55,14 +55,29 @@ public interface VaultSpi {
      */
     String CALLBACK_PASSWORD_CLASS = CALLBACK + ".passwordClass";
 
+    /**
+     * Masked password option name.
+     */
     String CALLBACK_MASKED = CALLBACK + ".maskedPassword";
 
+    /**
+     * Salt option name.
+     */
     String CALLBACK_SALT = CALLBACK + ".salt";
 
+    /**
+     * Iteration count option name.
+     */
     String CALLBACK_ITERATION = CALLBACK + ".iteration";
 
+    /**
+     * PBE algorithm option name.
+     */
     String CALLBACK_PBE_ALGORITHM = CALLBACK + ".algorithm";
 
+    /**
+     * PBE initial key material option name.
+     */
     String CALLBACK_PBE_INITIAL_KEY = CALLBACK + ".initialKey";
 
     /**

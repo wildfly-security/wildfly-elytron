@@ -18,21 +18,39 @@
 package org.wildfly.security.vault;
 
 /**
+ * Runtime version of VaultException.
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public class VaultRuntimeException extends RuntimeException {
 
+    /**
+     * Default constructor.
+     */
     public VaultRuntimeException() {
     }
 
+    /**
+     * Constructor with detail message specified.
+     * @param message - detail message
+     */
     public VaultRuntimeException(String message) {
         super(message);
     }
 
+    /**
+     * Constructor with detail message and cause specified.
+     * @param message - detail message
+     * @param cause - the cause
+     */
     public VaultRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Constructor with cause specified.
+     * @param cause - the cause
+     */
     public VaultRuntimeException(Throwable cause) {
         super(cause);
     }

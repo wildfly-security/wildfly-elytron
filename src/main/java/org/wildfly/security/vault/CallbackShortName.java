@@ -22,12 +22,24 @@ package org.wildfly.security.vault;
  */
 public enum CallbackShortName {
 
+    /**
+     * Callback short name for using {EXT} type of call as known from older Vault implementations.
+     */
     EXT(ExtCallback.class.getName()),
 
+    /**
+     * Callback short name for using {CMD} type of call as known from older Vault implementations.
+     */
     CMD(CmdCallback.class.getName()),
 
+    /**
+     * Callback short name for using {CLASS} type of call as known from older Vault implementations.
+     */
     CLASS(ClassCallback.class.getName()),
 
+    /**
+     * Callback short name for MASKED callback used to decrypt PBE masked passwords.
+     */
     MASKED(MaskedPasswordCallback.class.getName()),
     ;
 
@@ -37,6 +49,10 @@ public enum CallbackShortName {
         this.className = className;
     }
 
+    /**
+     * Get class name behind the shorten name.
+     * @return className of this short name
+     */
     public final String get() {
         return className;
     }

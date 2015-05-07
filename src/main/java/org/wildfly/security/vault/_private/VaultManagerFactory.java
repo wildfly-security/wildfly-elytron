@@ -18,15 +18,23 @@
 package org.wildfly.security.vault._private;
 
 /**
+ * Vault Manager Factory to create singleton {@code VaultManager}
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public enum VaultManagerFactory {
 
+    /**
+     * Instance of {@code VaultManagerFactory}
+     */
     INSTANCE;
 
     private static final VaultManager vaultManager = new VaultManager();
 
+    /**
+     * Returns the {@code VaultManager}
+     * @return vault manager
+     */
     public VaultManager getVaultManager() {
-        return INSTANCE.vaultManager;
+        return vaultManager;
     }
 }

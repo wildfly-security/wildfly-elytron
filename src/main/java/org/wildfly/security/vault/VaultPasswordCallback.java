@@ -23,16 +23,27 @@ import javax.security.auth.callback.Callback;
 import java.util.Arrays;
 
 /**
+ * Base class for vault related callbacks. It handles {@code password}.
+ * It also implements {@link Destroyable} interface.
+ *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public class VaultPasswordCallback implements Callback, Destroyable {
 
     private char[] password;
 
+    /**
+     * Returns password as {@code char[]}
+     * @return password
+     */
     public char[] getPassword() {
         return password != null ? Arrays.copyOf(password, password.length) : null;
     }
 
+    /**
+     * Sets password creating a copy of it.
+     * @param password password to set.
+     */
     public void setPassword(char[] password) {
         this.password = password != null ? Arrays.copyOf(password, password.length) : null;
     }

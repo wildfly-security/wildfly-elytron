@@ -59,6 +59,9 @@ import java.util.Set;
  */
 public class VaultURIParser {
 
+    /**
+     * Vault URI scheme name ("vault").
+     */
     public static final String VAULT_SCHEME = "vault";
 
     private String name;
