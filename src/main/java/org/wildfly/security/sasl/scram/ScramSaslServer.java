@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.scram;
 
 import static java.util.Arrays.copyOfRange;
-import static org.wildfly.security.sasl.util.HexConverter.convertToHexString;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -120,7 +119,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     if (response == null || response.length == 0) {
                         throw new SaslException("Client refuses to initiate authentication");
                     }
-                    if (DEBUG) System.out.printf("[S] Client first message: %s%n", convertToHexString(response));
+                    if (DEBUG) System.out.printf("[S] Client first message: %s%n", ByteIterator.ofBytes(response).hexEncode().drainToString());
 
                     final ByteStringBuilder b = new ByteStringBuilder();
                     int c;
@@ -181,7 +180,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                         throw invalidClientMessage();
                     }
                     byte[] nonce = di.drain();
-                    if (DEBUG) System.out.printf("[S] Client nonce: %s%n", convertToHexString(nonce));
+                    if (DEBUG) System.out.printf("[S] Client nonce: %s%n", ByteIterator.ofBytes(nonce).hexEncode().drainToString());
 
                     if (bi.hasNext()) {
                         throw invalidClientMessage();
@@ -217,7 +216,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                         // got a scram password
                         iterationCount = ((ScramDigestPassword) password).getIterationCount();
                         salt = ((ScramDigestPassword) password).getSalt();
-                        if (DEBUG) System.out.printf("[S] Salt (pre digested): %s%n", convertToHexString(salt));
+                        if (DEBUG) System.out.printf("[S] Salt (pre digested): %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
                         if (iterationCount < minimumIterationCount) {
                             throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
                         } else if (iterationCount > maximumIterationCount) {
@@ -227,7 +226,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             throw new SaslException("Salt must be specified");
                         }
                         saltedPassword = ((ScramDigestPassword)password).getDigest();
-                        if (DEBUG) System.out.printf("[S] Salted password (pre digested): %s%n", convertToHexString(saltedPassword));
+                        if (DEBUG) System.out.printf("[S] Salted password (pre digested): %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
                     } else {
                         // try two-way passwords
                         credentialCallback = new CredentialCallback(TwoWayPassword.class);
@@ -246,7 +245,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             } else if (callback == parameterCallback) {
                                 // one more try, with default parameters
                                 salt = ScramUtil.generateSalt(16, getRandom());
-                                if (DEBUG) System.out.printf("[S] Salt (random): %s%n", convertToHexString(salt));
+                                if (DEBUG) System.out.printf("[S] Salt (random): %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
                                 algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
                                 try {
                                     tryHandleCallbacks(nameCallback, credentialCallback);
@@ -296,7 +295,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                         }
                         try {
                             saltedPassword = ScramUtil.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
-                            if (DEBUG) System.out.printf("[S] Salted password: %s%n", convertToHexString(saltedPassword));
+                            if (DEBUG) System.out.printf("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
                         } catch (InvalidKeyException e) {
                             throw new SaslException("Invalid MAC initialization key");
                         }
@@ -442,28 +441,28 @@ final class ScramSaslServer extends AbstractSaslServer {
                     mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                     mac.update(Scram.CLIENT_KEY_BYTES);
                     clientKey = mac.doFinal();
-                    if (DEBUG) System.out.printf("[S] Client key: %s%n", convertToHexString(clientKey));
+                    if (DEBUG) System.out.printf("[S] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
 
                     // stored key
                     byte[] storedKey;
                     messageDigest.reset();
                     messageDigest.update(clientKey);
                     storedKey = messageDigest.digest();
-                    if (DEBUG) System.out.printf("[S] Stored key: %s%n", convertToHexString(storedKey));
+                    if (DEBUG) System.out.printf("[S] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
 
                     // client signature
                     mac.reset();
                     mac.init(new SecretKeySpec(storedKey, mac.getAlgorithm()));
                     mac.update(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length - clientFirstMessageBareStart);
-                    if (DEBUG) System.out.printf("[S] Using client first message: %s%n", convertToHexString(copyOfRange(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length)));
+                    if (DEBUG) System.out.printf("[S] Using client first message: %s%n", ByteIterator.ofBytes(copyOfRange(clientFirstMessage, clientFirstMessageBareStart, clientFirstMessage.length)).hexEncode().drainToString());
                     mac.update((byte) ',');
                     mac.update(serverFirstMessage);
-                    if (DEBUG) System.out.printf("[S] Using server first message: %s%n", convertToHexString(serverFirstMessage));
+                    if (DEBUG) System.out.printf("[S] Using server first message: %s%n", ByteIterator.ofBytes(serverFirstMessage).hexEncode().drainToString());
                     mac.update((byte) ',');
                     mac.update(response, 0, s); // client-final-message-without-proof
-                    if (DEBUG) System.out.printf("[S] Using client final message without proof: %s%n", convertToHexString(copyOfRange(response, 0, s)));
+                    if (DEBUG) System.out.printf("[S] Using client final message without proof: %s%n", ByteIterator.ofBytes(copyOfRange(response, 0, s)).hexEncode().drainToString());
                     byte[] clientSignature = mac.doFinal();
-                    if (DEBUG) System.out.printf("[S] Client signature: %s%n", convertToHexString(clientSignature));
+                    if (DEBUG) System.out.printf("[S] Client signature: %s%n", ByteIterator.ofBytes(clientSignature).hexEncode().drainToString());
 
                     // server key
                     byte[] serverKey;
@@ -471,7 +470,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                     mac.update(Scram.SERVER_KEY_BYTES);
                     serverKey = mac.doFinal();
-                    if (DEBUG) System.out.printf("[S] Server key: %s%n", convertToHexString(serverKey));
+                    if (DEBUG) System.out.printf("[S] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
 
                     // server signature
                     byte[] serverSignature;
@@ -483,17 +482,17 @@ final class ScramSaslServer extends AbstractSaslServer {
                     mac.update((byte) ',');
                     mac.update(response, 0, s); // client-final-message-without-proof
                     serverSignature = mac.doFinal();
-                    if (DEBUG) System.out.printf("[S] Server signature: %s%n", convertToHexString(serverSignature));
+                    if (DEBUG) System.out.printf("[S] Server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
 
                     if (DEBUG) System.out.printf("[S] Client proof string: %s%n", CodePointIterator.ofUtf8Bytes(recoveredClientProofEncoded).drainToString());
                     b.setLength(0);
                     byte[] recoveredClientProof = ByteIterator.ofBytes(recoveredClientProofEncoded).base64Decode().drain();
-                    if (DEBUG) System.out.printf("[S] Client proof: %s%n", convertToHexString(recoveredClientProof));
+                    if (DEBUG) System.out.printf("[S] Client proof: %s%n", ByteIterator.ofBytes(recoveredClientProof).hexEncode().drainToString());
 
                     // now check the proof
                     byte[] recoveredClientKey = clientSignature.clone();
                     ScramUtil.xor(recoveredClientKey, recoveredClientProof);
-                    if (DEBUG) System.out.printf("[S] Recovered client key: %s%n", convertToHexString(recoveredClientKey));
+                    if (DEBUG) System.out.printf("[S] Recovered client key: %s%n", ByteIterator.ofBytes(recoveredClientKey).hexEncode().drainToString());
                     if (! Arrays.equals(recoveredClientKey, clientKey)) {
                         // bad auth, send error
                         if (sendErrors) {

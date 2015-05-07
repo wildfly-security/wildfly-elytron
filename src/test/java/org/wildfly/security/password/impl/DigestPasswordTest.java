@@ -39,7 +39,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test case for {@link DigestPassword}.
@@ -85,7 +85,7 @@ public class DigestPasswordTest {
     }
 
     private void performTest(final String algorithm, final String expectedHexDigest) throws Exception {
-        byte[] preDigested = HexConverter.convertFromHex(expectedHexDigest);
+        byte[] preDigested = CodePointIterator.ofString(expectedHexDigest).hexDecode().drain();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         DigestPasswordAlgorithmSpec dpas = new DigestPasswordAlgorithmSpec(algorithm, USERNAME, REALM);

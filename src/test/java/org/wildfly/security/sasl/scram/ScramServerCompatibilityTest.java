@@ -37,7 +37,7 @@ import org.junit.runner.RunWith;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of server side of SCRAM mechanism.
@@ -56,7 +56,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
             }
             @Mock
             public byte[] generateSalt(int length, Random random){
-                return HexConverter.convertFromHex(salt);
+                return CodePointIterator.ofString(salt).hexDecode().drain();
             }
         };
     }

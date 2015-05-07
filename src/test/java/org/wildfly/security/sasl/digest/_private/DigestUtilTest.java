@@ -28,7 +28,8 @@ import javax.crypto.Mac;
 import org.junit.Before;
 import org.junit.Test;
 import org.wildfly.security.sasl.digest.Digest;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
 
@@ -47,18 +48,18 @@ public class DigestUtilTest {
 
     @Test
     public void testH_A1() throws Exception {
-
-        assertEquals("a2549853149b0536f01f0b850c643c57", HexConverter.convertToHexString(
+        assertEquals("a2549853149b0536f01f0b850c643c57", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
-                "OA6MG9tEQGm2hh".getBytes(), "OA6MHXh6VqTrRk".getBytes(), null, StandardCharsets.UTF_8)));
+                "OA6MG9tEQGm2hh".getBytes(), "OA6MHXh6VqTrRk".getBytes(), null, StandardCharsets.UTF_8)).hexEncode().drainToString());
 
-        assertEquals("7f94ea5b1eb1b0573cca321e2b517b63", HexConverter.convertToHexString(
+        assertEquals("7f94ea5b1eb1b0573cca321e2b517b63", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
-                "OA9BSXrbuRhWay".getBytes(), "OA9BSuZWMSpW8m".getBytes(), "chris", StandardCharsets.UTF_8)));
+                "OA9BSXrbuRhWay".getBytes(), "OA9BSuZWMSpW8m".getBytes(), "chris", StandardCharsets.UTF_8)).hexEncode().drainToString());
 
-        assertEquals("4e863a809aa7f7cc191be93705967394", HexConverter.convertToHexString(
+        assertEquals("4e863a809aa7f7cc191be93705967394", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", "\u0438\u4F60\uD83C\uDCA1".toCharArray()),
-                "sn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), "cn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), null, StandardCharsets.UTF_8)));
+                "sn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), "cn\u0438\u4F60\uD83C\uDCA1".getBytes(StandardCharsets.UTF_8), null,
+                StandardCharsets.UTF_8)).hexEncode().drainToString());
 
     }
 
@@ -66,19 +67,19 @@ public class DigestUtilTest {
     public void testDigestResponse() throws Exception {
 
         assertEquals("d388dad90d4bbd760a152321f2143af7", new String(
-                digestResponse(md, HexConverter.convertFromHex("a2549853149b0536f01f0b850c643c57"),
+                digestResponse(md, CodePointIterator.ofString("a2549853149b0536f01f0b850c643c57").hexDecode().drain(),
                 "OA6MG9tEQGm2hh".getBytes(), 1, "OA6MHXh6VqTrRk".getBytes(), null, "auth", "imap/elwood.innosoft.com", true)));
 
         assertEquals("ea40f60335c427b5527b84dbabcdfffd", new String(
-                digestResponse(md, HexConverter.convertFromHex("a2549853149b0536f01f0b850c643c57"),
+                digestResponse(md, CodePointIterator.ofString("a2549853149b0536f01f0b850c643c57").hexDecode().drain(),
                 "OA6MG9tEQGm2hh".getBytes(), 1, "OA6MHXh6VqTrRk".getBytes(), null, "auth", "imap/elwood.innosoft.com", false)));
 
         assertEquals("aa4e81f1c6656350f7bce05d436665de", new String(
-                digestResponse(md, HexConverter.convertFromHex("7f94ea5b1eb1b0573cca321e2b517b63"),
+                digestResponse(md, CodePointIterator.ofString("7f94ea5b1eb1b0573cca321e2b517b63").hexDecode().drain(),
                 "OA9BSXrbuRhWay".getBytes(), 1, "OA9BSuZWMSpW8m".getBytes(), "chris", "auth", "acap/elwood.innosoft.com", true)));
 
         assertEquals("af3ca83a805d4cfa00675a17315475c4", new String(
-                digestResponse(md, HexConverter.convertFromHex("7f94ea5b1eb1b0573cca321e2b517b63"),
+                digestResponse(md, CodePointIterator.ofString("7f94ea5b1eb1b0573cca321e2b517b63").hexDecode().drain(),
                 "OA9BSXrbuRhWay".getBytes(), 1, "OA9BSuZWMSpW8m".getBytes(), "chris", "auth", "acap/elwood.innosoft.com", false)));
 
     }
@@ -94,62 +95,62 @@ public class DigestUtilTest {
 
     @Test
     public void testCreate3desSubKey() throws Exception {
-        byte[] input1 = HexConverter.convertFromHex("FFFFFFFFFFFFFF");
+        byte[] input1 = CodePointIterator.ofString("FFFFFFFFFFFFFF").hexDecode().drain();
         byte[] output1 = create3desSubKey(input1, 0, 7);
-        assertEquals("FEFEFEFEFEFEFEFE".toLowerCase(), HexConverter.convertToHexString(output1));
+        assertEquals("FEFEFEFEFEFEFEFE".toLowerCase(), ByteIterator.ofBytes(output1).hexEncode().drainToString());
 
-        byte[] input2 = HexConverter.convertFromHex("d7c920cf2564cec39c570490f7ea");
+        byte[] input2 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
         byte[] output2 = create3desSubKey(input2, 0, 7);
-        assertEquals("D6E54919F22A929D".toLowerCase(), HexConverter.convertToHexString(output2));
+        assertEquals("D6E54919F22A929D".toLowerCase(), ByteIterator.ofBytes(output2).hexEncode().drainToString());
 
-        byte[] input3 = HexConverter.convertFromHex("d7c920cf2564cec39c570490f7ea");
+        byte[] input3 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
         byte[] output3 = create3desSubKey(input3, 7, 7);
-        assertEquals("C2CE15E04986DFD5".toLowerCase(), HexConverter.convertToHexString(output3));
+        assertEquals("C2CE15E04986DFD5".toLowerCase(), ByteIterator.ofBytes(output3).hexEncode().drainToString());
     }
 
     @Test
     public void testComputeHmac() throws Exception {
         Mac mac = Mac.getInstance("HmacMD5");
-        byte[] message = HexConverter.convertFromHex("11223344");
-        byte[] kc = HexConverter.convertFromHex("9fdbff3d48c87e74bd89460e2462c73a");
+        byte[] message = CodePointIterator.ofString("11223344").hexDecode().drain();
+        byte[] kc = CodePointIterator.ofString("9fdbff3d48c87e74bd89460e2462c73a").hexDecode().drain();
         byte[] output = computeHMAC(kc, 0, mac, message, 0, message.length);
-        assertEquals("EF3E40D7B5A64C1DAE6B".toLowerCase(), HexConverter.convertToHexString(output));
+        assertEquals("EF3E40D7B5A64C1DAE6B".toLowerCase(), ByteIterator.ofBytes(output).hexEncode().drainToString());
     }
 
     @Test
     public void testIntegerByteOrdered() throws Exception {
         byte[] output0 = new byte[4];
         integerByteOrdered(0x0, output0, 0, 4);
-        assertEquals("00000000".toLowerCase(), HexConverter.convertToHexString(output0));
+        assertEquals("00000000".toLowerCase(), ByteIterator.ofBytes(output0).hexEncode().drainToString());
 
         byte[] output1 = new byte[4];
         integerByteOrdered(0x1, output1, 0, 4);
-        assertEquals("00000001".toLowerCase(), HexConverter.convertToHexString(output1));
+        assertEquals("00000001".toLowerCase(), ByteIterator.ofBytes(output1).hexEncode().drainToString());
 
         byte[] output1234 = new byte[6];
         integerByteOrdered(0x1234, output1234, 1, 4);
-        assertEquals("000000123400".toLowerCase(), HexConverter.convertToHexString(output1234));
+        assertEquals("000000123400".toLowerCase(), ByteIterator.ofBytes(output1234).hexEncode().drainToString());
 
         byte[] outputFFFFFFFF = new byte[4];
         integerByteOrdered(0xFFFFFFFF, outputFFFFFFFF, 0, 4);
-        assertEquals("FFFFFFFF".toLowerCase(), HexConverter.convertToHexString(outputFFFFFFFF));
+        assertEquals("FFFFFFFF".toLowerCase(), ByteIterator.ofBytes(outputFFFFFFFF).hexEncode().drainToString());
     }
 
     @Test
     public void testDecodeByteOrderedInteger() throws Exception {
-        byte[] input0 = HexConverter.convertFromHex("00000000");
+        byte[] input0 = CodePointIterator.ofString("00000000").hexDecode().drain();
         assertEquals(0x0, decodeByteOrderedInteger(input0, 0, 4));
 
-        byte[] input1 = HexConverter.convertFromHex("00000001");
+        byte[] input1 = CodePointIterator.ofString("00000001").hexDecode().drain();
         assertEquals(0x1, decodeByteOrderedInteger(input1, 0, 4));
 
-        byte[] input1234 = HexConverter.convertFromHex("000000123400");
+        byte[] input1234 = CodePointIterator.ofString("000000123400").hexDecode().drain();
         assertEquals(0x1234, decodeByteOrderedInteger(input1234, 1, 4));
 
-        byte[] input1234b = HexConverter.convertFromHex("000000123400");
+        byte[] input1234b = CodePointIterator.ofString("000000123400").hexDecode().drain();
         assertEquals(0x1234, decodeByteOrderedInteger(input1234b, 3, 2));
 
-        byte[] inputFFFFFFFF = HexConverter.convertFromHex("FFFFFFFF");
+        byte[] inputFFFFFFFF = CodePointIterator.ofString("FFFFFFFF").hexDecode().drain();
         assertEquals(0xFFFFFFFF, decodeByteOrderedInteger(inputFFFFFFFF, 0, 4));
     }
 

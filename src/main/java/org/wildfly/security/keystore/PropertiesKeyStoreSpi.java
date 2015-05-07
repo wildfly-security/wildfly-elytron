@@ -55,7 +55,8 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * <p>
@@ -222,7 +223,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
                         final String escapedUsername = escapeString(username, ESCAPE_ARRAY);
                         final EnablingPasswordEntry pwdEntry = toWrite.get(username);
                         final DigestPassword digestPwd = (DigestPassword) pwdEntry.getPassword();
-                        final String property = escapedUsername + "=" + HexConverter.convertToHexString(digestPwd.getDigest());
+                        final String property = escapedUsername + "=" + ByteIterator.ofBytes(digestPwd.getDigest()).hexEncode().drainToString();
                         if (!pwdEntry.isEnabled()) {
                             writer.write(COMMENT_PREFIX);
                         }
@@ -241,7 +242,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
         for (String username : toWrite.keySet()) {
             final EnablingPasswordEntry pwdEntry = toWrite.get(username);
             final DigestPassword digestPwd = (DigestPassword) pwdEntry.getPassword();
-            final String property = escapeString(username, ESCAPE_ARRAY) + "=" + HexConverter.convertToHexString(digestPwd.getDigest());
+            final String property = escapeString(username, ESCAPE_ARRAY) + "=" + ByteIterator.ofBytes(digestPwd.getDigest()).hexEncode().drainToString();
             if (!pwdEntry.isEnabled()) {
                 writer.write(COMMENT_PREFIX);
             }
@@ -304,7 +305,7 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
             final Password pwd;
             try {
                 pwd = passwordFactory.generatePassword(
-                        new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, entry.username, realmName, HexConverter.convertFromHex(entry.hexDigest)));
+                        new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, entry.username, realmName, CodePointIterator.ofString(entry.hexDigest).hexDecode().drain()));
             } catch (InvalidKeySpecException ikse) {
                 throw log.noAlgorithmForPassword(entry.username);
             }

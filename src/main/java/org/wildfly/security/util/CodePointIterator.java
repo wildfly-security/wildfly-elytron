@@ -240,12 +240,116 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Drain all the remaining code points in this iterator to the given string builder,
+     * inserting the given prefix and delimiter before and after every {@code n} code points,
+     * respectively.
+     *
+     * @param b the string builder
+     * @param prefix the prefix
+     * @param delim the delimiter
+     * @param n the number of code points between each prefix and delimiter
+     * @return the same string builder
+     */
+    public StringBuilder drainTo(StringBuilder b, final String prefix, final int delim, final int n) {
+        int i = 0;
+        boolean insertPrefix = (prefix != null);
+        boolean insertDelim = Character.isValidCodePoint(delim);
+        if (hasNext()) {
+            if (insertPrefix) {
+                b.append(prefix);
+            }
+            b.appendCodePoint(next());
+            i ++;
+            while (hasNext()) {
+                if (i == n) {
+                    if (insertDelim) {
+                        b.appendCodePoint(delim);
+                    }
+                    if (insertPrefix) {
+                        b.append(prefix);
+                    }
+                    b.appendCodePoint(next());
+                    i = 1;
+                } else {
+                    b.appendCodePoint(next());
+                    i ++;
+                }
+            }
+        }
+        return b;
+    }
+
+    /**
+     * Drain all the remaining code points in this iterator to the given string builder,
+     * inserting the given delimiter after every {@code n} code points.
+     *
+     * @param b the string builder
+     * @param delim the delimiter
+     * @param n the number of code points between each delimiter
+     * @return the same string builder
+     */
+    public StringBuilder drainTo(StringBuilder b, final int delim, final int n) {
+        return drainTo(b, null, delim, n);
+    }
+
+    /**
+     * Drain all the remaining code points in this iterator to the given string builder,
+     * inserting the given prefix before every {@code n} code points.
+     *
+     * @param b the string builder
+     * @param prefix the prefix
+     * @param n the number of code points between each prefix
+     * @return the same string builder
+     */
+    public StringBuilder drainTo(StringBuilder b, final String prefix, final int n) {
+        return drainTo(b, prefix, -1, n);
+    }
+
+    /**
      * Drain all the remaining code points in this iterator to a new string.
      *
      * @return the string
      */
     public String drainToString() {
         return hasNext() ? drainTo(new StringBuilder()).toString() : "";
+    }
+
+    /**
+     * Drain all the remaining code points in this iterator to a new string,
+     * inserting the given prefix and delimiter before and after every {@code n}
+     * code points, respectively.
+     *
+     * @param prefix the prefix
+     * @param delim the delimiter
+     * @param n the number of code points between each prefix and delimiter
+     * @return the string
+     */
+    public String drainToString(final String prefix, final int delim, final int n) {
+        return hasNext() ? drainTo(new StringBuilder(), prefix, delim, n).toString() : "";
+    }
+
+    /**
+     * Drain all the remaining code points in this iterator to a new string,
+     * inserting the given delimiter after every {@code n} code points.
+     *
+     * @param delim the delimiter
+     * @param n the number of code points between each delimiter
+     * @return the string
+     */
+    public String drainToString(final int delim, final int n) {
+        return hasNext() ? drainTo(new StringBuilder(), null, delim, n).toString() : "";
+    }
+
+    /**
+     * Drain all the remaining code points in this iterator to a new string,
+     * inserting the given prefix before every {@code n} code points.
+     *
+     * @param prefix the prefix
+     * @param n the number of code points between each prefix
+     * @return the string
+     */
+    public String drainToString(final String prefix, final int n) {
+        return hasNext() ? drainTo(new StringBuilder(), prefix, -1, n).toString() : "";
     }
 
     /**
@@ -306,6 +410,15 @@ public abstract class CodePointIterator extends NumericIterator {
      */
     public ByteIterator base32Decode() {
         return super.base32Decode(Base32Alphabet.STANDARD, true);
+    }
+
+    /**
+     * Hex-decode the current stream.
+     *
+     * @return an iterator over the decoded bytes
+     */
+    public ByteIterator hexDecode() {
+        return super.hexDecode();
     }
 
     /**

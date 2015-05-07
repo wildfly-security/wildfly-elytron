@@ -34,7 +34,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Test;
-import org.wildfly.security.sasl.util.HexConverter;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * Test authentication without integrity and confidence checking (auth)
@@ -72,29 +72,29 @@ public class BasicAuthTest extends AbstractTest {
         assertFalse(client.isComplete());
 
         exchange = evaluateByClient(exchange);
-        assertEquals("6082020406092a864886f71201020201006e8201f3308201efa003020105a10302010ea20703050020000000a382010b6182010730820103a003020105a10d1b0b57494c44464c592e4f5247a220301ea003020100a11730151b047361736c1b0d746573745f7365727665725f31a381ca3081c7a003020110a281bf0481bc35c0e8fcda8a25bc04a0f0b15bd2007a8eaf706c6e282746f2520a0df3b2981a5c550647ac08cca70c8591e3e9f85c166f0b64a30af8c77b185cc8c3708e6d113ba90fca1a47e21540fedfc8b92e2427e601ba7d6c304483bf43bc85a8efe9936004c5b0132700426dd4427478338a389f6e0dec8125a7ec571859866349f9604730e45373bd956d86814943d8a1b11c9cf5a84c5722a5a665f7705884fc14b0d74c16547c92ec8b561c7c07f7ea6cdea07286ac4c4a2187a15e775da481ca3081c7a003020110a281bf0481bc7b05b4ad61dc02fb178b29d6aa5d79f05ee5d0c23a99204525c4927824b390f5ebd1cadcaa97ead6c3bdaf8c11d6c6e45c7b9270a9ddc44c52c6fe7ac29456590c3981aedc84aaad551dbcec2b9b930841713bff6d18f7df4e7ef27dafd06a60a7c2eeb1c18dd3d49579f98aca996eefda0741a98f2aa3f43328b29273e0c7984add0ebc10d77e11b099f9414d5c2d7330da9dcb090099f9d4985f924c6b524b97078589c10483df52419e2e0a8782f092705cea03807607c1f7c2d5", HexConverter.convertToHexString(exchange));
+        assertEquals("6082020406092a864886f71201020201006e8201f3308201efa003020105a10302010ea20703050020000000a382010b6182010730820103a003020105a10d1b0b57494c44464c592e4f5247a220301ea003020100a11730151b047361736c1b0d746573745f7365727665725f31a381ca3081c7a003020110a281bf0481bc35c0e8fcda8a25bc04a0f0b15bd2007a8eaf706c6e282746f2520a0df3b2981a5c550647ac08cca70c8591e3e9f85c166f0b64a30af8c77b185cc8c3708e6d113ba90fca1a47e21540fedfc8b92e2427e601ba7d6c304483bf43bc85a8efe9936004c5b0132700426dd4427478338a389f6e0dec8125a7ec571859866349f9604730e45373bd956d86814943d8a1b11c9cf5a84c5722a5a665f7705884fc14b0d74c16547c92ec8b561c7c07f7ea6cdea07286ac4c4a2187a15e775da481ca3081c7a003020110a281bf0481bc7b05b4ad61dc02fb178b29d6aa5d79f05ee5d0c23a99204525c4927824b390f5ebd1cadcaa97ead6c3bdaf8c11d6c6e45c7b9270a9ddc44c52c6fe7ac29456590c3981aedc84aaad551dbcec2b9b930841713bff6d18f7df4e7ef27dafd06a60a7c2eeb1c18dd3d49579f98aca996eefda0741a98f2aa3f43328b29273e0c7984add0ebc10d77e11b099f9414d5c2d7330da9dcb090099f9d4985f924c6b524b97078589c10483df52419e2e0a8782f092705cea03807607c1f7c2d5", ByteIterator.ofBytes(exchange).hexEncode().drainToString());
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         exchange = evaluateByServer(exchange);
-        assertEquals("606c06092a864886f71201020202006f5d305ba003020105a10302010fa24f304da003020110a246044489951ebd7508eea04bd5eabd787a6a4870454fe146c0ccc9dad0b54981dd53d075f95f6c132f1d44716091a65428f28ed320cb699d1652f8ebbbe56e5fdc7f52ddff5966", HexConverter.convertToHexString(exchange));
+        assertEquals("606c06092a864886f71201020202006f5d305ba003020105a10302010fa24f304da003020110a246044489951ebd7508eea04bd5eabd787a6a4870454fe146c0ccc9dad0b54981dd53d075f95f6c132f1d44716091a65428f28ed320cb699d1652f8ebbbe56e5fdc7f52ddff5966", ByteIterator.ofBytes(exchange).hexEncode().drainToString());
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         exchange = evaluateByClient(exchange);
-        assertEquals("", HexConverter.convertToHexString(exchange));
+        assertEquals("", ByteIterator.ofBytes(exchange).hexEncode().drainToString());
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         // different for JDK and WildFly impl, because JDK sends max buffer size although no security layer offered
         exchange = evaluateByServer(exchange);
-        assertEquals("603f06092a864886f71201020202010400ffffffffea1e2bf9dcfc44a31342cb16ed4e47a471506ab9e3152854052f6f54e687fe8bc940ea4a0100000004040404", HexConverter.convertToHexString(exchange));
+        assertEquals("603f06092a864886f71201020202010400ffffffffea1e2bf9dcfc44a31342cb16ed4e47a471506ab9e3152854052f6f54e687fe8bc940ea4a0100000004040404", ByteIterator.ofBytes(exchange).hexEncode().drainToString());
         assertFalse(server.isComplete());
         assertFalse(client.isComplete());
 
         // different for JDK and WildFly impl, because JDK sends max buffer size although no security layer offered
         exchange = evaluateByClient(exchange);
-        assertEquals("603f06092a864886f71201020202010400ffffffffe210a564589f9b536cd37a094a4cf9daf4d82ca5bfd1958c8901f0569cd068a60d1fd2ad0100000004040404", HexConverter.convertToHexString(exchange));
+        assertEquals("603f06092a864886f71201020202010400ffffffffe210a564589f9b536cd37a094a4cf9daf4d82ca5bfd1958c8901f0569cd068a60d1fd2ad0100000004040404", ByteIterator.ofBytes(exchange).hexEncode().drainToString());
         assertFalse(server.isComplete());
         assertTrue(client.isComplete());
 
