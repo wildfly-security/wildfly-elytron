@@ -73,7 +73,8 @@ public interface RealmIdentity {
     /**
      * Dispose this realm identity after a completed authentication attempt.
      */
-    void dispose();
+    default void dispose() {
+    }
 
     /**
      * Get an authenticated realm identity for this pre-authenticated identity.
