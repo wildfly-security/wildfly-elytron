@@ -56,11 +56,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(String name) {
-        return createRealmIdentity(new NamePrincipal(name));
-    }
-
-    @Override
     public RealmIdentity createRealmIdentity(Principal principal) {
         if (principal instanceof NamePrincipal == false) {
             throw new IllegalArgumentException("Invalid Principal type");
