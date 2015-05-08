@@ -20,6 +20,7 @@ package org.wildfly.security.password.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
@@ -108,7 +109,7 @@ public class DigestPasswordTest {
     private void validatePassword(DigestPassword simplePassword, String password, byte[] preDigested, PasswordFactory factory) throws Exception {
         Assert.assertArrayEquals(preDigested, simplePassword.getDigest());
 
-        assertTrue("Password Validation", factory.verify(simplePassword, password.toCharArray()));
-        assertFalse("Bad Password Rejection", factory.verify(simplePassword, "bad".toCharArray()));
+        assertTrue("Password Validation", factory.verifyCredential(simplePassword, clearPassword(password.toCharArray())));
+        assertFalse("Bad Password Rejection", factory.verifyCredential(simplePassword, clearPassword("bad".toCharArray())));
     }
 }

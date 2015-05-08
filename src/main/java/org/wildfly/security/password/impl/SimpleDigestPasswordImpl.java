@@ -26,6 +26,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -99,12 +100,29 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         }
     }
 
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        try {
-            return Arrays.equals(digest, getDigestOf(algorithm, guess));
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+    @Override
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class)
+                || credentialType.isAssignableFrom(SimpleDigestPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            try {
+                return Arrays.equals(digest, getDigestOf(algorithm, guess));
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            }
+        } else if (credential instanceof SimpleDigestPassword) {
+            SimpleDigestPassword guess = (SimpleDigestPassword) credential;
+
+            return algorithm.equals(guess.getAlgorithm()) && Arrays.equals(digest, guess.getDigest());
         }
+
+        return false;
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

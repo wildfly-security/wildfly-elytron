@@ -85,7 +85,7 @@ public abstract class PasswordFactorySpi {
      * @return {@code true} if the password matches, {@code false} otherwise
      * @throws InvalidKeyException if the given password type is not supported
      */
-    protected abstract boolean engineVerify(String algorithm, Password password, final char[] guess) throws InvalidKeyException;
+    protected abstract boolean engineVerifyCredential(String algorithm, Password password, final Object guess) throws InvalidKeyException;
 
     /**
      * Determine whether the given password object is convertible to the given key specification type.

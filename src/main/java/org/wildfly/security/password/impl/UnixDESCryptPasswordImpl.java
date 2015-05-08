@@ -26,6 +26,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -93,8 +94,25 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         throw new InvalidKeySpecException();
     }
 
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        return Arrays.equals(hash, generateHash(salt, guess));
+    @Override
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class)
+                || credentialType.isAssignableFrom(UnixDESCryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            return Arrays.equals(hash, generateHash(salt, guess));
+        } else if (credential instanceof UnixDESCryptPassword) {
+            UnixDESCryptPassword guess = (UnixDESCryptPassword) credential;
+
+            return salt == guess.getSalt() && Arrays.equals(hash, guess.getHash());
+        }
+
+        return false;
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

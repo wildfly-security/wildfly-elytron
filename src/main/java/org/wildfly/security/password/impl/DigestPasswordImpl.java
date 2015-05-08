@@ -25,6 +25,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
@@ -104,14 +105,29 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         throw new InvalidKeySpecException();
     }
 
+
     @Override
-    boolean verify(char[] guess) throws InvalidKeyException {
-        try {
-            byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
-            return Arrays.equals(digest, guessDigest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class) || credentialType.isAssignableFrom(DigestPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            try {
+                char[] guess = ((ClearPassword) credential).getPassword();
+                byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
+                return Arrays.equals(digest, guessDigest);
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            }
+        } else if (credential instanceof DigestPassword) {
+            DigestPassword guess = (DigestPassword) credential;
+            return algorithm.equals(guess.getAlgorithm()) && username.equals(guess.getUsername())
+                    && realm.equals(guess.getRealm()) && Arrays.equals(digest, guess.getDigest());
         }
+
+        return false;
     }
 
     @Override

@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -98,7 +99,7 @@ public class PropertiesFileKeyStoreTest {
         final DigestPassword digestPassword = (DigestPassword) storedPassword;
         assertEquals("Invalid username in password", "testuser", digestPassword.getUsername());
         assertEquals("Invalid realm in password", "testrealm", digestPassword.getRealm());
-        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(dukePassword, "testpassword".toCharArray()));
+        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(dukePassword, clearPassword("testpassword".toCharArray())));
 
         // try adding an entry with an invalid password type.
         passwordFactory = PasswordFactory.getInstance(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5);
@@ -173,7 +174,7 @@ public class PropertiesFileKeyStoreTest {
         DigestPassword digestPassword = (DigestPassword) passwordEntry.getPassword();
         assertEquals("Invalid username in password", testUsers[0], digestPassword.getUsername());
         assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
-        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[0].toCharArray()));
+        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(digestPassword, clearPassword(testPasswords[0].toCharArray())));
 
         passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[1], null);
         assertNotNull("Missing entry", passwordEntry);
@@ -181,7 +182,7 @@ public class PropertiesFileKeyStoreTest {
         digestPassword = (DigestPassword) passwordEntry.getPassword();
         assertEquals("Invalid username in password", testUsers[1], digestPassword.getUsername());
         assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
-        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[1].toCharArray()));
+        assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(digestPassword, clearPassword(testPasswords[1].toCharArray())));
 
         // re-enable javajoe.
         passwordEntry.enable();
@@ -215,7 +216,7 @@ public class PropertiesFileKeyStoreTest {
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[0], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
-            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[0].toCharArray()));
+            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(digestPassword, clearPassword(testPasswords[0].toCharArray())));
 
             passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[1], null);
             assertNotNull("Missing entry", passwordEntry);
@@ -223,7 +224,7 @@ public class PropertiesFileKeyStoreTest {
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[1], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
-            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[1].toCharArray()));
+            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(digestPassword, clearPassword(testPasswords[1].toCharArray())));
 
             passwordEntry = (EnablingPasswordEntry) keyStore.getEntry(testUsers[2], null);
             assertNotNull("Missing entry", passwordEntry);
@@ -231,7 +232,7 @@ public class PropertiesFileKeyStoreTest {
             digestPassword = (DigestPassword) passwordEntry.getPassword();
             assertEquals("Invalid username in password", testUsers[2], digestPassword.getUsername());
             assertEquals("Invalid realm in password", realmName, digestPassword.getRealm());
-            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verify(digestPassword, testPasswords[2].toCharArray()));
+            assertTrue(PasswordFactory.getInstance(DigestPassword.ALGORITHM_DIGEST_MD5).verifyCredential(digestPassword, clearPassword(testPasswords[2].toCharArray())));
         } finally {
             file.delete();
         }

@@ -18,9 +18,15 @@
 
 package org.wildfly.security.auth;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 
-import javax.security.auth.Subject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -29,6 +35,8 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.Certificate;
+
+import javax.security.auth.Subject;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -89,7 +97,7 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid credential", realmIdentity.getCredential(Password.class));
 
         // there is no keystore entry matching the test principal - verifyCredential must fail as there is no verifiable entry.
-        assertFalse(realmIdentity.verifyCredential("dukepass!@34".toCharArray()));
+        assertFalse(realmIdentity.verifyCredential(clearPassword("dukepass!@34".toCharArray())));
 
         // create another realm identity, this time using the variant that takes a principal.
         Principal principal = new NamePrincipal("javajoe");
@@ -142,8 +150,8 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class));
 
         // the realm identity must be able to verify the password for an enabled user.
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("passwd12#$".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential(clearPassword("passwd12#$".toCharArray())));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential(clearPassword("wrongpass".toCharArray())));
 
         // now lets switch to a realm identity that represents the disabled user "javajoe".
         realmIdentity = realm.createRealmIdentity("javajoe");
@@ -159,14 +167,14 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class));
 
         // and the realm identity won't be able to verify the password of the entry.
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("$#21pass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential(clearPassword("$#21pass".toCharArray())));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential(clearPassword("wrongpass".toCharArray())));
 
         // now we re-enable javajoe using the keystore API and rerun the previous tests.
         ((EnablingPasswordEntry) keyStore.getEntry("javajoe", null)).enable();
         assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(Password.class));
         assertNotNull("Invalid null credential", realmIdentity.getCredential(Password.class));
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("$#21pass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential(clearPassword("$#21pass".toCharArray())));
     }
 
     @Test
@@ -196,8 +204,8 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class));
 
         // the realm identity must be able to verify the password for the user "elytron".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("passwd12#$".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential(clearPassword("passwd12#$".toCharArray())));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential(clearPassword("wrongpass".toCharArray())));
 
         // now create a realm identity that represents the user "javajoe" (password is of type BCrypt).
         realmIdentity = realm.createRealmIdentity("javajoe");
@@ -217,7 +225,7 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class));
 
         // the realm identity must be able to verify the password for the user "javajoe".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("$#21pass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential(clearPassword("$#21pass".toCharArray())));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential(clearPassword("wrongpass".toCharArray())));
     }
 }

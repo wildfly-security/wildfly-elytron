@@ -19,6 +19,7 @@
 package org.wildfly.security.apacheds;
 
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -83,7 +84,7 @@ public class CryptCompatibilityTest {
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
 
-        assertTrue(pf.verify(password, (PASSWORD).toCharArray()));
+        assertTrue(pf.verifyCredential(password, clearPassword((PASSWORD).toCharArray())));
         System.out.println("Have something split out.");
     }
 
@@ -108,7 +109,7 @@ public class CryptCompatibilityTest {
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
 
-        assertTrue(pf.verify(password, (LONG_PASSWORD).toCharArray()));
+        assertTrue(pf.verifyCredential(password, clearPassword((LONG_PASSWORD).toCharArray())));
     }
 
     private static int convertSaltRepresentation(final byte[] saltBytes) throws InvalidKeySpecException {

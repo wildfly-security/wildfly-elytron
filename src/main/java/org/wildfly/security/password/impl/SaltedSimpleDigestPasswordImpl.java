@@ -26,7 +26,9 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -113,12 +115,28 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     }
 
     @Override
-    boolean verify(char[] guess) throws InvalidKeyException {
-        try {
-            return Arrays.equals(digest, digestOf(algorithm, salt, guess));
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class) || credentialType.isAssignableFrom(SaltedSimpleDigestPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            try {
+                return Arrays.equals(digest, digestOf(algorithm, salt, guess));
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            }
+        } else if (credential instanceof SaltedSimpleDigestPassword) {
+            SaltedSimpleDigestPassword guess = (SaltedSimpleDigestPassword) credential;
+
+            return algorithm.equals(guess.getAlgorithm()) && Arrays.equals(salt, guess.getSalt())
+                    && Arrays.equals(digest, guess.getDigest());
         }
+
+        return false;
     }
 
     @Override

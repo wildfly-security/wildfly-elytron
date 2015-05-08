@@ -188,18 +188,16 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             if (entry == null) return false;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
-                if (credential instanceof char[]) try {
-                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                try {
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verifyCredential(password, credential);
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                     throw new RealmUnavailableException(e);
-                } else {
-                    return false;
                 }
             } else if (entry instanceof EnablingPasswordEntry) {
                 final EnablingPasswordEntry pwdEntry = (EnablingPasswordEntry) entry;
                 final Password password = pwdEntry.getPassword();
-                if (pwdEntry.isEnabled() && credential instanceof char[]) try {
-                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                if (pwdEntry.isEnabled()) try {
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verifyCredential(password, credential);
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                     throw new RealmUnavailableException(e);
                 } else {

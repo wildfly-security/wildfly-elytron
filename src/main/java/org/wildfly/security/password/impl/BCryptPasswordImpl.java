@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -111,9 +112,25 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     }
 
     @Override
-    boolean verify(char[] guess) throws InvalidKeyException {
-        byte[] output = bcrypt(this.iterationCount, this.getSalt(), getNormalizedPasswordBytes(guess));
-        return Arrays.equals(this.hash, output);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class) || credentialType.isAssignableFrom(BCryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            byte[] output = bcrypt(this.iterationCount, this.getSalt(), getNormalizedPasswordBytes(guess));
+            return Arrays.equals(this.hash, output);
+        } else if (credential instanceof BCryptPassword) {
+            BCryptPassword guess = (BCryptPassword) credential;
+
+            return iterationCount == guess.getIterationCount() && Arrays.equals(salt, guess.getSalt())
+                    && Arrays.equals(hash, guess.getHash());
+        }
+
+        return false;
     }
 
     @Override

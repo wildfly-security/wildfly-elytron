@@ -30,6 +30,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -127,13 +128,31 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     }
 
     @Override
-    boolean verify(char[] guess) throws InvalidKeyException {
-        try {
-            byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
-            return Arrays.equals(this.digest, output);
-        } catch (NoSuchAlgorithmException nsae) {
-            throw new InvalidKeyException(nsae);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class)
+                || credentialType.isAssignableFrom(ScramDigestPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            try {
+                byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(),
+                        this.getIterationCount());
+                return Arrays.equals(this.digest, output);
+            } catch (NoSuchAlgorithmException nsae) {
+                throw new InvalidKeyException(nsae);
+            }
+        } else if (credential instanceof ScramDigestPassword) {
+            ScramDigestPassword guess = (ScramDigestPassword) credential;
+
+            return algorithm.equals(guess.getAlgorithm()) && iterationCount == guess.getIterationCount()
+                    && Arrays.equals(salt, guess.getSalt()) && Arrays.equals(digest, guess.getDigest());
         }
+
+        return false;
     }
 
     @Override

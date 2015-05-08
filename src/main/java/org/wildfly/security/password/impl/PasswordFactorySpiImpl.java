@@ -542,11 +542,11 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
     }
 
     @Override
-    protected boolean engineVerify(final String algorithm, final Password password, final char[] guess) throws InvalidKeyException {
+    protected boolean engineVerifyCredential(final String algorithm, final Password password, final Object guess) throws InvalidKeyException {
         if (password instanceof AbstractPasswordImpl) {
             final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
             if (algorithm.equals(abstractPassword.getAlgorithm())) {
-                return abstractPassword.verify(guess);
+                return abstractPassword.verifyCredential(guess);
             }
         }
         throw new InvalidKeyException();

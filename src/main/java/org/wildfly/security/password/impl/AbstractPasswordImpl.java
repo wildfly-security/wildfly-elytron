@@ -35,7 +35,9 @@ abstract class AbstractPasswordImpl implements Password {
 
     abstract <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException;
 
-    abstract boolean verify(final char[] guess) throws InvalidKeyException;
+    abstract boolean canVerify(Class<?> credentialType);
+
+    abstract boolean verifyCredential(final Object credential) throws InvalidKeyException;
 
     abstract <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType);
 

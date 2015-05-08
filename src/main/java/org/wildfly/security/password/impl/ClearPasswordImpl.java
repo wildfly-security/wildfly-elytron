@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -71,8 +72,18 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
         throw new InvalidKeySpecException();
     }
 
-    boolean verify(final char[] guess) {
-        return Arrays.equals(getPassword(), guess);
+    @Override
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            return Arrays.equals(getPassword(), ((ClearPassword) credential).getPassword());
+        }
+
+        return false;
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

@@ -176,7 +176,7 @@ public final class PasswordFactory {
      * @return {@code true} if the guess matches the password, {@code false} otherwise
      * @throws InvalidKeyException if the given password is not supported by this factory
      */
-    public boolean verify(Password password, char[] guess) throws InvalidKeyException {
-        return spi.engineVerify(algorithm, password, guess);
+    public boolean verifyCredential(Password password, Object guess) throws InvalidKeyException {
+        return spi.engineVerifyCredential(algorithm, password, guess);
     }
 }

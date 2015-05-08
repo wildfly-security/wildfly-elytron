@@ -22,12 +22,18 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
@@ -41,6 +47,18 @@ import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public class SunUnixMD5CryptTest {
+
+    private static final Provider provider = new WildFlyElytronProvider();
+
+    @BeforeClass
+    public static void register() {
+        Security.addProvider(provider);
+    }
+
+    @AfterClass
+    public static void remove() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void testParseCryptStringWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -85,8 +103,8 @@ public class SunUnixMD5CryptTest {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
         SunUnixMD5CryptPasswordImpl password = (SunUnixMD5CryptPasswordImpl) spi.engineGeneratePassword(PasswordUtil.identifyAlgorithm(cryptString), spec);
         final String algorithm = password.getAlgorithm();
-        assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
-        assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
+        assertTrue(spi.engineVerifyCredential(algorithm, password, clearPassword(correctPassword.toCharArray())));
+        assertFalse(spi.engineVerifyCredential(algorithm, password, clearPassword("wrongpassword".toCharArray())));
 
         // Create a new password using EncryptablePasswordSpec and check if the hash matches the hash from the spec
         SunUnixMD5CryptPasswordImpl password2 = (SunUnixMD5CryptPasswordImpl) spi.engineGeneratePassword(algorithm,
