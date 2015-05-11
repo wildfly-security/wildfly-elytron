@@ -37,5 +37,7 @@ public interface AuthenticatedRealmIdentity {
     /**
      * Dispose this realm identity after a completed authentication attempt.
      */
-    void dispose();
+    default void dispose() {
+    }
+
 }

@@ -145,10 +145,6 @@ public class JAASSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public void dispose() {
-        }
-
-        @Override
         public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException {
             return new JAASAuthenticatedRealmIdentity(this.principal, this.subject);
         }
