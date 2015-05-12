@@ -34,6 +34,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServer;
@@ -98,6 +99,11 @@ public class BasicScramSelfTest extends BaseTestCase {
                         if (credentialCallback.isCredentialSupported(password)) {
                             credentialCallback.setCredential(password);
                         }
+                    } else if (callback instanceof AuthorizeCallback) {
+                        AuthorizeCallback acb = (AuthorizeCallback) callback;
+                        assertEquals("login-name", acb.getAuthenticationID());
+                        assertEquals("user", acb.getAuthorizationID());
+                        acb.setAuthorized(true);
                     } else {
                         CallbackUtil.unsupported(callback);
                     }

@@ -81,6 +81,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
+        //        c="n,,"
         message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("v=rmF9pqV8S7suAoZWja4dJRkFsKQ=", new String(message));
@@ -187,12 +188,6 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertTrue(saslServer instanceof ScramSaslServer);
 
         byte[] message = "n,a=admin,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
-        message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
-
-        //         c="n,a=admin,"
-        message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NtV1dHUQfWdxjTl95JmKKGVQJSQ="
-                .getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
             fail("SaslException not throwed");
@@ -217,12 +212,12 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof ScramSaslServer);
 
-        byte[] message = "n,a=admin,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
-        //         c="n,a=user,"
-        message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ="
+        //         c="n,a=admin,"
+        message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ="
                 .getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
