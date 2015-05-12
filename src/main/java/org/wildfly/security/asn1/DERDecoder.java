@@ -35,8 +35,8 @@ import org.wildfly.security.util.ByteIterator;
  */
 public class DERDecoder implements ASN1Decoder {
 
-    private ByteIterator bi;
-    private ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
+    private final ByteIterator bi;
+    private final ArrayDeque<DecoderState> states = new ArrayDeque<DecoderState>();
     private int implicitTag = -1;
 
     /**

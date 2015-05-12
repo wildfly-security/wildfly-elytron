@@ -107,12 +107,24 @@ public class ASN1 {
      */
     public static final String OID_SHA1_WITH_ECDSA = "1.2.840.10045.4.1";
 
+    /**
+     * Format an AS.1 string from the given decoder as a string.
+     *
+     * @param decoder the ASN.1 decoder
+     * @return the formatted string
+     */
     public static String formatAsn1(ASN1Decoder decoder) {
         final StringBuilder builder = new StringBuilder();
         formatAsn1(decoder, builder);
         return builder.toString();
     }
 
+    /**
+     * Format an AS.1 string from the given decoder as a string.
+     *
+     * @param decoder the ASN.1 decoder
+     * @param builder the target string builder
+     */
     public static void formatAsn1(ASN1Decoder decoder, StringBuilder builder) {
         while (decoder.hasNextElement()) {
             final int type = decoder.peekType();
