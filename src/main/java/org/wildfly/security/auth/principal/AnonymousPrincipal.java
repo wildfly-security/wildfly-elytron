@@ -21,30 +21,62 @@ package org.wildfly.security.auth.principal;
 import java.io.Serializable;
 import java.security.Principal;
 
+/**
+ * The singleton anonymous principal.
+ */
 public final class AnonymousPrincipal implements Principal, Serializable {
 
     private static final long serialVersionUID = -2539713938519809712L;
 
     private static final AnonymousPrincipal INSTANCE = new AnonymousPrincipal();
 
+    /**
+     * Construct a new instance (should not be used; call {@link #getInstance()} instead).
+     */
     public AnonymousPrincipal() {
     }
 
+    /**
+     * Construct a new instance (should not be used; call {@link #getInstance()} instead).
+     *
+     * @param ignored ignored
+     */
     public AnonymousPrincipal(String ignored) {
     }
 
+    /**
+     * Get the anonymous principal instance.
+     *
+     * @return the anonymous principal instance
+     */
     public static AnonymousPrincipal getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Get the principal name (always "anonymous").
+     *
+     * @return the principal name (always "anonymous")
+     */
     public String getName() {
         return "anonymous";
     }
 
+    /**
+     * Determine whether the given object is also an anonymous principal.
+     *
+     * @param o the other object
+     * @return {@code true} if the object is an anonymous principal, {@code false} otherwise
+     */
     public boolean equals(final Object o) {
         return o instanceof AnonymousPrincipal;
     }
 
+    /**
+     * Get the hash code of this principal.
+     *
+     * @return the hash code of this principal
+     */
     public int hashCode() {
         return 3;
     }
