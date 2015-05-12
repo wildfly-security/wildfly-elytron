@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 import org.wildfly.security.auth.spi.RealmIdentity;
 
 /**
@@ -26,10 +28,13 @@ import org.wildfly.security.auth.spi.RealmIdentity;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class RealmIdentityCallback extends AbstractExtendedCallback {
+public final class RealmIdentityCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -238599667659078631L;
 
+    /**
+     * @serial The realm identity.
+     */
     private RealmIdentity realmIdentity;
 
     /**

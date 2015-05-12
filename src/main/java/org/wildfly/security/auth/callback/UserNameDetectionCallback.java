@@ -18,22 +18,40 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback used to detect the user name in advance.  Handlers should not be interactive.
  */
-public final class UserNameDetectionCallback extends AbstractExtendedCallback {
+public final class UserNameDetectionCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = 7825548149403292158L;
 
+    /**
+     * @serial The user name.
+     */
     private String userName;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param userName the user name
+     */
     public UserNameDetectionCallback(final String userName) {
         this.userName = userName;
     }
 
+    /**
+     * Construct a new instance with no user name.
+     */
     public UserNameDetectionCallback() {
     }
 
+    /**
+     * Get the user name.
+     *
+     * @return the user name
+     */
     public String getUserName() {
         return userName;
     }

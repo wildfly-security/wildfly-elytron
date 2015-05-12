@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.security.cert.X509Certificate;
 
 /**
@@ -25,12 +26,21 @@ import java.security.cert.X509Certificate;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class VerifyPeerTrustedCallback extends AbstractExtendedCallback {
+public final class VerifyPeerTrustedCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -2830410786419507677L;
 
+    /**
+     * @serial The certificate chain to verify.
+     */
     private final X509Certificate[] chain;
+    /**
+     * @serial The authentication type.
+     */
     private final String authType;
+    /**
+     * @serial A flag indicating whether the peer was verified.
+     */
     private boolean verified = false;
 
     /**

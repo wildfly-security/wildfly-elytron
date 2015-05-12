@@ -21,12 +21,17 @@ package org.wildfly.security.auth.callback;
 import javax.security.auth.callback.ChoiceCallback;
 
 /**
+ * A variation on {@code ChoiceCallback} which supports the extended callback interface.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class ExtendedChoiceCallback extends ChoiceCallback implements ExtendedCallback {
 
     private static final long serialVersionUID = 2222777746412093737L;
 
+    /**
+     * @serial A flag indicating whether the callback is optional.
+     */
     private final boolean optional;
 
     /**

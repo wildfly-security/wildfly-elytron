@@ -18,15 +18,20 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback to inform the callback handler of the public key type to be used.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public final class KeyTypeCallback extends AbstractExtendedCallback {
+public final class KeyTypeCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -7933564870333896205L;
 
+    /**
+     * @serial The key algorithm type name.
+     */
     private final String keyType;
 
     /**

@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,19 +16,7 @@
  * limitations under the License.
  */
 
+/**
+ * Extended callbacks and supporting utilities which allow efficient callback handler implementation.
+ */
 package org.wildfly.security.auth.callback;
-
-import java.io.Serializable;
-
-public abstract class AbstractExtendedCallback implements ExtendedCallback, Serializable {
-
-    private static final long serialVersionUID = 7987778726292016893L;
-
-    public boolean isOptional() {
-        return true;
-    }
-
-    public boolean needsInformation() {
-        return false;
-    }
-}

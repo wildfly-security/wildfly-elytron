@@ -45,12 +45,16 @@ public interface ExtendedCallback extends Callback {
      *
      * @return {@code true} if the callback is optional, {@code false} if it is mandatory
      */
-    boolean isOptional();
+    default boolean isOptional() {
+        return true;
+    }
 
     /**
      * Determine if this callback is requesting information.
      *
      * @return {@code true} if the callback is requesting information, {@code false} if it is only providing information
      */
-    boolean needsInformation();
+    default boolean needsInformation() {
+        return false;
+    }
 }

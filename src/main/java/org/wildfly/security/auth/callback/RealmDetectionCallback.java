@@ -18,22 +18,40 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback used to detect the user realm in advance.  Handlers should not be interactive.
  */
-public final class RealmDetectionCallback extends AbstractExtendedCallback {
+public final class RealmDetectionCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -5562791262784911074L;
 
+    /**
+     * @serial The realm name.
+     */
     private String realm;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param realm the realm name
+     */
     public RealmDetectionCallback(final String realm) {
         this.realm = realm;
     }
 
+    /**
+     * Construct a new instance with no realm name.
+     */
     public RealmDetectionCallback() {
     }
 
+    /**
+     * Get the realm name.
+     *
+     * @return the realm name
+     */
     public String getRealm() {
         return realm;
     }

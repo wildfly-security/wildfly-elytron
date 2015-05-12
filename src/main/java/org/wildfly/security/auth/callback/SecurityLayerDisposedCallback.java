@@ -18,13 +18,15 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback which indicates that the corresponding security layer (SASL client, SASL server, etc.) has been disposed
  * and any related resources may be relinquished.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityLayerDisposedCallback extends AbstractExtendedCallback {
+public final class SecurityLayerDisposedCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = 3720690487735346163L;
 

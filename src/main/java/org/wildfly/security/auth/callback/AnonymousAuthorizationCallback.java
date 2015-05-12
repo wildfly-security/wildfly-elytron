@@ -18,16 +18,24 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback to authorize anonymous authentication.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AnonymousAuthorizationCallback extends AbstractExtendedCallback {
+public final class AnonymousAuthorizationCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -6532813145396004679L;
 
+    /**
+     * @serial The authorization information from the client.
+     */
     private final String authorizationInfo;
+    /**
+     * @serial The authorization result flag.
+     */
     private boolean authorized;
 
     /**

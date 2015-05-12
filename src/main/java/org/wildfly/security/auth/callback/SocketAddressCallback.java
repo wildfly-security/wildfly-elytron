@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.net.SocketAddress;
 
 /**
@@ -26,11 +27,17 @@ import java.net.SocketAddress;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SocketAddressCallback extends AbstractExtendedCallback {
+public final class SocketAddressCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -4287450716990929230L;
 
+    /**
+     * @serial The socket address.
+     */
     private final SocketAddress address;
+    /**
+     * @serial The socket address disposition or "kind".
+     */
     private final Kind kind;
 
     /**
