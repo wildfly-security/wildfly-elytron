@@ -101,7 +101,7 @@ public class AtomicLoadKeyStore extends KeyStore {
     public LoadKey revertableload(final InputStream inputStream, final char[] password) throws NoSuchAlgorithmException, CertificateException, IOException {
         KeyStore current = keyStoreSpi.getCurrentKeyStore();
         if (current == null) {
-            throw log.revertableLoadNotPossible();
+            throw log.revertibleLoadNotPossible();
         }
 
         load(inputStream, password);
