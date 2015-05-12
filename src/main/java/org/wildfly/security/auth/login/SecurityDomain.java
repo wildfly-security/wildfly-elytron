@@ -160,21 +160,21 @@ public final class SecurityDomain {
             while (iterator.hasNext()) {
                 SecurityRealm realm = iterator.next();
                 try {
-                final CredentialSupport support = realm.getCredentialSupport(credentialType);
+                    final CredentialSupport support = realm.getCredentialSupport(credentialType);
 
-                final SupportLevel obtainable = support.obtainableSupportLevel();
-                final SupportLevel verification = support.verificationSupportLevel();
+                    final SupportLevel obtainable = support.obtainableSupportLevel();
+                    final SupportLevel verification = support.verificationSupportLevel();
 
-                if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
-                    obtainMin = obtainMax = obtainable;
-                    verifyMin = verifyMax = verification;
-                } else {
-                    if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
-                    if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
+                    if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
+                        obtainMin = obtainMax = obtainable;
+                        verifyMin = verifyMax = verification;
+                    } else {
+                        if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
+                        if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
 
-                    if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
-                    if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
-                }
+                        if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
+                        if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
+                    }
                 } catch (RealmUnavailableException e) {
                 }
             }
