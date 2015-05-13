@@ -39,6 +39,16 @@ public enum CredentialSupport {
     POSSIBLY_VERIFIABLE(SupportLevel.UNSUPPORTED, SupportLevel.POSSIBLY_SUPPORTED),
 
     /**
+     * The given credential type is possibly obtainable but never verifiable.
+     */
+    POSSIBLY_OBTAINABLE(SupportLevel.POSSIBLY_SUPPORTED, SupportLevel.UNSUPPORTED),
+
+    /**
+     * The given credential type can be obtained but not verified.
+     */
+    OBTAINABLE_ONLY(SupportLevel.SUPPORTED, SupportLevel.UNSUPPORTED),
+
+    /**
      * The given credential type is definitely verifiable but not obtainable.
      */
     VERIFIABLE_ONLY(SupportLevel.UNSUPPORTED, SupportLevel.SUPPORTED),
