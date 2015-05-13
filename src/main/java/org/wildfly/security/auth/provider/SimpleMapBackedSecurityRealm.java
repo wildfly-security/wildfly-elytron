@@ -139,7 +139,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             if (credential instanceof char[]) try {
                 final Password password = map.get(principal);
-                return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                return PasswordFactory.getInstance(password.getAlgorithm()).verifyCredential(password, credential);
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RealmUnavailableException(e);
             } else {

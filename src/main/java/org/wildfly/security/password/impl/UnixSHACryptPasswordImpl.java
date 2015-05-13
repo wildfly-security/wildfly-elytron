@@ -30,6 +30,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -129,14 +130,28 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     @Override
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        try {
-            byte[] password = getNormalizedPasswordBytes(guess);
-            byte[] encodedGuess = doEncode(algorithm, password, salt, iterationCount);
-            return Arrays.equals(getHash(), encodedGuess);
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class) || credentialType.isAssignableFrom(UnixSHACryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            try {
+                char[] guess = ((ClearPassword) credential).getPassword();
+                byte[] password = getNormalizedPasswordBytes(guess);
+                byte[] encodedGuess = doEncode(algorithm, password, salt, iterationCount);
+                return Arrays.equals(getHash(), encodedGuess);
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            }
+        } else if (credential instanceof UnixSHACryptPassword) {
+            UnixSHACryptPassword guess = (UnixSHACryptPassword) credential;
+            return algorithm.equals(guess.getAlgorithm()) && iterationCount == guess.getIterationCount()
+                    && Arrays.equals(salt, guess.getSalt()) && Arrays.equals(hash, guess.getHash());
         }
+
+        return false;
     }
 
     @Override

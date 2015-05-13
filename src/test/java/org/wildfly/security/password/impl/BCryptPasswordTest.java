@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security.PasswordUtil.clearPassword;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SALT_SIZE;
 import static org.wildfly.security.password.interfaces.BCryptPassword.DEFAULT_ITERATION_COUNT;
@@ -81,10 +82,10 @@ public class BCryptPasswordTest {
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         BCryptPassword password = (BCryptPassword) factory.generatePassword(spec);
-        Assert.assertTrue(factory.verify(password, "".toCharArray()));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword("".toCharArray())));
 
         // check if an incorrect password gets rejected.
-        Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+        Assert.assertFalse(factory.verifyCredential(password, clearPassword("wrongpassword".toCharArray())));
 
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
@@ -106,10 +107,10 @@ public class BCryptPasswordTest {
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         BCryptPassword password = (BCryptPassword) factory.generatePassword(spec);
-        Assert.assertTrue(factory.verify(password, correctPassword));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword(correctPassword)));
 
         // check if an incorrect password gets rejected.
-        Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+        Assert.assertFalse(factory.verifyCredential(password, clearPassword("wrongpassword".toCharArray())));
 
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
@@ -131,10 +132,10 @@ public class BCryptPasswordTest {
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         BCryptPassword password = (BCryptPassword) factory.generatePassword(spec);
-        Assert.assertTrue(factory.verify(password, correctPassword));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword(correctPassword)));
 
         // check if an incorrect password gets rejected.
-        Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+        Assert.assertFalse(factory.verifyCredential(password, clearPassword("wrongpassword".toCharArray())));
 
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
@@ -168,8 +169,8 @@ public class BCryptPasswordTest {
         Assert.assertEquals(DEFAULT_ITERATION_COUNT, bcryptSpec.getIterationCount());
 
         // check if the correct password is verified while an incorrect password is rejected.
-        Assert.assertTrue(factory.verify(password, "password".toCharArray()));
-        Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword("password".toCharArray())));
+        Assert.assertFalse(factory.verifyCredential(password, clearPassword("wrongpassword".toCharArray())));
     }
 
     /**
@@ -188,10 +189,10 @@ public class BCryptPasswordTest {
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         BCryptPassword password = (BCryptPassword) factory.generatePassword(spec);
-        Assert.assertTrue(factory.verify(password, correctPassword));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword(correctPassword)));
 
         // check if an incorrect password gets rejected.
-        Assert.assertFalse(factory.verify(password, "wrongpassword".toCharArray()));
+        Assert.assertFalse(factory.verifyCredential(password, clearPassword("wrongpassword".toCharArray())));
 
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
@@ -217,6 +218,6 @@ public class BCryptPasswordTest {
 
         // another long password that shares the first 72 bytes with the original password should yield the same hash.
         String longKeyAlt = "012345678901234567890123456789012345678901234567890123456789012345678901xxxxxxxxyyyyzzzzzz";
-        Assert.assertTrue(factory.verify(password, longKeyAlt.toCharArray()));
+        Assert.assertTrue(factory.verifyCredential(password, clearPassword(longKeyAlt.toCharArray())));
     }
 }

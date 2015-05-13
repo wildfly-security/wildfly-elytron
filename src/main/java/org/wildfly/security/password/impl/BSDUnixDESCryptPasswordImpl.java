@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -96,8 +97,26 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         throw new InvalidKeySpecException();
     }
 
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        return Arrays.equals(hash, generateHash(salt, iterationCount, guess));
+
+    @Override
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class) || credentialType.isAssignableFrom(BSDUnixDESCryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            return Arrays.equals(hash, generateHash(salt, iterationCount, guess));
+        } else if (credential instanceof BSDUnixDESCryptPassword) {
+            BSDUnixDESCryptPassword guess = (BSDUnixDESCryptPassword) credential;
+
+            return salt == guess.getSalt() && iterationCount == guess.getIterationCount()
+                    && Arrays.equals(hash, guess.getHash());
+        }
+
+        return false;
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {

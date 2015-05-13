@@ -27,6 +27,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -162,14 +163,31 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
     }
 
     @Override
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        byte[] test;
-        try {
-            test = sunMD5Crypt(getAlgorithm(), getNormalizedPasswordBytes(guess), getSalt(), getIterationCount());
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class)
+                || credentialType.isAssignableFrom(SunUnixMD5CryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            byte[] test;
+            try {
+                test = sunMD5Crypt(getAlgorithm(), getNormalizedPasswordBytes(guess), getSalt(), getIterationCount());
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("Cannot verify password", e);
+            }
+            return Arrays.equals(getHash(), test);
+        } else if (credential instanceof SunUnixMD5CryptPassword) {
+            SunUnixMD5CryptPassword guess = (SunUnixMD5CryptPassword) credential;
+
+            return algorithm.equals(guess.getAlgorithm()) && iterationCount == guess.getIterationCount()
+                    && Arrays.equals(salt, guess.getSalt()) && Arrays.equals(hash, guess.getHash());
         }
-        return Arrays.equals(getHash(), test);
+
+        return false;
     }
 
     @Override

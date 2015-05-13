@@ -27,6 +27,7 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -108,15 +109,31 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     @Override
-    boolean verify(final char[] guess) throws InvalidKeyException {
-        byte[] guessAsBytes = getNormalizedPasswordBytes(guess);
-        byte[] test;
-        try {
-            test = encode(guessAsBytes, getSalt());
-        } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+    boolean canVerify(Class<?> credentialType) {
+        return credentialType.isAssignableFrom(ClearPassword.class)
+                || credentialType.isAssignableFrom(UnixMD5CryptPassword.class);
+    }
+
+    @Override
+    boolean verifyCredential(Object credential) throws InvalidKeyException {
+        if (credential instanceof ClearPassword) {
+            char[] guess = ((ClearPassword) credential).getPassword();
+
+            byte[] guessAsBytes = getNormalizedPasswordBytes(guess);
+            byte[] test;
+            try {
+                test = encode(guessAsBytes, getSalt());
+            } catch (NoSuchAlgorithmException e) {
+                throw new InvalidKeyException("Cannot verify password", e);
+            }
+            return Arrays.equals(getHash(), test);
+        } else if (credential instanceof UnixMD5CryptPassword) {
+            UnixMD5CryptPassword guess = (UnixMD5CryptPassword) credential;
+
+            return Arrays.equals(salt, guess.getSalt()) && Arrays.equals(hash, guess.getHash());
         }
-        return Arrays.equals(getHash(), test);
+
+        return false;
     }
 
     @Override

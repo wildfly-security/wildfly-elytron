@@ -18,21 +18,26 @@
 
 package org.wildfly.security.password.impl;
 
-import org.junit.Test;
-import org.wildfly.security.password.Password;
-
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_256;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
+import java.security.spec.InvalidKeySpecException;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -45,6 +50,18 @@ import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
  */
 @SuppressWarnings("SpellCheckingInspection")
 public class UnixSHACryptPasswordUtilTest {
+
+    private static final Provider provider = new WildFlyElytronProvider();
+
+    @BeforeClass
+    public static void register() {
+        Security.addProvider(provider);
+    }
+
+    @AfterClass
+    public static void remove() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void shouldParseSpecWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -86,7 +103,7 @@ public class UnixSHACryptPasswordUtilTest {
         assertEquals(password.getIterationCount(), comparePassword.getIterationCount());
         assertArrayEquals(password.getSalt(), comparePassword.getSalt());
         assertArrayEquals(password.getHash(), comparePassword.getHash());
-        assertTrue(factorySpi.engineVerify(algorithm, password, "Hello world!".toCharArray()));
+        assertTrue(factorySpi.engineVerifyCredential(algorithm, password, clearPassword("Hello world!".toCharArray())));
     }
 
     @Test

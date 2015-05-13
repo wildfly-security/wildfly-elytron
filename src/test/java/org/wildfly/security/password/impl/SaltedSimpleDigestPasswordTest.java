@@ -20,6 +20,7 @@ package org.wildfly.security.password.impl;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
@@ -169,8 +170,8 @@ public class SaltedSimpleDigestPasswordTest {
         assertTrue("Salt Correctly Passed", Arrays.equals(salt, tsdp.getSalt()));
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdp.getDigest()));
 
-        assertTrue("Password Validation", pf.verify(tsdp, password));
-        assertFalse("Bad Password Rejection", pf.verify(tsdp, "bad".toCharArray()));
+        assertTrue("Password Validation", pf.verifyCredential(tsdp, clearPassword(password)));
+        assertFalse("Bad Password Rejection", pf.verifyCredential(tsdp, clearPassword("bad".toCharArray())));
     }
 
     private class TestPasswordImpl implements SaltedSimpleDigestPassword {

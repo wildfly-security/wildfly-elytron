@@ -21,6 +21,7 @@ package org.wildfly.security.password.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.PasswordUtil.clearPassword;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_256;
 
@@ -76,15 +77,15 @@ public class ScramDigestPasswordTest {
         assertEquals("4b007901b765489abead49d926f721d065a429c1", ByteIterator.ofBytes(digest).hexEncode().drainToString());
         spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_1, digest, "salt".getBytes(StandardCharsets.UTF_8), 4096);
         impl = new ScramDigestPasswordImpl(spec);
-        assertTrue(impl.verify("password".toCharArray()));
-        assertFalse(impl.verify("bad".toCharArray()));
+        assertTrue(impl.verifyCredential(clearPassword("password".toCharArray())));
+        assertFalse(impl.verifyCredential(clearPassword("bad".toCharArray())));
 
         digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_256, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 1000);
         assertEquals("632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3", ByteIterator.ofBytes(digest).hexEncode().drainToString());
         spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_256, digest, "salt".getBytes(StandardCharsets.UTF_8), 1000);
         impl = new ScramDigestPasswordImpl(spec);
-        assertTrue(impl.verify("password".toCharArray()));
-        assertFalse(impl.verify("bad".toCharArray()));
+        assertTrue(impl.verifyCredential(clearPassword("password".toCharArray())));
+        assertFalse(impl.verifyCredential(clearPassword("bad".toCharArray())));
     }
 
     /**
@@ -187,8 +188,8 @@ public class ScramDigestPasswordTest {
         assertTrue("Salt correctly passed", Arrays.equals(decodedSalt, sdp.getSalt()));
         assertEquals("Iteration count correctly passed", iterationCount, sdp.getIterationCount());
         assertTrue("Digest correctly generated", Arrays.equals(decodedDigest, sdp.getDigest()));
-        assertTrue("Password validation", factory.verify(sdp, password));
-        assertFalse("Bad password rejection", factory.verify(sdp, "badpassword".toCharArray()));
+        assertTrue("Password validation", factory.verifyCredential(sdp, clearPassword(password)));
+        assertFalse("Bad password rejection", factory.verifyCredential(sdp, clearPassword("badpassword".toCharArray())));
     }
 
 }
