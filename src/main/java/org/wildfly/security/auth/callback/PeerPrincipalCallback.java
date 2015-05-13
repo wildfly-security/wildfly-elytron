@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.security.Principal;
 
 /**
@@ -25,10 +26,13 @@ import java.security.Principal;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PeerPrincipalCallback extends AbstractExtendedCallback {
+public final class PeerPrincipalCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -2876104318406026491L;
 
+    /**
+     * @serial The peer principal.
+     */
     private final Principal principal;
 
     /**

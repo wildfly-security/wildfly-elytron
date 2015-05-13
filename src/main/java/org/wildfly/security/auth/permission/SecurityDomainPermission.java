@@ -26,10 +26,16 @@ import java.security.Permission;
 
 import org.wildfly.security.permission.PermissionActions;
 
+/**
+ * A permission controlling access to security domains.
+ */
 public final class SecurityDomainPermission extends Permission {
 
     private static final long serialVersionUID = 8533735187740371169L;
 
+    /**
+     * @serialField actions String The permission actions.
+     */
     private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[] {
         new ObjectStreamField("actions", String.class),
     };
@@ -37,36 +43,81 @@ public final class SecurityDomainPermission extends Permission {
     private transient String actionString;
     private transient int actions;
 
+    /**
+     * Construct a new instance with no actions.
+     *
+     * @param name the security domain name
+     */
     public SecurityDomainPermission(final String name) {
         super(name);
         actions = 0;
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @param name the security domain name
+     * @param actions the actions string
+     */
     public SecurityDomainPermission(final String name, final String actions) {
         super(name);
         this.actions = PermissionActions.parseActionStringToInt(Action.class, actions);
     }
 
+    /**
+     * Determine whether this permission implies another permission.
+     *
+     * @param permission the other permission
+     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
+     */
     public boolean implies(final Permission permission) {
         return permission instanceof SecurityDomainPermission && implies((SecurityDomainPermission) permission);
     }
 
+    /**
+     * Determine whether this permission implies another permission.
+     *
+     * @param permission the other permission
+     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
+     */
     public boolean implies(final SecurityDomainPermission permission) {
         return (actions & permission.actions) == permission.actions && getName().equals(permission.getName());
     }
 
+    /**
+     * Determine whether this permission equals another permission.
+     *
+     * @param obj the other permission
+     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
+     */
     public boolean equals(final Object obj) {
         return obj instanceof SecurityDomainPermission && equals((SecurityDomainPermission) obj);
     }
 
+    /**
+     * Determine whether this permission equals another permission.
+     *
+     * @param permission the other permission
+     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
+     */
     public boolean equals(final SecurityDomainPermission permission) {
         return actions == permission.actions && getName().equals(permission.getName());
     }
 
+    /**
+     * Get the hash code for this permission.
+     *
+     * @return the hash code for this permission
+     */
     public int hashCode() {
         return getName().hashCode() * 4 + actions;
     }
 
+    /**
+     * Get the actions for this permission.
+     *
+     * @return the actions for this permission
+     */
     public String getActions() {
         String actionString = this.actionString;
         if (actionString == null) {
@@ -75,9 +126,18 @@ public final class SecurityDomainPermission extends Permission {
         return actionString;
     }
 
+    /**
+     * The permission actions.  This enum is guaranteed to never be re-ordered.
+     */
     enum Action {
         // Do not re-order, ever
+        /**
+         * The "create" security domain permission action.
+         */
         create,
+        /**
+         * The "access" security domain permission action.
+         */
         access,
         ;
     }

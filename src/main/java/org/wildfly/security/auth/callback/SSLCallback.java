@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -29,12 +31,21 @@ import javax.net.ssl.SSLSocket;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLCallback extends AbstractExtendedCallback {
+public final class SSLCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = 7854221380587494535L;
 
+    /**
+     * @serial The SSL context.
+     */
     private final SSLContext sslContext;
+    /**
+     * @serial The SSL engine, if any.
+     */
     private final SSLEngine sslEngine;
+    /**
+     * @serial The SSL socket, if any.
+     */
     private final SSLSocket sslSocket;
 
     /**

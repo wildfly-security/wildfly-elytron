@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * A callback used to establish the channel binding for a security mechanism which supports it.  Both the binding type
  * and data must be set, otherwise no channel binding will be established.  The channel binding type should be one of
@@ -26,11 +28,17 @@ package org.wildfly.security.auth.callback;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ChannelBindingCallback extends AbstractExtendedCallback {
+public final class ChannelBindingCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = 779300207924589036L;
 
+    /**
+     * @serial The channel binding type.
+     */
     private String bindingType;
+    /**
+     * @serial The channel binding data.
+     */
     private byte[] bindingData;
 
     /**

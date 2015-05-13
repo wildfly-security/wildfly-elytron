@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
+
 /**
  * An optional callback indicating the success or failure of the authentication operation.  When this callback is
  * received, the callback handler may free any resources that were required to perform the authentication.  This
@@ -25,10 +27,13 @@ package org.wildfly.security.auth.callback;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AuthenticationCompleteCallback extends AbstractExtendedCallback {
+public final class AuthenticationCompleteCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -8336218311376736914L;
 
+    /**
+     * @serial The flag indicating whether the authentication was successful.
+     */
     private final boolean success;
 
     /**

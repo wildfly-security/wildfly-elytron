@@ -27,6 +27,12 @@ public final class RunAsPrincipalPermission extends Permission {
 
     private static final long serialVersionUID = -3361334389433669815L;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param name the principal name
+     * @param securityDomainName the security domain name
+     */
     public RunAsPrincipalPermission(final String name, final String securityDomainName) {
         super(compileName(name, securityDomainName));
     }
@@ -38,22 +44,50 @@ public final class RunAsPrincipalPermission extends Permission {
         return securityDomainName + ":" + name;
     }
 
+    /**
+     * Determine whether this permission implies another permission.
+     *
+     * @param permission the other permission
+     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
+     */
     public boolean implies(final Permission permission) {
         return equals(permission);
     }
 
+    /**
+     * Determine whether this permission equals another permission.
+     *
+     * @param obj the other permission
+     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
+     */
     public boolean equals(final Object obj) {
         return obj instanceof RunAsPrincipalPermission && equals((RunAsPrincipalPermission) obj);
     }
 
+    /**
+     * Determine whether this permission equals another permission.
+     *
+     * @param perm the other permission
+     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
+     */
     public boolean equals(final RunAsPrincipalPermission perm) {
         return perm != null && perm.getName().equals(getName());
     }
 
+    /**
+     * Get the hash code for this permission.
+     *
+     * @return the hash code for this permission
+     */
     public int hashCode() {
         return getName().hashCode();
     }
 
+    /**
+     * Get the actions for this permission (always an empty string).
+     *
+     * @return an empty string
+     */
     public String getActions() {
         return "";
     }

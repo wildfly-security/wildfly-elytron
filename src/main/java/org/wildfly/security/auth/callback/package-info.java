@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
  */
 
 /**
- * The principal types used by this API.  Note that, as a matter of policy, principal types are defined by
- * format (e.g. plain string, X.500 string, etc.), <em>not</em> by usage (e.g. user name, host name).
+ * Extended callbacks and supporting utilities which allow efficient callback handler implementation.
  */
-package org.wildfly.security.auth.principal;
+package org.wildfly.security.auth.callback;

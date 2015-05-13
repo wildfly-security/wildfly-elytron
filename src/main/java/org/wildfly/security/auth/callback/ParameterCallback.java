@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
@@ -29,9 +30,17 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class ParameterCallback implements ExtendedCallback {
+public final class ParameterCallback implements ExtendedCallback, Serializable {
 
+    private static final long serialVersionUID = -6000106115779144082L;
+
+    /**
+     * @serial The list of allowed parameter specification types.
+     */
     private final Class<? extends AlgorithmParameterSpec>[] allowedTypes;
+    /**
+     * @serial The algorithm parameter specification.
+     */
     private AlgorithmParameterSpec parameterSpec;
 
     /**

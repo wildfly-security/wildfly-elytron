@@ -75,16 +75,22 @@ public final class SecurityDomain {
         return new Builder();
     }
 
+    /**
+     * Create a new authentication context for this security domain which can be used to carry out a single authentication
+     * operation.
+     *
+     * @return the new authentication context
+     */
     public ServerAuthenticationContext createNewAuthenticationContext() {
         return new ServerAuthenticationContext(this);
     }
 
     /**
-     * Map the provided name to a {@link RealmIdentity}
+     * Map the provided name to a {@link RealmIdentity}.
      *
-     * @param name The name to map.
-     * @return The identity for the name.
-     * @throws RealmUnavailableException
+     * @param name the name to map
+     * @return the identity for the name
+     * @throws RealmUnavailableException if the realm is not able to perform the mapping
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
         for (NameRewriter rewriter : preRealmRewriters) {
@@ -160,21 +166,21 @@ public final class SecurityDomain {
             while (iterator.hasNext()) {
                 SecurityRealm realm = iterator.next();
                 try {
-                final CredentialSupport support = realm.getCredentialSupport(credentialType);
+                    final CredentialSupport support = realm.getCredentialSupport(credentialType);
 
-                final SupportLevel obtainable = support.obtainableSupportLevel();
-                final SupportLevel verification = support.verificationSupportLevel();
+                    final SupportLevel obtainable = support.obtainableSupportLevel();
+                    final SupportLevel verification = support.verificationSupportLevel();
 
-                if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
-                    obtainMin = obtainMax = obtainable;
-                    verifyMin = verifyMax = verification;
-                } else {
-                    if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
-                    if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
+                    if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
+                        obtainMin = obtainMax = obtainable;
+                        verifyMin = verifyMax = verification;
+                    } else {
+                        if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
+                        if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
 
-                    if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
-                    if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
-                }
+                        if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
+                        if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
+                    }
                 } catch (RealmUnavailableException e) {
                 }
             }
@@ -225,6 +231,9 @@ public final class SecurityDomain {
         currentSecurityIdentity.set(newIdentity);
     }
 
+    /**
+     * A builder for creating new security domains.
+     */
     public static final class Builder {
         private static final NameRewriter[] NONE = new NameRewriter[0];
 
@@ -236,6 +245,12 @@ public final class SecurityDomain {
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
 
+        /**
+         * Add a pre-realm name rewriter, which rewrites the authentication name before a realm is selected.
+         *
+         * @param rewriter the name rewriter
+         * @return this builder
+         */
         public Builder addPreRealmRewriter(NameRewriter rewriter) {
             assertNotBuilt();
             if (rewriter != null) preRealmRewriters.add(rewriter);
@@ -243,6 +258,12 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Add a post-realm name rewriter, which rewrites the authentication name after a realm is selected.
+         *
+         * @param rewriter the name rewriter
+         * @return this builder
+         */
         public Builder addPostRealmRewriter(NameRewriter rewriter) {
             assertNotBuilt();
             if (rewriter != null) postRealmRewriters.add(rewriter);
@@ -250,6 +271,12 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Set the realm mapper for this security domain, which selects a realm based on the authentication name.
+         *
+         * @param realmMapper the realm mapper
+         * @return this builder
+         */
         public Builder setRealmMapper(RealmMapper realmMapper) {
             assertNotBuilt();
             this.realmMapper = realmMapper == null ? RealmMapper.DEFAULT_REALM_MAPPER : realmMapper;
@@ -257,6 +284,13 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Add a realm to this security domain.
+         *
+         * @param name the realm's name in this configuration
+         * @param realm the realm
+         * @return this builder
+         */
         public Builder addRealm(String name, SecurityRealm realm) {
             assertNotBuilt();
             if (name == null) {
@@ -270,10 +304,20 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Get the default realm name.
+         *
+         * @return the default realm name
+         */
         public String getDefaultRealmName() {
             return defaultRealmName;
         }
 
+        /**
+         * Set the default realm name.
+         *
+         * @param defaultRealmName the default realm name
+         */
         public Builder setDefaultRealmName(final String defaultRealmName) {
             assertNotBuilt();
             if (defaultRealmName == null) {
@@ -284,6 +328,11 @@ public final class SecurityDomain {
             return this;
         }
 
+        /**
+         * Construct this security domain.
+         *
+         * @return the new security domain
+         */
         public SecurityDomain build() {
             final String defaultRealmName = this.defaultRealmName;
             if (defaultRealmName == null) {

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -32,9 +33,17 @@ import java.util.Set;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class CredentialCallback implements ExtendedCallback {
+public final class CredentialCallback implements ExtendedCallback, Serializable {
 
+    private static final long serialVersionUID = 4756568346009259703L;
+
+    /**
+     * @serial The set of allowed credential types.
+     */
     private final Set<Class<?>> allowedTypes;
+    /**
+     * @serial The credential itself.
+     */
     private Object credential;
 
     /**

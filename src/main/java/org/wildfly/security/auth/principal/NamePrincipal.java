@@ -30,6 +30,9 @@ public final class NamePrincipal implements Principal, Serializable {
 
     private static final long serialVersionUID = -6380283371738985125L;
 
+    /**
+     * @serial The principal name.
+     */
     private final String name;
 
     /**
@@ -50,18 +53,40 @@ public final class NamePrincipal implements Principal, Serializable {
         return name;
     }
 
+    /**
+     * Get the hash code of this principal.
+     *
+     * @return the hash code of this principal
+     */
     public int hashCode() {
         return name.hashCode();
     }
 
+    /**
+     * Determine whether this principal is equal to the given object.
+     *
+     * @param obj the object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
     public boolean equals(final Object obj) {
         return obj instanceof NamePrincipal && equals((NamePrincipal) obj);
     }
 
+    /**
+     * Determine whether this principal is equal to the given object.
+     *
+     * @param obj the object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
     public boolean equals(final NamePrincipal obj) {
         return obj != null && name.equals(obj.name);
     }
 
+    /**
+     * Get a string representation of this principal.
+     *
+     * @return the string representation of this principal
+     */
     public String toString() {
         return name;
     }

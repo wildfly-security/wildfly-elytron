@@ -238,7 +238,7 @@ public interface ASN1Decoder {
 
     /**
      * Determine if there is at least one more ASN.1 element that can be read. If called while
-     * decoding a constructed element (i.e., while decoding a sequence, set, or explictly tagged element),
+     * decoding a constructed element (i.e., while decoding a sequence, set, or explicitly tagged element),
      * this method will return whether the constructed element has at least one more ASN.1 element
      * that can be read. Otherwise, this method will return whether at least one more ASN.1 element
      * can be read from the input stream.

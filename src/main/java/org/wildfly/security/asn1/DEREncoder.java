@@ -44,11 +44,11 @@ public class DEREncoder implements ASN1Encoder {
     private static final TagComparator TAG_COMPARATOR = new TagComparator();
     private static final LexicographicComparator LEXICOGRAPHIC_COMPARATOR = new LexicographicComparator();
 
-    private ArrayDeque<EncoderState> states = new ArrayDeque<EncoderState>();
-    private ArrayList<ByteStringBuilder> buffers = new ArrayList<ByteStringBuilder>();
+    private final ArrayDeque<EncoderState> states = new ArrayDeque<EncoderState>();
+    private final ArrayList<ByteStringBuilder> buffers = new ArrayList<ByteStringBuilder>();
     private ByteStringBuilder currentBuffer;
     private int currentBufferPos = -1;
-    private ByteStringBuilder target;
+    private final ByteStringBuilder target;
     private int implicitTag = -1;
 
     /**

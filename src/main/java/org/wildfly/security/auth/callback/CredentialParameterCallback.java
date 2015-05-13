@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
+import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
@@ -44,10 +45,21 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class CredentialParameterCallback implements ExtendedCallback {
+public final class CredentialParameterCallback implements ExtendedCallback, Serializable {
 
+    private static final long serialVersionUID = 267007476766730906L;
+
+    /**
+     * @serial The credential kind, which should correspond to a security provider service type name.
+     */
     private final String credentialKind;
+    /**
+     * @serial The algorithm name, which should correspond to a valid name in an available security provider.
+     */
     private final String algorithmName;
+    /**
+     * @serial The algorithm parameter specification.
+     */
     private final AlgorithmParameterSpec algorithmParameterSpec;
 
     /**
