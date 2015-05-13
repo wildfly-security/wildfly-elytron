@@ -54,7 +54,7 @@ interface CredentialLoader {
      * be suitable for use with the supplied {@code distinguishedName}
      *
      * @param contextFactory the {@link DirContextFactory} to use to connect to LDAP.
-     * @param distinguishedName the ditinguished name of the identity.
+     * @param distinguishedName the distinguished name of the identity.
      * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
      */
     IdentityCredentialLoader forIdentity(DirContextFactory contextFactory, String distinguishedName);

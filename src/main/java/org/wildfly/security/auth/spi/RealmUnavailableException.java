@@ -32,20 +32,40 @@ public class RealmUnavailableException extends GeneralSecurityException {
 
     private static final long serialVersionUID = 5893125522523952643L;
 
+    /**
+     * Constructs a new {@code RealmUnavailableException} instance.  The message is left blank ({@code null}), and no
+     * cause is specified.
+     */
     public RealmUnavailableException() {
-        super();
     }
 
-    public RealmUnavailableException(String message, Throwable cause) {
-        super(message, cause);
+    /**
+     * Constructs a new {@code RealmUnavailableException} instance with an initial message.  No cause is specified.
+     *
+     * @param msg the message
+     */
+    public RealmUnavailableException(final String msg) {
+        super(msg);
     }
 
-    public RealmUnavailableException(String message) {
-        super(message);
-    }
-
-    public RealmUnavailableException(Throwable cause) {
+    /**
+     * Constructs a new {@code RealmUnavailableException} instance with an initial cause.  If a non-{@code null} cause
+     * is specified, its message is used to initialize the message of this {@code RealmUnavailableException}; otherwise
+     * the message is left blank ({@code null}).
+     *
+     * @param cause the cause
+     */
+    public RealmUnavailableException(final Throwable cause) {
         super(cause);
     }
 
+    /**
+     * Constructs a new {@code RealmUnavailableException} instance with an initial message and cause.
+     *
+     * @param msg the message
+     * @param cause the cause
+     */
+    public RealmUnavailableException(final String msg, final Throwable cause) {
+        super(msg, cause);
+    }
 }

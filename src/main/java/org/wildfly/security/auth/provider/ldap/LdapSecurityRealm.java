@@ -164,7 +164,7 @@ class LdapSecurityRealm implements SecurityRealm {
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
-                // If not supported in general then definately not supported for a specific principal.
+                // If not supported in general then definitely not supported for a specific principal.
                 return CredentialSupport.UNSUPPORTED;
             }
 
@@ -181,7 +181,7 @@ class LdapSecurityRealm implements SecurityRealm {
                         return temp;
                     }
 
-                    if (support == null || support.compareTo(temp) < 0) {
+                    if (support == null || temp != null && support.compareTo(temp) < 0) {
                         support = temp;
                     }
                 }
@@ -197,7 +197,7 @@ class LdapSecurityRealm implements SecurityRealm {
         @Override
         public <C> C getCredential(Class<C> credentialType) {
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
-                // If not supported in general then definately not supported for a specific principal.
+                // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
 
@@ -262,7 +262,7 @@ class LdapSecurityRealm implements SecurityRealm {
 
             if (principalMapping.nameIsDn) {
                 if (principalMapping.principalUseDn == false
-                        || (principalMapping.principalUseDn && (principalMapping.reloadPrincipalName || principalMapping.validatePresence))) {
+                        || (principalMapping.reloadPrincipalName || principalMapping.validatePresence)) {
                     context = dirContextFactory.obtainDirContext(null); // TODO - Referral Mode
                     ArrayList<String> requiredAttributes = new ArrayList<String>(2);
                     if (principalMapping.reloadPrincipalName) {

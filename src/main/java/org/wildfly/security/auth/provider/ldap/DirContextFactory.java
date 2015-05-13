@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import java.util.EnumSet;
+
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -34,18 +36,17 @@ public interface DirContextFactory {
     /**
      * Obtain a {@link DirContext} for the configured referral mode.
      *
-     * @param mode - The referral mode for if a referral is encountered querying LDAP. The passed in referral mode can be null
-     *        in which case the default of IGNORE will be assumed.
-     * @return A ready to use {@link DirContext} for searching and attribute retrieval.
+     * @param mode the referral mode for if a referral is encountered querying LDAP; the passed in referral mode can be {@code null}
+     *        in which case the default of {@code IGNORE} will be assumed
+     * @return a ready to use {@link DirContext} for searching and attribute retrieval
      */
     DirContext obtainDirContext(final ReferralMode mode) throws NamingException;
 
     /**
-     * Return the {@link DirContext} once it is no longer required.
+     * Return the {@link DirContext} once it is no longer required. The returned DirContext is not necessarily an
+     * {@link InitialDirContext} and as a result we can not assume it is closeable.
      *
-     * The returned DirContext is no necessarily an {@link InitialDirContext} as a result we can not assume it is closeable.
-     *
-     * @param context - The {@link DirContext} to return.
+     * @param context the {@link DirContext} to return
      */
     void returnContext(final DirContext context);
 
@@ -53,8 +54,23 @@ public interface DirContextFactory {
 
     // TODO - Is this the correct place to add credential verification?
 
+    /**
+     * The referral mode.
+     */
     public enum ReferralMode {
-        IGNORE("ignore"), FOLLOW("follow"), THROW("throw");
+        /**
+         * Referrals should be ignored.
+         */
+        IGNORE("ignore"),
+        /**
+         * Referrals should be followed.
+         */
+        FOLLOW("follow"),
+        /**
+         * Referrals should result in an exception.
+         */
+        THROW("throw"),
+        ;
 
         private final String value;
 
@@ -62,10 +78,76 @@ public interface DirContextFactory {
             this.value = value;
         }
 
+        /**
+         * Get the string value for this referral mode.
+         *
+         * @return the string value for this referral mode
+         */
         public String getValue() {
             return value;
         }
 
-    }
+        private static final int fullSize = values().length;
 
+        /**
+         * Determine whether the given set is fully populated (or "full"), meaning it contains all possible values.
+         *
+         * @param set the set
+         *
+         * @return {@code true} if the set is full, {@code false} otherwise
+         */
+        public static boolean isFull(final EnumSet<ReferralMode> set) {
+            return set != null && set.size() == fullSize;
+        }
+
+        /**
+         * Determine whether this instance is equal to one of the given instances.
+         *
+         * @param v1 the first instance
+         *
+         * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+         */
+        public boolean in(final ReferralMode v1) {
+            return this == v1;
+        }
+
+        /**
+         * Determine whether this instance is equal to one of the given instances.
+         *
+         * @param v1 the first instance
+         * @param v2 the second instance
+         *
+         * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+         */
+        public boolean in(final ReferralMode v1, final ReferralMode v2) {
+            return this == v1 || this == v2;
+        }
+
+        /**
+         * Determine whether this instance is equal to one of the given instances.
+         *
+         * @param v1 the first instance
+         * @param v2 the second instance
+         * @param v3 the third instance
+         *
+         * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+         */
+        public boolean in(final ReferralMode v1, final ReferralMode v2, final ReferralMode v3) {
+            return this == v1 || this == v2 || this == v3;
+        }
+
+        /**
+         * Determine whether this instance is equal to one of the given instances.
+         *
+         * @param values the possible values
+         *
+         * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+         */
+        public boolean in(final ReferralMode... values) {
+            if (values != null) for (ReferralMode value : values) {
+                if (this == value) return true;
+            }
+            return false;
+        }
+    }
 }

@@ -44,10 +44,21 @@ public class SimpleDirContextFactoryBuilder {
     private SimpleDirContextFactoryBuilder() {
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @return the new builder
+     */
     public static SimpleDirContextFactoryBuilder builder() {
         return new SimpleDirContextFactoryBuilder();
     }
 
+    /**
+     * Set the initial context factory class name.
+     *
+     * @param initialContextFactory the class name
+     * @return this builder
+     */
     public SimpleDirContextFactoryBuilder setInitialContextFactory(final String initialContextFactory) {
         assertNotBuilt();
         this.initialContextFactory = initialContextFactory;
@@ -55,6 +66,12 @@ public class SimpleDirContextFactoryBuilder {
         return this;
     }
 
+    /**
+     * Set the provider URL.
+     *
+     * @param providerUrl the provider URL
+     * @return this builder
+     */
     public SimpleDirContextFactoryBuilder setProviderUrl(final String providerUrl) {
         assertNotBuilt();
         this.providerUrl = providerUrl;
@@ -62,6 +79,12 @@ public class SimpleDirContextFactoryBuilder {
         return this;
     }
 
+    /**
+     * Set the security authentication method.
+     *
+     * @param securityAuthentication the authentication method
+     * @return this builder
+     */
     public SimpleDirContextFactoryBuilder setSecurityAuthentication(final String securityAuthentication) {
         assertNotBuilt();
         this.securityAuthentication = securityAuthentication;
@@ -69,6 +92,12 @@ public class SimpleDirContextFactoryBuilder {
         return this;
     }
 
+    /**
+     * Set the authentication principal.
+     *
+     * @param securityPrincipal the principal
+     * @return this builder
+     */
     public SimpleDirContextFactoryBuilder setSecurityPrincipal(final String securityPrincipal) {
         assertNotBuilt();
         this.securityPrincipal = securityPrincipal;
@@ -76,6 +105,12 @@ public class SimpleDirContextFactoryBuilder {
         return this;
     }
 
+    /**
+     * Set the authentication credential.
+     *
+     * @param securityCredential the credential
+     * @return this builder
+     */
     public SimpleDirContextFactoryBuilder setSecurityCredential(final String securityCredential) {
         assertNotBuilt();
         this.securityCredential = securityCredential;
@@ -83,6 +118,11 @@ public class SimpleDirContextFactoryBuilder {
         return this;
     }
 
+    /**
+     * Build this context factory.
+     *
+     * @return the context factory
+     */
     public DirContextFactory build() {
         assertNotBuilt();
 

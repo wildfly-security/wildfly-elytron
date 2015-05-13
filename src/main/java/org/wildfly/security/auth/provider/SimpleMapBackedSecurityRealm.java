@@ -48,6 +48,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     private final NameRewriter[] rewriters;
     private volatile Map<NamePrincipal, Password> map = Collections.emptyMap();
 
+    /**
+     * Construct a new instance.
+     *
+     * @param rewriters the name rewriters to use
+     */
     public SimpleMapBackedSecurityRealm(final NameRewriter... rewriters) {
         this.rewriters = rewriters.clone();
     }
@@ -121,17 +126,10 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public void dispose() {
-        }
-
-        @Override
         public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
-                }
-
-                public void dispose() {
                 }
             };
         }

@@ -34,8 +34,8 @@ interface IdentityCredentialLoader {
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not
      * supported.
      *
-     * @param credentialType the credential type to check.
-     * @return the level of support for this credential type.
+     * @param credentialType the credential type to check
+     * @return the level of support for this credential type
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType);
 

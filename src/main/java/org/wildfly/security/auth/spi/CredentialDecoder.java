@@ -35,6 +35,13 @@ public interface CredentialDecoder {
      */
     String getNameFromCredential(Object credential);
 
+    /**
+     * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
+     * matches the credential; this result will be returned.
+     *
+     * @param decoders the constituent decoders
+     * @return the aggregated decoder
+     */
     static CredentialDecoder aggregate(final CredentialDecoder... decoders) {
         if (decoders == null) {
             throw new IllegalArgumentException("decoders is null");

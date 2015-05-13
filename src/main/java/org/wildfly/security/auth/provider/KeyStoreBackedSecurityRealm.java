@@ -52,6 +52,11 @@ import org.wildfly.security.password.PasswordFactory;
 public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     private final KeyStore keyStore;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param keyStore the keystore to use to back this realm
+     */
     public KeyStoreBackedSecurityRealm(final KeyStore keyStore) {
         this.keyStore = keyStore;
     }
