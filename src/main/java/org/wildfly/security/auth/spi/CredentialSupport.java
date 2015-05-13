@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.spi;
 
+import java.util.EnumSet;
+
 /**
  * The level of support for a type of credential.
  *
@@ -67,7 +69,7 @@ public enum CredentialSupport {
     /**
      * Obtain the {@link SupportLevel} for being obtainable.
      *
-     * @return The {@link SupportLevel} for being obtainable.
+     * @return the {@link SupportLevel} for being obtainable
      */
     public SupportLevel obtainableSupportLevel() {
         return obtainable;
@@ -76,7 +78,7 @@ public enum CredentialSupport {
     /**
      * Obtain the {@link SupportLevel} for verification.
      *
-     * @return The {@link SupportLevel} for verification.
+     * @return the {@link SupportLevel} for verification
      */
     public SupportLevel verificationSupportLevel() {
         return verifiable;
@@ -161,5 +163,68 @@ public enum CredentialSupport {
         }
 
         throw new IllegalArgumentException("Invalid combination of obtainable and verifiable.");
+    }
+
+    private static final int fullSize = values().length;
+
+    /**
+     * Determine whether the given set is fully populated (or "full"), meaning it contains all possible values.
+     *
+     * @param set the set
+     *
+     * @return {@code true} if the set is full, {@code false} otherwise
+     */
+    public static boolean isFull(final EnumSet<CredentialSupport> set) {
+        return set != null && set.size() == fullSize;
+    }
+
+    /**
+     * Determine whether this instance is equal to one of the given instances.
+     *
+     * @param v1 the first instance
+     *
+     * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+     */
+    public boolean in(final CredentialSupport v1) {
+        return this == v1;
+    }
+
+    /**
+     * Determine whether this instance is equal to one of the given instances.
+     *
+     * @param v1 the first instance
+     * @param v2 the second instance
+     *
+     * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+     */
+    public boolean in(final CredentialSupport v1, final CredentialSupport v2) {
+        return this == v1 || this == v2;
+    }
+
+    /**
+     * Determine whether this instance is equal to one of the given instances.
+     *
+     * @param v1 the first instance
+     * @param v2 the second instance
+     * @param v3 the third instance
+     *
+     * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+     */
+    public boolean in(final CredentialSupport v1, final CredentialSupport v2, final CredentialSupport v3) {
+        return this == v1 || this == v2 || this == v3;
+    }
+
+    /**
+     * Determine whether this instance is equal to one of the given instances.
+     *
+     * @param values the possible values
+     *
+     * @return {@code true} if one of the instances matches this one, {@code false} otherwise
+     */
+    public boolean in(final CredentialSupport... values) {
+        if (values != null) for (CredentialSupport value : values) {
+            if (this == value) return true;
+        }
+        return false;
     }
 }

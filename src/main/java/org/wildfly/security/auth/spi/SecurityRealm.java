@@ -32,16 +32,15 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 public interface SecurityRealm {
 
     /**
-     * For the given name create the {@link RealmIdentity} in the context of this security realm.
-     *
-     * Any validation / name mapping is an implementation detail for the realm.
-     *
+     * For the given name create the {@link RealmIdentity} in the context of this security realm. Any validation / name
+     * mapping is an implementation detail for the realm.
+     * <p>
      * A realm returning a {@link RealmIdentity} does not confirm the existence of an identity, a realm may also return
      * {@code null} from this method if the provided {code name} can not be mapped to an identity although this is not required
      * of the realm.
      *
-     * @param name The name to use when creating the {@link RealmIdentity}
-     * @return The {@link RealmIdentity} for the provided {@code name} or {@code null}
+     * @param name the name to use when creating the {@link RealmIdentity}
+     * @return the {@link RealmIdentity} for the provided {@code name} or {@code null}
      */
     default RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException {
         return createRealmIdentity(new NamePrincipal(name));
@@ -50,11 +49,10 @@ public interface SecurityRealm {
     /**
      * Create a {@link RealmIdentity} from an existing {@link Principal}.
      *
-     * TODO - Not entirely convinced we need this yet,
-     *
-     * @param principal The principal to use to create the {@link RealmIdentity}
-     * @return The {@link RealmIdentity} for the provided {@code principal} or {@code null}
+     * @param principal the principal to use to create the {@link RealmIdentity}
+     * @return the {@link RealmIdentity} for the provided {@code principal} or {@code null}
      */
+    // TODO: determine if this is necessary.
     RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException;
 
     /**

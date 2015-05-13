@@ -36,8 +36,8 @@ public interface RealmIdentity {
      *
      * This method can return {@code null} if there is no mapping from the identity to a {@link Principal}
      *
-     * @return The {@link Principal} for this identity.
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     * @return the {@link Principal} for this identity
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     Principal getPrincipal() throws RealmUnavailableException;
 
@@ -47,7 +47,7 @@ public interface RealmIdentity {
      *
      * @param credentialType the credential type
      * @return the level of support for this credential type
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
 
@@ -57,7 +57,7 @@ public interface RealmIdentity {
      * @param credentialType the credential type class
      * @param <C> the credential type
      * @return the credential, or {@code null} if the principal has no credential of that type
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
 
@@ -65,8 +65,8 @@ public interface RealmIdentity {
      * Verify the given credential.
      *
      * @param credential the credential to verify
-     * @return {@code true} if verification was successful, {@code false} otherwise.
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     * @return {@code true} if verification was successful, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     boolean verifyCredential(Object credential) throws RealmUnavailableException;
 
@@ -80,7 +80,7 @@ public interface RealmIdentity {
      * Get an authenticated realm identity for this pre-authenticated identity.
      *
      * @return the authenticated realm identity (may not be {@code null})
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason.
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException;
 
