@@ -37,6 +37,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -79,6 +80,7 @@ final class ScramSaslServer extends AbstractSaslServer {
     private byte[] saltedPassword;
     private final boolean sendErrors = false;
     private int clientFirstMessageBareStart;
+    private ByteIterator gs2Header;
 
     ScramSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean plus, final Map<String, ?> props, final MessageDigest messageDigest, final Mac mac, final SecureRandom secureRandom, final String bindingType, final byte[] bindingData) {
         super(mechanismName, protocol, serverName, callbackHandler);
@@ -163,6 +165,8 @@ final class ScramSaslServer extends AbstractSaslServer {
                     }
 
                     clientFirstMessageBareStart = bi.offset();
+                    gs2Header = ByteIterator.ofBytes(response).limitedTo(clientFirstMessageBareStart);
+
                     // login name
                     String loginName;
                     if (bi.next() == 'n') {
@@ -301,6 +305,16 @@ final class ScramSaslServer extends AbstractSaslServer {
                         }
                     }
 
+                    final AuthorizeCallback authorizeCallback = new AuthorizeCallback(loginName, authorizationID==null ? loginName : authorizationID);
+                    try {
+                        tryHandleCallbacks(authorizeCallback);
+                    } catch (UnsupportedCallbackException e) {
+                        throw new SaslException("Callback handler does not support authorization", e);
+                    }
+                    if ( ! authorizeCallback.isAuthorized()) {
+                        throw new SaslException(loginName + " not authorized to act as " + authorizationID);
+                    }
+
                     // nonce (client + server nonce)
                     b.append('r').append('=');
                     b.append(nonce);
@@ -330,6 +344,14 @@ final class ScramSaslServer extends AbstractSaslServer {
                     if (bi.next() != 'c' || bi.next() != '=') {
                         throw invalidClientMessage();
                     }
+
+                    // check equality of gs2-header in FIRST and FINAL
+                    ByteIterator gs2HeaderIt = ByteIterator.ofBytes(response).delimitedBy(',');
+                    gs2HeaderIt.next(); gs2HeaderIt.next(); // skip "c="
+                    if(!gs2Header.contentEquals(gs2HeaderIt.base64Decode())){
+                        throw invalidClientMessage();
+                    }
+
                     final ByteIterator bindingIterator = di.base64Decode();
 
                     // -- sub-parse of binding data --
