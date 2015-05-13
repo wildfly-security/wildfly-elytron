@@ -2,10 +2,12 @@ org.wildfly.security
 org.wildfly.security.asn1
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
+org.wildfly.security.auth.login
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
 org.wildfly.security.auth.provider
 org.wildfly.security.auth.provider.ldap
+org.wildfly.security.auth.spi
 org.wildfly.security.auth.util
 org.wildfly.security.keystore
 org.wildfly.security.manager
