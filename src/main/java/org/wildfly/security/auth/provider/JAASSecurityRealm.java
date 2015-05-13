@@ -55,10 +55,21 @@ public class JAASSecurityRealm implements SecurityRealm {
 
     private CallbackHandler handler;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param loginConfiguration the login configuration name to use
+     */
     public JAASSecurityRealm(final String loginConfiguration) {
         this(loginConfiguration, null);
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @param loginConfiguration the login configuration name to use
+     * @param handler the JAAS callback handler to use
+     */
     public JAASSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
         this.loginConfiguration = loginConfiguration;
         this.handler = handler;

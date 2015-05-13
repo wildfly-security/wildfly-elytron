@@ -32,6 +32,12 @@ import org.wildfly.security.auth.spi.CredentialDecoder;
  */
 public final class X509CertificateCredentialDecoder implements CredentialDecoder {
 
+    /**
+     * Construct a new instance.
+     */
+    public X509CertificateCredentialDecoder() {
+    }
+
     public String getNameFromCredential(final Object credential) {
         if (credential instanceof X509Certificate) {
             return ((X509Certificate) credential).getSubjectX500Principal().getName(X500Principal.CANONICAL);
