@@ -114,7 +114,7 @@ public class AtomicLoadKeyStoreTest {
 
     private LoadKey load(AtomicLoadKeyStore keyStore, File source) throws Exception {
         try (FileInputStream fis = new FileInputStream(source)) {
-            return keyStore.revertableload(fis, STORE_PASSWORD);
+            return keyStore.revertibleLoad(fis, STORE_PASSWORD);
         }
     }
 

@@ -59,9 +59,7 @@ import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
- * <p>
  * A {@link KeyStore} implementation that is backed by the {@code WildFly} users properties file.
- * </p>
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
@@ -87,6 +85,9 @@ public class PropertiesKeyStoreSpi extends KeyStoreSpi {
 
     private final PasswordFactory passwordFactory;
 
+    /**
+     * Construct a new instance.
+     */
     public PropertiesKeyStoreSpi() {
         try {
             passwordFactory = PasswordFactory.getInstance(ALGORITHM_DIGEST_MD5);
