@@ -23,9 +23,8 @@ import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_C
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -54,6 +53,7 @@ import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.util.ByteIterator;
 
 /**
  * A {@link SecurityRealm} implementation that makes use of the legacy properties files.
@@ -69,18 +69,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final Pattern HASHED_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
     private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
-    private final File passwordFile;
-    private final File groupsFile;
     private final boolean plainText;
 
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
-        this.passwordFile = builder.passwordFile;
-        this.groupsFile = builder.groupsFile;
         this.plainText = builder.plainText;
-
-        load();
     }
 
     @Override
@@ -120,7 +114,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
                         passwordSpec = new  EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
                     } else {
-                         passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8));
+                         byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                         passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
 
                 } else {
@@ -151,7 +146,9 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
                 } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
-                    passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8));
+
+                    byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                    passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), hashed);
                 }
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
@@ -198,18 +195,18 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return plainText ? PLAIN_PATTERN : HASHED_PATTERN;
     }
 
-    public void load() throws IOException {
+    public void load(InputStream passwordsStream, InputStream groupsStream) throws IOException {
         Map<String, AccountEntry> accounts = new HashMap<>();
         Properties groups = new Properties();
-        if (groupsFile != null) {
-            try (InputStreamReader is = new InputStreamReader(new FileInputStream(groupsFile), StandardCharsets.UTF_8);) {
+        if (groupsStream != null) {
+            try (InputStreamReader is = new InputStreamReader(groupsStream, StandardCharsets.UTF_8);) {
                 groups.load(is);
             }
         }
 
         String realmName = null;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(passwordFile), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(passwordsStream, StandardCharsets.UTF_8))) {
 
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
@@ -252,21 +249,21 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     public static class Builder {
 
-        private File passwordFile;
-        private File groupsFile;
+        private InputStream passwordsStream;
+        private InputStream groupsStream;
         private boolean plainText;
 
         private Builder() {
         }
 
-        public Builder setPasswordFile(File passwordFile) {
-            this.passwordFile = passwordFile;
+        public Builder setPasswordsStream(InputStream passwordsStream) {
+            this.passwordsStream = passwordsStream;
 
             return this;
         }
 
-        public Builder setGroupsFile(File groupsFile) {
-            this.groupsFile = groupsFile;
+        public Builder setGroupsStream(InputStream groupsStream) {
+            this.groupsStream = groupsStream;
 
             return this;
         }
@@ -278,7 +275,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         LegacyPropertiesSecurityRealm build() throws IOException {
-            return new LegacyPropertiesSecurityRealm(this);
+            LegacyPropertiesSecurityRealm realm = new LegacyPropertiesSecurityRealm(this);
+            realm.load(passwordsStream, groupsStream);
+
+            return realm;
         }
 
     }
