@@ -16,24 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.keystore;
-
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-
 /**
- * A factory for creating {@link KeyStore} instances.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * Classes relating to authentication on the client and server side.
  */
-@FunctionalInterface
-interface KeyStoreFactory {
-
-    /**
-     * Construct or otherwise acquire a new instance.
-     *
-     * @return the new instance
-     * @throws KeyStoreException if instance creation failed for some reason
-     */
-    KeyStore getInstance() throws KeyStoreException;
-}
+package org.wildfly.security.auth;

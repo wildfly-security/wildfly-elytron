@@ -34,7 +34,7 @@ import java.security.cert.CertificateException;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ModifyTrackingKeyStoreSpi extends DelegatingKeyStoreSpi {
+class ModifyTrackingKeyStoreSpi extends DelegatingKeyStoreSpi {
 
     private final KeyStore delegate;
     private volatile boolean initialised = false;
@@ -90,14 +90,16 @@ public class ModifyTrackingKeyStoreSpi extends DelegatingKeyStoreSpi {
     /**
      * Identify if the KeyStore has been modified through this implementation since the last call to save or load.
      *
-     * @return {@code true} if the {@link KeyStore} has been modified, {@code false} otherwise.
+     * @return {@code true} if the {@link KeyStore} has been modified, {@code false} otherwise
      */
     boolean isModified() {
         return modified;
     }
 
     /**
-     * Set the modified flag for this {@link KeyStore}
+     * Set the modified flag for this {@link KeyStore}.
+     *
+     * @param modified the new value of the flag
      */
     void setModified(final boolean modified) {
         this.modified = modified;

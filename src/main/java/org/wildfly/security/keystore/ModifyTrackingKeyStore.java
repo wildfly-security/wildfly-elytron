@@ -44,11 +44,11 @@ public class ModifyTrackingKeyStore extends KeyStore {
     /**
      * Wrap an existing initialised {@link KeyStore} with a wrapper to track if it is modified.
      *
-     * @param toWrap the {@link KeyStore} to wrap.
+     * @param toWrap the {@link KeyStore} to wrap
      * @return the wrapper around the {@link KeyStore}
-     * @throws NoSuchAlgorithmException
-     * @throws CertificateException
-     * @throws IOException
+     * @throws NoSuchAlgorithmException if the keystore could not be loaded due to a missing algorithm
+     * @throws CertificateException if the keystore could not be loaded due to a certificate problem
+     * @throws IOException if the keystore could not be loaded due to an I/O problem
      * @throws IllegalArgumentException if the {@link KeyStore} being wrapped is {@code null}
      */
     public static ModifyTrackingKeyStore modifyTrackingKeyStore(final KeyStore toWrap) throws NoSuchAlgorithmException, CertificateException,

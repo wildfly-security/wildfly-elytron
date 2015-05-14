@@ -62,6 +62,12 @@ public final class ElytronAuthenticator extends Authenticator {
         }
     }
 
+    /**
+     * Get the password authentication for this authenticator, which uses the current local
+     * {@linkplain AuthenticationContext authentication context} to log in to the remote server.
+     *
+     * @return the authenticator
+     */
     protected PasswordAuthentication getPasswordAuthentication() {
         final AuthenticationContext context = AuthenticationContext.captureCurrent();
         final AuthenticationConfiguration authenticationConfiguration;
