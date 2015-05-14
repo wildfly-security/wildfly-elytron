@@ -44,11 +44,7 @@ public final class AuthenticationContextConfigurationClient {
     /**
      * A reusable privileged action to create a new configuration client.
      */
-    public static final PrivilegedAction<AuthenticationContextConfigurationClient> ACTION = new PrivilegedAction<AuthenticationContextConfigurationClient>() {
-        public AuthenticationContextConfigurationClient run() {
-            return new AuthenticationContextConfigurationClient();
-        }
-    };
+    public static final PrivilegedAction<AuthenticationContextConfigurationClient> ACTION = AuthenticationContextConfigurationClient::new;
 
     static final StackInspector STACK_INSPECTOR = StackInspector.getInstance();
 
