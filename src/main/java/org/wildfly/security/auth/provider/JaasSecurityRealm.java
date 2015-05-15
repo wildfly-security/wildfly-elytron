@@ -32,6 +32,9 @@ import java.security.AccessController;
 import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.acl.Group;
+import java.util.Enumeration;
+import java.util.Set;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -49,7 +52,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public class JAASSecurityRealm implements SecurityRealm {
+public class JaasSecurityRealm implements SecurityRealm {
 
     private final String loginConfiguration;
 
@@ -60,7 +63,7 @@ public class JAASSecurityRealm implements SecurityRealm {
      *
      * @param loginConfiguration the login configuration name to use
      */
-    public JAASSecurityRealm(final String loginConfiguration) {
+    public JaasSecurityRealm(final String loginConfiguration) {
         this(loginConfiguration, null);
     }
 
@@ -70,7 +73,7 @@ public class JAASSecurityRealm implements SecurityRealm {
      * @param loginConfiguration the login configuration name to use
      * @param handler the JAAS callback handler to use
      */
-    public JAASSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
+    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
         this.loginConfiguration = loginConfiguration;
         this.handler = handler;
     }
@@ -80,7 +83,7 @@ public class JAASSecurityRealm implements SecurityRealm {
         if (principal instanceof NamePrincipal == false) {
             throw ElytronMessages.log.invalidPrincipalType(NamePrincipal.class, principal == null ? null : principal.getClass());
         }
-        return new JAASRealmIdentity(principal);
+        return new JaasRealmIdentity(principal);
     }
 
     @Override
@@ -100,13 +103,47 @@ public class JAASSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class JAASRealmIdentity implements RealmIdentity {
+    private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
+        if (WildFlySecurityManager.isChecking()) {
+            try {
+                return AccessController.doPrivileged((PrivilegedExceptionAction<LoginContext>) () -> new LoginContext(loginConfig, subject, handler));
+            } catch (PrivilegedActionException pae) {
+                throw ElytronMessages.log.failedToCreateLoginContext(pae.getCause());
+            }
+        }
+        else {
+            try {
+                return new LoginContext(loginConfig, subject, handler);
+            } catch (LoginException le) {
+                throw ElytronMessages.log.failedToCreateLoginContext(le);
+            }
+        }
+    }
+
+    private CallbackHandler createCallbackHandler(final Principal principal, final Object credential) throws RealmUnavailableException {
+        if (handler == null) {
+            return new DefaultCallbackHandler(principal, credential);
+        }
+        else {
+            try {
+                final CallbackHandler callbackHandler = handler.getClass().newInstance();
+                // preserve backwards compatibility: custom handlers were allowed in the past as long as they had a public setSecurityInfo method.
+                final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
+                setSecurityInfo.invoke(callbackHandler, principal, credential);
+                return callbackHandler;
+            } catch (Exception e) {
+                throw ElytronMessages.log.failedToInstantiateCustomHandler(e);
+            }
+        }
+    }
+
+    private class JaasRealmIdentity implements RealmIdentity {
 
         private final Principal principal;
 
         private Subject subject;
 
-        private JAASRealmIdentity(final Principal principal) {
+        private JaasRealmIdentity(final Principal principal) {
             this.principal = principal;
         }
 
@@ -117,19 +154,7 @@ public class JAASSecurityRealm implements SecurityRealm {
 
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
-            if (handler == null) {
-                // we will be using the default handler that only supports char[] and String credentials.
-                if (char[].class.isAssignableFrom(credentialType) || String.class.isAssignableFrom(credentialType) || ClearPassword.class.isAssignableFrom(credentialType)) {
-                    return CredentialSupport.VERIFIABLE_ONLY;
-                }
-                else {
-                    return CredentialSupport.UNSUPPORTED;
-                }
-            }
-            else {
-                // if a custom handler is set then the credential type is possibly verifiable.
-                return CredentialSupport.POSSIBLY_VERIFIABLE;
-            }
+            return JaasSecurityRealm.this.getCredentialSupport(credentialType);
         }
 
         @Override
@@ -139,8 +164,9 @@ public class JAASSecurityRealm implements SecurityRealm {
 
         @Override
         public boolean verifyCredential(Object credential) throws RealmUnavailableException {
+            this.subject = null;
             boolean successfulLogin;
-            final CallbackHandler callbackHandler = this.createCallbackHandler(credential);
+            final CallbackHandler callbackHandler = createCallbackHandler(principal, credential);
             final Subject subject = new Subject();
             final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
 
@@ -157,41 +183,7 @@ public class JAASSecurityRealm implements SecurityRealm {
 
         @Override
         public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException {
-            return new JAASAuthenticatedRealmIdentity(this.principal, this.subject);
-        }
-
-        private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
-            if (WildFlySecurityManager.isChecking()) {
-                try {
-                    return AccessController.doPrivileged(new CreateLoginContextAction(loginConfig, subject, handler));
-                } catch (PrivilegedActionException pae) {
-                    throw ElytronMessages.log.failedToCreateLoginContext(pae.getCause());
-                }
-            }
-            else {
-                try {
-                    return new LoginContext(loginConfig, subject, handler);
-                } catch (LoginException le) {
-                    throw ElytronMessages.log.failedToCreateLoginContext(le);
-                }
-            }
-        }
-
-        private CallbackHandler createCallbackHandler(final Object credential) throws RealmUnavailableException {
-            if (handler == null) {
-                return new DefaultCallbackHandler(this.principal, credential);
-            }
-            else {
-                try {
-                    final CallbackHandler callbackHandler = handler.getClass().newInstance();
-                    // preserve backwards compatibility: custom handlers were allowed in the past as long as they had a public setSecurityInfo method.
-                    final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
-                    setSecurityInfo.invoke(callbackHandler, this.principal, credential);
-                    return callbackHandler;
-                } catch (Exception e) {
-                    throw ElytronMessages.log.failedToInstantiateCustomHandler(e);
-                }
-            }
+            return new JaasAuthenticatedRealmIdentity(this.principal, this.subject);
         }
     }
 
@@ -238,43 +230,67 @@ public class JAASSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class JAASAuthenticatedRealmIdentity implements AuthenticatedRealmIdentity {
+    private class JaasAuthenticatedRealmIdentity implements AuthenticatedRealmIdentity {
+
+        private static final String CALLER_PRINCIPAL_GROUP = "CallerPrincipal";
 
         private final Principal principal;
+        private Principal callerPrincipal;
         private final Subject subject;
 
-        private JAASAuthenticatedRealmIdentity(final Principal principal, final Subject subject) {
+        private JaasAuthenticatedRealmIdentity(final Principal principal, final Subject subject) {
             this.principal = principal;
             this.subject = subject;
-            // todo investigate subject for a caller principal for backwards compatibility.
+            // check if the subject has a caller principal group - if it has then we should use that principal.
+            this.callerPrincipal = getCallerPrincipal(subject);
         }
 
         @Override
         public void dispose() {
-            // todo call JAAS logout here if subject is not null?
+            if (this.subject != null) {
+                try {
+                    CallbackHandler handler = createCallbackHandler(principal, null);
+                    LoginContext context = createLoginContext(loginConfiguration, subject, handler);
+                    context.logout();
+                }
+                catch (LoginException | RealmUnavailableException e) {
+                    ElytronMessages.log.debugJAASLogoutFailure(principal, e);
+                }
+                // reset the caller principal after logout.
+                this.callerPrincipal = null;
+            }
         }
 
         @Override
         public Principal getPrincipal() {
-            return principal;
-        }
-    }
-
-    private class CreateLoginContextAction implements PrivilegedExceptionAction<LoginContext> {
-
-        private final String loginConfig;
-        private final Subject subject;
-        private final CallbackHandler handler;
-
-        private CreateLoginContextAction(final String loginConfig, final Subject subject, final CallbackHandler handler) {
-            this.loginConfig = loginConfig;
-            this.subject = subject;
-            this.handler = handler;
+            return this.callerPrincipal != null ? this.callerPrincipal : this.principal;
         }
 
-        @Override
-        public LoginContext run() throws Exception {
-            return new LoginContext(this.loginConfig, this.subject, this.handler);
+        /**
+         * Obtains the caller principal from the specified {@link Subject}. This method looks for a group called {@code
+         * CallerPrincipal} and if it finds one it returns the first {@link java.security.Principal} in the group.
+         *
+         * @param subject the {@link javax.security.auth.Subject} to be inspected.
+         * @return the first {@link java.security.Principal} found in the {@code CallerPrincipal} group or {@code null} if
+         * a caller principal couldn't be found.
+         */
+        private Principal getCallerPrincipal(Subject subject) {
+            Principal callerPrincipal = null;
+            if (subject != null) {
+                Set<Principal> principals = subject.getPrincipals();
+                if (principals != null && !principals.isEmpty()) {
+                    for (Principal principal : principals) {
+                        if (principal instanceof Group && principal.getName().equals(CALLER_PRINCIPAL_GROUP)) {
+                            Enumeration<? extends Principal> enumeration = ((Group) principal).members();
+                            if (enumeration.hasMoreElements()) {
+                                callerPrincipal = enumeration.nextElement();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return callerPrincipal;
         }
     }
 }

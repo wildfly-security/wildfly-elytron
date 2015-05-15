@@ -289,4 +289,8 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 79, value = "SASL client refuses to initiate authentication")
     SaslException saslClientRefusesToInitiateAuthentication();
+
+    @LogMessage(level = Logger.Level.DEBUG)
+    @Message(id = 80, value = "JAAS logout failed for principal %s")
+    void debugJAASLogoutFailure(Principal principal, @Cause Throwable cause);
 }

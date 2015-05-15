@@ -18,8 +18,8 @@
 
 package org.wildfly.security.sasl.gssapi;
 
-import static org.wildfly.security.sasl.gssapi.JAASUtil.loginClient;
-import static org.wildfly.security.sasl.gssapi.JAASUtil.loginServer;
+import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
+import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
 
 import java.util.Collections;
 import java.util.Map;

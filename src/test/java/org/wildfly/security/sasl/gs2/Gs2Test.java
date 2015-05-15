@@ -19,8 +19,8 @@
 package org.wildfly.security.sasl.gs2;
 
 import static org.junit.Assert.*;
-import static org.wildfly.security.sasl.gssapi.JAASUtil.loginClient;
-import static org.wildfly.security.sasl.gssapi.JAASUtil.loginServer;
+import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
+import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
 import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;

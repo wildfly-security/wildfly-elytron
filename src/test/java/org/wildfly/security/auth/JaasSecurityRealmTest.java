@@ -33,7 +33,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.provider.JAASSecurityRealm;
+import org.wildfly.security.auth.provider.JaasSecurityRealm;
+import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.SecurityRealm;
@@ -42,18 +43,18 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
- * Testsuite for the {@link org.wildfly.security.auth.provider.JAASSecurityRealm}.
+ * Testsuite for the {@link org.wildfly.security.auth.provider.JaasSecurityRealm}.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public class JAASSecurityRealmTest {
+public class JaasSecurityRealmTest {
 
     private static final Provider provider = new WildFlyElytronProvider();
 
     @BeforeClass
     public static void init() {
         Security.addProvider(provider);
-        System.setProperty("java.security.auth.login.config", JAASSecurityRealmTest.class.getResource("login.config").toString());
+        System.setProperty("java.security.auth.login.config", JaasSecurityRealmTest.class.getResource("login.config").toString());
     }
 
     @AfterClass
@@ -62,10 +63,10 @@ public class JAASSecurityRealmTest {
     }
 
     @Test
-    public void testJAASSecurityRealm() throws Exception {
+    public void testJaasSecurityRealm() throws Exception {
 
         // create a JAAS security realm with the default callback handler.
-        SecurityRealm realm = new JAASSecurityRealm("test");
+        SecurityRealm realm = new JaasSecurityRealm("test");
 
         // test the creation of a realm identity.
         RealmIdentity realmIdentity = realm.createRealmIdentity("elytron");
@@ -73,7 +74,7 @@ public class JAASSecurityRealmTest {
         Principal realmPrincipal = realmIdentity.getPrincipal();
         assertNotNull("Unexpected null realm principal", realmPrincipal);
         assertTrue("Invalid realm principal type", realmPrincipal instanceof NamePrincipal);
-        assertEquals("Invalid realm principal name", "elytron", realmPrincipal.getName());
+        assertEquals("Invalid realm principal name", new NamePrincipal("elytron"), realmPrincipal);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
         assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(char[].class));
@@ -100,11 +101,32 @@ public class JAASSecurityRealmTest {
             }
         }));
 
-        // now create a JAAS realm that takes a custom callback handler.
-        realm = new JAASSecurityRealm("test", new TestCallbackHandler());
+        // get the authenticated realm identity after successfully verifying the credential.
+        assertTrue(realmIdentity.verifyCredential("passwd12#$"));
+        AuthenticatedRealmIdentity authRealmIdentity = realmIdentity.getAuthenticatedRealmIdentity();
+        assertNotNull("Unexpected null authenticated realm identity", authRealmIdentity);
+        // check if the authenticated identity returns the caller principal as set by the test login module.
+        Principal authPrincipal = authRealmIdentity.getPrincipal();
+        assertNotNull("Unexpected null principal", authPrincipal);
+        assertEquals("Invalid principal name", new NamePrincipal("auth-caller"), authPrincipal);
+
+        // dispose the auth realm identity - should trigger a JAAS logout that clears the subject.
+        authRealmIdentity.dispose();
+        authPrincipal = authRealmIdentity.getPrincipal();
+        // after the logout, the subject no longer contains a caller principal so the identity should return the same principal as the realm identity.
+        assertNotNull("Unexpected null principal", authPrincipal);
+        assertEquals("Invalid principal name", new NamePrincipal("elytron"), authPrincipal);
+
+    }
+
+    @Test
+    public void testJaasSecurityRealmWithCustomCallbackHandler() throws Exception {
+
+        // create a JAAS realm that takes a custom callback handler.
+        SecurityRealm realm = new JaasSecurityRealm("test", new TestCallbackHandler());
 
         // create a new realm identity using the realm.
-        realmIdentity = realm.createRealmIdentity("javajoe");
+        RealmIdentity realmIdentity = realm.createRealmIdentity("javajoe");
 
         // as the custom handler might be able to handle different credential types, we should get a POSSIBLY_VERIFIABLE support for any type.
         assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(char[].class));
@@ -122,5 +144,6 @@ public class JAASSecurityRealmTest {
             }
         }));
         assertFalse(realmIdentity.verifyCredential("wrongpass"));
+
     }
 }
