@@ -38,6 +38,7 @@ public final class StringPrep {
     // XXX case folding would go here
 
     public static final long MAP_SCRAM_LOGIN_CHARS      = 1L << 30;
+    public static final long MAP_GS2_LOGIN_CHARS        = 1L << 31;
 
     // normalizations
 
@@ -251,7 +252,7 @@ public final class StringPrep {
                 target.append(' ');
                 continue;
             }
-            if (isSet(profile, MAP_SCRAM_LOGIN_CHARS)) {
+            if (isSet(profile, MAP_SCRAM_LOGIN_CHARS) || isSet(profile, MAP_GS2_LOGIN_CHARS)) {
                 if (cp == '=') {
                     target.append('=').append('3').append('D');
                     continue;

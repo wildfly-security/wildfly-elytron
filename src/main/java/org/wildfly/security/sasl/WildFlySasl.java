@@ -44,6 +44,17 @@ public final class WildFlySasl {
      */
     public static final String GSSAPI_DELEGATE_CREDENTIAL = "wildfly.sasl.gssapi.client.delegate-credential";
 
+
+    /**
+     * A property used to specify if the GS2 mechanism should support credential delegation. A value of
+     * "true" indicates that the credential should be delegated from the client to the server. The default
+     * value is "false" unless a {@link GSSCredential} is passed in using a {@link CredentialCallback},
+     * in which case the default is "true".
+     *
+     * Note: This is a client only property and is not used server side.
+     */
+    public static final String GS2_DELEGATE_CREDENTIAL = "wildfly.sasl.gs2.client.delegate-credential";
+
     /**
      * The various specifications for the SASL mechanisms mandate certain behaviour and verification of that behaviour at the
      * opposite side of the connection, unfortunately when interacting with other SASL mechanism implementations some of these
