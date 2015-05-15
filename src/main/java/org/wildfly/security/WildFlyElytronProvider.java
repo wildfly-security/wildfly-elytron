@@ -51,7 +51,6 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGO
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
 import java.security.Provider;
-import java.security.Provider.Service;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +62,6 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
-import org.wildfly.security.keystore.PropertiesKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -98,7 +96,6 @@ public class WildFlyElytronProvider extends Provider {
         final Map<String, String> emptyMap = Collections.emptyMap();
 
         putService(new Service(this, "KeyStore", "PasswordFile", PasswordKeyStoreSpi.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, "KeyStore", "PropertiesFile", PropertiesKeyStoreSpi.class.getName(), emptyList, emptyMap));
     }
 
     private void putPasswordImplementations() {
