@@ -28,35 +28,50 @@ import org.wildfly.security.password.Password;
  */
 public interface DigestPassword extends OneWayPassword {
 
+    /**
+     * The algorithm name "digest-md5".
+     */
     String ALGORITHM_DIGEST_MD5 = "digest-md5";
+
+    /**
+     * The algorithm name "digest-sha".
+     */
     String ALGORITHM_DIGEST_SHA = "digest-sha";
+
+    /**
+     * The algorithm name "digest-sha-256".
+     */
     String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
+
+    /**
+     * The algorithm name "digest-sha-512".
+     */
     String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
 
     /**
      * Get the username this {@link Password} is associated with.
-     *
+     * <p>
      * Generally a {@link Password} should not need to know this information but this is an integral part of how the
      * representation of this {@link Password} is created.
      *
-     * @return The username this {@link Password} is associated with.
+     * @return the username this {@link Password} is associated with
      */
     String getUsername();
 
     /**
      * Get the realm this {@link Password} is associated with.
-     *
-     * Note: This is independent of the name of the realm used to obtain the {@link Password} representation, this is the value
+     * <p>
+     * <em>Note:</em> This is independent of the name of the realm used to obtain the {@link Password} representation, this is the value
      * used to generate the digest.
      *
-     * @return the realm this {@link Password} is associated with.
+     * @return the realm this {@link Password} is associated with
      */
     String getRealm();
 
     /**
-     * Get the digest represented by this {@link Password}
+     * Get the digest represented by this {@link Password}.
      *
-     * @return The digest represented by this {@link Password}
+     * @return the digest represented by this {@link Password}
      */
     byte[] getDigest();
 

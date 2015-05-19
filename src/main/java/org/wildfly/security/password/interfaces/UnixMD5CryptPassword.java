@@ -21,15 +21,33 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * The UNIX modular-crypt MD5 crypt algorithm.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface UnixMD5CryptPassword extends OneWayPassword {
 
+    /**
+     * The algorithm name "crypt-md5".
+     */
     String ALGORITHM_CRYPT_MD5 = "crypt-md5";
 
+    /**
+     * The maximum salt size.
+     */
     int SALT_SIZE = 8;
 
+    /**
+     * Get the salt component of this password.
+     *
+     * @return the salt component
+     */
     byte[] getSalt();
 
+    /**
+     * Get the hash component of this password.
+     *
+     * @return the hash component
+     */
     byte[] getHash();
 }

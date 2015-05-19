@@ -21,15 +21,46 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * A simple single digest based password.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface SimpleDigestPassword extends OneWayPassword {
-    String ALGORITHM_SIMPLE_DIGEST_MD2 = "simple-digest-md2";
-    String ALGORITHM_SIMPLE_DIGEST_MD5 = "simple-digest-md5";
-    String ALGORITHM_SIMPLE_DIGEST_SHA_1 = "simple-digest-sha-1";
-    String ALGORITHM_SIMPLE_DIGEST_SHA_256 = "simple-digest-sha-256";
-    String ALGORITHM_SIMPLE_DIGEST_SHA_384 = "simple-digest-sha-384";
-    String ALGORITHM_SIMPLE_DIGEST_SHA_512 = "simpledigest-sha-512";
 
+    /**
+     * The algorithm name "simple-digest-md2".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_MD2 = "simple-digest-md2";
+
+    /**
+     * The algorithm name "simple-digest-md5".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_MD5 = "simple-digest-md5";
+
+    /**
+     * The algorithm name "simple-digest-sha-1".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_SHA_1 = "simple-digest-sha-1";
+
+    /**
+     * The algorithm name "simple-digest-sha-256".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_SHA_256 = "simple-digest-sha-256";
+
+    /**
+     * The algorithm name "simple-digest-sha-384".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_SHA_384 = "simple-digest-sha-384";
+
+    /**
+     * The algorithm name "simple-digest-sha-512".
+     */
+    String ALGORITHM_SIMPLE_DIGEST_SHA_512 = "simple-digest-sha-512";
+
+    /**
+     * Get the digest of this password.
+     *
+     * @return the digest
+     */
     byte[] getDigest();
 }

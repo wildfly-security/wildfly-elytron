@@ -21,21 +21,50 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * A password using the "bcrypt" Blowfish-based one-way password encryption algorithm.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface BCryptPassword extends OneWayPassword {
 
+    /**
+     * The algorithm name.
+     */
     String ALGORITHM_BCRYPT = "bcrypt";
 
+    /**
+     * A constant representing the bcrypt salt size, in bytes.
+     */
     int BCRYPT_SALT_SIZE = 16;
 
+    /**
+     * A constant representing the bcrypt hash size, in bytes.
+     */
     int BCRYPT_HASH_SIZE = 23;
 
+    /**
+     * A constant representing the default iteration count for bcrypt passwords.
+     */
     int DEFAULT_ITERATION_COUNT = 10;
 
+    /**
+     * Get the hash segment of this password.
+     *
+     * @return the hash segment
+     */
     byte[] getHash();
 
+    /**
+     * Get the salt segment of this password.
+     *
+     * @return the salt segment
+     */
     byte[] getSalt();
 
+    /**
+     * Get the iteration count of this password.
+     *
+     * @return the iteration count
+     */
     int getIterationCount();
 }

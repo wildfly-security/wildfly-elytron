@@ -64,8 +64,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
 /**
- *
- *
+ * The Elytron-provided password factory SPI implementation, which supports all the provided password types.
  */
 public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
 

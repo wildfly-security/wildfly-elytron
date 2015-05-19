@@ -21,20 +21,50 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * An MD5-crypt password using the Sun scheme.
+ *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 public interface SunUnixMD5CryptPassword extends OneWayPassword {
 
+    /**
+     * The algorithm name "sun-crypt-md5".
+     */
     String ALGORITHM_SUN_CRYPT_MD5 = "sun-crypt-md5";
+
+    /**
+     * The algorithm name "sun-crypt-md5-bare-salt".
+     */
     String ALGORITHM_SUN_CRYPT_MD5_BARE_SALT = "sun-crypt-md5-bare-salt";
 
+    /**
+     * The default salt size of this password type.
+     */
     int DEFAULT_SALT_SIZE = 8;
 
+    /**
+     * The default iteration count of this password type.
+     */
     int DEFAULT_ITERATION_COUNT = 5500;
 
+    /**
+     * Get the salt component of this password.
+     *
+     * @return the salt
+     */
     byte[] getSalt();
 
+    /**
+     * Get the hash component of this password.
+     *
+     * @return the hash
+     */
     byte[] getHash();
 
+    /**
+     * Get the iteration count of this password.
+     *
+     * @return the iteration count
+     */
     int getIterationCount();
 }
