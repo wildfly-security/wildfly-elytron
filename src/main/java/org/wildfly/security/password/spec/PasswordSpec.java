@@ -21,7 +21,7 @@ package org.wildfly.security.password.spec;
 import java.security.spec.KeySpec;
 
 /**
- *
+ * A password specification object.
  */
 public interface PasswordSpec extends KeySpec {
 }

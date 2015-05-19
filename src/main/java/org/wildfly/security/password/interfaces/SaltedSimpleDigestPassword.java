@@ -19,6 +19,7 @@
 package org.wildfly.security.password.interfaces;
 
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
 
 /**
  * A simple password where the generated digest also includes a salt.
@@ -83,16 +84,16 @@ public interface SaltedSimpleDigestPassword extends OneWayPassword {
     int DEFAULT_SALT_SIZE = 12;
 
     /**
-     * Get the digest represented by this {@link org.wildfly.security.password.Password password}
+     * Get the digest represented by this {@linkplain Password password}.
      *
-     * @return The digest represented by this {@link org.wildfly.security.password.Password password}
+     * @return the digest represented by this {@linkplain Password password}
      */
     byte[] getDigest();
 
     /**
      * Get the salt used to generate the digest.
      *
-     * @return The salt used to generate the digest.
+     * @return the salt used to generate the digest
      */
     byte[] getSalt();
 

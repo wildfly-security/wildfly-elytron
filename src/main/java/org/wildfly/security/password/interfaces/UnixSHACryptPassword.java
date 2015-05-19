@@ -21,14 +21,30 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * The UNIX modular-crypt SHA crypt algorithm.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface UnixSHACryptPassword extends OneWayPassword {
+
+    /**
+     * The algorithm name "crypt-sha-256".
+     */
     String ALGORITHM_CRYPT_SHA_256 = "crypt-sha-256";
+
+    /**
+     * The algorithm name "crypt-sha-512".
+     */
     String ALGORITHM_CRYPT_SHA_512 = "crypt-sha-512";
 
+    /**
+     * The maximum salt size of this algorithm.
+     */
     int SALT_SIZE = 16;
 
+    /**
+     * The default iteration count of this algorithm.
+     */
     int DEFAULT_ITERATION_COUNT = 5000;
 
     /**

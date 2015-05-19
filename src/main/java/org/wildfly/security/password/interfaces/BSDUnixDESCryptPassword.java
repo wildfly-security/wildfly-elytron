@@ -21,20 +21,50 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
+ * A BSD-style DES "crypt" password.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface BSDUnixDESCryptPassword extends OneWayPassword {
+
+    /**
+     * The algorithm name.
+     */
     String ALGORITHM_BSD_CRYPT_DES = "bsd-crypt-des";
 
+    /**
+     * The constant size of the hash, in bytes.
+     */
     int BSD_CRYPT_DES_HASH_SIZE = 8;
 
+    /**
+     * The constant size of the salt, in bytes.
+     */
     int BSD_CRYPT_DES_SALT_SIZE = 3;
 
+    /**
+     * The default iteration count.
+     */
     int DEFAULT_ITERATION_COUNT = 5001;
 
+    /**
+     * Get the iteration count of this password.
+     *
+     * @return the iteration count
+     */
     int getIterationCount();
 
+    /**
+     * Get the salt segment of this password as an {@code int} value.
+     *
+     * @return the salt segment
+     */
     int getSalt();
 
+    /**
+     * Get the hash segment of this password.
+     *
+     * @return the hash segment
+     */
     byte[] getHash();
 }

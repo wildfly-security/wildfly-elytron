@@ -21,11 +21,20 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 
 /**
- *
+ * The traditional UNIX DES crypt password algorithm.
  */
 public interface UnixDESCryptPassword extends OneWayPassword {
+
+    /**
+     * The algorithm name "crypt-des".
+     */
     String ALGORITHM_CRYPT_DES = "crypt-des";
 
+    /**
+     * Get the salt of this password as a {@code short}.
+     *
+     * @return the salt
+     */
     short getSalt();
 
     /**
