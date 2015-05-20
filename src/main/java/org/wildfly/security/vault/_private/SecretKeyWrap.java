@@ -79,7 +79,7 @@ class SecretKeyWrap implements SecretKey, Serializable {
         final PasswordFactory passwordFactory;
         try {
             passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-            password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(ElytronVault.byteArrayDecode(encoded)));
+            password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(KeystorePasswordStorage.byteArrayDecode(encoded)));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IOException(e);
         }

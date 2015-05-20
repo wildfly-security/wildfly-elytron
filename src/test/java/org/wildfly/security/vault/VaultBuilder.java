@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.vault;
 
-import org.wildfly.security.vault._private.ElytronVault;
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -139,7 +139,7 @@ public class VaultBuilder {
         SecretKey adminKey = generator.generateKey();
 
         KeyStore.ProtectionParameter keyPP = new KeyStore.PasswordProtection(keyPassword);
-        keyStore.setEntry(ElytronVault.DEFAULT_ADMIN_KEY_ALIAS, new KeyStore.SecretKeyEntry(adminKey), keyPP);
+        keyStore.setEntry(KeystorePasswordStorage.DEFAULT_ADMIN_KEY_ALIAS, new KeyStore.SecretKeyEntry(adminKey), keyPP);
 
         Cipher cipher = Cipher.getInstance(cryptoAlgorithm);
         cipher.init(Cipher.ENCRYPT_MODE, adminKey);

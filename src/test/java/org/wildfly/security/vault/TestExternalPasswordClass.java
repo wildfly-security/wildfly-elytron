@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.vault;
 
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
+
 import javax.security.auth.DestroyFailedException;
 import java.util.Arrays;
 import java.util.Map;
@@ -49,7 +51,7 @@ public class TestExternalPasswordClass implements PasswordClass {
         if (password != null) {
             return password.clone();
         } else if (options != null) {
-            return ((String)options.get(VaultSpi.CALLBACK + ".myPassword")).toCharArray();
+            return ((String)options.get(KeystorePasswordStorage.CALLBACK + ".myPassword")).toCharArray();
         }
         throw new RuntimeException("Password is not specified correctly");
     }

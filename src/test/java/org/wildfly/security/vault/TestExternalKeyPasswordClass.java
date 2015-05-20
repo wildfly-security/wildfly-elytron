@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.vault;
 
-import org.wildfly.security.vault._private.ElytronVault;
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
 
 import java.util.Map;
 
@@ -43,7 +43,7 @@ public class TestExternalKeyPasswordClass extends TestExternalPasswordClass {
         if (password != null) {
             return password.clone();
         } else if (options != null) {
-            return ((String)options.get(ElytronVault.KEY_PASSWORD_CALLBACK + ".myPassword")).toCharArray();
+            return ((String)options.get(KeystorePasswordStorage.KEY_PASSWORD_CALLBACK + ".myPassword")).toCharArray();
         }
         throw new RuntimeException("Key password is not specified correctly");
     }

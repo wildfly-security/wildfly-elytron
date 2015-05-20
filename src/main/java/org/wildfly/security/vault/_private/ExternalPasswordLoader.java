@@ -30,7 +30,6 @@ import org.wildfly.security.vault.ParametrizedCallbackHandler;
 import org.wildfly.security.vault.VaultCallbackHandler;
 import org.wildfly.security.vault.VaultException;
 import org.wildfly.security.vault.VaultPasswordCallback;
-import org.wildfly.security.vault.VaultSpi;
 
 import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
@@ -46,7 +45,7 @@ import java.util.stream.Collectors;
 import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
 /**
- * Class for handling all forms of external password loading to be used with {@link ElytronVault}
+ * Class for handling all forms of external password loading to be used with {@link VaultManager}
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
@@ -54,8 +53,8 @@ class ExternalPasswordLoader {
 
     private String callbackOptionName;
     private String callbackHandlerOptionName;
-    private String passwordClassOptionName = VaultSpi.CALLBACK_PASSWORD_CLASS;
-    private String clearTextPasswordOptionName = VaultSpi.STORAGE_PASSWORD;
+    private String passwordClassOptionName = KeystorePasswordStorage.CALLBACK_PASSWORD_CLASS;
+    private String clearTextPasswordOptionName = KeystorePasswordStorage.STORAGE_PASSWORD;
     private String maskedPasswordOptionName;
     private String saltOptionName;
     private String iterationOptionName;
@@ -79,12 +78,12 @@ class ExternalPasswordLoader {
     }
 
     ExternalPasswordLoader() {
-        this(VaultSpi.CALLBACK, VaultSpi.CALLBACK_HANDLER,
-                VaultSpi.CALLBACK_PASSWORD_CLASS, VaultSpi.STORAGE_PASSWORD,
-                VaultSpi.CALLBACK_MASKED, VaultSpi.CALLBACK_SALT, VaultSpi.CALLBACK_ITERATION, VaultSpi.CALLBACK_PBE_ALGORITHM, VaultSpi.CALLBACK_PBE_INITIAL_KEY);
+        this(KeystorePasswordStorage.CALLBACK, KeystorePasswordStorage.CALLBACK_HANDLER,
+                KeystorePasswordStorage.CALLBACK_PASSWORD_CLASS, KeystorePasswordStorage.STORAGE_PASSWORD,
+                KeystorePasswordStorage.CALLBACK_MASKED, KeystorePasswordStorage.CALLBACK_SALT, KeystorePasswordStorage.CALLBACK_ITERATION, KeystorePasswordStorage.CALLBACK_PBE_ALGORITHM, KeystorePasswordStorage.CALLBACK_PBE_INITIAL_KEY);
     }
 
-    char[] loadPassword(final Map<String, Object> options) throws VaultException, IllegalAccessException, InstantiationException, IOException, UnsupportedCallbackException, NoSuchMethodException {
+    char[] loadPassword(final Map<String, String> options) throws VaultException, IllegalAccessException, InstantiationException, IOException, UnsupportedCallbackException, NoSuchMethodException {
         CallbackHandler cbh = null;
         if (options.get(callbackHandlerOptionName) != null) {
             String callbackHandlerSpec = (String)options.get(callbackHandlerOptionName);
@@ -149,20 +148,13 @@ class ExternalPasswordLoader {
             }
         } else {
             Callback cb = null;
-            Object pass = options.get(clearTextPasswordOptionName);
-            if (pass != null && pass instanceof char[]) {
+            String pass = options.get(clearTextPasswordOptionName);
+            if (pass.startsWith("{")) {
+                cb = PasswordLoaderBridge.createCallback(pass, options);
+            } else {
                 PasswordCallback pcb = new PasswordCallback("Password", false);
-                pcb.setPassword((char[])pass);
+                pcb.setPassword(pass.toCharArray());
                 cb = pcb;
-            } else if (pass != null && pass instanceof String) {
-                String passSpec = (String) pass;
-                if (passSpec.startsWith("{")) {
-                    cb = PasswordLoaderBridge.createCallback(passSpec, options);
-                } else {
-                    PasswordCallback pcb = new PasswordCallback("Password", false);
-                    pcb.setPassword(passSpec.toCharArray());
-                    cb = pcb;
-                }
             }
             callbacks = new Callback[] {cb};
         }
@@ -216,7 +208,7 @@ class ExternalPasswordLoader {
                             return getClass().getClassLoader().loadClass(classModuleSpec.getClassName());
                         }
                     } catch (ModuleLoadException | ClassNotFoundException e) {
-                        throw log.vaultRuntimeException(e);
+                        throw new RuntimeException(e);
                     }
                 }
             });
@@ -225,8 +217,8 @@ class ExternalPasswordLoader {
         }
     }
 
-    static String[] options2Arguments(final Map<String, Object> options, String key) {
-        List<String> keyList = options.entrySet().stream().map(Map.Entry<String, Object>::getKey).filter(s -> s.startsWith(key))
+    static String[] options2Arguments(final Map<String, String> options, String key) {
+        List<String> keyList = options.entrySet().stream().map(Map.Entry<String, String>::getKey).filter(s -> s.startsWith(key))
                 .sorted().skip(1).collect(Collectors.toList());
         String[] arguments;
         if (keyList.size() > 0) {

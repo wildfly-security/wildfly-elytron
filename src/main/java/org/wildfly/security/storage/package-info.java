@@ -1,5 +1,5 @@
 /*
- * JBoss, Home of Professional Open Source
+ * JBoss, Home of Professional Open Source.
  * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
@@ -15,21 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.vault._private;
-
-import org.wildfly.security.storage.PasswordStorage;
-
-import java.net.URI;
 
 /**
- * Class to hold all information about vault configuration before initialized.
- * Used for lazy initialization of {@link PasswordStorage} instances.
+ * Package to Password Storage SPI classes and interfaces.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-class VaultInfo {
-    volatile PasswordStorage vault;
-    URI vaultUri;
-    String providerName;
-    String storageType;
-}
+package org.wildfly.security.storage;

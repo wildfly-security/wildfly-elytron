@@ -34,7 +34,6 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 
 /**
@@ -130,10 +129,6 @@ public class VaultManagerTest {
         // expected entries there
         Assert.assertArrayEquals("secret-password-1".toCharArray(), vm.retrieve(testVaultUriQuery1));
         Assert.assertArrayEquals("secret-password-2".toCharArray(), vm.retrieve(testVaultUriQuery2));
-
-        // number of entries check
-        Set<String> entries = vm.getAttributes(testVaultUriBase);
-        Assert.assertEquals("Number of stored entries has to be 2.", 2, entries.size());
 
         // retrieve non-existent entry
         try {

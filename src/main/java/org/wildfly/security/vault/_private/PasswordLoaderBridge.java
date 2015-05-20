@@ -24,8 +24,6 @@ import org.wildfly.security.vault.CmdCallback;
 import org.wildfly.security.vault.ExtCallback;
 import org.wildfly.security.vault.MaskedPasswordCallback;
 import org.wildfly.security.vault.VaultException;
-import org.wildfly.security.vault.VaultRuntimeException;
-import org.wildfly.security.vault.VaultSpi;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -58,7 +56,7 @@ public class PasswordLoaderBridge {
     private PasswordLoaderBridge() {
     }
 
-    static Callback createCallback(final String passwordCommand, final Map<String, Object> options) throws VaultException {
+    static Callback createCallback(final String passwordCommand, final Map<String, String> options) throws VaultException {
 
         String passwordCmdType = null;
         String passwordCmd = null;
@@ -69,8 +67,8 @@ public class PasswordLoaderBridge {
             passwordCmdType = tokenizer.nextToken();
             passwordCmd = tokenizer.nextToken();
         } else if (passwordCommand.startsWith(PASS_MASK_PREFIX)) {
-            String salt = (String)options.get(VaultSpi.CALLBACK_SALT);
-            int iterationCount = Integer.parseInt((String)options.get(VaultSpi.CALLBACK_ITERATION));
+            String salt = (String)options.get(KeystorePasswordStorage.CALLBACK_SALT);
+            int iterationCount = Integer.parseInt((String)options.get(KeystorePasswordStorage.CALLBACK_ITERATION));
             return new MaskedPasswordCallback(passwordCommand, salt, iterationCount);
         } else {
             // Its just the password string
@@ -107,7 +105,7 @@ public class PasswordLoaderBridge {
                 return new ClassCallback(className, module);
             }
         } else {
-            throw new VaultRuntimeException("invalidPasswordCommandType(passwordCmdType)" + passwordCmdType);
+            throw new VaultException("invalidPasswordCommandType(passwordCmdType)" + passwordCmdType);
         }
     }
 

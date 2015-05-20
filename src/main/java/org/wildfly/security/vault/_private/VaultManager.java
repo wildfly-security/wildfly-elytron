@@ -17,39 +17,35 @@
  */
 package org.wildfly.security.vault._private;
 
-import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
-import org.jboss.modules.ModuleLoadException;
-import org.jboss.modules.ModuleLoader;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.storage.PasswordStorage;
+import org.wildfly.security.storage.StorageException;
+import org.wildfly.security.storage.UnsupportedPasswordClassException;
 import org.wildfly.security.vault.VaultException;
 import org.wildfly.security.vault.VaultPermission;
-import org.wildfly.security.vault.VaultRuntimeException;
-import org.wildfly.security.vault.VaultSpi;
 import org.wildfly.security.vault.VaultURIParser;
 
 import javax.security.auth.callback.UnsupportedCallbackException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.PrivilegedAction;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
- * VaultManager handles multiple {@link VaultSpi} implementations possibly loaded from different JBoss Modules.
+ * VaultManager handles multiple {@link PasswordStorage} instances possibly loaded from different {@link java.security.Provider}.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
 public final class VaultManager {
-
-    static final String DEFAULT_VAULT_CLASS_NAME = ElytronVault.class.getName();
 
     // map of current vaults
     private ConcurrentHashMap<String, VaultInfo> vaults = new ConcurrentHashMap<>();
@@ -68,12 +64,10 @@ public final class VaultManager {
      * Vault is lazy loaded when it is accessed for the first time.
      *
      * @param vaultUri - {@code URI} which represents Vault
-     * @param module - JBoss Modules module to load Vault implementation from
-     * @param className - implementation class of {@link VaultSpi}
      * @throws VaultException - throws in case of vaultUri parsing problem
      */
-    public void registerNewVaultInstance(final String vaultUri, final String module, final String className) throws VaultException {
-        registerNewVaultInstance(getVaultUri(vaultUri), module, className);
+    public void registerNewVaultInstance(final String vaultUri) throws VaultException {
+        registerNewVaultInstance(getVaultUri(vaultUri));
     }
 
     /**
@@ -81,64 +75,57 @@ public final class VaultManager {
      *
      * Vault is lazy loaded when it is accessed for the first time.
      *
-     * @param vaultUri - {@code URI} which represents Vault
-     * @param module - JBoss Modules module to load Vault implementation from
-     * @param className - implementation class of {@link VaultSpi}
-     * @throws VaultException - throws in case of vaultUri parsing problem
-     */
-    public void registerNewVaultInstance(final URI vaultUri, final String module, final String className) throws VaultException {
-        VaultURIParser parser = new VaultURIParser(vaultUri);
-        VaultInfo vi = new VaultInfo();
-        vi.module = module;
-        vi.className = className;
-        vi.vaultUri = vaultUri;
-        vaults.put(parser.getName(), vi);
-    }
-
-    /**
-     * Registers new Vault based on {@code vaultUri} parameter to the VaultManager.
-     *
-     * Vault is lazy loaded when it is accessed for the first time.
-     *
-     * @param vaultUri - {@code URI} which represents Vault
-     * @param module - JBoss Modules module to load Vault implementation from
-     * @throws VaultException - throws in case of vaultUri parsing problem
-     */
-    public void registerNewVaultInstance(final URI vaultUri, final String module) throws VaultException {
-        registerNewVaultInstance(vaultUri, module, null);
-    }
-
-
-    /**
-     * Registers new Vault based on {@code vaultUri} parameter to the VaultManager.
-     *
-     * Vault is lazy loaded when it is accessed for the first time.
-     *
-     * @param vaultUri - {@code URI} which represents Vault
-     * @throws VaultException - throws in case of vaultUri parsing problem
+     * @param vaultUri {@code URI} which represents Vault
+     * @throws VaultException thrown in case of vaultUri parsing problem
      */
     public void registerNewVaultInstance(final URI vaultUri) throws VaultException {
-        registerNewVaultInstance(vaultUri, null, null);
+        VaultURIParser parser = new VaultURIParser(vaultUri);
+        VaultInfo vi = new VaultInfo();
+        vi.vaultUri = vaultUri;
+        vaults.put(parser.getName(), vi);
     }
 
     /**
      *  Un-registers Vault with given name.
      *
      * @param name of the Vault to un-register
+     * @throws VaultException when vault with given name doesn't exist
      */
-    public void unregisterVault(final String name) {
+    public void unregisterVault(final String name) throws VaultException {
         VaultInfo vi = vaults.remove(name);
         if (vi == null) {
             throw log.vaultDoesNotExist(name);
         }
     }
 
-    private VaultSpi getDefaultVault() throws VaultException {
-        ServiceLoader<VaultSpi> loader = ServiceLoader.load(VaultSpi.class);
-        return loader.iterator().next();
+    /**
+     *  Un-registers Vault with given name.
+     *
+     * @param vaultUri {@code URI} which represents Vault
+     * @throws VaultException when vault with given name doesn't exist
+     */
+    public void unregisterVault(final URI vaultUri) throws VaultException {
+        VaultURIParser parser = new VaultURIParser(vaultUri);
+        unregisterVault(parser.getName());
     }
 
-    private VaultSpi loadAndInitializeVault(final VaultInfo vaultInfo) throws VaultException {
+    private PasswordStorage getDefaultPasswordStorage() throws NoSuchAlgorithmException {
+        return PasswordStorage.getInstance(KeystorePasswordStorage.KEY_STORE_PASSWORD_STORAGE);
+    }
+
+    private PasswordStorage getPasswordStorage(final String storageType, final String providerName) throws NoSuchAlgorithmException, NoSuchProviderException {
+        if (storageType != null) {
+            if (providerName != null) {
+                return PasswordStorage.getInstance(storageType, providerName);
+            } else {
+                return PasswordStorage.getInstance(storageType);
+            }
+        } else {
+            return getDefaultPasswordStorage();
+        }
+    }
+
+    private PasswordStorage loadAndInitializeVault(final VaultInfo vaultInfo) throws VaultException {
         if (vaultInfo.vault != null) {
             return vaultInfo.vault;
         } else {
@@ -148,9 +135,9 @@ public final class VaultManager {
             }
             VaultURIParser parser = new VaultURIParser(vaultInfo.vaultUri);
             String vaultName = parser.getName();
-            Map<String, Object> options = parser.getOptionsMap();
+            Map<String, String> options = parser.getOptionsMap();
             ExternalPasswordLoader passwordLoader = new ExternalPasswordLoader();
-            Object password = null;
+            char[] password;
             try {
                 password = passwordLoader.loadPassword(options);
             } catch (IllegalAccessException | InstantiationException | IOException | UnsupportedCallbackException | NoSuchMethodException e) {
@@ -158,23 +145,31 @@ public final class VaultManager {
             }
 
             // remove unwanted options from the map (like all with prefix VaultSpi.CALLBACK and VaultSpi.CALLBACK_HANDLER
-            filterVaultOptions(options, VaultSpi.CALLBACK_HANDLER, VaultSpi.CALLBACK);
+            filterVaultOptions(options, KeystorePasswordStorage.CALLBACK_HANDLER, KeystorePasswordStorage.CALLBACK);
+            options.put(KeystorePasswordStorage.STORAGE_PASSWORD, new String(password));
+            options.put(KeystorePasswordStorage.STORAGE_FILE, parser.getStorageFile());
+            options.put(KeystorePasswordStorage.NAME, vaultName);
 
-            options.put(VaultSpi.STORAGE_PASSWORD, password);
-            options.put(VaultSpi.STORAGE_FILE, parser.getStorageFile());
-            options.put(VaultSpi.NAME, vaultName);
-
-            VaultSpi vlt = getVaultImplementation(vaultInfo.module, vaultInfo.className);
+            PasswordStorage vlt = null;
+            try {
+                vlt = getPasswordStorage(vaultInfo.storageType, vaultInfo.providerName);
+            } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+                throw new VaultException(e);
+            }
             synchronized (vaultInfo) {
-                vlt.init(options);
-                log.logVaultInitialized(vaultName, vlt.getVaultType());
+                try {
+                    vlt.initialize(options);
+                } catch (StorageException e) {
+                    throw new VaultException(e);
+                }
+                log.logVaultInitialized(vaultName, vlt.getType());
                 vaultInfo.vault = vlt;
             }
             return vaultInfo.vault;
         }
     }
 
-    private static void filterVaultOptions(Map<String, Object> options, String... prefix) {
+    private static void filterVaultOptions(Map<String, String> options, String... prefix) {
         HashSet<String> toRemove = new HashSet<>();
         for (String key: options.keySet()) {
             for (String p: prefix) {
@@ -188,113 +183,70 @@ public final class VaultManager {
     }
 
     /**
-     * This method just loads the vault implementation class (no initialization).
-     *
-     * @param module JBoss Module to load the {@code className} from
-     * @param className containing implementation class for Vault. Can be {@code null} which loads className from the current module.
-     * @return {@link VaultSpi} implementation loaded from given JBoss Module
-     */
-    private VaultSpi getVaultImplementation(final String module, final String className) throws VaultException {
-        if (module != null) {
-            final Module vaultModule = doPrivileged(new PrivilegedAction<Module>() {
-                @Override
-                public Module run() {
-                    ModuleLoader loader = Module.getCallerModuleLoader();
-                    try {
-                        return loader.loadModule(ModuleIdentifier.fromString(module));
-                    } catch (ModuleLoadException e) {
-                        throw log.vaultRuntimeException(e);
-                    }
-                }
-            });
-
-            ServiceLoader<VaultSpi> loader = vaultModule.loadService(VaultSpi.class);
-            VaultSpi v = null;
-            Iterator<VaultSpi> it = loader.iterator();
-            if (className != null) {
-                while(it.hasNext()) {
-                    v = it.next();
-                    if (className.equals(v.getClass().getName())) {
-                        return v;
-                    }
-                }
-                throw log.vaultClassImplementationNotFound(className + "@" + module);
-            } else {
-                if (it.hasNext()) {
-                    return it.next();
-                }
-                throw log.vaultDoesNotExist("@" + module);
-            }
-        }
-        return getDefaultVault();
-    }
-
-    /**
-     * Store new secured attribute in the specified Vault
+     * Store new secured attribute in the specified password storage
      *
      * @param attributeQueryUri {@code URI} which specifies the Vault and attribute name
      * @param value secured attribute which will be stored under attribute specified in {@code attributeQueryUri}
-     * @throws VaultException if anything with the Vault goes wrong
      * @throws URISyntaxException if {@code attributeQueryUri} cannot be parsed
+     * @throws VaultException if anything with the storage goes wrong
      */
-    public void store(final String attributeQueryUri, final char[] value) throws VaultException, URISyntaxException {
+    public void store(final String attributeQueryUri, final char[] value) throws URISyntaxException, VaultException {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(VaultPermission.MODIFY_VAULT);
         }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
-        VaultSpi v = getVault(p.getName());
-        v.store(p.getAttribute(), value);
+        PasswordStorage storage = getStorage(p.getName());
+        try {
+            ClearPassword clearPassword = (ClearPassword) PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
+                    .generatePassword(new ClearPasswordSpec(value));
+            storage.store(p.getAttribute(), ClearPassword.class, clearPassword);
+        } catch (NoSuchAlgorithmException | UnsupportedPasswordClassException | StorageException | InvalidKeySpecException e) {
+            throw new VaultException(e);
+        }
     }
 
     /**
-     * Retrieve secured attribute from the specified Vault
+     * Retrieve secured attribute from the specified password storage
      *
-     * @param attributeQueryUri {@code URI} which specifies the Vault and attribute name
+     * @param attributeQueryUri {@code URI} which specifies the storage and attribute name
      * @return clear text secured attribute
-     * @throws VaultException if anything with the Vault goes wrong
      * @throws URISyntaxException if {@code attributeQueryUri} cannot be parsed
+     * @throws VaultException if anything with the storage goes wrong or attribute doesn't exist in the storage
      */
-    public char[] retrieve(final String attributeQueryUri) throws VaultException, URISyntaxException {
+    public char[] retrieve(final String attributeQueryUri) throws URISyntaxException, VaultException {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
         }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
-        VaultSpi v = getVault(p.getName());
-        return v.retrieve(p.getAttribute());
+        PasswordStorage storage = getStorage(p.getName());
+        try {
+            return storage.retrieve(p.getAttribute(), ClearPassword.class).getPassword();
+        } catch (StorageException | UnsupportedPasswordClassException e) {
+            throw new VaultException(e);
+        }
     }
 
     /**
      * Remove secured attribute from the specified Vault
      *
      * @param attributeQueryUri {@code URI} which specifies the Vault and attribute name
-     * @throws VaultException if anything with the Vault goes wrong
      * @throws URISyntaxException if {@code attributeQueryUri} cannot be parsed
+     * @throws VaultException if anything with the storage goes wrong
      */
-    public void remove(final String attributeQueryUri) throws VaultException, URISyntaxException {
+    public void remove(final String attributeQueryUri) throws URISyntaxException, VaultException {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(VaultPermission.MODIFY_VAULT);
         }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
-        VaultSpi v = getVault(p.getName());
-        v.remove(p.getAttribute());
-    }
-
-
-    /**
-     * Get all attributes stored in particular vault
-     * @param vaultUri {@code URI} of vault to get attributes fromm
-     * @return {@code Set<String>} attribute names
-     * @throws VaultException in any problems with the Vault
-     */
-    public Set<String> getAttributes(final String vaultUri) throws VaultException {
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
+        PasswordStorage storage = getStorage(p.getName());
+        try {
+            storage.remove(p.getAttribute(), ClearPassword.class);
+        } catch (StorageException | UnsupportedPasswordClassException e) {
+            throw new VaultException(e);
         }
-        return getVault(getVaultUri(vaultUri)).getAttributes();
     }
 
     /**
@@ -304,6 +256,7 @@ public final class VaultManager {
      * @param attributeQueryUri to check
      * @return true or false depending on attribute existence
      * @throws URISyntaxException in case of badly formed {@code attributeQueryUri}
+     * @throws VaultException if anything with the storage goes wrong
      */
     public boolean exists(final String attributeQueryUri) throws URISyntaxException, VaultException {
         final SecurityManager sm = System.getSecurityManager();
@@ -311,36 +264,31 @@ public final class VaultManager {
             sm.checkPermission(VaultPermission.RETRIEVE_SECURED_ATTRIBUTE);
         }
         VaultURIParser p = new VaultURIParser(attributeQueryUri);
-        return getVault(p.getName()).exists(p.getAttribute());
+        PasswordStorage storage = getStorage(p.getName());
+        try {
+            return  storage.exists(p.getAttribute(), ClearPassword.class);
+        } catch (StorageException | UnsupportedPasswordClassException e) {
+            throw new VaultException(e);
+        }
     }
 
-    private URI getVaultUri(final String vaultUri) throws VaultRuntimeException {
+    private URI getVaultUri(final String vaultUri) throws VaultException {
         try {
             return new URI(vaultUri);
         } catch (URISyntaxException e) {
-            throw log.vaultRuntimeException(e);
+            throw log.vaultException(e);
         }
     }
 
     /**
-     * Returns Vault as {@link VaultSpi} from currently managed Vaults.
+     * Returns {@link PasswordStorage} from currently managed Vaults.
+     * In case the storage is not initialized it loads the {@link PasswordStorage} and initialize it.
      *
-     * @param vault Vault {@link java.net.URI} which represents at least name of the vault to retrieve. Minimal URI is {@code vault://vault_name}
-     * @return null in case there is no such vault name present or {@link VaultSpi} otherwise
+     * @param name the name of the storage to retrieve
+     * @return {@code null} in case there is no such {@link PasswordStorage} name present or {@link PasswordStorage} otherwise
+     * @throws VaultException in case the storage does not exist
      */
-    private VaultSpi getVault(final URI vault) throws VaultException {
-        VaultURIParser p = new VaultURIParser(vault);
-        return getVault(p.getName());
-    }
-
-    /**
-     * Returns Vault as {@link VaultSpi} from currently managed Vaults.
-     *
-     * @param name the name of the Vault to retrieve
-     * @return null in case there is no such vault name present or {@link VaultSpi} otherwise
-     * @throws VaultRuntimeException in case the vault does not exist
-     */
-    private VaultSpi getVault(final String name) throws VaultException {
+    private PasswordStorage getStorage(final String name) throws VaultException {
         VaultInfo vi = vaults.get(name);
         if (vi == null) {
             throw log.vaultDoesNotExist(name);
@@ -348,9 +296,10 @@ public final class VaultManager {
 
         if (vi.vault == null) {
             return loadAndInitializeVault(vi);
+        } else if (! vi.vault.isInitialized()) {
+            return loadAndInitializeVault(vi);
         }
         return vi.vault;
     }
-
 
 }

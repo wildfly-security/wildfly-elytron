@@ -17,12 +17,16 @@
  */
 package org.wildfly.security.vault._private;
 
-import org.kohsuke.MetaInfServices;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.storage.PasswordStorageSpi;
+import org.wildfly.security.storage.StorageException;
+import org.wildfly.security.storage.UnsupportedPasswordClassException;
+import org.wildfly.security.vault.PasswordClass;
+import org.wildfly.security.vault.VaultCallbackHandler;
 import org.wildfly.security.vault.VaultException;
-import org.wildfly.security.vault.VaultSpi;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -57,217 +61,268 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
- * Implementation of {@link VaultSpi} interface.
- *
- * This class is default {@code Elytron} implementation of VaultSpi. It is using JCEKS type {@link KeyStore} to store secret attributes.
+ * Keystore based {@link ClearPassword} password storage used in default Elytron Vault implementation.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-@MetaInfServices(value = VaultSpi.class)
-public class ElytronVault implements VaultSpi {
+public class KeystorePasswordStorage extends PasswordStorageSpi {
+    /**
+     * Value of this option denotes file which is used as vault storage.
+     */
+    public static final String NAME = "name";
+    /**
+     * Value of this option denotes file which is used as vault storage.
+     */
+    public static final String STORAGE_FILE = "storage.file";
+    /**
+     * Value of this option is storage password. Could be omitted but {@code CALLBACK} has to specified.
+     */
+    public static final String STORAGE_PASSWORD = "storage.password";
+    /**
+     *  Format of this option is either {@code [class]} or {@code [class]@[module]}
+     *  Default callback handler if {@link VaultCallbackHandler}.
+     */
+    public static final String CALLBACK_HANDLER = "handler";
+    /**
+     *  Format of this option is either {@code [class]} or {@code [class]@[module]}
+     */
+    public static final String CALLBACK = "callback";
+    /**
+     *  Password class specification. This class has to implement {@link PasswordClass} interface.
+     *  Format of this option is either {@code [class]} or {@code [class]@[module]}
+     */
+    public static final String CALLBACK_PASSWORD_CLASS = CALLBACK + ".passwordClass";
+    /**
+     * Masked password option name.
+     */
+    public static final String CALLBACK_MASKED = CALLBACK + ".maskedPassword";
+    /**
+     * Salt option name.
+     */
+    public static final String CALLBACK_SALT = CALLBACK + ".salt";
+    /**
+     * Iteration count option name.
+     */
+    public static final String CALLBACK_ITERATION = CALLBACK + ".iteration";
+    /**
+     * PBE algorithm option name.
+     */
+    public static final String CALLBACK_PBE_ALGORITHM = CALLBACK + ".algorithm";
+    /**
+     * PBE initial key material option name.
+     */
+    public static final String CALLBACK_PBE_INITIAL_KEY = CALLBACK + ".initialKey";
+
+    /**
+     * Algorithm/type of this {@link PasswordStorageSpi} implementation.
+     */
+    public static final String KEY_STORE_PASSWORD_STORAGE = "KeyStorePasswordStorage";
 
     // ElytronVault options
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String CREATE_STORAGE = "create.storage";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_ALIAS = "key.alias";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD = "key.password";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_CALLBACK = KEY_PASSWORD + ".callback";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_CALLBACK_HANDLER = KEY_PASSWORD_CALLBACK + ".handler";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_CALLBACK_PASSWORD_CLASS = KEY_PASSWORD_CALLBACK + ".passwordClass";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_MASKED = KEY_PASSWORD + ".maskedPassword";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_SALT = KEY_PASSWORD + ".salt";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_ITERATION = KEY_PASSWORD + ".iteration";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_PBE_ALGORITHM = KEY_PASSWORD + ".algorithm";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_PASSWORD_PBE_INITIAL_KEY = KEY_PASSWORD +".initialKey";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String KEY_SIZE = "key.size";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String CRYPTO_ALGORITHM = "crypto.algorithm";
     /**
-     * {@link ElytronVault} supported option
+     * {@link KeystorePasswordStorage} supported option
      */
     public static final String RELOADABLE = "reloadable";
     /**
-     * Default admin key alias for {@link ElytronVault}
+     * Default admin key alias for {@link KeystorePasswordStorage}
      */
     public static final String DEFAULT_ADMIN_KEY_ALIAS = "ELY_ADMIN_KEY";
 
     private static final String KEYSTORE_TYPE = "JCEKS";
     private static final char[] CHARS = new char[0];
-    private static HashSet<String> supportedOptions = new HashSet<>();
+    private static HashSet<String> supportedConfigurationAttributes = new HashSet<>();
 
     static {
-        Collections.addAll(supportedOptions,
-                // general VaultSpi options
+        Collections.addAll(supportedConfigurationAttributes,
+                // KeystorePasswordStorage options
                 NAME, STORAGE_FILE, STORAGE_PASSWORD,
-                // ElytronVault options
                 CREATE_STORAGE, KEY_ALIAS, KEY_PASSWORD, KEY_PASSWORD_CALLBACK, KEY_PASSWORD_CALLBACK_HANDLER, KEY_PASSWORD_CALLBACK_PASSWORD_CLASS,
                 KEY_PASSWORD_MASKED, KEY_PASSWORD_SALT, KEY_PASSWORD_ITERATION, KEY_PASSWORD_PBE_ALGORITHM, KEY_PASSWORD_PBE_INITIAL_KEY,
                 KEY_SIZE, CRYPTO_ALGORITHM, RELOADABLE);
     }
 
+    // used for reporting only / do not modify
+    private String vaultName;
     private boolean reloadable = false;
     private File storageFile = null;
-    private String vaultName = null;
     private char[] storagePassword = null;
     private String adminKeyAlias = null;
-    private boolean initialized = false;
     private SecretKey adminKey = null;
     private int keySize = 128;
-    private String cryptoAlgorithm = "AES";
+    private String cryptographicAlgorithm = "AES";
     private boolean createStorage = false;
 
     private KeyStore.ProtectionParameter adminKeyProtectionParam = null;
 
-    private ConcurrentHashMap<String, byte[]> vault = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, byte[]> storage = new ConcurrentHashMap<>();
 
     /**
-     * Default ElytronVaultConstructor.
+     * Construct a new instance.
      */
-    public ElytronVault() {
+    public KeystorePasswordStorage() {
     }
 
     @Override
-    public String getVaultType() {
-        return "ElytronVault";
-    }
+    public void initialize(Map<String, String> attributes) throws StorageException {
+        checkValidConfigurationAttributes(attributes.keySet());
 
-    @Override
-    public void init(Map<String, Object> options) throws VaultException {
-        checkValidOptions(options.keySet());
-
-        storageFile = new File((String) options.get(STORAGE_FILE));
-        vaultName = (String) options.get(NAME);
-        storagePassword = convertPassword(options.get(STORAGE_PASSWORD));
-        adminKeyAlias = (String) options.get(KEY_ALIAS);
+        vaultName = attributes.getOrDefault(NAME, "defaultStorageName");
+        storageFile = new File((String) attributes.get(STORAGE_FILE));
+        storagePassword = convertPassword(attributes.get(STORAGE_PASSWORD));
+        adminKeyAlias = (String) attributes.get(KEY_ALIAS);
         if (adminKeyAlias == null) {
             adminKeyAlias = DEFAULT_ADMIN_KEY_ALIAS;
         }
 
-        if (options.get(KEY_SIZE) != null) {
-            keySize = Integer.parseInt((String) options.get(KEY_SIZE));
+        if (attributes.get(KEY_SIZE) != null) {
+            keySize = Integer.parseInt((String) attributes.get(KEY_SIZE));
         }
 
-        if (options.get(CRYPTO_ALGORITHM) != null) {
-            cryptoAlgorithm = (String) options.get(CRYPTO_ALGORITHM);
+        if (attributes.get(CRYPTO_ALGORITHM) != null) {
+            cryptographicAlgorithm = (String) attributes.get(CRYPTO_ALGORITHM);
         }
 
-        if (options.get(CREATE_STORAGE) != null) {
-            createStorage = Boolean.parseBoolean((String) options.get(CREATE_STORAGE));
+        if (attributes.get(CREATE_STORAGE) != null) {
+            createStorage = Boolean.parseBoolean((String) attributes.get(CREATE_STORAGE));
         }
 
-        char[] adminKeyPassword = loadKeyPassword(options);
+        char[] adminKeyPassword = loadKeyPassword(attributes);
         if (adminKeyPassword != null) {
             adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
             destroyPassword(adminKeyPassword);
         }
 
-        readVaultKeyStore();
+        readKeyStore();
 
         initialized = true;
     }
 
     @Override
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    @Override
-    public Set<String> getAttributes() {
-        if (!isInitialized()) {
-            log.vaultIsNotInitialized(vaultName);
+    public <T extends Password> boolean exists(String key, Class<T> passwordClass) throws StorageException, UnsupportedPasswordClassException {
+        if (passwordClass.isAssignableFrom(ClearPassword.class)) {
+            return storage.get(key) != null;
+        } else {
+            throw new UnsupportedPasswordClassException(resolvePasswordClassName(passwordClass));
         }
-        return vault.keySet();
     }
 
     @Override
-    public boolean exists(String attribute) {
-        if (!isInitialized()) {
-            log.vaultIsNotInitialized(vaultName);
-        }
-        return vault.containsKey(attribute);
-    }
+    public <T extends Password> void store(String key, Class<T> passwordClass, Password password) throws StorageException, UnsupportedPasswordClassException {
 
-    @Override
-    public void store(String attribute, char[] value) throws VaultException {
         if (!isInitialized()) {
             log.vaultIsNotInitialized(vaultName);
         }
         if (!reloadable) {
+            if (! passwordClass.isAssignableFrom(ClearPassword.class)) {
+                throw new UnsupportedPasswordClassException(resolvePasswordClassName(passwordClass));
+            }
+            ClearPassword clearPassword;
+            if (password instanceof ClearPassword) {
+                clearPassword = (ClearPassword)password;
+            } else {
+                throw new UnsupportedPasswordClassException(resolvePasswordClassName(passwordClass));
+            }
             try {
-                vault.put(attribute, encryptEntry(value, null));
+                storage.put(key, encryptEntry(clearPassword, null));
             } catch (GeneralSecurityException e) {
-                throw log.vaultException(e);
+                throw new StorageException(e);
             }
             storeToFile();
         } else {
             throw log.reloadableVaultIsReadOnly(vaultName);
         }
+
+
     }
 
     @Override
-    public char[] retrieve(String attribute) throws VaultException {
-        if (!isInitialized()) {
-            log.vaultIsNotInitialized(vaultName);
+    @SuppressWarnings("unchecked")
+    public <T extends Password> T retrieve(String key, Class<T> passwordClass) throws StorageException, UnsupportedPasswordClassException {
+        if (!passwordClass.isAssignableFrom(ClearPassword.class)) {
+            throw new UnsupportedPasswordClassException(resolvePasswordClassName(passwordClass));
         }
-
-        byte[] encryptedAttribute = vault.get(attribute);
-        if (encryptedAttribute == null) {
-            throw log.securedAttributeNotFound(attribute, vaultName);
-        }
-
-        try {
-            return decryptEntry(encryptedAttribute, null);
-        } catch (GeneralSecurityException e) {
-            throw log.vaultException(e);
+        byte[] encryptedPasswordData = storage.get(key);
+        if (encryptedPasswordData != null) {
+            try {
+                return (T) decryptEntry(encryptedPasswordData, null);
+            } catch (GeneralSecurityException e) {
+                throw new StorageException(e);
+            }
+        } else {
+            throw log.securedAttributeNotFound(key, vaultName);
         }
     }
 
     @Override
-    public void remove(String attribute) throws VaultException {
-        if (!isInitialized()) {
-            log.vaultIsNotInitialized(vaultName);
+    public <T extends Password> void remove(String key, Class<T> passwordClass) throws StorageException, UnsupportedPasswordClassException {
+        if (!passwordClass.isAssignableFrom(ClearPassword.class)) {
+            throw new UnsupportedPasswordClassException(resolvePasswordClassName(passwordClass));
         }
-        vault.remove(attribute);
+        if (storage.get(key) != null) {
+            storage.remove(key);
+        }
     }
 
-    private synchronized void storeToFile() throws VaultException {
+    private <T extends Password> String resolvePasswordClassName(Class<T> passwordClass) throws UnsupportedPasswordClassException {
+        if (passwordClass.isInterface()) {
+
+        }
+        return passwordClass.getName();
+    }
+
+    private synchronized void storeToFile() throws StorageException {
 
         if (createStorage && !storageFile.exists()) {
             try {
@@ -286,42 +341,43 @@ public class ElytronVault implements VaultSpi {
             }
             vaultStorage.store(new FileOutputStream(storageFile), storagePassword);
         } catch (GeneralSecurityException | IOException e) {
-            throw log.vaultException(e);
+            throw new StorageException(e);
         }
     }
 
-    private void packToKeyStore(KeyStore keyStore) throws KeyStoreException, NoSuchAlgorithmException, InvalidKeySpecException {
+    private void packToKeyStore(KeyStore keyStore) throws KeyStoreException, NoSuchAlgorithmException, InvalidKeySpecException, UnsupportedPasswordClassException {
         // adminKey handling
         keyStore.setEntry(adminKeyAlias, new KeyStore.SecretKeyEntry(adminKey), adminKeyProtectionParam);
         // secret attributes
         final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-        Set<String> vaultAttributes = vault.keySet();
-        for (String attribute : vaultAttributes) {
-            ClearPassword password = (ClearPassword)passwordFactory.generatePassword(new ClearPasswordSpec(byteArrayDecode(vault.get(attribute))));
-            keyStore.setEntry(attribute, new KeyStore.SecretKeyEntry(wrapPassword(password)), adminKeyProtectionParam);
+        Set<String> vaultKeys = storage.keySet();
+        for (String key : vaultKeys) {
+            ClearPassword password = (ClearPassword)passwordFactory.generatePassword(new ClearPasswordSpec(byteArrayDecode(storage.get(key))));
+            keyStore.setEntry(key, new KeyStore.SecretKeyEntry(wrapPassword(password)), adminKeyProtectionParam);
         }
     }
 
-    private void checkValidOptions(Set<String> options) throws VaultException {
-        StringBuilder wrongOptions = new StringBuilder();
-        for (String o : options) {
-            if (!o.startsWith(KEY_PASSWORD_CALLBACK) && !supportedOptions.contains(o)) {
-                wrongOptions.append(", ").append(o);
+    private void checkValidConfigurationAttributes(Set<String> attributes) throws StorageException {
+        StringBuilder wrongAttributes = new StringBuilder();
+        for (String o : attributes) {
+            if (!o.startsWith(KEY_PASSWORD_CALLBACK) && !supportedConfigurationAttributes.contains(o)) {
+                wrongAttributes.append(", ").append(o);
             }
         }
-        if (wrongOptions.length() > 0) {
-            throw log.unsuportedVaultOption(wrongOptions.substring(2));
+        if (wrongAttributes.length() > 0) {
+            throw log.unsupportedPasswordStorageConfigurationAttributes(vaultName, wrongAttributes.substring(2));
         }
     }
 
-    private void readVaultKeyStore() throws VaultException {
+    private void readKeyStore() throws StorageException {
 
         if (createStorage && (!storageFile.exists() || !storageFile.canRead())) {
             // do not read key store, just generate adminKey
             try {
                 adminKey = generateSecretKey();
             } catch (NoSuchAlgorithmException e) {
-                throw log.vaultException(e);
+                log.info("Storage exception:", e);
+                throw new StorageException(e);
             }
             return;
         }
@@ -333,7 +389,7 @@ public class ElytronVault implements VaultSpi {
                 String alias = storedAliases.nextElement();
                 if (!alias.equalsIgnoreCase(adminKeyAlias)) {
                     KeyStore.SecretKeyEntry secret = (KeyStore.SecretKeyEntry)vaultStorage.getEntry(alias, adminKeyProtectionParam);
-                    vault.put(alias, secret.getSecretKey().getEncoded());
+                    storage.put(alias, secret.getSecretKey().getEncoded());
                 }
             }
 
@@ -350,46 +406,47 @@ public class ElytronVault implements VaultSpi {
     }
 
     private SecretKey generateSecretKey() throws NoSuchAlgorithmException {
-        KeyGenerator generator = KeyGenerator.getInstance(cryptoAlgorithm);
+        KeyGenerator generator = KeyGenerator.getInstance(cryptographicAlgorithm);
         generator.init(keySize);
         return generator.generateKey();
     }
-
 
     /**
      * Encrypt {@code entry} by encoding it using UTF-8 to {@code byte[]}
      * {@code char[]} is first encoded to {@code byte[]} using {@link java.nio.charset.StandardCharsets}.UTF_8 character set.
      *
-     * @param entry to encrypt
+     * @param clearPassword {@link ClearPassword} to encrypt
      * @param cipher {@link Cipher} to encrypt the entry
      * @return encrypted value
      * @throws NoSuchAlgorithmException
      * @throws NoSuchPaddingException
      * @throws InvalidKeyException
      */
-    private byte[] encryptEntry(char[] entry, Cipher cipher) throws NoSuchAlgorithmException, NoSuchPaddingException,
+    private byte[] encryptEntry(ClearPassword clearPassword, Cipher cipher) throws NoSuchAlgorithmException, NoSuchPaddingException,
             InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher c = (cipher != null ? cipher : getCipher(Cipher.ENCRYPT_MODE));
-        return c.doFinal(charArrayEncode(entry));
+        return c.doFinal(charArrayEncode(clearPassword.getPassword()));
     }
 
     /**
-     * Decrypting secret entry directly to {@code char[]}.
+     * Decrypting secret entry directly to {@code ClearPassword}.
      * {@code byte[]} is encoded to {@code char[]} using {@link java.nio.charset.StandardCharsets}.UTF_8 character set.
      *
      * @param entry to decrypt
      * @param cipher {@link Cipher} to decrypt the entry
-     * @return decrypted and UTF-8 char[] encoded value of entry
+     * @return decrypted {@link ClearPassword} instance
      * @throws NoSuchPaddingException
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeyException
      * @throws BadPaddingException
      * @throws IllegalBlockSizeException
      */
-    private char[] decryptEntry(byte[] entry, Cipher cipher) throws NoSuchPaddingException, NoSuchAlgorithmException,
-            InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    private ClearPassword decryptEntry(byte[] entry, Cipher cipher) throws NoSuchPaddingException, NoSuchAlgorithmException,
+            InvalidKeyException, BadPaddingException, IllegalBlockSizeException, InvalidKeySpecException {
         Cipher c = (cipher != null ? cipher : getCipher(Cipher.DECRYPT_MODE));
-        return byteArrayDecode(c.doFinal(entry));
+        ClearPassword clearPassword = (ClearPassword) PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
+                .generatePassword(new ClearPasswordSpec(byteArrayDecode(c.doFinal(entry))));
+        return clearPassword;
     }
 
     static char[] byteArrayDecode(byte[] buffer) {
@@ -401,8 +458,8 @@ public class ElytronVault implements VaultSpi {
     }
 
     private Cipher getCipher(int mode) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException {
-        SecretKeySpec adminKeySpec = new SecretKeySpec(adminKey.getEncoded(), cryptoAlgorithm);
-        Cipher c = Cipher.getInstance(cryptoAlgorithm);
+        SecretKeySpec adminKeySpec = new SecretKeySpec(adminKey.getEncoded(), cryptographicAlgorithm);
+        Cipher c = Cipher.getInstance(cryptographicAlgorithm);
         c.init(mode, adminKeySpec);
         return c;
     }
@@ -431,7 +488,7 @@ public class ElytronVault implements VaultSpi {
         return new SecretKeyWrap(password);
     }
 
-    private char[] loadKeyPassword(final Map<String, Object> options) throws VaultException {
+    private char[] loadKeyPassword(final Map<String, String> options) throws StorageException {
         ExternalPasswordLoader passwordLoader = new ExternalPasswordLoader(
                 KEY_PASSWORD_CALLBACK,
                 KEY_PASSWORD_CALLBACK_HANDLER,
@@ -440,8 +497,9 @@ public class ElytronVault implements VaultSpi {
                 KEY_PASSWORD_MASKED, KEY_PASSWORD_SALT, KEY_PASSWORD_ITERATION, KEY_PASSWORD_PBE_ALGORITHM, KEY_PASSWORD_PBE_INITIAL_KEY);
         try {
             return passwordLoader.loadPassword(options);
-        } catch (IllegalAccessException | InstantiationException | IOException | UnsupportedCallbackException | NoSuchMethodException e) {
-            throw new VaultException(e);
+        } catch (VaultException | IllegalAccessException | InstantiationException | IOException | UnsupportedCallbackException | NoSuchMethodException e) {
+            throw new StorageException(e);
         }
     }
+
 }

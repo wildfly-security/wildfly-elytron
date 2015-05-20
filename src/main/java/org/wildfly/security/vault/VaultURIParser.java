@@ -284,10 +284,10 @@ public class VaultURIParser {
     }
 
     /**
-     * Returns new {@code Map<String, Object>} for use in {@link org.wildfly.security.vault.VaultSpi} to initialize the vault.
+     * Returns new {@code Map<String, Object>} for use in {@code PasswordStorage} to initialize the password storage.
      * @return Map of options parsed from the vault URI
      */
-    public Map<String, Object> getOptionsMap() {
+    public Map<String, String> getOptionsMap() {
         return new HashMap<>(options);
     }
 

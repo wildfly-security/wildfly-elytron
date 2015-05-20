@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.vault;
 
-import org.wildfly.security.vault._private.ElytronVault;
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
 
 import java.util.Map;
 
@@ -43,10 +43,10 @@ public class TestCallback extends VaultPasswordCallback implements ParametrizedC
      * method which "computes" password. It can be read by {@link #getPassword()}.
      */
     public void computePassword() {
-        if (parameters.get(VaultSpi.CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX) != null) {
-            setPassword(((String) parameters.get(VaultSpi.CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX)).toCharArray());
-        } else if (parameters.get(ElytronVault.KEY_PASSWORD_CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX) != null) {
-            setPassword(((String) parameters.get(ElytronVault.KEY_PASSWORD_CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX)).toCharArray());
+        if (parameters.get(KeystorePasswordStorage.CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX) != null) {
+            setPassword(((String) parameters.get(KeystorePasswordStorage.CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX)).toCharArray());
+        } else if (parameters.get(KeystorePasswordStorage.KEY_PASSWORD_CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX) != null) {
+            setPassword(((String) parameters.get(KeystorePasswordStorage.KEY_PASSWORD_CALLBACK + "." + TEST_PASSWORD_PARAMETER_NAME_SUFFIX)).toCharArray());
         }
     }
 
