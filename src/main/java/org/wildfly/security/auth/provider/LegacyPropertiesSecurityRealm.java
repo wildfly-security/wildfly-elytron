@@ -274,7 +274,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             return this;
         }
 
-        LegacyPropertiesSecurityRealm build() throws IOException {
+        public LegacyPropertiesSecurityRealm build() throws IOException {
             LegacyPropertiesSecurityRealm realm = new LegacyPropertiesSecurityRealm(this);
             realm.load(passwordsStream, groupsStream);
 
