@@ -53,7 +53,7 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.sasl.gssapi.BaseGssapiTests;
-import org.wildfly.security.sasl.gssapi.JAASUtil;
+import org.wildfly.security.sasl.gssapi.JaasUtil;
 import org.wildfly.security.sasl.gssapi.TestKDC;
 
 /*
@@ -112,8 +112,8 @@ public abstract class AbstractTest {
         testKdc.startDirectoryService();
         testKdc.startKDC();
 
-        clientSubject = JAASUtil.loginClient();
-        serverSubject = JAASUtil.loginServer();
+        clientSubject = JaasUtil.loginClient();
+        serverSubject = JaasUtil.loginServer();
 
     }
 

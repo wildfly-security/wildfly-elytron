@@ -28,8 +28,12 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 import java.io.IOException;
 import java.security.Principal;
+import java.security.acl.Group;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -79,6 +83,10 @@ public class TestLoginModule implements LoginModule {
     @Override
     public boolean commit() throws LoginException {
         this.subject.getPrincipals().add(this.principal);
+        // add a caller principal group for testing purposes.
+        final Group group = new TestGroup("CallerPrincipal");
+        group.addMember(new NamePrincipal("auth-caller"));
+        this.subject.getPrincipals().add(group);
         return true;
     }
 
@@ -89,7 +97,46 @@ public class TestLoginModule implements LoginModule {
 
     @Override
     public boolean logout() throws LoginException {
-        this.subject.getPrincipals().remove(this.principal);
+        this.subject.getPrincipals().clear();
         return true;
+    }
+
+    /**
+     * A {@code Group} implementation used in the tests to store the caller principal.
+     */
+    private class TestGroup implements Group {
+
+        private String name;
+        private HashSet<Principal> principals;
+
+        public TestGroup(final String name) {
+            this.name = name;
+            this.principals = new HashSet<Principal>();
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public boolean addMember(Principal user) {
+            return this.principals.add(user);
+        }
+
+        @Override
+        public boolean removeMember(Principal user) {
+            return this.principals.remove(user);
+        }
+
+        @Override
+        public boolean isMember(Principal member) {
+            return this.principals.contains(member);
+        }
+
+        @Override
+        public Enumeration<? extends Principal> members() {
+            return Collections.enumeration(this.principals);
+        }
     }
 }

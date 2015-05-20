@@ -42,9 +42,9 @@ import org.jboss.logging.Logger;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class JAASUtil {
+public class JaasUtil {
 
-    private static Logger log = Logger.getLogger(JAASUtil.class);
+    private static Logger log = Logger.getLogger(JaasUtil.class);
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
 
