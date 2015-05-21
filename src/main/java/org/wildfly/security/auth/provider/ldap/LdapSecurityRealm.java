@@ -30,6 +30,9 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -39,6 +42,9 @@ import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.interfaces.ClearPassword;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * Security realm implementation backed by LDAP.
@@ -225,7 +231,38 @@ class LdapSecurityRealm implements SecurityRealm {
             };
         }
 
+        @Override
         public boolean verifyCredential(final Object credential) {
+            if (ClearPassword.class.isInstance(credential)) {
+                final ClearPassword clearPassword = (ClearPassword) credential;
+                DirContext dirContext = null;
+
+                try {
+                    // TODO: for not we just create a DirContext using the provided credentials. Need to also support referrals.
+                    dirContext = dirContextFactory.obtainDirContext(callbacks -> {
+                        for (Callback callback : callbacks) {
+                            if (NameCallback.class.isInstance(callback)) {
+                                NameCallback nameCallback = (NameCallback) callback;
+                                nameCallback.setName(getPrincipal().getName());
+                            } else if (PasswordCallback.class.isInstance(callback)) {
+                                PasswordCallback nameCallback = (PasswordCallback) callback;
+                                nameCallback.setPassword(clearPassword.getPassword());
+                            }
+                        }
+                    }, null);
+
+                    return true;
+                } catch (NamingException e) {
+                    log.debugf("Credential verification failed.", e);
+                } finally {
+                    if (dirContext != null) {
+                        dirContextFactory.returnContext(dirContext);
+                    }
+                }
+            } else {
+                throw new IllegalArgumentException("Unsupported credential type [" + credential.getClass() + "].");
+            }
+
             return false;
         }
     }
