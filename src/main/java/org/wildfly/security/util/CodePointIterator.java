@@ -167,23 +167,28 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
-     * Get a sub-iterator that is delimited by the given code point.  The returned iterator offset starts at 0 and cannot
+     * Get a sub-iterator that is delimited by the given code points.  The returned iterator offset starts at 0 and cannot
      * be backed up before that point.  The returned iterator will return {@code false} for {@code hasNext()} if the next
      * character in the encapsulated iterator is a delimiter or if the underlying iterator returns {@code false} for
      * {@code hasNext()}.
      *
-     * @param delim the code point delimiter
+     * @param delims the code point delimiters
      * @return the sub-iterator
      */
-    public final CodePointIterator delimitedBy(final int delim) {
-        if (! Character.isValidCodePoint(delim) || ! hasNext()) {
+    public final CodePointIterator delimitedBy(final int... delims) {
+        if ((delims == null) || (delims.length == 0) || ! hasNext()) {
             return EMPTY;
+        }
+        for (int delim : delims) {
+            if (! Character.isValidCodePoint(delim)) {
+                return EMPTY;
+            }
         }
         return new CodePointIterator() {
             int offset = 0;
 
             public boolean hasNext() {
-                return CodePointIterator.this.hasNext() && CodePointIterator.this.peekNext() != delim;
+                return CodePointIterator.this.hasNext() && ! isDelim(CodePointIterator.this.peekNext());
             }
 
             public boolean hasPrev() {
@@ -222,6 +227,15 @@ public abstract class CodePointIterator extends NumericIterator {
 
             public int offset() {
                 return offset;
+            }
+
+            private boolean isDelim(int c) {
+                for (int delim : delims) {
+                    if (delim == c) {
+                        return true;
+                    }
+                }
+                return false;
             }
         };
     }

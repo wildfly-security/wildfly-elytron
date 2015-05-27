@@ -950,24 +950,29 @@ public abstract class ByteIterator extends NumericIterator {
     }
 
     /**
-     * Get a sub-iterator that is delimited by the given byte.  The returned iterator offset starts at 0 and cannot
+     * Get a sub-iterator that is delimited by the given bytes.  The returned iterator offset starts at 0 and cannot
      * be backed up before that point.  The returned iterator will return {@code false} for {@code hasNext()} if the next
      * character in the encapsulated iterator is a delimiter or if the underlying iterator returns {@code false} for
      * {@code hasNext()}.
      *
-     * @param delim the byte delimiter
+     * @param delims the byte delimiters
      * @return the sub-iterator
      */
-    public final ByteIterator delimitedBy(final int delim) {
-        if (delim < 0 || delim > 0xff || ! hasNext()) {
+    public final ByteIterator delimitedBy(final int... delims) {
+        if ((delims == null) || (delims.length == 0) || ! hasNext()) {
             return EMPTY;
+        }
+        for (int delim : delims) {
+            if (delim < 0 || delim > 0xff) {
+                return EMPTY;
+            }
         }
         return new ByteIterator() {
             int offset = 0;
             int current = -1;
 
             public boolean hasNext() {
-                return ByteIterator.this.hasNext() && delim != ByteIterator.this.peekNext();
+                return ByteIterator.this.hasNext() && ! isDelim(ByteIterator.this.peekNext());
             }
 
             public boolean hasPrev() {
@@ -976,7 +981,7 @@ public abstract class ByteIterator extends NumericIterator {
 
             public int next() {
                 int n = ByteIterator.this.peekNext();
-                if (n == delim) {
+                if (isDelim(n)) {
                     current = -1;
                     throw new NoSuchElementException();
                 }
@@ -986,7 +991,7 @@ public abstract class ByteIterator extends NumericIterator {
 
             public int peekNext() throws NoSuchElementException {
                 int n = ByteIterator.this.peekNext();
-                if (n == delim) {
+                if (isDelim(n)) {
                     throw new NoSuchElementException();
                 }
                 return n;
@@ -1010,6 +1015,15 @@ public abstract class ByteIterator extends NumericIterator {
 
             public int offset() {
                 return offset;
+            }
+
+            private boolean isDelim(int b) {
+                for (int delim : delims) {
+                    if (delim == b) {
+                        return true;
+                    }
+                }
+                return false;
             }
         };
     }
