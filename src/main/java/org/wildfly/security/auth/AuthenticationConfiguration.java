@@ -24,12 +24,14 @@ import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
+import java.security.Provider;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -46,6 +48,7 @@ import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.util.ServiceLoaderSupplier;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -104,11 +107,7 @@ public abstract class AuthenticationConfiguration {
     }.useAnonymous();
 
     private final AuthenticationConfiguration parent;
-    private final CallbackHandler callbackHandler = new CallbackHandler() {
-        public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
-        }
-    };
+    private final CallbackHandler callbackHandler = callbacks -> AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
 
     // constructors
 
@@ -345,6 +344,37 @@ public abstract class AuthenticationConfiguration {
     public AuthenticationConfiguration usePort(int port) {
         if (port < 1 || port > 65535) throw new IllegalArgumentException("Invalid port " + port);
         return new SetPortAuthenticationConfiguration(this, port);
+    }
+
+    // Providers
+
+    /**
+     * Use the given security provider supplier to locate security implementations.
+     *
+     * @param providerSupplier the provider supplier
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useProviders(Supplier<Provider[]> providerSupplier) {
+        return providerSupplier == null ? useDefaultProviders() : new ProvidersAuthenticationConfiguration(this, providerSupplier);
+    }
+
+    /**
+     * Use the system default security providers to locate security implementations.
+     *
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useDefaultProviders() {
+        return without(ProvidersAuthenticationConfiguration.class);
+    }
+
+    /**
+     * Use security providers from the given class loader.
+     *
+     * @param classLoader the class loader to search for security providers
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
+        return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
     }
 
     // SASL
