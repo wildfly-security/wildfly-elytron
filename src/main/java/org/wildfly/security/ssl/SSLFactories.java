@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
+import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
 
@@ -34,9 +35,9 @@ import org.wildfly.security._private.ElytronMessages;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLContextFactories {
+public final class SSLFactories {
 
-    private SSLContextFactories() {}
+    private SSLFactories() {}
 
     private static final String serviceType = SSLContext.class.getSimpleName();
 
@@ -74,7 +75,7 @@ public final class SSLContextFactories {
                 return createSimpleSslContextFactory(supportedProtocol, provider);
             }
         }
-        return SSLContextFactories::throwIt;
+        return SSLFactories::throwIt;
     }
 
     private static SSLContext throwIt() throws NoSuchAlgorithmException {
@@ -90,5 +91,30 @@ public final class SSLContextFactories {
      */
     public static SecurityFactory<SSLContext> createSimpleSslContextFactory(String protocol, Provider provider) {
         return () -> SSLContext.getInstance(protocol, provider);
+    }
+
+    /**
+     * Create a configured SSL context from an outside SSL context.
+     *
+     * @param original the original SSL context
+     * @param protocolSelector the protocol selector to apply
+     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @return the configured SSL context
+     */
+    public static SSLContext createConfiguredSslContext(SSLContext original, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
+        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, protocolSelector, cipherSuiteSelector));
+    }
+
+    /**
+     * Create a configured SSL context factory from an outside SSL context.  The returned factory will create new instances
+     * for every call, so it might be necessary to wrap with a {@link OneTimeSecurityFactory} instance.
+     *
+     * @param originalFactory the original SSL context factory
+     * @param protocolSelector the protocol selector to apply
+     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @return the configured SSL context
+     */
+    public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
+        return () -> createConfiguredSslContext(originalFactory.create(), protocolSelector, cipherSuiteSelector);
     }
 }

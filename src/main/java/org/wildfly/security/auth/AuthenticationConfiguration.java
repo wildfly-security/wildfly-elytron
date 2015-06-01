@@ -19,10 +19,14 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.Provider;
 import java.util.Arrays;
@@ -33,6 +37,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -48,7 +56,10 @@ import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.ssl.CipherSuiteSelector;
+import org.wildfly.security.ssl.ConfiguredSSLSocket;
 import org.wildfly.security.util.ServiceLoaderSupplier;
+import org.wildfly.security.ssl.ProtocolSelector;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -103,6 +114,24 @@ public abstract class AuthenticationConfiguration {
 
         Principal getPrincipal() {
             return AnonymousPrincipal.getInstance();
+        }
+
+        SSLContext getSSLContext(final URI uri) throws NoSuchAlgorithmException {
+            return SSLContext.getDefault();
+        }
+
+        void configureSslEngine(final URI uri, final SSLEngine sslEngine) {
+        }
+
+        void configureSslSocket(final URI uri, final SSLSocket sslSocket) {
+        }
+
+        ProtocolSelector getProtocolSelector() {
+            return ProtocolSelector.defaultProtocols();
+        }
+
+        CipherSuiteSelector getCipherSuiteSelector() {
+            return CipherSuiteSelector.openSslDefault();
         }
     }.useAnonymous();
 
@@ -161,6 +190,26 @@ public abstract class AuthenticationConfiguration {
 
     String getAuthorizationName() {
         return null;
+    }
+
+    SSLContext getSSLContext(final URI uri) throws NoSuchAlgorithmException {
+        return parent.getSSLContext(uri);
+    }
+
+    void configureSslEngine(final URI uri, final SSLEngine sslEngine) {
+        parent.configureSslEngine(uri, sslEngine);
+    }
+
+    void configureSslSocket(final URI uri, final SSLSocket sslSocket) {
+        parent.configureSslSocket(uri, sslSocket);
+    }
+
+    ProtocolSelector getProtocolSelector() {
+        return parent.getProtocolSelector();
+    }
+
+    CipherSuiteSelector getCipherSuiteSelector() {
+        return parent.getCipherSuiteSelector();
     }
 
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
@@ -401,6 +450,41 @@ public abstract class AuthenticationConfiguration {
         return names == null || names.length == 0 ? this : new FilterSaslMechanismAuthenticationConfiguration(this, false, new HashSet<String>(Arrays.asList(names)));
     }
 
+    // SSL
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given protocol selector
+     * for choosing an SSL/TLS protocol.
+     *
+     * @param protocolSelector the protocol selector
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useSslProtocolSelector(ProtocolSelector protocolSelector) {
+        return protocolSelector == null ? without(ProtocolSelectorAuthenticationConfiguration.class) : new ProtocolSelectorAuthenticationConfiguration(this, protocolSelector);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given cipher suite selector
+     * for choosing the set of SSL/TLS cipher suites.
+     *
+     * @param cipherSuiteSelector the cipher suite selector
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useSslCipherSuiteSelector(CipherSuiteSelector cipherSuiteSelector) {
+        return cipherSuiteSelector == null ? without(CipherSuiteSelectorAuthenticationConfiguration.class) : new CipherSuiteSelectorAuthenticationConfiguration(this, cipherSuiteSelector);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
+     * for choosing the set of SSL/TLS cipher suites.
+     *
+     * @param sslContext the SSL context to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useSslContext(SSLContext sslContext) {
+        return sslContext == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContext);
+    }
+
     // client methods
 
     CallbackHandler getCallbackHandler() {
@@ -422,5 +506,109 @@ public abstract class AuthenticationConfiguration {
         int port = getPort(uri);
         if (port == -1) port = defaultPort;
         return new InetSocketAddress(host, port);
+    }
+
+    SSLEngine createSslEngine(final URI uri, final SSLContext sslContext, final int defaultUriPort) {
+        int port = getPort(uri);
+        if (port == -1) port = defaultUriPort;
+        final SSLEngine sslEngine = sslContext.createSSLEngine(getHost(uri), port);
+        configureSslEngine(uri, sslEngine);
+        sslEngine.setUseClientMode(true);
+        return sslEngine;
+    }
+
+    SSLSocket createClientSslSocket(final URI uri, final SSLContext sslContext, final boolean connect, final int defaultUriPort) throws IOException {
+        final SSLSocket sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket();
+        configureSslSocket(uri, sslSocket);
+        sslSocket.setUseClientMode(true);
+        if (connect) {
+            sslSocket.connect(getDestinationInetAddress(uri, defaultUriPort));
+        }
+        return sslSocket;
+    }
+
+    SSLSocketFactory createClientSslSocketFactory(final String uriScheme, final SSLContext sslContext) {
+        final SSLSocketFactory delegate = sslContext.getSocketFactory();
+        final CipherSuiteSelector cipherSuiteSelector = getCipherSuiteSelector();
+        final String[] cipherSuites = cipherSuiteSelector.evaluate(delegate.getSupportedCipherSuites());
+        return new SSLSocketFactory() {
+            public String[] getDefaultCipherSuites() {
+                return cipherSuites.clone();
+            }
+
+            public String[] getSupportedCipherSuites() {
+                return cipherSuites.clone();
+            }
+
+            private URI calculateUri(final String host, final int port) {
+                final URI uri;
+                try {
+                    uri = new URI(uriScheme, null, host, port, null, null, null);
+                } catch (URISyntaxException e) {
+                    throw new IllegalArgumentException(e);
+                }
+                return uri;
+            }
+
+            /**
+             * Get the text name of an IP address without a DNS lookup.  Ugly but effective.
+             *
+             * @param address the IP address
+             * @return the text name
+             */
+            private String nameOf(InetAddress address) {
+                final String str = address.toString();
+                final int idx = str.indexOf('/');
+                return idx == 0 ? str.substring(idx + 1) : str.substring(0, idx);
+            }
+
+            public SSLSocket createSocket(final Socket socket, final String host, final int port, final boolean autoClose) throws IOException {
+                final URI uri = calculateUri(host, port);
+                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket(socket, host, port, autoClose);
+                configureSslSocket(uri, delegateSocket);
+                delegateSocket.setUseClientMode(true);
+                return new ConfiguredSSLSocket(delegateSocket);
+            }
+
+            public SSLSocket createSocket(final String host, final int port) throws IOException {
+                final URI uri = calculateUri(host, port);
+                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
+                configureSslSocket(uri, delegateSocket);
+                delegateSocket.setUseClientMode(true);
+                delegateSocket.connect(new InetSocketAddress(host, port));
+                return new ConfiguredSSLSocket(delegateSocket);
+            }
+
+            public SSLSocket createSocket(final String host, final int port, final InetAddress localAddress, final int localPort) throws IOException {
+                final URI uri = calculateUri(host, port);
+                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
+                configureSslSocket(uri, delegateSocket);
+                delegateSocket.setUseClientMode(true);
+                delegateSocket.bind(new InetSocketAddress(localAddress, localPort));
+                delegateSocket.connect(new InetSocketAddress(host, port));
+                return new ConfiguredSSLSocket(delegateSocket);
+            }
+
+            public SSLSocket createSocket(final InetAddress address, final int port) throws IOException {
+                final String name = nameOf(address);
+                final URI uri = calculateUri(name, port);
+                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
+                configureSslSocket(uri, delegateSocket);
+                delegateSocket.setUseClientMode(true);
+                delegateSocket.connect(new InetSocketAddress(address, port));
+                return new ConfiguredSSLSocket(delegateSocket);
+            }
+
+            public SSLSocket createSocket(final InetAddress address, final int port, final InetAddress localAddress, final int localPort) throws IOException {
+                final String name = nameOf(address);
+                final URI uri = calculateUri(name, port);
+                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
+                configureSslSocket(uri, delegateSocket);
+                delegateSocket.setUseClientMode(true);
+                delegateSocket.bind(new InetSocketAddress(localAddress, localPort));
+                delegateSocket.connect(new InetSocketAddress(address, port));
+                return new ConfiguredSSLSocket(delegateSocket);
+            }
+        };
     }
 }

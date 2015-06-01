@@ -66,6 +66,6 @@ final class ConfiguredSSLSocketFactory extends AbstractDelegatingSSLSocketFactor
     }
 
     private Socket wrap(Socket orig) {
-        return orig instanceof SSLSocket ? new ConfiguredSSLSocket((SSLSocket) orig, contextSpi.getProtocolSelector(), contextSpi.getCipherSuiteSelector()) : orig;
+        return orig instanceof SSLSocket ? new ConfiguredSSLSocket((SSLSocket) orig) : orig;
     }
 }

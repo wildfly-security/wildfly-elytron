@@ -18,12 +18,19 @@
 
 package org.wildfly.security.auth;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Collection;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -116,8 +123,7 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
-     * Create a SASL client using the given URI and configuration, and using the caller's class loader and any globally
-     * installed providers for the purposes of discovering available SASL client implementations.
+     * Create a SASL client using the given URI and configuration from the given SASL client factory.
      *
      * @param uri the target URI
      * @param configuration the authentication configuration
@@ -139,5 +145,71 @@ public final class AuthenticationContextConfigurationClient {
      */
     public InetSocketAddress getDestinationInetSocketAddress(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) {
         return configuration.getDestinationInetAddress(uri, protocolDefaultPort);
+    }
+
+    /**
+     * Get an SSL context for the given URI.
+     *
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @return the SSL context
+     * @throws NoSuchAlgorithmException if an SSL context with the configured protocol failed to be instantiated
+     */
+    public SSLContext getSslContext(URI uri, AuthenticationConfiguration configuration) throws NoSuchAlgorithmException {
+        return configuration.getSSLContext(uri);
+    }
+
+    /**
+     * Get an SSL engine for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(URI, AuthenticationConfiguration)}.
+     *
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @param sslContext the SSL context to use
+     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @return the SSL engine
+     */
+    public SSLEngine createSslEngine(URI uri, AuthenticationConfiguration configuration, SSLContext sslContext, int protocolDefaultPort) {
+        return configuration.createSslEngine(uri, sslContext, protocolDefaultPort);
+    }
+
+    /**
+     * Get an SSL client socket for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(URI, AuthenticationConfiguration)}.
+     *
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @param sslContext the SSL context to use
+     * @param connect {@code true} to connect the socket immediately, {@code false} otherwise
+     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @return the SSL engine
+     * @throws IOException if socket creation or connection fails for some reason
+     */
+    public SSLSocket createSslSocket(URI uri, AuthenticationConfiguration configuration, SSLContext sslContext, boolean connect, int protocolDefaultPort) throws IOException {
+        return configuration.createClientSslSocket(uri, sslContext, connect, protocolDefaultPort);
+    }
+
+    /**
+     * Create an SSL client socket factory.
+     *
+     * @param uriScheme the URI scheme for the sockets created by the factory
+     * @param configuration the authentication configuration to use
+     * @param sslContext the SSL context to use
+     * @return the SSL socket factory
+     */
+    public SSLSocketFactory createSslSocketFactory(String uriScheme, AuthenticationConfiguration configuration, SSLContext sslContext) {
+        return configuration.createClientSslSocketFactory(uriScheme, sslContext);
+    }
+
+    /**
+     * Connect a plain socket to the given URI.
+     *
+     * @param uri the connection URI
+     * @param configuration the authentication configuration to use
+     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @return the connected socket
+     * @throws IOException if socket creation or connection fails for some reason
+     */
+    public Socket connect(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) throws IOException {
+        final InetSocketAddress address = getDestinationInetSocketAddress(uri, configuration, protocolDefaultPort);
+        return new Socket(address.getAddress(), address.getPort());
     }
 }
