@@ -31,6 +31,7 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
+import org.junit.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
@@ -47,12 +48,14 @@ public class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;
     private final char[] expectedPassword;
+    private final String expectedAuthzid;
     private final KeySpec keySpec;
     private final String algorithm;
 
     public ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
         this.expectedPassword = expectedPassword;
+        expectedAuthzid = null;
         keySpec = null;
         algorithm = null;
     }
@@ -61,6 +64,15 @@ public class ServerCallbackHandler implements CallbackHandler {
         this.expectedUsername = expectedUsername;
         this.algorithm = algorithm;
         this.keySpec = keyspec;
+        expectedAuthzid = null;
+        expectedPassword = null;
+    }
+
+    public ServerCallbackHandler(final String expectedUsername, final String algorithm, KeySpec keyspec, String authzid) {
+        this.expectedUsername = expectedUsername;
+        this.algorithm = algorithm;
+        this.keySpec = keyspec;
+        expectedAuthzid = authzid;
         expectedPassword = null;
     }
 
@@ -81,7 +93,12 @@ public class ServerCallbackHandler implements CallbackHandler {
                 ((AnonymousAuthorizationCallback) current).setAuthorized(true);
             } else if (current instanceof AuthorizeCallback) {
                 AuthorizeCallback acb = (AuthorizeCallback) current;
-                acb.setAuthorized(acb.getAuthenticationID().equals(acb.getAuthorizationID()));
+                Assert.assertEquals(expectedUsername, acb.getAuthenticationID());
+                if(expectedAuthzid != null){
+                    acb.setAuthorized(expectedAuthzid.equals(acb.getAuthorizationID()));
+                }else{
+                    acb.setAuthorized(expectedUsername.equals(acb.getAuthorizationID()));
+                }
             } else if (current instanceof RealmCallback) {
             } else if (current instanceof CredentialCallback && algorithm != null && keySpec != null) {
                 CredentialCallback ccb = (CredentialCallback) current;
