@@ -74,13 +74,13 @@ final class ScramSaslServer extends AbstractSaslServer {
     private final String bindingType;
     private final byte[] bindingData;
 
+    private String userName;
     private String authorizationID;
     private byte[] clientFirstMessage;
     private byte[] serverFirstMessage;
     private byte[] saltedPassword;
     private final boolean sendErrors = false;
     private int clientFirstMessageBareStart;
-    private ByteIterator gs2Header;
 
     ScramSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean plus, final Map<String, ?> props, final MessageDigest messageDigest, final Mac mac, final SecureRandom secureRandom, final String bindingType, final byte[] bindingData) {
         super(mechanismName, protocol, serverName, callbackHandler);
@@ -165,15 +165,13 @@ final class ScramSaslServer extends AbstractSaslServer {
                     }
 
                     clientFirstMessageBareStart = bi.offset();
-                    gs2Header = ByteIterator.ofBytes(response).limitedTo(clientFirstMessageBareStart);
 
-                    // login name
-                    String loginName;
+                    // user name
                     if (bi.next() == 'n') {
                         if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        loginName = StringPrep.decode(cpi, new StringBuilder()).toString();
+                        userName = StringPrep.decode(cpi, new StringBuilder()).toString();
                         bi.next(); // skip delimiter
                     } else {
                         throw invalidClientMessage();
@@ -196,7 +194,7 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // get password
 
-                    final NameCallback nameCallback = new NameCallback("Remote authentication name", loginName);
+                    final NameCallback nameCallback = new NameCallback("Remote authentication name", userName);
 
                     // first try pre-digested
 
@@ -306,16 +304,6 @@ final class ScramSaslServer extends AbstractSaslServer {
                         }
                     }
 
-                    final AuthorizeCallback authorizeCallback = new AuthorizeCallback(loginName, authorizationID==null ? loginName : authorizationID);
-                    try {
-                        tryHandleCallbacks(authorizeCallback);
-                    } catch (UnsupportedCallbackException e) {
-                        throw new SaslException("Callback handler does not support authorization", e);
-                    }
-                    if ( ! authorizeCallback.isAuthorized()) {
-                        throw new SaslException(loginName + " not authorized to act as " + authorizationID);
-                    }
-
                     // nonce (client + server nonce)
                     b.append('r').append('=');
                     b.append(nonce);
@@ -346,18 +334,11 @@ final class ScramSaslServer extends AbstractSaslServer {
                         throw invalidClientMessage();
                     }
 
-                    // check equality of gs2-header in FIRST and FINAL
-                    ByteIterator gs2HeaderIt = ByteIterator.ofBytes(response).delimitedBy(',');
-                    gs2HeaderIt.next(); gs2HeaderIt.next(); // skip "c="
-                    if(!gs2Header.contentEquals(gs2HeaderIt.base64Decode())){
-                        throw invalidClientMessage();
-                    }
-
                     final ByteIterator bindingIterator = di.base64Decode();
 
                     // -- sub-parse of binding data --
                     switch (bindingIterator.next()) {
-                        case 'n': {
+                        case 'n': case 'y': { // n,[a=authzid],
                             if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
                             if (bindingIterator.next() != ',') {
                                 throw invalidClientMessage();
@@ -368,40 +349,22 @@ final class ScramSaslServer extends AbstractSaslServer {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
-                                    break;
-                                }
-                                default: throw invalidClientMessage();
-                            }
-                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
-                                // extra data
-                                throw invalidClientMessage();
-                            }
-                            break;
-                        }
-                        case 'y': {
-                            if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
-                            if (bindingIterator.next() != ',') {
-                                throw invalidClientMessage();
-                            }
-                            switch (bindingIterator.next()) {
-                                case ',': break;
-                                case 'a': {
-                                    if (bindingIterator.next() != '=') {
+                                    if(! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
+                                    if (bindingIterator.next() != ',') {
+                                        throw invalidClientMessage();
+                                    }
                                     break;
                                 }
                                 default: throw invalidClientMessage();
                             }
-                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
-                                // extra data
+                            if (bindingIterator.hasNext()) { // require end
                                 throw invalidClientMessage();
                             }
                             break;
                         }
-                        case 'p': {
+                        case 'p': { // p=bindingType,[a=authzid],bindingData
                             if (! plus) {
                                 throw new SaslException("Channel binding not supported for mechanism " + getMechanismName());
                             }
@@ -420,20 +383,23 @@ final class ScramSaslServer extends AbstractSaslServer {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    authorizationID = bindingIterator.delimitedBy(',').asUtf8String().drainToString();
+                                    if(! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
+                                        throw invalidClientMessage();
+                                    }
                                     break;
                                 }
                                 default: throw invalidClientMessage();
+                            }
+                            if (bindingIterator.next() != ',') {
+                                throw invalidClientMessage();
                             }
                             // following is the raw channel binding data
                             if (! bindingIterator.contentEquals(ByteIterator.ofBytes(bindingData))) {
                                 throw new SaslException("Channel binding data mismatch for mechanism " + getMechanismName());
                             }
-                            if (bindingIterator.hasNext() && (bindingIterator.next() != ',' || bindingIterator.hasNext())) {
-                                // extra data
+                            if (bindingIterator.next() != ',' || bindingIterator.hasNext()) { // require end
                                 throw invalidClientMessage();
                             }
-                            // all clear!
                             break;
                         }
                     }
@@ -446,7 +412,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     while (di.hasNext()) { di.next(); }
 
                     // proof
-                    final int s = bi.offset();
+                    final int proofOffset = bi.offset();
                     bi.next(); // skip delimiter
                     if (bi.next() != 'p' || bi.next() != '=') {
                         throw invalidClientMessage();
@@ -482,8 +448,8 @@ final class ScramSaslServer extends AbstractSaslServer {
                     mac.update(serverFirstMessage);
                     if (DEBUG) System.out.printf("[S] Using server first message: %s%n", ByteIterator.ofBytes(serverFirstMessage).hexEncode().drainToString());
                     mac.update((byte) ',');
-                    mac.update(response, 0, s); // client-final-message-without-proof
-                    if (DEBUG) System.out.printf("[S] Using client final message without proof: %s%n", ByteIterator.ofBytes(copyOfRange(response, 0, s)).hexEncode().drainToString());
+                    mac.update(response, 0, proofOffset); // client-final-message-without-proof
+                    if (DEBUG) System.out.printf("[S] Using client final message without proof: %s%n", ByteIterator.ofBytes(copyOfRange(response, 0, proofOffset)).hexEncode().drainToString());
                     byte[] clientSignature = mac.doFinal();
                     if (DEBUG) System.out.printf("[S] Client signature: %s%n", ByteIterator.ofBytes(clientSignature).hexEncode().drainToString());
 
@@ -503,7 +469,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                     mac.update((byte) ',');
                     mac.update(serverFirstMessage);
                     mac.update((byte) ',');
-                    mac.update(response, 0, s); // client-final-message-without-proof
+                    mac.update(response, 0, proofOffset); // client-final-message-without-proof
                     serverSignature = mac.doFinal();
                     if (DEBUG) System.out.printf("[S] Server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
 
@@ -525,6 +491,19 @@ final class ScramSaslServer extends AbstractSaslServer {
                             return b.toArray();
                         }
                         throw new SaslException("Authentication rejected (invalid proof)");
+                    }
+
+                    if (authorizationID == null) {
+                        authorizationID = userName;
+                    }
+                    final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
+                    try {
+                        tryHandleCallbacks(authorizeCallback);
+                    } catch (UnsupportedCallbackException e) {
+                        throw new SaslException("Callback handler does not support authorization", e);
+                    }
+                    if ( ! authorizeCallback.isAuthorized()) {
+                        throw new SaslException(userName + " not authorized to act as " + authorizationID);
                     }
 
                     // == send response ==
