@@ -257,4 +257,30 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertFalse(saslServer.isComplete());
     }
 
+    /**
+     * Test authentication with unusual characters in credentials (quoting of "n" and "a")
+     */
+    @Test
+    public void testStrangeCredentials() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1".toCharArray()));
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "protocol", "server", Collections.emptyMap(), cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "n,,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=AAnSTGiu2SSEn7Hkxi6+CXBpLc8=".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("v=jqnGKIvKrX0ER+X58AQ4PsRQl20=", new String(message)); // not verified
+
+        assertTrue(saslServer.isComplete());
+    }
+
 }
