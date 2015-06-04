@@ -232,6 +232,37 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
+     * Test rejection of different authorization id in FIRST and FINAL message
+     */
+    @Test
+    public void testMismatchedAuthorizationIdBlank() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
+                Collections.emptyMap(), cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        //        c="n,,"
+        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
+                .getBytes(StandardCharsets.UTF_8);
+        try {
+            saslServer.evaluateResponse(message);
+            fail("SaslException not throwed");
+        } catch (SaslException e) {
+        }
+        assertFalse(saslServer.isComplete());
+    }
+
+    /**
      * Test rejection of correct credentials and non-corresponding nonce
      */
     @Test
@@ -271,19 +302,18 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1".toCharArray()));
+        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray()), "strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301");
         final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "protocol", "server", Collections.emptyMap(), cbh);
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof ScramSaslServer);
 
-        byte[] message = "n,,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
-        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=AAnSTGiu2SSEn7Hkxi6+CXBpLc8=".getBytes(StandardCharsets.UTF_8);
+        message = "c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=ZWpaDThPD7OErOz+6Q+n9msNhMQ=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=jqnGKIvKrX0ER+X58AQ4PsRQl20=", new String(message)); // not verified
-
+        assertEquals("v=k1gWxds6QP4FdDqmsLtaxIl38NM=", new String(message));
         assertTrue(saslServer.isComplete());
     }
 

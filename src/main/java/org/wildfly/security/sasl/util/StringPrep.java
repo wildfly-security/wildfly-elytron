@@ -19,9 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import java.text.Normalizer;
-
 import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Preparation of Internationalized Strings ("stringprep") by RFC 3454
@@ -40,6 +38,9 @@ public final class StringPrep {
 
     public static final long MAP_SCRAM_LOGIN_CHARS      = 1L << 30;
     public static final long MAP_GS2_LOGIN_CHARS        = 1L << 31;
+
+    public static final long UNMAP_SCRAM_LOGIN_CHARS    = 1L << 28;
+    public static final long UNMAP_GS2_LOGIN_CHARS      = 1L << 29;
 
     // normalizations
 
@@ -253,7 +254,8 @@ public final class StringPrep {
                 target.append(' ');
                 continue;
             }
-            // Escaping used in GS2 and SCRAM (RFC 5801,5802)
+
+            // Escaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
             if (isSet(profile, MAP_SCRAM_LOGIN_CHARS) || isSet(profile, MAP_GS2_LOGIN_CHARS)) {
                 if (cp == '=') {
                     target.append('=').append('3').append('D');
@@ -261,6 +263,27 @@ public final class StringPrep {
                 } else if (cp == ',') {
                     target.append('=').append('2').append('C');
                     continue;
+                }
+            }
+
+            // Unescaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
+            else if (isSet(profile, UNMAP_SCRAM_LOGIN_CHARS) || isSet(profile, UNMAP_GS2_LOGIN_CHARS)) {
+                if (cp == '=') {
+                    if (i + 1 >= len) {
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
+                    char ch1 = string.charAt(i++);
+                    char ch2 = string.charAt(i++);
+
+                    if(ch1 == '3' && ch2 == 'D'){
+                        target.append('=');
+                        continue;
+                    }else if(ch1 == '2' && ch2 == 'C'){
+                        target.append(',');
+                        continue;
+                    }else{
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
                 }
             }
 
@@ -280,31 +303,5 @@ public final class StringPrep {
             // Now, encode that one
             target.appendUtf8Raw(cp);
         }
-    }
-
-    /**
-     * Decode escaping used in GS2 and SCRAM (RFC 5801,5802)
-     *
-     * @param input
-     * @param output
-     */
-    public static StringBuilder decode(CodePointIterator input, StringBuilder output) {
-        while(input.hasNext()){
-            int ch = input.next();
-            if(ch != '='){
-                output.appendCodePoint(ch);
-            }else{
-                int ch1 = input.next();
-                int ch2 = input.next();
-                if(ch1 == '2' && ch2 == 'C'){
-                    output.appendCodePoint(',');
-                }else if(ch1 == '3' && ch2 == 'D'){
-                    output.appendCodePoint('=');
-                }else{
-                    throw new IllegalArgumentException("Invalid escape sequence"); // server MUST fail
-                }
-            }
-        }
-        return output;
     }
 }

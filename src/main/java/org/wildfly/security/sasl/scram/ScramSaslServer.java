@@ -81,6 +81,7 @@ final class ScramSaslServer extends AbstractSaslServer {
     private byte[] saltedPassword;
     private final boolean sendErrors = false;
     private int clientFirstMessageBareStart;
+    private int cbindFlag;
 
     ScramSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean plus, final Map<String, ?> props, final MessageDigest messageDigest, final Mac mac, final SecureRandom secureRandom, final String bindingType, final byte[] bindingData) {
         super(mechanismName, protocol, serverName, callbackHandler);
@@ -132,8 +133,8 @@ final class ScramSaslServer extends AbstractSaslServer {
                     // == parse message ==
 
                     // binding type
-                    c = bi.next();
-                    if (c == 'p' && plus) {
+                    cbindFlag = bi.next();
+                    if (cbindFlag == 'p' && plus) {
                         assert bindingType != null; // because {@code plus} is true
                         assert bindingData != null;
                         if (bi.next() != '=') {
@@ -144,7 +145,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             throw new SaslException("Channel binding type mismatch between client and server");
                         }
                         bi.next(); // skip delimiter
-                    } else if ((c == 'y' || c == 'n') && !plus) {
+                    } else if ((cbindFlag == 'y' || cbindFlag == 'n') && !plus) {
                         if (bi.next() != ',') {
                             throw invalidClientMessage();
                         }
@@ -171,7 +172,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                         if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        userName = StringPrep.decode(cpi, new StringBuilder()).toString();
+                        ByteStringBuilder bsb = new ByteStringBuilder();
+                        StringPrep.encode(cpi.drainToString(), bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
+                        userName = new String(bsb.toArray(), StandardCharsets.UTF_8);
                         bi.next(); // skip delimiter
                     } else {
                         throw invalidClientMessage();
@@ -337,19 +340,26 @@ final class ScramSaslServer extends AbstractSaslServer {
                     final ByteIterator bindingIterator = di.base64Decode();
 
                     // -- sub-parse of binding data --
-                    switch (bindingIterator.next()) {
+                    if(bindingIterator.next() != cbindFlag) {
+                        throw invalidClientMessage();
+                    }
+                    switch (cbindFlag) {
                         case 'n': case 'y': { // n,[a=authzid],
                             if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
                             if (bindingIterator.next() != ',') {
                                 throw invalidClientMessage();
                             }
                             switch (bindingIterator.next()) {
-                                case ',': break;
+                                case ',':
+                                    if (authorizationID != null) {
+                                        throw invalidClientMessage();
+                                    }
+                                    break;
                                 case 'a': {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    if(! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
+                                    if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
                                         throw invalidClientMessage();
                                     }
                                     if (bindingIterator.next() != ',') {
@@ -378,12 +388,16 @@ final class ScramSaslServer extends AbstractSaslServer {
                                 throw invalidClientMessage();
                             }
                             switch (bindingIterator.next()) {
-                                case ',': break;
+                                case ',':
+                                    if (authorizationID != null) {
+                                        throw invalidClientMessage();
+                                    }
+                                    break;
                                 case 'a': {
                                     if (bindingIterator.next() != '=') {
                                         throw invalidClientMessage();
                                     }
-                                    if(! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
+                                    if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
                                         throw invalidClientMessage();
                                     }
                                     break;
@@ -495,6 +509,10 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     if (authorizationID == null) {
                         authorizationID = userName;
+                    }else{
+                        ByteStringBuilder bsb = new ByteStringBuilder();
+                        StringPrep.encode(authorizationID, bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
+                        authorizationID = new String(bsb.toArray(), StandardCharsets.UTF_8);
                     }
                     final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
                     try {
