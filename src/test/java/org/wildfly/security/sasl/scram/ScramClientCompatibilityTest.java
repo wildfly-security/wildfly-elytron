@@ -192,11 +192,11 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
 
         byte[] message = AbstractSaslParticipant.NO_BYTES;
         message = saslClient.evaluateChallenge(message);
-        assertEquals("n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,r=fyko+d2lbbFgONRv9qkxdawL", new String(message));
+        assertEquals("n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,r=fyko+d2lbbFgONRv9qkxdawL", new String(message, StandardCharsets.UTF_8));
 
         message = "r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096".getBytes(StandardCharsets.UTF_8);
         message = saslClient.evaluateChallenge(message);
-        assertEquals("c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=5Drqrw2srEQfQ84h8Okz6eV091w=", new String(message));
+        assertEquals("c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=5Drqrw2srEQfQ84h8Okz6eV091w=", new String(message, StandardCharsets.UTF_8));
 
         message = "v=7xo0Rb9jQts952duIEz4oaIfD/c=".getBytes(StandardCharsets.UTF_8);
         message = saslClient.evaluateChallenge(message);
