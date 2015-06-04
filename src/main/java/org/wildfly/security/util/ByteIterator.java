@@ -218,12 +218,12 @@ public abstract class ByteIterator extends NumericIterator {
 
                 int calc1(final int b0, final int b1) {
                     // d1 = r1[3..0] + r0[7..6]
-                    return alphabet.encode((b1 << 2 | b0 >> 6) & 0x3f);
+                    return alphabet.encode(((b1 << 2) & 0x3f) | ((b0 >> 6) & 0x3));
                 }
 
                 int calc2(final int b1, final int b2) {
                     // d2 = r2[1..0] + r1[7..4]
-                    return alphabet.encode((b2 << 4 | b1 >> 4) & 0x3f);
+                    return alphabet.encode(((b2 << 4) & 0x3f) | ((b1 >> 4) & 0xF));
                 }
 
                 int calc3(final int b2) {
@@ -240,12 +240,12 @@ public abstract class ByteIterator extends NumericIterator {
 
                 int calc1(final int b0, final int b1) {
                     // d1 = r0[1..0] + r1[7..4]
-                    return alphabet.encode((b0 << 4 | b1 >> 4) & 0x3f);
+                    return alphabet.encode(((b0 << 4) & 0x3f) | ((b1 >> 4) & 0xF));
                 }
 
                 int calc2(final int b1, final int b2) {
                     // d2 = r1[3..0] + r2[7..6]
-                    return alphabet.encode((b1 << 2 | b2 >> 6) & 0x3f);
+                    return alphabet.encode(((b1 << 2) & 0x3f) | ((b2 >> 6) & 0x3));
                 }
 
                 int calc3(final int b2) {
