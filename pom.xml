@@ -54,6 +54,7 @@
         <version.jmockit>1.10</version.jmockit>
         <version.org.wildfly.checkstyle-config>1.0.3.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.0.Alpha2</version.org.wildfly.client.config>
+        <version.org.wildfly.common>1.0.0.Alpha2</version.org.wildfly.common>
         <version.com.puppycrawl.tools.checkstyle>6.3</version.com.puppycrawl.tools.checkstyle>
 
         <test.level>INFO</test.level>
@@ -224,6 +225,12 @@
             <groupId>org.wildfly.client</groupId>
             <artifactId>wildfly-client-config</artifactId>
             <version>${version.org.wildfly.client.config}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly.common</groupId>
+            <artifactId>wildfly-common</artifactId>
+            <version>${version.org.wildfly.common}</version>
             <scope>provided</scope>
         </dependency>
 
