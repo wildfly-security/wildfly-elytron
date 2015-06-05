@@ -289,15 +289,12 @@ public final class ServerAuthenticationContext {
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
 
+            @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                try {
-                    handleOne(callbacks, 0);
-                } catch (RealmUnavailableException e) {
-                    throw new IOException(e);
-                }
+                handleOne(callbacks, 0);
             }
 
-            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException, RealmUnavailableException {
+            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException {
                 if (idx == callbacks.length) {
                     return;
                 }
@@ -431,34 +428,42 @@ public final class ServerAuthenticationContext {
             this.id = id;
         }
 
+        @Override
         public int getId() {
             return id;
         }
 
+        @Override
         SecurityIdentity getAuthorizedIdentity() {
             throw ElytronMessages.log.noSuccessfulAuthentication();
         }
 
+        @Override
         Principal getAuthenticationPrincipal() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         CredentialSupport getCredentialSupport(final Class<?> credentialType) {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         RealmInfo getRealmInfo() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         RealmIdentity getRealmIdentity() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
@@ -471,34 +476,42 @@ public final class ServerAuthenticationContext {
             this.identity = identity;
         }
 
+        @Override
         int getId() {
             return COMPLETE_ID;
         }
 
+        @Override
         SecurityIdentity getAuthorizedIdentity() {
             return identity;
         }
 
+        @Override
         Principal getAuthenticationPrincipal() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         CredentialSupport getCredentialSupport(final Class<?> credentialType) {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         RealmInfo getRealmInfo() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        @Override
         RealmIdentity getRealmIdentity() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
@@ -513,34 +526,42 @@ public final class ServerAuthenticationContext {
             this.realmIdentity = realmIdentity;
         }
 
+        @Override
         int getId() {
             return ASSIGNED_ID;
         }
 
+        @Override
         SecurityIdentity getAuthorizedIdentity() {
             throw ElytronMessages.log.noSuccessfulAuthentication();
         }
 
+        @Override
         Principal getAuthenticationPrincipal() throws RealmUnavailableException {
             return realmIdentity.getPrincipal();
         }
 
+        @Override
         CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
             return realmIdentity.getCredentialSupport(credentialType);
         }
 
+        @Override
         <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
             return realmIdentity.getCredential(credentialType);
         }
 
+        @Override
         boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             return realmIdentity.verifyCredential(credential);
         }
 
+        @Override
         RealmInfo getRealmInfo() {
             return realmInfo;
         }
 
+        @Override
         RealmIdentity getRealmIdentity() {
             return realmIdentity;
         }

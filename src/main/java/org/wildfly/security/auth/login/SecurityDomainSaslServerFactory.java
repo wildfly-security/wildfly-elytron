@@ -46,7 +46,6 @@ import org.wildfly.security.auth.callback.SecurityLayerDisposedCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.RealmIdentity;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -65,6 +64,7 @@ class SecurityDomainSaslServerFactory extends AbstractDelegatingSaslServerFactor
         this.domain = domain;
     }
 
+    @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final DomainCallbackHandler callbackHandler = new DomainCallbackHandler();
         final SaslServer saslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, callbackHandler);
@@ -72,6 +72,7 @@ class SecurityDomainSaslServerFactory extends AbstractDelegatingSaslServerFactor
             return null;
         }
         return new AbstractDelegatingSaslServer(saslServer) {
+            @Override
             public Object getNegotiatedProperty(final String propName) {
                 switch (propName) {
                     case "org.wildfly.auth-context": return callbackHandler.context;
@@ -90,15 +91,8 @@ class SecurityDomainSaslServerFactory extends AbstractDelegatingSaslServerFactor
             return identity;
         }
 
+        @Override
         public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            try {
-                innerHandle(callbacks);
-            } catch (RealmUnavailableException e) {
-                throw new IOException(e);
-            }
-        }
-
-        private void innerHandle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException, RealmUnavailableException {
             for (Callback callback : callbacks) {
                 if (callback instanceof NameCallback) {
                     // login name
