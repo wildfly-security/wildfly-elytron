@@ -45,6 +45,7 @@ import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
@@ -320,39 +321,41 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
+
+                    final TwoWayPassword credential = getCredential(TwoWayPassword.class);
+                    if (credential == null) {
+                        // there's a slight hope that we could get a proper credential callback
+                        throw new FastUnsupportedCallbackException(callback);
+                    }
+                    final ClearPasswordSpec clearPasswordSpec;
+                    try {
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
+                        clearPasswordSpec = passwordFactory.getKeySpec(credential, ClearPasswordSpec.class);
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                        // try to fall back to another credential type
+                        throw new FastUnsupportedCallbackException(callback);
+                    }
+                    passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof PasswordVerifyCallback) {
+                    final PasswordVerifyCallback passwordVerifyCallback = (PasswordVerifyCallback) callback;
                     // need a plain password
-                    final char[] providedPassword = passwordCallback.getPassword();
-                    if (providedPassword != null) {
-                        if (getCredentialSupport(char[].class).isDefinitelyVerifiable() && ! verifyCredential(providedPassword)) {
-                            throw new SaslException("Invalid password");
-                        } else if (getCredentialSupport(TwoWayPassword.class).isDefinitelyVerifiable()) {
-                            try {
-                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-                                final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
-                                if (! verifyCredential(password)) {
-                                    throw new SaslException("Invalid password");
-                                }
-                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                                throw new SaslException("Password verification not supported", e);
-                            }
-                        } else {
-                            throw new SaslException("Password verification not supported");
-                        }
-                    } else {
-                        final TwoWayPassword credential = getCredential(TwoWayPassword.class);
-                        if (credential == null) {
-                            // there's a slight hope that we could get a proper credential callback
-                            throw new FastUnsupportedCallbackException(callback);
-                        }
-                        final ClearPasswordSpec clearPasswordSpec;
+                    final char[] providedPassword = passwordVerifyCallback.getPassword();
+                    if (getCredentialSupport(char[].class).isDefinitelyVerifiable()) {
+                        passwordVerifyCallback.setVerified(verifyCredential(providedPassword));
+                    } else if (getCredentialSupport(TwoWayPassword.class).isDefinitelyVerifiable()) {
                         try {
-                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
-                            clearPasswordSpec = passwordFactory.getKeySpec(credential, ClearPasswordSpec.class);
-                        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                            final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
+                            passwordVerifyCallback.setVerified(verifyCredential(password));
+                        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                             // try to fall back to another credential type
                             throw new FastUnsupportedCallbackException(callback);
                         }
-                        passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+                    } else {
+                        // try to fall back to another credential type
+                        throw new FastUnsupportedCallbackException(callback);
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CredentialCallback) {
