@@ -44,6 +44,7 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
+import org.wildfly.security.auth.callback.CredentialVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
@@ -371,6 +372,17 @@ public final class ServerAuthenticationContext {
                     }
                     // otherwise just fall out; some mechanisms will try again with different credentials
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof CredentialVerifyCallback) {
+                    CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
+                    RealmIdentity identity = this.identity;
+                    if (identity == null) {
+                        throw new SaslException("No user identity loaded for credential verification");
+                    }
+
+                    Object credential = credentialVerifyCallback.getCredential();
+                    if (identity.getCredentialSupport(credential.getClass()).isDefinitelyVerifiable()) {
+                        credentialVerifyCallback.setVerified(identity.verifyCredential(credential));
+                    }
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
                     handleOne(callbacks, idx + 1);
