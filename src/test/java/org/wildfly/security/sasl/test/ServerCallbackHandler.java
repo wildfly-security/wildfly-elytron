@@ -33,6 +33,7 @@ import javax.security.sasl.SaslException;
 
 import org.junit.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
+import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -51,6 +52,8 @@ public class ServerCallbackHandler implements CallbackHandler {
     private final String expectedAuthzid;
     private final KeySpec keySpec;
     private final String algorithm;
+    private String bindingType = null;
+    private byte[] bindingData = null;
 
     public ServerCallbackHandler(final String expectedUsername, final char[] expectedPassword) {
         this.expectedUsername = expectedUsername;
@@ -74,6 +77,11 @@ public class ServerCallbackHandler implements CallbackHandler {
         this.keySpec = keyspec;
         expectedAuthzid = authzid;
         expectedPassword = null;
+    }
+
+    public void setBinding(String bindingType, byte[] bindingData){
+        this.bindingType = bindingType;
+        this.bindingData = bindingData;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -111,6 +119,10 @@ public class ServerCallbackHandler implements CallbackHandler {
                 } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                     throw new IOException("Password object generation failed", e);
                 }
+            } else if (current instanceof ChannelBindingCallback && bindingType != null) {
+                ChannelBindingCallback cbc = (ChannelBindingCallback) current;
+                cbc.setBindingType(bindingType);
+                cbc.setBindingData(bindingData);
             } else {
                 throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");
             }

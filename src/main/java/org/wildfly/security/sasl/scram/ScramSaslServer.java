@@ -346,29 +346,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                     switch (cbindFlag) {
                         case 'n': case 'y': { // n,[a=authzid],
                             if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
-                            if (bindingIterator.next() != ',') {
-                                throw invalidClientMessage();
-                            }
-                            switch (bindingIterator.next()) {
-                                case ',':
-                                    if (authorizationID != null) {
-                                        throw invalidClientMessage();
-                                    }
-                                    break;
-                                case 'a': {
-                                    if (bindingIterator.next() != '=') {
-                                        throw invalidClientMessage();
-                                    }
-                                    if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
-                                        throw invalidClientMessage();
-                                    }
-                                    if (bindingIterator.next() != ',') {
-                                        throw invalidClientMessage();
-                                    }
-                                    break;
-                                }
-                                default: throw invalidClientMessage();
-                            }
+
+                            parseAuthorizationId(bindingIterator);
+
                             if (bindingIterator.hasNext()) { // require end
                                 throw invalidClientMessage();
                             }
@@ -384,34 +364,13 @@ final class ScramSaslServer extends AbstractSaslServer {
                             if (! bindingType.equals(bindingIterator.delimitedBy(',').asUtf8String().drainToString())) {
                                 throw new SaslException("Channel binding type mismatch for mechanism " + getMechanismName());
                             }
-                            if (bindingIterator.next() != ',') {
-                                throw invalidClientMessage();
-                            }
-                            switch (bindingIterator.next()) {
-                                case ',':
-                                    if (authorizationID != null) {
-                                        throw invalidClientMessage();
-                                    }
-                                    break;
-                                case 'a': {
-                                    if (bindingIterator.next() != '=') {
-                                        throw invalidClientMessage();
-                                    }
-                                    if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
-                                        throw invalidClientMessage();
-                                    }
-                                    break;
-                                }
-                                default: throw invalidClientMessage();
-                            }
-                            if (bindingIterator.next() != ',') {
-                                throw invalidClientMessage();
-                            }
+                            parseAuthorizationId(bindingIterator);
+
                             // following is the raw channel binding data
                             if (! bindingIterator.contentEquals(ByteIterator.ofBytes(bindingData))) {
                                 throw new SaslException("Channel binding data mismatch for mechanism " + getMechanismName());
                             }
-                            if (bindingIterator.next() != ',' || bindingIterator.hasNext()) { // require end
+                            if (bindingIterator.hasNext()) { // require end
                                 throw invalidClientMessage();
                             }
                             break;
@@ -553,6 +512,32 @@ final class ScramSaslServer extends AbstractSaslServer {
             if (! ok) {
                 setNegotiationState(FAILED_STATE);
             }
+        }
+    }
+
+    private void parseAuthorizationId(ByteIterator bindingIterator) throws SaslException {
+        if (bindingIterator.next() != ',') {
+            throw invalidClientMessage();
+        }
+        switch (bindingIterator.next()) {
+            case ',':
+                if (authorizationID != null) {
+                    throw invalidClientMessage();
+                }
+                break;
+            case 'a': {
+                if (bindingIterator.next() != '=') {
+                    throw invalidClientMessage();
+                }
+                if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
+                    throw invalidClientMessage();
+                }
+                if (bindingIterator.next() != ',') {
+                    throw invalidClientMessage();
+                }
+                break;
+            }
+            default: throw invalidClientMessage();
         }
     }
 
