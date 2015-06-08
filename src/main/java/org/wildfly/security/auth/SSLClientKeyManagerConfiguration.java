@@ -18,25 +18,29 @@
 
 package org.wildfly.security.auth;
 
-import javax.net.ssl.SSLContext;
+import java.security.GeneralSecurityException;
+
+import javax.net.ssl.X509KeyManager;
+
+import org.wildfly.security.SecurityFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SSLContextAuthenticationConfiguration extends AuthenticationConfiguration {
+class SSLClientKeyManagerConfiguration extends AuthenticationConfiguration {
 
-    private final SSLContext sslContext;
+    private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
-    SSLContextAuthenticationConfiguration(final AuthenticationConfiguration parent, final SSLContext sslContext) {
-        super(parent);
-        this.sslContext = sslContext;
+    SSLClientKeyManagerConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
+        super(parent.without(SSLClientCertificateConfiguration.class));
+        this.keyManagerFactory = keyManagerFactory;
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SSLContextAuthenticationConfiguration(newParent, sslContext);
+        return new SSLClientKeyManagerConfiguration(newParent, keyManagerFactory);
     }
 
-    SSLContext getSslContext() {
-        return sslContext;
+    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() throws GeneralSecurityException {
+        return keyManagerFactory;
     }
 }

@@ -20,6 +20,7 @@ package org.wildfly.security.ssl;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -57,6 +58,18 @@ final class ConfiguredSSLContextSpi extends AbstractDelegatingSSLContextSpi {
 
     protected SSLEngine engineCreateSSLEngine(final String host, final int port) {
         return new ConfiguredSSLEngine(super.engineCreateSSLEngine(host, port), protocolSelector, cipherSuiteSelector);
+    }
+
+    protected SSLParameters engineGetDefaultSSLParameters() {
+        // these will always be identical
+        return engineGetSupportedSSLParameters();
+    }
+
+    protected SSLParameters engineGetSupportedSSLParameters() {
+        final SSLParameters parameters = super.engineGetSupportedSSLParameters();
+        parameters.setCipherSuites(cipherSuiteSelector.evaluate(parameters.getCipherSuites()));
+        parameters.setProtocols(protocolSelector.evaluate(parameters.getProtocols()));
+        return parameters;
     }
 
     ProtocolSelector getProtocolSelector() {

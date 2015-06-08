@@ -32,12 +32,19 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
 /**
+ * An SSL context SPI implementation which delegates to another SSL context.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
+public abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
     private final SSLContext delegate;
 
-    AbstractDelegatingSSLContextSpi(final SSLContext delegate) {
+    /**
+     * Construct a new instance.
+     *
+     * @param delegate the SSL context to delegate
+     */
+    protected AbstractDelegatingSSLContextSpi(final SSLContext delegate) {
         this.delegate = delegate;
     }
 
@@ -77,7 +84,12 @@ abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
         return delegate.getSupportedSSLParameters();
     }
 
-    public SSLContext getDelegate() {
+    /**
+     * Get the delegate SSL context.
+     *
+     * @return the delegate SSL context
+     */
+    protected SSLContext getDelegate() {
         return delegate;
     }
 }

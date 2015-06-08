@@ -18,9 +18,8 @@
 
 package org.wildfly.security.auth;
 
-import java.net.URI;
-
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 
 import org.wildfly.security.ssl.CipherSuiteSelector;
@@ -45,13 +44,16 @@ class CipherSuiteSelectorAuthenticationConfiguration extends AuthenticationConfi
         return cipherSuiteSelector;
     }
 
-    void configureSslEngine(final URI uri, final SSLEngine sslEngine) {
-        super.configureSslEngine(uri, sslEngine);
+    void configureSslEngine(final SSLEngine sslEngine) {
+        super.configureSslEngine(sslEngine);
+        final SSLParameters sslParameters = sslEngine.getSSLParameters();
+        sslParameters.setUseCipherSuitesOrder(true);
+        sslEngine.setSSLParameters(sslParameters);
         sslEngine.setEnabledCipherSuites(cipherSuiteSelector.evaluate(sslEngine.getSupportedCipherSuites()));
     }
 
-    void configureSslSocket(final URI uri, final SSLSocket sslSocket) {
-        super.configureSslSocket(uri, sslSocket);
+    void configureSslSocket(final SSLSocket sslSocket) {
+        super.configureSslSocket(sslSocket);
         sslSocket.setEnabledCipherSuites(cipherSuiteSelector.evaluate(sslSocket.getSupportedCipherSuites()));
     }
 }

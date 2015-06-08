@@ -18,25 +18,29 @@
 
 package org.wildfly.security.auth;
 
-import javax.net.ssl.SSLContext;
+import java.security.GeneralSecurityException;
+
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SSLContextAuthenticationConfiguration extends AuthenticationConfiguration {
+class SSLClientCertificateConfiguration extends AuthenticationConfiguration {
 
-    private final SSLContext sslContext;
+    private final SecurityFactory<X500CertificateChainPrivateCredential> credentialFactory;
 
-    SSLContextAuthenticationConfiguration(final AuthenticationConfiguration parent, final SSLContext sslContext) {
-        super(parent);
-        this.sslContext = sslContext;
+    SSLClientCertificateConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X500CertificateChainPrivateCredential> credentialFactory) {
+        super(parent.without(SSLClientKeyManagerConfiguration.class), true);
+        this.credentialFactory = credentialFactory;
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SSLContextAuthenticationConfiguration(newParent, sslContext);
+        return new SSLClientCertificateConfiguration(newParent, credentialFactory);
     }
 
-    SSLContext getSslContext() {
-        return sslContext;
+    void configureKeyManager(final ConfigurationKeyManager.Builder builder) throws GeneralSecurityException {
+        super.configureKeyManager(builder);
+        builder.addCredential(credentialFactory.create());
     }
 }

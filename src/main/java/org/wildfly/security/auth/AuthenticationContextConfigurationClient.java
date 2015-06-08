@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -36,7 +37,6 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.manager.StackInspector;
 import org.wildfly.security.permission.ElytronPermission;
 
 /**
@@ -52,8 +52,6 @@ public final class AuthenticationContextConfigurationClient {
      * A reusable privileged action to create a new configuration client.
      */
     public static final PrivilegedAction<AuthenticationContextConfigurationClient> ACTION = AuthenticationContextConfigurationClient::new;
-
-    static final StackInspector STACK_INSPECTOR = StackInspector.getInstance();
 
     /**
      * Construct a new instance.
@@ -150,17 +148,16 @@ public final class AuthenticationContextConfigurationClient {
     /**
      * Get an SSL context for the given URI.
      *
-     * @param uri the connection URI
      * @param configuration the authentication configuration to use
      * @return the SSL context
      * @throws NoSuchAlgorithmException if an SSL context with the configured protocol failed to be instantiated
      */
-    public SSLContext getSslContext(URI uri, AuthenticationConfiguration configuration) throws NoSuchAlgorithmException {
-        return configuration.getSSLContext(uri);
+    public SSLContext getSslContext(AuthenticationConfiguration configuration) throws GeneralSecurityException {
+        return configuration.createSslContext();
     }
 
     /**
-     * Get an SSL engine for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(URI, AuthenticationConfiguration)}.
+     * Get an SSL engine for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(AuthenticationConfiguration)}.
      *
      * @param uri the connection URI
      * @param configuration the authentication configuration to use
@@ -173,7 +170,7 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
-     * Get an SSL client socket for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(URI, AuthenticationConfiguration)}.
+     * Get an SSL client socket for the given URI.  Normally the SSL context is acquired via {@link #getSslContext(AuthenticationConfiguration)}.
      *
      * @param uri the connection URI
      * @param configuration the authentication configuration to use
@@ -190,13 +187,12 @@ public final class AuthenticationContextConfigurationClient {
     /**
      * Create an SSL client socket factory.
      *
-     * @param uriScheme the URI scheme for the sockets created by the factory
      * @param configuration the authentication configuration to use
      * @param sslContext the SSL context to use
      * @return the SSL socket factory
      */
-    public SSLSocketFactory createSslSocketFactory(String uriScheme, AuthenticationConfiguration configuration, SSLContext sslContext) {
-        return configuration.createClientSslSocketFactory(uriScheme, sslContext);
+    public SSLSocketFactory createSslSocketFactory(AuthenticationConfiguration configuration, SSLContext sslContext) {
+        return configuration.createClientSslSocketFactory(sslContext.getSocketFactory());
     }
 
     /**

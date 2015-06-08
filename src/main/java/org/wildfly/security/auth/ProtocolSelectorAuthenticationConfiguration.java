@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth;
 
-import java.net.URI;
-
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
 
@@ -45,13 +43,13 @@ class ProtocolSelectorAuthenticationConfiguration extends AuthenticationConfigur
         return protocolSelector;
     }
 
-    void configureSslEngine(final URI uri, final SSLEngine sslEngine) {
-        super.configureSslEngine(uri, sslEngine);
+    void configureSslEngine(final SSLEngine sslEngine) {
+        super.configureSslEngine(sslEngine);
         sslEngine.setEnabledProtocols(protocolSelector.evaluate(sslEngine.getSupportedProtocols()));
     }
 
-    void configureSslSocket(final URI uri, final SSLSocket sslSocket) {
-        super.configureSslSocket(uri, sslSocket);
+    void configureSslSocket(final SSLSocket sslSocket) {
+        super.configureSslSocket(sslSocket);
         sslSocket.setEnabledProtocols(protocolSelector.evaluate(sslSocket.getSupportedProtocols()));
     }
 }
