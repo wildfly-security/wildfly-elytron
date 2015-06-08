@@ -18,9 +18,9 @@
 
 package org.wildfly.security.auth.login;
 
+import static java.util.Collections.unmodifiableMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,25 +50,22 @@ import org.wildfly.security.util._private.UnmodifiableArrayList;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class SecurityDomain {
-    private final Map<String, SecurityRealm> realmMap;
+    private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
-    private final NameRewriter[] preRealmRewriters;
+    private final NameRewriter preRealmRewriter;
     private final RealmMapper realmMapper;
-    private final NameRewriter[] postRealmRewriters;
+    private final NameRewriter postRealmRewriter;
     private final boolean anonymousAllowed;
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity = new ThreadLocal<>();
     private final RoleMapper roleMapper;
-    private final Map<String, RoleMapper> realmRoleMappers;
 
-    SecurityDomain(final Map<String, SecurityRealm> realmMap, final String defaultRealmName, final NameRewriter[] preRealmRewriters, final RealmMapper realmMapper, final NameRewriter[] postRealmRewriters, RoleMapper roleMapper, Map<String, RoleMapper> realmRoleMappers) {
-        assert realmMap.containsKey(defaultRealmName);
-        this.realmMap = realmMap;
-        this.defaultRealmName = defaultRealmName;
-        this.preRealmRewriters = preRealmRewriters;
-        this.realmMapper = realmMapper;
-        this.postRealmRewriters = postRealmRewriters;
-        this.roleMapper = roleMapper == null ? RoleMapper.IDENTITY_ROLE_MAPPER : roleMapper;
-        this.realmRoleMappers = realmRoleMappers;
+    SecurityDomain(Builder builder) {
+        this.realmMap = unmodifiableMap(builder.realms);
+        this.defaultRealmName = builder.defaultRealmName;
+        this.preRealmRewriter = builder.preRealmRewriter;
+        this.realmMapper = builder.realmMapper;
+        this.roleMapper = builder.roleMapper;
+        this.postRealmRewriter = builder.postRealmRewriter;
         // todo configurable
         anonymousAllowed = false;
     }
@@ -100,21 +97,14 @@ public final class SecurityDomain {
      * @throws RealmUnavailableException if the realm is not able to perform the mapping
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
-        for (NameRewriter rewriter : preRealmRewriters) {
-            name = rewriter.rewriteName(name);
-        }
+        name = this.preRealmRewriter.rewriteName(name);
         String realmName = realmMapper.getRealmMapping(name);
         if (realmName == null) {
             realmName = defaultRealmName;
         }
-        SecurityRealm securityRealm = realmMap.get(realmName);
-        if (securityRealm == null) {
-            securityRealm = realmMap.get(defaultRealmName);
-        }
+        SecurityRealm securityRealm = getRealm(realmName);
         assert securityRealm != null;
-        for (NameRewriter rewriter : postRealmRewriters) {
-            name = rewriter.rewriteName(name);
-        }
+        name = this.postRealmRewriter.rewriteName(name);
         return securityRealm.createRealmIdentity(name);
     }
 
@@ -157,21 +147,24 @@ public final class SecurityDomain {
     }
 
     SecurityRealm getRealm(final String realmName) {
-        SecurityRealm securityRealm = realmMap.get(realmName);
-        if (securityRealm == null) {
-            securityRealm = realmMap.get(defaultRealmName);
+        RealmInfo realmInfo = this.realmMap.get(realmName);
+
+        if (realmInfo == null) {
+            realmInfo = this.realmMap.get(this.defaultRealmName);
         }
-        return securityRealm;
+
+        return realmInfo.getSecurityRealm();
     }
 
     CredentialSupport getCredentialSupport(final Class<?> credentialType) {
         SupportLevel obtainMin, obtainMax, verifyMin, verifyMax;
         obtainMin = obtainMax = verifyMin = verifyMax = null;
-        Iterator<SecurityRealm> iterator = realmMap.values().iterator();
+        Iterator<RealmInfo> iterator = realmMap.values().iterator();
         if (iterator.hasNext()) {
 
             while (iterator.hasNext()) {
-                SecurityRealm realm = iterator.next();
+                RealmInfo realmInfo = iterator.next();
+                SecurityRealm realm = realmInfo.getSecurityRealm();
                 try {
                     final CredentialSupport support = realm.getCredentialSupport(credentialType);
 
@@ -238,20 +231,18 @@ public final class SecurityDomain {
         currentSecurityIdentity.set(newIdentity);
     }
 
-    Set<String> mapRolesForCurrentSecurityIdentity() {
-        SecurityIdentity securityIdentity = getCurrentSecurityIdentity();
-
+    Set<String> mapRoles(SecurityIdentity securityIdentity) {
         if (securityIdentity == null) {
-            throw new IllegalStateException("No SecurityIdentity set.");
+            log.nullParameter("securityIdentity");
         }
 
         AuthenticatedRealmIdentity identity = securityIdentity.getAuthenticatedRealmIdentity();
-        String realmName = this.defaultRealmName; // TODO: how to obtain the realm name
-        RoleMapper roleMapper = this.realmRoleMappers.get(realmName);
         Set<String> mappedRoles = identity.getRoles(); // zeroth role mapping, just grab roles from the identity
+        RealmInfo realmInfo = securityIdentity.getRealmInfo();
+        RoleMapper realmRoleMapper = realmInfo.getRoleMapper();
 
         // apply the first level mapping, which is based on the role mapper associated with a realm.
-        mappedRoles = roleMapper.mapRoles(mappedRoles);
+        mappedRoles = realmRoleMapper.mapRoles(mappedRoles);
 
         // apply the second level mapping, which is based on the role mapper associated with this security domain.
         return this.roleMapper.mapRoles(mappedRoles);
@@ -261,40 +252,37 @@ public final class SecurityDomain {
      * A builder for creating new security domains.
      */
     public static final class Builder {
-        private static final NameRewriter[] NONE = new NameRewriter[0];
-
         private boolean built = false;
 
-        private final ArrayList<NameRewriter> preRealmRewriters = new ArrayList<>();
-        private final ArrayList<NameRewriter> postRealmRewriters = new ArrayList<>();
-        private final HashMap<String, SecurityRealm> realms = new HashMap<>();
+        private final HashMap<String, RealmInfo> realms = new HashMap<>();
+        private NameRewriter preRealmRewriter;
+        private NameRewriter postRealmRewriter;
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper;
-        private final HashMap<String, RoleMapper> realmRoleMappers = new HashMap<>();
 
         /**
-         * Add a pre-realm name rewriter, which rewrites the authentication name before a realm is selected.
+         * Sets a pre-realm name rewriter, which rewrites the authentication name before a realm is selected.
          *
          * @param rewriter the name rewriter
          * @return this builder
          */
-        public Builder addPreRealmRewriter(NameRewriter rewriter) {
+        public Builder setPreRealmRewriter(NameRewriter rewriter) {
             assertNotBuilt();
-            if (rewriter != null) preRealmRewriters.add(rewriter);
+            this.preRealmRewriter = rewriter;
 
             return this;
         }
 
         /**
-         * Add a post-realm name rewriter, which rewrites the authentication name after a realm is selected.
+         * Sets a post-realm name rewriter, which rewrites the authentication name after a realm is selected.
          *
          * @param rewriter the name rewriter
          * @return this builder
          */
-        public Builder addPostRealmRewriter(NameRewriter rewriter) {
+        public Builder setPostRealmRewriter(NameRewriter rewriter) {
             assertNotBuilt();
-            if (rewriter != null) postRealmRewriters.add(rewriter);
+            this.postRealmRewriter = rewriter;
 
             return this;
         }
@@ -358,8 +346,11 @@ public final class SecurityDomain {
                 throw log.nullParameter("realm");
             }
 
-            this.realms.put(name, realm);
-            this.realmRoleMappers.put(name, roleMapper == null ? RoleMapper.IDENTITY_ROLE_MAPPER : roleMapper);
+            if (roleMapper == null) {
+                roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
+            }
+
+            realms.put(name, new RealmInfo(name, realm, roleMapper));
 
             return this;
         }
@@ -398,17 +389,15 @@ public final class SecurityDomain {
             if (defaultRealmName == null) {
                 throw log.nullParameter("defaultRealmName");
             }
-            final HashMap<String, SecurityRealm> realmMap = new HashMap<>(realms);
-            if (! realmMap.containsKey(defaultRealmName)) {
+            final HashMap<String, RealmInfo> realmMap = new HashMap<>(realms);
+            if (!realmMap.containsKey(defaultRealmName)) {
                 throw log.realmMapDoesntContainDefault(defaultRealmName);
             }
 
             assertNotBuilt();
             built = true;
 
-            NameRewriter[] preRealm = preRealmRewriters.isEmpty() ? NONE : preRealmRewriters.toArray(new NameRewriter[preRealmRewriters.size()]);
-            NameRewriter[] postRealm = postRealmRewriters.isEmpty() ? NONE : postRealmRewriters.toArray(new NameRewriter[postRealmRewriters.size()]);
-            return new SecurityDomain(realmMap, defaultRealmName, preRealm, realmMapper, postRealm, roleMapper, realmRoleMappers);
+            return new SecurityDomain(this);
         }
 
         private void assertNotBuilt() {

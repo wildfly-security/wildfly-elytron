@@ -36,14 +36,20 @@ import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
 public final class SecurityIdentity {
     private final SecurityDomain securityDomain;
     private final AuthenticatedRealmIdentity authenticatedRealmIdentity;
+    private final RealmInfo realmInfo;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final AuthenticatedRealmIdentity authenticatedRealmIdentity) {
+    SecurityIdentity(final SecurityDomain securityDomain, final RealmInfo realmInfo, final AuthenticatedRealmIdentity authenticatedRealmIdentity) {
         this.securityDomain = securityDomain;
+        this.realmInfo = realmInfo;
         this.authenticatedRealmIdentity = authenticatedRealmIdentity;
     }
 
     SecurityDomain getSecurityDomain() {
         return securityDomain;
+    }
+
+    RealmInfo getRealmInfo() {
+        return this.realmInfo;
     }
 
     AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
@@ -177,6 +183,6 @@ public final class SecurityIdentity {
      * @return the roles.
      */
     public Set<String> getRoles() {
-        return getSecurityDomain().mapRolesForCurrentSecurityIdentity();
+        return getSecurityDomain().mapRoles(this);
     }
 }
