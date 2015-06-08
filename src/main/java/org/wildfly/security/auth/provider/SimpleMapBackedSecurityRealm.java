@@ -36,6 +36,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -131,6 +132,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
+        @Override
         public String getName() {
             return name;
         }
@@ -157,21 +159,29 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             return entry == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(entry.getAttributes());
         }
 
+        @Override
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
-            if (credential instanceof char[]) try {
-                final SimpleRealmEntry entry = map.get(name);
+            try {
+                SimpleRealmEntry entry = map.get(name);
                 if (entry == null) {
                     return false;
                 }
-                final Password password = entry.getPassword();
-                return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+
+                if (credential instanceof char[]) {
+                    final Password password = entry.getPassword();
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
+                } else if (credential instanceof ClearPassword) {
+                    final Password password = entry.getPassword();
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((ClearPassword) credential).getPassword());
+                } else {
+                    return false;
+                }
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RealmUnavailableException(e);
-            } else {
-                return false;
             }
         }
 
+        @Override
         public boolean exists() throws RealmUnavailableException {
             return map.containsKey(name);
         }
