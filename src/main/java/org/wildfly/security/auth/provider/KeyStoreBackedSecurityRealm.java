@@ -27,6 +27,8 @@ import java.security.PrivateKey;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.Set;
 
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
@@ -163,6 +165,11 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
+                }
+
+                @Override
+                public Set<String> getRoles() {
+                    return Collections.emptySet();
                 }
             };
         }

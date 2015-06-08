@@ -32,9 +32,11 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -346,6 +348,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         @Override
         public Principal getPrincipal() {
             return principal;
+        }
+
+        @Override
+        public Set<String> getRoles() {
+            return Collections.emptySet();
         }
 
     }
