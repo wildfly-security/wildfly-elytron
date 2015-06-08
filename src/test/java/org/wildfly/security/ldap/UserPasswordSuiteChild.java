@@ -42,6 +42,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -90,6 +91,28 @@ public class UserPasswordSuiteChild {
     @Test
     public void testPlainUser() throws Exception {
         performSimpleNameTest("plainUser", ClearPassword.class, ClearPassword.ALGORITHM_CLEAR, "plainPassword".toCharArray());
+    }
+
+    @Test
+    public void testPlainUserVerifyOnRealmIdentity() throws Exception {
+        RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity("plainUser");
+        ClearPasswordSpec passwordSpec = new ClearPasswordSpec("plainPassword".toCharArray());
+        PasswordFactory instance = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        Password password = instance.generatePassword(passwordSpec);
+
+        verifyPasswordSupport(realmIdentity, ClearPassword.class);
+        assertTrue(realmIdentity.verifyCredential(password));
+    }
+
+    @Test
+    public void testPlainUserVerifyFailedOnRealmIdentity() throws Exception {
+        RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity("plainUser");
+        ClearPasswordSpec invalidPasswordSpec = new ClearPasswordSpec("invalidPassword".toCharArray());
+        PasswordFactory instance = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        Password invalidPassword = instance.generatePassword(invalidPasswordSpec);
+
+        verifyPasswordSupport(realmIdentity, ClearPassword.class);
+        assertFalse(realmIdentity.verifyCredential(invalidPassword));
     }
 
     @Test

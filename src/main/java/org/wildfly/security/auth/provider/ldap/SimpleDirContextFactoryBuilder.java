@@ -18,11 +18,14 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import java.util.Hashtable;
-
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import java.util.Hashtable;
 
 /**
  * A simple builder for a {@link DirContextFactory} which creates new contexts on demand and disposes of them as soon as they
@@ -144,17 +147,43 @@ public class SimpleDirContextFactoryBuilder {
 
         @Override
         public DirContext obtainDirContext(ReferralMode mode) throws NamingException {
-            Hashtable<String, String> env = new Hashtable<String, String>();
+            return createDirContext(securityPrincipal, securityCredential.toCharArray(), null);
+        }
+
+        @Override
+        public DirContext obtainDirContext(CallbackHandler handler, ReferralMode mode) throws NamingException {
+            NameCallback nameCallback = new NameCallback("Principal Name");
+            PasswordCallback passwordCallback = new PasswordCallback("Password", false);
+
+            try {
+                handler.handle(new Callback[] {nameCallback, passwordCallback});
+            } catch (Exception e) {
+                throw new RuntimeException("Could not obtain credentials.", e);
+            }
+
+            String securityPrincipal = nameCallback.getName();
+
+            if (securityPrincipal == null) {
+                throw new IllegalArgumentException("Could not not obtain security principal.");
+            }
+
+            char[] securityCredential = passwordCallback.getPassword();
+
+            if (securityCredential == null) {
+                throw new IllegalArgumentException("Could not not obtain security credential.");
+            }
+
+            return createDirContext(securityPrincipal, securityCredential, mode);
+        }
+
+        private DirContext createDirContext(String securityPrincipal, char[] securityCredential, ReferralMode mode) throws NamingException {
+            Hashtable<String, String> env = new Hashtable<>();
+
             env.put(InitialDirContext.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(InitialDirContext.PROVIDER_URL, providerUrl);
             env.put(InitialDirContext.SECURITY_AUTHENTICATION, securityAuthentication);
-            if (securityPrincipal != null) {
-                env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
-            }
-            if (securityCredential != null) {
-                env.put(InitialDirContext.SECURITY_CREDENTIALS, securityCredential);
-            }
-
+            env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
+            env.put(InitialDirContext.SECURITY_CREDENTIALS, String.valueOf(securityCredential));
             env.put(InitialDirContext.REFERRAL, mode == null ? ReferralMode.IGNORE.getValue() : mode.getValue());
 
             return new InitialDirContext(env);
@@ -164,7 +193,7 @@ public class SimpleDirContextFactoryBuilder {
         public void returnContext(DirContext context) {
             if (context instanceof InitialDirContext) {
                 try {
-                    ((InitialDirContext) context).close();
+                    context.close();
                 } catch (NamingException ignored) {
                 }
             }

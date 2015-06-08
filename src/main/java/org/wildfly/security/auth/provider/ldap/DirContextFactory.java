@@ -23,6 +23,7 @@ import java.util.EnumSet;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import javax.security.auth.callback.CallbackHandler;
 
 /**
  * Factory for obtaining connected DirContext instances.
@@ -41,6 +42,16 @@ public interface DirContextFactory {
      * @return a ready to use {@link DirContext} for searching and attribute retrieval
      */
     DirContext obtainDirContext(final ReferralMode mode) throws NamingException;
+
+    /**
+     * Obtain a {@link DirContext} based on the credentials extracted from the given {@link CallbackHandler}.
+     *
+     * @param handler the callback handler used to extract credentials in order to obtain a connected DirContext instance.
+     * @param mode the referral mode for if a referral is encountered querying LDAP; the passed in referral mode can be {@code null}
+     *        in which case the default of {@code IGNORE} will be assumed
+     * @return a ready to use {@link DirContext} for searching and attribute retrieval
+     */
+    DirContext obtainDirContext(CallbackHandler handler, ReferralMode mode) throws NamingException;
 
     /**
      * Return the {@link DirContext} once it is no longer required. The returned DirContext is not necessarily an
