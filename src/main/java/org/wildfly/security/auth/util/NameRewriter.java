@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.util;
 
+import org.wildfly.common.Assert;
+
 /**
  * A name rewriter.  Name rewriters transform names from one form to another for various purposes, including (but
  * not limited to):
@@ -31,6 +33,7 @@ package org.wildfly.security.auth.util;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@FunctionalInterface
 public interface NameRewriter {
 
     /**
@@ -41,4 +44,35 @@ public interface NameRewriter {
      * @throws IllegalArgumentException if the name is syntactically invalid
      */
     String rewriteName(String original) throws IllegalArgumentException;
+
+    /**
+     * Create a name rewriter which aggregates the given name rewriters.
+     *
+     * @param rewriter1 the first name rewriter (must not be {@code null})
+     * @param rewriter2 the second name rewriter (must not be {@code null})
+     * @return the name rewriter (not {@code null})
+     */
+    static NameRewriter aggregate(NameRewriter rewriter1, NameRewriter rewriter2) {
+        Assert.checkNotNullParam("rewriter1", rewriter1);
+        Assert.checkNotNullParam("rewriter2", rewriter2);
+        return (n) -> rewriter2.rewriteName(rewriter1.rewriteName(n));
+    }
+
+    /**
+     * Create a name rewriter which aggregates the given name rewriters.
+     *
+     * @param nameRewriters the name rewriters (must not be {@code null}, cannot have {@code null} elements)
+     * @return the name rewriter (not {@code null})
+     */
+    static NameRewriter aggregate(NameRewriter... nameRewriters) {
+        Assert.checkNotNullParam("nameRewriters", nameRewriters);
+        final NameRewriter[] clone = nameRewriters.clone();
+        for (int i = 0; i < clone.length; i++) {
+            Assert.checkNotNullArrayParam("nameRewriters", i, clone[i]);
+        }
+        return (n) -> {
+            for (NameRewriter r : clone) n = r.rewriteName(n);
+            return n;
+        };
+    }
 }
