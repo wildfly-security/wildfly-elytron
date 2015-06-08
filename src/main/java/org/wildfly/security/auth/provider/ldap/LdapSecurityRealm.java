@@ -21,7 +21,9 @@ package org.wildfly.security.auth.provider.ldap;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -221,6 +223,11 @@ class LdapSecurityRealm implements SecurityRealm {
             return new AuthenticatedRealmIdentity() {
                 public Principal getPrincipal() {
                     return principal;
+                }
+
+                @Override
+                public Set<String> getRoles() {
+                    return Collections.emptySet();
                 }
             };
         }

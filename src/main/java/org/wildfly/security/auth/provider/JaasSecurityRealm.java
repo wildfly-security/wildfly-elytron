@@ -33,6 +33,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Set;
 
@@ -264,6 +265,11 @@ public class JaasSecurityRealm implements SecurityRealm {
         @Override
         public Principal getPrincipal() {
             return this.callerPrincipal != null ? this.callerPrincipal : this.principal;
+        }
+
+        @Override
+        public Set<String> getRoles() {
+            return Collections.emptySet();
         }
 
         /**

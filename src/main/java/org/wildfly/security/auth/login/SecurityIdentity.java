@@ -21,6 +21,7 @@ package org.wildfly.security.auth.login;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.wildfly.security.ParametricPrivilegedAction;
@@ -168,5 +169,14 @@ public final class SecurityIdentity {
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
+    }
+
+    /**
+     * <p>Get the roles associated with this identity.</p>
+     *
+     * @return the roles.
+     */
+    public Set<String> getRoles() {
+        return getSecurityDomain().mapRolesForCurrentSecurityIdentity();
     }
 }
