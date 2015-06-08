@@ -218,6 +218,16 @@ public class StringPrepTest {
     }
 
     /**
+     * RFC 5802 5.1. SCRAM Attributes - characters ',' or '=' in usernames
+     */
+    @Test
+    public void testUnMappingScramLoginChars() {
+        ByteStringBuilder b = new ByteStringBuilder();
+        StringPrep.encode("a=2Cb=3Dc=2C", b, StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
+        Assert.assertArrayEquals(new byte[]{'a', ',', 'b', '=', 'c', ','}, b.toArray());
+    }
+
+    /**
      * RFC 3454 4. Normalization (sanity check)
      */
     @Test

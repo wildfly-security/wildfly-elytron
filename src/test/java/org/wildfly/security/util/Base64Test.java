@@ -111,6 +111,54 @@ public class Base64Test {
         Assert.assertArrayEquals(input, CodePointIterator.ofString(output).base64Decode().drain());
     }
 
+    @Test
+    public void testEncodeBytes1() {
+        ByteStringBuilder bsb = new ByteStringBuilder();
+        bsb.append((byte)0x00);
+        bsb.append((byte)0xB8);
+        assertEquals("ALg=", bsb.iterate().base64Encode().drainToString());
+    }
+
+    @Test
+    public void testEncodeBytes2() {
+        ByteStringBuilder bsb = new ByteStringBuilder();
+        bsb.append((byte)0x01);
+        bsb.append((byte)0xB8);
+        assertEquals("Abg=", bsb.iterate().base64Encode().drainToString());
+    }
+
+    @Test
+    public void testEncodeBytes3() {
+        ByteStringBuilder bsb = new ByteStringBuilder();
+        bsb.append((byte)0xF0);
+        bsb.append((byte)0xF0);
+        bsb.append((byte)0xF0);
+        assertEquals("8PDw", bsb.iterate().base64Encode().drainToString());
+    }
+
+    @Test
+    public void testEncodeBytes4() {
+        ByteStringBuilder bsb = new ByteStringBuilder();
+        bsb.append((byte)0xD0);
+        bsb.append((byte)0xB8);
+        bsb.append((byte)0xE4);
+        bsb.append((byte)0xBD);
+        bsb.append((byte)0xA0);
+        bsb.append((byte)0xF0);
+        bsb.append((byte)0x9F);
+        bsb.append((byte)0x82);
+        bsb.append((byte)0xA1);
+        bsb.append((byte)0x31);
+        bsb.append((byte)0xE2);
+        bsb.append((byte)0x81);
+        bsb.append((byte)0x84);
+        bsb.append((byte)0x32);
+        bsb.append((byte)0x20);
+        bsb.append((byte)0xCC);
+        bsb.append((byte)0x81);
+        assertEquals("0LjkvaDwn4KhMeKBhDIgzIE=", bsb.iterate().base64Encode().drainToString());
+    }
+
 
     /*
      * Standard Base64 alphabet decoding

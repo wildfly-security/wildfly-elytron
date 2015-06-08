@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.util;
 
 import java.text.Normalizer;
-
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -39,6 +38,9 @@ public final class StringPrep {
 
     public static final long MAP_SCRAM_LOGIN_CHARS      = 1L << 30;
     public static final long MAP_GS2_LOGIN_CHARS        = 1L << 31;
+
+    public static final long UNMAP_SCRAM_LOGIN_CHARS    = 1L << 28;
+    public static final long UNMAP_GS2_LOGIN_CHARS      = 1L << 29;
 
     // normalizations
 
@@ -79,7 +81,7 @@ public final class StringPrep {
 
     // StringPrep section 3 - Mapping
 
-    public static boolean mapCodePointToNothing(int input) {
+    private static boolean mapCodePointToNothing(int input) {
         return input == 0xAD
             || input == 0x034F
             || input == 0x1806
@@ -90,7 +92,7 @@ public final class StringPrep {
             || input == 0xFEFF;
     }
 
-    public static boolean mapCodePointToSpace(int input) {
+    private static boolean mapCodePointToSpace(int input) {
         return input == 0xA0
             || input == 0x1680
             || input >= 0x2000 && input <= 0x200B
@@ -101,19 +103,19 @@ public final class StringPrep {
 
     // StringPrep section 5 - Prohibited I/O
 
-    public static void forbidNonAsciiSpaces(int input) {
+    private static void forbidNonAsciiSpaces(int input) {
         if (mapCodePointToSpace(input)) {
             throw new IllegalArgumentException("Invalid non-ASCII space");
         }
     }
 
-    public static void forbidAsciiControl(int input) {
+    private static void forbidAsciiControl(int input) {
         if (input < 0x20 || input == 0x7F) {
             throw new IllegalArgumentException("Invalid ASCII control");
         }
     }
 
-    public static void forbidNonAsciiControl(int input) {
+    private static void forbidNonAsciiControl(int input) {
         if (input >= 0x80 && input <= 0x9F
             || input == 0x06DD
             || input == 0x070F
@@ -130,37 +132,37 @@ public final class StringPrep {
         }
     }
 
-    public static void forbidPrivateUse(int input) {
+    private static void forbidPrivateUse(int input) {
         if (input >= 0xE000 && input <= 0xF8FF || input >= 0xF0000 && input <= 0xFFFFD || input >= 0x100000 && input <= 0x10FFFD) {
             throw new IllegalArgumentException("Invalid private use character");
         }
     }
 
-    public static void forbidNonCharacter(int input) {
+    private static void forbidNonCharacter(int input) {
         if ((input & 0xFFFE) == 0xFFFE || input >= 0xFDD0 && input <= 0xFDEF) {
             throw new IllegalArgumentException("Invalid non-character code point");
         }
     }
 
-    public static void forbidSurrogate(int input) {
+    private static void forbidSurrogate(int input) {
         if (input >= 0xD800 && input <= 0xDFFF) {
             throw new IllegalArgumentException("Invalid surrogate code point");
         }
     }
 
-    public static void forbidInappropriateForPlainText(int input) {
+    private static void forbidInappropriateForPlainText(int input) {
         if (input >= 0xFFF9 && input <= 0xFFFD) {
             throw new IllegalArgumentException("Invalid plain text code point");
         }
     }
 
-    public static void forbidInappropriateForCanonicalRepresentation(int input) {
+    private static void forbidInappropriateForCanonicalRepresentation(int input) {
         if (input >= 0x2FF0 && input <= 0x2FFB) {
             throw new IllegalArgumentException("Invalid non-canonical code point");
         }
     }
 
-    public static void forbidChangeDisplayPropertiesOrDeprecated(int input) {
+    private static void forbidChangeDisplayPropertiesOrDeprecated(int input) {
         if (input >= 0x0340 && input <= 0x0341
             || input >= 0x200E && input <= 0x200F
             || input >= 0x202A && input <= 0x202E
@@ -169,13 +171,13 @@ public final class StringPrep {
         }
     }
 
-    public static void forbidTagging(int input) {
+    private static void forbidTagging(int input) {
         if (input == 0x0E0001 || input >= 0x0E0020 && input <= 0x0E007F) {
             throw new IllegalArgumentException("Invalid tagging character");
         }
     }
 
-    public static void forbidUnassigned(int input) {
+    private static void forbidUnassigned(int input) {
         if (Character.getType(input) == Character.UNASSIGNED) {
             throw new IllegalArgumentException("Unassigned code point");
         }
@@ -252,6 +254,8 @@ public final class StringPrep {
                 target.append(' ');
                 continue;
             }
+
+            // Escaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
             if (isSet(profile, MAP_SCRAM_LOGIN_CHARS) || isSet(profile, MAP_GS2_LOGIN_CHARS)) {
                 if (cp == '=') {
                     target.append('=').append('3').append('D');
@@ -259,6 +263,27 @@ public final class StringPrep {
                 } else if (cp == ',') {
                     target.append('=').append('2').append('C');
                     continue;
+                }
+            }
+
+            // Unescaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
+            else if (isSet(profile, UNMAP_SCRAM_LOGIN_CHARS) || isSet(profile, UNMAP_GS2_LOGIN_CHARS)) {
+                if (cp == '=') {
+                    if (i + 1 >= len) {
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
+                    char ch1 = string.charAt(i++);
+                    char ch2 = string.charAt(i++);
+
+                    if(ch1 == '3' && ch2 == 'D'){
+                        target.append('=');
+                        continue;
+                    }else if(ch1 == '2' && ch2 == 'C'){
+                        target.append(',');
+                        continue;
+                    }else{
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
                 }
             }
 
