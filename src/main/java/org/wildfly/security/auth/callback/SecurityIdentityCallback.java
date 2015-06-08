@@ -20,7 +20,7 @@ package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
 
-import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.login.SecurityIdentity;
 
 /**
  * A server-side callback used to pass a realm identity from the callback handler to the authentication mechanism.  If
@@ -28,19 +28,19 @@ import org.wildfly.security.auth.spi.RealmIdentity;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class RealmIdentityCallback implements ExtendedCallback, Serializable {
+public final class SecurityIdentityCallback implements ExtendedCallback, Serializable {
 
     private static final long serialVersionUID = -238599667659078631L;
 
     /**
-     * @serial The realm identity.
+     * @serial The security identity.
      */
-    private RealmIdentity realmIdentity;
+    private SecurityIdentity securityIdentity;
 
     /**
      * Construct a new instance.
      */
-    public RealmIdentityCallback() {
+    public SecurityIdentityCallback() {
     }
 
     /**
@@ -48,16 +48,16 @@ public final class RealmIdentityCallback implements ExtendedCallback, Serializab
      *
      * @return the realm identity, or {@code null} if there is none
      */
-    public RealmIdentity getRealmIdentity() {
-        return realmIdentity;
+    public SecurityIdentity getSecurityIdentity() {
+        return securityIdentity;
     }
 
     /**
      * Set the realm identity.
      *
-     * @param realmIdentity the realm identity, or {@code null} if there is none
+     * @param securityIdentity the realm identity, or {@code null} if there is none
      */
-    public void setRealmIdentity(final RealmIdentity realmIdentity) {
-        this.realmIdentity = realmIdentity;
+    public void setSecurityIdentity(final SecurityIdentity securityIdentity) {
+        this.securityIdentity = securityIdentity;
     }
 }

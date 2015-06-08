@@ -96,7 +96,7 @@ public final class WildFlySasl {
     /**
      * The property which holds the negotiated realm identity after a successful SASL server-side authentication.
      */
-    public static final String REALM_IDENTITY = "wildfly.sasl.realm-identity";
+    public static final String SECURITY_IDENTITY = "wildfly.sasl.realm-identity";
 
     /**
      * The immutable empty names array.

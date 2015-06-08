@@ -31,6 +31,7 @@ import java.util.Set;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -147,13 +148,16 @@ public final class SecurityDomain {
     }
 
     SecurityRealm getRealm(final String realmName) {
+        return getRealmInfo(realmName).getSecurityRealm();
+    }
+
+    RealmInfo getRealmInfo(final String realmName) {
         RealmInfo realmInfo = this.realmMap.get(realmName);
 
         if (realmInfo == null) {
             realmInfo = this.realmMap.get(this.defaultRealmName);
         }
-
-        return realmInfo.getSecurityRealm();
+        return realmInfo;
     }
 
     CredentialSupport getCredentialSupport(final Class<?> credentialType) {
@@ -232,9 +236,7 @@ public final class SecurityDomain {
     }
 
     Set<String> mapRoles(SecurityIdentity securityIdentity) {
-        if (securityIdentity == null) {
-            log.nullParameter("securityIdentity");
-        }
+        Assert.checkNotNullParam("securityIdentity", securityIdentity);
 
         AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
         Set<String> mappedRoles = identity.getRoles(); // zeroth role mapping, just grab roles from the identity
@@ -246,6 +248,26 @@ public final class SecurityDomain {
 
         // apply the second level mapping, which is based on the role mapper associated with this security domain.
         return this.roleMapper.mapRoles(mappedRoles);
+    }
+
+    String getDefaultRealmName() {
+        return defaultRealmName;
+    }
+
+    NameRewriter getPreRealmRewriter() {
+        return preRealmRewriter;
+    }
+
+    RealmMapper getRealmMapper() {
+        return realmMapper;
+    }
+
+    NameRewriter getPostRealmRewriter() {
+        return postRealmRewriter;
+    }
+
+    RoleMapper getRoleMapper() {
+        return roleMapper;
     }
 
     /**

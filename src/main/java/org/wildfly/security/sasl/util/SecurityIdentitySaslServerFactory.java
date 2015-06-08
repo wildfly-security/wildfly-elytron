@@ -27,23 +27,23 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.wildfly.security.auth.callback.RealmIdentityCallback;
-import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.callback.SecurityIdentityCallback;
+import org.wildfly.security.auth.login.SecurityIdentity;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
- * A SASL server factory which makes the authenticated {@link RealmIdentity} available to the caller.
+ * A SASL server factory which makes the authenticated {@link SecurityIdentity} available to the caller.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class RealmIdentitySaslServerFactory extends AbstractDelegatingSaslServerFactory {
+public final class SecurityIdentitySaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
     /**
      * Construct a new instance.
      *
      * @param delegate the delegate SASL server factory
      */
-    public RealmIdentitySaslServerFactory(final SaslServerFactory delegate) {
+    public SecurityIdentitySaslServerFactory(final SaslServerFactory delegate) {
         super(delegate);
     }
 
@@ -51,28 +51,28 @@ public final class RealmIdentitySaslServerFactory extends AbstractDelegatingSasl
         final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
         return delegateSaslServer == null ? null : new AbstractDelegatingSaslServer(delegateSaslServer) {
             private final AtomicBoolean complete = new AtomicBoolean();
-            private volatile RealmIdentity realmIdentity;
+            private volatile SecurityIdentity securityIdentity;
 
             public byte[] evaluateResponse(final byte[] response) throws SaslException {
                 final byte[] challenge = delegate.evaluateResponse(response);
                 if (isComplete() && complete.compareAndSet(false, true)) try {
-                    final RealmIdentityCallback ric = new RealmIdentityCallback();
+                    final SecurityIdentityCallback ric = new SecurityIdentityCallback();
                     cbh.handle(new Callback[] { ric });
-                    realmIdentity = ric.getRealmIdentity();
+                    securityIdentity = ric.getSecurityIdentity();
                 } catch (Throwable ignored) {
                 }
                 return challenge;
             }
 
             public Object getNegotiatedProperty(final String propName) {
-                return propName.equals(WildFlySasl.REALM_IDENTITY) ? realmIdentity : super.getNegotiatedProperty(propName);
+                return propName.equals(WildFlySasl.SECURITY_IDENTITY) ? securityIdentity : super.getNegotiatedProperty(propName);
             }
 
             public void dispose() throws SaslException {
                 try {
                     super.dispose();
                 } finally {
-                    realmIdentity = null;
+                    securityIdentity = null;
                 }
             }
         };

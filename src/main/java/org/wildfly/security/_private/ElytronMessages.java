@@ -76,7 +76,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
 
-    // id = 8
+    @Message(id = 8, value = "No authentication is in progress")
+    IllegalStateException noAuthenticationInProgress();
 
     @Message(id = 9, value = "No successful authentication on this context")
     IllegalStateException noSuccessfulAuthentication();

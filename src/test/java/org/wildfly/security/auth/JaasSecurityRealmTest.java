@@ -111,11 +111,11 @@ public class JaasSecurityRealmTest {
         assertEquals("Invalid principal name", new NamePrincipal("auth-caller"), authPrincipal);
 
         // dispose the auth realm identity - should trigger a JAAS logout that clears the subject.
-        // TODO - some other solution is needed here!
-        authPrincipal = authRealmIdentity.getPrincipal();
+        // TODO - some other solution is needed here!  We can no longer force JAAS logout in an authorization scenario.
+        //authPrincipal = authRealmIdentity.getPrincipal();
         // after the logout, the subject no longer contains a caller principal so the identity should return the same principal as the realm identity.
-        assertNotNull("Unexpected null principal", authPrincipal);
-        assertEquals("Invalid principal name", new NamePrincipal("elytron"), authPrincipal);
+        //assertNotNull("Unexpected null principal", authPrincipal);
+        //assertEquals("Invalid principal name", new NamePrincipal("elytron"), authPrincipal);
 
     }
 
