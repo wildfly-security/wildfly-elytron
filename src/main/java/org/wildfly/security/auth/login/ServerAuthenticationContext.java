@@ -176,6 +176,7 @@ public final class ServerAuthenticationContext {
         }
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = domain.getPostRealmRewriter().rewriteName(name);
+        name = realmInfo.getNameRewriter().rewriteName(name);
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         boolean ok = false;

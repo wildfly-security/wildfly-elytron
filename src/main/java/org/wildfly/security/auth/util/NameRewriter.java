@@ -37,6 +37,11 @@ import org.wildfly.common.Assert;
 public interface NameRewriter {
 
     /**
+     * The simple identity name rewriter, which does no rewriting.
+     */
+    NameRewriter IDENTITY_REWRITER = original -> original;
+
+    /**
      * Rewrite a name.  Must not return {@code null}.
      *
      * @param original the original name (must not be {@code null})
