@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 
 /**
  * A loaded and authenticated security identity.
@@ -35,13 +35,13 @@ import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
  */
 public final class SecurityIdentity {
     private final SecurityDomain securityDomain;
-    private final AuthenticatedRealmIdentity authenticatedRealmIdentity;
+    private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final RealmInfo realmInfo, final AuthenticatedRealmIdentity authenticatedRealmIdentity) {
+    SecurityIdentity(final SecurityDomain securityDomain, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity) {
         this.securityDomain = securityDomain;
         this.realmInfo = realmInfo;
-        this.authenticatedRealmIdentity = authenticatedRealmIdentity;
+        this.authorizationIdentity = authorizationIdentity;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -52,8 +52,8 @@ public final class SecurityIdentity {
         return this.realmInfo;
     }
 
-    AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
-        return authenticatedRealmIdentity;
+    AuthorizationIdentity getAuthorizationIdentity() {
+        return authorizationIdentity;
     }
 
     /**

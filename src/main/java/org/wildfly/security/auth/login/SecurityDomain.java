@@ -31,7 +31,7 @@ import java.util.Set;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslServerFactory;
 
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -236,7 +236,7 @@ public final class SecurityDomain {
             log.nullParameter("securityIdentity");
         }
 
-        AuthenticatedRealmIdentity identity = securityIdentity.getAuthenticatedRealmIdentity();
+        AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
         Set<String> mappedRoles = identity.getRoles(); // zeroth role mapping, just grab roles from the identity
         RealmInfo realmInfo = securityIdentity.getRealmInfo();
         RoleMapper realmRoleMapper = realmInfo.getRoleMapper();

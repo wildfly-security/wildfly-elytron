@@ -22,11 +22,13 @@ import java.security.Principal;
 import java.util.Set;
 
 /**
- * A representation of a post-authentication identity.
+ * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
+ * authorization decisions.  Since there is no upper bound in the lifespan of instances of this class, they should
+ * not retain references to scarce resources like database connections or file handles.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface AuthenticatedRealmIdentity {
+public interface AuthorizationIdentity {
 
     /**
      * Get the {@link Principal} for this identity, or {@code null} if there is none.
@@ -46,11 +48,4 @@ public interface AuthenticatedRealmIdentity {
      * @return A string set containing the roles for this identity or an empty set if this identity has no roles.
      */
     Set<String> getRoles();
-
-    /**
-     * Dispose this realm identity after a completed authentication attempt.
-     */
-    default void dispose() {
-    }
-
 }

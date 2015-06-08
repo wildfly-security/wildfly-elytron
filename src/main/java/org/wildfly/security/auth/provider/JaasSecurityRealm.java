@@ -40,7 +40,7 @@ import java.util.Set;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -183,8 +183,8 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException {
-            return new JaasAuthenticatedRealmIdentity(this.principal, this.subject);
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            return new JaasAuthorizationIdentity(this.principal, this.subject);
         }
     }
 
@@ -231,7 +231,7 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class JaasAuthenticatedRealmIdentity implements AuthenticatedRealmIdentity {
+    private class JaasAuthorizationIdentity implements AuthorizationIdentity {
 
         private static final String CALLER_PRINCIPAL_GROUP = "CallerPrincipal";
 
@@ -239,27 +239,11 @@ public class JaasSecurityRealm implements SecurityRealm {
         private Principal callerPrincipal;
         private final Subject subject;
 
-        private JaasAuthenticatedRealmIdentity(final Principal principal, final Subject subject) {
+        private JaasAuthorizationIdentity(final Principal principal, final Subject subject) {
             this.principal = principal;
             this.subject = subject;
             // check if the subject has a caller principal group - if it has then we should use that principal.
             this.callerPrincipal = getCallerPrincipal(subject);
-        }
-
-        @Override
-        public void dispose() {
-            if (this.subject != null) {
-                try {
-                    CallbackHandler handler = createCallbackHandler(principal, null);
-                    LoginContext context = createLoginContext(loginConfiguration, subject, handler);
-                    context.logout();
-                }
-                catch (LoginException | RealmUnavailableException e) {
-                    ElytronMessages.log.debugJAASLogoutFailure(principal, e);
-                }
-                // reset the caller principal after logout.
-                this.callerPrincipal = null;
-            }
         }
 
         @Override

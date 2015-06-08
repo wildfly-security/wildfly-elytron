@@ -35,7 +35,7 @@ import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -161,8 +161,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
-            return new AuthenticatedRealmIdentity() {
+        public AuthorizationIdentity getAuthorizationIdentity() {
+            return new AuthorizationIdentity() {
                 public Principal getPrincipal() {
                     return principal;
                 }

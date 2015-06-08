@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -162,12 +162,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException {
+            public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
                 if (accountEntry == null) {
                     return null;
                 }
 
-                return new PropertiesAuthenticatedRealmIdentity(principal);
+                return new PropertiesAuthorizationIdentity(principal);
             }
 
         };
@@ -337,11 +337,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
     }
 
-    private class PropertiesAuthenticatedRealmIdentity implements AuthenticatedRealmIdentity {
+    private class PropertiesAuthorizationIdentity implements AuthorizationIdentity {
 
         private final Principal principal;
 
-        private PropertiesAuthenticatedRealmIdentity(Principal principal) {
+        private PropertiesAuthorizationIdentity(Principal principal) {
             this.principal = principal;
         }
 

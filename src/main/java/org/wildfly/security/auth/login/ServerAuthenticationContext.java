@@ -24,6 +24,7 @@ import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
@@ -36,6 +37,8 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -66,8 +69,7 @@ public final class ServerAuthenticationContext {
     private static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
 
     private final SecurityDomain domain;
-
-    private boolean done = false;
+    private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 
     ServerAuthenticationContext(final SecurityDomain domain) {
         this.domain = domain;
@@ -84,11 +86,19 @@ public final class ServerAuthenticationContext {
      * @param protocol the protocol which is currently in use
      * @return the SASL server
      * @throws SaslException if creating the SASL server failed for some reason
+     * @throws IllegalStateException if authentication was already initiated on this context
      */
-    public SaslServer createSaslServer(SaslServerFactory saslServerFactory, String serverName, String mechanismName, String protocol) throws SaslException {
-        if (done) {
-            throw new SaslException("Authentication already performed");
-        }
+    public SaslServer createSaslServer(SaslServerFactory saslServerFactory, String serverName, String mechanismName, String protocol) throws SaslException, IllegalStateException {
+        Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
+        Assert.checkNotNullParam("mechanismName", mechanismName);
+        Assert.checkNotNullParam("protocol", protocol);
+        State oldState;
+        do {
+            oldState = stateRef.get();
+            if (oldState != INITIAL) {
+                throw ElytronMessages.log.alreadyInitiated();
+            }
+        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         return new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory).createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, createCallbackHandler());
     }
 
@@ -96,8 +106,16 @@ public final class ServerAuthenticationContext {
      * Create a server-side SSL engine that authenticates using this authentication context.
      *
      * @return the SSL engine
+     * @throws IllegalStateException if authentication was already initiated on this context
      */
-    public SSLEngine createServerSslEngine() {
+    public SSLEngine createServerSslEngine() throws IllegalStateException {
+        State oldState;
+        do {
+            oldState = stateRef.get();
+            if (oldState != INITIAL) {
+                throw ElytronMessages.log.alreadyInitiated();
+            }
+        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         throw new UnsupportedOperationException();
     }
 
@@ -105,9 +123,27 @@ public final class ServerAuthenticationContext {
      * Create a server-side SSL socket that authenticates using this authentication context.
      *
      * @return the SSL socket
+     * @throws IllegalStateException if authentication was already initiated on this context
      */
-    public SSLSocket createServerSslSocket() {
+    public SSLSocket createServerSslSocket() throws IllegalStateException {
+        State oldState;
+        do {
+            oldState = stateRef.get();
+            if (oldState != INITIAL) {
+                throw ElytronMessages.log.alreadyInitiated();
+            }
+        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Get the authorized identity result of this authentication.
+     *
+     * @return the authorized identity
+     * @throws IllegalStateException if the authentication is incomplete
+     */
+    public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
+        return stateRef.get().getAuthorizedIdentity();
     }
 
     CallbackHandler createCallbackHandler() {
@@ -224,13 +260,15 @@ public final class ServerAuthenticationContext {
                     // ignore for now
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AnonymousAuthorizationCallback) {
-                    // todo: check configuration to see if anonymous login is allowed
                     ((AnonymousAuthorizationCallback) callback).setAuthorized(domain.isAnonymousAllowed());
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
-                    // todo: clean up authentication-time resources
+                    if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                        stateRef.set(new CompleteState(new SecurityIdentity(domain, identity.getAuthorizationIdentity())));
+                    } else {
+                        stateRef.set(FAILED);
+                    }
                     identity = null;
-                    done = true;
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
                     final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
@@ -247,4 +285,46 @@ public final class ServerAuthenticationContext {
             }
         };
     }
+
+    abstract static class State {
+        abstract int getId();
+
+        abstract SecurityIdentity getAuthorizedIdentity();
+    }
+
+    static final class SimpleState extends State {
+        private final int id;
+
+        SimpleState(final int id) {
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        SecurityIdentity getAuthorizedIdentity() {
+            throw ElytronMessages.log.noSuccessfulAuthentication();
+        }
+    }
+
+    static final class CompleteState extends State {
+        private final SecurityIdentity identity;
+
+        public CompleteState(final SecurityIdentity identity) {
+            this.identity = identity;
+        }
+
+        int getId() {
+            return 3;
+        }
+
+        SecurityIdentity getAuthorizedIdentity() {
+            return identity;
+        }
+    }
+
+    private static final SimpleState INITIAL = new SimpleState(0);
+    private static final SimpleState IN_PROGRESS = new SimpleState(1);
+    private static final SimpleState FAILED = new SimpleState(2);
 }

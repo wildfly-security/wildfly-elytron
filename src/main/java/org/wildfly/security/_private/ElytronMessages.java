@@ -78,9 +78,11 @@ public interface ElytronMessages extends BasicLogger {
 
     // id = 8
 
-    // id = 9
+    @Message(id = 9, value = "No successful authentication on this context")
+    IllegalStateException noSuccessfulAuthentication();
 
-    // id = 10
+    @Message(id = 10, value = "Authentication already initiated on this context")
+    IllegalStateException alreadyInitiated();
 
     @Message(id = 11, value = "%s is null")
     IllegalArgumentException nullParameter(String parameter);

@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.JaasSecurityRealm;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.SecurityRealm;
@@ -103,7 +103,7 @@ public class JaasSecurityRealmTest {
 
         // get the authenticated realm identity after successfully verifying the credential.
         assertTrue(realmIdentity.verifyCredential("passwd12#$"));
-        AuthenticatedRealmIdentity authRealmIdentity = realmIdentity.getAuthenticatedRealmIdentity();
+        AuthorizationIdentity authRealmIdentity = realmIdentity.getAuthorizationIdentity();
         assertNotNull("Unexpected null authenticated realm identity", authRealmIdentity);
         // check if the authenticated identity returns the caller principal as set by the test login module.
         Principal authPrincipal = authRealmIdentity.getPrincipal();
@@ -111,7 +111,7 @@ public class JaasSecurityRealmTest {
         assertEquals("Invalid principal name", new NamePrincipal("auth-caller"), authPrincipal);
 
         // dispose the auth realm identity - should trigger a JAAS logout that clears the subject.
-        authRealmIdentity.dispose();
+        // TODO - some other solution is needed here!
         authPrincipal = authRealmIdentity.getPrincipal();
         // after the logout, the subject no longer contains a caller principal so the identity should return the same principal as the realm identity.
         assertNotNull("Unexpected null principal", authPrincipal);
