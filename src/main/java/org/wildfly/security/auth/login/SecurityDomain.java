@@ -20,7 +20,6 @@ package org.wildfly.security.auth.login;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
