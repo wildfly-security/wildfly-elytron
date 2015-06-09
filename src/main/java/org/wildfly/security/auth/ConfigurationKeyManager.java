@@ -32,8 +32,8 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.principal.PrincipalUtil;
 import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X500PrincipalUtil;
 
 final class ConfigurationKeyManager extends X509ExtendedKeyManager {
     private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer;
@@ -49,7 +49,7 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
         if (aliasesByIssuer != null) {
             if (issuers != null) {
                 for (Principal issuer : issuers) {
-                    X500Principal x500Principal = PrincipalUtil.asX500Principal(issuer);
+                    X500Principal x500Principal = X500PrincipalUtil.asX500Principal(issuer);
                     final String alias = aliasesByIssuer.get(x500Principal);
                     if (alias != null) {
                         return alias;
@@ -71,7 +71,7 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
         if (aliasesByIssuer != null) {
             if (issuers != null) {
                 for (Principal issuer : issuers) {
-                    X500Principal x500Principal = PrincipalUtil.asX500Principal(issuer);
+                    X500Principal x500Principal = X500PrincipalUtil.asX500Principal(issuer);
                     final String alias = aliasesByIssuer.get(x500Principal);
                     if (alias != null) {
                         if (aliases == null) aliases = new LinkedHashSet<>(3);

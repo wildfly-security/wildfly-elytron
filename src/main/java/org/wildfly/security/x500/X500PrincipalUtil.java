@@ -20,12 +20,14 @@ package org.wildfly.security.x500;
 
 import static org.wildfly.security.asn1.ASN1.*;
 
+import java.security.Principal;
 import java.util.Arrays;
 
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.asn1.ASN1Decoder;
 import org.wildfly.security.asn1.DERDecoder;
+import sun.security.x509.X500Name;
 
 /**
  * A utility class for easily accessing details of an {@link X500Principal}.
@@ -35,6 +37,16 @@ import org.wildfly.security.asn1.DERDecoder;
 public final class X500PrincipalUtil {
 
     private static final String[] NO_STRINGS = new String[0];
+    private static final boolean HAS_X500_NAME;
+
+    static {
+        boolean hasX500Name = false;
+        try {
+            Class.forName("sun.security.x509.X500Name", true, X500PrincipalUtil.class.getClassLoader());
+            hasX500Name = true;
+        } catch (Throwable t) {}
+        HAS_X500_NAME = hasX500Name;
+    }
 
     private X500PrincipalUtil() {
     }
@@ -96,5 +108,22 @@ public final class X500PrincipalUtil {
             result[len - i - 1] = strings[i];
         }
         return result;
+    }
+
+    /**
+     * Attempt to convert the given principal to an X.500 principal.
+     *
+     * @param principal the original principal
+     * @return the X.500 principal
+     */
+    public static X500Principal asX500Principal(Principal principal) {
+        if (principal instanceof X500Principal) {
+            return (X500Principal) principal;
+        }
+        if (HAS_X500_NAME && principal instanceof X500Name) {
+            return ((X500Name) principal).asX500Principal();
+        }
+        // if all else fails...
+        return new X500Principal(principal.getName());
     }
 }
