@@ -52,6 +52,7 @@
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
+        <version.hsqldb>2.3.1</version.hsqldb>
         <version.org.wildfly.checkstyle-config>1.0.3.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.0.Alpha2</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.0.0.Alpha2</version.org.wildfly.common>
@@ -374,6 +375,14 @@
             <groupId>org.jmockit</groupId>
             <artifactId>jmockit</artifactId>
             <version>${version.jmockit}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- HSQL Database-->
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>${version.hsqldb}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
