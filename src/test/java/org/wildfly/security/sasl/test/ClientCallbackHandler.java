@@ -30,6 +30,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 
+import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -46,6 +47,8 @@ public class ClientCallbackHandler implements CallbackHandler {
     private final KeySpec keySpec;
     private final String realm;
     private final String algorithm;
+    private String bindingType = null;
+    private byte[] bindingData = null;
 
     public ClientCallbackHandler(final String username, final char[] password) {
         this(username, password, null);
@@ -65,6 +68,11 @@ public class ClientCallbackHandler implements CallbackHandler {
         this.password = null;
         this.algorithm = algorithm;
         this.keySpec = keySpec;
+    }
+
+    public void setBinding(String bindingType, byte[] bindingData){
+        this.bindingType = bindingType;
+        this.bindingData = bindingData;
     }
 
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -108,6 +116,10 @@ public class ClientCallbackHandler implements CallbackHandler {
                 } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                     throw new IOException("Password object generation failed", e);
                 }
+            } else if (current instanceof ChannelBindingCallback && bindingType != null) {
+                ChannelBindingCallback cbc = (ChannelBindingCallback) current;
+                cbc.setBindingType(bindingType);
+                cbc.setBindingData(bindingData);
             } else {
                 throw new UnsupportedCallbackException(current, current.getClass().getSimpleName() + " not supported.");
             }

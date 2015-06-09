@@ -40,6 +40,9 @@ public final class StringPrep {
     public static final long MAP_SCRAM_LOGIN_CHARS      = 1L << 30;
     public static final long MAP_GS2_LOGIN_CHARS        = 1L << 31;
 
+    public static final long UNMAP_SCRAM_LOGIN_CHARS    = 1L << 28;
+    public static final long UNMAP_GS2_LOGIN_CHARS      = 1L << 29;
+
     // normalizations
 
     public static final long NORMALIZE_KC               = 1L << 2;
@@ -252,6 +255,8 @@ public final class StringPrep {
                 target.append(' ');
                 continue;
             }
+
+            // Escaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
             if (isSet(profile, MAP_SCRAM_LOGIN_CHARS) || isSet(profile, MAP_GS2_LOGIN_CHARS)) {
                 if (cp == '=') {
                     target.append('=').append('3').append('D');
@@ -259,6 +264,27 @@ public final class StringPrep {
                 } else if (cp == ',') {
                     target.append('=').append('2').append('C');
                     continue;
+                }
+            }
+
+            // Unescaping used in GS2 and SCRAM username/authzid (RFC 5801,5802)
+            else if (isSet(profile, UNMAP_SCRAM_LOGIN_CHARS) || isSet(profile, UNMAP_GS2_LOGIN_CHARS)) {
+                if (cp == '=') {
+                    if (i + 1 >= len) {
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
+                    char ch1 = string.charAt(i++);
+                    char ch2 = string.charAt(i++);
+
+                    if(ch1 == '3' && ch2 == 'D'){
+                        target.append('=');
+                        continue;
+                    }else if(ch1 == '2' && ch2 == 'C'){
+                        target.append(',');
+                        continue;
+                    }else{
+                        throw new IllegalArgumentException("Invalid escape sequence");
+                    }
                 }
             }
 

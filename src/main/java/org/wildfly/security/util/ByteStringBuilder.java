@@ -376,22 +376,22 @@ public final class ByteStringBuilder {
 
             public int next() throws NoSuchElementException {
                 if (! hasNext()) throw new NoSuchElementException();
-                return content[idx ++];
+                return content[idx ++] & 0xff;
             }
 
             public int peekNext() throws NoSuchElementException {
                 if (! hasNext()) throw new NoSuchElementException();
-                return content[idx];
+                return content[idx] & 0xff;
             }
 
             public int prev() throws NoSuchElementException {
                 if (! hasPrev()) throw new NoSuchElementException();
-                return content[--idx];
+                return content[--idx] & 0xff;
             }
 
             public int peekPrev() throws NoSuchElementException {
                 if (! hasPrev()) throw new NoSuchElementException();
-                return content[idx - 1];
+                return content[idx - 1] & 0xff;
             }
 
             public int offset() {

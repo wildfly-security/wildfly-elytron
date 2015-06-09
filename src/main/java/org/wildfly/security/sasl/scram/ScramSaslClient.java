@@ -181,7 +181,8 @@ class ScramSaslClient extends AbstractSaslClient {
                                     }
                                     b2.append(',');
                                     if (getAuthorizationId() != null) {
-                                        b2.append("a=").append(getAuthorizationId());
+                                        b2.append("a=");
+                                        StringPrep.encode(getAuthorizationId(), b2, StringPrep.PROFILE_SASL_STORED | StringPrep.MAP_SCRAM_LOGIN_CHARS);
                                     }
                                     b2.append(',');
                                     if (plus) {
@@ -192,7 +193,8 @@ class ScramSaslClient extends AbstractSaslClient {
                                     b2.append('n');
                                     b2.append(',');
                                     if (getAuthorizationId() != null) {
-                                        b2.append("a=").append(getAuthorizationId());
+                                        b2.append("a=");
+                                        StringPrep.encode(getAuthorizationId(), b2, StringPrep.PROFILE_SASL_STORED | StringPrep.MAP_SCRAM_LOGIN_CHARS);
                                     }
                                     b2.append(',');
                                     assert !plus;
