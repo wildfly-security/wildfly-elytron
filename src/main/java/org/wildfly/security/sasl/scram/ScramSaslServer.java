@@ -173,7 +173,9 @@ final class ScramSaslServer extends AbstractSaslServer {
                         if (bi.next() != '=') {
                             throw invalidClientMessage();
                         }
-                        loginName = cpi.drainToString();
+                        ByteStringBuilder bsb = new ByteStringBuilder();
+                        StringPrep.encode(cpi.drainToString(), bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
+                        loginName = new String(bsb.toArray(), StandardCharsets.UTF_8);
                         bi.next(); // skip delimiter
                     } else {
                         throw invalidClientMessage();
@@ -284,9 +286,10 @@ final class ScramSaslServer extends AbstractSaslServer {
                             throw new SaslException("Unsupported password algorithm type");
                         }
                         // get the clear password
-                        StringPrep.encode(passwordChars, b, StringPrep.NORMALIZE_KC);
+                        StringPrep.encode(passwordChars, b, StringPrep.PROFILE_SASL_STORED);
                         passwordChars = new String(b.toArray(), StandardCharsets.UTF_8).toCharArray();
                         b.setLength(0);
+
                         iterationCount = algorithmSpec.getIterationCount();
                         salt = algorithmSpec.getSalt();
                         if (iterationCount < minimumIterationCount) {
