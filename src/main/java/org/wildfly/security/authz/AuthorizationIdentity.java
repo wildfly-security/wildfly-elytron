@@ -18,6 +18,10 @@
 
 package org.wildfly.security.authz;
 
+import java.security.spec.AlgorithmParameterSpec;
+
+import org.wildfly.security.auth.server.SupportLevel;
+
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
  * authorization decisions.  Since there is no upper bound in the lifespan of instances of this class, they should
@@ -34,6 +38,30 @@ public interface AuthorizationIdentity {
      */
     default Attributes getAttributes() {
         return Attributes.EMPTY;
+    }
+
+    /**
+     * Determine if a specific forwarding credential type is supported by this identity.  If {@link SupportLevel#SUPPORTED}
+     * is returned, the {@link #getForwardingCredential(Class, AlgorithmParameterSpec)} <em>should not</em> return {@code null};
+     * this case should be indicated by using {@link SupportLevel#POSSIBLY_SUPPORTED}.
+     *
+     * @param credentialType the credential type
+     * @param parameterSpec an optional parameter specification for the credential type (may be {@code null})
+     * @return the support level for the credential type (not {@code null})
+     */
+    default SupportLevel getForwardingCredentialTypeSupport(Class<?> credentialType, AlgorithmParameterSpec parameterSpec) {
+        return SupportLevel.UNSUPPORTED;
+    }
+
+    /**
+     * Get a specific forwarding credential.
+     *
+     * @param credentialType the credential type
+     * @param parameterSpec an optional parameter specification for the credential type (may be {@code null})
+     * @return the credential, or {@code null} if no matching credential is available
+     */
+    default <C> C getForwardingCredential(Class<C> credentialType, AlgorithmParameterSpec parameterSpec) {
+        return null;
     }
 
     /**
