@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.auth.provider.jdbc.mapper;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.spi.CredentialSupport;
 
@@ -44,6 +45,7 @@ public class RSAPrivateKeyMapper implements KeyMapper {
      * @param privateKey The column index from where an array of bytes are read in order to create the private key.
      */
     public RSAPrivateKeyMapper(int privateKey) {
+        Assert.checkMinimumParameter("privateKey", 1, privateKey);
         this.privateKey = privateKey;
     }
 
@@ -78,12 +80,8 @@ public class RSAPrivateKeyMapper implements KeyMapper {
         Object privateKey = null;
 
         try {
-            while (resultSet.next()) {
-                int privateKeyIndex = getPrivateKey();
-
-                if (privateKeyIndex > 0) {
-                    privateKey = resultSet.getObject(privateKeyIndex);
-                }
+            if (resultSet.next()) {
+                privateKey = resultSet.getObject(getPrivateKey());
             }
         } catch (Exception e) {
             throw new RuntimeException("Could not RSA key from query.", e);
