@@ -64,4 +64,22 @@ public interface AuthorizationIdentity {
             return Collections.emptySet();
         }
     };
+
+    /**
+     * Create an empty identity for the given principal.
+     *
+     * @param principal the principal
+     * @return the empty identity
+     */
+    static AuthorizationIdentity emptyIdentity(Principal principal) {
+        return new AuthorizationIdentity() {
+            public Principal getPrincipal() {
+                return principal;
+            }
+
+            public Set<String> getRoles() {
+                return Collections.emptySet();
+            }
+        };
+    }
 }

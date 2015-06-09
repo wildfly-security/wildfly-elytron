@@ -95,8 +95,12 @@ public final class SeparateAuthenticationSecurityRealm implements SecurityRealm 
             return authenticationIdentity.verifyCredential(credential);
         }
 
+        public boolean exists() throws RealmUnavailableException {
+            return authenticationIdentity.exists();
+        }
+
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return authorizationIdentity.getAuthorizationIdentity();
+            return authorizationIdentity.exists() ? authorizationIdentity.getAuthorizationIdentity() : AuthorizationIdentity.emptyIdentity(getPrincipal());
         }
 
         public void dispose() {

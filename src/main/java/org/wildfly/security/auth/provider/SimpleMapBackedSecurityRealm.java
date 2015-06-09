@@ -149,5 +149,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
                 return false;
             }
         }
+
+        public boolean exists() throws RealmUnavailableException {
+            return true;
+        }
     }
 }

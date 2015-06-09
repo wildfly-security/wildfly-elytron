@@ -182,6 +182,13 @@ public class JaasSecurityRealm implements SecurityRealm {
             return successfulLogin;
         }
 
+        public boolean exists() throws RealmUnavailableException {
+            /* we don't really know that the identity exists, but we know that there is always
+             * an authorization identity so that's as good as {@code true}
+             */
+            return true;
+        }
+
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             return new JaasAuthorizationIdentity(this.principal, this.subject);

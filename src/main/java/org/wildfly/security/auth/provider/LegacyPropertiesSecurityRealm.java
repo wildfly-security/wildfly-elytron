@@ -161,6 +161,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 }
             }
 
+            public boolean exists() throws RealmUnavailableException {
+                return accountEntry != null;
+            }
+
             @Override
             public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
                 if (accountEntry == null) {

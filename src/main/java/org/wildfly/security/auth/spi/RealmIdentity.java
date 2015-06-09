@@ -71,6 +71,15 @@ public interface RealmIdentity {
     boolean verifyCredential(Object credential) throws RealmUnavailableException;
 
     /**
+     * Determine if the identity exists in lieu of verifying or acquiring a credential.  This method is intended to be
+     * used to verify an identity for non-authentication purposes only.
+     *
+     * @return {@code true} if the identity exists in this realm, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    boolean exists() throws RealmUnavailableException;
+
+    /**
      * Dispose this realm identity after a completed authentication attempt.
      */
     default void dispose() {
@@ -104,6 +113,10 @@ public interface RealmIdentity {
             return false;
         }
 
+        public boolean exists() throws RealmUnavailableException {
+            return true;
+        }
+
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             return AuthorizationIdentity.ANONYMOUS;
         }
@@ -130,6 +143,10 @@ public interface RealmIdentity {
             }
 
             public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+                return false;
+            }
+
+            public boolean exists() throws RealmUnavailableException {
                 return false;
             }
 

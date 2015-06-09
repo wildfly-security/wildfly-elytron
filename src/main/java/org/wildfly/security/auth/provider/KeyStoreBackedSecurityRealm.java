@@ -191,5 +191,9 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 return false;
             }
         }
+
+        public boolean exists() throws RealmUnavailableException {
+            return true;
+        }
     }
 }
