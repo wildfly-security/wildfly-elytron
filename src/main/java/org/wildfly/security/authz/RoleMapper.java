@@ -20,28 +20,26 @@ package org.wildfly.security.authz;
 import java.util.Set;
 
 /**
- * <p>A role mapper is responsible for mapping roles based on their raw form.<p>
- *
- * <p>Roles are basically represented as {@link String} values, where these values are their names. Role mapping allows to transform roles
+ * A role mapper is responsible for mapping roles based on their raw form.
+ * <p>
+ * Roles are basically represented as {@link String} values, where these values are their names. Role mapping allows to transform roles
  * from their raw form (eg.: just like they were loaded from a identity store such as a database or LDAP server) in a more consistent
- * form.</p>
+ * form.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public interface RoleMapper {
 
     /**
-     * <p>
-     *     Returns a set of strings representing the roles mapped from the given roles in their raw form.
-     * </p>
+     * Returns a set of strings representing the roles mapped from the given roles in their raw form.
      *
-     * @param rolesToMap the roles in their raw form to apply mapping.
-     * @return
+     * @param rolesToMap the roles in their raw form to apply mapping
+     * @return the mapped role set
      */
     Set<String> mapRoles(Set<String> rolesToMap);
 
     /**
-     * <p>A default implementation that does nothing but return the given roles.</p>
+     * A default implementation that does nothing but return the given roles.
      */
     RoleMapper IDENTITY_ROLE_MAPPER = rolesToMap -> rolesToMap;
 }
