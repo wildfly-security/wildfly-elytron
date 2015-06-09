@@ -22,6 +22,8 @@ import static org.junit.Assert.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -36,6 +38,7 @@ import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;
 import org.wildfly.security.util.CodePointIterator;
@@ -87,6 +90,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertEquals("v=rmF9pqV8S7suAoZWja4dJRkFsKQ=", new String(message));
 
         assertTrue(saslServer.isComplete());
+        assertEquals("user", saslServer.getAuthorizationID());
     }
 
     /**
@@ -152,23 +156,22 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
+        CallbackHandler cbh = new ServerCallbackHandler("admin", "clear", new ClearPasswordSpec("pencil".toCharArray()), "user");
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof ScramSaslServer);
 
-        byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=user,n=admin,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
         //         c="n,a=user,"
-        message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ="
-                .getBytes(StandardCharsets.UTF_8);
+        message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=sSem09WkghLJOV/Ma5LjIqUtoo8=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=n1qgUn3vi9dh7nG1+Giie5qsaVQ=", new String(message));
+        assertEquals("v=xzTfS758LckdRoQKN/ZFY/Bauxo=", new String(message));
 
         assertTrue(saslServer.isComplete());
+        assertEquals(saslServer.getAuthorizationID(),"user");
     }
 
     /**
@@ -188,6 +191,10 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertTrue(saslServer instanceof ScramSaslServer);
 
         byte[] message = "n,a=admin,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ=".getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
             fail("SaslException not throwed");
@@ -228,6 +235,37 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
+     * Test rejection of different authorization id in FIRST and FINAL message
+     */
+    @Test
+    public void testMismatchedAuthorizationIdBlank() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
+                Collections.emptyMap(), cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        //        c="n,,"
+        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
+                .getBytes(StandardCharsets.UTF_8);
+        try {
+            saslServer.evaluateResponse(message);
+            fail("SaslException not throwed");
+        } catch (SaslException e) {
+        }
+        assertFalse(saslServer.isComplete());
+    }
+
+    /**
      * Test rejection of correct credentials and non-corresponding nonce
      */
     @Test
@@ -258,7 +296,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     }
 
     /**
-     * Test authentication with unusual characters in credentials (quoting of "n" and "a")
+     * Test authentication with unusual characters in credentials (quoting of ',' and '=')
      */
     @Test
     public void testStrangeCredentials() throws Exception {
@@ -267,20 +305,134 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1".toCharArray()));
+        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray()), "strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301");
         final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "protocol", "server", Collections.emptyMap(), cbh);
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof ScramSaslServer);
 
-        byte[] message = "n,,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
-        message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=AAnSTGiu2SSEn7Hkxi6+CXBpLc8=".getBytes(StandardCharsets.UTF_8);
+        message = "c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=ZWpaDThPD7OErOz+6Q+n9msNhMQ=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=jqnGKIvKrX0ER+X58AQ4PsRQl20=", new String(message)); // not verified
-
+        assertEquals("v=k1gWxds6QP4FdDqmsLtaxIl38NM=", new String(message));
         assertTrue(saslServer.isComplete());
+    }
+
+    /**
+     * Client does support channel binding and know the server does not
+     */
+    @Test
+    public void testBindingCorrectY() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        //        c="y,,"
+        message = "c=eSws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=BjZF5dV+EkD3YCb3pH3IP8riMGw=".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("v=dsprQ5R2AGYt1kn4bQRwTAE0PTU=", new String(message));
+        assertTrue(saslServer.isComplete());
+    }
+
+
+    /**
+     * Client does support channel binding but thinks the server does not
+     */
+    @Test
+    public void testBindingIncorrectY() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        cbh.setBinding("sameType", new byte[]{0x12,',',0x00});
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        try {
+            saslServer.evaluateResponse(message);
+            fail("SaslException not throwed");
+        } catch (SaslException e) {
+        }
+        assertFalse(saslServer.isComplete());
+    }
+
+    /**
+     * Test authentication with correct requirement of channel binding (p=)
+     */
+    @Test
+    public void testBindingCorrect() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        cbh.setBinding("same-type", new byte[]{(byte)0x00,(byte)0x2C,(byte)0xFF});
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        //         c="p=same-type,\00\2C\FF"
+        message = "c=cD1zYW1lLXR5cGUsLAAs/w==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=H8mpU86Osa2lDJvFElvu7qys7LE=".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("v=/ubKPpiyDhhCsgGfHqY5Xm7msjM=", new String(message));
+        assertTrue(saslServer.isComplete());
+    }
+
+    /**
+     * Test authentication with channel binding with wrong binding data
+     */
+    @Test
+    public void testBindingBadData() throws Exception {
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+
+        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
+        assertNotNull(serverFactory);
+
+        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
+        cbh.setBinding("same-type", new byte[]{(byte)0x99,(byte)0x99});
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
+        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
+        assertNotNull(saslServer);
+        assertTrue(saslServer instanceof ScramSaslServer);
+
+        byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        message = saslServer.evaluateResponse(message);
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+
+        //         c="p=same-type,\00\2C\FF"
+        message = "c=cD1zYW1lLXR5cGUsLAAs/w==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=H8mpU86Osa2lDJvFElvu7qys7LE=".getBytes(StandardCharsets.UTF_8);
+        try {
+            saslServer.evaluateResponse(message);
+            fail("SaslException not throwed");
+        } catch (SaslException e) {
+        }
+        assertFalse(saslServer.isComplete());
     }
 
 }
