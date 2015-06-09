@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util._private;
 
+import java.lang.reflect.Array;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -135,5 +137,18 @@ public final class Arrays2 {
      */
     public static int indexOf(byte[] array, int search) {
         return indexOf(array, search, 0, array.length);
+    }
+
+    /**
+     * Create an array of the given size, ensuring type safety.
+     *
+     * @param elementType the element type class
+     * @param size the array size
+     * @param <E> the element type
+     * @return the array
+     */
+    @SuppressWarnings("unchecked")
+    public static <E> E[] createArray(Class<E> elementType, int size) {
+        return (E[]) Array.newInstance(elementType, size);
     }
 }

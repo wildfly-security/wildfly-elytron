@@ -46,17 +46,15 @@ public interface CredentialDecoder {
         if (decoders == null) {
             throw new IllegalArgumentException("decoders is null");
         }
-        return new CredentialDecoder() {
-            public String getNameFromCredential(final Object credential) {
-                String result;
-                for (CredentialDecoder decoder : decoders) {
-                    result = decoder.getNameFromCredential(credential);
-                    if (result != null) {
-                        return result;
-                    }
+        return credential -> {
+            String result;
+            for (CredentialDecoder decoder : decoders) {
+                result = decoder.getNameFromCredential(credential);
+                if (result != null) {
+                    return result;
                 }
-                return null;
             }
+            return null;
         };
     }
 }

@@ -26,17 +26,10 @@ import javax.net.ssl.SSLSocket;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
+public final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
 
-    private final ProtocolSelector protocolSelector;
-    private final CipherSuiteSelector cipherSuiteSelector;
-
-    ConfiguredSSLSocket(final SSLSocket delegate, final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector) {
+    public ConfiguredSSLSocket(final SSLSocket delegate) {
         super(delegate);
-        this.protocolSelector = protocolSelector;
-        this.cipherSuiteSelector = cipherSuiteSelector;
-        delegate.setEnabledProtocols(protocolSelector.evaluate(delegate.getSupportedProtocols()));
-        delegate.setEnabledCipherSuites(cipherSuiteSelector.evaluate(delegate.getSupportedCipherSuites()));
     }
 
     public void setEnabledCipherSuites(final String[] suites) {
@@ -48,9 +41,14 @@ final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
     }
 
     public void setSSLParameters(final SSLParameters params) {
-        super.setSSLParameters(params);
-        // re-set the protocols and cipher suites
-        super.setEnabledProtocols(protocolSelector.evaluate(super.getSupportedProtocols()));
-        super.setEnabledCipherSuites(cipherSuiteSelector.evaluate(super.getSupportedCipherSuites()));
+        final SSLParameters newParams = new SSLParameters(getEnabledCipherSuites(), getEnabledProtocols());
+        newParams.setUseCipherSuitesOrder(params.getUseCipherSuitesOrder());
+        newParams.setSNIMatchers(params.getSNIMatchers());
+        newParams.setServerNames(params.getServerNames());
+        newParams.setAlgorithmConstraints(params.getAlgorithmConstraints());
+        newParams.setEndpointIdentificationAlgorithm(params.getEndpointIdentificationAlgorithm());
+        newParams.setNeedClientAuth(params.getNeedClientAuth());
+        newParams.setWantClientAuth(params.getWantClientAuth());
+        super.setSSLParameters(newParams);
     }
 }

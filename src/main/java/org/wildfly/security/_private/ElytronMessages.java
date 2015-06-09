@@ -63,7 +63,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(value = "Parse error")
     String parseError();
 
-    // id = 2
+    @Message(id = 2, value = "No algorithm found matching TLS/SSL protocol selection criteria")
+    NoSuchAlgorithmException noAlgorithmForSslProtocol();
 
     // id = 3
 

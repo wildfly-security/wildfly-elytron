@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,27 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.ssl;
+package org.wildfly.security.auth;
 
 import javax.net.ssl.SSLContext;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLFactory {
-    private SSLFactory() {}
+class SSLContextAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    public static SSLContext createSslContext(CipherSuiteSelector filter) {
-        return null;
+    private final SSLContext sslContext;
+
+    SSLContextAuthenticationConfiguration(final AuthenticationConfiguration parent, final SSLContext sslContext) {
+        super(parent);
+        this.sslContext = sslContext;
+    }
+
+    AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
+        return new SSLContextAuthenticationConfiguration(newParent, sslContext);
+    }
+
+    SSLContext getSslContext() {
+        return sslContext;
     }
 }

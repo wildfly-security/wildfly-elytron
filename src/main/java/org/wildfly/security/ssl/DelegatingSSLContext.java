@@ -21,10 +21,18 @@ package org.wildfly.security.ssl;
 import javax.net.ssl.SSLContext;
 
 /**
+ * An SSL context which delegates to a customized SPI implementation.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-final class DelegatingSSLContext extends SSLContext {
-    DelegatingSSLContext(final AbstractDelegatingSSLContextSpi contextSpi) {
+public final class DelegatingSSLContext extends SSLContext {
+
+    /**
+     * Construct a new instance.
+     *
+     * @param contextSpi the SSL context SPI to delegate to
+     */
+    public DelegatingSSLContext(final AbstractDelegatingSSLContextSpi contextSpi) {
         super(contextSpi, contextSpi.getDelegate().getProvider(), contextSpi.getDelegate().getProtocol());
     }
 }
