@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -126,8 +126,8 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() {
-            return new AuthenticatedRealmIdentity() {
+        public AuthorizationIdentity getAuthorizationIdentity() {
+            return new AuthorizationIdentity() {
                 public Principal getPrincipal() {
                     return principal;
                 }

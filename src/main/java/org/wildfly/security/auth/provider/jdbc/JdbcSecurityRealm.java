@@ -20,7 +20,7 @@ package org.wildfly.security.auth.provider.jdbc;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
-import org.wildfly.security.auth.spi.AuthenticatedRealmIdentity;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
@@ -156,8 +156,8 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException {
-            return new JdbcAuthenticatedRealmIdentity(getPrincipal());
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            return new JdbcAuthorizationIdentity(getPrincipal());
         }
 
         private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Object givenCredential) {
@@ -242,11 +242,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
             }
         }
 
-        private class JdbcAuthenticatedRealmIdentity implements AuthenticatedRealmIdentity {
+        private class JdbcAuthorizationIdentity implements AuthorizationIdentity {
 
             private Principal principal;
 
-            public JdbcAuthenticatedRealmIdentity(Principal principal) {
+            public JdbcAuthorizationIdentity(Principal principal) {
                 this.principal = principal;
             }
 
@@ -258,11 +258,6 @@ public class JdbcSecurityRealm implements SecurityRealm {
             @Override
             public Set<String> getRoles() {
                 return Collections.emptySet();
-            }
-
-            @Override
-            public void dispose() {
-
             }
         }
     }

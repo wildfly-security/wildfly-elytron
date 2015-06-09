@@ -36,9 +36,5 @@ public interface RealmMapper {
     /**
      * A realm mapper which always maps to the default realm.
      */
-    RealmMapper DEFAULT_REALM_MAPPER = new RealmMapper() {
-        public String getRealmMapping(final String userName) {
-            return null;
-        }
-    };
+    RealmMapper DEFAULT_REALM_MAPPER = userName -> null;
 }

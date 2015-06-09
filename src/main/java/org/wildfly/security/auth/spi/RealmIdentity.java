@@ -77,11 +77,11 @@ public interface RealmIdentity {
     }
 
     /**
-     * Get an authenticated realm identity for this pre-authenticated identity.
+     * Get an authorization identity for this pre-authenticated identity.
      *
-     * @return the authenticated realm identity (may not be {@code null})
+     * @return the authorization identity (may not be {@code null})
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    AuthenticatedRealmIdentity getAuthenticatedRealmIdentity() throws RealmUnavailableException;
+    AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException;
 
 }
