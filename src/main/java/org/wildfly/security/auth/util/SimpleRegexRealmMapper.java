@@ -21,32 +21,50 @@ package org.wildfly.security.auth.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.wildfly.common.Assert;
+
 /**
  * A simple regular expression-based realm mapper.  The realm name pattern must contain a single capture group which
- * matches the substring to use as the realm name.  If the substring is not matched, the default realm is used.
+ * matches the substring to use as the realm name.  If the substring is not matched, the delegate realm mapper is used.
+ * If there is no delegate realm mapper, the default realm is used.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class SimpleRegexRealmMapper implements RealmMapper {
     private final Pattern realmNamePattern;
+    private final RealmMapper delegate;
 
     /**
      * Construct a new instance.
      *
-     * @param realmNamePattern the realm name pattern, which must contain at least one capture group
+     * @param realmNamePattern the realm name pattern, which must contain at least one capture group (cannot be {@code null})
      * @throws IllegalArgumentException if the given pattern does not contain a capture group
      */
     public SimpleRegexRealmMapper(final Pattern realmNamePattern) {
+        this(realmNamePattern, DEFAULT_REALM_MAPPER);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param realmNamePattern the realm name pattern, which must contain at least one capture group (cannot be {@code null})
+     * @param delegate the delegate mapper to use if the pattern is not matched (cannot be {@code null})
+     * @throws IllegalArgumentException if the given pattern does not contain a capture group
+     */
+    public SimpleRegexRealmMapper(final Pattern realmNamePattern, final RealmMapper delegate) {
+        Assert.checkNotNullParam("realmNamePattern", realmNamePattern);
+        Assert.checkNotNullParam("delegate", delegate);
         final int groupCount = realmNamePattern.matcher("").groupCount();
         if (groupCount < 1) {
             throw new IllegalArgumentException("Pattern requires a capture group");
         }
         this.realmNamePattern = realmNamePattern;
+        this.delegate = delegate;
     }
 
     public String getRealmMapping(final String userName) {
         final Matcher matcher = realmNamePattern.matcher(userName);
         assert matcher.groupCount() >= 1;
-        return matcher.matches() ? matcher.group(1) : null;
+        return matcher.matches() ? matcher.group(1) : delegate.getRealmMapping(userName);
     }
 }
