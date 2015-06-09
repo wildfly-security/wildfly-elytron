@@ -19,6 +19,8 @@ package org.wildfly.security.authz;
 
 import java.util.Set;
 
+import org.wildfly.common.Assert;
+
 /**
  * A role mapper is responsible for mapping roles based on their raw form.
  * <p>
@@ -42,4 +44,35 @@ public interface RoleMapper {
      * A default implementation that does nothing but return the given roles.
      */
     RoleMapper IDENTITY_ROLE_MAPPER = rolesToMap -> rolesToMap;
+
+    /**
+     * Create an aggregate role mapper.  Each role mapper is applied in order.
+     *
+     * @param mapper1 the first role mapper to apply (must not be {@code null})
+     * @param mapper2 the second role mapper to apply (must not be {@code null})
+     * @return the aggregate role mapper (not {@code null})
+     */
+    static RoleMapper aggregate(RoleMapper mapper1, RoleMapper mapper2) {
+        Assert.checkNotNullParam("mapper1", mapper1);
+        Assert.checkNotNullParam("mapper2", mapper2);
+        return rolesToMap -> mapper2.mapRoles(mapper1.mapRoles(rolesToMap));
+    }
+
+    /**
+     * Create an aggregate role mapper.  Each role mapper is applied in order.
+     *
+     * @param mappers the role mappers to apply (most not be {@code null} or contain {@code null} elements)
+     * @return the aggregate role mapper (not {@code null})
+     */
+    static RoleMapper aggregate(RoleMapper... mappers) {
+        Assert.checkNotNullParam("mappers", mappers);
+        final RoleMapper[] clone = mappers.clone();
+        for (int i = 0; i < clone.length; i++) {
+            Assert.checkNotNullArrayParam("mappers", i, clone[i]);
+        }
+        return (rolesToMap) -> {
+            for (RoleMapper r : clone) rolesToMap = r.mapRoles(rolesToMap);
+            return rolesToMap;
+        };
+    }
 }
