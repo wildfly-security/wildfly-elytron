@@ -19,7 +19,10 @@
 package org.wildfly.security.auth.spi;
 
 import java.security.Principal;
+import java.util.Collections;
 import java.util.Set;
+
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
@@ -48,4 +51,17 @@ public interface AuthorizationIdentity {
      * @return A string set containing the roles for this identity or an empty set if this identity has no roles.
      */
     Set<String> getRoles();
+
+    /**
+     * The anonymous authorization identity.
+     */
+    AuthorizationIdentity ANONYMOUS = new AuthorizationIdentity() {
+        public Principal getPrincipal() {
+            return AnonymousPrincipal.getInstance();
+        }
+
+        public Set<String> getRoles() {
+            return Collections.emptySet();
+        }
+    };
 }

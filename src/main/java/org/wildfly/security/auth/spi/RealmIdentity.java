@@ -84,4 +84,59 @@ public interface RealmIdentity {
      */
     AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException;
 
+    /**
+     * The anonymous realm identity.
+     */
+    RealmIdentity ANONYMOUS = new RealmIdentity() {
+        public Principal getPrincipal() throws RealmUnavailableException {
+            return ANONYMOUS.getPrincipal();
+        }
+
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+            return CredentialSupport.UNSUPPORTED;
+        }
+
+        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return null;
+        }
+
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            return false;
+        }
+
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            return AuthorizationIdentity.ANONYMOUS;
+        }
+    };
+
+    /**
+     * An identity for a non-existent user.
+     *
+     * @param principal the identity principal
+     * @return the realm identity
+     */
+    static RealmIdentity nonExistentIdentity(Principal principal) {
+        return new RealmIdentity() {
+            public Principal getPrincipal() throws RealmUnavailableException {
+                return principal;
+            }
+
+            public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+                return CredentialSupport.UNSUPPORTED;
+            }
+
+            public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+                return null;
+            }
+
+            public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+                return false;
+            }
+
+            public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                // todo: exception hierarchy
+                throw new IllegalStateException("User does not exist");
+            }
+        };
+    }
 }

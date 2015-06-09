@@ -40,6 +40,13 @@ class RealmInfo {
         this.nameRewriter = realmBuilder.getNameRewriter();
     }
 
+    RealmInfo(final SecurityRealm securityRealm, final String name, final RoleMapper roleMapper, final NameRewriter nameRewriter) {
+        this.securityRealm = securityRealm;
+        this.name = name;
+        this.roleMapper = roleMapper;
+        this.nameRewriter = nameRewriter;
+    }
+
     String getName() {
         return this.name;
     }

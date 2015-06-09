@@ -20,6 +20,7 @@ package org.wildfly.security.auth.login;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,8 +57,9 @@ public final class SecurityDomain {
     private final RealmMapper realmMapper;
     private final NameRewriter postRealmRewriter;
     private final boolean anonymousAllowed;
-    private final ThreadLocal<SecurityIdentity> currentSecurityIdentity = new ThreadLocal<>();
+    private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
+    private final SecurityIdentity anonymousIdentity;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -68,6 +70,9 @@ public final class SecurityDomain {
         this.postRealmRewriter = builder.postRealmRewriter;
         // todo configurable
         anonymousAllowed = false;
+        final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER);
+        anonymousIdentity = new SecurityIdentity(this, realmInfo, AuthorizationIdentity.ANONYMOUS);
+        currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
     /**
@@ -218,8 +223,22 @@ public final class SecurityDomain {
         }
     }
 
-    SecurityIdentity getCurrentSecurityIdentity() {
+    /**
+     * Get the current security identity for this domain.
+     *
+     * @return the current security identity for this domain (not {@code null})
+     */
+    public SecurityIdentity getCurrentSecurityIdentity() {
         return currentSecurityIdentity.get();
+    }
+
+    /**
+     * Get the anonymous security identity for this realm.
+     *
+     * @return the anonymous security identity for this realm (not {@code null})
+     */
+    public SecurityIdentity getAnonymousSecurityIdentity() {
+        return anonymousIdentity;
     }
 
     SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
