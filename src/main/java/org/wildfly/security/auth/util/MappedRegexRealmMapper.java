@@ -33,11 +33,23 @@ public class MappedRegexRealmMapper extends SimpleRegexRealmMapper {
     /**
      * Construct a new instance.
      *
-     * @param realmNamePattern the realm portion pattern
-     * @param realmNameMap the realm portion to realm name map
+     * @param realmNamePattern the realm name pattern, which must contain at least one capture group (cannot be {@code null})
+     * @param realmNameMap the realm portion to realm name map (cannot be {@code null})
      */
     public MappedRegexRealmMapper(final Pattern realmNamePattern, final Map<String, String> realmNameMap) {
         super(realmNamePattern);
+        this.realmNameMap = realmNameMap;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param realmNamePattern the realm name pattern, which must contain at least one capture group (cannot be {@code null})
+     * @param delegate the delegate mapper to use if the pattern is not matched (cannot be {@code null})
+     * @param realmNameMap the realm portion to realm name map (cannot be {@code null})
+     */
+    public MappedRegexRealmMapper(final Pattern realmNamePattern, final RealmMapper delegate, final Map<String, String> realmNameMap) {
+        super(realmNamePattern, delegate);
         this.realmNameMap = realmNameMap;
     }
 
