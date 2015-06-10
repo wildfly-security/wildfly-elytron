@@ -46,7 +46,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.KeyTypeCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
-import org.wildfly.security.auth.provider.X509CertificateCredentialDecoder;
+import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteStringBuilder;
 

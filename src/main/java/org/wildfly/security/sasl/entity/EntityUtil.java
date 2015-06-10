@@ -47,7 +47,7 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.auth.provider.X509CertificateCredentialDecoder;
+import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500PrincipalUtil;
 
