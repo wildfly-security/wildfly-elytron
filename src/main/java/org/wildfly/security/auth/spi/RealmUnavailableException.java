@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.spi;
 
-import java.security.GeneralSecurityException;
+import java.io.IOException;
 
 /**
  * An exception to indicate a general underlying failure of the realm.
@@ -28,7 +28,7 @@ import java.security.GeneralSecurityException;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class RealmUnavailableException extends GeneralSecurityException {
+public class RealmUnavailableException extends IOException {
 
     private static final long serialVersionUID = 5893125522523952643L;
 

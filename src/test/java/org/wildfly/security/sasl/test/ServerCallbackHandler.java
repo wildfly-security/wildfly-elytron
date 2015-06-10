@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -35,9 +36,9 @@ import org.junit.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
 
 /**
  * A server side callback handler for use with the test cases to trigger
@@ -84,6 +85,7 @@ public class ServerCallbackHandler implements CallbackHandler {
         this.bindingData = bindingData;
     }
 
+    @Override
     public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
         for (Callback current : callbacks) {
             if (current instanceof NameCallback) {
@@ -91,12 +93,12 @@ public class ServerCallbackHandler implements CallbackHandler {
                 if (username == null || username.equals(expectedUsername) == false) {
                     throw new SaslException("Invalid username received (expected \"" + expectedUsername + "\", received \"" + username + "\"");
                 }
+            } else if (current instanceof PasswordVerifyCallback && expectedPassword != null) {
+                PasswordVerifyCallback pvc = (PasswordVerifyCallback) current;
+                pvc.setVerified(Arrays.equals(expectedPassword, pvc.getPassword()));
             } else if (current instanceof PasswordCallback && expectedPassword != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(expectedPassword);
-            } else if (current instanceof VerifyPasswordCallback && expectedPassword != null) {
-                VerifyPasswordCallback vcb = (VerifyPasswordCallback) current;
-                vcb.setVerified(String.valueOf(expectedPassword).equals(vcb.getPassword()));
             } else if (current instanceof AnonymousAuthorizationCallback) {
                 ((AnonymousAuthorizationCallback) current).setAuthorized(true);
             } else if (current instanceof AuthorizeCallback) {

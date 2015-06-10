@@ -32,7 +32,7 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.callback.VerifyPasswordCallback;
+import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -55,6 +55,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         this.callbackHandler = callbackHandler;
     }
 
+    @Override
     public String getAuthorizationID() {
         if (! isComplete()) {
             throw log.saslAuthenticationNotComplete();
@@ -62,14 +63,17 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         return authorizedId;
     }
 
+    @Override
     public String getMechanismName() {
         return PLAIN;
     }
 
+    @Override
     public boolean isComplete() {
         return complete;
     }
 
+    @Override
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         if (complete) {
             throw log.saslMessageAfterComplete();
@@ -102,17 +106,19 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         // First verify username and password.
 
         NameCallback ncb = new NameCallback("PLAIN authentication identity", loginName);
-        VerifyPasswordCallback vpc = new VerifyPasswordCallback(password);
+        PasswordVerifyCallback pvc = new PasswordVerifyCallback(password.toCharArray());
 
         try {
-            callbackHandler.handle(new Callback[] { ncb, vpc });
+            callbackHandler.handle(new Callback[] { ncb, pvc });
         } catch (SaslException e) {
             throw e;
         } catch (IOException | UnsupportedCallbackException e) {
             throw log.saslServerSideAuthenticationFailed(e);
+        } finally {
+            pvc.clearPassword();
         }
 
-        if (vpc.isVerified() == false) {
+        if (pvc.isVerified() == false) {
             throw log.saslPasswordNotVerified();
         }
 
@@ -135,6 +141,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         return null;
     }
 
+    @Override
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
             throw log.saslAuthenticationNotComplete();
@@ -143,6 +150,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         }
     }
 
+    @Override
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
             throw log.saslAuthenticationNotComplete();
@@ -151,10 +159,12 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         }
     }
 
+    @Override
     public Object getNegotiatedProperty(final String propName) {
         return null;
     }
 
+    @Override
     public void dispose() throws SaslException {
     }
 }
