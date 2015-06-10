@@ -374,14 +374,10 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CredentialVerifyCallback) {
                     CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
-                    RealmIdentity identity = this.identity;
-                    if (identity == null) {
-                        throw new SaslException("No user identity loaded for credential verification");
-                    }
 
                     Object credential = credentialVerifyCallback.getCredential();
-                    if (identity.getCredentialSupport(credential.getClass()).isDefinitelyVerifiable()) {
-                        credentialVerifyCallback.setVerified(identity.verifyCredential(credential));
+                    if (getCredentialSupport(credential.getClass()).isDefinitelyVerifiable()) {
+                        credentialVerifyCallback.setVerified(verifyCredential(credential));
                     }
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
