@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.auth.provider.jdbc.mapper;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.password.PasswordFactory;
@@ -35,7 +36,10 @@ import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
+import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.util.CodePointIterator;
 
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -74,7 +78,8 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGO
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
 /**
- * A {@link KeyMapper} that knows how to map columns to a {@link org.wildfly.security.password.Password} instance.
+ * <p>A {@link KeyMapper} that knows how to map columns from a SQL query to attributes of specific {@link org.wildfly.security.password.Password} type
+ * as defined by the algorithm.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
@@ -82,24 +87,52 @@ public class PasswordKeyMapper implements KeyMapper {
 
     private final int hash;
     private final String algorithm;
-    private final int salt;
-    private final int iterationCount;
+    private int salt = -1;
+    private int iterationCount = -1;
     private final Class<?> passwordType;
 
-    public PasswordKeyMapper(String algorithm, int hash, int salt, int iterationCount) throws InvalidKeyException {
+    /**
+     * Constructs a new instance.
+     *
+     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
+    public PasswordKeyMapper(String algorithm, int hash) throws InvalidKeyException {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkMinimumParameter("hash", 1, hash);
         this.algorithm = algorithm;
         this.passwordType = toPasswordType(algorithm);
         this.hash = hash;
-        this.salt = salt;
-        this.iterationCount = iterationCount;
     }
 
-    public PasswordKeyMapper(String algorithm, int hash) throws InvalidKeyException {
-        this(algorithm, hash, -1, -1);
-    }
-
+    /**
+     * Constructs a new instance.
+     *
+     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
     public PasswordKeyMapper(String algorithm, int hash, int salt) throws InvalidKeyException {
-        this(algorithm, hash, salt, -1);
+        this(algorithm, hash);
+        Assert.checkMinimumParameter("salt", 1, salt);
+        this.salt = salt;
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
+     * @param iterationCount the column index from where the iteration count or cost, if supported by the given algorithm, is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
+    public PasswordKeyMapper(String algorithm, int hash, int salt, int iterationCount) throws InvalidKeyException {
+        this(algorithm, hash, salt);
+        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
+        this.iterationCount = iterationCount;
     }
 
     @Override
@@ -156,24 +189,20 @@ public class PasswordKeyMapper implements KeyMapper {
 
     @Override
     public Object map(ResultSet resultSet) {
-        Object hash = null;
-        Object salt = null;
+        byte[] hash = null;
+        byte[] salt = null;
         int iterationCount = 0;
 
         try {
-            while (resultSet.next()) {
-                hash = resultSet.getObject(getHash());
+            if (resultSet.next()) {
+                hash = toByteArray(resultSet.getObject(getHash()));
 
-                int saltIndex = getSalt();
-
-                if (saltIndex > 0) {
-                    salt = resultSet.getObject(saltIndex);
+                if (getSalt() > 0) {
+                    salt = toByteArray(resultSet.getObject(getSalt()));
                 }
 
-                int iterationCountIndex = getIterationCount();
-
-                if (iterationCountIndex > 0) {
-                    iterationCount = resultSet.getInt(iterationCountIndex);
+                if (getIterationCount() > 0) {
+                    iterationCount = resultSet.getInt(getIterationCount());
                 }
             }
         } catch (Exception e) {
@@ -187,12 +216,13 @@ public class PasswordKeyMapper implements KeyMapper {
                 Class<?> credentialType = getKeyType();
 
                 if (ClearPassword.class.equals(credentialType)) {
-                    return passwordFactory.generatePassword(new ClearPasswordSpec(hash.toString().toCharArray()));
+                    return toClearPassword(hash, passwordFactory);
                 } else if (BCryptPassword.class.equals(credentialType)) {
-                    BCryptPasswordSpec bCryptPasswordSpec = (BCryptPasswordSpec) PasswordUtil.parseCryptString(hash.toString().toCharArray());
-                    return passwordFactory.generatePassword(bCryptPasswordSpec);
+                    return toBcryptPassword(hash, passwordFactory);
                 } else if (SaltedSimpleDigestPassword.class.equals(credentialType)) {
                     return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
+                } else if (SimpleDigestPassword.class.equals(credentialType)) {
+                    return toSimpleDigestPassword(hash, passwordFactory);
                 } else if (ScramDigestPassword.class.equals(credentialType)) {
                     return toScramDigestPassword(hash, salt, iterationCount, passwordFactory);
                 }
@@ -204,56 +234,36 @@ public class PasswordKeyMapper implements KeyMapper {
         return null;
     }
 
-    private Object toScramDigestPassword(Object hash, Object salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Object toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
             throw new RuntimeException("Salt is expected when creating [" + ScramDigestPassword.class + "] passwords.");
         }
 
-        byte[] hashBytes = null;
-
-        if (String.class.isInstance(hash)) {
-            hashBytes = hash.toString().getBytes();
-        } else if (byte[].class.isInstance(hash)) {
-            hashBytes = (byte[]) hash;
-        }
-
-        byte[] saltBytes = null;
-
-        if (String.class.isInstance(salt)) {
-            saltBytes = salt.toString().getBytes();
-        } else if (byte[].class.isInstance(salt)) {
-            saltBytes = (byte[]) salt;
-        }
-
-        ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(algorithm, hashBytes, saltBytes, iterationCount);
-
+        ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(algorithm, hash, salt, iterationCount);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 
-    private Object toSaltedSimpleDigestPassword(Object hash, Object salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Object toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+        SimpleDigestPasswordSpec simpleDigestPasswordSpec = new SimpleDigestPasswordSpec(algorithm, hash);
+        return passwordFactory.generatePassword(simpleDigestPasswordSpec);
+    }
+
+    private Object toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
             throw new RuntimeException("Salt is expected when creating [" + SaltedSimpleDigestPassword.class + "] passwords.");
         }
 
-        byte[] hashBytes = null;
-
-        if (String.class.isInstance(hash)) {
-            hashBytes = hash.toString().getBytes();
-        } else if (byte[].class.isInstance(hash)) {
-            hashBytes = (byte[]) hash;
-        }
-
-        byte[] saltBytes = null;
-
-        if (String.class.isInstance(salt)) {
-            saltBytes = salt.toString().getBytes();
-        } else if (byte[].class.isInstance(salt)) {
-            saltBytes = (byte[]) salt;
-        }
-
-        SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(algorithm, hashBytes, saltBytes);
-
+        SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(algorithm, hash, salt);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
+    }
+
+    private Object toBcryptPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+        BCryptPasswordSpec bCryptPasswordSpec = (BCryptPasswordSpec) PasswordUtil.parseCryptString(toCharArray(hash));
+        return passwordFactory.generatePassword(bCryptPasswordSpec);
+    }
+
+    private Object toClearPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+        return passwordFactory.generatePassword(new ClearPasswordSpec(toCharArray(hash)));
     }
 
     private PasswordFactory getPasswordFactory(String algorithm) {
@@ -262,6 +272,20 @@ public class PasswordKeyMapper implements KeyMapper {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Could not obtain PasswordFactory for algorithm [" + algorithm + "].", e);
         }
+    }
+
+    private byte[] toByteArray(Object value) throws UnsupportedEncodingException {
+        if (String.class.isInstance(value)) {
+            return value.toString().getBytes("UTF-8");
+        } else if (byte[].class.isInstance(value)) {
+            return (byte[]) value;
+        }
+
+        return new byte[0];
+    }
+
+    private char[] toCharArray(byte[] hash) {
+        return CodePointIterator.ofUtf8Bytes(hash).drainToString().toCharArray();
     }
 
     /**
