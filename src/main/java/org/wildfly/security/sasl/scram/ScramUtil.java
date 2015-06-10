@@ -19,11 +19,17 @@
 package org.wildfly.security.sasl.scram;
 
 import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Random;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.sasl.SaslException;
 
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -112,6 +118,23 @@ class ScramUtil {
         assert hash.length == input.length;
         for (int i = 0; i < hash.length; i++) {
             hash[i] ^= input[i];
+        }
+    }
+
+    static char[] getTwoWayPasswordChars(Password password) throws SaslException {
+        if (password == null) {
+            throw new SaslException("No password provided");
+        }
+        PasswordFactory pf;
+        try {
+            pf = PasswordFactory.getInstance(password.getAlgorithm());
+        } catch (NoSuchAlgorithmException e) {
+            throw new SaslException("Invalid password algorithm");
+        }
+        try {
+            return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
+        } catch (InvalidKeySpecException e) {
+            throw new SaslException("Unsupported password algorithm type");
         }
     }
 
