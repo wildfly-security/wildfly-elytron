@@ -41,6 +41,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
@@ -271,6 +272,10 @@ class LdapSecurityRealm implements SecurityRealm {
             }
 
             return false;
+        }
+
+        public boolean exists() throws RealmUnavailableException {
+            return true;
         }
     }
 

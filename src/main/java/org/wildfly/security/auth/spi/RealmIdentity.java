@@ -71,6 +71,15 @@ public interface RealmIdentity {
     boolean verifyCredential(Object credential) throws RealmUnavailableException;
 
     /**
+     * Determine if the identity exists in lieu of verifying or acquiring a credential.  This method is intended to be
+     * used to verify an identity for non-authentication purposes only.
+     *
+     * @return {@code true} if the identity exists in this realm, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    boolean exists() throws RealmUnavailableException;
+
+    /**
      * Dispose this realm identity after a completed authentication attempt.
      */
     default void dispose() {
@@ -84,4 +93,67 @@ public interface RealmIdentity {
      */
     AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException;
 
+    /**
+     * The anonymous realm identity.
+     */
+    RealmIdentity ANONYMOUS = new RealmIdentity() {
+        public Principal getPrincipal() throws RealmUnavailableException {
+            return ANONYMOUS.getPrincipal();
+        }
+
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+            return CredentialSupport.UNSUPPORTED;
+        }
+
+        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return null;
+        }
+
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            return false;
+        }
+
+        public boolean exists() throws RealmUnavailableException {
+            return true;
+        }
+
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            return AuthorizationIdentity.ANONYMOUS;
+        }
+    };
+
+    /**
+     * An identity for a non-existent user.
+     *
+     * @param principal the identity principal
+     * @return the realm identity
+     */
+    static RealmIdentity nonExistentIdentity(Principal principal) {
+        return new RealmIdentity() {
+            public Principal getPrincipal() throws RealmUnavailableException {
+                return principal;
+            }
+
+            public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+                return CredentialSupport.UNSUPPORTED;
+            }
+
+            public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+                return null;
+            }
+
+            public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+                return false;
+            }
+
+            public boolean exists() throws RealmUnavailableException {
+                return false;
+            }
+
+            public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                // todo: exception hierarchy
+                throw new IllegalStateException("User does not exist");
+            }
+        };
+    }
 }

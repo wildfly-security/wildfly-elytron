@@ -64,4 +64,16 @@ public interface SecurityRealm {
      */
     CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
 
+    /**
+     * An empty security realm.
+     */
+    SecurityRealm EMPTY_REALM = new SecurityRealm() {
+        public RealmIdentity createRealmIdentity(final Principal principal) throws RealmUnavailableException {
+            return RealmIdentity.nonExistentIdentity(principal);
+        }
+
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+            return CredentialSupport.UNSUPPORTED;
+        }
+    };
 }

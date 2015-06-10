@@ -155,6 +155,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
             return false;
         }
 
+        public boolean exists() throws RealmUnavailableException {
+            return true;
+        }
+
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             return new JdbcAuthorizationIdentity(getPrincipal());

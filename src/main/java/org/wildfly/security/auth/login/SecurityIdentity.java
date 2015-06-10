@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.login;
 
+import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
@@ -184,5 +185,14 @@ public final class SecurityIdentity {
      */
     public Set<String> getRoles() {
         return getSecurityDomain().mapRoles(this);
+    }
+
+    /**
+     * Get the principal of this identity.
+     *
+     * @return the principal of this identity
+     */
+    public Principal getPrincipal() {
+        return authorizationIdentity.getPrincipal();
     }
 }
