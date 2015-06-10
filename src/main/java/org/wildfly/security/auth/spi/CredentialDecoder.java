@@ -18,8 +18,10 @@
 
 package org.wildfly.security.auth.spi;
 
+import java.security.Principal;
+
 /**
- * A decoder which acquires an authentication name from a credential.  Implementations may indicate that the credential
+ * A decoder which acquires a principal from a credential.  Implementations may indicate that the credential
  * is not understood.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -27,13 +29,13 @@ package org.wildfly.security.auth.spi;
 public interface CredentialDecoder {
 
     /**
-     * Get the authentication name from an opaque credential.  If this decoder cannot understand the given credential
+     * Get the principal from an opaque credential.  If this decoder cannot understand the given credential
      * type, {@code null} is returned.
      *
      * @param credential the credential to decode
-     * @return the authentication name, or {@code null} if this decoder does not understand the credential
+     * @return the principal, or {@code null} if this decoder does not understand the credential
      */
-    String getNameFromCredential(Object credential);
+    Principal getPrincipalFromCredential(Object credential);
 
     /**
      * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
@@ -47,9 +49,9 @@ public interface CredentialDecoder {
             throw new IllegalArgumentException("decoders is null");
         }
         return credential -> {
-            String result;
+            Principal result;
             for (CredentialDecoder decoder : decoders) {
-                result = decoder.getNameFromCredential(credential);
+                result = decoder.getPrincipalFromCredential(credential);
                 if (result != null) {
                     return result;
                 }
