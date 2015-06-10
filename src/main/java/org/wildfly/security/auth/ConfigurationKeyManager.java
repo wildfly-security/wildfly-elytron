@@ -32,14 +32,14 @@ import javax.net.ssl.SSLEngine;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.x500.X500PrincipalUtil;
 
 final class ConfigurationKeyManager extends X509ExtendedKeyManager {
     private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer;
-    private final Map<String, X500CertificateChainPrivateCredential> credentialsByAlias;
+    private final Map<String, X509CertificateChainPrivateCredential> credentialsByAlias;
 
-    ConfigurationKeyManager(final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer, final Map<String, X500CertificateChainPrivateCredential> credentialsByAlias) {
+    ConfigurationKeyManager(final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer, final Map<String, X509CertificateChainPrivateCredential> credentialsByAlias) {
         this.credentialAliasesByKeyTypeAndIssuer = credentialAliasesByKeyTypeAndIssuer;
         this.credentialsByAlias = credentialsByAlias;
     }
@@ -123,23 +123,23 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
     }
 
     public X509Certificate[] getCertificateChain(final String alias) {
-        final X500CertificateChainPrivateCredential credential = credentialsByAlias.get(alias);
+        final X509CertificateChainPrivateCredential credential = credentialsByAlias.get(alias);
         return credential == null ? null : credential.getCertificateChain();
     }
 
     public PrivateKey getPrivateKey(final String alias) {
-        final X500CertificateChainPrivateCredential credential = credentialsByAlias.get(alias);
+        final X509CertificateChainPrivateCredential credential = credentialsByAlias.get(alias);
         return credential == null ? null : credential.getPrivateKey();
     }
 
     static final class Builder {
         private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer = new HashMap<>();
-        private final Map<String, X500CertificateChainPrivateCredential> credentialsByAlias = new HashMap<>();
+        private final Map<String, X509CertificateChainPrivateCredential> credentialsByAlias = new HashMap<>();
 
         Builder() {
         }
 
-        void addCredential(X500CertificateChainPrivateCredential credential) {
+        void addCredential(X509CertificateChainPrivateCredential credential) {
             final PrivateKey privateKey = credential.getPrivateKey();
             final X509Certificate[] certificateChain = credential.getCertificateChain();
             final String keyType = privateKey.getAlgorithm();

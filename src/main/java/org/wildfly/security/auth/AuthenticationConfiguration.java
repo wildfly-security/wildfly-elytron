@@ -70,7 +70,7 @@ import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ConfiguredSSLSocket;
 import org.wildfly.security.ssl.DelegatingSSLContext;
 import org.wildfly.security.ssl.SSLFactories;
-import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.ssl.ProtocolSelector;
 
@@ -549,7 +549,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useSslClientCredential(PrivateKey privateKey, X509Certificate... certificateChain) {
-        return certificateChain == null || certificateChain.length == 0 || privateKey == null ? without(SSLClientCertificateConfiguration.class) : useSslClientCredential(new X500CertificateChainPrivateCredential(privateKey, certificateChain));
+        return certificateChain == null || certificateChain.length == 0 || privateKey == null ? without(SSLClientCertificateConfiguration.class) : useSslClientCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
     }
 
     /**
@@ -558,7 +558,7 @@ public abstract class AuthenticationConfiguration {
      * @param credential the credential containing the private key and certificate chain
      * @return the new configuration
      */
-    public AuthenticationConfiguration useSslClientCredential(X500CertificateChainPrivateCredential credential) {
+    public AuthenticationConfiguration useSslClientCredential(X509CertificateChainPrivateCredential credential) {
         return credential == null ? without(SSLClientCertificateConfiguration.class) : useSslClientCredential(new FixedSecurityFactory<>(credential));
     }
 
@@ -568,7 +568,7 @@ public abstract class AuthenticationConfiguration {
      * @param credentialFactory a factory which produces the credential containing the private key and certificate chain
      * @return the new configuration
      */
-    public AuthenticationConfiguration useSslClientCredential(SecurityFactory<X500CertificateChainPrivateCredential> credentialFactory) {
+    public AuthenticationConfiguration useSslClientCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
         return credentialFactory == null ? without(SSLClientCertificateConfiguration.class) : new SSLClientCertificateConfiguration(this, credentialFactory);
     }
 
