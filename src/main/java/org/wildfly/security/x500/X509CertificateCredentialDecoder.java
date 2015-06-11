@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.provider;
+package org.wildfly.security.x500;
 
 import java.security.cert.X509Certificate;
 

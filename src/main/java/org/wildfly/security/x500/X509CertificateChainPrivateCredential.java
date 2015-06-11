@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.ssl;
+package org.wildfly.security.x500;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
@@ -26,7 +26,7 @@ import java.security.cert.X509Certificate;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class X500CertificateChainPrivateCredential {
+public final class X509CertificateChainPrivateCredential {
     private final PrivateKey privateKey;
     private final X509Certificate[] certificateChain;
 
@@ -41,7 +41,7 @@ public final class X500CertificateChainPrivateCredential {
      * @param privateKey the private key (not {@code null})
      * @param certificateChain the certificate chain (not {@code null}, cannot contain {@code null} elements)
      */
-    public X500CertificateChainPrivateCredential(final PrivateKey privateKey, final X509Certificate... certificateChain) {
+    public X509CertificateChainPrivateCredential(final PrivateKey privateKey, final X509Certificate... certificateChain) {
         this.privateKey = privateKey;
         this.certificateChain = certificateChain.clone();
     }
