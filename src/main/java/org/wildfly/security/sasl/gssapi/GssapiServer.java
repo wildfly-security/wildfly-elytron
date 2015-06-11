@@ -43,7 +43,7 @@ import org.jboss.logging.Logger;
  */
 public class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
-    private static final Logger log = Logger.getLogger(GssapiServer.class);
+    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.gssapi.server");
 
     private static final int ACCEPTOR_STATE = 1;
     private static final int SECURITY_LAYER_ADVERTISER = 2;
