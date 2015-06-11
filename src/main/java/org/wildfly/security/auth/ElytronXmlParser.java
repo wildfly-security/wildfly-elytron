@@ -685,7 +685,7 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedContent();
             }
         }
-        return null;
+        throw reader.unexpectedDocumentEnd();
     }
 
     // common types
