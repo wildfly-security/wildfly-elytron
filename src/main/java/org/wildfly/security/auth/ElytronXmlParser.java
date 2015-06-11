@@ -19,6 +19,7 @@
 package org.wildfly.security.auth;
 
 import static javax.xml.stream.XMLStreamConstants.*;
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
 import java.io.FileInputStream;
@@ -31,7 +32,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.Provider;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +47,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.jboss.modules.Module;
+import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -55,6 +63,10 @@ import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.ssl.CipherSuiteSelector;
+import org.wildfly.security.ssl.ProtocolSelector;
+import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
+import org.wildfly.security.util.ServiceLoaderSupplier;
 
 /**
  * A parser for the Elytron XML schema.
@@ -421,6 +433,47 @@ public final class ElytronXmlParser {
                         final SecurityFactory<KeyStore.Entry> factory = parseKeyStoreRefType(reader, keyStoresMap);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
                         configuration = () -> parentConfig.create().useKeyStoreCredential(factory.create());
+                        break;
+                    }
+                    case "set-authorization-name": {
+                        gotConfig = true;
+                        final String authName = parseNameType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useAuthorizationName(authName);
+                        break;
+                    }
+                    case "key-store-ssl-certificate": {
+                        gotConfig = true;
+                        final SecurityFactory<KeyStore.Entry> factory = parseKeyStoreRefType(reader, keyStoresMap);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useSslClientCredential(new PrivateKeyKeyStoreEntryCredentialFactory(factory));
+                        break;
+                    }
+                    case "ssl-cipher-suite": {
+                        gotConfig = true;
+                        final CipherSuiteSelector selector = parseCipherSuiteSelectorType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useSslCipherSuiteSelector(selector);
+                        break;
+                    }
+                    case "ssl-protocol": {
+                        gotConfig = true;
+                        final ProtocolSelector selector = parseProtocolSelectorNamesType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useSslProtocolSelector(selector);
+                        break;
+                    }
+                    case "use-system-providers": {
+                        gotConfig = true;
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useProviders(null);
+                        break;
+                    }
+                    case "use-module-providers": {
+                        gotConfig = true;
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        final Module module = parseModuleRefType(reader);
+                        configuration = () -> parentConfig.create().useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader()));
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -914,6 +967,103 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
+    /**
+     * Parse an XML element of type {@code ssl-cipher-selector-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return the parsed cipher suite selector
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static CipherSuiteSelector parseCipherSuiteSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        CipherSuiteSelector selector = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            if (reader.getAttributeLocalName(i).equals("selector")) {
+                selector = CipherSuiteSelector.fromString(reader.getAttributeValue(i));
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (selector == null) {
+            throw missingAttribute(reader, "selector");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return selector;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code names} which yields a protocol selector from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return the parsed protocol selector
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static ProtocolSelector parseProtocolSelectorNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        ProtocolSelector selector = ProtocolSelector.empty();
+        for (String name : parseNamesType(reader)) {
+            selector = selector.add(name);
+        }
+        return selector;
+    }
+
+    /**
+     * Parse an XML element of type {@code module-ref-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return the corresponding module
+     * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
+     */
+    public static Module parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String name = null;
+        String slot = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            if (reader.getAttributeLocalName(i).equals("name")) {
+                name = reader.getAttributeValue(i);
+            } else if (reader.getAttributeLocalName(i).equals("slot")) {
+                slot = reader.getAttributeValue(i);
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (name == null) {
+            throw missingAttribute(reader, "name");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                final ModuleIdentifier identifier = ModuleIdentifier.create(name, slot);
+                try {
+                    return Module.getModuleFromCallerModuleLoader(identifier);
+                } catch (ModuleLoadException e) {
+                    throw log.noModuleFound(reader, e, identifier);
+                }
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
     // util
 
     private static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
@@ -990,6 +1140,24 @@ public final class ElytronXmlParser {
 
         InputStream createStream() throws IOException {
             return uri.toURL().openStream();
+        }
+    }
+
+    static final class PrivateKeyKeyStoreEntryCredentialFactory implements SecurityFactory<X500CertificateChainPrivateCredential> {
+        private final SecurityFactory<KeyStore.Entry> entrySecurityFactory;
+
+        PrivateKeyKeyStoreEntryCredentialFactory(final SecurityFactory<KeyStore.Entry> entrySecurityFactory) {
+            this.entrySecurityFactory = entrySecurityFactory;
+        }
+
+        public X500CertificateChainPrivateCredential create() throws GeneralSecurityException {
+            final KeyStore.Entry entry = entrySecurityFactory.create();
+            if (entry instanceof KeyStore.PrivateKeyEntry) {
+                final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
+                final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
+                return new X500CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
+            }
+            throw log.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
         }
     }
 }
