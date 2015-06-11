@@ -234,15 +234,13 @@ public final class ElytronXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                return new OneTimeSecurityFactory<>(new SecurityFactory<AuthenticationContext>() {
-                    public AuthenticationContext create() throws GeneralSecurityException {
-                        AuthenticationContext context = AuthenticationContext.EMPTY;
-                        for (SecurityFactory<RuleConfigurationPair> pairFactory : rulesList) {
-                            final RuleConfigurationPair pair = pairFactory.create();
-                            context = context.with(pair.getMatchRule(), pair.getConfiguration());
-                        }
-                        return context;
+                return new OneTimeSecurityFactory<>(() -> {
+                    AuthenticationContext context = AuthenticationContext.EMPTY;
+                    for (SecurityFactory<RuleConfigurationPair> pairFactory : rulesList) {
+                        final RuleConfigurationPair pair = pairFactory.create();
+                        context = context.with(pair.getMatchRule(), pair.getConfiguration());
                     }
+                    return context;
                 });
             } else {
                 throw reader.unexpectedContent();
@@ -290,19 +288,15 @@ public final class ElytronXmlParser {
             configuration = new FixedSecurityFactory<>(AuthenticationConfiguration.EMPTY);
         } else {
             final String ext = _extends;
-            rule = new SecurityFactory<MatchRule>() {
-                public MatchRule create() throws GeneralSecurityException {
-                    final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                    if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
-                    return factory.create().getMatchRule();
-                }
+            rule = () -> {
+                final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
+                if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
+                return factory.create().getMatchRule();
             };
-            configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                public AuthenticationConfiguration create() throws GeneralSecurityException {
-                    final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                    if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
-                    return factory.create().getConfiguration();
-                }
+            configuration = () -> {
+                final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
+                if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
+                return factory.create().getConfiguration();
             };
         }
         boolean gotConfig = false;
@@ -319,88 +313,56 @@ public final class ElytronXmlParser {
                         if (gotConfig) throw reader.unexpectedElement();
                         parseEmptyType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchNoUser();
-                            }
-                        };
+                        rule = () -> parentRule.create().matchNoUser();
                         break;
                     }
                     case "match-userinfo": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String userName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchUser(userName);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchUser(userName);
                         break;
                     }
                     case "match-protocol": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String protoName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchProtocol(protoName);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchProtocol(protoName);
                         break;
                     }
                     case "match-host": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String hostName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchHost(hostName);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchHost(hostName);
                         break;
                     }
                     case "match-path": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String pathName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchPath(pathName);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchPath(pathName);
                         break;
                     }
                     case "match-port": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final int port = parsePortType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchPort(port);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchPort(port);
                         break;
                     }
                     case "match-urn": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String urnString = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchUrnName(urnString);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchUrnName(urnString);
                         break;
                     }
                     case "match-domain": {
                         if (gotConfig) throw reader.unexpectedElement();
                         final String domainName = parseNameType(reader);
                         final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = new SecurityFactory<MatchRule>() {
-                            public MatchRule create() throws GeneralSecurityException {
-                                return parentRule.create().matchLocalSecurityDomain(domainName);
-                            }
-                        };
+                        rule = () -> parentRule.create().matchLocalSecurityDomain(domainName);
                         break;
                     }
 
@@ -409,88 +371,56 @@ public final class ElytronXmlParser {
                         gotConfig = true;
                         final String hostName = parseNameType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().useHost(hostName);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().useHost(hostName);
                         break;
                     }
                     case "set-port": {
                         gotConfig = true;
                         final int port = parsePortType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().usePort(port);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().usePort(port);
                         break;
                     }
                     case "set-user-name": {
                         gotConfig = true;
                         final String userName = parseNameType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().useName(userName);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().useName(userName);
                         break;
                     }
                     case "set-anonymous": {
                         gotConfig = true;
                         parseEmptyType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().useAnonymous();
-                            }
-                        };
+                        configuration = () -> parentConfig.create().useAnonymous();
                         break;
                     }
                     case "rewrite-user-name-regex": {
                         gotConfig = true;
                         final NameRewriter nameRewriter = parseRegexSubstitutionType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().rewriteUser(nameRewriter);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().rewriteUser(nameRewriter);
                         break;
                     }
                     case "require-sasl-mechanisms": {
                         gotConfig = true;
                         final String[] names = parseNamesType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().allowSaslMechanisms(names);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().allowSaslMechanisms(names);
                         break;
                     }
                     case "forbid-sasl-mechanisms": {
                         gotConfig = true;
                         final String[] names = parseNamesType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().forbidSaslMechanisms(names);
-                            }
-                        };
+                        configuration = () -> parentConfig.create().forbidSaslMechanisms(names);
                         break;
                     }
                     case "key-store-credential": {
                         gotConfig = true;
                         final SecurityFactory<KeyStore.Entry> factory = parseKeyStoreRefType(reader, keyStoresMap);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = new SecurityFactory<AuthenticationConfiguration>() {
-                            public AuthenticationConfiguration create() throws GeneralSecurityException {
-                                return parentConfig.create().useKeyStoreCredential(factory.create());
-                            }
-                        };
+                        configuration = () -> parentConfig.create().useKeyStoreCredential(factory.create());
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -498,11 +428,7 @@ public final class ElytronXmlParser {
             } else if (tag == END_ELEMENT) {
                 final OneTimeSecurityFactory<MatchRule> finalRule = new OneTimeSecurityFactory<MatchRule>(rule);
                 final OneTimeSecurityFactory<AuthenticationConfiguration> finalConfig = new OneTimeSecurityFactory<AuthenticationConfiguration>(configuration);
-                final SecurityFactory<RuleConfigurationPair> finalPair = new SecurityFactory<RuleConfigurationPair>() {
-                    public RuleConfigurationPair create() throws GeneralSecurityException {
-                        return new RuleConfigurationPair(finalRule.create(), finalConfig.create());
-                    }
-                };
+                final SecurityFactory<RuleConfigurationPair> finalPair = () -> new RuleConfigurationPair(finalRule.create(), finalConfig.create());
                 rulesList.add(finalPair);
                 if (name != null) {
                     rulesMap.put(name, finalPair);
@@ -615,17 +541,15 @@ public final class ElytronXmlParser {
                         }
                         gotCredential = true;
                         final SecurityFactory<KeyStore.Entry> entryFactory = parseKeyStoreRefType(reader, keyStoresMap);
-                        passwordFactory = new OneTimeSecurityFactory<>(new SecurityFactory<char[]>() {
-                            public char[] create() throws GeneralSecurityException {
-                                final KeyStore.Entry entry = entryFactory.create();
-                                if (entry instanceof PasswordEntry) {
-                                    final Password password = ((PasswordEntry) entry).getPassword();
-                                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                                    final ClearPasswordSpec passwordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
-                                    return passwordSpec.getEncodedPassword();
-                                }
-                                return null;
+                        passwordFactory = new OneTimeSecurityFactory<>(() -> {
+                            final KeyStore.Entry entry = entryFactory.create();
+                            if (entry instanceof PasswordEntry) {
+                                final Password password = ((PasswordEntry) entry).getPassword();
+                                final PasswordFactory passwordFactory1 = PasswordFactory.getInstance(password.getAlgorithm());
+                                final ClearPasswordSpec passwordSpec = passwordFactory1.getKeySpec(password, ClearPasswordSpec.class);
+                                return passwordSpec.getEncodedPassword();
                             }
+                            return null;
                         });
                         break;
                     }
@@ -734,31 +658,27 @@ public final class ElytronXmlParser {
             } else if (tag == END_ELEMENT) {
                 final SecurityFactory<KeyStore.Entry> finalKeyStoreCredential = keyStoreCredential;
                 final String finalKeyStoreName = keyStoreName;
-                return new KeyStoreEntrySecurityFactory(new SecurityFactory<KeyStore>() {
-                    public KeyStore create() throws GeneralSecurityException {
-                        final SecurityFactory<KeyStore> keyStoreSecurityFactory = keyStoresMap.get(finalKeyStoreName);
-                        if (keyStoreSecurityFactory == null) {
-                            throw new IllegalArgumentException("Unknown key store specified");
-                        }
-                        return keyStoreSecurityFactory.create();
+                return new KeyStoreEntrySecurityFactory(() -> {
+                    final SecurityFactory<KeyStore> keyStoreSecurityFactory = keyStoresMap.get(finalKeyStoreName);
+                    if (keyStoreSecurityFactory == null) {
+                        throw new IllegalArgumentException("Unknown key store specified");
                     }
-                }, alias, keyStoreCredential == null ? null : new SecurityFactory<KeyStore.ProtectionParameter>() {
-                    public KeyStore.ProtectionParameter create() throws GeneralSecurityException {
-                        final KeyStore.Entry entry = finalKeyStoreCredential.create();
-                        if (entry instanceof PasswordEntry) {
-                            final Password password = ((PasswordEntry) entry).getPassword();
-                            final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                            final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
-                            return new KeyStore.PasswordProtection(spec.getEncodedPassword());
-                        } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                            final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
-                            final SecretKeyFactory instance = SecretKeyFactory.getInstance(secretKey.getAlgorithm());
-                            final SecretKeySpec keySpec = (SecretKeySpec) instance.getKeySpec(secretKey, SecretKeySpec.class);
-                            final byte[] encoded = keySpec.getEncoded();
-                            return encoded == null ? null : new KeyStore.PasswordProtection(new String(encoded, StandardCharsets.UTF_8).toCharArray());
-                        } else {
-                            return null;
-                        }
+                    return keyStoreSecurityFactory.create();
+                }, alias, keyStoreCredential == null ? null : () -> {
+                    final KeyStore.Entry entry = finalKeyStoreCredential.create();
+                    if (entry instanceof PasswordEntry) {
+                        final Password password = ((PasswordEntry) entry).getPassword();
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                        final ClearPasswordSpec spec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+                        return new KeyStore.PasswordProtection(spec.getEncodedPassword());
+                    } else if (entry instanceof KeyStore.SecretKeyEntry) {
+                        final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+                        final SecretKeyFactory instance = SecretKeyFactory.getInstance(secretKey.getAlgorithm());
+                        final SecretKeySpec keySpec = (SecretKeySpec) instance.getKeySpec(secretKey, SecretKeySpec.class);
+                        final byte[] encoded = keySpec.getEncoded();
+                        return encoded == null ? null : new KeyStore.PasswordProtection(new String(encoded, StandardCharsets.UTF_8).toCharArray());
+                    } else {
+                        return null;
                     }
                 });
             } else {
