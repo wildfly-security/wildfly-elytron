@@ -80,4 +80,14 @@ public interface NameRewriter {
             return n;
         };
     }
+
+    /**
+     * Create a name rewriter which always returns the same name.
+     *
+     * @param name the name to return
+     * @return the name
+     */
+    static NameRewriter constant(String name) {
+        return original -> name;
+    }
 }
