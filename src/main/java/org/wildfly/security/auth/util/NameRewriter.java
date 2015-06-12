@@ -60,7 +60,7 @@ public interface NameRewriter {
     static NameRewriter aggregate(NameRewriter rewriter1, NameRewriter rewriter2) {
         Assert.checkNotNullParam("rewriter1", rewriter1);
         Assert.checkNotNullParam("rewriter2", rewriter2);
-        return (n) -> rewriter2.rewriteName(rewriter1.rewriteName(n));
+        return n -> rewriter2.rewriteName(rewriter1.rewriteName(n));
     }
 
     /**
@@ -75,7 +75,7 @@ public interface NameRewriter {
         for (int i = 0; i < clone.length; i++) {
             Assert.checkNotNullArrayParam("nameRewriters", i, clone[i]);
         }
-        return (n) -> {
+        return n -> {
             for (NameRewriter r : clone) n = r.rewriteName(n);
             return n;
         };
