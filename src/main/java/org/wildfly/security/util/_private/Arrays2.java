@@ -19,6 +19,7 @@
 package org.wildfly.security.util._private;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -150,5 +151,39 @@ public final class Arrays2 {
     @SuppressWarnings("unchecked")
     public static <E> E[] createArray(Class<E> elementType, int size) {
         return (E[]) Array.newInstance(elementType, size);
+    }
+
+    /**
+     * Create a new array from the original which contains no {@code null} values, possibly <em>destroying</em> the
+     * contents of the original array.  If the original contains no {@code null} values, the original array is returned.
+     *
+     * @param original the original array (not {@code null}, will be modified)
+     * @param <E> the element type
+     * @return the compacted (possibly empty) array
+     */
+    public static <E> E[] compactNulls(E[] original) {
+        int r = 0;
+        E item;
+        for (;;) {
+            item = original[r++];
+            if (item == null) {
+                break;
+            }
+            if (r == original.length) {
+                // already null-free
+                return original;
+            }
+        }
+        // we must destroy the original array
+        int w = r - 1;
+        for (;;) {
+            item = original[r++];
+            if (item != null) {
+                original[w++] = item;
+            }
+            if (r == original.length) {
+                return Arrays.copyOf(original, w);
+            }
+        }
     }
 }
