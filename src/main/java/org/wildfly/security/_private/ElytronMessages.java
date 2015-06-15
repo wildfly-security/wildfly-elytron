@@ -24,6 +24,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.security.auth.callback.Callback;
 import javax.security.sasl.SaslClientFactory;
@@ -68,11 +69,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "No algorithm found matching TLS/SSL protocol selection criteria")
     NoSuchAlgorithmException noAlgorithmForSslProtocol();
 
-    // id = 3
+    @Message(id = 3, value = "Empty certificate chain is not trusted")
+    CertificateException emptyChainNotTrusted();
 
-    // id = 4
+    @Message(id = 4, value = "Certificate not trusted due to realm failure for principal %s, name %s")
+    CertificateException notTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal, String name);
 
-    // id = 5
+    @Message(id = 5, value = "Credential validation failed; certificate is not trusted for principal %s, name %s")
+    CertificateException notTrusted(Principal principal, String name);
 
     @Message(id = 6, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
@@ -300,4 +304,7 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = Logger.Level.DEBUG)
     @Message(id = 80, value = "JAAS logout failed for principal %s")
     void debugJAASLogoutFailure(Principal principal, @Cause Throwable cause);
+
+    @Message(id = 81, value = "No default trust manager available")
+    NoSuchAlgorithmException noDefaultTrustManager();
 }

@@ -46,7 +46,6 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -57,7 +56,6 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.FixedSecurityFactory;
-import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -81,17 +79,6 @@ import org.wildfly.security.ssl.ProtocolSelector;
  */
 public abstract class AuthenticationConfiguration {
     // constants
-
-    static final SecurityFactory<X509TrustManager> DEFAULT_TRUST_MANAGER_FACTORY = new OneTimeSecurityFactory<>(() -> {
-        final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        trustManagerFactory.init((KeyStore) null);
-        for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
-            if (trustManager instanceof X509TrustManager) {
-                return (X509TrustManager) trustManager;
-            }
-        }
-        return null;
-    });
 
     /**
      * An empty configuration which can be used as the basis for any configuration.  This configuration supports no
@@ -159,7 +146,7 @@ public abstract class AuthenticationConfiguration {
         }
 
         SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
-            return DEFAULT_TRUST_MANAGER_FACTORY;
+            return SSLFactories.getDefaultX509TrustManagerSecurityFactory();
         }
 
         SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {

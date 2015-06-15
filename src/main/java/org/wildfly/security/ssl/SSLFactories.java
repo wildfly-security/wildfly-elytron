@@ -18,6 +18,7 @@
 
 package org.wildfly.security.ssl;
 
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.IdentityHashMap;
@@ -25,6 +26,9 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
@@ -116,5 +120,25 @@ public final class SSLFactories {
      */
     public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
         return () -> createConfiguredSslContext(originalFactory.create(), protocolSelector, cipherSuiteSelector);
+    }
+
+    private static final SecurityFactory<X509TrustManager> DEFAULT_TRUST_MANAGER_SECURITY_FACTORY = new OneTimeSecurityFactory<>(() -> {
+        final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init((KeyStore) null);
+        for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
+            if (trustManager instanceof X509TrustManager) {
+                return (X509TrustManager) trustManager;
+            }
+        }
+        throw ElytronMessages.log.noDefaultTrustManager();
+    });
+
+    /**
+     * Get the platform's default X.509 trust manager security factory.  The factory caches the instance.
+     *
+     * @return the security factory for the default trust manager
+     */
+    public static SecurityFactory<X509TrustManager> getDefaultX509TrustManagerSecurityFactory() {
+        return DEFAULT_TRUST_MANAGER_SECURITY_FACTORY;
     }
 }
