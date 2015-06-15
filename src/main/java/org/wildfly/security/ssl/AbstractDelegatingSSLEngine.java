@@ -29,7 +29,7 @@ import javax.net.ssl.SSLSession;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public class AbstractDelegatingSSLEngine extends SSLEngine {
+abstract class AbstractDelegatingSSLEngine extends SSLEngine {
     private final SSLEngine delegate;
 
     protected AbstractDelegatingSSLEngine(final SSLEngine delegate) {

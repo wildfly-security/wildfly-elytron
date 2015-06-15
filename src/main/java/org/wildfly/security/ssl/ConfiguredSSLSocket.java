@@ -27,12 +27,12 @@ import javax.net.ssl.SSLSocket;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
+final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
 
     private final SSLContext sslContext;
     private final SSLConfigurator sslConfigurator;
 
-    public ConfiguredSSLSocket(final SSLSocket delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
+    ConfiguredSSLSocket(final SSLSocket delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
         super(delegate);
         this.sslContext = sslContext;
         this.sslConfigurator = sslConfigurator;
