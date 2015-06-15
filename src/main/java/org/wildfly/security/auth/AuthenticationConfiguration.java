@@ -19,9 +19,7 @@
 package org.wildfly.security.auth;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -39,12 +37,9 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
-import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -65,8 +60,6 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
-import org.wildfly.security.ssl.ConfiguredSSLSocket;
-import org.wildfly.security.ssl.DelegatingSSLContext;
 import org.wildfly.security.ssl.SSLFactories;
 import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.util.ServiceLoaderSupplier;
@@ -620,100 +613,6 @@ public abstract class AuthenticationConfiguration {
             final TrustManager[] trustManagers = new TrustManager[] { trustManager };
             sslContext.init(keyManagers, trustManagers, null);
         }
-        return new DelegatingSSLContext(new ClientSSLContextSpiImpl(sslContext, this));
-    }
-
-    SSLEngine createSslEngine(final URI uri, final SSLContext sslContext, final int defaultUriPort) {
-        int port = getPort(uri);
-        if (port == -1) port = defaultUriPort;
-        final String host = getHost(uri);
-        final SSLEngine sslEngine = sslContext.createSSLEngine(host, port);
-        final SSLParameters sslParameters = sslEngine.getSSLParameters();
-        sslParameters.setServerNames(Collections.singletonList(new SNIHostName(host)));
-        sslEngine.setSSLParameters(sslParameters);
-        configureSslEngine(sslEngine);
-        sslEngine.setUseClientMode(true);
-        return sslEngine;
-    }
-
-    SSLSocket createClientSslSocket(final URI uri, final SSLContext sslContext, final boolean connect, final int defaultUriPort) throws IOException {
-        final SSLSocket sslSocket = (SSLSocket) sslContext.getSocketFactory().createSocket();
-        final String host = getHost(uri);
-        final SSLParameters sslParameters = sslSocket.getSSLParameters();
-        sslParameters.setServerNames(Collections.singletonList(new SNIHostName(host)));
-        sslSocket.setSSLParameters(sslParameters);
-        configureSslSocket(sslSocket);
-        sslSocket.setUseClientMode(true);
-        if (connect) {
-            sslSocket.connect(getDestinationInetAddress(uri, defaultUriPort));
-        }
-        return sslSocket;
-    }
-
-    SSLSocketFactory createClientSslSocketFactory(final SSLSocketFactory delegate) {
-        final CipherSuiteSelector cipherSuiteSelector = getCipherSuiteSelector();
-        final String[] cipherSuites = cipherSuiteSelector.evaluate(delegate.getSupportedCipherSuites());
-        return new SSLSocketFactory() {
-            public String[] getDefaultCipherSuites() {
-                return cipherSuites.clone();
-            }
-
-            public String[] getSupportedCipherSuites() {
-                return cipherSuites.clone();
-            }
-
-            /**
-             * Get the text name of an IP address without a DNS lookup.  Ugly but effective.
-             *
-             * @param address the IP address
-             * @return the text name
-             */
-            private String nameOf(InetAddress address) {
-                final String str = address.toString();
-                final int idx = str.indexOf('/');
-                return idx == 0 ? str.substring(idx + 1) : str.substring(0, idx);
-            }
-
-            public SSLSocket createSocket(final Socket socket, final String host, final int port, final boolean autoClose) throws IOException {
-                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket(socket, host, port, autoClose);
-                configureSslSocket(delegateSocket);
-                delegateSocket.setUseClientMode(true);
-                return new ConfiguredSSLSocket(delegateSocket);
-            }
-
-            public SSLSocket createSocket(final String host, final int port) throws IOException {
-                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
-                configureSslSocket(delegateSocket);
-                delegateSocket.setUseClientMode(true);
-                delegateSocket.connect(new InetSocketAddress(host, port));
-                return new ConfiguredSSLSocket(delegateSocket);
-            }
-
-            public SSLSocket createSocket(final String host, final int port, final InetAddress localAddress, final int localPort) throws IOException {
-                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
-                configureSslSocket(delegateSocket);
-                delegateSocket.setUseClientMode(true);
-                delegateSocket.bind(new InetSocketAddress(localAddress, localPort));
-                delegateSocket.connect(new InetSocketAddress(host, port));
-                return new ConfiguredSSLSocket(delegateSocket);
-            }
-
-            public SSLSocket createSocket(final InetAddress address, final int port) throws IOException {
-                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
-                configureSslSocket(delegateSocket);
-                delegateSocket.setUseClientMode(true);
-                delegateSocket.connect(new InetSocketAddress(address, port));
-                return new ConfiguredSSLSocket(delegateSocket);
-            }
-
-            public SSLSocket createSocket(final InetAddress address, final int port, final InetAddress localAddress, final int localPort) throws IOException {
-                final SSLSocket delegateSocket = (SSLSocket) delegate.createSocket();
-                configureSslSocket(delegateSocket);
-                delegateSocket.setUseClientMode(true);
-                delegateSocket.bind(new InetSocketAddress(localAddress, localPort));
-                delegateSocket.connect(new InetSocketAddress(address, port));
-                return new ConfiguredSSLSocket(delegateSocket);
-            }
-        };
+        return SSLFactories.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
     }
 }
