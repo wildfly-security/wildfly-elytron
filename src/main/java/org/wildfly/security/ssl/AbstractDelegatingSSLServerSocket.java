@@ -179,4 +179,8 @@ abstract class AbstractDelegatingSSLServerSocket extends SSLServerSocket {
     public void setSSLParameters(final SSLParameters parameters) {
         delegate.setSSLParameters(parameters);
     }
+
+    protected SSLServerSocket getDelegate() {
+        return delegate;
+    }
 }

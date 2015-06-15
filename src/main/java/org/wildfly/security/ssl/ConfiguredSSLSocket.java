@@ -18,37 +18,51 @@
 
 package org.wildfly.security.ssl;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 
 /**
- * An SSL socket which is pre-configured with a specific protocol and cipher suite selection.
+ * An SSL socket which is pre-configured.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ConfiguredSSLSocket extends AbstractDelegatingSSLSocket {
 
-    public ConfiguredSSLSocket(final SSLSocket delegate) {
+    private final SSLContext sslContext;
+    private final SSLConfigurator sslConfigurator;
+
+    public ConfiguredSSLSocket(final SSLSocket delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
         super(delegate);
+        this.sslContext = sslContext;
+        this.sslConfigurator = sslConfigurator;
+    }
+
+    public void setUseClientMode(final boolean mode) {
+        sslConfigurator.setUseClientMode(sslContext, getDelegate(), mode);
+    }
+
+    public void setNeedClientAuth(final boolean need) {
+        sslConfigurator.setNeedClientAuth(sslContext, getDelegate(), need);
+    }
+
+    public void setWantClientAuth(final boolean want) {
+        sslConfigurator.setWantClientAuth(sslContext, getDelegate(), want);
+    }
+
+    public void setEnableSessionCreation(final boolean flag) {
+        sslConfigurator.setEnableSessionCreation(sslContext, getDelegate(), flag);
     }
 
     public void setEnabledCipherSuites(final String[] suites) {
-        // ignored
+        sslConfigurator.setEnabledCipherSuites(sslContext, getDelegate(), suites);
     }
 
     public void setEnabledProtocols(final String[] protocols) {
-        // ignored
+        sslConfigurator.setEnabledProtocols(sslContext, getDelegate(), protocols);
     }
 
     public void setSSLParameters(final SSLParameters params) {
-        final SSLParameters newParams = new SSLParameters(getEnabledCipherSuites(), getEnabledProtocols());
-        newParams.setUseCipherSuitesOrder(params.getUseCipherSuitesOrder());
-        newParams.setSNIMatchers(params.getSNIMatchers());
-        newParams.setServerNames(params.getServerNames());
-        newParams.setAlgorithmConstraints(params.getAlgorithmConstraints());
-        newParams.setEndpointIdentificationAlgorithm(params.getEndpointIdentificationAlgorithm());
-        newParams.setNeedClientAuth(params.getNeedClientAuth());
-        newParams.setWantClientAuth(params.getWantClientAuth());
-        super.setSSLParameters(newParams);
+        sslConfigurator.setSSLParameters(sslContext, getDelegate(), params);
     }
 }

@@ -101,12 +101,11 @@ public final class SSLFactories {
      * Create a configured SSL context from an outside SSL context.
      *
      * @param original the original SSL context
-     * @param protocolSelector the protocol selector to apply
-     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @param sslConfigurator the SSL configurator
      * @return the configured SSL context
      */
-    public static SSLContext createConfiguredSslContext(SSLContext original, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
-        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, protocolSelector, cipherSuiteSelector));
+    public static SSLContext createConfiguredSslContext(SSLContext original, final SSLConfigurator sslConfigurator) {
+        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, sslConfigurator));
     }
 
     /**
@@ -114,12 +113,11 @@ public final class SSLFactories {
      * for every call, so it might be necessary to wrap with a {@link OneTimeSecurityFactory} instance.
      *
      * @param originalFactory the original SSL context factory
-     * @param protocolSelector the protocol selector to apply
-     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @param sslConfigurator the SSL configurator
      * @return the configured SSL context
      */
-    public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
-        return () -> createConfiguredSslContext(originalFactory.create(), protocolSelector, cipherSuiteSelector);
+    public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, final SSLConfigurator sslConfigurator) {
+        return () -> createConfiguredSslContext(originalFactory.create(), sslConfigurator);
     }
 
     private static final SecurityFactory<X509TrustManager> DEFAULT_TRUST_MANAGER_SECURITY_FACTORY = new OneTimeSecurityFactory<>(() -> {

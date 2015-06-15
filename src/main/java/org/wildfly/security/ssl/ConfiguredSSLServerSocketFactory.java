@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 
@@ -29,11 +30,13 @@ import javax.net.ssl.SSLServerSocketFactory;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServerSocketFactory {
-    private final ConfiguredSSLContextSpi contextSpi;
+    private final SSLContext sslContext;
+    private final SSLConfigurator sslConfigurator;
 
-    ConfiguredSSLServerSocketFactory(final SSLServerSocketFactory delegate, final ConfiguredSSLContextSpi contextSpi) {
+    ConfiguredSSLServerSocketFactory(final SSLServerSocketFactory delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
         super(delegate);
-        this.contextSpi = contextSpi;
+        this.sslContext = sslContext;
+        this.sslConfigurator = sslConfigurator;
     }
 
     public ServerSocket createServerSocket() throws IOException {
@@ -53,6 +56,14 @@ final class ConfiguredSSLServerSocketFactory extends AbstractDelegatingSSLServer
     }
 
     private ServerSocket wrap(ServerSocket original) throws IOException {
-        return original instanceof SSLServerSocket ? new ConfiguredSSLServerSocket((SSLServerSocket) original, contextSpi.getProtocolSelector(), contextSpi.getCipherSuiteSelector()) : original;
+        if (original instanceof SSLServerSocket) {
+            final SSLServerSocket sslServerSocket = (SSLServerSocket) original;
+            final SSLContext sslContext = this.sslContext;
+            final SSLConfigurator sslConfigurator = this.sslConfigurator;
+            sslConfigurator.configure(sslContext, sslServerSocket);
+            return new ConfiguredSSLServerSocket(sslServerSocket, sslContext, sslConfigurator);
+        } else {
+            return original;
+        }
     }
 }

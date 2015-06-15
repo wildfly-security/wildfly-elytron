@@ -159,4 +159,8 @@ public class AbstractDelegatingSSLEngine extends SSLEngine {
     public void setSSLParameters(final SSLParameters params) {
         delegate.setSSLParameters(params);
     }
+
+    protected SSLEngine getDelegate() {
+        return delegate;
+    }
 }

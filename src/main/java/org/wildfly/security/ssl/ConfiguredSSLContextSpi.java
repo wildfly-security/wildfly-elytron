@@ -29,23 +29,15 @@ import javax.net.ssl.SSLSocketFactory;
  */
 final class ConfiguredSSLContextSpi extends AbstractDelegatingSSLContextSpi {
 
-    private volatile ProtocolSelector protocolSelector;
-    private volatile CipherSuiteSelector cipherSuiteSelector;
+    private final SSLConfigurator sslConfigurator;
 
-    ConfiguredSSLContextSpi(final SSLContext delegate, final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector) {
+    ConfiguredSSLContextSpi(final SSLContext delegate, final SSLConfigurator sslConfigurator) {
         super(delegate);
-        if (protocolSelector == null) {
-            throw new IllegalArgumentException("protocolSelector is null");
-        }
-        if (cipherSuiteSelector == null) {
-            throw new IllegalArgumentException("cipherSuiteSelector is null");
-        }
-        this.protocolSelector = protocolSelector;
-        this.cipherSuiteSelector = cipherSuiteSelector;
+        this.sslConfigurator = sslConfigurator;
     }
 
     protected SSLSocketFactory engineGetSocketFactory() {
-        return new ConfiguredSSLSocketFactory(super.engineGetSocketFactory(), this);
+        return new ConfiguredSSLSocketFactory(super.engineGetSocketFactory(), getDelegate(), sslConfigurator);
     }
 
     protected SSLServerSocketFactory engineGetServerSocketFactory() {
@@ -53,44 +45,26 @@ final class ConfiguredSSLContextSpi extends AbstractDelegatingSSLContextSpi {
     }
 
     protected SSLEngine engineCreateSSLEngine() {
-        return new ConfiguredSSLEngine(super.engineCreateSSLEngine(), protocolSelector, cipherSuiteSelector);
+        final SSLEngine sslEngine = super.engineCreateSSLEngine();
+        final SSLConfigurator sslConfigurator = this.sslConfigurator;
+        sslConfigurator.configure(getDelegate(), sslEngine);
+        return new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator);
     }
 
     protected SSLEngine engineCreateSSLEngine(final String host, final int port) {
-        return new ConfiguredSSLEngine(super.engineCreateSSLEngine(host, port), protocolSelector, cipherSuiteSelector);
+        final SSLEngine sslEngine = super.engineCreateSSLEngine(host, port);
+        final SSLConfigurator sslConfigurator = this.sslConfigurator;
+        sslConfigurator.configure(getDelegate(), sslEngine);
+        return new ConfiguredSSLEngine(sslEngine, getDelegate(), sslConfigurator);
     }
 
     protected SSLParameters engineGetDefaultSSLParameters() {
-        // these will always be identical
-        return engineGetSupportedSSLParameters();
+        final SSLContext delegate = getDelegate();
+        return sslConfigurator.getDefaultSSLParameters(delegate, delegate.getDefaultSSLParameters());
     }
 
     protected SSLParameters engineGetSupportedSSLParameters() {
-        final SSLParameters parameters = super.engineGetSupportedSSLParameters();
-        parameters.setCipherSuites(cipherSuiteSelector.evaluate(parameters.getCipherSuites()));
-        parameters.setProtocols(protocolSelector.evaluate(parameters.getProtocols()));
-        return parameters;
-    }
-
-    ProtocolSelector getProtocolSelector() {
-        return protocolSelector;
-    }
-
-    void setProtocolSelector(final ProtocolSelector protocolSelector) {
-        if (protocolSelector == null) {
-            throw new IllegalArgumentException("protocolSelector is null");
-        }
-        this.protocolSelector = protocolSelector;
-    }
-
-    CipherSuiteSelector getCipherSuiteSelector() {
-        return cipherSuiteSelector;
-    }
-
-    void setCipherSuiteSelector(final CipherSuiteSelector cipherSuiteSelector) {
-        if (cipherSuiteSelector == null) {
-            throw new IllegalArgumentException("cipherSuiteSelector is null");
-        }
-        this.cipherSuiteSelector = cipherSuiteSelector;
+        final SSLContext delegate = getDelegate();
+        return sslConfigurator.getSupportedSSLParameters(delegate, delegate.getSupportedSSLParameters());
     }
 }

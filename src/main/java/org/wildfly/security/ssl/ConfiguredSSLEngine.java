@@ -18,6 +18,7 @@
 
 package org.wildfly.security.ssl;
 
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 
@@ -28,29 +29,40 @@ import javax.net.ssl.SSLParameters;
  */
 final class ConfiguredSSLEngine extends AbstractDelegatingSSLEngine {
 
-    private final ProtocolSelector protocolSelector;
-    private final CipherSuiteSelector cipherSuiteSelector;
+    private final SSLContext sslContext;
+    private final SSLConfigurator sslConfigurator;
 
-    ConfiguredSSLEngine(final SSLEngine delegate, final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector) {
+    ConfiguredSSLEngine(final SSLEngine delegate, final SSLContext sslContext, final SSLConfigurator sslConfigurator) {
         super(delegate);
-        this.protocolSelector = protocolSelector;
-        this.cipherSuiteSelector = cipherSuiteSelector;
-        delegate.setEnabledProtocols(protocolSelector.evaluate(delegate.getSupportedProtocols()));
-        delegate.setEnabledCipherSuites(cipherSuiteSelector.evaluate(delegate.getSupportedCipherSuites()));
+        this.sslContext = sslContext;
+        this.sslConfigurator = sslConfigurator;
     }
 
     public void setEnabledCipherSuites(final String[] suites) {
-        // ignored
+        sslConfigurator.setEnabledCipherSuites(sslContext, getDelegate(), suites);
     }
 
     public void setEnabledProtocols(final String[] protocols) {
-        // ignored
+        sslConfigurator.setEnabledProtocols(sslContext, getDelegate(), protocols);
     }
 
     public void setSSLParameters(final SSLParameters params) {
-        super.setSSLParameters(params);
-        // re-set the protocols and cipher suites
-        super.setEnabledProtocols(protocolSelector.evaluate(super.getSupportedProtocols()));
-        super.setEnabledCipherSuites(cipherSuiteSelector.evaluate(super.getSupportedCipherSuites()));
+        sslConfigurator.setSSLParameters(sslContext, getDelegate(), params);
+    }
+
+    public void setUseClientMode(final boolean mode) {
+        sslConfigurator.setUseClientMode(sslContext, getDelegate(), mode);
+    }
+
+    public void setNeedClientAuth(final boolean need) {
+        sslConfigurator.setNeedClientAuth(sslContext, getDelegate(), need);
+    }
+
+    public void setWantClientAuth(final boolean want) {
+        sslConfigurator.setWantClientAuth(sslContext, getDelegate(), want);
+    }
+
+    public void setEnableSessionCreation(final boolean flag) {
+        sslConfigurator.setEnableSessionCreation(sslContext, getDelegate(), flag);
     }
 }
