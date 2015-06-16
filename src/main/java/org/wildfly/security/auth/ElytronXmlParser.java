@@ -65,7 +65,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
-import org.wildfly.security.ssl.X500CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 
 /**
@@ -1143,19 +1143,19 @@ public final class ElytronXmlParser {
         }
     }
 
-    static final class PrivateKeyKeyStoreEntryCredentialFactory implements SecurityFactory<X500CertificateChainPrivateCredential> {
+    static final class PrivateKeyKeyStoreEntryCredentialFactory implements SecurityFactory<X509CertificateChainPrivateCredential> {
         private final SecurityFactory<KeyStore.Entry> entrySecurityFactory;
 
         PrivateKeyKeyStoreEntryCredentialFactory(final SecurityFactory<KeyStore.Entry> entrySecurityFactory) {
             this.entrySecurityFactory = entrySecurityFactory;
         }
 
-        public X500CertificateChainPrivateCredential create() throws GeneralSecurityException {
+        public X509CertificateChainPrivateCredential create() throws GeneralSecurityException {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
-                return new X500CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
+                return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
             }
             throw log.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
         }
