@@ -34,6 +34,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.sasl.SaslException;
 
+import org.jboss.logging.Logger;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -66,6 +67,8 @@ class ScramSaslClient extends AbstractSaslClient {
     private byte[] saltedPassword;
     private byte[] serverFirstMessage;
 
+    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.scram.client");
+
     ScramSaslClient(final String mechanismName, final MessageDigest messageDigest, final Mac mac, final SecureRandom secureRandom, final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final Map<String, ?> props, final boolean plus, final String bindingType, final byte[] bindingData) {
         super(mechanismName, protocol, serverName, callbackHandler, authorizationId, true);
         this.bindingType = bindingType;
@@ -91,9 +94,8 @@ class ScramSaslClient extends AbstractSaslClient {
         setNegotiationState(ST_NEW);
     }
 
-    private static final boolean DEBUG = true;
-
     protected byte[] evaluateMessage(final int state, final byte[] challenge) throws SaslException {
+        boolean trace = log.isTraceEnabled();
         switch (state) {
             case ST_NEW: {
                 // initial response
@@ -125,16 +127,16 @@ class ScramSaslClient extends AbstractSaslClient {
                 b.append(',').append('r').append('=');
                 Random random = secureRandom != null ? secureRandom : ThreadLocalRandom.current();
                 b.append(nonce = ScramUtil.generateNonce(48, random));
-                if (DEBUG) System.out.printf("[C] Client nonce: %s%n", ByteIterator.ofBytes(nonce).hexEncode().drainToString());
+                if(trace) log.tracef("[C] Client nonce: %s%n", ByteIterator.ofBytes(nonce).hexEncode().drainToString());
                 setNegotiationState(ST_R1_SENT);
-                if (DEBUG) System.out.printf("[C] Client first message: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
+                if(trace) log.tracef("[C] Client first message: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
                 return clientFirstMessage = b.toArray();
             }
             case ST_R1_SENT: {
                 serverFirstMessage = challenge;
                 final ByteIterator bi = ByteIterator.ofBytes(challenge);
                 final ByteIterator di = bi.delimitedBy(',');
-                if (DEBUG) System.out.printf("[C] Server first message: %s%n", ByteIterator.ofBytes(challenge).hexEncode().drainToString());
+                if(trace) log.tracef("[C] Server first message: %s%n", ByteIterator.ofBytes(challenge).hexEncode().drainToString());
                 final ByteStringBuilder b = new ByteStringBuilder();
                 final Mac mac = ScramSaslClient.this.mac;
                 final MessageDigest messageDigest = ScramSaslClient.this.messageDigest;
@@ -152,7 +154,7 @@ class ScramSaslClient extends AbstractSaslClient {
                         if (bi.next() == 's' && bi.next() == '=') {
                             final byte[] salt = di.base64Decode().drain();
                             bi.next(); // skip delimiter
-                            if (DEBUG) System.out.printf("[C] Server sent salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
+                            if(trace) log.tracef("[C] Server sent salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
                             if (bi.next() == 'i' && bi.next() == '=') {
                                 final int iterationCount = ScramUtil.parsePosInt(di);
                                 if (iterationCount < minimumIterationCount) {
@@ -172,7 +174,7 @@ class ScramSaslClient extends AbstractSaslClient {
                                 b.append('c').append('=');
                                 ByteStringBuilder b2 = new ByteStringBuilder();
                                 if (bindingData != null) {
-                                    if (DEBUG) System.out.printf("[C] Binding data: %s%n", ByteIterator.ofBytes(bindingData).hexEncode().drainToString());
+                                    if(trace) log.tracef("[C] Binding data: %s%n", ByteIterator.ofBytes(bindingData).hexEncode().drainToString());
                                     if (plus) {
                                         b2.append("p=");
                                         b2.append(bindingType);
@@ -204,31 +206,31 @@ class ScramSaslClient extends AbstractSaslClient {
                                 b.append(',').append('r').append('=').append(nonce).append(serverNonce);
                                 // no extensions
                                 this.saltedPassword = ScramUtil.calculateHi(mac, passwordCallback.getPassword(), salt, 0, salt.length, iterationCount);
-                                if (DEBUG) System.out.printf("[C] Client salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Client salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
                                 mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                                 final byte[] clientKey = mac.doFinal(Scram.CLIENT_KEY_BYTES);
-                                if (DEBUG) System.out.printf("[C] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
                                 final byte[] storedKey = messageDigest.digest(clientKey);
-                                if (DEBUG) System.out.printf("[C] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Stored key: %s%n", ByteIterator.ofBytes(storedKey).hexEncode().drainToString());
                                 mac.init(new SecretKeySpec(storedKey, mac.getAlgorithm()));
                                 mac.update(clientFirstMessage, bareStart, clientFirstMessage.length - bareStart);
-                                if (DEBUG) System.out.printf("[C] Using client first message: %s%n", ByteIterator.ofBytes(Arrays.copyOfRange(clientFirstMessage, bareStart, clientFirstMessage.length)).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Using client first message: %s%n", ByteIterator.ofBytes(Arrays.copyOfRange(clientFirstMessage, bareStart, clientFirstMessage.length)).hexEncode().drainToString());
                                 mac.update((byte) ',');
                                 mac.update(challenge);
-                                if (DEBUG) System.out.printf("[C] Using server first message: %s%n", ByteIterator.ofBytes(challenge).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Using server first message: %s%n", ByteIterator.ofBytes(challenge).hexEncode().drainToString());
                                 mac.update((byte) ',');
                                 b.updateMac(mac);
-                                if (DEBUG) System.out.printf("[C] Using client final message without proof: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Using client final message without proof: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
                                 final byte[] clientProof = mac.doFinal();
-                                if (DEBUG) System.out.printf("[C] Client signature: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Client signature: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
                                 ScramUtil.xor(clientProof, clientKey);
-                                if (DEBUG) System.out.printf("[C] Client proof: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Client proof: %s%n", ByteIterator.ofBytes(clientProof).hexEncode().drainToString());
                                 this.proofStart = b.length();
                                 // proof
                                 b.append(',').append('p').append('=');
                                 b.appendLatin1(ByteIterator.ofBytes(clientProof).base64Encode());
                                 setNegotiationState(ST_R2_SENT);
-                                if (DEBUG) System.out.printf("[C] Client final message: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
+                                if(trace) log.tracef("[C] Client final message: %s%n", ByteIterator.ofBytes(b.toArray()).hexEncode().drainToString());
                                 return clientFinalMessage = b.toArray();
                             }
                         }
@@ -242,7 +244,7 @@ class ScramSaslClient extends AbstractSaslClient {
                 throw new SaslException("Invalid server message");
             }
             case ST_R2_SENT: {
-                if (DEBUG) System.out.printf("[C] Server final message: %s%n", new String(challenge, StandardCharsets.UTF_8));
+                if(trace) log.tracef("[C] Server final message: %s%n", new String(challenge, StandardCharsets.UTF_8));
                 final Mac mac = ScramSaslClient.this.mac;
                 final MessageDigest messageDigest = ScramSaslClient.this.messageDigest;
                 final ByteIterator bi = ByteIterator.ofBytes(challenge);
@@ -259,7 +261,7 @@ class ScramSaslClient extends AbstractSaslClient {
                         // verify server signature
                         mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                         byte[] serverKey = mac.doFinal(Scram.SERVER_KEY_BYTES);
-                        if (DEBUG) System.out.printf("[C] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
+                        if(trace) log.tracef("[C] Server key: %s%n", ByteIterator.ofBytes(serverKey).hexEncode().drainToString());
                         mac.init(new SecretKeySpec(serverKey, mac.getAlgorithm()));
                         mac.update(clientFirstMessage, bareStart, clientFirstMessage.length - bareStart);
                         mac.update((byte) ',');
@@ -267,7 +269,7 @@ class ScramSaslClient extends AbstractSaslClient {
                         mac.update((byte) ',');
                         mac.update(clientFinalMessage, 0, proofStart);
                         byte[] serverSignature = mac.doFinal();
-                        if (DEBUG) System.out.printf("[C] Recovered server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
+                        if(trace) log.tracef("[C] Recovered server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
                         if (! di.base64Decode().contentEquals(ByteIterator.ofBytes(serverSignature))) {
                             setNegotiationState(FAILED_STATE);
                             throw new SaslException("Server authenticity cannot be verified");

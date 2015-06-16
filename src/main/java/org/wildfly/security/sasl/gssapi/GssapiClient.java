@@ -44,7 +44,7 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 public class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
-    private static final Logger log = Logger.getLogger(GssapiClient.class);
+    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.gssapi.client");
 
     private static final int INITIAL_CHALLENGE_STATE = 1;
     private static final int CHALLENGE_RESPONSE_STATE = 2;
