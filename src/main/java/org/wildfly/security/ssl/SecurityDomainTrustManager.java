@@ -24,6 +24,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -59,20 +61,20 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
         delegate.checkClientTrusted(chain, authType, socket);
-        doClientTrustCheck(chain, authType);
+        doClientTrustCheck(chain, authType, ((SSLSocket) socket).getHandshakeSession());
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final SSLEngine sslEngine) throws CertificateException {
         delegate.checkClientTrusted(chain, authType, sslEngine);
-        doClientTrustCheck(chain, authType);
+        doClientTrustCheck(chain, authType, sslEngine.getHandshakeSession());
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType) throws CertificateException {
         delegate.checkClientTrusted(chain, authType);
-        doClientTrustCheck(chain, authType);
+        doClientTrustCheck(chain, authType, null);
     }
 
-    private void doClientTrustCheck(final X509Certificate[] chain, final String authType) throws CertificateException {
+    private void doClientTrustCheck(final X509Certificate[] chain, final String authType, final SSLSession handshakeSession) throws CertificateException {
         Assert.checkNotNullParam("chain", chain);
         Assert.checkNotNullParam("authType", authType);
         if (chain.length == 0) {
@@ -94,6 +96,9 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
                 throw ElytronMessages.log.notTrusted(principal, name);
             }
             authenticationContext.succeed();
+            if (handshakeSession != null) {
+                handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
+            }
             ok = true;
         } catch (RealmUnavailableException e) {
             throw ElytronMessages.log.notTrustedRealmProblem(e, principal, name);
