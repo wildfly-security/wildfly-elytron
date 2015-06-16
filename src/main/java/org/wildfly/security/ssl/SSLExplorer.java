@@ -38,7 +38,6 @@ import java.io.IOException;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.StandardConstants;
 
 import java.util.ArrayList;
@@ -47,6 +46,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.wildfly.security._private.ElytronMessages;
 
 /**
  * Instances of this class acts as an explorer of the network data of an
@@ -183,7 +184,7 @@ final class SSLExplorer {
             return exploreTLSRecord(input,
                                     firstByte, secondByte, thirdByte);
         } else {
-            throw new SSLException("Not handshake record");
+            throw ElytronMessages.log.notHandshakeRecord();
         }
     }
 
@@ -246,8 +247,7 @@ final class SSLExplorer {
         try {
             // Is it a V2ClientHello?
             if (thirdByte != 0x01) {
-                throw new SSLException(
-                        "Unsupported or Unrecognized SSL record");
+                throw ElytronMessages.log.unsupportedSslRecord();
             }
 
             // What's the hello version?
@@ -261,9 +261,8 @@ final class SSLExplorer {
             return new SSLCapabilitiesImpl((byte)0x00, (byte)0x02,
                         helloVersionMajor, helloVersionMinor,
                         Collections.<SNIServerName>emptyList());
-        } catch (BufferUnderflowException bufe) {
-            throw new SSLProtocolException(
-                        "Invalid handshake record");
+        } catch (BufferUnderflowException ignored) {
+            throw ElytronMessages.log.invalidHandshakeRecord();
         }
     }
 
@@ -291,7 +290,7 @@ final class SSLExplorer {
 
         // Is it a handshake message?
         if (firstByte != 22) {        // 22: handshake record
-            throw new SSLException("Not handshake record");
+            throw ElytronMessages.log.notHandshakeRecord();
         }
 
         // We need the record version to construct SSLCapabilities.
@@ -308,9 +307,8 @@ final class SSLExplorer {
         try {
             return exploreHandshake(input,
                 recordMajorVersion, recordMinorVersion, recordLength);
-        } catch (BufferUnderflowException bufe) {
-            throw new SSLProtocolException(
-                        "Invalid handshake record");
+        } catch (BufferUnderflowException ignored) {
+            throw ElytronMessages.log.invalidHandshakeRecord();
         }
     }
 
@@ -348,7 +346,7 @@ final class SSLExplorer {
         // What is the handshake type?
         byte handshakeType = input.get();
         if (handshakeType != 0x01) {   // 0x01: client_hello message
-            throw new IllegalStateException("Not initial handshaking");
+            throw ElytronMessages.log.expectedClientHello();
         }
 
         // What is the handshake body length?
@@ -357,7 +355,7 @@ final class SSLExplorer {
         // Theoretically, a single handshake message might span multiple
         // records, but in practice this does not occur.
         if (handshakeLength > (recordLength - 4)) { // 4: handshake header size
-            throw new SSLException("Handshake message spans multiple records");
+            throw ElytronMessages.log.multiRecordSSLHandshake();
         }
 
         input = input.duplicate();
@@ -484,8 +482,7 @@ final class SSLExplorer {
         if (extLen >= 2) {     // "server_name" extension in ClientHello
             int listLen = getInt16(input);     // length of server_name_list
             if (listLen == 0 || listLen + 2 != extLen) {
-                throw new SSLProtocolException(
-                    "Invalid server name indication extension");
+                throw ElytronMessages.log.invalidSniExt();
             }
 
             remains -= 2;     // 0x02: the length field of server_name_list
@@ -493,8 +490,7 @@ final class SSLExplorer {
                 int code = getInt8(input);      // name_type
                 int snLen = getInt16(input);    // length field of server name
                 if (snLen > remains) {
-                    throw new SSLProtocolException(
-                        "Not enough data to fill declared vector size");
+                    throw ElytronMessages.log.notEnoughData();
                 }
                 byte[] encoded = new byte[snLen];
                 input.get(encoded);
@@ -503,8 +499,7 @@ final class SSLExplorer {
                 switch (code) {
                     case StandardConstants.SNI_HOST_NAME:
                         if (encoded.length == 0) {
-                            throw new SSLProtocolException(
-                                "Empty HostName in server name indication");
+                            throw ElytronMessages.log.emptyHostNameSni();
                         }
                         serverName = new SNIHostName(encoded);
                         break;
@@ -513,22 +508,18 @@ final class SSLExplorer {
                 }
                 // check for duplicated server name type
                 if (sniMap.put(serverName.getType(), serverName) != null) {
-                    throw new SSLProtocolException(
-                            "Duplicated server name of type " +
-                            serverName.getType());
+                    throw ElytronMessages.log.duplicatedSniServerName(serverName.getType());
                 }
 
                 remains -= encoded.length + 3;  // NameType: 1 byte
                                                 // HostName length: 2 bytes
             }
         } else if (extLen == 0) {     // "server_name" extension in ServerHello
-            throw new SSLProtocolException(
-                        "Not server name indication extension in client");
+            throw ElytronMessages.log.invalidSniExt();
         }
 
         if (remains != 0) {
-            throw new SSLProtocolException(
-                        "Invalid server name indication extension");
+            throw ElytronMessages.log.invalidSniExt();
         }
 
         return Collections.unmodifiableList(new ArrayList<>(sniMap.values()));

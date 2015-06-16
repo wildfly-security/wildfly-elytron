@@ -28,6 +28,7 @@ import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.callback.Callback;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -315,4 +316,31 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 83, value = "SSL channel is closed")
     SSLException sslClosed();
+
+    @Message(id = 84, value = "Initial SSL/TLS data is not a handshake record")
+    SSLHandshakeException notHandshakeRecord();
+
+    @Message(id = 85, value = "Initial SSL/TLS handshake record is invalid")
+    SSLHandshakeException invalidHandshakeRecord();
+
+    @Message(id = 86, value = "Initial SSL/TLS handshake spans multiple records")
+    SSLHandshakeException multiRecordSSLHandshake();
+
+    @Message(id = 87, value = "Expected \"client hello\" record")
+    SSLHandshakeException expectedClientHello();
+
+    @Message(id = 88, value = "Unsupported SSL/TLS record")
+    SSLHandshakeException unsupportedSslRecord();
+
+    @Message(id = 89, value = "Invalid SNI extension")
+    SSLProtocolException invalidSniExt();
+
+    @Message(id = 90, value = "Not enough data in record to fill declared item size")
+    SSLProtocolException notEnoughData();
+
+    @Message(id = 91, value = "Empty host name in SNI record data")
+    SSLProtocolException emptyHostNameSni();
+
+    @Message(id = 92, value = "Duplicated SNI server name of type %d")
+    SSLProtocolException duplicatedSniServerName(int type);
 }
