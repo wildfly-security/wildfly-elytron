@@ -160,4 +160,16 @@ public final class SSLUtils {
         Assert.checkNotNullParam("selector", selector);
         return new SNIServerSSLEngine(selector);
     }
+
+    /**
+     * Get a factory which produces SSL engines which dispatch to the appropriate SSL context based on the SNI information
+     * in the SSL greeting.
+     *
+     * @param selector the context selector to use (cannot be {@code null})
+     * @return the SSL engine factory (not {@code null})
+     */
+    public static SecurityFactory<SSLEngine> createSNIDispatchingSSLEngineFactory(SNIServerSSLContextSelector selector) {
+        Assert.checkNotNullParam("selector", selector);
+        return () -> new SNIServerSSLEngine(selector);
+    }
 }
