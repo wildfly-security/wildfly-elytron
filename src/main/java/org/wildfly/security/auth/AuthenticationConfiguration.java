@@ -60,7 +60,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
-import org.wildfly.security.ssl.SSLFactories;
+import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.ssl.ProtocolSelector;
@@ -139,7 +139,7 @@ public abstract class AuthenticationConfiguration {
         }
 
         SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
-            return SSLFactories.getDefaultX509TrustManagerSecurityFactory();
+            return SSLUtils.getDefaultX509TrustManagerSecurityFactory();
         }
 
         SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
@@ -590,7 +590,7 @@ public abstract class AuthenticationConfiguration {
         if (sslContext == null) {
             sslContext = SSLContext.getDefault();
         } else {
-            final SecurityFactory<SSLContext> sslContextFactory = SSLFactories.createSslContextFactory(getProtocolSelector(), getProviderSupplier());
+            final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(getProtocolSelector(), getProviderSupplier());
             sslContext = sslContextFactory.create();
             final SecurityFactory<X509KeyManager> keyManagerFactory = getX509KeyManagerFactory();
             final KeyManager keyManager;
@@ -613,6 +613,6 @@ public abstract class AuthenticationConfiguration {
             final TrustManager[] trustManagers = new TrustManager[] { trustManager };
             sslContext.init(keyManagers, trustManagers, null);
         }
-        return SSLFactories.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
+        return SSLUtils.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
     }
 }

@@ -27,6 +27,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -35,17 +36,23 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.login.SecurityIdentity;
 
 /**
- * A factory for SSL contexts.
+ * SSL factories and utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLFactories {
+public final class SSLUtils {
 
-    private SSLFactories() {}
+    private SSLUtils() {}
 
     private static final String serviceType = SSLContext.class.getSimpleName();
+
+    /**
+     * The key used to store the authenticated {@link SecurityIdentity} onto the {@link SSLSession}.
+     */
+    public static final String SSL_SESSION_IDENTITY_KEY = "org.wildfly.security.ssl.identity";
 
     /**
      * Create an SSL context factory which locates the best context by searching the preferred providers in order using
@@ -81,7 +88,7 @@ public final class SSLFactories {
                 return createSimpleSslContextFactory(supportedProtocol, provider);
             }
         }
-        return SSLFactories::throwIt;
+        return SSLUtils::throwIt;
     }
 
     private static SSLContext throwIt() throws NoSuchAlgorithmException {

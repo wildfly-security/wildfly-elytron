@@ -168,10 +168,10 @@ public final class ServerSSLContextBuilder {
         final PrincipalDecoder principalDecoder = this.principalDecoder;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
-            final SecurityFactory<SSLContext> sslContextFactory = SSLFactories.createSslContextFactory(protocolSelector, providerSupplier);
+            final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
-            final X509TrustManager x509TrustManager = SSLFactories.getDefaultX509TrustManagerSecurityFactory().create();
+            final X509TrustManager x509TrustManager = SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
             final boolean canAuthClients = securityDomain != null;
             sslContext.init(new KeyManager[] {
                 keyManagerSecurityFactory.create()
