@@ -64,6 +64,12 @@
                 <xsd:element name="require-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="set-authorization-name" type="name-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="ssl-cipher-suite" type="ssl-cipher-selector-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="ssl-protocol" type="names-list-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="use-system-providers" type="empty-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="use-module-providers" type="module-ref-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>
@@ -109,6 +115,15 @@
 
     <xsd:complexType name="name-type">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ssl-cipher-selector-type">
+        <xsd:attribute name="selector" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="module-ref-type">
+        <xsd:attribute name="module-name" type="xsd:string" use="required"/>
+        <xsd:attribute name="slot" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="port-number-type">
