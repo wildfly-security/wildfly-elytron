@@ -130,7 +130,7 @@ final class ServerSSLConfigurator implements SSLConfigurator {
 
     private SSLParameters redefine(SSLParameters original, String[] supportedCipherSuites, String[] supportedProtocols) {
         final SSLParameters params = new SSLParameters();
-        configure(params, supportedProtocols, supportedCipherSuites);
+        configure(params, protocolSelector.evaluate(supportedProtocols), cipherSuiteSelector.evaluate(supportedCipherSuites));
         // copy all other parameters over
         params.setServerNames(original.getServerNames());
         params.setSNIMatchers(original.getSNIMatchers());
