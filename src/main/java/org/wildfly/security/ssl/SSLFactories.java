@@ -26,10 +26,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
@@ -138,5 +140,17 @@ public final class SSLFactories {
      */
     public static SecurityFactory<X509TrustManager> getDefaultX509TrustManagerSecurityFactory() {
         return DEFAULT_TRUST_MANAGER_SECURITY_FACTORY;
+    }
+
+    /**
+     * Get a server SSL engine which dispatches to the appropriate SSL context based on the SNI information in the
+     * SSL greeting.
+     *
+     * @param selector the context selector to use (cannot be {@code null})
+     * @return the SSL engine (not {@code null})
+     */
+    public static SSLEngine createSNIDispatchingSSLEngine(SNIServerSSLContextSelector selector) {
+        Assert.checkNotNullParam("selector", selector);
+        return new SNIServerSSLEngine(selector);
     }
 }

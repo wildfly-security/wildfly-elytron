@@ -26,6 +26,8 @@ import java.security.Principal;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.security.auth.callback.Callback;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -307,4 +309,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 81, value = "No default trust manager available")
     NoSuchAlgorithmException noDefaultTrustManager();
+
+    @Message(id = 82, value = "No host for SSL connection")
+    SSLHandshakeException noHostForSslConnection();
+
+    @Message(id = 83, value = "SSL channel is closed")
+    SSLException sslClosed();
 }
