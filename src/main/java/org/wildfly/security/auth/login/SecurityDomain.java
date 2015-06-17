@@ -33,6 +33,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -40,6 +41,7 @@ import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.spi.SupportLevel;
 import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.auth.util.PrincipalDecoder;
 import org.wildfly.security.auth.util.RealmMapper;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleMapper;
@@ -61,6 +63,7 @@ public final class SecurityDomain {
     private final boolean anonymousAllowed;
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
+    private final PrincipalDecoder principalDecoder;
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
 
@@ -72,6 +75,7 @@ public final class SecurityDomain {
         this.roleMapper = builder.roleMapper;
         this.permissionMapper = builder.permissionMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
+        this.principalDecoder = builder.principalDecoder;
         // todo configurable
         anonymousAllowed = false;
         final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER);
@@ -106,6 +110,7 @@ public final class SecurityDomain {
      * @throws RealmUnavailableException if the realm is not able to perform the mapping
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
+        Assert.checkNotNullParam("name", name);
         name = this.preRealmRewriter.rewriteName(name);
         String realmName = realmMapper.getRealmMapping(name);
         if (realmName == null) {
@@ -115,6 +120,23 @@ public final class SecurityDomain {
         assert securityRealm != null;
         name = this.postRealmRewriter.rewriteName(name);
         return securityRealm.createRealmIdentity(name);
+    }
+
+    /**
+     * Map the provided principal to a {@link RealmIdentity}.
+     *
+     * @param principal the principal to map
+     * @return the identity for the name
+     * @throws IllegalArgumentException if the principal could not be successfully decoded to a name
+     * @throws RealmUnavailableException if the realm is not able to perform the mapping
+     */
+    public RealmIdentity mapPrincipal(Principal principal) throws RealmUnavailableException, IllegalArgumentException {
+        Assert.checkNotNullParam("principal", principal);
+        final String name = principalDecoder.getName(principal);
+        if (name == null) {
+            throw ElytronMessages.log.unrecognizedPrincipalType(principal);
+        }
+        return mapName(name);
     }
 
     /**
@@ -301,6 +323,10 @@ public final class SecurityDomain {
         return roleMapper;
     }
 
+    PrincipalDecoder getPrincipalDecoder() {
+        return principalDecoder;
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -314,6 +340,7 @@ public final class SecurityDomain {
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.IDENTITY_PERMISSION_MAPPER;
+        private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
 
         Builder() {
         }
@@ -385,6 +412,20 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("permissionMapper", permissionMapper);
             assertNotBuilt();
             this.permissionMapper = permissionMapper;
+            return this;
+        }
+
+        /**
+         * Set the principal decoder for this security domain, which will be used to convert {@link Principal} objects
+         * into names for handling in the realm.
+         *
+         * @param principalDecoder the principal decoder (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setPrincipalDecoder(PrincipalDecoder principalDecoder) {
+            Assert.checkNotNullParam("principalDecoder", principalDecoder);
+            assertNotBuilt();
+            this.principalDecoder = principalDecoder;
             return this;
         }
 

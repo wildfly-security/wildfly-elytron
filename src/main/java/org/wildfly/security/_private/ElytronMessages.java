@@ -343,4 +343,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 92, value = "Duplicated SNI server name of type %d")
     SSLProtocolException duplicatedSniServerName(int type);
+
+    @Message(id = 93, value = "Unrecognized principal type for %s")
+    IllegalArgumentException unrecognizedPrincipalType(Principal principal);
 }
