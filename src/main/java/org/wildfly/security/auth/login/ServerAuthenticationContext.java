@@ -33,6 +33,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -50,6 +51,7 @@ import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -98,13 +100,6 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
         Assert.checkNotNullParam("mechanismName", mechanismName);
         Assert.checkNotNullParam("protocol", protocol);
-        State oldState;
-        do {
-            oldState = stateRef.get();
-            if (oldState != INITIAL) {
-                throw ElytronMessages.log.alreadyInitiated();
-            }
-        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         return new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory).createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, createCallbackHandler());
     }
 
@@ -116,13 +111,6 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if authentication was already initiated on this context
      */
     public SSLEngine createServerSslEngine() throws IllegalStateException {
-        State oldState;
-        do {
-            oldState = stateRef.get();
-            if (oldState != INITIAL) {
-                throw ElytronMessages.log.alreadyInitiated();
-            }
-        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         throw new UnsupportedOperationException();
     }
 
@@ -134,13 +122,6 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if authentication was already initiated on this context
      */
     public SSLSocket createServerSslSocket() throws IllegalStateException {
-        State oldState;
-        do {
-            oldState = stateRef.get();
-            if (oldState != INITIAL) {
-                throw ElytronMessages.log.alreadyInitiated();
-            }
-        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         throw new UnsupportedOperationException();
     }
 
@@ -152,6 +133,24 @@ public final class ServerAuthenticationContext {
      */
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
         return stateRef.get().getAuthorizedIdentity();
+    }
+
+    /**
+     * Set the authentication principal for this authentication.  Calling this method initiates authentication.
+     *
+     * @param principal the authentication principal
+     * @throws IllegalArgumentException if the name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public void setAuthenticationPrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        Assert.checkNotNullParam("principal", principal);
+        if (principal instanceof NamePrincipal) {
+            setAuthenticationName(principal.getName());
+        } else {
+            // todo: use the domain principal decoder...
+            throw Assert.unsupported();
+        }
     }
 
     /**
@@ -290,6 +289,7 @@ public final class ServerAuthenticationContext {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
+            private String assignedName;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -301,21 +301,34 @@ public final class ServerAuthenticationContext {
                     return;
                 }
                 Callback callback = callbacks[idx];
-                if (callback instanceof NameCallback) {
+                if (callback instanceof AuthorizeCallback) {
+                    final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
+                    final String authenticationID = authorizeCallback.getAuthenticationID();
+                    final String authorizationID = authorizeCallback.getAuthorizationID();
+                    // TODO: perform a proper authorization permission check
+                    authorizeCallback.setAuthorized(authenticationID.equals(authorizationID));
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof NameCallback) {
                     // login name
-                    final String name = ((NameCallback) callback).getName();
-                    try {
-                        setAuthenticationName(name);
-                    } catch (Exception e) {
-                        throw new IOException(e);
+                    final String name = ((NameCallback) callback).getDefaultName();
+                    if (assignedName != null) {
+                        if (! assignedName.equals(name)) {
+                            throw ElytronMessages.log.alreadyInitiated();
+                        }
+                    } else {
+                        assignedName = name;
+                        try {
+                            setAuthenticationName(name);
+                        } catch (Exception e) {
+                            throw new IOException(e);
+                        }
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PeerPrincipalCallback) {
                     // login name
                     final Principal principal = ((PeerPrincipalCallback) callback).getPrincipal();
                     try {
-                        // todo: handle X500 properly
-                        setAuthenticationName(principal.getName());
+                        setAuthenticationPrincipal(principal);
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
