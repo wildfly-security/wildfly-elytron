@@ -55,7 +55,6 @@ import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 public final class ServerSSLContextBuilder {
     private SecurityDomain securityDomain;
     private CredentialDecoder credentialDecoder = X509CertificateCredentialDecoder.getInstance();
-    private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean requireClientAuth;
@@ -80,16 +79,6 @@ public final class ServerSSLContextBuilder {
     public void setCredentialDecoder(final CredentialDecoder credentialDecoder) {
         Assert.checkNotNullParam("credentialDecoder", credentialDecoder);
         this.credentialDecoder = credentialDecoder;
-    }
-
-    /**
-     * Set the principal decoder.  This decoder is used to get a name string to pass into the realm for this identity.
-     *
-     * @param principalDecoder the principal decoder
-     */
-    public void setPrincipalDecoder(final PrincipalDecoder principalDecoder) {
-        Assert.checkNotNullParam("principalDecoder", principalDecoder);
-        this.principalDecoder = principalDecoder;
     }
 
     /**
@@ -165,7 +154,6 @@ public final class ServerSSLContextBuilder {
         final boolean requireClientAuth = this.requireClientAuth;
         final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory = this.keyManagerSecurityFactory;
         final CredentialDecoder credentialDecoder = this.credentialDecoder;
-        final PrincipalDecoder principalDecoder = this.principalDecoder;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
@@ -177,7 +165,7 @@ public final class ServerSSLContextBuilder {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
                 canAuthClients ?
-                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, credentialDecoder, principalDecoder) :
+                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, credentialDecoder) :
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration

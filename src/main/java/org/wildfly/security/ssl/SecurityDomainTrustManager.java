@@ -36,7 +36,6 @@ import org.wildfly.security.auth.login.ServerAuthenticationContext;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.auth.util.CredentialDecoder;
-import org.wildfly.security.auth.util.PrincipalDecoder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -46,17 +45,15 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
     private final CredentialDecoder credentialDecoder;
-    private final PrincipalDecoder principalDecoder;
 
-    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder, final PrincipalDecoder principalDecoder) {
+    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
         this.delegate = delegate;
         this.securityDomain = securityDomain;
         this.credentialDecoder = credentialDecoder;
-        this.principalDecoder = principalDecoder;
     }
 
-    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder, final PrincipalDecoder principalDecoder) {
-        this(delegate instanceof X509ExtendedTrustManager ? (X509ExtendedTrustManager) delegate : new WrappingX509ExtendedTrustManager(delegate), securityDomain, credentialDecoder, principalDecoder);
+    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
+        this(delegate instanceof X509ExtendedTrustManager ? (X509ExtendedTrustManager) delegate : new WrappingX509ExtendedTrustManager(delegate), securityDomain, credentialDecoder);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -82,18 +79,17 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         }
         final X509Certificate subjectCertificate = chain[0];
         Principal principal = credentialDecoder.getPrincipalFromCredential(subjectCertificate);
-        String name = principalDecoder.getName(principal);
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
-            authenticationContext.setAuthenticationName(name);
+            authenticationContext.setAuthenticationPrincipal(principal);
             final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(X509Certificate.class);
             if (credentialSupport.mayBeVerifiable()) {
                 if (! authenticationContext.verifyCredential(subjectCertificate)) {
-                    throw ElytronMessages.log.notTrusted(principal, name);
+                    throw ElytronMessages.log.notTrusted(principal);
                 }
             } else {
-                throw ElytronMessages.log.notTrusted(principal, name);
+                throw ElytronMessages.log.notTrusted(principal);
             }
             authenticationContext.succeed();
             if (handshakeSession != null) {
@@ -101,7 +97,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             }
             ok = true;
         } catch (RealmUnavailableException e) {
-            throw ElytronMessages.log.notTrustedRealmProblem(e, principal, name);
+            throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
         } finally {
             if (! ok) {
                 authenticationContext.fail();

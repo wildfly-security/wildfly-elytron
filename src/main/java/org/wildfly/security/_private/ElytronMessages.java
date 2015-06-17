@@ -75,11 +75,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3, value = "Empty certificate chain is not trusted")
     CertificateException emptyChainNotTrusted();
 
-    @Message(id = 4, value = "Certificate not trusted due to realm failure for principal %s, name %s")
-    CertificateException notTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal, String name);
+    @Message(id = 4, value = "Certificate not trusted due to realm failure for principal %s")
+    CertificateException notTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal);
 
-    @Message(id = 5, value = "Credential validation failed; certificate is not trusted for principal %s, name %s")
-    CertificateException notTrusted(Principal principal, String name);
+    @Message(id = 5, value = "Credential validation failed; certificate is not trusted for principal %s")
+    CertificateException notTrusted(Principal principal);
 
     @Message(id = 6, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
