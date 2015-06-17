@@ -20,6 +20,8 @@ package org.wildfly.security.auth.login;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.PermissionCollection;
+import java.security.Principal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,6 +41,7 @@ import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.spi.SupportLevel;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.auth.util.RealmMapper;
+import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.util._private.UnmodifiableArrayList;
@@ -59,6 +62,7 @@ public final class SecurityDomain {
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
     private final SecurityIdentity anonymousIdentity;
+    private final PermissionMapper permissionMapper;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -66,6 +70,7 @@ public final class SecurityDomain {
         this.preRealmRewriter = builder.preRealmRewriter;
         this.realmMapper = builder.realmMapper;
         this.roleMapper = builder.roleMapper;
+        this.permissionMapper = builder.permissionMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         // todo configurable
         anonymousAllowed = false;
@@ -267,6 +272,15 @@ public final class SecurityDomain {
         return this.roleMapper.mapRoles(mappedRoles);
     }
 
+    PermissionCollection mapPermissions(SecurityIdentity securityIdentity) {
+        Assert.checkNotNullParam("securityIdentity", securityIdentity);
+        AuthorizationIdentity authorizationIdentity = securityIdentity.getAuthorizationIdentity();
+        Principal principal = authorizationIdentity.getPrincipal();
+        Set<String> roles = securityIdentity.getRoles();
+
+        return this.permissionMapper.mapPermissions(principal, roles);
+    }
+
     String getDefaultRealmName() {
         return defaultRealmName;
     }
@@ -299,6 +313,7 @@ public final class SecurityDomain {
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
+        private PermissionMapper permissionMapper = PermissionMapper.IDENTITY_PERMISSION_MAPPER;
 
         Builder() {
         }
@@ -356,6 +371,20 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("roleMapper", roleMapper);
             assertNotBuilt();
             this.roleMapper = roleMapper;
+            return this;
+        }
+
+        /**
+         * Set the permission mapper for this security domain, which will be used to obtain and map permissions based on the
+         * identities from this security domain.
+         *
+         * @param permissionMapper the permission mapper (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setPermissionMapper(PermissionMapper permissionMapper) {
+            Assert.checkNotNullParam("permissionMapper", permissionMapper);
+            assertNotBuilt();
+            this.permissionMapper = permissionMapper;
             return this;
         }
 

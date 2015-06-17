@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.login;
 
+import java.security.PermissionCollection;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -179,12 +180,21 @@ public final class SecurityIdentity {
     }
 
     /**
-     * <p>Get the roles associated with this identity.</p>
+     * Get the roles associated with this identity.
      *
-     * @return the roles.
+     * @return the roles associated with this identity
      */
     public Set<String> getRoles() {
-        return getSecurityDomain().mapRoles(this);
+        return this.securityDomain.mapRoles(this);
+    }
+
+    /**
+     * Get the permissions associated with this identity.
+     *
+     * @return the permissions associated with this identity
+     */
+    public PermissionCollection getPermissions() {
+        return this.securityDomain.mapPermissions(this);
     }
 
     /**
