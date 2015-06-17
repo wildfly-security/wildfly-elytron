@@ -80,11 +80,8 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException {
-        if (principal instanceof NamePrincipal == false) {
-            throw ElytronMessages.log.invalidPrincipalType(NamePrincipal.class, principal == null ? null : principal.getClass());
-        }
-        return new JaasRealmIdentity(principal);
+    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+        return new JaasRealmIdentity(new NamePrincipal(name));
     }
 
     @Override

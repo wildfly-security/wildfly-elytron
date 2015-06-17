@@ -17,7 +17,6 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
@@ -59,12 +58,8 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException {
-        if (principal instanceof NamePrincipal == false) {
-            throw ElytronMessages.log.invalidPrincipalType(NamePrincipal.class, principal == null ? null : principal.getClass());
-        }
-
-        return new JdbcRealmIdentity(principal);
+    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+        return new JdbcRealmIdentity(new NamePrincipal(name));
     }
 
     @Override

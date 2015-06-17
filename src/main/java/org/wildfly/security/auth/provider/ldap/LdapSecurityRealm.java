@@ -80,15 +80,6 @@ class LdapSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(Principal principal) {
-        if (principal instanceof NamePrincipal  || principal instanceof X500Principal) {
-            return new LdapRealmIdentity(principal);
-        }
-
-        return null;
-    }
-
-    @Override
     public CredentialSupport getCredentialSupport(Class<?> credentialType) {
         CredentialSupport response = CredentialSupport.UNSUPPORTED;
         if (Password.class.isAssignableFrom(credentialType) == false) {

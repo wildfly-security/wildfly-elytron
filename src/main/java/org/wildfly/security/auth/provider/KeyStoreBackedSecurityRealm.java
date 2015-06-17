@@ -33,7 +33,6 @@ import java.util.Set;
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -63,11 +62,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(Principal principal) {
-        if (principal instanceof NamePrincipal == false) {
-            throw ElytronMessages.log.invalidPrincipalType(NamePrincipal.class, principal == null ? null : principal.getClass());
-        }
-        return new KeyStoreRealmIdentity(principal);
+    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+        return new KeyStoreRealmIdentity(new NamePrincipal(name));
     }
 
     @Override

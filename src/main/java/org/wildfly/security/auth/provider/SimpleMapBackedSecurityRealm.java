@@ -72,15 +72,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         for (NameRewriter rewriter : rewriters) {
             name = rewriter.rewriteName(name);
         }
-        return createRealmIdentity(new NamePrincipal(name));
-    }
-
-    @Override
-    public RealmIdentity createRealmIdentity(Principal principal) {
-        if (principal instanceof NamePrincipal == false) {
-            throw new IllegalArgumentException("Invalid Principal type");
-        }
-        return new SimpleMapRealmIdentity(principal);
+        return new SimpleMapRealmIdentity(new NamePrincipal(name));
     }
 
     private boolean checkType(final Set<Class<?>> supportedTypes, HashSet<Class<?>> checked, Class<?> actualType) {
