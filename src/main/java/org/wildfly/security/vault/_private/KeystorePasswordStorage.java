@@ -259,7 +259,7 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
     }
 
     @Override
-    public <T extends Password> void store(String key, Class<T> passwordClass, Password password) throws StorageException, UnsupportedPasswordClassException {
+    public <T extends Password> void store(String key, Class<T> passwordClass, T password) throws StorageException, UnsupportedPasswordClassException {
 
         if (!isInitialized()) {
             log.vaultIsNotInitialized(vaultName);

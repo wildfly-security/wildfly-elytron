@@ -159,7 +159,7 @@ public class PasswordStorage {
      * @throws StorageException when the password cannot be stored.
      * @throws UnsupportedPasswordClassException when the passwordClass is not supported
      */
-    public<T extends Password> void store(String key, Class<T> passwordClass, Password password) throws StorageException, UnsupportedPasswordClassException {
+    public<T extends Password> void store(String key, Class<T> passwordClass, T password) throws StorageException, UnsupportedPasswordClassException {
         spi.store(key, passwordClass, password);
     }
 

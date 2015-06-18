@@ -63,7 +63,7 @@ public abstract class PasswordStorageSpi {
      * @throws StorageException when the password cannot be stored.
      * @throws UnsupportedPasswordClassException when the passwordClass is not supported
      */
-    public abstract <T extends Password> void store(String key, Class<T> passwordClass, Password password) throws StorageException, UnsupportedPasswordClassException;
+    public abstract <T extends Password> void store(String key, Class<T> passwordClass, T password) throws StorageException, UnsupportedPasswordClassException;
 
     /**
      * Retrieve password stored in the storage under the key and of the passwordClass
