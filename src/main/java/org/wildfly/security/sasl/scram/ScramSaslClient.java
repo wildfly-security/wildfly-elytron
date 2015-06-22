@@ -32,9 +32,12 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslException;
 
 import org.jboss.logging.Logger;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -62,10 +65,10 @@ class ScramSaslClient extends AbstractSaslClient {
     private int bareStart;
     private byte[] clientFinalMessage;
     private byte[] nonce;
-    private PasswordCallback passwordCallback;
     private int proofStart;
     private byte[] saltedPassword;
     private byte[] serverFirstMessage;
+    private char[] clearPassword = null;
 
     private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.scram.client");
 
@@ -103,7 +106,26 @@ class ScramSaslClient extends AbstractSaslClient {
                 final ByteStringBuilder b = new ByteStringBuilder();
                 final String authorizationId = getAuthorizationId();
                 final NameCallback nameCallback = authorizationId == null ? new NameCallback("User name") : new NameCallback("User name", authorizationId);
-                handleCallbacks(nameCallback, passwordCallback = new PasswordCallback("Password", false));
+                final CredentialCallback twoWayCredentialCallback = new CredentialCallback(TwoWayPassword.class);
+                final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
+
+                try {
+                    tryHandleCallbacks(nameCallback, passwordCallback);
+                    clearPassword = passwordCallback.getPassword();
+                    passwordCallback.clearPassword();
+                } catch (UnsupportedCallbackException e) {
+                    // clear credential if clear password not supported
+                    if (e.getCallback() == passwordCallback) {
+                        handleCallbacks(nameCallback, twoWayCredentialCallback);
+                        clearPassword = ScramUtil.getTwoWayPasswordChars((TwoWayPassword) twoWayCredentialCallback.getCredential());
+                    } else {
+                        throw new SaslException("Callback handler failed", e);
+                    }
+                }
+                if(clearPassword == null){
+                    throw new SaslException("No password provided");
+                }
+
                 // gs2-cbind-flag
                 if (bindingData != null) {
                     if (plus) {
@@ -205,8 +227,9 @@ class ScramSaslClient extends AbstractSaslClient {
                                 // nonce
                                 b.append(',').append('r').append('=').append(nonce).append(serverNonce);
                                 // no extensions
-                                this.saltedPassword = ScramUtil.calculateHi(mac, passwordCallback.getPassword(), salt, 0, salt.length, iterationCount);
-                                if(trace) log.tracef("[C] Client salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
+
+                                saltedPassword = ScramUtil.calculateHi(mac, clearPassword, salt, 0, salt.length, iterationCount);
+                                if (trace) log.tracef("[C] Client salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
                                 mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
                                 final byte[] clientKey = mac.doFinal(Scram.CLIENT_KEY_BYTES);
                                 if(trace) log.tracef("[C] Client key: %s%n", ByteIterator.ofBytes(clientKey).hexEncode().drainToString());
@@ -238,6 +261,7 @@ class ScramSaslClient extends AbstractSaslClient {
                 } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException | InvalidKeyException ignored) {
                     throw new SaslException("Invalid server message");
                 } finally {
+                    Arrays.fill(clearPassword, (char)0); // wipe out the password
                     messageDigest.reset();
                     mac.reset();
                 }

@@ -23,9 +23,7 @@ import static java.util.Arrays.copyOfRange;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
@@ -36,6 +34,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
@@ -45,10 +44,8 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.ParameterCallback;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
@@ -59,6 +56,7 @@ import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 final class ScramSaslServer extends AbstractSaslServer {
 
@@ -80,6 +78,9 @@ final class ScramSaslServer extends AbstractSaslServer {
     private byte[] clientFirstMessage;
     private byte[] serverFirstMessage;
     private byte[] saltedPassword;
+    private byte[] salt;
+    private HashedPasswordAlgorithmSpec algorithmSpec;
+    private int iterationCount;
     private final boolean sendErrors = false;
     private int clientFirstMessageBareStart;
     private int cbindFlag;
@@ -197,117 +198,21 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // == send first challenge ==
 
-                    // get password
-
+                    // get salted password
                     final NameCallback nameCallback = new NameCallback("Remote authentication name", userName);
-
-                    // first try pre-digested
-
-                    CredentialCallback credentialCallback = new CredentialCallback(ScramDigestPassword.class);
-                    try {
-                        tryHandleCallbacks(nameCallback, credentialCallback);
-                    } catch (UnsupportedCallbackException e) {
-                        final Callback callback = e.getCallback();
-                        if (callback == nameCallback) {
-                            throw new SaslException("Callback handler does not support user name", e);
-                        } else if (callback == credentialCallback) {
-                            throw new SaslException("Callback handler does not support credential acquisition", e);
-                        } else {
-                            throw new SaslException("Callback handler failed for unknown reason", e);
-                        }
+                    saltedPassword = null;
+                    getPredigestedSaltedPassword(nameCallback);
+                    if (saltedPassword == null) {
+                        getSaltedPasswordFromTwoWay(nameCallback, b);
                     }
-                    int iterationCount;
-                    byte[] salt;
-                    Password password = (Password) credentialCallback.getCredential();
-                    if (password != null) {
-                        // got a scram password
-                        iterationCount = ((ScramDigestPassword) password).getIterationCount();
-                        salt = ((ScramDigestPassword) password).getSalt();
-                        if(trace) log.tracef("[S] Salt (pre digested): %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
-                        if (iterationCount < minimumIterationCount) {
-                            throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
-                        } else if (iterationCount > maximumIterationCount) {
-                            throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
-                        }
-                        if (salt == null) {
-                            throw new SaslException("Salt must be specified");
-                        }
-                        saltedPassword = ((ScramDigestPassword)password).getDigest();
-                        if(trace) log.tracef("[S] Salted password (pre digested): %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
-                    } else {
-                        // try two-way passwords
-                        credentialCallback = new CredentialCallback(TwoWayPassword.class);
-                        final ParameterCallback parameterCallback = new ParameterCallback(HashedPasswordAlgorithmSpec.class);
-                        HashedPasswordAlgorithmSpec algorithmSpec;
-                        try {
-                            tryHandleCallbacks(nameCallback, parameterCallback, credentialCallback);
-                            algorithmSpec = (HashedPasswordAlgorithmSpec) parameterCallback.getParameterSpec();
-                            if (algorithmSpec == null) throw new FastUnsupportedCallbackException(parameterCallback);
-                        } catch (UnsupportedCallbackException e) {
-                            Callback callback = e.getCallback();
-                            if (callback == nameCallback) {
-                                throw new SaslException("Callback handler does not support user name", e);
-                            } else if (callback == credentialCallback) {
-                                throw new SaslException("Callback handler does not support credential acquisition", e);
-                            } else if (callback == parameterCallback) {
-                                // one more try, with default parameters
-                                salt = ScramUtil.generateSalt(16, getRandom());
-                                if(trace) log.tracef("[S] Salt (random): %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
-                                algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
-                                try {
-                                    tryHandleCallbacks(nameCallback, credentialCallback);
-                                } catch (UnsupportedCallbackException e1) {
-                                    callback = e.getCallback();
-                                    if (callback == nameCallback) {
-                                        throw new SaslException("Callback handler does not support user name", e);
-                                    } else if (callback == credentialCallback) {
-                                        throw new SaslException("Callback handler does not support credential acquisition", e);
-                                    } else {
-                                        throw new SaslException("Callback handler failed for unknown reason", e);
-                                    }
-                                }
-                            } else {
-                                throw new SaslException("Callback handler failed for unknown reason", e);
-                            }
-                        }
-                        password = (Password) credentialCallback.getCredential();
-                        if (password == null) {
-                            throw new SaslException("No password provided");
-                        }
-                        PasswordFactory pf;
-                        try {
-                            pf = PasswordFactory.getInstance(password.getAlgorithm());
-                        } catch (NoSuchAlgorithmException e) {
-                            throw new SaslException("Invalid password algorithm");
-                        }
-                        char[] passwordChars;
-                        try {
-                            passwordChars = pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
-                        } catch (InvalidKeySpecException e) {
-                            throw new SaslException("Unsupported password algorithm type");
-                        }
-                        // get the clear password
-                        StringPrep.encode(passwordChars, b, StringPrep.PROFILE_SASL_STORED);
-                        passwordChars = new String(b.toArray(), StandardCharsets.UTF_8).toCharArray();
-                        b.setLength(0);
-
-                        iterationCount = algorithmSpec.getIterationCount();
-                        salt = algorithmSpec.getSalt();
-                        if (iterationCount < minimumIterationCount) {
-                            throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
-                        } else if (iterationCount > maximumIterationCount) {
-                            throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
-                        }
-                        if (salt == null) {
-                            throw new SaslException("Salt must be specified");
-                        }
-                        try {
-                            saltedPassword = ScramUtil.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
-                            if(trace) log.tracef("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
-                        } catch (InvalidKeyException e) {
-                            throw new SaslException("Invalid MAC initialization key");
-                        }
+                    if (saltedPassword == null) {
+                        getSaltedPasswordFromPasswordCallback(nameCallback, b);
                     }
+                    if (saltedPassword == null) {
+                        throw new SaslException("Callback handler does not support CredentialCallback nor PasswordCallback");
+                    }
+                    if(trace) log.tracef("[S] Salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
+                    if(trace) log.tracef("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
 
                     // nonce (client + server nonce)
                     b.append('r').append('=');
@@ -543,13 +448,132 @@ final class ScramSaslServer extends AbstractSaslServer {
         }
     }
 
-    Random getRandom() {
+    private void getPredigestedSaltedPassword(NameCallback nameCallback) throws SaslException {
+        CredentialCallback credentialCallback = new CredentialCallback(ScramDigestPassword.class);
+        try {
+            tryHandleCallbacks(nameCallback, credentialCallback);
+        } catch (UnsupportedCallbackException e) {
+            final Callback callback = e.getCallback();
+            if (callback == nameCallback) {
+                throw new SaslException("Callback handler does not support user name", e);
+            } else if (callback == credentialCallback) {
+                return; // pre digested not supported
+            } else {
+                throw new SaslException("Callback handler failed for unknown reason", e);
+            }
+        }
+        Password password = (Password) credentialCallback.getCredential();
+        if (password != null) {
+            // got a scram password
+            iterationCount = ((ScramDigestPassword) password).getIterationCount();
+            salt = ((ScramDigestPassword) password).getSalt();
+            if (iterationCount < minimumIterationCount) {
+                throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
+            } else if (iterationCount > maximumIterationCount) {
+                throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
+            }
+            if (salt == null) {
+                throw new SaslException("Salt must be specified");
+            }
+            saltedPassword = ((ScramDigestPassword)password).getDigest();
+        }
+    }
+
+    private void getSaltedPasswordFromTwoWay(NameCallback nameCallback, ByteStringBuilder b) throws SaslException {
+        CredentialCallback credentialCallback = new CredentialCallback(TwoWayPassword.class);
+        final ParameterCallback parameterCallback = new ParameterCallback(HashedPasswordAlgorithmSpec.class);
+        try {
+            tryHandleCallbacks(nameCallback, parameterCallback, credentialCallback);
+            algorithmSpec = (HashedPasswordAlgorithmSpec) parameterCallback.getParameterSpec();
+            if (algorithmSpec == null) throw new FastUnsupportedCallbackException(parameterCallback);
+        } catch (UnsupportedCallbackException e) {
+            Callback callback = e.getCallback();
+            if (callback == nameCallback) {
+                throw new SaslException("Callback handler does not support user name", e);
+            } else if (callback == credentialCallback) {
+                return; // credential acquisition not supported
+            } else if (callback == parameterCallback) {
+                // one more try, with default parameters
+                salt = ScramUtil.generateSalt(16, getRandom());
+                algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
+                try {
+                    tryHandleCallbacks(nameCallback, credentialCallback);
+                } catch (UnsupportedCallbackException ex) {
+                    callback = ex.getCallback();
+                    if (callback == nameCallback) {
+                        throw new SaslException("Callback handler does not support user name", ex);
+                    } else if (callback == credentialCallback) {
+                        return;
+                    } else {
+                        throw new SaslException("Callback handler failed for unknown reason", ex);
+                    }
+                }
+            } else {
+                throw new SaslException("Callback handler failed for unknown reason", e);
+            }
+        }
+
+        // get the clear password
+        Password password = (Password) credentialCallback.getCredential();
+        char[] passwordChars = ScramUtil.getTwoWayPasswordChars(password);
+        getSaltedPasswordFromPasswordChars(passwordChars, b);
+    }
+
+    private void getSaltedPasswordFromPasswordCallback(NameCallback nameCallback, ByteStringBuilder b) throws SaslException {
+        final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
+        try {
+            tryHandleCallbacks(nameCallback, passwordCallback);
+        } catch (UnsupportedCallbackException e) {
+            final Callback callback = e.getCallback();
+            if (callback == nameCallback) {
+                throw new SaslException("Callback handler does not support user name", e);
+            } else if (callback == passwordCallback) {
+                return; // PasswordCallback not supported
+            } else {
+                throw new SaslException("Callback handler failed for unknown reason", e);
+            }
+        }
+
+        salt = ScramUtil.generateSalt(16, getRandom());
+        algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
+
+        char[] passwordChars = passwordCallback.getPassword();
+        passwordCallback.clearPassword();
+        getSaltedPasswordFromPasswordChars(passwordChars, b);
+    }
+
+    private void getSaltedPasswordFromPasswordChars(char[] passwordChars, ByteStringBuilder b) throws SaslException {
+        StringPrep.encode(passwordChars, b, StringPrep.PROFILE_SASL_STORED);
+        Arrays.fill(passwordChars, (char)0); // wipe out the password
+        passwordChars = new String(b.toArray(), StandardCharsets.UTF_8).toCharArray();
+        b.setLength(0);
+
+        iterationCount = algorithmSpec.getIterationCount();
+        salt = algorithmSpec.getSalt();
+        if (iterationCount < minimumIterationCount) {
+            throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
+        } else if (iterationCount > maximumIterationCount) {
+            throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
+        }
+        if (salt == null) {
+            throw new SaslException("Salt must be specified");
+        }
+        try {
+            saltedPassword = ScramUtil.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
+            Arrays.fill(passwordChars, (char)0); // wipe out the password
+        } catch (InvalidKeyException e) {
+            throw new SaslException("Invalid MAC initialization key");
+        }
+    }
+
+    private Random getRandom() {
         return secureRandom != null ? secureRandom : ThreadLocalRandom.current();
     }
 
     public void dispose() throws SaslException {
         clientFirstMessage = null;
         serverFirstMessage = null;
+        saltedPassword = null;
         setNegotiationState(FAILED_STATE);
         mac.reset();
         messageDigest.reset();
