@@ -18,12 +18,10 @@
 
 package org.wildfly.security.sasl.util;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -53,16 +51,14 @@ public final class ChannelBindingSaslClientFactory extends AbstractDelegatingSas
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, new CallbackHandler() {
-            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof ChannelBindingCallback) {
-                        ((ChannelBindingCallback) callback).setBindingType(bindingType);
-                        ((ChannelBindingCallback) callback).setBindingData(bindingData);
-                    }
+        return delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbacks -> {
+            for (Callback callback : callbacks) {
+                if (callback instanceof ChannelBindingCallback) {
+                    ((ChannelBindingCallback) callback).setBindingType(bindingType);
+                    ((ChannelBindingCallback) callback).setBindingData(bindingData);
                 }
-                cbh.handle(callbacks);
             }
+            cbh.handle(callbacks);
         });
     }
 }
