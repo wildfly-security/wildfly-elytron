@@ -30,9 +30,10 @@ import org.kohsuke.MetaInfServices;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MetaInfServices(value = SaslClientFactory.class, priority = 10)
+@MetaInfServices(value = SaslClientFactory.class)
 public final class LocalUserClientFactory extends LocalUserSaslFactory implements SaslClientFactory {
 
+    @Override
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         if (! isIncluded(mechanisms)) {
             return null;

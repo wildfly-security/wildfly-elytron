@@ -31,9 +31,10 @@ import org.kohsuke.MetaInfServices;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@MetaInfServices(value = SaslClientFactory.class, priority = -10)
+@MetaInfServices(value = SaslClientFactory.class)
 public class AnonymousClientFactory extends AbstractAnonymousFactory implements SaslClientFactory {
 
+    @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Only return a client if we are sure anonymous is supported.
         return isIncluded(mechanisms) && matches(props) ? new AnonymousSaslClient(protocol, serverName, cbh, authorizationId) : null;
