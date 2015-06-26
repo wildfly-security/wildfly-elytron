@@ -18,25 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.x500.X500Principal;
-
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -46,6 +28,21 @@ import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
+
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.x500.X500Principal;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -59,15 +56,14 @@ class LdapSecurityRealm implements SecurityRealm {
     private final DirContextFactory dirContextFactory;
     private final List<NameRewriter> nameRewriters;
     private final PrincipalMapping principalMapping;
-
-    private final Collection<CredentialLoader> credentialLoaders;
+    private final List<CredentialLoader> credentialLoaders = new ArrayList<>();
 
     LdapSecurityRealm(final DirContextFactory dirContextFactory, final List<NameRewriter> nameRewriters,
-            final PrincipalMapping principalMapping, final Collection<CredentialLoader> credentialLoaders) {
+            final PrincipalMapping principalMapping) {
         this.dirContextFactory = dirContextFactory;
         this.nameRewriters = nameRewriters;
         this.principalMapping = principalMapping;
-        this.credentialLoaders = credentialLoaders;
+        this.credentialLoaders.add(new UserPasswordCredentialLoader(this.principalMapping.passwordAttribute));
     }
 
     @Override
@@ -76,7 +72,7 @@ class LdapSecurityRealm implements SecurityRealm {
             name = current.rewriteName(name);
         }
 
-        return principalMapping.nameIsDn ? new LdapRealmIdentity(null, name) : new LdapRealmIdentity(name, null);
+        return new LdapRealmIdentity(name);
     }
 
     @Override
@@ -91,6 +87,7 @@ class LdapSecurityRealm implements SecurityRealm {
     @Override
     public CredentialSupport getCredentialSupport(Class<?> credentialType) {
         CredentialSupport response = CredentialSupport.UNSUPPORTED;
+
         if (Password.class.isAssignableFrom(credentialType) == false) {
             return response;
         }
@@ -111,67 +108,37 @@ class LdapSecurityRealm implements SecurityRealm {
 
     private class LdapRealmIdentity implements RealmIdentity {
 
-        private boolean loadedNames = false;
-        private String simpleName;
-        private String distinguishedName;
-        private Principal principal;
+        private String name;
+        private LdapIdentity identity;
 
-        private LdapRealmIdentity(final String simpleName, final String distinguishedName) {
-            this.simpleName = simpleName;
-            this.distinguishedName = distinguishedName;
+        private LdapRealmIdentity(final String name) {
+            this.name = name;
         }
 
         private LdapRealmIdentity(final Principal principal) {
             assert principal instanceof NamePrincipal || principal instanceof X500Principal;
-            if (principal instanceof NamePrincipal) {
-                if (principalMapping.principalUseDn) {
-                    distinguishedName = principal.getName();
-                } else {
-                    simpleName = principal.getName();
-                }
-            } else {
-                distinguishedName = principal.getName();
-            }
-            this.principal = principal;
-        }
-
-        private void loadNames() {
-            // TODO - We need a slightly different approach if the name was obtained from a Principal.
-
-            if (loadedNames == false) {
-                try {
-                    NamePair np = loadNamePair(simpleName, distinguishedName);
-                    loadedNames = true;
-                    simpleName = np.simpleName;
-                    distinguishedName = np.distinguishedName;
-                } catch (NamingException e) {
-                    // TODO - Log
-                }
-            }
+            this.name = principal.getName();
         }
 
         @Override
         public Principal getPrincipal() {
-            if (principal == null) {
-                loadNames();
-                if (loadedNames) {
-                    if (principalMapping.principalUseDn) {
-                        try {
-                            principal = new X500Principal(distinguishedName);
-                        } catch (IllegalArgumentException ignored) {
-                            principal = new NamePrincipal(distinguishedName);
-                        }
-                    } else {
-                        principal = new NamePrincipal(simpleName);
-                    }
-                }
+            if (this.identity == null || !principalMapping.cachePrincipal) {
+                this.identity = getIdentity(this.name);
             }
 
-            return principal;
+            if (this.identity != null) {
+                return this.identity.toPrincipal();
+            }
+
+            return null;
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+        public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+            if (!exists()) {
+                return null;
+            }
+
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return CredentialSupport.UNSUPPORTED;
@@ -179,10 +146,9 @@ class LdapSecurityRealm implements SecurityRealm {
 
             CredentialSupport support = null;
 
-            loadNames();
             for (CredentialLoader current : credentialLoaders) {
                 if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
-                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, distinguishedName);
+                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
                     CredentialSupport temp = icl.getCredentialSupport(credentialType);
                     if (temp != null && temp.isDefinitelyObtainable()) {
@@ -204,16 +170,19 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) {
+        public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+            if (!exists()) {
+                return null;
+            }
+
             if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
 
-            loadNames();
             for (CredentialLoader current : credentialLoaders) {
                 if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
-                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, distinguishedName);
+                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
                     C credential = icl.getCredential(credentialType);
                     if (credential != null) {
@@ -229,7 +198,11 @@ class LdapSecurityRealm implements SecurityRealm {
         public AuthorizationIdentity getAuthorizationIdentity() {
             return new AuthorizationIdentity() {
                 public Principal getPrincipal() {
-                    return principal;
+                    if (identity != null) {
+                        return identity.toPrincipal();
+                    }
+
+                    return null;
                 }
 
                 @Override
@@ -240,175 +213,156 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final Object credential) {
-            if (ClearPassword.class.isInstance(credential)) {
-                final ClearPassword clearPassword = (ClearPassword) credential;
-                DirContext dirContext = null;
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            if (!exists()) {
+                return false;
+            }
 
-                try {
-                    // TODO: for not we just create a DirContext using the provided credentials. Need to also support referrals.
-                    dirContext = dirContextFactory.obtainDirContext(callbacks -> {
-                        for (Callback callback : callbacks) {
-                            if (NameCallback.class.isInstance(callback)) {
-                                NameCallback nameCallback = (NameCallback) callback;
-                                nameCallback.setName(getPrincipal().getName());
-                            } else if (PasswordCallback.class.isInstance(callback)) {
-                                PasswordCallback nameCallback = (PasswordCallback) callback;
-                                nameCallback.setPassword(clearPassword.getPassword());
-                            }
-                        }
-                    }, null);
+            char[] password;
 
-                    return true;
-                } catch (NamingException e) {
-                    log.debugf("Credential verification failed.", e);
-                } finally {
-                    if (dirContext != null) {
-                        dirContextFactory.returnContext(dirContext);
-                    }
-                }
+            if (char[].class.isInstance(credential)) {
+                password = (char[]) credential;
+            } else if (String.class.isInstance(credential)) {
+                password = credential.toString().toCharArray();
+            } else if (ClearPassword.class.isInstance(credential)) {
+                ClearPassword clearPassword = (ClearPassword) credential;
+                password = clearPassword.getPassword();
             } else {
-                throw new IllegalArgumentException("Unsupported credential type [" + credential.getClass() + "].");
+                throw new RuntimeException("Invalid credential type. You must provide a char[], String or " + ClearPassword.class + ".");
+            }
+
+            DirContext dirContext = null;
+
+            try {
+                // TODO: for not we just create a DirContext using the provided credentials. Need to also support referrals.
+                dirContext = dirContextFactory.obtainDirContext(callbacks -> {
+                    for (Callback callback : callbacks) {
+                        if (NameCallback.class.isInstance(callback)) {
+                            NameCallback nameCallback = (NameCallback) callback;
+                            nameCallback.setName(this.identity.getDistinguishedName());
+                        } else if (PasswordCallback.class.isInstance(callback)) {
+                            PasswordCallback nameCallback = (PasswordCallback) callback;
+                            nameCallback.setPassword(password);
+                        }
+                    }
+                }, null);
+
+                return true;
+            } catch (NamingException e) {
+                log.debugf("Credential verification failed.", e);
+            } finally {
+                dirContextFactory.returnContext(dirContext);
             }
 
             return false;
         }
 
+        @Override
         public boolean exists() throws RealmUnavailableException {
-            return true;
+            return getPrincipal() != null;
+        }
+
+        private LdapIdentity getIdentity(String name) {
+            DirContext context = null;
+            NamingEnumeration<SearchResult> searchResult = null;
+
+            try {
+                SearchControls searchControls = new SearchControls();
+
+                searchControls.setSearchScope(principalMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+                searchControls.setTimeLimit(principalMapping.searchTimeLimit);
+
+                searchControls.setReturningAttributes(new String[] {principalMapping.nameAttribute});
+
+                String searchDn = principalMapping.searchDn;
+                String simpleName = name;
+
+                if (name.startsWith(principalMapping.nameAttribute)) {
+                    simpleName = name.substring(principalMapping.nameAttribute.length() + 1, name.indexOf(','));
+                    searchDn = name.substring(name.indexOf(',') + 1);
+                }
+
+                Object[] filterArg = new Object[] {simpleName};
+                String filter = String.format("(%s={0})", principalMapping.nameAttribute);
+
+                context = dirContextFactory.obtainDirContext(null); // TODO - Referral Mode
+                searchResult = context.search(searchDn, filter, filterArg, searchControls);
+
+                if (searchResult.hasMore()) {
+                    SearchResult result = searchResult.next();
+
+                    if (searchResult.hasMore()) {
+                        throw new NamingException("Search returned too many results.");
+                    }
+
+                    return new LdapIdentity(simpleName, result.getNameInNamespace());
+                }
+            } catch (NamingException e) {
+                throw new RuntimeException("Could not obtain principal.", e);
+            } finally {
+                if (searchResult != null) {
+                    try {
+                        searchResult.close();
+                    } catch (NamingException ignore) {
+                    }
+                }
+                dirContextFactory.returnContext(context);
+            }
+
+            return null;
+        }
+
+        private class LdapIdentity {
+
+            private final String simpleName;
+            private final String distinguishedName;
+            private final Principal principal;
+
+            LdapIdentity(String simpleName, String distinguishedName) {
+                this.simpleName = simpleName;
+                this.distinguishedName = distinguishedName;
+                this.principal = createPrincipal(this.simpleName, distinguishedName);
+            }
+
+            String getDistinguishedName() {
+                return this.distinguishedName;
+            }
+
+            Principal toPrincipal() {
+                return this.principal;
+            }
+
+            private Principal createPrincipal(String simpleName, String distinguishedName) {
+                if (principalMapping.principalUseDn) {
+                    return new X500Principal(distinguishedName);
+                } else {
+                    return new NamePrincipal(simpleName);
+                }
+            }
         }
     }
 
     static class PrincipalMapping {
 
         private final String searchDn;
-        private final boolean recursive;
-        private final boolean nameIsDn;
+        private final boolean searchRecursive;
         private final boolean principalUseDn;
         private final String nameAttribute;
-        private final String dnAttribute;
-        private final boolean validatePresence;
-        private final boolean reloadPrincipalName;
+        private final boolean cachePrincipal;
+        private final String passwordAttribute;
+        public int searchTimeLimit;
 
-        public PrincipalMapping(String searchDn, boolean recursive, boolean nameIsDn, boolean principalUseDn,
-                String nameAttribute, String dnAttribute, boolean validatePresence, boolean reloadPrincipalName) {
+        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, boolean principalUseDn,
+                                String nameAttribute, String passwordAttribute, boolean cachePrincipal) {
+            Assert.checkNotNullParam("nameAttribute", nameAttribute);
+            Assert.checkNotNullParam("passwordAttribute", passwordAttribute);
             this.searchDn = searchDn;
-            this.recursive = recursive;
-            this.nameIsDn = nameIsDn;
+            this.searchRecursive = searchRecursive;
+            this.searchTimeLimit = searchTimeLimit;
             this.principalUseDn = principalUseDn;
             this.nameAttribute = nameAttribute;
-            this.dnAttribute = dnAttribute;
-            this.validatePresence = validatePresence;
-            this.reloadPrincipalName = reloadPrincipalName;
-        }
-
-    }
-
-    private NamePair loadNamePair(String simpleName, String distinguishedName) throws NamingException {
-        DirContext context = null;
-        NamingEnumeration<SearchResult> searchResult = null;
-        try {
-
-            if (principalMapping.nameIsDn) {
-                if (principalMapping.principalUseDn == false
-                        || (principalMapping.reloadPrincipalName || principalMapping.validatePresence)) {
-                    context = dirContextFactory.obtainDirContext(null); // TODO - Referral Mode
-                    ArrayList<String> requiredAttributes = new ArrayList<String>(2);
-                    if (principalMapping.reloadPrincipalName) {
-                        requiredAttributes.add(principalMapping.dnAttribute);
-                    }
-                    if (principalMapping.nameAttribute != null) {
-                        requiredAttributes.add(principalMapping.nameAttribute);
-                    }
-
-                    Attributes attributes = context.getAttributes(distinguishedName,
-                            requiredAttributes.toArray(new String[requiredAttributes.size()]));
-                    if (principalMapping.nameAttribute != null) {
-                        Attribute nameAttribute = attributes.get(principalMapping.nameAttribute);
-                        if (nameAttribute != null) {
-                            simpleName = (String) nameAttribute.get();
-                        }
-                    }
-
-                    if (principalMapping.reloadPrincipalName) {
-                        Attribute dnAttribute = attributes.get(principalMapping.dnAttribute);
-                        if (dnAttribute != null) {
-                            distinguishedName = (String) dnAttribute.get();
-                        }
-                    }
-                }
-            } else {
-                SearchControls searchControls = new SearchControls();
-                searchControls.setSearchScope(principalMapping.recursive ? SearchControls.SUBTREE_SCOPE
-                        : SearchControls.ONELEVEL_SCOPE);
-                searchControls.setTimeLimit(10000); // TODO - Make Config
-
-                context = dirContextFactory.obtainDirContext(null); // TODO - Referral Mode
-                ArrayList<String> requiredAttributes = new ArrayList<String>(2);
-                if (principalMapping.reloadPrincipalName) {
-                    requiredAttributes.add(principalMapping.nameAttribute);
-                }
-                if (principalMapping.dnAttribute != null) {
-                    requiredAttributes.add(principalMapping.dnAttribute);
-                }
-
-                if (requiredAttributes.size() > 0) {
-                searchControls.setReturningAttributes(requiredAttributes.toArray(new String[requiredAttributes.size()]));
-                }
-
-                Object[] filterArg = new Object[] { simpleName };
-                String filter = String.format("(%s={0})", principalMapping.nameAttribute);
-
-                searchResult = context.search(principalMapping.searchDn, filter, filterArg, searchControls);
-                if (searchResult.hasMore()) {
-                    SearchResult result = searchResult.next();
-                    if (searchResult.hasMore()) {
-                        throw new NamingException("Search returned too many results.");
-                    }
-
-                    Attributes attributes = result.getAttributes();
-                    if (principalMapping.dnAttribute != null) {
-                        Attribute dn = attributes.get(principalMapping.dnAttribute);
-                        if (dn != null) {
-                            distinguishedName = (String) dn.get();
-                        }
-                    }
-                    if (distinguishedName == null) {
-                        distinguishedName = result.getName()
-                                + ("".equals(principalMapping.searchDn) ? "" : "," + principalMapping.searchDn);
-                    }
-                    if (principalMapping.reloadPrincipalName) {
-                        Attribute nameAttribute = attributes.get(principalMapping.nameAttribute);
-                        if (nameAttribute != null) {
-                            simpleName = (String) nameAttribute.get();
-                        }
-                    }
-                } else {
-                    throw new NamingException("Search returned no results.");
-                }
-            }
-
-            return new NamePair(simpleName, distinguishedName);
-
-        } finally {
-            if (searchResult != null) {
-                searchResult.close();
-            }
-            if (context != null) {
-                dirContextFactory.returnContext(context);
-            }
+            this.passwordAttribute = passwordAttribute;
+            this.cachePrincipal = cachePrincipal;
         }
     }
-
-    private class NamePair {
-        private final String simpleName;
-        private final String distinguishedName;
-
-        public NamePair(String simpleName, String distinguishedName) {
-            this.simpleName = simpleName;
-            this.distinguishedName = distinguishedName;
-        }
-
-    }
-
 }

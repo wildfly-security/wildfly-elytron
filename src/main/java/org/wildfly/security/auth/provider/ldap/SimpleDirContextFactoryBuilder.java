@@ -26,6 +26,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import java.util.Hashtable;
+import java.util.Properties;
 
 /**
  * A simple builder for a {@link DirContextFactory} which creates new contexts on demand and disposes of them as soon as they
@@ -43,6 +44,7 @@ public class SimpleDirContextFactoryBuilder {
     private String securityAuthentication = "simple";
     private String securityPrincipal = null;
     private String securityCredential = null;
+    private Properties connectionProperties;
 
     private SimpleDirContextFactoryBuilder() {
     }
@@ -122,6 +124,19 @@ public class SimpleDirContextFactoryBuilder {
     }
 
     /**
+     * <p>Set additional connection properties.
+     *
+     * @param connectionProperties the additional connection properties.
+     * @return
+     */
+    public SimpleDirContextFactoryBuilder setConnectionProperties(Properties connectionProperties) {
+        assertNotBuilt();
+        this.connectionProperties = connectionProperties;
+
+        return this;
+    }
+
+    /**
      * Build this context factory.
      *
      * @return the context factory
@@ -186,11 +201,22 @@ public class SimpleDirContextFactoryBuilder {
             env.put(InitialDirContext.SECURITY_CREDENTIALS, String.valueOf(securityCredential));
             env.put(InitialDirContext.REFERRAL, mode == null ? ReferralMode.IGNORE.getValue() : mode.getValue());
 
+            // set any additional connection property
+            if (connectionProperties != null) {
+                for (Object key : connectionProperties.keySet()) {
+                    env.put(key.toString(), connectionProperties.getProperty(key.toString()));
+                }
+            }
+
             return new InitialDirContext(env);
         }
 
         @Override
         public void returnContext(DirContext context) {
+            if (context == null) {
+                return;
+            }
+
             if (context instanceof InitialDirContext) {
                 try {
                     context.close();

@@ -38,7 +38,8 @@ import org.wildfly.security.apacheds.LdapService;
 @Suite.SuiteClasses(
     {ConnectionSuiteChild.class,
      PrincipalMappingSuiteChild.class,
-     UserPasswordSuiteChild.class})
+     UserPasswordSuiteChild.class,
+    UserVerifyPasswordSuiteChild.class})
 public class LdapTestSuite {
 
     static final String SERVER_DN = "uid=server,dc=elytron,dc=wildfly,dc=org";

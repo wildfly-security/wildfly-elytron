@@ -18,13 +18,6 @@
 
 package org.wildfly.security.ldap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,10 +32,17 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -67,19 +67,12 @@ public class UserPasswordSuiteChild {
 
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(true)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .build()
-                .userPassword()
-                .addCredentialSupport(ClearPassword.class, CredentialSupport.UNKNOWN)
-                .addCredentialSupport(SimpleDigestPassword.class, CredentialSupport.UNKNOWN)
-                .addCredentialSupport(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN)
-                .addCredentialSupport(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
-                .addCredentialSupport(UnixDESCryptPassword.class, CredentialSupport.UNKNOWN)
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                    .useX500Principal()
+                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                    .setNameAttribute("uid")
+                    .build()
+                )
                 .build();
     }
 
