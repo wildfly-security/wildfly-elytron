@@ -33,7 +33,7 @@ import org.wildfly.security.auth.spi.SecurityRealm;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SeparateAuthenticationSecurityRealm implements SecurityRealm {
+public final class AggregateSecurityRealm implements SecurityRealm {
     private final SecurityRealm authenticationRealm;
     private final SecurityRealm authorizationRealm;
 
@@ -43,7 +43,7 @@ public final class SeparateAuthenticationSecurityRealm implements SecurityRealm 
      * @param authenticationRealm the realm to use for authentication
      * @param authorizationRealm the realm to use for authorization
      */
-    public SeparateAuthenticationSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm authorizationRealm) {
+    public AggregateSecurityRealm(final SecurityRealm authenticationRealm, final SecurityRealm authorizationRealm) {
         this.authenticationRealm = authenticationRealm;
         this.authorizationRealm = authorizationRealm;
     }
