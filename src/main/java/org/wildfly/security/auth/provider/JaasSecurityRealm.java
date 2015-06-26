@@ -35,6 +35,7 @@ import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.wildfly.security._private.ElytronMessages;
@@ -241,6 +242,7 @@ public class JaasSecurityRealm implements SecurityRealm {
     private class JaasAuthorizationIdentity implements AuthorizationIdentity {
 
         private static final String CALLER_PRINCIPAL_GROUP = "CallerPrincipal";
+        private static final String ROLE_GROUP = "Roles";
 
         private final Principal principal;
         private Principal callerPrincipal;
@@ -250,7 +252,7 @@ public class JaasSecurityRealm implements SecurityRealm {
             this.principal = principal;
             this.subject = subject;
             // check if the subject has a caller principal group - if it has then we should use that principal.
-            this.callerPrincipal = getCallerPrincipal(subject);
+            this.callerPrincipal = getCallerPrincipal();
         }
 
         @Override
@@ -260,21 +262,35 @@ public class JaasSecurityRealm implements SecurityRealm {
 
         @Override
         public Set<String> getRoles() {
-            return Collections.emptySet();
+            Set<String> roles = null;
+            if (this.subject != null) {
+                Set<Principal> principals = this.subject.getPrincipals();
+                if (principals != null && !principals.isEmpty()) {
+                    for (Principal principal : principals) {
+                        if (principal instanceof Group && principal.getName().equals(ROLE_GROUP)) {
+                            roles = new HashSet<String>();
+                            Enumeration<? extends Principal> enumeration = ((Group) principal).members();
+                            while (enumeration.hasMoreElements()) {
+                                roles.add(enumeration.nextElement().getName());
+                            }
+                        }
+                    }
+                }
+            }
+            return roles == null || roles.isEmpty() ? Collections.EMPTY_SET : roles;
         }
 
         /**
          * Obtains the caller principal from the specified {@link Subject}. This method looks for a group called {@code
          * CallerPrincipal} and if it finds one it returns the first {@link java.security.Principal} in the group.
          *
-         * @param subject the {@link javax.security.auth.Subject} to be inspected.
          * @return the first {@link java.security.Principal} found in the {@code CallerPrincipal} group or {@code null} if
          * a caller principal couldn't be found.
          */
-        private Principal getCallerPrincipal(Subject subject) {
+        private Principal getCallerPrincipal() {
             Principal callerPrincipal = null;
-            if (subject != null) {
-                Set<Principal> principals = subject.getPrincipals();
+            if (this.subject != null) {
+                Set<Principal> principals = this.subject.getPrincipals();
                 if (principals != null && !principals.isEmpty()) {
                     for (Principal principal : principals) {
                         if (principal instanceof Group && principal.getName().equals(CALLER_PRINCIPAL_GROUP)) {
