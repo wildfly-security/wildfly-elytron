@@ -32,13 +32,15 @@ import org.kohsuke.MetaInfServices;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@MetaInfServices(value = SaslServerFactory.class, priority = -10)
+@MetaInfServices(value = SaslServerFactory.class)
 public class AnonymousServerFactory extends AbstractAnonymousFactory implements SaslServerFactory {
 
+    @Override
     public String[] getMechanismNames(Map<String, ?> props) {
         return super.getMechanismNames(props);
     }
 
+    @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure anonymous is required don't return a SaslServer
         if (ANONYMOUS.equals(mechanism) == false || matches(props) == false) {
