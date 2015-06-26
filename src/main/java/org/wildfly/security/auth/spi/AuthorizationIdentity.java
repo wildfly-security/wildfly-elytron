@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.authz.RoleMapper;
 
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
@@ -79,6 +80,26 @@ public interface AuthorizationIdentity {
 
             public Set<String> getRoles() {
                 return Collections.emptySet();
+            }
+        };
+    }
+
+    /**
+     * Create a basic authorization identity implementation.
+     *
+     * @param principal the principal
+     * @param roles the assigned roles to return
+     * @param roleMapper an additional role mapper to apply (may be {@link RoleMapper#IDENTITY_ROLE_MAPPER})
+     * @return the authorization identity
+     */
+    static AuthorizationIdentity basicIdentity(Principal principal, Set<String> roles, RoleMapper roleMapper) {
+        return new AuthorizationIdentity() {
+            public Principal getPrincipal() {
+                return principal;
+            }
+
+            public Set<String> getRoles() {
+                return roleMapper.mapRoles(roles);
             }
         };
     }
