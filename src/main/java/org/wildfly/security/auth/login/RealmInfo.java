@@ -19,6 +19,7 @@ package org.wildfly.security.auth.login;
 
 import org.wildfly.security.auth.spi.SecurityRealm;
 import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 
 /**
@@ -32,19 +33,22 @@ class RealmInfo {
     private final String name;
     private final RoleMapper roleMapper;
     private final NameRewriter nameRewriter;
+    private final RoleDecoder roleDecoder;
 
     RealmInfo(final SecurityDomain.RealmBuilder realmBuilder) {
         this.name = realmBuilder.getName();
         this.securityRealm = realmBuilder.getRealm();
         this.roleMapper = realmBuilder.getRoleMapper();
         this.nameRewriter = realmBuilder.getNameRewriter();
+        this.roleDecoder = realmBuilder.getRoleDecoder();
     }
 
-    RealmInfo(final SecurityRealm securityRealm, final String name, final RoleMapper roleMapper, final NameRewriter nameRewriter) {
+    RealmInfo(final SecurityRealm securityRealm, final String name, final RoleMapper roleMapper, final NameRewriter nameRewriter, final RoleDecoder roleDecoder) {
         this.securityRealm = securityRealm;
         this.name = name;
         this.roleMapper = roleMapper;
         this.nameRewriter = nameRewriter;
+        this.roleDecoder = roleDecoder;
     }
 
     String getName() {
@@ -61,5 +65,9 @@ class RealmInfo {
 
     NameRewriter getNameRewriter() {
         return nameRewriter;
+    }
+
+    RoleDecoder getRoleDecoder() {
+        return roleDecoder;
     }
 }

@@ -40,9 +40,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.x500.X500Principal;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -194,11 +192,6 @@ class LdapSecurityRealm implements SecurityRealm {
                     }
 
                     return null;
-                }
-
-                @Override
-                public Set<String> getRoles() {
-                    return Collections.emptySet();
                 }
             };
         }
