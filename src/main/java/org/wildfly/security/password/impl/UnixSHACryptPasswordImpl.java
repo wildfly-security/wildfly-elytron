@@ -67,8 +67,8 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this.hash = hash;
     }
 
-    UnixSHACryptPasswordImpl(final UnixSHACryptPasswordSpec spec) {
-        this(spec.getAlgorithm(), truncatedClone(spec.getSalt()), min(999_999_999, max(1_000, spec.getIterationCount())), spec.getHash().clone());
+    UnixSHACryptPasswordImpl(final String algorithm, final UnixSHACryptPasswordSpec spec) {
+        this(algorithm, truncatedClone(spec.getSalt()), min(999_999_999, max(1_000, spec.getIterationCount())), spec.getHash().clone());
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
@@ -122,7 +122,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class)) {
-            return keySpecType.cast(new UnixSHACryptPasswordSpec(this.getAlgorithm(), this.getHash(), this.getSalt(), this.getIterationCount()));
+            return keySpecType.cast(new UnixSHACryptPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
         } else {
             throw new InvalidKeySpecException("Expected to get a UnixSHACryptPasswordSpec as spec, got " + keySpecType.getName());
         }

@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2013 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,16 +16,20 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.spec;
+package org.wildfly.security.password.interfaces;
 
-public final class SimpleDigestPasswordSpec implements PasswordSpec {
+class RawSimpleDigestPassword extends RawPassword implements SimpleDigestPassword {
+
+    private static final long serialVersionUID = -4517729891352607948L;
+
     private final byte[] digest;
 
-    public SimpleDigestPasswordSpec(final byte[] digest) {
+    RawSimpleDigestPassword(final String algorithm, final byte[] digest) {
+        super(algorithm);
         this.digest = digest;
     }
 
     public byte[] getDigest() {
-        return digest;
+        return digest.clone();
     }
 }

@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,32 +16,32 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.spec;
+package org.wildfly.security.password.interfaces;
 
-/**
- * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
- */
-public final class SunUnixMD5CryptPasswordSpec implements PasswordSpec {
+class RawBSDUnixDESCryptPassword extends RawPassword implements BSDUnixDESCryptPassword {
 
-    private final byte[] hash;
-    private final byte[] salt;
+    private static final long serialVersionUID = -652173302985035000L;
+
     private final int iterationCount;
+    private final int salt;
+    private final byte[] hash;
 
-    public SunUnixMD5CryptPasswordSpec(final byte[] hash, final byte[] salt, final int iterationCount) {
-        this.hash = hash;
-        this.salt = salt;
+    RawBSDUnixDESCryptPassword(final String algorithm, final int iterationCount, final int salt, final byte[] hash) {
+        super(algorithm);
         this.iterationCount = iterationCount;
-    }
-
-    public byte[] getHash() {
-        return hash;
-    }
-
-    public byte[] getSalt() {
-        return salt;
+        this.salt = salt;
+        this.hash = hash;
     }
 
     public int getIterationCount() {
         return iterationCount;
+    }
+
+    public int getSalt() {
+        return salt;
+    }
+
+    public byte[] getHash() {
+        return hash.clone();
     }
 }

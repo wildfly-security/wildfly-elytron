@@ -121,21 +121,20 @@ public class BSDUnixDESCryptTest {
         String cryptString = "_rH..saltodLocONXC9c";
 
         // Get the spec by parsing the crypt string
-        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
-        assertEquals(1_271, spec.getIterationCount());
-        assertEquals(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE, spec.getHash().length);
+        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) PasswordUtil.parseCryptString(cryptString);
+        assertEquals(1_271, password.getIterationCount());
+        assertEquals(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE, password.getHash().length);
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(password));
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws InvalidKeyException, InvalidKeySpecException {
-        BSDUnixDESCryptPasswordSpec spec = (BSDUnixDESCryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
+        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) PasswordUtil.parseCryptString(cryptString);
 
         // Use the spec to generate a BSDUnixDESCryptPasswordImpl and then verify the hash
         // using the correct password
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(PasswordUtil.identifyAlgorithm(cryptString), spec);
         final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
@@ -143,18 +142,17 @@ public class BSDUnixDESCryptTest {
         // Create a new password using EncryptablePasswordSpec and check if the hash matches
         // the hash from the spec
         byte[] salt = new byte[3];
-        salt[0] = (byte) (spec.getSalt() >> 16);
-        salt[1] = (byte) (spec.getSalt() >> 8);
-        salt[2] = (byte) (spec.getSalt());
+        salt[0] = (byte) (password.getSalt() >> 16);
+        salt[1] = (byte) (password.getSalt() >> 8);
+        salt[2] = (byte) (password.getSalt());
         BSDUnixDESCryptPasswordImpl password2 = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(algorithm,
-                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(spec.getIterationCount(), salt)));
-        assertEquals(spec.getSalt(), password2.getSalt());
-        assertArrayEquals(spec.getHash(), password2.getHash());
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(password.getIterationCount(), salt)));
+        assertEquals(password.getSalt(), password2.getSalt());
+        assertArrayEquals(password.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same
         // crypt string
-        spec = spi.engineGetKeySpec(PasswordUtil.identifyAlgorithm(cryptString), password2, BSDUnixDESCryptPasswordSpec.class);
-        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(password2));
     }
 
     @Test

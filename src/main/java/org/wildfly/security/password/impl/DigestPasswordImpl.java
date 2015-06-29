@@ -50,8 +50,8 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         this.digest = digest;
     }
 
-    DigestPasswordImpl(final DigestPasswordSpec spec) {
-        this(spec.getAlgorithm(), spec.getUsername(), spec.getRealm(),  spec.getDigest().clone());
+    DigestPasswordImpl(final String algorithm, final DigestPasswordSpec spec) {
+        this(algorithm, spec.getUsername(), spec.getRealm(),  spec.getDigest().clone());
     }
 
     DigestPasswordImpl(final DigestPassword password) {
@@ -99,7 +99,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(DigestPasswordSpec.class)) {
-            return keySpecType.cast(new DigestPasswordSpec(algorithm, username, realm, digest.clone()));
+            return keySpecType.cast(new DigestPasswordSpec(username, realm, digest.clone()));
         }
         throw new InvalidKeySpecException();
     }

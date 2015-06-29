@@ -80,8 +80,8 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     UnixDESCryptPasswordImpl(final UnixDESCryptPassword password) throws InvalidKeyException {
         salt = password.getSalt();
         final byte[] hash = password.getHash();
-        if (hash == null || hash.length != 7) {
-            throw new InvalidKeyException("DES crypt password hash must be 56 bits");
+        if (hash == null || hash.length != 8) {
+            throw new InvalidKeyException("DES crypt password hash must be 64 bits");
         }
         this.hash = hash;
     }

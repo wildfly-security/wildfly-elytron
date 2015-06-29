@@ -20,11 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.UTF_8;
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.parseUserPassword;
-import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
-import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
-import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
 
-import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,18 +32,11 @@ import javax.naming.directory.DirContext;
 
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
-import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
@@ -121,10 +110,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                 for (int i = 0; i < attribute.size(); i++) {
                     byte[] value = (byte[]) attribute.get(i);
 
-                    PasswordSpec spec = parseUserPassword(value);
-                    PasswordFactory pf = PasswordFactory.getInstance(toAlgorithm(spec));
-
-                    Password password = pf.generatePassword(spec);
+                    Password password = parseUserPassword(value);
 
                     if (credentialType.isInstance(password)) {
                         return credentialType.cast(password);
@@ -134,27 +120,11 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                 }
 
                 return null;
-            } catch (NamingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
+            } catch (NamingException | InvalidKeySpecException e) {
                 return null;
             } finally {
                 contextFactory.returnContext(context);
             }
-        }
-
-        private String toAlgorithm(PasswordSpec passwordSpec) {
-            if (passwordSpec instanceof ClearPasswordSpec) {
-                return ALGORITHM_CLEAR;
-            } else if (passwordSpec instanceof SimpleDigestPasswordSpec) {
-                return ((SimpleDigestPasswordSpec) passwordSpec).getAlgorithm();
-            } else if (passwordSpec instanceof SaltedSimpleDigestPasswordSpec) {
-                return ((SaltedSimpleDigestPasswordSpec) passwordSpec).getAlgorithm();
-            } else if (passwordSpec instanceof BSDUnixDESCryptPasswordSpec) {
-                return ALGORITHM_BSD_CRYPT_DES;
-            } else if (passwordSpec instanceof UnixDESCryptPasswordSpec) {
-                return ALGORITHM_CRYPT_DES;
-            }
-
-            return null;
         }
     }
 

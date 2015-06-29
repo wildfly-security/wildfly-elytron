@@ -34,7 +34,7 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 
 /**
- * A {@link Password} implementation for {@link SaltedSimpleDigestPassword}.
+ * A {@code Password} implementation for {@link SaltedSimpleDigestPassword}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -52,8 +52,8 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         this.salt = salt;
     }
 
-    SaltedSimpleDigestPasswordImpl(final SaltedSimpleDigestPasswordSpec spec) {
-        this(spec.getAlgorithm(), spec.getSalt().clone(), spec.getDigest().clone());
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final SaltedSimpleDigestPasswordSpec spec) {
+        this(algorithm, spec.getSalt().clone(), spec.getDigest().clone());
     }
 
     SaltedSimpleDigestPasswordImpl(final SaltedSimpleDigestPassword password) {

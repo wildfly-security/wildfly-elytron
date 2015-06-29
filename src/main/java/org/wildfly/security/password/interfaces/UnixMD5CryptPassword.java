@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * The UNIX modular-crypt MD5 crypt algorithm.
@@ -50,4 +53,21 @@ public interface UnixMD5CryptPassword extends OneWayPassword {
      * @return the hash component
      */
     byte[] getHash();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param salt the salt
+     * @param hash the hash
+     * @return the raw password implementation
+     */
+    static UnixMD5CryptPassword createRaw(String algorithm, byte[] salt, byte[] hash) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("hash", hash);
+        return new RawUnixMD5CryptPassword(algorithm, salt, hash);
+    }
 }

@@ -109,8 +109,8 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
         this(password.getAlgorithm(), password.getHash().clone(), password.getSalt().clone(), password.getIterationCount());
     }
 
-    SunUnixMD5CryptPasswordImpl(final SunUnixMD5CryptPasswordSpec spec) {
-        this(spec.getAlgorithm(), spec.getHash().clone(), spec.getSalt().clone(), spec.getIterationCount());
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final SunUnixMD5CryptPasswordSpec spec) {
+        this(algorithm, spec.getHash().clone(), spec.getSalt().clone(), spec.getIterationCount());
     }
 
     SunUnixMD5CryptPasswordImpl(final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
@@ -156,7 +156,7 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
     @Override
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(SunUnixMD5CryptPasswordSpec.class)) {
-            return keySpecType.cast(new SunUnixMD5CryptPasswordSpec(getAlgorithm(), getHash(), getSalt(), getIterationCount()));
+            return keySpecType.cast(new SunUnixMD5CryptPasswordSpec(getHash(), getSalt(), getIterationCount()));
         }
         throw new InvalidKeySpecException();
     }

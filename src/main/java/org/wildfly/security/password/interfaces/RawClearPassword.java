@@ -16,20 +16,20 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.spec;
+package org.wildfly.security.password.interfaces;
 
-/**
- * An extension of {@link PasswordSpec} where the spec is tied to a specific algorithm.
- *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- */
-public interface AlgorithmPasswordSpec extends PasswordSpec {
+class RawClearPassword extends RawPassword implements ClearPassword {
 
-    /**
-     * Get the algorithm this spec instance is for.
-     *
-     * @return the algorithm this spec instance is for.
-     */
-    String getAlgorithm();
+    private static final long serialVersionUID = -7982031201140935435L;
 
+    private final char[] password;
+
+    RawClearPassword(final String algorithm, final char[] password) {
+        super(algorithm);
+        this.password = password;
+    }
+
+    public char[] getPassword() throws IllegalStateException {
+        return password.clone();
+    }
 }

@@ -46,8 +46,8 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         this.digest = digest;
     }
 
-    SimpleDigestPasswordImpl(final SimpleDigestPasswordSpec spec) {
-        this(spec.getAlgorithm(), spec.getDigest().clone());
+    SimpleDigestPasswordImpl(final String algorithm, final SimpleDigestPasswordSpec spec) {
+        this(algorithm, spec.getDigest().clone());
     }
 
     SimpleDigestPasswordImpl(final SimpleDigestPassword password) {
@@ -68,7 +68,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(SimpleDigestPasswordSpec.class)) {
-            return keySpecType.cast(new SimpleDigestPasswordSpec(algorithm, digest.clone()));
+            return keySpecType.cast(new SimpleDigestPasswordSpec(digest.clone()));
         }
         throw new InvalidKeySpecException();
     }

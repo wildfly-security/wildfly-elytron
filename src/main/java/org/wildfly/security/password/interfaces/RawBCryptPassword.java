@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,33 +16,29 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.spec;
+package org.wildfly.security.password.interfaces;
 
-public final class UnixSHACryptPasswordSpec implements PasswordSpec {
-    private final byte[] hashBytes;
+class RawBCryptPassword extends RawPassword implements BCryptPassword {
+
+    private static final long serialVersionUID = -3386914527972301638L;
+
+    private final byte[] hash;
     private final byte[] salt;
     private final int iterationCount;
 
-    /**
-     * Creates a new password specification, with the parameters that will be used
-     * when hashing the plain text.
-     *
-     * @param hashBytes         the plain text, as bytes
-     * @param salt              the salt. If none is provided, a new one is randomly generated
-     * @param iterationCount    the iteration count
-     */
-    public UnixSHACryptPasswordSpec(final byte[] hashBytes, final byte[] salt, final int iterationCount) {
-        this.hashBytes = hashBytes;
+    RawBCryptPassword(final String algorithm, final byte[] hash, final byte[] salt, final int iterationCount) {
+        super(algorithm);
+        this.hash = hash;
         this.salt = salt;
         this.iterationCount = iterationCount;
     }
 
     public byte[] getHash() {
-        return hashBytes;
+        return hash.clone();
     }
 
     public byte[] getSalt() {
-        return salt;
+        return salt.clone();
     }
 
     public int getIterationCount() {

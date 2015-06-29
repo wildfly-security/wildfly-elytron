@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A password using the "bcrypt" Blowfish-based one-way password encryption algorithm.
@@ -67,4 +70,22 @@ public interface BCryptPassword extends OneWayPassword {
      * @return the iteration count
      */
     int getIterationCount();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param hash the hash
+     * @param salt the salt
+     * @param iterationCount the iteration count
+     * @return the raw password implementation
+     */
+    static BCryptPassword createRaw(String algorithm, byte[] hash, byte[] salt, int iterationCount) {
+        Assert.checkNotNullParam("hash", hash);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("algorithm", algorithm);
+        return new RawBCryptPassword(algorithm, hash.clone(), salt.clone(), iterationCount);
+    }
 }

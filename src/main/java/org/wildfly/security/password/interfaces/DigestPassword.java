@@ -17,8 +17,10 @@
  */
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * Digest MD5 (pre-digested) password.
@@ -75,4 +77,22 @@ public interface DigestPassword extends OneWayPassword {
      */
     byte[] getDigest();
 
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param username the user name
+     * @param realm the realm
+     * @param digest the digest
+     * @return the raw password implementation
+     */
+    static DigestPassword createRaw(String algorithm, String username, String realm, byte[] digest) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("username", username);
+        Assert.checkNotNullParam("realm", realm);
+        Assert.checkNotNullParam("digest", digest);
+        return new RawDigestPassword(algorithm, username, realm, digest.clone());
+    }
 }

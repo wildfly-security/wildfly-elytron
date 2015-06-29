@@ -161,8 +161,9 @@ public class UserPasswordSuiteChild {
         Password loadedPassword = (Password) identity.getCredential(credentialType);
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
-        assertTrue("Valid Password", factory.verify(loadedPassword, password));
-        assertFalse("Invalid Password", factory.verify(loadedPassword, "LetMeIn".toCharArray()));
+        final Password translated = factory.translate(loadedPassword);
+        assertTrue("Valid Password", factory.verify(translated, password));
+        assertFalse("Invalid Password", factory.verify(translated, "LetMeIn".toCharArray()));
     }
 
 }

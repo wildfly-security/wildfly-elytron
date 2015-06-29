@@ -99,7 +99,7 @@ public class DigestPasswordTest {
         DigestPasswordSpec digestSpec = factory.getKeySpec(digestPassword, DigestPasswordSpec.class);
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, digestSpec.getDigest()));
 
-        digestSpec = new DigestPasswordSpec(algorithm, USERNAME, REALM, preDigested);
+        digestSpec = new DigestPasswordSpec(USERNAME, REALM, preDigested);
         digestPassword = (DigestPassword) factory.generatePassword(digestSpec);
 
         validatePassword(digestPassword, PASSWORD, preDigested, factory);

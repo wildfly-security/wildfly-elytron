@@ -36,7 +36,6 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
-import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
@@ -152,8 +151,7 @@ public class JdbcSecurityRealmTest {
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
-        BCryptPasswordSpec spec = passwordFactory.getKeySpec(storedPassword, BCryptPasswordSpec.class);
-        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(storedPassword));
     }
 
     @Test
@@ -472,8 +470,7 @@ public class JdbcSecurityRealmTest {
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new HashedPasswordAlgorithmSpec(10, salt))
             );
-            BCryptPasswordSpec bCryptPasswordSpec = passwordFactory.getKeySpec(bCryptPassword, BCryptPasswordSpec.class);
-            String cryptString = PasswordUtil.getCryptString(bCryptPasswordSpec);
+            String cryptString = PasswordUtil.getCryptString(bCryptPassword);
 
             preparedStatement.setString(1, userName);
             preparedStatement.setString(2, cryptString);

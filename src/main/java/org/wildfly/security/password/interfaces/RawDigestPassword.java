@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,21 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.password.spec;
 
-/**
- * A {@link PasswordSpec} for a password represented by a Digest Response as seen in DigestMD5 SASL mechanism.
- *
- * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
- */
-public final class DigestPasswordSpec implements PasswordSpec {
+package org.wildfly.security.password.interfaces;
+
+class RawDigestPassword extends RawPassword implements DigestPassword {
+
+    private static final long serialVersionUID = 7084601864990731347L;
 
     private final String username;
     private final String realm;
     private final byte[] digest;
 
-    public DigestPasswordSpec(String username, String realm, byte[] digest) {
+    RawDigestPassword(final String algorithm, final String username, final String realm, final byte[] digest) {
+        super(algorithm);
         this.username = username;
         this.realm = realm;
         this.digest = digest;
@@ -44,7 +42,6 @@ public final class DigestPasswordSpec implements PasswordSpec {
     }
 
     public byte[] getDigest() {
-        return digest;
+        return digest.clone();
     }
-
 }

@@ -21,6 +21,8 @@ package org.wildfly.security.util;
 import static org.wildfly.security.util.Alphabet.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -1352,6 +1354,22 @@ public abstract class ByteIterator extends NumericIterator {
             return 0;
         }
     };
+
+    public final InputStream asInputStream() {
+        return new InputStream() {
+            public int read() throws IOException {
+                return hasNext() ? next() : -1;
+            }
+
+            public int read(final byte[] b) throws IOException {
+                return drain(b);
+            }
+
+            public int read(final byte[] b, final int off, final int len) throws IOException {
+                return drain(b, off, len);
+            }
+        };
+    }
 
     abstract class Base64EncodingCodePointIterator extends CodePointIterator {
 

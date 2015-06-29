@@ -23,7 +23,7 @@ package org.wildfly.security.password.spec;
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
-public final class ScramDigestPasswordSpec implements AlgorithmPasswordSpec {
+public final class ScramDigestPasswordSpec implements PasswordSpec {
 
     private final String algorithm;
     private final byte[] digest;
@@ -43,11 +43,6 @@ public final class ScramDigestPasswordSpec implements AlgorithmPasswordSpec {
         this.digest = digest;
         this.salt = salt;
         this.iterationCount = iterationCount;
-    }
-
-    @Override
-    public String getAlgorithm() {
-        return this.algorithm;
     }
 
     public byte[] getDigest() {

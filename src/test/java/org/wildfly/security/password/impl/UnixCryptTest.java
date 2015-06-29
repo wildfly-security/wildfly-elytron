@@ -29,7 +29,6 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -47,7 +46,7 @@ public class UnixCryptTest {
 
     @Test
     public void testParse() throws InvalidKeySpecException {
-        final UnixDESCryptPasswordSpec spec = (UnixDESCryptPasswordSpec) PasswordUtil.parseCryptString("ABwOg1D2JDxIQ");
+        final UnixDESCryptPassword spec = (UnixDESCryptPassword) PasswordUtil.parseCryptString("ABwOg1D2JDxIQ");
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
         byte[] salt = new byte[2];
         salt[0] = (byte) (spec.getSalt() >> 8);
@@ -55,14 +54,14 @@ public class UnixCryptTest {
         assertEquals("ABwOg1D2JDxIQ", PasswordUtil.getCryptString(spec));
         final UnixDESCryptPassword p2 = (UnixDESCryptPassword) spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
         assertEquals("Salts unmatched", spec.getSalt(), p2.getSalt());
-        assertEquals("ABwOg1D2JDxIQ", PasswordUtil.getCryptString(spi.engineGetKeySpec("crypt-des", p2, UnixDESCryptPasswordSpec.class)));
+        assertEquals("ABwOg1D2JDxIQ", PasswordUtil.getCryptString(p2));
     }
 
     @Test
     public void testKnownStrings() throws InvalidKeySpecException, InvalidKeyException {
         PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtil.parseCryptString("xyf/bMLia/2RU")), "testtest".toCharArray()));
-        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtil.parseCryptString("ABwOg1D2JDxIQ")), "test".toCharArray()));
-        assertTrue(spi.engineVerify("crypt-des", spi.engineGeneratePassword("crypt-des", PasswordUtil.parseCryptString("./derspCn2Kmo")), "testtestextra".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", PasswordUtil.parseCryptString("xyf/bMLia/2RU"), "testtest".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", PasswordUtil.parseCryptString("ABwOg1D2JDxIQ"), "test".toCharArray()));
+        assertTrue(spi.engineVerify("crypt-des", PasswordUtil.parseCryptString("./derspCn2Kmo"), "testtestextra".toCharArray()));
     }
 }
