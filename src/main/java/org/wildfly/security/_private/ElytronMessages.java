@@ -20,6 +20,7 @@ package org.wildfly.security._private;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
@@ -345,4 +346,46 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 93, value = "Unrecognized principal type for %s")
     IllegalArgumentException unrecognizedPrincipalType(Principal principal);
+
+    @Message(id = 94, value = "Filesystem-backed realm unexpectedly failed to open path \"%s\" for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmFailedToOpen(Path path, String finalName, @Cause IOException cause);
+
+    @Message(id = 95, value = "Filesystem-backed realm unexpectedly failed to read path \"%s\" for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmFailedToRead(Path path, String finalName, @Cause Exception cause);
+
+    @Message(id = 96, value = "Invalid empty name given")
+    IllegalArgumentException invalidEmptyName();
+
+    @Message(id = 97, value = "Filesystem-backed realm encountered invalid file content in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmInvalidContent(Path path, int lineNumber, String name);
+
+    @Message(id = 98, value = "Filesystem-backed realm encountered missing required attribute \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmMissingAttribute(String attribute, Path path, int lineNumber, String name);
+
+    @Message(id = 99, value = "Filesystem-backed realm encountered invalid password format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmInvalidPasswordFormat(String format, Path path, int lineNumber, String name);
+
+    @Message(id = 100, value = "Filesystem-backed realm failed to rename \"%s\" to \"%s\"")
+    RealmUnavailableException fileSystemRealmRenameFailed(String name, String finalName, @Cause IOException e);
+
+    @Message(id = 101, value = "Filesystem-backed realm failed to delete identity \"%s\"")
+    RealmUnavailableException fileSystemRealmDeleteFailed(String name, @Cause IOException e);
+
+    @Message(id = 102, value = "Filesystem-backed realm failed to find identity \"%s\"")
+    RealmUnavailableException fileSystemRealmNotFound(String name);
+
+    @Message(id = 103, value = "Filesystem-backed realm failed to write to file \"%s\" for identity \"%s\"")
+    RealmUnavailableException fileSystemRealmFailedToWrite(Path tempPath, String name, @Cause Exception e);
+
+    @Message(id = 104, value = "Filesystem-backed realm cannot create duplicate identity for identity \"%s\"")
+    RealmUnavailableException fileSystemRealmAlreadyExists(String name, @Cause Throwable e);
+
+    @Message(id = 105, value = "Filesystem-backed realm encountered invalid certificate format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmCertificateReadError(String format, Path path, int lineNumber, String name);
+
+    @Message(id = 106, value = "Filesystem-backed realm encountered invalid key format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmUnsupportedKeyFormat(String format, Path path, int lineNumber, String name);
+
+    @Message(id = 107, value = "Filesystem-backed realm encountered invalid key algorithm for format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name);
 }
