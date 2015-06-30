@@ -103,7 +103,7 @@ public interface RoleMapper {
         for (int i = 0; i < clone.length; i++) {
             Assert.checkNotNullArrayParam("mappers", i, clone[i]);
         }
-        return (rolesToMap) -> {
+        return rolesToMap -> {
             for (RoleMapper r : clone) rolesToMap = r.mapRoles(rolesToMap);
             return rolesToMap;
         };
