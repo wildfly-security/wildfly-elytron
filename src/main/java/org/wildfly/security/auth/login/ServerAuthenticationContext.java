@@ -62,6 +62,7 @@ import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 
 /**
@@ -99,7 +100,14 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
         Assert.checkNotNullParam("mechanismName", mechanismName);
         Assert.checkNotNullParam("protocol", protocol);
-        return new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory).createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, createCallbackHandler());
+        final AuthenticationCompleteCallbackSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
+        final CallbackHandler callbackHandler;
+        if (mechanismName.equals(AbstractAnonymousFactory.ANONYMOUS)) {
+            callbackHandler = createAnonymousCallbackHandler();
+        } else {
+            callbackHandler = createCallbackHandler();
+        }
+        return factory.createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, callbackHandler);
     }
 
     /**
@@ -132,6 +140,29 @@ public final class ServerAuthenticationContext {
      */
     public SecurityIdentity getAuthorizedIdentity() throws IllegalStateException {
         return stateRef.get().getAuthorizedIdentity();
+    }
+
+    /**
+     * Set the authentication to anonymous, completing the authentication process.
+     *
+     * @throws IllegalStateException if the authentication is already complete
+     */
+    public void anonymous() throws IllegalStateException {
+        State oldState;
+        oldState = stateRef.get();
+        if (oldState.isDone()) {
+            throw ElytronMessages.log.alreadyComplete();
+        }
+        final CompleteState completeState = new CompleteState(domain.getAnonymousSecurityIdentity());
+        while (! stateRef.compareAndSet(oldState, completeState)) {
+            oldState = stateRef.get();
+            if (oldState.isDone()) {
+                throw ElytronMessages.log.alreadyComplete();
+            }
+        }
+        if (oldState.getId() == ASSIGNED_ID) {
+            oldState.getRealmIdentity().dispose();
+        }
     }
 
     /**
@@ -310,6 +341,49 @@ public final class ServerAuthenticationContext {
         return stateRef.get().verifyCredential(credential);
     }
 
+    CallbackHandler createAnonymousCallbackHandler() {
+        return new CallbackHandler() {
+            @Override
+            public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                handleOne(callbacks, 0);
+            }
+
+            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException {
+                if (idx == callbacks.length) {
+                    return;
+                }
+                Callback callback = callbacks[idx];
+                if (callback instanceof AnonymousAuthorizationCallback) {
+                    // anonymous is always allowed; disable anonymous authentication in the mechanism filters.
+                    anonymous();
+                    ((AnonymousAuthorizationCallback) callback).setAuthorized(true);
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof AuthenticationCompleteCallback) {
+                    if (! isDone()) {
+                        if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                            succeed();
+                        } else {
+                            fail();
+                        }
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SocketAddressCallback) {
+                    final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
+                    if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
+                        // todo: filter by IP address
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SecurityIdentityCallback) {
+                    ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
+                    handleOne(callbacks, idx + 1);
+                } else {
+                    CallbackUtil.unsupported(callback);
+                }
+            }
+        };
+    }
+
+
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
             private String assignedName;
@@ -417,9 +491,6 @@ public final class ServerAuthenticationContext {
                     }
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
-                    handleOne(callbacks, idx + 1);
-                } else if (callback instanceof AnonymousAuthorizationCallback) {
-                    ((AnonymousAuthorizationCallback) callback).setAuthorized(domain.isAnonymousAllowed());
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (((AuthenticationCompleteCallback) callback).succeeded()) {
