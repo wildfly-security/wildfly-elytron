@@ -18,14 +18,14 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreSpi;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.cert.CertificateException;
+
+import org.wildfly.common.Assert;
 
 /**
  * A wrapper around {@link KeyStore} to make it unmodifiable.
@@ -53,9 +53,7 @@ public class UnmodifiableKeyStore extends KeyStore {
      */
     public static KeyStore unmodifiableKeyStore(final KeyStore toWrap) throws NoSuchAlgorithmException, CertificateException,
             IOException {
-        if (toWrap == null) {
-            throw log.nullParameter("toWrap");
-        }
+        Assert.checkNotNullParam("toWrap", toWrap);
 
         KeyStore keyStore = new UnmodifiableKeyStore(new UnmodifiableKeyStoreSpi(toWrap), toWrap.getProvider(),
                 toWrap.getType());

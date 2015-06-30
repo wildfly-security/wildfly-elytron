@@ -96,8 +96,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10, value = "Authentication already initiated on this context")
     IllegalStateException alreadyInitiated();
 
-    @Message(id = 11, value = "%s is null")
-    IllegalArgumentException nullParameter(String parameter);
+    // id = 11
 
     @Message(id = 12, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesntContainDefault(String defaultRealm);
