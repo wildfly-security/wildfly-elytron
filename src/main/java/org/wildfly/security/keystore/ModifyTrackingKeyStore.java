@@ -18,13 +18,13 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.cert.CertificateException;
+
+import org.wildfly.common.Assert;
 
 /**
  * A {@link KeyStore} implementation that tracks if it's contents have been modified through the API since the last load / save.
@@ -53,9 +53,7 @@ public class ModifyTrackingKeyStore extends KeyStore {
      */
     public static ModifyTrackingKeyStore modifyTrackingKeyStore(final KeyStore toWrap) throws NoSuchAlgorithmException, CertificateException,
             IOException {
-        if (toWrap == null) {
-            throw log.nullParameter("toWrap");
-        }
+        Assert.checkNotNullParam("toWrap", toWrap);
 
         ModifyTrackingKeyStore keyStore = new ModifyTrackingKeyStore(new ModifyTrackingKeyStoreSpi(toWrap), toWrap.getProvider(),
                 toWrap.getType());
