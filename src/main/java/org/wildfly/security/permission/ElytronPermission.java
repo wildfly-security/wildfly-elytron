@@ -37,6 +37,7 @@ public final class ElytronPermission extends Permission {
     enum Name {
         createAuthenticator,
         createAuthenticationContextConfigurationClient,
+        createSecurityDomain,
         ;
 
         private final ElytronPermission permission;
