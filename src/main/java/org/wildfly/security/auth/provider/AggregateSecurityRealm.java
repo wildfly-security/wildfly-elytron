@@ -48,11 +48,11 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         this.authorizationRealm = authorizationRealm;
     }
 
-    public RealmIdentity createRealmIdentity(final Principal principal) throws RealmUnavailableException {
+    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
         boolean ok = false;
-        final RealmIdentity authenticationIdentity = authenticationRealm.createRealmIdentity(principal);
+        final RealmIdentity authenticationIdentity = authenticationRealm.createRealmIdentity(name);
         try {
-            final RealmIdentity authorizationIdentity = authorizationRealm.createRealmIdentity(principal);
+            final RealmIdentity authorizationIdentity = authorizationRealm.createRealmIdentity(name);
             try {
                 final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
                 ok = true;

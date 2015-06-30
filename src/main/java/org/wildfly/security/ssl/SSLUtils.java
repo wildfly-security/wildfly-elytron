@@ -18,6 +18,7 @@
 
 package org.wildfly.security.ssl;
 
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.IdentityHashMap;
@@ -25,21 +26,33 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.login.SecurityIdentity;
 
 /**
- * A factory for SSL contexts.
+ * SSL factories and utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SSLFactories {
+public final class SSLUtils {
 
-    private SSLFactories() {}
+    private SSLUtils() {}
 
     private static final String serviceType = SSLContext.class.getSimpleName();
+
+    /**
+     * The key used to store the authenticated {@link SecurityIdentity} onto the {@link SSLSession}.
+     */
+    public static final String SSL_SESSION_IDENTITY_KEY = "org.wildfly.security.ssl.identity";
 
     /**
      * Create an SSL context factory which locates the best context by searching the preferred providers in order using
@@ -75,7 +88,7 @@ public final class SSLFactories {
                 return createSimpleSslContextFactory(supportedProtocol, provider);
             }
         }
-        return SSLFactories::throwIt;
+        return SSLUtils::throwIt;
     }
 
     private static SSLContext throwIt() throws NoSuchAlgorithmException {
@@ -97,12 +110,11 @@ public final class SSLFactories {
      * Create a configured SSL context from an outside SSL context.
      *
      * @param original the original SSL context
-     * @param protocolSelector the protocol selector to apply
-     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @param sslConfigurator the SSL configurator
      * @return the configured SSL context
      */
-    public static SSLContext createConfiguredSslContext(SSLContext original, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
-        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, protocolSelector, cipherSuiteSelector));
+    public static SSLContext createConfiguredSslContext(SSLContext original, final SSLConfigurator sslConfigurator) {
+        return new DelegatingSSLContext(new ConfiguredSSLContextSpi(original, sslConfigurator));
     }
 
     /**
@@ -110,11 +122,54 @@ public final class SSLFactories {
      * for every call, so it might be necessary to wrap with a {@link OneTimeSecurityFactory} instance.
      *
      * @param originalFactory the original SSL context factory
-     * @param protocolSelector the protocol selector to apply
-     * @param cipherSuiteSelector the cipher suite selector to apply
+     * @param sslConfigurator the SSL configurator
      * @return the configured SSL context
      */
-    public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, ProtocolSelector protocolSelector, CipherSuiteSelector cipherSuiteSelector) {
-        return () -> createConfiguredSslContext(originalFactory.create(), protocolSelector, cipherSuiteSelector);
+    public static SecurityFactory<SSLContext> createConfiguredSslContextFactory(SecurityFactory<SSLContext> originalFactory, final SSLConfigurator sslConfigurator) {
+        return () -> createConfiguredSslContext(originalFactory.create(), sslConfigurator);
+    }
+
+    private static final SecurityFactory<X509TrustManager> DEFAULT_TRUST_MANAGER_SECURITY_FACTORY = new OneTimeSecurityFactory<>(() -> {
+        final TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init((KeyStore) null);
+        for (TrustManager trustManager : trustManagerFactory.getTrustManagers()) {
+            if (trustManager instanceof X509TrustManager) {
+                return (X509TrustManager) trustManager;
+            }
+        }
+        throw ElytronMessages.log.noDefaultTrustManager();
+    });
+
+    /**
+     * Get the platform's default X.509 trust manager security factory.  The factory caches the instance.
+     *
+     * @return the security factory for the default trust manager
+     */
+    public static SecurityFactory<X509TrustManager> getDefaultX509TrustManagerSecurityFactory() {
+        return DEFAULT_TRUST_MANAGER_SECURITY_FACTORY;
+    }
+
+    /**
+     * Get a server SSL engine which dispatches to the appropriate SSL context based on the SNI information in the
+     * SSL greeting.
+     *
+     * @param selector the context selector to use (cannot be {@code null})
+     * @return the SSL engine (not {@code null})
+     */
+    public static SSLEngine createSNIDispatchingSSLEngine(SNIServerSSLContextSelector selector) {
+        Assert.checkNotNullParam("selector", selector);
+        return new SNIServerSSLEngine(selector);
+    }
+
+    /**
+     * Get a factory which produces SSL engines which dispatch to the appropriate SSL context based on the SNI information
+     * in the SSL greeting.
+     *
+     * @param selector the context selector to use (cannot be {@code null})
+     * @return the SSL engine factory (not {@code null})
+     */
+    public static SecurityFactory<SSLEngine> createSNIDispatchingSSLEngineFactory(SNIServerSSLContextSelector selector) {
+        Assert.checkNotNullParam("selector", selector);
+        return () -> new SNIServerSSLEngine(selector);
     }
 }

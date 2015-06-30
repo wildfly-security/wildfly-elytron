@@ -25,14 +25,14 @@ import javax.net.ssl.SSLContext;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class DelegatingSSLContext extends SSLContext {
+final class DelegatingSSLContext extends SSLContext {
 
     /**
      * Construct a new instance.
      *
      * @param contextSpi the SSL context SPI to delegate to
      */
-    public DelegatingSSLContext(final AbstractDelegatingSSLContextSpi contextSpi) {
+    DelegatingSSLContext(final AbstractDelegatingSSLContextSpi contextSpi) {
         super(contextSpi, contextSpi.getDelegate().getProvider(), contextSpi.getDelegate().getProtocol());
     }
 }

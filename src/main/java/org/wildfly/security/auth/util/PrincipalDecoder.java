@@ -16,24 +16,25 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.spi;
+package org.wildfly.security.auth.util;
+
+import java.security.Principal;
 
 /**
- * A decoder which acquires an authentication name from a credential.  Implementations may indicate that the credential
- * is not understood.
+ * A decoder for extracting a simple name from a principal.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface CredentialDecoder {
+public interface PrincipalDecoder {
 
     /**
-     * Get the authentication name from an opaque credential.  If this decoder cannot understand the given credential
-     * type, {@code null} is returned.
+     * Get the name from a principal.  If this decoder cannot understand the given principal type or contents,
+     * {@code null} is returned.
      *
-     * @param credential the credential to decode
-     * @return the authentication name, or {@code null} if this decoder does not understand the credential
+     * @param principal the principal to decode
+     * @return the name, or {@code null} if this decoder does not understand the principal
      */
-    String getNameFromCredential(Object credential);
+    String getName(Principal principal);
 
     /**
      * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
@@ -42,14 +43,14 @@ public interface CredentialDecoder {
      * @param decoders the constituent decoders
      * @return the aggregated decoder
      */
-    static CredentialDecoder aggregate(final CredentialDecoder... decoders) {
+    static PrincipalDecoder aggregate(final PrincipalDecoder... decoders) {
         if (decoders == null) {
             throw new IllegalArgumentException("decoders is null");
         }
-        return credential -> {
+        return principal -> {
             String result;
-            for (CredentialDecoder decoder : decoders) {
-                result = decoder.getNameFromCredential(credential);
+            for (PrincipalDecoder decoder : decoders) {
+                result = decoder.getName(principal);
                 if (result != null) {
                     return result;
                 }
@@ -57,4 +58,9 @@ public interface CredentialDecoder {
             return null;
         };
     }
+
+    /**
+     * The default decoder, which just calls {@link Principal#getName()}.
+     */
+    PrincipalDecoder DEFAULT = Principal::getName;
 }

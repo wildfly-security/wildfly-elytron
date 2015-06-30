@@ -36,7 +36,7 @@ import javax.net.ssl.TrustManager;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
+abstract class AbstractDelegatingSSLContextSpi extends SSLContextSpi {
     private final SSLContext delegate;
 
     /**

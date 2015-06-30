@@ -289,4 +289,8 @@ abstract class AbstractDelegatingSSLSocket extends SSLSocket {
     public void setPerformancePreferences(final int connectionTime, final int latency, final int bandwidth) {
         delegate.setPerformancePreferences(connectionTime, latency, bandwidth);
     }
+
+    protected SSLSocket getDelegate() {
+        return delegate;
+    }
 }

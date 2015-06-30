@@ -633,22 +633,21 @@ class EntityUtil {
     }
 
     public static boolean matchGeneralNames(List<GeneralName> generalNames, X509Certificate cert) {
-        final X509CertificateCredentialDecoder certCredentialDecoder = new X509CertificateCredentialDecoder();
-        String certSubjectName = certCredentialDecoder.getNameFromCredential(cert);
+        X500Principal certSubjectName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(cert);
         try {
             if (matchGeneralNames(generalNames, convertToGeneralNames(cert.getSubjectAlternativeNames()))) {
                 return true;
             }
         } catch (CertificateParsingException e) {
-            // Ingore unless the subject name is empty
-            if (certSubjectName.isEmpty()) {
+            // Ignore unless the subject name is empty
+            if (certSubjectName == null) {
                 throw new IllegalStateException("Unable to determine name", e);
             }
         }
         List<GeneralName> certNames;
-        if (! certSubjectName.isEmpty()) {
+        if (certSubjectName != null) {
             certNames = new ArrayList<GeneralName>(1);
-            certNames.add(new DirectoryName(certSubjectName));
+            certNames.add(new DirectoryName(certSubjectName.getName(X500Principal.CANONICAL)));
             if (matchGeneralNames(generalNames, certNames)) {
                 return true;
             }

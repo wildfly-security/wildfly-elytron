@@ -51,7 +51,6 @@ import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -136,24 +135,6 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Set the authentication principal for this authentication.  Calling this method initiates authentication.
-     *
-     * @param principal the authentication principal
-     * @throws IllegalArgumentException if the name is syntactically invalid
-     * @throws RealmUnavailableException if the realm is not available
-     * @throws IllegalStateException if the authentication name was already set
-     */
-    public void setAuthenticationPrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
-        Assert.checkNotNullParam("principal", principal);
-        if (principal instanceof NamePrincipal) {
-            setAuthenticationName(principal.getName());
-        } else {
-            // todo: use the domain principal decoder...
-            throw Assert.unsupported();
-        }
-    }
-
-    /**
      * Set the authentication name for this authentication.  Calling this method initiates authentication.
      *
      * @param name the authentication name
@@ -170,6 +151,48 @@ public final class ServerAuthenticationContext {
                 throw ElytronMessages.log.alreadyInitiated();
             }
         } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
+        name = domain.getPreRealmRewriter().rewriteName(name);
+        String realmName = domain.getRealmMapper().getRealmMapping(name);
+        if (realmName == null) {
+            realmName = domain.getDefaultRealmName();
+        }
+        RealmInfo realmInfo = domain.getRealmInfo(realmName);
+        name = domain.getPostRealmRewriter().rewriteName(name);
+        name = realmInfo.getNameRewriter().rewriteName(name);
+        final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
+        final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+        boolean ok = false;
+        try {
+            if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(realmInfo, realmIdentity))) {
+                throw Assert.unreachableCode();
+            }
+            ok = true;
+        } finally {
+            if (! ok) realmIdentity.dispose();
+        }
+    }
+
+    /**
+     * Set the authentication principal for this authentication.  Calling this method initiates authentication.
+     *
+     * @param principal the authentication principal
+     * @throws IllegalArgumentException if the principal cannot be mapped to a name, or the mapped name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public void setAuthenticationPrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        Assert.checkNotNullParam("principal", principal);
+        State oldState;
+        do {
+            oldState = stateRef.get();
+            if (oldState != INITIAL) {
+                throw ElytronMessages.log.alreadyInitiated();
+            }
+        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
+        String name = domain.getPrincipalDecoder().getName(principal);
+        if (name == null) {
+            throw ElytronMessages.log.unrecognizedPrincipalType(principal);
+        }
         name = domain.getPreRealmRewriter().rewriteName(name);
         String realmName = domain.getRealmMapper().getRealmMapping(name);
         if (realmName == null) {

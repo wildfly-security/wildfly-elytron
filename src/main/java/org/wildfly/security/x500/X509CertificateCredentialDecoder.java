@@ -22,26 +22,33 @@ import java.security.cert.X509Certificate;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.spi.CredentialDecoder;
+import org.wildfly.security.auth.util.CredentialDecoder;
 
 /**
- * A credential decoder which can decode an {@link X509Certificate}.  The decoded name is the subject DN as a
- * string in {@link X500Principal#CANONICAL} format.
+ * A credential decoder which can decode an {@link X509Certificate} into an {@link X500Principal}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class X509CertificateCredentialDecoder implements CredentialDecoder {
 
-    /**
-     * Construct a new instance.
-     */
-    public X509CertificateCredentialDecoder() {
+    private static final X509CertificateCredentialDecoder INSTANCE = new X509CertificateCredentialDecoder();
+
+    private X509CertificateCredentialDecoder() {
     }
 
-    public String getNameFromCredential(final Object credential) {
+    public X500Principal getPrincipalFromCredential(final Object credential) {
         if (credential instanceof X509Certificate) {
-            return ((X509Certificate) credential).getSubjectX500Principal().getName(X500Principal.CANONICAL);
+            return ((X509Certificate) credential).getSubjectX500Principal();
         }
         return null;
+    }
+
+    /**
+     * Get the singleton instance of this class.
+     *
+     * @return the credential decoder instance
+     */
+    public static X509CertificateCredentialDecoder getInstance() {
+        return INSTANCE;
     }
 }

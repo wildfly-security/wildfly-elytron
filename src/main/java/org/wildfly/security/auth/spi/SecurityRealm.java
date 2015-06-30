@@ -18,10 +18,7 @@
 
 package org.wildfly.security.auth.spi;
 
-import java.security.Principal;
-
 import org.wildfly.security.auth.principal.NamePrincipal;
-
 
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
@@ -42,18 +39,7 @@ public interface SecurityRealm {
      * @param name the name to use when creating the {@link RealmIdentity}
      * @return the {@link RealmIdentity} for the provided {@code name} or {@code null}
      */
-    default RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException {
-        return createRealmIdentity(new NamePrincipal(name));
-    }
-
-    /**
-     * Create a {@link RealmIdentity} from an existing {@link Principal}.
-     *
-     * @param principal the principal to use to create the {@link RealmIdentity}
-     * @return the {@link RealmIdentity} for the provided {@code principal} or {@code null}
-     */
-    // TODO: determine if this is necessary.
-    RealmIdentity createRealmIdentity(Principal principal) throws RealmUnavailableException;
+    RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
@@ -68,8 +54,8 @@ public interface SecurityRealm {
      * An empty security realm.
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
-        public RealmIdentity createRealmIdentity(final Principal principal) throws RealmUnavailableException {
-            return RealmIdentity.nonExistentIdentity(principal);
+        public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+            return RealmIdentity.nonExistentIdentity(new NamePrincipal(name));
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {

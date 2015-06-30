@@ -24,7 +24,11 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.callback.Callback;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -68,11 +72,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "No algorithm found matching TLS/SSL protocol selection criteria")
     NoSuchAlgorithmException noAlgorithmForSslProtocol();
 
-    // id = 3
+    @Message(id = 3, value = "Empty certificate chain is not trusted")
+    CertificateException emptyChainNotTrusted();
 
-    // id = 4
+    @Message(id = 4, value = "Certificate not trusted due to realm failure for principal %s")
+    CertificateException notTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal);
 
-    // id = 5
+    @Message(id = 5, value = "Credential validation failed; certificate is not trusted for principal %s")
+    CertificateException notTrusted(Principal principal);
 
     @Message(id = 6, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
@@ -300,4 +307,43 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = Logger.Level.DEBUG)
     @Message(id = 80, value = "JAAS logout failed for principal %s")
     void debugJAASLogoutFailure(Principal principal, @Cause Throwable cause);
+
+    @Message(id = 81, value = "No default trust manager available")
+    NoSuchAlgorithmException noDefaultTrustManager();
+
+    @Message(id = 82, value = "No host for SSL connection")
+    SSLHandshakeException noHostForSslConnection();
+
+    @Message(id = 83, value = "SSL channel is closed")
+    SSLException sslClosed();
+
+    @Message(id = 84, value = "Initial SSL/TLS data is not a handshake record")
+    SSLHandshakeException notHandshakeRecord();
+
+    @Message(id = 85, value = "Initial SSL/TLS handshake record is invalid")
+    SSLHandshakeException invalidHandshakeRecord();
+
+    @Message(id = 86, value = "Initial SSL/TLS handshake spans multiple records")
+    SSLHandshakeException multiRecordSSLHandshake();
+
+    @Message(id = 87, value = "Expected \"client hello\" record")
+    SSLHandshakeException expectedClientHello();
+
+    @Message(id = 88, value = "Unsupported SSL/TLS record")
+    SSLHandshakeException unsupportedSslRecord();
+
+    @Message(id = 89, value = "Invalid SNI extension")
+    SSLProtocolException invalidSniExt();
+
+    @Message(id = 90, value = "Not enough data in record to fill declared item size")
+    SSLProtocolException notEnoughData();
+
+    @Message(id = 91, value = "Empty host name in SNI record data")
+    SSLProtocolException emptyHostNameSni();
+
+    @Message(id = 92, value = "Duplicated SNI server name of type %d")
+    SSLProtocolException duplicatedSniServerName(int type);
+
+    @Message(id = 93, value = "Unrecognized principal type for %s")
+    IllegalArgumentException unrecognizedPrincipalType(Principal principal);
 }

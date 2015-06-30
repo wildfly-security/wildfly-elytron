@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 
@@ -168,8 +169,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
 
                     // Determine the authorization identity
-                    X509CertificateCredentialDecoder certCredentialDecoder = new X509CertificateCredentialDecoder();
-                    clientName = certCredentialDecoder.getNameFromCredential(clientCert);
+                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(clientCert).getName(X500Principal.CANONICAL);
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);
