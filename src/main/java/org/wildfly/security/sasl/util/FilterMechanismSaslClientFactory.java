@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -39,8 +39,19 @@ import org.wildfly.common.Assert;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSaslClientFactory {
-    private final boolean include;
-    private final Set<String> mechanisms;
+    private final Predicate<String> predicate;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param delegate the factory to delegate to
+     * @param predicate the mechanism name predicate
+     */
+    public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, final Predicate<String> predicate) {
+        super(delegate);
+        Assert.checkNotNullParam("predicate", predicate);
+        this.predicate = predicate;
+    }
 
     /**
      * Construct a new instance.
@@ -52,10 +63,9 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, String... mechanisms) {
         super(delegate);
         Assert.checkNotNullParam("mechanisms", mechanisms);
-        this.include = include;
         final HashSet<String> set = new HashSet<String>(mechanisms.length);
         Collections.addAll(set, mechanisms);
-        this.mechanisms = set;
+        predicate = name -> set.contains(name) == include;
     }
 
     /**
@@ -68,17 +78,17 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, Collection<String> mechanisms) {
         super(delegate);
         Assert.checkNotNullParam("mechanisms", mechanisms);
-        this.include = include;
-        this.mechanisms = new HashSet<String>(mechanisms);
-    }
+        final HashSet<String> set = new HashSet<String>(mechanisms);
+        predicate = name -> set.contains(name) == include;
+   }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         for (String mechanism : mechanisms) {
-            if (this.mechanisms.contains(mechanism) != include) {
+            if (! predicate.test(mechanism)) {
                 // make a copy and remove the unsupported mechanisms
                 final ArrayList<String> list = new ArrayList<>(mechanisms.length - 1);
                 for (String m2 : mechanisms) {
-                    if (this.mechanisms.contains(mechanism) == include) {
+                    if (predicate.test(m2)) {
                         list.add(m2);
                     }
                 }
@@ -93,7 +103,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
         final String[] names = delegate.getMechanismNames(props);
         final ArrayList<String> list = new ArrayList<>(names.length);
         for (String name : names) {
-            if (mechanisms.contains(name) == include) {
+            if (predicate.test(name)) {
                 list.add(name);
             }
         }
