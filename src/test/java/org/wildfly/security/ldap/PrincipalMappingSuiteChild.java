@@ -18,15 +18,8 @@
 
 package org.wildfly.security.ldap;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.security.Principal;
-
-import javax.security.auth.x500.X500Principal;
-
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -36,6 +29,13 @@ import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.auth.spi.SecurityRealm;
+
+import javax.security.auth.x500.X500Principal;
+import java.security.Principal;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test case to test different principal mapping configurations.
@@ -66,12 +66,10 @@ public class PrincipalMappingSuiteChild {
     public void testSimpleToDn() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(true)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                        .useX500Principal()
+                        .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                        .setNameAttribute("uid").build())
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("plainUser");
@@ -89,12 +87,9 @@ public class PrincipalMappingSuiteChild {
     public void testDnToSimple() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(true)
-                .setPrincipalUseDn(false)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                        .setNameAttribute("uid")
+                        .build())
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
@@ -114,9 +109,9 @@ public class PrincipalMappingSuiteChild {
 //                .setDirContextFactory(dirContextFactory)
 //                .principalMapping()
 //                .setNameIsDn(false)
-//                .setPrincipalUseDn(false)
+//                .useX500Principal(false)
 //                .setValidatePresence(false)
-//                .setReloadPrincipalName(false)
+//                .cachePrincipal(false)
 //                .build()
 //                .build();
 //
@@ -135,14 +130,11 @@ public class PrincipalMappingSuiteChild {
     public void testSimpleToSimpleValidate() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(false)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .setReloadPrincipalName(false)
-                .setValidatePresence(true)
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                        .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                        .setNameAttribute("uid")
+                        .build()
+                )
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("PlainUser");
@@ -160,14 +152,12 @@ public class PrincipalMappingSuiteChild {
     public void testSimpleToSimpleReload() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(false)
-                .setPrincipalUseDn(false)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setNameAttribute("uid")
-                .setReloadPrincipalName(true)
-                .setValidatePresence(true)
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                                .setNameAttribute("uid")
+                                .cachePrincipal()
+                                .build()
+                )
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("PlainUser");
@@ -185,43 +175,42 @@ public class PrincipalMappingSuiteChild {
     public void testDnToDnNoLookup() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(true)
-                .setPrincipalUseDn(true)
-                .setValidatePresence(false)
-                .setReloadPrincipalName(false)
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                                .setNameAttribute("uid")
+                                .useX500Principal()
+                                .cachePrincipal()
+                                .build()
+                )
                 .build();
 
-        /*
-         * This user does not exist in LDAP but in this case we want to verify the directory is not hit.
-         */
-
-        RealmIdentity identity = realm.createRealmIdentity("uid=otherUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
         Principal principal = identity.getPrincipal();
+
         assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof X500Principal);
-        assertTrue("Mapped DN", "uid=otherUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
+
+        Principal cachedPrincipal = identity.getPrincipal();
+
+        Assert.assertSame(principal, cachedPrincipal);
     }
 
     @Test
     public void testDnToDnVerify() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping()
-                .setNameIsDn(true)
-                .setPrincipalUseDn(true)
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setReloadPrincipalName(false)
-                .setValidatePresence(true)
-                .build()
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                    .setNameAttribute("uid")
+                    .useX500Principal()
+                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                    .cachePrincipal()
+                    .build()
+                )
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
         Principal principal = identity.getPrincipal();
         assertNotNull(principal);
         assertTrue("Principal Type", principal instanceof X500Principal);
-        assertTrue("Mapped DN", "UID=PlainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
+        assertTrue("Mapped DN", "UID=plainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
 
         identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
         principal = identity.getPrincipal();

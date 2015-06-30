@@ -18,13 +18,11 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import java.util.HashMap;
+import org.wildfly.security.auth.spi.RealmIdentity;
+import org.wildfly.security.auth.util.NameRewriter;
+
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
-import org.wildfly.security.auth.spi.CredentialSupport;
-import org.wildfly.security.auth.util.NameRewriter;
 
 /**
  * Builder for the security realm implementation backed by LDAP.
@@ -37,7 +35,6 @@ public class LdapSecurityRealmBuilder {
     private DirContextFactory dirContextFactory;
     private List<NameRewriter> nameRewriters = new LinkedList<NameRewriter>();
     private LdapSecurityRealm.PrincipalMapping principalMapping;
-    private List<CredentialLoader> credentialLoaders = new LinkedList<CredentialLoader>();
 
     private LdapSecurityRealmBuilder() {
     }
@@ -59,6 +56,7 @@ public class LdapSecurityRealmBuilder {
      */
     public LdapSecurityRealmBuilder setDirContextFactory(final DirContextFactory dirContextFactory) {
         assertNotBuilt();
+
         this.dirContextFactory = dirContextFactory;
 
         return this;
@@ -72,7 +70,8 @@ public class LdapSecurityRealmBuilder {
      */
     public LdapSecurityRealmBuilder addNameRewriter(final NameRewriter nameReWriter) {
         assertNotBuilt();
-        nameRewriters.add(nameReWriter);
+
+        this.nameRewriters.add(nameReWriter);
 
         return this;
     }
@@ -82,21 +81,12 @@ public class LdapSecurityRealmBuilder {
      *
      * @return the builder for the principal mapping
      */
-    public PrincipalMappingBuilder principalMapping() {
+    public LdapSecurityRealmBuilder principalMapping(LdapSecurityRealm.PrincipalMapping principalMapping) {
         assertNotBuilt();
 
-        return new PrincipalMappingBuilder();
-    }
+        this.principalMapping = principalMapping;
 
-    /**
-     * Add a user/password credential loader to this builder.
-     *
-     * @return the builder for the user/password credential loader
-     */
-    public UserPasswordCredentialLoaderBuilder userPassword() {
-        assertNotBuilt();
-
-        return new UserPasswordCredentialLoaderBuilder();
+        return this;
     }
 
     /**
@@ -114,7 +104,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, nameRewriters, principalMapping, credentialLoaders);
+        return new LdapSecurityRealm(dirContextFactory, nameRewriters, principalMapping);
     }
 
     private void assertNotBuilt() {
@@ -126,209 +116,116 @@ public class LdapSecurityRealmBuilder {
     /**
      * A builder for a principal mapping.
      */
-    public class PrincipalMappingBuilder {
+    public static class PrincipalMappingBuilder {
 
-        private boolean built = false;
         private String searchDn = null;
-        private boolean recursive = false;
-        private boolean nameIsDn = false;
+        private boolean searchRecursive = false;
         private boolean principalUseDn = false;
         private String nameAttribute;
-        private String dnAttribute;
-        private boolean validatePresence;
-        private boolean reloadPrincipalName = false;
+        private boolean cachePrincipal = false;
+        private String passwordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
+        private int searchTimeLimit = 10000;
 
-        PrincipalMappingBuilder() {
+        public static PrincipalMappingBuilder builder() {
+            return new PrincipalMappingBuilder();
         }
 
         /**
-         * Set the search DN for this mapping.
+         * <p>Set the name of the context to be used when executing queries.
          *
-         * @param searchDn the search DN
+         * <p>This option is specially useful when authenticating users based on names that don't use a X.500 format such as <em>plainUser</em>.
+         * In this case, you must also provide {@link #setNameAttribute(String)} with the attribute name that contains the user name.</p>
+         *
+         * <p>If the names used to authenticate users are based on the X.500 format, this configuration can be suppressed.
+         *
+         * <p>Please note that by using this option the realm is able to authenticate users based on their simple or X.500 names.
+         *
+         * @param searchDn the name of the context to search
          * @return this builder
          */
         public PrincipalMappingBuilder setSearchDn(final String searchDn) {
-            assertNotBuilt();
             this.searchDn = searchDn;
-
             return this;
         }
 
         /**
-         * Set the recursive flag for this mapping.
+         * Indicate if queries are searchRecursive, searching the entire subtree rooted at the name specified in {@link #setSearchDn(String)}.
+         * Otherwise search one level of the named context.
          *
-         * @param recursive the recursive flag
          * @return this builder
          */
-        public PrincipalMappingBuilder setRecursive(final boolean recursive) {
-            assertNotBuilt();
-            this.recursive = recursive;
-
+        public PrincipalMappingBuilder searchRecursive() {
+            this.searchRecursive = false;
             return this;
         }
 
         /**
-         * Establish whether the name is a DN for this mapping.
+         * Sets the time limit of the SearchControls in milliseconds.
          *
-         * @param nameIsDn {@code true} if the name is a DN, {@code false} otherwise
+         * @param limit the limit in milliseconds. Defaults to 5000 milliseconds.
          * @return this builder
          */
-        public PrincipalMappingBuilder setNameIsDn(final boolean nameIsDn) {
-            assertNotBuilt();
-            this.nameIsDn = nameIsDn;
-
+        public PrincipalMappingBuilder setSearchTimeLimit(int limit) {
+            this.searchTimeLimit = limit;
             return this;
         }
 
         /**
-         * Establish whether the principal shall use the DN for this mapping.
+         * <p>Indicate if the principal obtained from {@link RealmIdentity#getPrincipal()} should be a {@link javax.security.auth.x500.X500Principal} instance.
+         * Otherwise a {@link org.wildfly.security.auth.principal.NamePrincipal} is returned with user's simple name.
          *
-         * @param principalUseDn {@code true} to use DN, {@code false} otherwise
+         * <p>Use this option if you want to obtain principal names based on their X.500 format just like they are represented in LDAP.
+         *
          * @return this builder
          */
-        public PrincipalMappingBuilder setPrincipalUseDn(final boolean principalUseDn) {
-            assertNotBuilt();
-            this.principalUseDn = principalUseDn;
-
+        public PrincipalMappingBuilder useX500Principal() {
+            this.principalUseDn = true;
             return this;
         }
 
         /**
-         * Set the name attribute for this mapping.
+         * Set the name of the attribute in LDAP that holds the user name.
          *
          * @param nameAttribute the name attribute
          * @return this builder
          */
         public PrincipalMappingBuilder setNameAttribute(final String nameAttribute) {
-            assertNotBuilt();
             this.nameAttribute = nameAttribute;
-
             return this;
         }
 
         /**
-         * Set the DN attribute for this mapping.
+         * <p>Set the name of the attribute in LDAP that holds the user's password. Use this this option if you want to
+         * obtain credentials from Ldap based on the built-in supported types.
          *
-         * @param dnAttribute the DN attribute
+         * @param passwordAttribute the password attribute name. Defaults to {@link UserPasswordCredentialLoader#DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME}.
          * @return this builder
          */
-        public PrincipalMappingBuilder setDnAttribute(final String dnAttribute) {
-            assertNotBuilt();
-            this.dnAttribute = dnAttribute;
-
+        public PrincipalMappingBuilder setPasswordAttribute(final String passwordAttribute) {
+            this.passwordAttribute = passwordAttribute;
             return this;
         }
 
         /**
-         * Set the validate-presence flag for this mapping.
+         * <p>Indicate if the principal obtained from {@link RealmIdentity#getPrincipal()} should be cached.
          *
-         * @param validatePresence the validate-presence flag
+         * <p>In this case, the LDAP server will be queried once while building the principal instance for the first time.
+         * Subsequent calls to {@link RealmIdentity#getPrincipal()} will always return the same instance.
+         *
          * @return this builder
          */
-        public PrincipalMappingBuilder setValidatePresence(final boolean validatePresence) {
-            assertNotBuilt();
-            this.validatePresence = validatePresence;
-
-            return this;
-        }
-
-        /**
-         * Set the reload-principal-name flag for this mapping.
-         *
-         * @param reloadPrincipalName the reload-principal-name flag
-         * @return this builder
-         */
-        public PrincipalMappingBuilder setReloadPrincipalName(final boolean reloadPrincipalName) {
-            assertNotBuilt();
-            this.reloadPrincipalName = reloadPrincipalName;
-
+        public PrincipalMappingBuilder cachePrincipal() {
+            this.cachePrincipal = true;
             return this;
         }
 
         /**
          * Build this principal mapping.
          *
-         * @return the enclosing LDAP security realm builder
+         * @return a {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.PrincipalMapping} instance with all the configuration.
          */
-        public LdapSecurityRealmBuilder build() {
-            assertNotBuilt();
-
-            principalMapping = new LdapSecurityRealm.PrincipalMapping(searchDn, recursive, nameIsDn, principalUseDn,
-                    nameAttribute, dnAttribute, validatePresence, reloadPrincipalName);
-            built = true;
-            return LdapSecurityRealmBuilder.this;
-        }
-
-        private void assertNotBuilt() {
-            if (built) {
-                throw new IllegalStateException("Builder has already been built.");
-            }
-
-            LdapSecurityRealmBuilder.this.assertNotBuilt();
-        }
-
-    }
-
-    /**
-     * A builder for a user/password credential loader.
-     */
-    public class UserPasswordCredentialLoaderBuilder {
-
-        private boolean built = false;
-        private String userPasswordAttributeName = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
-        private Map<Class<?>, CredentialSupport> credentialSupportMap = new HashMap<Class<?>, CredentialSupport>();
-
-        UserPasswordCredentialLoaderBuilder() {
-        }
-
-        /**
-         * Set the user/password attribute name.
-         *
-         * @param userPasswordAttributeName the attribute name
-         * @return this builder
-         */
-        public UserPasswordCredentialLoaderBuilder setUserPasswordAttributeName(final String userPasswordAttributeName) {
-            assertNotBuilt();
-            this.userPasswordAttributeName = userPasswordAttributeName;
-
-            return this;
-        }
-
-        /**
-         * Add support for a specific credential type.
-         *
-         * @param credentialType the credential type
-         * @param support the level of support for the credential type
-         * @return this builder
-         */
-        public UserPasswordCredentialLoaderBuilder addCredentialSupport(final Class<?> credentialType, final CredentialSupport support) {
-            assertNotBuilt();
-            credentialSupportMap.put(credentialType, support);
-
-            return this;
-        }
-
-        /**
-         * Build this credential loader.
-         *
-         * @return the enclosing LDAP security realm builder
-         */
-        public LdapSecurityRealmBuilder build() {
-            assertNotBuilt();
-
-            built = true;
-            credentialLoaders.add(new UserPasswordCredentialLoader(userPasswordAttributeName, credentialSupportMap));
-
-            return LdapSecurityRealmBuilder.this;
-        }
-
-        private void assertNotBuilt() {
-            if (built) {
-                throw new IllegalStateException("Builder has already been built.");
-            }
-
-            LdapSecurityRealmBuilder.this.assertNotBuilt();
+        public LdapSecurityRealm.PrincipalMapping build() {
+            return new LdapSecurityRealm.PrincipalMapping(searchDn, searchRecursive, searchTimeLimit, principalUseDn, nameAttribute, this.passwordAttribute, cachePrincipal);
         }
     }
-
 }

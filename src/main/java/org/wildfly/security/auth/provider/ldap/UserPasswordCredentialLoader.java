@@ -26,6 +26,7 @@ import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGO
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.naming.NamingException;
@@ -36,6 +37,11 @@ import javax.naming.directory.DirContext;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
+import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
@@ -51,21 +57,26 @@ import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
 class UserPasswordCredentialLoader implements CredentialLoader {
 
     static final String DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME = "userPassword";
+    static Map<Class<?>, CredentialSupport> DEFAULT_CREDENTIAL_SUPPORT = new HashMap<>();
+
+    static {
+        DEFAULT_CREDENTIAL_SUPPORT.put(ClearPassword.class, CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put(SimpleDigestPassword.class, CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put(UnixDESCryptPassword.class, CredentialSupport.UNKNOWN);
+    }
 
     private final String userPasswordAttributeName;
-    private final Map<Class<?>, CredentialSupport> credentialSupportMap;
 
-    public UserPasswordCredentialLoader(String userPasswordAttributeName, Map<Class<?>, CredentialSupport> credentialSupportMap) {
+    public UserPasswordCredentialLoader(String userPasswordAttributeName) {
         this.userPasswordAttributeName = userPasswordAttributeName;
-        this.credentialSupportMap = credentialSupportMap;
     }
 
     @Override
     public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
-        if (credentialSupportMap.isEmpty()) {
-            return CredentialSupport.UNKNOWN;
-        }
-        CredentialSupport response = credentialSupportMap.get(credentialType);
+        CredentialSupport response = DEFAULT_CREDENTIAL_SUPPORT.get(credentialType);
+
         if (response == null) {
             response = CredentialSupport.UNSUPPORTED;
         }

@@ -18,15 +18,16 @@
 
 package org.wildfly.security.ldap;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
+
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import java.util.Properties;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 /**
  * Test case to test connectivity to the server, also verifies that the user accounts in use are all correctly registered.
@@ -72,10 +73,22 @@ public class ConnectionSuiteChild {
     }
 
     private void runTest(final String principal, final String credential) throws NamingException {
+        Properties additionalConnectionProperties = new Properties();
+
+        // let's configure connection pooling
+        additionalConnectionProperties.put("com.sun.jndi.ldap.connect.pool", "true");
+
+        System.setProperty("com.sun.jndi.ldap.connect.pool.authentication", "simple");
+        System.setProperty("com.sun.jndi.ldap.connect.pool.maxsize", "10");
+        System.setProperty("com.sun.jndi.ldap.connect.pool.prefsize", "5");
+        System.setProperty("com.sun.jndi.ldap.connect.pool.timeout", "300000");
+        System.setProperty("com.sun.jndi.ldap.connect.pool.debug", "all");
+
         DirContextFactory factory = SimpleDirContextFactoryBuilder.builder()
                 .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
                 .setSecurityPrincipal(principal)
                 .setSecurityCredential(credential)
+                .setConnectionProperties(additionalConnectionProperties)
                 .build();
 
         DirContext context = factory.obtainDirContext(null);
