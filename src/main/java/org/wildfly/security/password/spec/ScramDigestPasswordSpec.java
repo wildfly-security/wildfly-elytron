@@ -25,7 +25,6 @@ package org.wildfly.security.password.spec;
  */
 public final class ScramDigestPasswordSpec implements PasswordSpec {
 
-    private final String algorithm;
     private final byte[] digest;
     private final byte[] salt;
     private final int iterationCount;
@@ -33,13 +32,11 @@ public final class ScramDigestPasswordSpec implements PasswordSpec {
     /**
      * Create a new instance of {@code ScramDigestPasswordSpec} with the specified parameters.
      *
-     * @param algorithm to be used to create the digest (SCRAM-SHA-1 or SCRAM-SHA-256).
      * @param digest a byte[] representing the digest.
      * @param salt a byte[] representing the salt used to create the digest.
      * @param iterationCount an int representing the iteration count used to create the digest.
      */
-    public ScramDigestPasswordSpec(final String algorithm, final byte[] digest, final byte[] salt, final int iterationCount) {
-        this.algorithm = algorithm;
+    public ScramDigestPasswordSpec(final byte[] digest, final byte[] salt, final int iterationCount) {
         this.digest = digest;
         this.salt = salt;
         this.iterationCount = iterationCount;

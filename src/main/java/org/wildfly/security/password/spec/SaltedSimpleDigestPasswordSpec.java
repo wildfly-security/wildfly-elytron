@@ -25,12 +25,10 @@ package org.wildfly.security.password.spec;
  */
 public final class SaltedSimpleDigestPasswordSpec implements PasswordSpec {
 
-    private final String algorithm;
     private final byte[] digest;
     private final byte[] salt;
 
-    public SaltedSimpleDigestPasswordSpec(final String algorithm, final byte[] digest, final byte[] salt) {
-        this.algorithm = algorithm;
+    public SaltedSimpleDigestPasswordSpec(final byte[] digest, final byte[] salt) {
         this.digest = digest;
         this.salt = salt;
     }

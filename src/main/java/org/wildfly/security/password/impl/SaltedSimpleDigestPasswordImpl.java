@@ -107,7 +107,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(SaltedSimpleDigestPasswordSpec.class)) {
-            return keySpecType.cast(new SaltedSimpleDigestPasswordSpec(algorithm, digest.clone(), salt.clone()));
+            return keySpecType.cast(new SaltedSimpleDigestPasswordSpec(digest.clone(), salt.clone()));
         }
         throw new InvalidKeySpecException();
     }

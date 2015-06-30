@@ -139,7 +139,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
         if (keySpecType.isAssignableFrom(ScramDigestPasswordSpec.class)) {
-            return keySpecType.cast(new ScramDigestPasswordSpec(this.getAlgorithm(), this.getDigest(), this.getSalt(), this.getIterationCount()));
+            return keySpecType.cast(new ScramDigestPasswordSpec(this.getDigest(), this.getSalt(), this.getIterationCount()));
         }
         throw new InvalidKeySpecException();
     }
