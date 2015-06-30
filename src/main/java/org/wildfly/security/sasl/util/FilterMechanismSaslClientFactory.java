@@ -80,7 +80,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
         Assert.checkNotNullParam("mechanisms", mechanisms);
         final HashSet<String> set = new HashSet<String>(mechanisms);
         predicate = name -> set.contains(name) == include;
-   }
+    }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         for (String mechanism : mechanisms) {
