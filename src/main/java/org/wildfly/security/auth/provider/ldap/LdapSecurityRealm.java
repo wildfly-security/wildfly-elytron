@@ -104,11 +104,6 @@ class LdapSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        private LdapRealmIdentity(final Principal principal) {
-            assert principal instanceof NamePrincipal || principal instanceof X500Principal;
-            this.name = principal.getName();
-        }
-
         @Override
         public Principal getPrincipal() {
             if (this.identity == null || !principalMapping.cachePrincipal) {
