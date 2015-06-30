@@ -46,6 +46,39 @@ public interface RoleMapper {
     RoleMapper IDENTITY_ROLE_MAPPER = rolesToMap -> rolesToMap;
 
     /**
+     * Create a role mapper which is the intersection (logical "and") of the results of this and the given role mapper.
+     *
+     * @param other the other role mapper
+     * @return the intersection role mapper
+     */
+    default RoleMapper and(RoleMapper other) {
+        RoleMapper left = this;
+        return rolesToMap -> new IntersectionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+    }
+
+    /**
+     * Create a role mapper which is the union (logical "or") of the results of this and the given role mapper.
+     *
+     * @param other the other role mapper
+     * @return the union role mapper
+     */
+    default RoleMapper or(RoleMapper other) {
+        RoleMapper left = this;
+        return rolesToMap -> new UnionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+    }
+
+    /**
+     * Create a role mapper which is the symmetric difference (logical "xor") of the results of this and the given role mapper.
+     *
+     * @param other the other role mapper
+     * @return the difference role mapper
+     */
+    default RoleMapper xor(RoleMapper other) {
+        RoleMapper left = this;
+        return rolesToMap -> new DifferenceSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+    }
+
+    /**
      * Create an aggregate role mapper.  Each role mapper is applied in order.
      *
      * @param mapper1 the first role mapper to apply (must not be {@code null})
@@ -70,7 +103,7 @@ public interface RoleMapper {
         for (int i = 0; i < clone.length; i++) {
             Assert.checkNotNullArrayParam("mappers", i, clone[i]);
         }
-        return (rolesToMap) -> {
+        return rolesToMap -> {
             for (RoleMapper r : clone) rolesToMap = r.mapRoles(rolesToMap);
             return rolesToMap;
         };
