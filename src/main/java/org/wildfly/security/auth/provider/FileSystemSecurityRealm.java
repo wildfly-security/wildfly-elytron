@@ -1,0 +1,788 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.wildfly.security.auth.provider;
+
+import static java.nio.file.StandardOpenOption.*;
+import static javax.xml.stream.XMLStreamConstants.*;
+
+import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.ThreadLocalRandom;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.spi.Attributes;
+import org.wildfly.security.auth.spi.AuthorizationIdentity;
+import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.spi.MapAttributes;
+import org.wildfly.security.auth.spi.ModifiableRealmIdentity;
+import org.wildfly.security.auth.spi.ModifiableSecurityRealm;
+import org.wildfly.security.auth.spi.RealmUnavailableException;
+import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
+
+/**
+ * A simple filesystem-backed security realm.
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
+public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
+
+    static final String ELYTRON_1_0 = "urn:elytron:1.0";
+
+    private final Path root;
+    private final NameRewriter nameRewriter;
+    private final int levels;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param root the root path of the identity store
+     * @param nameRewriter the name rewriter to apply to looked up names
+     * @param levels the number of levels of directory hashing to apply
+     */
+    public FileSystemSecurityRealm(final Path root, final NameRewriter nameRewriter, final int levels) {
+        this.root = root;
+        this.nameRewriter = nameRewriter;
+        this.levels = levels;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param root the root path of the identity store
+     * @param levels the number of levels of directory hashing to apply
+     */
+    public FileSystemSecurityRealm(final Path root, final int levels) {
+        this.root = root;
+        this.levels = levels;
+        nameRewriter = NameRewriter.IDENTITY_REWRITER;
+    }
+
+    /**
+     * Construct a new instance with 2 levels of hashing.
+     *
+     * @param root the root path of the identity store
+     */
+    public FileSystemSecurityRealm(final Path root) {
+        this.root = root;
+        levels = 2;
+        nameRewriter = NameRewriter.IDENTITY_REWRITER;
+    }
+
+    private Path pathFor(final String name) {
+        assert name.codePointCount(0, name.length()) > 0;
+        final int levels = this.levels;
+        Path path = root;
+        int idx = 0;
+        for (int level = 0; level < levels; level ++) {
+            int newIdx = name.offsetByCodePoints(idx, 1);
+            path = path.resolve(name.substring(idx, newIdx));
+            idx = newIdx;
+            if (idx == name.length()) {
+                break;
+            }
+        }
+        return path.resolve(name + ".xml");
+    }
+
+    public ModifiableRealmIdentity createRealmIdentity(final String name) {
+        if (name.isEmpty()) {
+            throw ElytronMessages.log.invalidEmptyName();
+        }
+        final String finalName = nameRewriter.rewriteName(name);
+        return new Identity(new NamePrincipal(finalName), pathFor(finalName));
+    }
+
+    public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+        return subIterator(root, levels);
+    }
+
+    private Iterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
+        if (levels == 0) {
+            final Iterator<Path> iterator;
+            try {
+                iterator = Files.newDirectoryStream(root, "*.xml").iterator();
+            } catch (IOException e) {
+                return Collections.emptyIterator();
+            }
+            return new Iterator<ModifiableRealmIdentity>() {
+
+                public boolean hasNext() {
+                    return iterator.hasNext();
+                }
+
+                public ModifiableRealmIdentity next() {
+                    final Path path = iterator.next();
+                    final String fileName = path.getFileName().toString();
+                    return createRealmIdentity(fileName.substring(0, fileName.length() - 4));
+                }
+            };
+        } else {
+            final Iterator<Path> iterator;
+            try {
+                iterator = Files.newDirectoryStream(root, entry -> {
+                    final String fileName = entry.getFileName().toString();
+                    return fileName.length() == 1 && !fileName.equals(".") && Files.isDirectory(entry);
+                }).iterator();
+            } catch (IOException e) {
+                return Collections.emptyIterator();
+            }
+            return new Iterator<ModifiableRealmIdentity>() {
+                private Iterator<ModifiableRealmIdentity> subIterator;
+
+                public boolean hasNext() {
+                    for (;;) {
+                        if (subIterator == null) {
+                            if (! iterator.hasNext()) {
+                                return false;
+                            }
+                            final Path path = iterator.next();
+                            subIterator = subIterator(path, levels - 1);
+                        } else if (subIterator.hasNext()) {
+                            return true;
+                        } else {
+                            subIterator = null;
+                        }
+                    }
+                }
+
+                public ModifiableRealmIdentity next() {
+                    if (! hasNext()) {
+                        throw new NoSuchElementException();
+                    }
+                    return subIterator.next();
+                }
+            };
+        }
+    }
+
+    public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+        return CredentialSupport.UNKNOWN;
+    }
+
+    @FunctionalInterface
+    interface CredentialParseFunction<C> {
+        C parseCredential(String algorithm, String format, String body) throws RealmUnavailableException, XMLStreamException;
+    }
+
+    class Identity implements ModifiableRealmIdentity {
+
+        private final NamePrincipal namePrincipal;
+        private final Path path;
+
+        Identity(final NamePrincipal namePrincipal, final Path path) {
+            this.namePrincipal = namePrincipal;
+            this.path = path;
+
+        }
+
+        public Principal getPrincipal() {
+            return namePrincipal;
+        }
+
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+            List<Object> credentials = loadCredentials();
+            for (Object credential : credentials) {
+                if (credentialType.isInstance(credential)) {
+                    return CredentialSupport.FULLY_SUPPORTED;
+                }
+            }
+            return CredentialSupport.UNSUPPORTED;
+        }
+
+        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            List<Object> credentials = loadCredentials();
+            for (Object credential : credentials) {
+                if (credentialType.isInstance(credential)) {
+                    return credentialType.cast(credential);
+                }
+            }
+            return null;
+        }
+
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            // we only know how to verify plain-text passwords
+            if (credential instanceof ClearPassword) {
+                ClearPassword clearPassword = (ClearPassword) credential;
+                List<Object> credentials = loadCredentials();
+                for (Object ours : credentials) {
+                    if (ours instanceof Password) try {
+                        final Password password = (Password) ours;
+                        final String algorithm = password.getAlgorithm();
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                        return passwordFactory.verify(password, clearPassword.getPassword());
+                    } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+                        // try next credential
+                    }
+                }
+            }
+            return false;
+        }
+
+        private List<Object> loadCredentials() throws RealmUnavailableException {
+            final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+            return loadedIdentity == null ? Collections.emptyList() : loadedIdentity.getCredentials();
+        }
+
+        public boolean exists() throws RealmUnavailableException {
+            return Files.exists(path);
+        }
+
+        public void delete() throws RealmUnavailableException {
+            try {
+                Files.delete(path);
+            } catch (NoSuchFileException e) {
+                throw ElytronMessages.log.fileSystemRealmNotFound(getPrincipal().getName());
+            } catch (IOException e) {
+                throw ElytronMessages.log.fileSystemRealmDeleteFailed(getPrincipal().getName(), e);
+            }
+        }
+
+        private String tempSuffix() {
+            final ThreadLocalRandom random = ThreadLocalRandom.current();
+            char[] array = new char[12];
+            for (int i = 0; i < array.length; i ++) {
+                int idx = random.nextInt(36);
+                if (idx < 26) {
+                    array[i] = (char) ('A' + idx);
+                } else {
+                    array[i] = (char) ('0' + idx - 26);
+                }
+            }
+            return new String(array);
+        }
+
+        private Path tempPath() {
+            return path.getParent().resolve(path.getFileName().toString() + '.' + tempSuffix());
+        }
+
+        public void create() throws RealmUnavailableException {
+            for (;;) {
+                final Path tempPath = tempPath();
+                final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+                try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
+                    try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
+                        final XMLStreamWriter streamWriter = holder.getXmlStreamWriter();
+                        // create empty identity
+                        streamWriter.writeStartDocument();
+                        streamWriter.writeCharacters("\n");
+                        streamWriter.writeStartElement(ELYTRON_1_0, "identity");
+                        streamWriter.writeEndElement();
+                        streamWriter.writeEndDocument();
+                    } catch (XMLStreamException e) {
+                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getPrincipal().getName(), e);
+                    }
+                } catch (FileAlreadyExistsException ignored) {
+                    // try a new name
+                    continue;
+                } catch (IOException e) {
+                    throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, getPrincipal().getName(), e);
+                }
+                try {
+                    Files.createLink(path, tempPath);
+                } catch (FileAlreadyExistsException e) {
+                    try {
+                        Files.delete(tempPath);
+                    } catch (IOException e2) {
+                        e.addSuppressed(e2);
+                    }
+                    throw ElytronMessages.log.fileSystemRealmAlreadyExists(getPrincipal().getName(), e);
+                } catch (IOException e) {
+                    throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getPrincipal().getName(), e);
+                }
+                try {
+                    Files.delete(tempPath);
+                } catch (IOException ignored) {
+                    // nothing we can do
+                }
+                return;
+            }
+        }
+
+        public void setCredentials(final List<Object> credentials) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentials", credentials);
+            final LoadedIdentity loadedIdentity = loadIdentity(true, false);
+            if (loadedIdentity == null) {
+                throw ElytronMessages.log.fileSystemRealmNotFound(namePrincipal.getName());
+            }
+            final LoadedIdentity newIdentity = new LoadedIdentity(getPrincipal(), credentials, loadedIdentity.getAttributes());
+            replaceIdentity(newIdentity);
+        }
+
+        public void setAttributes(final Attributes attributes) throws RealmUnavailableException {
+            Assert.checkNotNullParam("attributes", attributes);
+            final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+            if (loadedIdentity == null) {
+                throw ElytronMessages.log.fileSystemRealmNotFound(namePrincipal.getName());
+            }
+            final LoadedIdentity newIdentity = new LoadedIdentity(getPrincipal(), loadedIdentity.getCredentials(), attributes);
+            replaceIdentity(newIdentity);
+        }
+
+        private void replaceIdentity(final LoadedIdentity newIdentity) throws RealmUnavailableException {
+            for (;;) {
+                final Path tempPath = tempPath();
+                try {
+                    final XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+                    try (OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(tempPath, WRITE, CREATE_NEW, DSYNC))) {
+                        try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
+                            writeIdentity(holder.getXmlStreamWriter(), newIdentity);
+                        } catch (XMLStreamException | InvalidKeySpecException | CertificateEncodingException e) {
+                            throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getPrincipal().getName(), e);
+                        }
+                    } catch (FileAlreadyExistsException ignored) {
+                        // try a new name
+                        continue;
+                    } catch (IOException e) {
+                        try {
+                            Files.deleteIfExists(tempPath);
+                        } catch (IOException e2) {
+                            e.addSuppressed(e2);
+                        }
+                        throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, getPrincipal().getName(), e);
+                    }
+                    try {
+                        Files.createLink(path, tempPath);
+                    } catch (FileAlreadyExistsException e) {
+                        try {
+                            Files.delete(tempPath);
+                        } catch (IOException e2) {
+                            e.addSuppressed(e2);
+                        }
+                        throw ElytronMessages.log.fileSystemRealmAlreadyExists(getPrincipal().getName(), e);
+                    } catch (IOException e) {
+                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getPrincipal().getName(), e);
+                    }
+                    try {
+                        Files.delete(tempPath);
+                    } catch (IOException ignored) {
+                        // nothing we can do
+                    }
+                    return;
+                } catch (Throwable t) {
+                    try {
+                        Files.delete(tempPath);
+                    } catch (IOException e) {
+                        t.addSuppressed(e);
+                    }
+                    throw t;
+                }
+            }
+        }
+
+        private void writeIdentity(final XMLStreamWriter streamWriter, final LoadedIdentity newIdentity) throws XMLStreamException, InvalidKeySpecException, CertificateEncodingException {
+            streamWriter.writeStartDocument();
+            streamWriter.writeCharacters("\n");
+            streamWriter.writeStartElement(ELYTRON_1_0, "identity");
+            final Iterator<Object> credIter = newIdentity.getCredentials().iterator();
+            if (credIter.hasNext()) {
+                streamWriter.writeCharacters("\n    ");
+                streamWriter.writeStartElement(ELYTRON_1_0, "credentials");
+                do {
+                    streamWriter.writeCharacters("\n        ");
+                    final Object credential = credIter.next();
+                    if (credential instanceof Password) {
+                        streamWriter.writeStartElement(ELYTRON_1_0, "password");
+                        streamWriter.writeCharacters(PasswordUtil.getCryptString((Password) credential));
+                        streamWriter.writeEndElement();
+                    } else if (credential instanceof PublicKey) {
+                        final PublicKey publicKey = (PublicKey) credential;
+                        final String algorithm = publicKey.getAlgorithm();
+                        final String format = publicKey.getFormat();
+                        final byte[] encoded = publicKey.getEncoded();
+                        final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
+                        streamWriter.writeStartElement(ELYTRON_1_0, "public-key");
+                        streamWriter.writeAttribute("algorithm", algorithm);
+                        streamWriter.writeAttribute("format", format);
+                        while (iterator.hasNext()) {
+                            streamWriter.writeCharacters("\n            ");
+                            streamWriter.writeCharacters(iterator.limitedTo(64).drainToString());
+                        }
+                        streamWriter.writeCharacters("\n        ");
+                        streamWriter.writeEndElement();
+                    } else if (credential instanceof X509Certificate) {
+                        final X509Certificate certificate = (X509Certificate) credential;
+                        final byte[] encoded = certificate.getEncoded();
+                        final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
+                        streamWriter.writeStartElement(ELYTRON_1_0, "certificate");
+                        streamWriter.writeAttribute("algorithm", "X.509");
+                        while (iterator.hasNext()) {
+                            streamWriter.writeCharacters("\n            ");
+                            streamWriter.writeCharacters(iterator.limitedTo(64).drainToString());
+                        }
+                        streamWriter.writeCharacters("\n        ");
+                        streamWriter.writeEndElement();
+                    }
+                } while (credIter.hasNext());
+                streamWriter.writeCharacters("\n    ");
+                streamWriter.writeEndElement();
+            }
+            final Iterator<Attributes.Entry> entryIter = newIdentity.getAttributes().entries().iterator();
+            if (entryIter.hasNext()) {
+                streamWriter.writeCharacters("\n    ");
+                streamWriter.writeStartElement(ELYTRON_1_0, "attributes");
+                do {
+                    final Attributes.Entry entry = entryIter.next();
+                    for (String value : entry) {
+                        streamWriter.writeCharacters("\n        ");
+                        streamWriter.writeStartElement(ELYTRON_1_0, "attribute");
+                        streamWriter.writeAttribute("name", entry.getKey());
+                        streamWriter.writeAttribute("value", value);
+                        streamWriter.writeEndElement();
+                    }
+                } while (entryIter.hasNext());
+                streamWriter.writeCharacters("\n    ");
+                streamWriter.writeEndElement();
+            }
+            streamWriter.writeEndElement();
+            streamWriter.writeEndDocument();
+        }
+
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            final LoadedIdentity loadedIdentity = loadIdentity(true, false);
+            return loadedIdentity == null ? AuthorizationIdentity.emptyIdentity(namePrincipal) : AuthorizationIdentity.basicIdentity(namePrincipal, loadedIdentity.getAttributes());
+        }
+
+        private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {
+            try (InputStream inputStream = Files.newInputStream(path, READ)) {
+                final XMLInputFactory inputFactory = XMLInputFactory.newFactory();
+                inputFactory.setProperty(XMLInputFactory.IS_VALIDATING, Boolean.FALSE);
+                inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+                inputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+                inputFactory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.TRUE);
+                try (final AutoCloseableXMLStreamReaderHolder holder = new AutoCloseableXMLStreamReaderHolder(inputFactory.createXMLStreamReader(inputStream, "UTF-8"))) {
+                    final XMLStreamReader streamReader = holder.getXmlStreamReader();
+                    return parseIdentity(streamReader, skipCredentials, skipAttributes);
+                } catch (XMLStreamException e) {
+                    throw ElytronMessages.log.fileSystemRealmFailedToRead(path, getPrincipal().getName(), e);
+                }
+            } catch (NoSuchFileException | FileNotFoundException ignored) {
+                return null;
+            } catch (IOException e) {
+                throw ElytronMessages.log.fileSystemRealmFailedToOpen(path, getPrincipal().getName(), e);
+            }
+        }
+
+        private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
+            final int tag = streamReader.nextTag();
+            if (tag != START_ELEMENT || ! ELYTRON_1_0.equals(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            return parseIdentityContents(streamReader, skipCredentials, skipRoles);
+        }
+
+        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
+            final int attributeCount = streamReader.getAttributeCount();
+            if (attributeCount > 0) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            List<Object> credentials = Collections.emptyList();
+            Attributes attributes = Attributes.EMPTY;
+            int tag;
+            boolean gotCredentials = false;
+            boolean gotRoles = false;
+            for (;;) {
+                tag = streamReader.nextTag();
+                if (tag == END_ELEMENT) {
+                    return new LoadedIdentity(namePrincipal, credentials, attributes);
+                } else {
+                    assert tag == START_ELEMENT;
+                    if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                        throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                    }
+                    if (! gotCredentials && "credentials".equals(streamReader.getLocalName())) {
+                        gotCredentials = true;
+                        if (skipCredentials) {
+                            consumeContent(streamReader);
+                        } else {
+                            credentials = parseCredentials(streamReader);
+                        }
+                    } else if (! gotRoles && "attributes".equals(streamReader.getLocalName())) {
+                        gotRoles = true;
+                        if (skipRoles) {
+                            consumeContent(streamReader);
+                        } else {
+                            attributes = parseAttributes(streamReader);
+                        }
+                    }
+                }
+
+            }
+        }
+
+        private List<Object> parseCredentials(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            final int attributeCount = streamReader.getAttributeCount();
+            if (attributeCount > 0) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            int tag = streamReader.nextTag();
+            if (tag == END_ELEMENT) {
+                return Collections.emptyList();
+            }
+            List<Object> credentials = new ArrayList<>();
+            do {
+                if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+                if ("password".equals(streamReader.getLocalName())) {
+                    credentials.add(parsePassword(streamReader));
+                } else if ("private-key".equals(streamReader.getLocalName())) {
+                    credentials.add(parsePrivateKey(streamReader));
+                } else if ("certificate".equals(streamReader.getLocalName())) {
+                    credentials.add(parseCertificate(streamReader));
+                } else {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            } while (streamReader.nextTag() == START_ELEMENT);
+            return credentials;
+        }
+
+        private <C> C parseCredential(final XMLStreamReader streamReader, CredentialParseFunction<C> function) throws RealmUnavailableException, XMLStreamException {
+            final int attributeCount = streamReader.getAttributeCount();
+            String algorithm = null;
+            String format = null;
+            for (int i = 0; i < attributeCount; i ++) {
+                if (streamReader.getAttributeNamespace(i) != null) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+                final String localName = streamReader.getAttributeLocalName(i);
+                if ("algorithm".equals(localName)) {
+                    algorithm = streamReader.getAttributeValue(i);
+                } else if ("format".equals(localName)) {
+                    format = streamReader.getAttributeValue(i);
+                } else {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            }
+            final String text = streamReader.getElementText().trim();
+            C cred = function.parseCredential(algorithm, format, text);
+            if (streamReader.nextTag() != END_ELEMENT) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            return cred;
+        }
+
+        private X509Certificate parseCertificate(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            return parseCredential(streamReader, (algorithm, format, text) -> {
+                if (algorithm == null) algorithm = "X.509";
+                if (format == null) format = "X.509";
+                try {
+                    final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
+                    return (X509Certificate) certificateFactory.generateCertificate(CodePointIterator.ofString(text).base64Decode().asInputStream());
+                } catch (CertificateException | ClassCastException e) {
+                    throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            });
+        }
+
+        private PrivateKey parsePrivateKey(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            return parseCredential(streamReader, (algorithm, format, text) -> {
+                if (algorithm == null) {
+                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+                try {
+                    final KeySpec keySpec;
+                    if (format == null || format.equals("X.509")) {
+                        keySpec = new X509EncodedKeySpec(CodePointIterator.ofString(text).base64Decode().drain());
+                    } else {
+                        throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                    }
+                    return KeyFactory.getInstance(algorithm).generatePrivate(keySpec);
+                } catch (InvalidKeySpecException e) {
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                } catch (NoSuchAlgorithmException e) {
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            });
+        }
+
+        private Password parsePassword(final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+            return parseCredential(streamReader, (algorithm, format, text) -> {
+                try {
+                    if ("crypt".equals(format)) {
+                        return PasswordUtil.parseCryptString(text);
+                    } else {
+                        throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                    }
+                } catch (InvalidKeySpecException e) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            });
+        }
+
+        private Attributes parseAttributes(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            final int attributeCount = streamReader.getAttributeCount();
+            if (attributeCount > 0) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            int tag = streamReader.nextTag();
+            if (tag == END_ELEMENT) {
+                return Attributes.EMPTY;
+            }
+            Attributes attributes = new MapAttributes();
+            do {
+                if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+                if ("attribute".equals(streamReader.getLocalName())) {
+                    parseAttribute(streamReader, attributes);
+                } else {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            } while (streamReader.nextTag() == START_ELEMENT);
+            return attributes;
+        }
+
+        private void parseAttribute(final XMLStreamReader streamReader, final Attributes attributes) throws XMLStreamException, RealmUnavailableException {
+            String name = null;
+            String value = null;
+            final int attributeCount = streamReader.getAttributeCount();
+            for (int i = 0; i < attributeCount; i++) {
+                if (streamReader.getAttributeNamespace(i) != null) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+                if ("name".equals(streamReader.getAttributeLocalName(i))) {
+                    name = streamReader.getAttributeValue(i);
+                } else if ("value".equals(streamReader.getAttributeLocalName(i))) {
+                    value = streamReader.getAttributeValue(i);
+                } else {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+                }
+            }
+            if (name == null) {
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("name", path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            if (value == null) {
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+            attributes.addLast(name, value);
+            if (streamReader.nextTag() != END_ELEMENT) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getPrincipal().getName());
+            }
+        }
+
+        private void consumeContent(final XMLStreamReader reader) throws XMLStreamException {
+            while (reader.hasNext()) {
+                switch (reader.next()) {
+                    case START_ELEMENT: {
+                        consumeContent(reader);
+                        break;
+                    }
+                    case END_ELEMENT: {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    final class LoadedIdentity {
+        private final Principal principal;
+        private final List<Object> credentials;
+        private final Attributes attributes;
+
+        LoadedIdentity(final Principal principal, final List<Object> credentials, final Attributes attributes) {
+            this.principal = principal;
+            this.credentials = credentials;
+            this.attributes = attributes;
+        }
+
+        public Principal getPrincipal() {
+            return principal;
+        }
+
+        public Attributes getAttributes() {
+            return attributes;
+        }
+
+        List<Object> getCredentials() {
+            return credentials;
+        }
+    }
+
+    static class AutoCloseableXMLStreamReaderHolder implements AutoCloseable {
+        private final XMLStreamReader xmlStreamReader;
+
+        AutoCloseableXMLStreamReaderHolder(final XMLStreamReader xmlStreamReader) {
+            this.xmlStreamReader = xmlStreamReader;
+        }
+
+        public void close() throws XMLStreamException {
+            xmlStreamReader.close();
+        }
+
+        public XMLStreamReader getXmlStreamReader() {
+            return xmlStreamReader;
+        }
+    }
+
+    static class AutoCloseableXMLStreamWriterHolder implements AutoCloseable {
+        private final XMLStreamWriter xmlStreamWriter;
+
+        AutoCloseableXMLStreamWriterHolder(final XMLStreamWriter xmlStreamWriter) {
+            this.xmlStreamWriter = xmlStreamWriter;
+        }
+
+        public void close() throws XMLStreamException {
+            xmlStreamWriter.close();
+        }
+
+        public XMLStreamWriter getXmlStreamWriter() {
+            return xmlStreamWriter;
+        }
+    }
+}

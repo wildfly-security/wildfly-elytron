@@ -25,6 +25,44 @@
             attributeFormDefault="unqualified"
             version="1.0">
 
+    <!-- File-backed realm elements -->
+
+    <xsd:element name="identity" type="identity-type"/>
+
+    <xsd:complexType name="identity-type">
+        <xsd:all minOccurs="1" maxOccurs="1">
+            <xsd:element name="credentials" type="credentials-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="attributes" type="attributes-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="credentials-type">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="password" type="credential-type"/>
+            <xsd:element name="private-key" type="credential-type"/>
+            <xsd:element name="certificate" type="credential-type"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="attributes-type">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="attribute" type="attribute-type"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="credential-type">
+        <xsd:simpleContent>
+            <xsd:extension base="xsd:string"/>
+        </xsd:simpleContent>
+        <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
+        <xsd:attribute name="format" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="attribute-type">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="value" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
     <!-- Authentication client elements -->
 
     <xsd:element name="authentication-client" type="authentication-client-type"/>
