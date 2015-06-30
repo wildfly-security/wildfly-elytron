@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 
 /**
@@ -36,4 +38,17 @@ public interface ClearPassword extends TwoWayPassword {
      * @return the password characters
      */
     char[] getPassword() throws IllegalStateException;
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param password the password characters
+     * @return the raw password implementation
+     */
+    static ClearPassword createRaw(String algorithm, char[] password) {
+        return new RawClearPassword(algorithm, password);
+    }
 }

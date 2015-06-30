@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * An MD5-crypt password using the Sun scheme.
@@ -67,4 +70,22 @@ public interface SunUnixMD5CryptPassword extends OneWayPassword {
      * @return the iteration count
      */
     int getIterationCount();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param hash the hash
+     * @param salt the salt
+     * @param iterationCount the iteration count
+     * @return the raw password implementation
+     */
+    static SunUnixMD5CryptPassword createRaw(String algorithm, byte[] salt, byte[] hash, int iterationCount) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("hash", hash);
+        return new RawSunUnixMD5CryptPassword(algorithm, salt, hash, iterationCount);
+    }
 }

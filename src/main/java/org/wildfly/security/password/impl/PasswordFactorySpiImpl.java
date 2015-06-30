@@ -49,7 +49,6 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
-import org.wildfly.security.password.spec.AlgorithmPasswordSpec;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -133,9 +132,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SUN_CRYPT_MD5:
             case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                if (keySpec instanceof SunUnixMD5CryptPasswordSpec && algorithmEquals(algorithm, keySpec)) {
+                if (keySpec instanceof SunUnixMD5CryptPasswordSpec) {
                     try {
-                        return new SunUnixMD5CryptPasswordImpl((SunUnixMD5CryptPasswordSpec) keySpec);
+                        return new SunUnixMD5CryptPasswordImpl(algorithm, (SunUnixMD5CryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -157,9 +156,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_CRYPT_SHA_256:
             case ALGORITHM_CRYPT_SHA_512: {
-                if (keySpec instanceof UnixSHACryptPasswordSpec && algorithmEquals(algorithm, keySpec)) {
+                if (keySpec instanceof UnixSHACryptPasswordSpec) {
                     try {
-                        return new UnixSHACryptPasswordImpl((UnixSHACryptPasswordSpec) keySpec);
+                        return new UnixSHACryptPasswordImpl(algorithm, (UnixSHACryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -183,8 +182,8 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_SHA:
             case ALGORITHM_DIGEST_SHA_256:
             case ALGORITHM_DIGEST_SHA_512:
-                if (keySpec instanceof DigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
-                    return new DigestPasswordImpl((DigestPasswordSpec) keySpec);
+                if (keySpec instanceof DigestPasswordSpec) {
+                    return new DigestPasswordImpl(algorithm, (DigestPasswordSpec) keySpec);
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     return new DigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                 }
@@ -195,9 +194,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SIMPLE_DIGEST_SHA_256:
             case ALGORITHM_SIMPLE_DIGEST_SHA_384:
             case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
-                if (keySpec instanceof SimpleDigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
+                if (keySpec instanceof SimpleDigestPasswordSpec) {
                     try {
-                        return new SimpleDigestPasswordImpl((SimpleDigestPasswordSpec) keySpec);
+                        return new SimpleDigestPasswordImpl(algorithm, (SimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -227,9 +226,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
-                if (keySpec instanceof SaltedSimpleDigestPasswordSpec && algorithmEquals(algorithm, keySpec)) {
+                if (keySpec instanceof SaltedSimpleDigestPasswordSpec) {
                     try {
-                        return new SaltedSimpleDigestPasswordImpl((SaltedSimpleDigestPasswordSpec) keySpec);
+                        return new SaltedSimpleDigestPasswordImpl(algorithm, (SaltedSimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -297,7 +296,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SCRAM_SHA_256: {
                 if (keySpec instanceof ScramDigestPasswordSpec) {
                     try {
-                        return new ScramDigestPasswordImpl((ScramDigestPasswordSpec) keySpec);
+                        return new ScramDigestPasswordImpl(algorithm, (ScramDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e.getMessage());
                     }
@@ -320,10 +319,6 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
         }
         throw new InvalidKeySpecException("Unknown algorithm or incompatible PasswordSpec");
-    }
-
-    private boolean algorithmEquals(String algorithm, KeySpec keySpec) {
-        return keySpec instanceof AlgorithmPasswordSpec ? algorithm.equals(((AlgorithmPasswordSpec)keySpec).getAlgorithm()) : false;
     }
 
     @Override

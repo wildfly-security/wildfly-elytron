@@ -49,9 +49,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.PasswordUtil;
-import org.wildfly.security.password.spec.PasswordSpec;
 
 /**
  * A password file formatted {@link KeyStore} implementation.
@@ -191,13 +189,10 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
             for (Map.Entry<String, PasswordEntry> entry : map.entrySet()) {
                 final PasswordEntry passwordEntry = entry.getValue();
                 final Password pw = passwordEntry.getPassword();
-                final PasswordFactory factory = PasswordFactory.getInstance(pw.getAlgorithm());
-                final PasswordSpec passwordSpec;
                 final char[] chars;
                 final String alias = entry.getKey();
                 try {
-                    passwordSpec = factory.getKeySpec(pw, PasswordSpec.class);
-                    chars = PasswordUtil.getCryptStringChars(passwordSpec);
+                    chars = PasswordUtil.getCryptStringChars(pw);
                 } catch (InvalidKeySpecException e) {
                     throw log.keyStoreFailedToTranslate(alias, e);
                 }
@@ -272,9 +267,7 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
                             }
                             final Password pw;
                             try {
-                                final PasswordSpec passwordSpec = PasswordUtil.parseCryptString(c);
-                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-                                pw = passwordFactory.generatePassword(passwordSpec);
+                                pw = PasswordUtil.parseCryptString(c);
                             } catch (InvalidKeySpecException e) {
                                 throw log.noAlgorithmForPassword(alias);
                             }

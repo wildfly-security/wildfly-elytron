@@ -32,7 +32,6 @@ import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
-import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
@@ -218,7 +217,7 @@ public class PasswordKeyMapper implements KeyMapper {
                 if (ClearPassword.class.equals(credentialType)) {
                     return toClearPassword(hash, passwordFactory);
                 } else if (BCryptPassword.class.equals(credentialType)) {
-                    return toBcryptPassword(hash, passwordFactory);
+                    return PasswordUtil.parseCryptString(toCharArray(hash));
                 } else if (SaltedSimpleDigestPassword.class.equals(credentialType)) {
                     return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
                 } else if (SimpleDigestPassword.class.equals(credentialType)) {
@@ -244,7 +243,7 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     private Object toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        SimpleDigestPasswordSpec simpleDigestPasswordSpec = new SimpleDigestPasswordSpec(algorithm, hash);
+        SimpleDigestPasswordSpec simpleDigestPasswordSpec = new SimpleDigestPasswordSpec(hash);
         return passwordFactory.generatePassword(simpleDigestPasswordSpec);
     }
 
@@ -255,11 +254,6 @@ public class PasswordKeyMapper implements KeyMapper {
 
         SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(algorithm, hash, salt);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
-    }
-
-    private Object toBcryptPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        BCryptPasswordSpec bCryptPasswordSpec = (BCryptPasswordSpec) PasswordUtil.parseCryptString(toCharArray(hash));
-        return passwordFactory.generatePassword(bCryptPasswordSpec);
     }
 
     private Object toClearPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {

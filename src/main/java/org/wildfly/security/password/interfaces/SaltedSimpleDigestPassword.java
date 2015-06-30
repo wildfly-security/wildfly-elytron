@@ -20,6 +20,7 @@ package org.wildfly.security.password.interfaces;
 
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A simple password where the generated digest also includes a salt.
@@ -97,4 +98,17 @@ public interface SaltedSimpleDigestPassword extends OneWayPassword {
      */
     byte[] getSalt();
 
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param digest the digest
+     * @param salt the salt
+     * @return the raw password implementation
+     */
+    static SaltedSimpleDigestPassword createRaw(final String algorithm, final byte[] digest, final byte[] salt) {
+        return new RawSaltedSimpleDigestPassword(algorithm, digest.clone(), salt.clone());
+    }
 }

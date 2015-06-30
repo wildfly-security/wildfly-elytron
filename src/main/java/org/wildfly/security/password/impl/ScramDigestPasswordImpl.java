@@ -62,8 +62,8 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         this(password.getAlgorithm(), password.getDigest().clone(), password.getSalt().clone(), password.getIterationCount());
     }
 
-    ScramDigestPasswordImpl(final ScramDigestPasswordSpec spec) {
-        this(spec.getAlgorithm(), spec.getDigest().clone(), spec.getSalt().clone(), spec.getIterationCount());
+    ScramDigestPasswordImpl(final String algorithm, final ScramDigestPasswordSpec spec) {
+        this(algorithm, spec.getDigest().clone(), spec.getSalt().clone(), spec.getIterationCount());
     }
 
     ScramDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {

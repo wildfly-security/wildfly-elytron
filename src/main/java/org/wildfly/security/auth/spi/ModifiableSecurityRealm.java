@@ -16,20 +16,25 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.spec;
+package org.wildfly.security.auth.spi;
+
+import java.util.Iterator;
 
 /**
- * An extension of {@link PasswordSpec} where the spec is tied to a specific algorithm.
+ * A realm which can be modified.
  *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface AlgorithmPasswordSpec extends PasswordSpec {
+public interface ModifiableSecurityRealm extends SecurityRealm {
+
+    /** {@inheritDoc} */
+    ModifiableRealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
-     * Get the algorithm this spec instance is for.
+     * Get an iterator over all of this realm's identities.
      *
-     * @return the algorithm this spec instance is for.
+     * @return the identity iterator
+     * @throws RealmUnavailableException if the realm fails for some reason
      */
-    String getAlgorithm();
-
+    Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException;
 }

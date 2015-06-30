@@ -624,13 +624,13 @@ public class DigestTest extends BaseTestCase {
 
     private CallbackHandler getClientCallbackHandler(String username, String realm, String sendedRealm, String password) throws NoSuchAlgorithmException {
         byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
-        KeySpec keySpec = new DigestPasswordSpec(DigestPassword.ALGORITHM_DIGEST_MD5, username, realm, urpHash);
+        KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
         return new ClientCallbackHandler(username, sendedRealm, DigestPassword.ALGORITHM_DIGEST_MD5, keySpec);
     }
 
     private CallbackHandler getServerCallbackHandler(String username, String realm, String password) throws NoSuchAlgorithmException {
         byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
-        KeySpec keySpec = new DigestPasswordSpec(DigestPassword.ALGORITHM_DIGEST_MD5, username, realm, urpHash);
+        KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
         return new ServerCallbackHandler(username, DigestPassword.ALGORITHM_DIGEST_MD5, keySpec);
     }
 }

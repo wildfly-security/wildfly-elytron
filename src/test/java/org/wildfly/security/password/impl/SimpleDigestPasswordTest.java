@@ -151,7 +151,7 @@ public class SimpleDigestPasswordTest {
         SimpleDigestPasswordSpec simpleSpec = factory.getKeySpec(simplePassword, SimpleDigestPasswordSpec.class);
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, simpleSpec.getDigest()));
 
-        simpleSpec = new SimpleDigestPasswordSpec(algorithmName, preDigested);
+        simpleSpec = new SimpleDigestPasswordSpec(preDigested);
         simplePassword = (SimpleDigestPassword) factory.generatePassword(simpleSpec);
 
         validatePassword(simplePassword, password, preDigested, factory);

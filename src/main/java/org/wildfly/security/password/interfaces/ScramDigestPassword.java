@@ -18,8 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A SCRAM-digest password, used by the SCRAM family of SASL mechanisms.
@@ -69,4 +71,21 @@ public interface ScramDigestPassword extends OneWayPassword {
      */
     int getIterationCount();
 
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param digest the digest
+     * @param salt the salt
+     * @param iterationCount the iteration count
+     * @return the raw password implementation
+     */
+    static ScramDigestPassword createRaw(String algorithm, byte[] digest, byte[] salt, int iterationCount) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("digest", digest);
+        Assert.checkNotNullParam("salt", salt);
+        return new RawScramDigestPassword(algorithm, digest.clone(), salt.clone(), iterationCount);
+    }
 }

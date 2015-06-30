@@ -34,7 +34,6 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 
 /**
  * Tests for UnixMD5CryptUtil.
@@ -51,10 +50,10 @@ public class UnixMD5CryptUtilTest {
         String cryptString = "$1$saltsalt$qjXMvbEw8oaL.CzflDtaK/";
 
         // Get the spec by parsing the crypt string
-        UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
+        UnixMD5CryptPassword password = (UnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(password));
     }
 
     @Test
@@ -67,29 +66,27 @@ public class UnixMD5CryptUtilTest {
         final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new EncryptablePasswordSpec(passwordStr.toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
 
         // Check if the salt was truncated in the resulting crypt string
-        final String cryptString = PasswordUtil.getCryptString(spi.engineGetKeySpec(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, password, UnixMD5CryptPasswordSpec.class));
+        final String cryptString = PasswordUtil.getCryptString(password);
         assertTrue("Didn't truncate the salt", cryptString.startsWith("$1$thissalt$"));
         assertEquals("$1$thissalt$B4AUaoQwRs3ex2F95O4ut/", cryptString);
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
-        UnixMD5CryptPasswordSpec spec = (UnixMD5CryptPasswordSpec) PasswordUtil.parseCryptString(cryptString);
+        UnixMD5CryptPassword password = (UnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
 
         // Use the spec to generate a UnixMD5CryptPasswordImpl and then verify the hash using the correct password
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        UnixMD5CryptPasswordImpl password = (UnixMD5CryptPasswordImpl) spi.engineGeneratePassword(PasswordUtil.identifyAlgorithm(cryptString), spec);
         final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
 
         // Create a new password using EncryptablePasswordSpec and check if the hash matches the hash from the spec
         UnixMD5CryptPasswordImpl password2 = (UnixMD5CryptPasswordImpl) spi.engineGeneratePassword(algorithm,
-                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(0, spec.getSalt())));
-        assertArrayEquals(spec.getHash(), password2.getHash());
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(0, password.getSalt())));
+        assertArrayEquals(password.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same crypt string
-        spec = spi.engineGetKeySpec(PasswordUtil.identifyAlgorithm(cryptString), password2, UnixMD5CryptPasswordSpec.class);
-        assertEquals(cryptString, PasswordUtil.getCryptString(spec));
+        assertEquals(cryptString, PasswordUtil.getCryptString(password2));
     }
 
     @Test

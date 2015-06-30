@@ -24,12 +24,12 @@ import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPasswor
 import java.nio.charset.Charset;
 import java.security.spec.InvalidKeySpecException;
 
-import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.SimpleDigestPassword;
+import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -45,55 +45,55 @@ class UserPasswordPasswordUtil {
     private UserPasswordPasswordUtil() {
     }
 
-    public static PasswordSpec parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
+    public static Password parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword == null || userPassword.length == 0) {
             throw new IllegalArgumentException("userPassword can not be null or empty.");
         }
 
         if (userPassword[0] != '{') {
-            return createClearPasswordSpec(userPassword);
+            return createClearPassword(userPassword);
         } else {
             if (userPassword[1] == 'm' && userPassword[2] == 'd' && userPassword[3] == '5' && userPassword[4] == '}') {
                 // {md5}
-                return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_MD5, 5, userPassword);
+                return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_MD5, 5, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_1, 5, userPassword);
+                    return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_1, 5, userPassword);
                 } else if (userPassword[4] == '2' && userPassword[5] == '5' && userPassword[6] == '6' && userPassword[7] == '}') {
                     // {sha256}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_256, 8, userPassword);
+                    return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_256, 8, userPassword);
                 } else if (userPassword[4] == '3' && userPassword[5] == '8' && userPassword[6] == '4' && userPassword[7] == '}') {
                     // {sha384}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_384, 8, userPassword);
+                    return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_384, 8, userPassword);
                 } else if (userPassword[4] == '5' && userPassword[5] == '1' && userPassword[6] == '2' && userPassword[7] == '}') {
                     // {sha512}
-                    return createSimpleDigestPasswordSpec(ALGORITHM_SIMPLE_DIGEST_SHA_512, 8, userPassword);
+                    return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_512, 8, userPassword);
                 }
             } else if (userPassword[1] == 's' && userPassword[2] == 'm' && userPassword[3] == 'd' && userPassword[4] == '5' && userPassword[5] == '}') {
                 // {smd5}
-                return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_MD5, 6, userPassword);
+                return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_MD5, 6, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 's' && userPassword[3] == 'h' && userPassword[4] == 'a') {
                 if (userPassword[5] == '}') {
                     // {ssha}
-                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
+                    return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
                 } else if (userPassword[5] == '2' && userPassword[6] == '5' && userPassword[7] == '6' && userPassword[8] == '}') {
                     // {ssha256}
-                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
+                    return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
                 } else if (userPassword[5] == '3' && userPassword[6] == '8' && userPassword[7] == '4' && userPassword[8] == '}') {
                     // {ssha384}
-                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
+                    return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
                 } else if (userPassword[5] == '5' && userPassword[6] == '1' && userPassword[7] == '2' && userPassword[8] == '}') {
                     // {ssha512}
-                    return createSaltedSimpleDigestPasswordSpec(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
+                    return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
             } else if (userPassword[1] == 'c' && userPassword[2] == 'r' && userPassword[3] == 'y' && userPassword[4] == 'p' && userPassword[5] == 't' && userPassword[6] == '}') {
                 if (userPassword[7] == '_') {
                     // {crypt}_
-                    return createBsdCryptBasedSpec(userPassword);
+                    return createBsdCryptBasedPassword(userPassword);
                 } else {
                     // {crypt}
-                    return createCryptBasedSpec(userPassword);
+                    return createCryptBasedPassword(userPassword);
                 }
             }
             for (int i = 1; i < userPassword.length - 1; i++) {
@@ -101,23 +101,22 @@ class UserPasswordPasswordUtil {
                     throw new InvalidKeySpecException();
                 }
             }
-            return createClearPasswordSpec(userPassword);
+            return createClearPassword(userPassword);
         }
     }
 
-    private static PasswordSpec createClearPasswordSpec(byte[] userPassword) {
-        return new ClearPasswordSpec(new String(userPassword, UTF_8).toCharArray());
+    private static Password createClearPassword(byte[] userPassword) {
+        return ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, new String(userPassword, UTF_8).toCharArray());
     }
 
-    private static PasswordSpec createSimpleDigestPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
+    private static Password createSimpleDigestPassword(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         byte[] digest = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
-
-        return new SimpleDigestPasswordSpec(algorithm, digest);
+        return SimpleDigestPassword.createRaw(algorithm, digest);
     }
 
-    private static PasswordSpec createSaltedSimpleDigestPasswordSpec(String algorithm, int prefixSize, byte[] userPassword)
+    private static Password createSaltedSimpleDigestPassword(String algorithm, int prefixSize, byte[] userPassword)
             throws InvalidKeySpecException {
         int length = userPassword.length - prefixSize;
         byte[] decoded = CodePointIterator.ofUtf8Bytes(userPassword, prefixSize, length).base64Decode().drain();
@@ -133,10 +132,10 @@ class UserPasswordPasswordUtil {
         System.arraycopy(decoded, 0, digest, 0, digestLength);
         System.arraycopy(decoded, digestLength, salt, 0, saltLength);
 
-        return new SaltedSimpleDigestPasswordSpec(algorithm, digest, salt);
+        return SaltedSimpleDigestPassword.createRaw(algorithm, digest, salt);
     }
 
-    private static PasswordSpec createCryptBasedSpec(byte[] userPassword) throws InvalidKeySpecException {
+    private static Password createCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword.length != 20) {
             throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
         }
@@ -149,10 +148,10 @@ class UserPasswordPasswordUtil {
         short salt = (short) (lo | hi << 6);
         byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
-        return new UnixDESCryptPasswordSpec(hash, salt); // Uses a fixed iteration count of 25
+        return UnixDESCryptPassword.createRaw(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, salt, hash);
     }
 
-    private static PasswordSpec createBsdCryptBasedSpec(byte[] userPassword) throws InvalidKeySpecException {
+    private static Password createBsdCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword.length != 27) {
             throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
         }
@@ -176,7 +175,7 @@ class UserPasswordPasswordUtil {
         int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
         byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
-        return new BSDUnixDESCryptPasswordSpec(hash, salt, iterationCount);
+        return BSDUnixDESCryptPassword.createRaw(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
     }
 
     private static int expectedDigestLengthBytes(final String algorithm) {

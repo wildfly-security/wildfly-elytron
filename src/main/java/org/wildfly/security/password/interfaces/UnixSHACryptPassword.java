@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * The UNIX modular-crypt SHA crypt algorithm.
@@ -65,4 +68,22 @@ public interface UnixSHACryptPassword extends OneWayPassword {
      * @return  the number of iterations to perform
      */
     int getIterationCount();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param salt the salt
+     * @param hash the hash
+     * @param iterationCount the iteration count
+     * @return the raw password implementation
+     */
+    static UnixSHACryptPassword createRaw(String algorithm, byte[] salt, byte[] hash, int iterationCount) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("hash", hash);
+        return new RawUnixSHACryptPassword(algorithm, salt, hash, iterationCount);
+    }
 }

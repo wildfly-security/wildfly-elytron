@@ -26,6 +26,8 @@ import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
+import org.wildfly.common.Assert;
+
 /**
  * A factory for passwords.
  * <p>
@@ -41,7 +43,17 @@ public final class PasswordFactory {
     private final String algorithm;
     private final PasswordFactorySpi spi;
 
-    private PasswordFactory(final Provider provider, final String algorithm, final PasswordFactorySpi spi) {
+    /**
+     * Construct a new instance.
+     *
+     * @param spi the password factory SPI (not {@code null})
+     * @param provider the provider (not {@code null})
+     * @param algorithm the algorithm name (not {@code null})
+     */
+    public PasswordFactory(final PasswordFactorySpi spi, final Provider provider, final String algorithm) {
+        Assert.checkNotNullParam("spi", spi);
+        Assert.checkNotNullParam("provider", provider);
+        Assert.checkNotNullParam("algorithm", algorithm);
         this.provider = provider;
         this.algorithm = algorithm;
         this.spi = spi;
@@ -58,7 +70,7 @@ public final class PasswordFactory {
         for (Provider provider : Security.getProviders()) {
             final Provider.Service service = provider.getService("PasswordFactory", algorithm);
             if (service != null) {
-                return new PasswordFactory(provider, algorithm, (PasswordFactorySpi) service.newInstance(null));
+                return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
             }
         }
         throw new NoSuchAlgorithmException();
@@ -89,7 +101,7 @@ public final class PasswordFactory {
     public static PasswordFactory getInstance(String algorithm, Provider provider) throws NoSuchAlgorithmException {
         final Provider.Service service = provider.getService("PasswordFactory", algorithm);
         if (service == null) throw new NoSuchAlgorithmException(algorithm);
-        return new PasswordFactory(provider, algorithm, (PasswordFactorySpi) service.newInstance(null));
+        return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
     }
 
     /**

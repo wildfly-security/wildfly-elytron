@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A simple single digest based password.
@@ -63,4 +66,19 @@ public interface SimpleDigestPassword extends OneWayPassword {
      * @return the digest
      */
     byte[] getDigest();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param digest the digest
+     * @return the raw password implementation
+     */
+    static SimpleDigestPassword createRaw(String algorithm, byte[] digest) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("digest", digest);
+        return new RawSimpleDigestPassword(algorithm, digest.clone());
+    }
 }

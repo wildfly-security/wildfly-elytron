@@ -117,7 +117,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         passwordSpec = new  EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
                     } else {
                          byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
-                         passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), hashed);
+                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
 
                 } else {
@@ -150,7 +150,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
 
                     byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
-                    passwordSpec = new DigestPasswordSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName(), hashed);
+                    passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                 }
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);

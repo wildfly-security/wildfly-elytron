@@ -18,7 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * The traditional UNIX DES crypt password algorithm.
@@ -43,4 +46,20 @@ public interface UnixDESCryptPassword extends OneWayPassword {
      * @return the crypt bytes
      */
     byte[] getHash();
+
+    /**
+     * Create a raw implementation of this password type.  No validation of the content is performed, and the password
+     * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
+     * before it can be validated and used to verify guesses.
+     *
+     * @param algorithm the algorithm name
+     * @param salt the salt
+     * @param hash the hash
+     * @return the raw password implementation
+     */
+    static UnixDESCryptPassword createRaw(String algorithm, short salt, byte[] hash) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("hash", hash);
+        return new RawUnixDESCryptPassword(algorithm, salt, hash);
+    }
 }
