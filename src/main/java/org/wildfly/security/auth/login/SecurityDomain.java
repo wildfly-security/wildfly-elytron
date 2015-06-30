@@ -346,7 +346,7 @@ public final class SecurityDomain {
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
-        private PermissionMapper permissionMapper = PermissionMapper.IDENTITY_PERMISSION_MAPPER;
+        private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
 
         Builder() {
