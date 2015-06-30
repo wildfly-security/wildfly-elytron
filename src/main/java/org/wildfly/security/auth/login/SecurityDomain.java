@@ -47,6 +47,7 @@ import org.wildfly.security.auth.util.RealmMapper;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
+import org.wildfly.security.permission.ElytronPermission;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.util._private.UnmodifiableArrayList;
 
@@ -57,6 +58,8 @@ import org.wildfly.security.util._private.UnmodifiableArrayList;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public final class SecurityDomain {
+
+    static final ElytronPermission CREATE_SECURITY_DOMAIN = new ElytronPermission("createSecurityDomain");
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
     private final NameRewriter preRealmRewriter;
@@ -477,6 +480,11 @@ public final class SecurityDomain {
          * @return the new security domain
          */
         public SecurityDomain build() {
+            final SecurityManager sm = System.getSecurityManager();
+            if (sm != null) {
+                sm.checkPermission(CREATE_SECURITY_DOMAIN);
+            }
+
             final String defaultRealmName = this.defaultRealmName;
             Assert.checkNotNullParam("defaultRealmName", defaultRealmName);
             final HashMap<String, RealmInfo> realmMap = new HashMap<>(realms.size());
