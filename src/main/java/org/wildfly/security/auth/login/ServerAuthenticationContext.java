@@ -374,6 +374,15 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Determine if authentication was already completed on this context.
+     *
+     * @return {@code true} if authentication was completed; {@code false} otherwise
+     */
+    public boolean isDone() {
+        return stateRef.get().isDone();
+    }
+
+    /**
      * Get the principal associated with the current authentication name.  Only valid during authentication process.
      *
      * @return the principal
@@ -473,7 +482,6 @@ public final class ServerAuthenticationContext {
 
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
-            private String assignedName;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -487,25 +495,16 @@ public final class ServerAuthenticationContext {
                 Callback callback = callbacks[idx];
                 if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-                    final String authenticationID = authorizeCallback.getAuthenticationID();
                     final String authorizationID = authorizeCallback.getAuthorizationID();
-                    // TODO: perform a proper authorization permission check
-                    authorizeCallback.setAuthorized(authenticationID.equals(authorizationID));
+                    authorizeCallback.setAuthorized(authorize(authorizationID));
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof NameCallback) {
                     // login name
                     final String name = ((NameCallback) callback).getDefaultName();
-                    if (assignedName != null) {
-                        if (! assignedName.equals(name)) {
-                            throw ElytronMessages.log.alreadyComplete();
-                        }
-                    } else {
-                        assignedName = name;
-                        try {
-                            setAuthenticationName(name);
-                        } catch (Exception e) {
-                            throw new IOException(e);
-                        }
+                    try {
+                        setAuthenticationName(name);
+                    } catch (Exception e) {
+                        throw new IOException(e);
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PeerPrincipalCallback) {
@@ -580,10 +579,12 @@ public final class ServerAuthenticationContext {
                     // ignore for now
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
-                    if (((AuthenticationCompleteCallback) callback).succeeded()) {
-                        succeed();
-                    } else {
-                        fail();
+                    if (! isDone()) {
+                        if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                            succeed();
+                        } else {
+                            fail();
+                        }
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
