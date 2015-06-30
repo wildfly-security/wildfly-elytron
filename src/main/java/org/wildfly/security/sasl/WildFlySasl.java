@@ -26,6 +26,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.ietf.jgss.GSSCredential;
+import org.wildfly.security.auth.callback.CredentialCallback;
 
 /**
  * The core WildFly SASL utilities.
