@@ -123,11 +123,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
                 public Principal getPrincipal() {
                     return principal;
                 }
-
-                @Override
-                public Set<String> getRoles() {
-                    return Collections.emptySet();
-                }
             };
         }
 

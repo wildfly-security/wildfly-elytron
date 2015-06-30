@@ -19,8 +19,6 @@
 package org.wildfly.security.auth.spi;
 
 import java.security.Principal;
-import java.util.Collections;
-import java.util.Set;
 
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 
@@ -41,29 +39,18 @@ public interface AuthorizationIdentity {
     Principal getPrincipal();
 
     /**
-     * <p>Get the roles in their raw form for this identity. Roles are represented as {@link String} values where
-     * each value is related with the name of a role.</p>
+     * Get the attributes which pertain to this identity.  By default, an empty attribute collection is returned.
      *
-     * <p>The raw form of a role is usually the same that came from the underlying identity store (eg.: database or LDAP server).
-     * Additional mapping may be applied later by a specific {@link org.wildfly.security.authz.RoleMapper} associated with the
-     * {@link SecurityRealm} or {@link org.wildfly.security.auth.login.SecurityDomain} from where this identity was created.</p>
-     *
-     * @return A string set containing the roles for this identity or an empty set if this identity has no roles.
+     * @return the attributes
      */
-    Set<String> getRoles();
+    default Attributes getAttributes() {
+        return Attributes.EMPTY;
+    }
 
     /**
      * The anonymous authorization identity.
      */
-    AuthorizationIdentity ANONYMOUS = new AuthorizationIdentity() {
-        public Principal getPrincipal() {
-            return AnonymousPrincipal.getInstance();
-        }
-
-        public Set<String> getRoles() {
-            return Collections.emptySet();
-        }
-    };
+    AuthorizationIdentity ANONYMOUS = AnonymousPrincipal::getInstance;
 
     /**
      * Create an empty identity for the given principal.
@@ -72,13 +59,24 @@ public interface AuthorizationIdentity {
      * @return the empty identity
      */
     static AuthorizationIdentity emptyIdentity(Principal principal) {
+        return () -> principal;
+    }
+
+    /**
+     * Create a basic authorization identity implementation.
+     *
+     * @param principal the principal
+     * @param attributes the identity attributes
+     * @return the authorization identity
+     */
+    static AuthorizationIdentity basicIdentity(Principal principal, Attributes attributes) {
         return new AuthorizationIdentity() {
             public Principal getPrincipal() {
                 return principal;
             }
 
-            public Set<String> getRoles() {
-                return Collections.emptySet();
+            public Attributes getAttributes() {
+                return attributes;
             }
         };
     }

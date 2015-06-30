@@ -34,6 +34,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.spi.Attributes;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -44,6 +45,7 @@ import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.auth.util.PrincipalDecoder;
 import org.wildfly.security.auth.util.RealmMapper;
 import org.wildfly.security.authz.PermissionMapper;
+import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.util._private.UnmodifiableArrayList;
@@ -78,7 +80,7 @@ public final class SecurityDomain {
         this.principalDecoder = builder.principalDecoder;
         // todo configurable
         anonymousAllowed = false;
-        final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER);
+        final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
         anonymousIdentity = new SecurityIdentity(this, realmInfo, AuthorizationIdentity.ANONYMOUS);
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
@@ -283,8 +285,10 @@ public final class SecurityDomain {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
 
         AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
-        Set<String> mappedRoles = identity.getRoles(); // zeroth role mapping, just grab roles from the identity
+        Attributes attributes = identity.getAttributes();
         RealmInfo realmInfo = securityIdentity.getRealmInfo();
+        RoleDecoder roleDecoder = realmInfo.getRoleDecoder(); // zeroth role mapping, just grab roles from the identity
+        Set<String> mappedRoles = roleDecoder.decodeRoles(attributes);
         RoleMapper realmRoleMapper = realmInfo.getRoleMapper();
 
         // apply the first level mapping, which is based on the role mapper associated with a realm.
@@ -505,6 +509,7 @@ public final class SecurityDomain {
         private final SecurityRealm realm;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        private RoleDecoder roleDecoder = RoleDecoder.EMPTY;
 
         RealmBuilder(final String name, final SecurityRealm realm) {
             this.name = name;
@@ -565,6 +570,24 @@ public final class SecurityDomain {
         public void setNameRewriter(final NameRewriter nameRewriter) {
             Assert.checkNotNullParam("nameRewriter", nameRewriter);
             this.nameRewriter = nameRewriter;
+        }
+
+        /**
+         * Get the role decoder.
+         *
+         * @return the role decoder (not {@code null})
+         */
+        public RoleDecoder getRoleDecoder() {
+            return roleDecoder;
+        }
+
+        /**
+         * Set the role decoder.
+         *
+         * @param roleDecoder the role decoder (may not be {@code null})
+         */
+        public void setRoleDecoder(final RoleDecoder roleDecoder) {
+            this.roleDecoder = roleDecoder;
         }
     }
 }
