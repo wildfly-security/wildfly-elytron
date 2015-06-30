@@ -238,7 +238,7 @@ public class PasswordKeyMapper implements KeyMapper {
             throw new RuntimeException("Salt is expected when creating [" + ScramDigestPassword.class + "] passwords.");
         }
 
-        ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(algorithm, hash, salt, iterationCount);
+        ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(hash, salt, iterationCount);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 
@@ -252,7 +252,7 @@ public class PasswordKeyMapper implements KeyMapper {
             throw new RuntimeException("Salt is expected when creating [" + SaltedSimpleDigestPassword.class + "] passwords.");
         }
 
-        SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(algorithm, hash, salt);
+        SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(hash, salt);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 

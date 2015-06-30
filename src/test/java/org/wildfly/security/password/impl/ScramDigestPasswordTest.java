@@ -74,14 +74,14 @@ public class ScramDigestPasswordTest {
 
         digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_1, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 4096);
         assertEquals("4b007901b765489abead49d926f721d065a429c1", ByteIterator.ofBytes(digest).hexEncode().drainToString());
-        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_1, digest, "salt".getBytes(StandardCharsets.UTF_8), 4096);
+        spec = new ScramDigestPasswordSpec(digest, "salt".getBytes(StandardCharsets.UTF_8), 4096);
         impl = new ScramDigestPasswordImpl(ALGORITHM_SCRAM_SHA_1, spec);
         assertTrue(impl.verify("password".toCharArray()));
         assertFalse(impl.verify("bad".toCharArray()));
 
         digest = ScramDigestPasswordImpl.scramDigest(ALGORITHM_SCRAM_SHA_256, "password".getBytes(StandardCharsets.UTF_8), "salt".getBytes(StandardCharsets.UTF_8), 1000);
         assertEquals("632c2812e46d4604102ba7618e9d6d7d2f8128f6266b4a03264d2a0460b7dcb3", ByteIterator.ofBytes(digest).hexEncode().drainToString());
-        spec = new ScramDigestPasswordSpec(ALGORITHM_SCRAM_SHA_256, digest, "salt".getBytes(StandardCharsets.UTF_8), 1000);
+        spec = new ScramDigestPasswordSpec(digest, "salt".getBytes(StandardCharsets.UTF_8), 1000);
         impl = new ScramDigestPasswordImpl(ALGORITHM_SCRAM_SHA_256, spec);
         assertTrue(impl.verify("password".toCharArray()));
         assertFalse(impl.verify("bad".toCharArray()));
@@ -177,7 +177,7 @@ public class ScramDigestPasswordTest {
         assertTrue("Digest correctly generated", Arrays.equals(decodedDigest, sdps.getDigest()));
 
         // use the scram digest spec to build a password without hashing it (i.e., use the pre digested hash)
-        sdps = new ScramDigestPasswordSpec(algorithm, decodedDigest, decodedSalt, iterationCount);
+        sdps = new ScramDigestPasswordSpec(decodedDigest, decodedSalt, iterationCount);
         scramPassword = (ScramDigestPassword) factory.generatePassword(sdps);
         validatePassword(factory, password, scramPassword, decodedDigest, decodedSalt, iterationCount);
     }

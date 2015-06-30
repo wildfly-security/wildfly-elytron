@@ -153,7 +153,7 @@ public class SaltedSimpleDigestPasswordTest {
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdps.getDigest()));
 
         // Digest into Spec -> Password
-        tsdps = new SaltedSimpleDigestPasswordSpec(algorithmName, preDigested, salt);
+        tsdps = new SaltedSimpleDigestPasswordSpec(preDigested, salt);
         tsdp = (SaltedSimpleDigestPassword) pf.generatePassword(tsdps);
 
         validatePassword(tsdp, preDigested, pf);
