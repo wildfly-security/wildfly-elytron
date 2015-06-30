@@ -48,5 +48,5 @@ public interface PermissionMapper {
     /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionCollection}.
      */
-    PermissionMapper IDENTITY_PERMISSION_MAPPER = (principal, roles) -> Policy.UNSUPPORTED_EMPTY_COLLECTION;
+    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> Policy.UNSUPPORTED_EMPTY_COLLECTION;
 }
