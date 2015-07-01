@@ -52,6 +52,7 @@ import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -190,13 +191,14 @@ public final class ServerAuthenticationContext {
             if (realmName == null) {
                 realmName = domain.getDefaultRealmName();
             }
+            final NamePrincipal principal = new NamePrincipal(name);
             RealmInfo realmInfo = domain.getRealmInfo(realmName);
             name = domain.getPostRealmRewriter().rewriteName(name);
             name = realmInfo.getNameRewriter().rewriteName(name);
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
             final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
             try {
-                if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(realmInfo, realmIdentity))) {
+                if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(principal, realmInfo, realmIdentity))) {
                     throw Assert.unreachableCode();
                 }
                 ok = true;
@@ -312,19 +314,19 @@ public final class ServerAuthenticationContext {
         if (realmName == null) {
             realmName = domain.getDefaultRealmName();
         }
-        RealmInfo realmInfo = domain.getRealmInfo(realmName);
-        name = domain.getPostRealmRewriter().rewriteName(name);
-        name = realmInfo.getNameRewriter().rewriteName(name);
-        final String currentName = oldState.getAuthenticationPrincipal().getName();
-        if (currentName.equals(name)) {
+        Principal principal = new NamePrincipal(name);
+        if (oldState.getAuthenticationPrincipal().equals(principal)) {
             // it's the same identity; just succeed
             succeed();
             return true;
         }
+        RealmInfo realmInfo = domain.getRealmInfo(realmName);
+        name = domain.getPostRealmRewriter().rewriteName(name);
+        name = realmInfo.getNameRewriter().rewriteName(name);
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, realmInfo, authorizationIdentity);
+        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity);
         if (securityIdentity.getPermissions().implies(new RunAsPrincipalPermission(name))) {
             CompleteState newState = new CompleteState(securityIdentity);
             while (! stateRef.compareAndSet(oldState, newState)) {
@@ -360,7 +362,7 @@ public final class ServerAuthenticationContext {
         }
         RealmInfo realmInfo = oldState.getRealmInfo();
         final AuthorizationIdentity authorizationIdentity = oldState.getRealmIdentity().getAuthorizationIdentity();
-        CompleteState newState = new CompleteState(new SecurityIdentity(domain, realmInfo, authorizationIdentity));
+        CompleteState newState = new CompleteState(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity));
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
             if (oldState.isDone()) {
@@ -614,7 +616,7 @@ public final class ServerAuthenticationContext {
 
         abstract SecurityIdentity getAuthorizedIdentity();
 
-        abstract Principal getAuthenticationPrincipal() throws RealmUnavailableException;
+        abstract Principal getAuthenticationPrincipal();
 
         abstract CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException;
 
@@ -649,7 +651,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noSuccessfulAuthentication();
+            throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
@@ -752,10 +754,12 @@ public final class ServerAuthenticationContext {
     }
 
     static final class NameAssignedState extends State {
+        private final Principal authenticationPrincipal;
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
 
-        NameAssignedState(final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+        NameAssignedState(final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+            this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
         }
@@ -767,12 +771,12 @@ public final class ServerAuthenticationContext {
 
         @Override
         SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noSuccessfulAuthentication();
+            throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
-        Principal getAuthenticationPrincipal() throws RealmUnavailableException {
-            return realmIdentity.getPrincipal();
+        Principal getAuthenticationPrincipal() {
+            return authenticationPrincipal;
         }
 
         @Override

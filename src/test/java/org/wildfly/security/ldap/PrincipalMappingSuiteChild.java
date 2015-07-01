@@ -19,10 +19,8 @@
 package org.wildfly.security.ldap;
 
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
@@ -30,11 +28,7 @@ import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.spi.RealmUnavailableException;
 import org.wildfly.security.auth.spi.SecurityRealm;
 
-import javax.security.auth.x500.X500Principal;
-import java.security.Principal;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -67,20 +61,15 @@ public class PrincipalMappingSuiteChild {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                        .useX500Principal()
                         .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                         .setNameAttribute("uid").build())
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("plainUser");
-        Principal principal = identity.getPrincipal();
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof X500Principal);
-        assertTrue("Mapped DN", "uid=plainUser,dc=elytron,dc=wildfly,dc=org".equalsIgnoreCase(principal.getName()));
+        assertTrue("Exists", identity.exists());
 
         identity = realm.createRealmIdentity("nobody");
-        principal = identity.getPrincipal();
-        assertNull(principal);
+        assertFalse("Exists", identity.exists());
     }
 
     @Test
@@ -93,14 +82,10 @@ public class PrincipalMappingSuiteChild {
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
-        Principal principal = identity.getPrincipal();
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof NamePrincipal);
-        assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
+        assertTrue("Exists", identity.exists());
 
         identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
-        principal = identity.getPrincipal();
-        assertNull(principal);
+        assertFalse("Exists", identity.exists());
     }
 
 //    @Test
@@ -138,37 +123,24 @@ public class PrincipalMappingSuiteChild {
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("PlainUser");
-        Principal principal = identity.getPrincipal();
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof NamePrincipal);
-        assertTrue("Mapped DN", "PlainUser".equalsIgnoreCase(principal.getName()));
+        assertTrue("Exists", identity.exists());
 
         identity = realm.createRealmIdentity("nobody");
-        principal = identity.getPrincipal();
-        assertNull(principal);
+        assertFalse("Exists", identity.exists());
     }
 
     @Test
     public void testSimpleToSimpleReload() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setNameAttribute("uid")
-                                .cachePrincipal()
-                                .build()
-                )
+                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder().setSearchDn("dc=elytron,dc=wildfly,dc=org").setNameAttribute("uid").build())
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("PlainUser");
-        Principal principal = identity.getPrincipal();
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof NamePrincipal);
-        assertTrue("Mapped DN", "plainUser".equalsIgnoreCase(principal.getName()));
+        assertTrue("Exists", identity.exists());
 
         identity = realm.createRealmIdentity("nobody");
-        principal = identity.getPrincipal();
-        assertNull(principal);
+        assertFalse("Exists", identity.exists());
     }
 
     @Test
@@ -177,20 +149,12 @@ public class PrincipalMappingSuiteChild {
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setNameAttribute("uid")
-                                .useX500Principal()
-                                .cachePrincipal()
                                 .build()
                 )
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
-        Principal principal = identity.getPrincipal();
-
-        assertNotNull(principal);
-
-        Principal cachedPrincipal = identity.getPrincipal();
-
-        Assert.assertSame(principal, cachedPrincipal);
+        assertTrue("Exists", identity.exists());
     }
 
     @Test
@@ -199,22 +163,16 @@ public class PrincipalMappingSuiteChild {
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                     .setNameAttribute("uid")
-                    .useX500Principal()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                    .cachePrincipal()
                     .build()
                 )
                 .build();
 
         RealmIdentity identity = realm.createRealmIdentity("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
-        Principal principal = identity.getPrincipal();
-        assertNotNull(principal);
-        assertTrue("Principal Type", principal instanceof X500Principal);
-        assertTrue("Mapped DN", "UID=plainUser,DC=elytron,DC=wildfly,DC=org".equals(principal.getName()));
+        assertTrue("Exists", identity.exists());
 
         identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
-        principal = identity.getPrincipal();
-        assertNull(principal);
+        assertFalse("Exists", identity.exists());
     }
 
 }

@@ -37,11 +37,13 @@ import org.wildfly.security.auth.spi.AuthorizationIdentity;
  */
 public final class SecurityIdentity {
     private final SecurityDomain securityDomain;
+    private final Principal principal;
     private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity) {
+    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity) {
         this.securityDomain = securityDomain;
+        this.principal = principal;
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
     }
@@ -203,6 +205,6 @@ public final class SecurityIdentity {
      * @return the principal of this identity
      */
     public Principal getPrincipal() {
-        return authorizationIdentity.getPrincipal();
+        return principal;
     }
 }

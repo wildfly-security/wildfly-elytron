@@ -24,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
 
@@ -32,7 +31,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.JaasSecurityRealm;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -71,10 +69,6 @@ public class JaasSecurityRealmTest {
         // test the creation of a realm identity.
         RealmIdentity realmIdentity = realm.createRealmIdentity("elytron");
         assertNotNull("Unexpected null realm identity", realmIdentity);
-        Principal realmPrincipal = realmIdentity.getPrincipal();
-        assertNotNull("Unexpected null realm principal", realmPrincipal);
-        assertTrue("Invalid realm principal type", realmPrincipal instanceof NamePrincipal);
-        assertEquals("Invalid realm principal name", new NamePrincipal("elytron"), realmPrincipal);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
         assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(char[].class));
@@ -106,9 +100,9 @@ public class JaasSecurityRealmTest {
         AuthorizationIdentity authRealmIdentity = realmIdentity.getAuthorizationIdentity();
         assertNotNull("Unexpected null authenticated realm identity", authRealmIdentity);
         // check if the authenticated identity returns the caller principal as set by the test login module.
-        Principal authPrincipal = authRealmIdentity.getPrincipal();
-        assertNotNull("Unexpected null principal", authPrincipal);
-        assertEquals("Invalid principal name", new NamePrincipal("auth-caller"), authPrincipal);
+//        Principal authPrincipal = authRealmIdentity.getPrincipal();
+//        assertNotNull("Unexpected null principal", authPrincipal);
+//        assertEquals("Invalid principal name", new NamePrincipal("auth-caller"), authPrincipal);
 
         // dispose the auth realm identity - should trigger a JAAS logout that clears the subject.
         // TODO - some other solution is needed here!  We can no longer force JAAS logout in an authorization scenario.

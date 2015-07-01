@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.spi;
 
-import org.wildfly.security.auth.principal.NamePrincipal;
-
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
  *
@@ -55,7 +53,7 @@ public interface SecurityRealm {
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
         public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
-            return RealmIdentity.nonExistentIdentity(new NamePrincipal(name));
+            return RealmIdentity.nonExistentIdentity(name);
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {

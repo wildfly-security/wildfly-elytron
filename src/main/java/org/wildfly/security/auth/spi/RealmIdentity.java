@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.spi;
 
-import java.security.Principal;
+import org.wildfly.common.Assert;
 
 /**
  * A representation of a pre-authentication identity.
@@ -32,14 +32,11 @@ import java.security.Principal;
 public interface RealmIdentity {
 
     /**
-     * Get the {@link Principal} for this identity.
+     * Get the identity's name within the realm.
      *
-     * This method can return {@code null} if there is no mapping from the identity to a {@link Principal}
-     *
-     * @return the {@link Principal} for this identity
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @return the name of the identity within the realm
      */
-    Principal getPrincipal() throws RealmUnavailableException;
+    String getName();
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
@@ -97,8 +94,9 @@ public interface RealmIdentity {
      * The anonymous realm identity.
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
-        public Principal getPrincipal() throws RealmUnavailableException {
-            return ANONYMOUS.getPrincipal();
+
+        public String getName() {
+            return "anonymous";
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
@@ -118,20 +116,22 @@ public interface RealmIdentity {
         }
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return AuthorizationIdentity.ANONYMOUS;
+            return AuthorizationIdentity.EMPTY;
         }
     };
 
     /**
      * An identity for a non-existent user.
      *
-     * @param principal the identity principal
+     * @param name the identity name
      * @return the realm identity
      */
-    static RealmIdentity nonExistentIdentity(Principal principal) {
+    static RealmIdentity nonExistentIdentity(String name) {
+        Assert.checkNotNullParam("name", name);
         return new RealmIdentity() {
-            public Principal getPrincipal() throws RealmUnavailableException {
-                return principal;
+
+            public String getName() {
+                return name;
             }
 
             public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {

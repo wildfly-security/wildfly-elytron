@@ -22,7 +22,6 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
@@ -31,7 +30,6 @@ import java.security.cert.X509Certificate;
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500PrivateCredential;
 
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -61,7 +59,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
-        return new KeyStoreRealmIdentity(new NamePrincipal(name));
+        return new KeyStoreRealmIdentity(name);
     }
 
     @Override
@@ -69,9 +67,9 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
-    private KeyStore.Entry getEntry(Principal principal) {
+    private KeyStore.Entry getEntry(String name) {
         try {
-            return keyStore.getEntry(principal.getName(), null);
+            return keyStore.getEntry(name, null);
         } catch (NoSuchAlgorithmException e) {
             return null;
         } catch (UnrecoverableEntryException e) {
@@ -83,20 +81,19 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
     private class KeyStoreRealmIdentity implements RealmIdentity {
 
-        private final Principal principal;
+        private final String name;
 
-        private KeyStoreRealmIdentity(Principal principal) {
-            this.principal = principal;
+        private KeyStoreRealmIdentity(final String name) {
+            this.name = name;
         }
 
-        @Override
-        public Principal getPrincipal() {
-            return principal;
+        public String getName() {
+            return name;
         }
 
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
-            final KeyStore.Entry entry = getEntry(principal);
+            final KeyStore.Entry entry = getEntry(name);
             if (entry == null) {
                 return CredentialSupport.UNSUPPORTED;
             }
@@ -122,7 +119,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
 
         @Override
         public <C> C getCredential(final Class<C> credentialType) {
-            final KeyStore.Entry entry = getEntry(principal);
+            final KeyStore.Entry entry = getEntry(name);
             if (entry == null) return null;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
@@ -138,7 +135,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 } else if (credentialType.isInstance(certificate)) {
                     return credentialType.cast(certificate);
                 } else if (credentialType.isAssignableFrom(X500PrivateCredential.class) && certificate instanceof X509Certificate) {
-                    return credentialType.cast(new X500PrivateCredential((X509Certificate) certificate, privateKey, principal.getName()));
+                    return credentialType.cast(new X500PrivateCredential((X509Certificate) certificate, privateKey, name));
                 }
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
                 final Certificate certificate = ((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate();
@@ -157,14 +154,11 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() {
             return new AuthorizationIdentity() {
-                public Principal getPrincipal() {
-                    return principal;
-                }
             };
         }
 
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
-            final KeyStore.Entry entry = getEntry(principal);
+            final KeyStore.Entry entry = getEntry(name);
             if (entry == null) return false;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();

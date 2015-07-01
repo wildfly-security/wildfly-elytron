@@ -68,7 +68,6 @@ public class UserPasswordSuiteChild {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory)
                 .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                    .useX500Principal()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setNameAttribute("uid")
                     .build()

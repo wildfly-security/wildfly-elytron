@@ -18,10 +18,6 @@
 
 package org.wildfly.security.auth.spi;
 
-import java.security.Principal;
-
-import org.wildfly.security.auth.principal.AnonymousPrincipal;
-
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for
  * authorization decisions.  Since there is no upper bound in the lifespan of instances of this class, they should
@@ -30,13 +26,6 @@ import org.wildfly.security.auth.principal.AnonymousPrincipal;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface AuthorizationIdentity {
-
-    /**
-     * Get the {@link Principal} for this identity, or {@code null} if there is none.
-     *
-     * @return the {@link Principal} for this identity
-     */
-    Principal getPrincipal();
 
     /**
      * Get the attributes which pertain to this identity.  By default, an empty attribute collection is returned.
@@ -48,32 +37,18 @@ public interface AuthorizationIdentity {
     }
 
     /**
-     * The anonymous authorization identity.
+     * The empty authorization identity.
      */
-    AuthorizationIdentity ANONYMOUS = AnonymousPrincipal::getInstance;
-
-    /**
-     * Create an empty identity for the given principal.
-     *
-     * @param principal the principal
-     * @return the empty identity
-     */
-    static AuthorizationIdentity emptyIdentity(Principal principal) {
-        return () -> principal;
-    }
+    AuthorizationIdentity EMPTY = basicIdentity(Attributes.EMPTY);
 
     /**
      * Create a basic authorization identity implementation.
      *
-     * @param principal the principal
      * @param attributes the identity attributes
      * @return the authorization identity
      */
-    static AuthorizationIdentity basicIdentity(Principal principal, Attributes attributes) {
+    static AuthorizationIdentity basicIdentity(Attributes attributes) {
         return new AuthorizationIdentity() {
-            public Principal getPrincipal() {
-                return principal;
-            }
 
             public Attributes getAttributes() {
                 return attributes;

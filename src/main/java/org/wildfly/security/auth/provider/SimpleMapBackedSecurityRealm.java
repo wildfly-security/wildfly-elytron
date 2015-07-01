@@ -20,13 +20,11 @@ package org.wildfly.security.auth.provider;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -46,7 +44,7 @@ import org.wildfly.security.password.PasswordFactory;
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     private final NameRewriter[] rewriters;
-    private volatile Map<NamePrincipal, Password> map = Collections.emptyMap();
+    private volatile Map<String, Password> map = Collections.emptyMap();
 
     /**
      * Construct a new instance.
@@ -63,7 +61,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      *
      * @param passwordMap the password map
      */
-    public void setPasswordMap(final Map<NamePrincipal, Password> passwordMap) {
+    public void setPasswordMap(final Map<String, Password> passwordMap) {
         map = passwordMap;
     }
 
@@ -72,7 +70,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         for (NameRewriter rewriter : rewriters) {
             name = rewriter.rewriteName(name);
         }
-        return new SimpleMapRealmIdentity(new NamePrincipal(name));
+        return new SimpleMapRealmIdentity(name);
     }
 
     private boolean checkType(final Set<Class<?>> supportedTypes, HashSet<Class<?>> checked, Class<?> actualType) {
@@ -94,41 +92,37 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
     private class SimpleMapRealmIdentity implements RealmIdentity {
 
-        private final Principal principal;
+        private final String name;
 
-        SimpleMapRealmIdentity(final Principal principal) {
-            this.principal = principal;
+        SimpleMapRealmIdentity(final String name) {
+            this.name = name;
         }
 
-        @Override
-        public Principal getPrincipal() {
-            return principal;
+        public String getName() {
+            return name;
         }
 
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
-            final Password password = map.get(principal);
+            final Password password = map.get(name);
             return credentialType.isInstance(password) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
         @Override
         public <C> C getCredential(Class<C> credentialType) {
-            final Password password = map.get(principal);
+            final Password password = map.get(name);
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
         }
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() {
             return new AuthorizationIdentity() {
-                public Principal getPrincipal() {
-                    return principal;
-                }
             };
         }
 
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             if (credential instanceof char[]) try {
-                final Password password = map.get(principal);
+                final Password password = map.get(name);
                 return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RealmUnavailableException(e);

@@ -17,8 +17,6 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import org.wildfly.security.auth.spi.RealmIdentity;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +49,7 @@ public class JdbcSecurityRealmBuilder {
     }
 
     /**
-     * <p>A SQL SELECT statement that will be used to return data from a database based on the {@link RealmIdentity#getPrincipal()}.
+     * <p>A SQL SELECT statement that will be used to return data from a database based on the authentication name.
      *
      * <p>When authenticating, validating or obtaining credentials for a {@link org.wildfly.security.auth.spi.RealmIdentity},
      * this query will be used. You must provide a SELECT with a single query parameter as follows:
@@ -60,7 +58,7 @@ public class JdbcSecurityRealmBuilder {
      *     JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder().authenticationQuery("SELECT password FROM user_bcrypt_password where name = ?")
      * </pre>
      *
-     * <p>Where the query parameter value would be the {@link RealmIdentity#getPrincipal()} name.
+     * <p>Where the query parameter value would be the authentication name.
      *
      * @param sql the authentication query
      * @return this builder
