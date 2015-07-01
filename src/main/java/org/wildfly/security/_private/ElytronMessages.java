@@ -243,8 +243,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 59, value = "Failed to instantiate custom CallbackHandler")
     RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
 
-    @Message(id = 60, value = "The Callback array cannot be null")
-    IllegalArgumentException invalidNullCallbackArray();
+    // 60
 
     @Message(id = 61, value = "Credential cannot be converted to a password")
     FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
@@ -297,8 +296,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 77, value = "[%s] SASL client refuses to initiate authentication")
     SaslException saslClientRefusesToInitiateAuthentication(String mechName);
 
-    @Message(id = 78, value = "Parameter %s is null")
-    IllegalArgumentException nullParameter(String parameter);
+    // 78
 
     // 79
 

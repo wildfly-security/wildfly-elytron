@@ -36,6 +36,7 @@ import java.security.acl.Group;
 import java.util.Enumeration;
 import java.util.Set;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -203,8 +204,7 @@ public class JaasSecurityRealm implements SecurityRealm {
 
         @Override
         public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            if (callbacks == null)
-                throw ElytronMessages.log.invalidNullCallbackArray();
+            Assert.checkNotNullParam("callbacks", callbacks);
 
             for (Callback callback : callbacks) {
                 if (callback instanceof NameCallback) {

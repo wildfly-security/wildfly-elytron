@@ -18,8 +18,6 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -29,6 +27,8 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
+
+import org.wildfly.common.Assert;
 
 /**
  * A {@link SaslClientFactory} which aggregates other {@code SaslClientFactory} instances into one.
@@ -44,9 +44,7 @@ public final class AggregateSaslClientFactory implements SaslClientFactory {
      * @param factories the factories to aggregate (must not be {@code null})
      */
     public AggregateSaslClientFactory(final SaslClientFactory... factories) {
-        if (factories == null) {
-            throw log.nullParameter("factories");
-        }
+        Assert.checkNotNullParam("factories", factories);
         this.factories = factories.clone();
     }
 
@@ -56,9 +54,7 @@ public final class AggregateSaslClientFactory implements SaslClientFactory {
      * @param factories the factories to aggregate (must not be {@code null})
      */
     public AggregateSaslClientFactory(final Collection<SaslClientFactory> factories) {
-        if (factories == null) {
-            throw log.nullParameter("factories");
-        }
+        Assert.checkNotNullParam("factories", factories);
         this.factories = factories.toArray(new SaslClientFactory[factories.size()]);
     }
 

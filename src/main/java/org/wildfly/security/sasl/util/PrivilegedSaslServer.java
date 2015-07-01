@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.util;
 
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
@@ -29,6 +28,8 @@ import java.security.PrivilegedExceptionAction;
 
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
+
+import org.wildfly.common.Assert;
 
 /**
  * A {@code SaslServer} which evaluates responses and wrap/unwrap requests in an privileged context.
@@ -40,12 +41,8 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
 
     PrivilegedSaslServer(final SaslServer delegate, final AccessControlContext accessControlContext) {
         super(delegate);
-        if (delegate == null) {
-            throw log.nullParameter("delegate");
-        }
-        if (accessControlContext == null) {
-            throw log.nullParameter("accessControlContext");
-        }
+        Assert.checkNotNullParam("delegate", delegate);
+        Assert.checkNotNullParam("accessControlContext", accessControlContext);
         this.accessControlContext = accessControlContext;
     }
 
