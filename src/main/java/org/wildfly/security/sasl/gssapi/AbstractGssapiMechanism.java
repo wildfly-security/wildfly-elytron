@@ -28,7 +28,7 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
-import org.jboss.logging.Logger;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslWrapper;
@@ -55,11 +55,11 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         try {
             KERBEROS_V5 = new Oid("1.2.840.113554.1.2.2");
         } catch (GSSException e) {
-            throw new RuntimeException("Unable to initialise Oid", e);
+            throw ElytronMessages.log.unableToInitialiseOid(e);
         }
     }
 
-    private final Logger log;
+    private final ElytronMessages log;
     protected GSSContext gssContext;
     protected final int configuredMaxReceiveBuffer;
     protected int actualMaxReceiveBuffer;
@@ -69,7 +69,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     protected QOP selectedQop;
 
     protected AbstractGssapiMechanism(String mechanismName, String protocol, String serverName, final Map<String, ?> props,
-            final CallbackHandler callbackHandler, final Logger log) throws SaslException {
+            final CallbackHandler callbackHandler, final ElytronMessages log) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
 
         this.log = log;
@@ -77,8 +77,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         if (props.containsKey(Sasl.MAX_BUFFER)) {
             configuredMaxReceiveBuffer = Integer.parseInt((String) props.get(Sasl.MAX_BUFFER));
             if (configuredMaxReceiveBuffer > DEFAULT_MAX_BUFFER_SIZE) {
-                throw new SaslException(String.format("Receive buffer requested '%d' is greater than supported maximum '%d'.",
-                        configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE));
+                throw log.saslReceiveBufferIsGreaterThanMaximum(getMechanismName(), configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE);
             }
         } else {
             configuredMaxReceiveBuffer = DEFAULT_MAX_BUFFER_SIZE;
@@ -143,7 +142,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             log.trace("dispose");
             gssContext.dispose();
         } catch (GSSException e) {
-            throw new SaslException("Unable to dispose of GSSContext", e);
+            throw log.saslUnableToDisposeGssContext(getMechanismName(), e);
         } finally {
             gssContext = null;
         }
@@ -157,7 +156,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 for (int i = 0; i < qopNames.length; i++) {
                     QOP mapped = QOP.mapFromName(qopNames[i]);
                     if (mapped == null) {
-                        throw new SaslException(String.format("Unrecogniesed QOP value '%s'", qopNames[i]));
+                        throw log.saslUnexpectedQop(getMechanismName(), qopNames[i]);
                     }
                     preferredQop[i] = mapped;
 
@@ -256,7 +255,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 log.tracef("Wrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw new SaslException("Unable to wrap message.", e);
+                throw log.saslUnableToWrapMessage(getMechanismName(), e);
             }
         }
 
@@ -268,7 +267,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 log.tracef("Unwrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw new SaslException("Unable to wrap message.", e);
+                throw log.saslUnableToUnwrapMessage(getMechanismName(), e);
             }
         }
 

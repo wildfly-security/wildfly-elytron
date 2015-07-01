@@ -35,6 +35,8 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
 import org.jboss.logging.Logger;
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 
 /**
  * SaslServer for the GSSAPI mechanism as defined by RFC 4752
@@ -43,13 +45,13 @@ import org.jboss.logging.Logger;
  */
 public class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
-    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.gssapi.server");
+    private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.server");
 
     private static final int ACCEPTOR_STATE = 1;
     private static final int SECURITY_LAYER_ADVERTISER = 2;
     private static final int SECURITY_LAYER_RECEIVER = 3;
 
-    private String authroizationId;
+    private String authorizationId;
 
     private byte offeredSecurityLayer;
 
@@ -71,7 +73,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
 
             gssContext = manager.createContext(ourCredential);
         } catch (GSSException e) {
-            throw new SaslException("Unable to create GSSContext", e);
+            throw log.saslUnableToCreateGssContext(getMechanismName(), e);
         }
         // We don't request integrity or confidentiality as that is only
         // supported on the client side.
@@ -88,7 +90,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
     public String getAuthorizationID() {
         assertComplete();
 
-        return authroizationId;
+        return authorizationId;
     }
 
     @Override
@@ -109,7 +111,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                         Oid actualMech = gssContext.getMech();
                         log.tracef("Negotiated mechanism %s", actualMech);
                         if (KERBEROS_V5.equals(actualMech) == false) {
-                            throw new SaslException("Negotiated mechanism was not Kerberos V5");
+                            throw log.saslNegotiatedMechanismWasNotKerberosV5(getMechanismName());
                         }
 
                         setNegotiationState(SECURITY_LAYER_ADVERTISER);
@@ -124,14 +126,14 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
 
                     return response;
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to accept message from client.", e);
+                    throw log.saslUnableToAcceptClientMessage(getMechanismName(), e);
                 }
 
             case SECURITY_LAYER_ADVERTISER:
                 // This state expects at most to be called with an empty message, it will then advertise
                 // the currently support security layer and transition to the next state to await a response
                 if (message != null && message.length > 0) {
-                    throw new SaslException("Only expecting an empty message, received a full message.");
+                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
                 }
 
                 byte[] response = new byte[4];
@@ -165,7 +167,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 }
 
                 if (supportedSecurityLayers == 0x00) {
-                    throw new SaslException("Insufficient levels of protection available for supported security layers.");
+                    throw log.saslInsufficientQopsAvailable(getMechanismName());
                 }
 
                 response[0] = supportedSecurityLayers;
@@ -184,7 +186,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                     MessageProp msgProp = new MessageProp(0, false);
                     response = gssContext.wrap(response, 0, 4, msgProp);
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to generate security layer challenge.", e);
+                    throw log.saslUnableToGenerateChallenge(getMechanismName(), e);
                 }
 
                 log.trace("Transitioning to receive chosen security layer from client");
@@ -198,17 +200,17 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 try {
                     unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to unwrap security layer response.", e);
+                    throw log.saslUnableToUnwrapMessage(getMechanismName(), e);
                 }
 
                 if (unwrapped.length < 4) {
-                    throw new SaslException(String.format("Invalid message of length %d on unwrapping.", unwrapped.length));
+                    throw log.saslInvalidMessageOnUnwrapping(getMechanismName(), unwrapped.length);
                 }
 
                 // What we offered and our own list of QOP could be different so we compare against what we offered as we know we
                 // only offered it if the underlying GssContext also supports it.
                 if ((offeredSecurityLayer & unwrapped[0]) == 0x00) {
-                    throw new SaslException("Client selected a security layer that was not offered.");
+                    throw log.saslSelectedUnofferedQop(getMechanismName());
                 }
 
                 QOP selectedQop = QOP.mapFromValue(unwrapped[0]);
@@ -217,12 +219,12 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
                 log.tracef("Client selected security layer %s, with maxBuffer of %d", selectedQop, maxBuffer);
                 if (relaxComplianceChecks == false && selectedQop == QOP.AUTH && maxBuffer != 0) {
-                    throw new SaslException("No security layer selected but message length received.");
+                    throw log.saslNoSecurityLayerButLengthReceived(getMechanismName());
                 }
                 try {
                     maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to get maximum size of message before wrap.", e);
+                    throw log.saslUnableToGetMaximumSizeOfMessage(getMechanismName(), e);
                 }
 
                 this.selectedQop = selectedQop;
@@ -231,7 +233,7 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 try {
                     authenticationId = gssContext.getSrcName().toString();
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to determine name of peer.", e);
+                    throw log.saslUnableToDeterminePeerName(getMechanismName(), e);
                 }
                 final String authorizationId;
                 if (unwrapped.length > 4) {
@@ -245,9 +247,9 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 handleCallbacks(new Callback[] {cb});
 
                 if (cb.isAuthorized() == false) {
-                    throw new SaslException(String.format("User %s is not authorized to act as %s", authenticationId, authorizationId));
+                    throw log.saslAuthorizationFailed(getMechanismName(), authenticationId, authorizationId);
                 }
-                this.authroizationId = authorizationId;
+                this.authorizationId = authorizationId;
 
                 if (selectedQop != QOP.AUTH) {
                     log.trace("Setting message wrapper.");
@@ -259,6 +261,6 @@ public class GssapiServer extends AbstractGssapiMechanism implements SaslServer 
                 // By now this is the end.
                 return null;
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 }

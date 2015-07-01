@@ -35,6 +35,7 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -43,6 +44,7 @@ import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
 
 import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -73,7 +75,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         try {
             this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanism));
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException(getMechanismName() + ": Expected message digest algorithm is not available", e);
+            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
         }
     }
 
@@ -122,12 +124,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                 return clientQop;
             }
         }
-        throw new SaslException(getMechanismName() + ": No common protection layer between client and server");
+        throw log.saslNoCommonProtectionLayer(getMechanismName());
     }
 
     private String selectCipher(String ciphersFromServer) throws SaslException {
         if (ciphersFromServer == null) {
-            throw new SaslException(getMechanismName() + ": No ciphers offered by server");
+            throw log.saslNoCiphersOfferedByServer(getMechanismName());
         }
 
         TransformationMapper trans = new DefaultTransformationMapper();
@@ -141,7 +143,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
         }
 
-        throw new SaslException(getMechanismName() + ": No common cipher between client and server");
+        throw log.saslNoCommonCipher(getMechanismName());
     }
 
 
@@ -236,8 +238,8 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             DigestPassword digestedPassword = (DigestPassword) credentialCallback.getCredential();
             digestURP = digestedPassword.getDigest();
 
-            if(userName == null) throw new SaslException("No username provided");
-            if(digestURP == null) throw new SaslException("No pre-digested password provided");
+            if(userName == null) throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), null);
+            if(digestURP == null) throw log.saslNotProvidedPreDigested(getMechanismName());
 
         } catch (UnsupportedCallbackException e) {
 
@@ -259,14 +261,14 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                 char[] clearPassword = passwordCallback.getPassword();
                 passwordCallback.clearPassword();
 
-                if(userName == null) throw new SaslException("No username provided");
-                if(clearPassword == null) throw new SaslException("No clear password provided");
+                if(userName == null) throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), null);
+                if(clearPassword == null) log.saslNotProvidedClearPassword(getMechanismName());
 
                 digestURP = userRealmPasswordDigest(messageDigest, userName, realm, clearPassword);
-                if (clearPassword != null) Arrays.fill(clearPassword, (char)0); // wipe out the password
+                Arrays.fill(clearPassword, (char)0); // wipe out the password
 
             } else {
-                throw new SaslException("Callback handler failed", e);
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
             }
 
         }
@@ -286,7 +288,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // nonce
         if(nonce == null){
-            throw new SaslException(getMechanismName() + ": Nonce not provided by server");
+            throw log.saslMissingDirective(getMechanismName(), "nonce");
         }
         digestResponse.append("nonce=\"");
         digestResponse.append(nonce);
@@ -357,7 +359,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
         byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
-            throw new SaslException(getMechanismName() + ": Invalid rspauth from server");
+            throw log.saslServerAuthenticityCannotBeVerified(getMechanismName());
         }
     }
 
@@ -392,6 +394,6 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                 negotiationComplete();
                 return null;
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 }

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +52,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, String... mechanisms) {
         super(delegate);
         if (mechanisms == null) {
-            throw new IllegalArgumentException("mechanisms is null");
+            throw log.nullParameter("mechanisms");
         }
         this.include = include;
         final HashSet<String> set = new HashSet<String>(mechanisms.length);
@@ -68,7 +70,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, Collection<String> mechanisms) {
         super(delegate);
         if (mechanisms == null) {
-            throw new IllegalArgumentException("mechanisms is null");
+            throw log.nullParameter("mechanisms");
         }
         this.include = include;
         this.mechanisms = new HashSet<String>(mechanisms);

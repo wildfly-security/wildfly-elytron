@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.entity;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.net.URI;
@@ -53,7 +55,7 @@ public abstract class GeneralName {
 
     GeneralName(final int type) {
         if (type < 0 || type > 8) {
-            throw new IllegalArgumentException("Invalid value for a general name type; expected a value between 0 and 8 (inclusive)");
+            throw log.invalidValueForGeneralNameType();
         }
         this.type = type;
     }
@@ -451,7 +453,7 @@ public abstract class GeneralName {
             try {
                 return (new URI(name)).equals(new URI(other.getName()));
             } catch (URISyntaxException e) {
-                throw new ASN1Exception("Invalid general name for URI type");
+                throw log.asnInvalidGeneralNameForUriType(e);
             }
         }
 
@@ -486,7 +488,7 @@ public abstract class GeneralName {
         public IPAddress(final byte[] address) {
             super(IP_ADDRESS);
             if ((address.length != 4) && (address.length != 8) && (address.length != 16) && (address.length != 32)) {
-                throw new ASN1Exception("Invalid general name for IP address type");
+                throw log.asnInvalidGeneralNameForIpAddressType();
             }
             this.address = address;
         }
@@ -545,10 +547,10 @@ public abstract class GeneralName {
                 } else if (strAddress.indexOf(':') >= 0) {
                     addr = parseIPv6Address(strAddress);
                 } else {
-                    throw new ASN1Exception("Invalid general name for IP address type");
+                    throw log.asnInvalidGeneralNameForIpAddressType();
                 }
             } catch (UnknownHostException e) {
-                throw new ASN1Exception(e.getMessage());
+                throw log.asnIpAddressGeneralNameCannotBeResolved(e);
             }
             return addr;
         }
@@ -580,7 +582,7 @@ public abstract class GeneralName {
 
                 int prefixLength = Integer.parseInt(strAddress.substring(slashIndex + 1));
                 if (prefixLength > 128) {
-                    throw new ASN1Exception("Invalid general name for IP address type");
+                    throw log.asnInvalidGeneralNameForIpAddressType();
                 }
                 byte[] mask = new byte[16];
                 int maskIndex, bit;

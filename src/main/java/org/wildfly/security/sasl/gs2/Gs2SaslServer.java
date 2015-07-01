@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.gs2;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
-import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.util.Map;
 
@@ -36,6 +35,7 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -75,7 +75,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         try {
             mechanism = Gs2.getMechanismForSaslName(mechanismName);
         } catch (GSSException e) {
-            throw log.saslMechanismToOidMappingFailed(e);
+            throw log.saslMechanismToOidMappingFailed(getMechanismName(), e);
         }
 
         // Attempt to obtain a credential
@@ -90,13 +90,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
                 GSSName localName = gssManager.createName(localNameStr, GSSName.NT_HOSTBASED_SERVICE, mechanism);
                 credential = gssManager.createCredential(localName, GSSContext.INDEFINITE_LIFETIME, mechanism, GSSCredential.ACCEPT_ONLY);
             } catch (GSSException e1) {
-                throw log.saslUnableToCreateGssContext(e1);
+                throw log.saslUnableToCreateGssContext(getMechanismName(), e1);
             }
         }
         try {
             gssContext = gssManager.createContext(credential);
         } catch (GSSException e) {
-            throw log.saslUnableToCreateGssContext(e);
+            throw log.saslUnableToCreateGssContext(getMechanismName(), e);
         }
     }
 
@@ -121,7 +121,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
             case ST_FIRST_MESSAGE: {
                 assert gssContext.isEstablished() == false;
                 if (message == null || message.length == 0) {
-                    throw log.saslClientRefusesToInitiateAuthentication();
+                    throw log.saslClientRefusesToInitiateAuthentication(getMechanismName());
                 }
                 ByteIterator bi = ByteIterator.ofBytes(message);
                 ByteIterator di = bi.delimitedBy(',');
@@ -146,12 +146,12 @@ final class Gs2SaslServer extends AbstractSaslServer {
                         throw log.saslChannelBindingNotSupported(getMechanismName());
                     }
                     if (bi.next() != '=') {
-                        throw log.saslInvalidMessageReceived();
+                        throw log.saslInvalidMessageReceived(getMechanismName());
                     }
                     assert bindingType != null;
                     assert bindingData != null;
                     if (! bindingType.equals(cpi.drainToString())) {
-                        throw log.saslChannelBindingTypeMismatch();
+                        throw log.saslChannelBindingTypeMismatch(getMechanismName());
                     }
                     skipDelimiter(bi);
                 } else if (b == 'y' || b == 'n') {
@@ -160,19 +160,19 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     }
                     skipDelimiter(bi);
                 } else {
-                    throw log.saslInvalidMessageReceived();
+                    throw log.saslInvalidMessageReceived(getMechanismName());
                 }
 
                 // gs2-authzid
                 b = bi.next();
                 if (b == 'a') {
                     if (bi.next() != '=') {
-                        throw log.saslInvalidMessageReceived();
+                        throw log.saslInvalidMessageReceived(getMechanismName());
                     }
                     authorizationID = cpi.drainToString();
                     skipDelimiter(bi);
                 } else if (b != ',') {
-                    throw log.saslInvalidMessageReceived();
+                    throw log.saslInvalidMessageReceived(getMechanismName());
                 }
 
                 // Restore the initial context token header, if necessary
@@ -189,7 +189,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     try {
                         token = restoreTokenHeader(bi.drain());
                     } catch (ASN1Exception e) {
-                        throw log.saslUnableToCreateResponseToken(e);
+                        throw log.saslUnableToCreateResponseTokenWithCause(getMechanismName(), e);
                     }
                 }
 
@@ -199,7 +199,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     ChannelBinding channelBinding = Gs2Util.createChannelBinding(gs2HeaderExcludingNonStdFlag, gs2CbFlagPUsed, bindingData);
                     gssContext.setChannelBinding(channelBinding);
                 } catch (GSSException e) {
-                    throw log.saslUnableToSetChannelBinding(e);
+                    throw log.saslUnableToSetChannelBinding(getMechanismName(), e);
                 }
 
                 try {
@@ -207,7 +207,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     if (gssContext.isEstablished()) {
                         Oid actualMechanism = gssContext.getMech();
                         if (! mechanism.equals(actualMechanism)) {
-                            throw log.saslGssApiMechanismMismatch();
+                            throw log.saslGssApiMechanismMismatch(getMechanismName());
                         }
                         checkAuthorizationID();
                         negotiationComplete();
@@ -217,7 +217,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw log.saslUnableToAcceptClientMessage(e);
+                    throw log.saslUnableToAcceptClientMessage(getMechanismName(), e);
                 }
             }
             case ST_ACCEPTOR: {
@@ -227,31 +227,31 @@ final class Gs2SaslServer extends AbstractSaslServer {
                     if (gssContext.isEstablished()) {
                         Oid actualMechanism = gssContext.getMech();
                         if (! mechanism.equals(actualMechanism)) {
-                            throw log.saslGssApiMechanismMismatch();
+                            throw log.saslGssApiMechanismMismatch(getMechanismName());
                         }
                         checkAuthorizationID();
                         negotiationComplete();
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw log.saslUnableToAcceptClientMessage(e);
+                    throw log.saslUnableToAcceptClientMessage(getMechanismName(), e);
                 }
             }
             case COMPLETE_STATE: {
                 if (message != null && message.length != 0) {
-                    throw log.saslMessageAfterComplete();
+                    throw log.saslMessageAfterComplete(getMechanismName());
                 }
                 return null;
             }
-            default: throw new IllegalStateException();
         }
+        throw Assert.impossibleSwitchCase(state);
     }
 
     public void dispose() throws SaslException {
         try {
             gssContext.dispose();
         } catch (GSSException e) {
-            throw log.saslUnableToDisposeGssContext(e);
+            throw log.saslUnableToDisposeGssContext(getMechanismName(), e);
         } finally {
             gssContext = null;
         }
@@ -272,7 +272,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         try {
             encoder.writeEncoded(mechanism.getDER());
         } catch (GSSException e) {
-            throw new ASN1Exception(e.getMessage());
+            throw new ASN1Exception(e);
         }
         encoder.writeEncoded(token);
         encoder.endSequence();
@@ -284,7 +284,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         try {
             authenticationID = gssContext.getSrcName().toString();
         } catch (GSSException e) {
-            throw log.saslUnableToDeterminePeerName(e);
+            throw log.saslUnableToDeterminePeerName(getMechanismName(), e);
         }
         if (authorizationID == null) {
             authorizationID = authenticationID;
@@ -292,13 +292,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
         AuthorizeCallback authorizeCallback = new AuthorizeCallback(authenticationID, authorizationID);
         handleCallbacks(authorizeCallback);
         if (! authorizeCallback.isAuthorized()) {
-            throw log.saslAuthorizationFailed(authenticationID, authorizationID);
+            throw log.saslAuthorizationFailed(getMechanismName(), authenticationID, authorizationID);
         }
     }
 
     private void skipDelimiter(ByteIterator bi) throws SaslException {
         if (bi.next() != ',') {
-            throw log.saslInvalidMessageReceived();
+            throw log.saslInvalidMessageReceived(getMechanismName());
         }
     }
 }

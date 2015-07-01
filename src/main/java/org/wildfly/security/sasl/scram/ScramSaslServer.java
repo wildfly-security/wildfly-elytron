@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.scram;
 
 import static java.util.Arrays.copyOfRange;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -39,7 +40,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 
-import org.jboss.logging.Logger;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.ParameterCallback;
@@ -85,8 +86,6 @@ final class ScramSaslServer extends AbstractSaslServer {
     private int clientFirstMessageBareStart;
     private int cbindFlag;
 
-    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.scram.server");
-
     ScramSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean plus, final Map<String, ?> props, final MessageDigest messageDigest, final Mac mac, final SecureRandom secureRandom, final String bindingType, final byte[] bindingData) {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.messageDigest = messageDigest;
@@ -123,7 +122,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
                 case S_FIRST_MESSAGE: {
                     if (response == null || response.length == 0) {
-                        throw new SaslException("Client refuses to initiate authentication");
+                        throw log.saslClientRefusesToInitiateAuthentication(getMechanismName());
                     }
                     if(trace) log.tracef("[S] Client first message: %s%n", ByteIterator.ofBytes(response).hexEncode().drainToString());
 
@@ -141,31 +140,31 @@ final class ScramSaslServer extends AbstractSaslServer {
                         assert bindingType != null; // because {@code plus} is true
                         assert bindingData != null;
                         if (bi.next() != '=') {
-                            throw invalidClientMessage();
+                            throw log.saslInvalidClientMessage(getMechanismName());
                         }
                         if (! bindingType.equals(cpi.drainToString())) {
                             // nope, auth must fail because we cannot acquire the same binding
-                            throw new SaslException("Channel binding type mismatch between client and server");
+                            throw log.saslChannelBindingTypeMismatch(getMechanismName());
                         }
                         bi.next(); // skip delimiter
                     } else if ((cbindFlag == 'y' || cbindFlag == 'n') && !plus) {
                         if (bi.next() != ',') {
-                            throw invalidClientMessage();
+                            throw log.saslInvalidClientMessage(getMechanismName());
                         }
                     } else {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     // authorization ID
                     c = bi.next();
                     if (c == 'a') {
                         if (bi.next() != '=') {
-                            throw invalidClientMessage();
+                            throw log.saslInvalidClientMessage(getMechanismName());
                         }
                         authorizationID = cpi.drainToString();
                         bi.next(); // skip delimiter
                     } else if (c != ',') {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     clientFirstMessageBareStart = bi.offset();
@@ -173,25 +172,25 @@ final class ScramSaslServer extends AbstractSaslServer {
                     // user name
                     if (bi.next() == 'n') {
                         if (bi.next() != '=') {
-                            throw invalidClientMessage();
+                            throw log.saslInvalidClientMessage(getMechanismName());
                         }
                         ByteStringBuilder bsb = new ByteStringBuilder();
                         StringPrep.encode(cpi.drainToString(), bsb, StringPrep.PROFILE_SASL_QUERY | StringPrep.UNMAP_SCRAM_LOGIN_CHARS);
                         userName = new String(bsb.toArray(), StandardCharsets.UTF_8);
                         bi.next(); // skip delimiter
                     } else {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     // random nonce
                     if (bi.next() != 'r' || bi.next() != '=') {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
                     byte[] nonce = di.drain();
                     if(trace) log.tracef("[S] Client nonce: %s%n", ByteIterator.ofBytes(nonce).hexEncode().drainToString());
 
                     if (bi.hasNext()) {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     clientFirstMessage = response;
@@ -209,7 +208,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                         getSaltedPasswordFromPasswordCallback(nameCallback, b);
                     }
                     if (saltedPassword == null) {
-                        throw new SaslException("Callback handler does not support CredentialCallback nor PasswordCallback");
+                        throw log.saslCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null);
                     }
                     if(trace) log.tracef("[S] Salt: %s%n", ByteIterator.ofBytes(salt).hexEncode().drainToString());
                     if(trace) log.tracef("[S] Salted password: %s%n", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
@@ -241,44 +240,44 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // first comes the channel binding
                     if (bi.next() != 'c' || bi.next() != '=') {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     final ByteIterator bindingIterator = di.base64Decode();
 
                     // -- sub-parse of binding data --
                     if(bindingIterator.next() != cbindFlag) {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
                     switch (cbindFlag) {
                         case 'n': case 'y': { // n,[a=authzid],
-                            if (plus) throw new SaslException("Channel binding not provided by client for mechanism " + getMechanismName());
+                            if (plus) throw log.saslChannelBindingNotProvided(getMechanismName());
 
                             parseAuthorizationId(bindingIterator);
 
                             if (bindingIterator.hasNext()) { // require end
-                                throw invalidClientMessage();
+                                throw log.saslInvalidClientMessage(getMechanismName());
                             }
                             break;
                         }
                         case 'p': { // p=bindingType,[a=authzid],bindingData
                             if (! plus) {
-                                throw new SaslException("Channel binding not supported for mechanism " + getMechanismName());
+                                throw log.saslChannelBindingNotSupported(getMechanismName());
                             }
                             if (bindingIterator.next() != '=') {
-                                throw invalidClientMessage();
+                                throw log.saslInvalidClientMessage(getMechanismName());
                             }
                             if (! bindingType.equals(bindingIterator.delimitedBy(',').asUtf8String().drainToString())) {
-                                throw new SaslException("Channel binding type mismatch for mechanism " + getMechanismName());
+                                throw log.saslChannelBindingTypeMismatch(getMechanismName());
                             }
                             parseAuthorizationId(bindingIterator);
 
                             // following is the raw channel binding data
                             if (! bindingIterator.contentEquals(ByteIterator.ofBytes(bindingData))) {
-                                throw new SaslException("Channel binding data mismatch for mechanism " + getMechanismName());
+                                throw log.saslChannelBindingTypeMismatch(getMechanismName());
                             }
                             if (bindingIterator.hasNext()) { // require end
-                                throw invalidClientMessage();
+                                throw log.saslInvalidClientMessage(getMechanismName());
                             }
                             break;
                         }
@@ -287,7 +286,7 @@ final class ScramSaslServer extends AbstractSaslServer {
 
                     // nonce
                     if (bi.next() != 'r' || bi.next() != '=') {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
                     while (di.hasNext()) { di.next(); }
 
@@ -295,11 +294,11 @@ final class ScramSaslServer extends AbstractSaslServer {
                     final int proofOffset = bi.offset();
                     bi.next(); // skip delimiter
                     if (bi.next() != 'p' || bi.next() != '=') {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
                     byte[] recoveredClientProofEncoded = di.drain();
                     if (bi.hasNext()) {
-                        throw invalidClientMessage();
+                        throw log.saslInvalidClientMessage(getMechanismName());
                     }
 
                     // == verify proof ==
@@ -370,7 +369,7 @@ final class ScramSaslServer extends AbstractSaslServer {
                             setNegotiationState(FAILED_STATE);
                             return b.toArray();
                         }
-                        throw new SaslException("Authentication rejected (invalid proof)");
+                        throw log.saslAuthenticationRejectedInvalidProof(getMechanismName());
                     }
 
                     if (authorizationID == null) {
@@ -384,10 +383,10 @@ final class ScramSaslServer extends AbstractSaslServer {
                     try {
                         tryHandleCallbacks(authorizeCallback);
                     } catch (UnsupportedCallbackException e) {
-                        throw new SaslException("Callback handler does not support authorization", e);
+                        throw log.saslAuthorizationUnsupported(getMechanismName(), e);
                     }
                     if ( ! authorizeCallback.isAuthorized()) {
-                        throw new SaslException(userName + " not authorized to act as " + authorizationID);
+                        throw log.saslAuthorizationFailed(getMechanismName(), userName, authorizationID);
                     }
 
                     // == send response ==
@@ -401,20 +400,18 @@ final class ScramSaslServer extends AbstractSaslServer {
                 }
                 case COMPLETE_STATE: {
                     if (response != null && response.length != 0) {
-                        throw new SaslException("Client sent extra response");
+                        throw log.saslClientSentExtraMessage(getMechanismName());
                     }
                     ok = true;
                     return null;
                 }
                 case FAILED_STATE: {
-                    throw new SaslException("Authentication failed");
-                }
-                default: {
-                    throw new IllegalStateException();
+                    throw log.saslAuthenticationFailed(getMechanismName());
                 }
             }
+            throw Assert.impossibleSwitchCase(state);
         } catch (ArrayIndexOutOfBoundsException | InvalidKeyException ignored) {
-            throw invalidClientMessage();
+            throw log.saslInvalidClientMessage(getMechanismName());
         } finally {
             if (! ok) {
                 setNegotiationState(FAILED_STATE);
@@ -424,27 +421,27 @@ final class ScramSaslServer extends AbstractSaslServer {
 
     private void parseAuthorizationId(ByteIterator bindingIterator) throws SaslException {
         if (bindingIterator.next() != ',') {
-            throw invalidClientMessage();
+            throw log.saslInvalidClientMessage(getMechanismName());
         }
         switch (bindingIterator.next()) {
             case ',':
                 if (authorizationID != null) {
-                    throw invalidClientMessage();
+                    throw log.saslInvalidClientMessage(getMechanismName());
                 }
                 break;
             case 'a': {
                 if (bindingIterator.next() != '=') {
-                    throw invalidClientMessage();
+                    throw log.saslInvalidClientMessage(getMechanismName());
                 }
                 if (! bindingIterator.delimitedBy(',').asUtf8String().drainToString().equals(authorizationID)) {
-                    throw invalidClientMessage();
+                    throw log.saslInvalidClientMessage(getMechanismName());
                 }
                 if (bindingIterator.next() != ',') {
-                    throw invalidClientMessage();
+                    throw log.saslInvalidClientMessage(getMechanismName());
                 }
                 break;
             }
-            default: throw invalidClientMessage();
+            default: throw log.saslInvalidClientMessage(getMechanismName());
         }
     }
 
@@ -455,11 +452,11 @@ final class ScramSaslServer extends AbstractSaslServer {
         } catch (UnsupportedCallbackException e) {
             final Callback callback = e.getCallback();
             if (callback == nameCallback) {
-                throw new SaslException("Callback handler does not support user name", e);
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
             } else if (callback == credentialCallback) {
                 return; // pre digested not supported
             } else {
-                throw new SaslException("Callback handler failed for unknown reason", e);
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
             }
         }
         Password password = (Password) credentialCallback.getCredential();
@@ -468,12 +465,12 @@ final class ScramSaslServer extends AbstractSaslServer {
             iterationCount = ((ScramDigestPassword) password).getIterationCount();
             salt = ((ScramDigestPassword) password).getSalt();
             if (iterationCount < minimumIterationCount) {
-                throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
+                throw log.saslIterationCountIsTooLow(getMechanismName(), iterationCount, minimumIterationCount);
             } else if (iterationCount > maximumIterationCount) {
-                throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
+                throw log.saslIterationCountIsTooHigh(getMechanismName(), iterationCount, maximumIterationCount);
             }
             if (salt == null) {
-                throw new SaslException("Salt must be specified");
+                throw log.saslSaltMustBeSpecified(getMechanismName());
             }
             saltedPassword = ((ScramDigestPassword)password).getDigest();
         }
@@ -489,7 +486,7 @@ final class ScramSaslServer extends AbstractSaslServer {
         } catch (UnsupportedCallbackException e) {
             Callback callback = e.getCallback();
             if (callback == nameCallback) {
-                throw new SaslException("Callback handler does not support user name", e);
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
             } else if (callback == credentialCallback) {
                 return; // credential acquisition not supported
             } else if (callback == parameterCallback) {
@@ -501,21 +498,21 @@ final class ScramSaslServer extends AbstractSaslServer {
                 } catch (UnsupportedCallbackException ex) {
                     callback = ex.getCallback();
                     if (callback == nameCallback) {
-                        throw new SaslException("Callback handler does not support user name", ex);
+                        throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), ex);
                     } else if (callback == credentialCallback) {
                         return;
                     } else {
-                        throw new SaslException("Callback handler failed for unknown reason", ex);
+                        throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), ex);
                     }
                 }
             } else {
-                throw new SaslException("Callback handler failed for unknown reason", e);
+                throw log.saslCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), e);
             }
         }
 
         // get the clear password
-        Password password = (Password) credentialCallback.getCredential();
-        char[] passwordChars = ScramUtil.getTwoWayPasswordChars(password);
+        TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
+        char[] passwordChars = ScramUtil.getTwoWayPasswordChars(getMechanismName(), password);
         getSaltedPasswordFromPasswordChars(passwordChars, b);
     }
 
@@ -526,11 +523,11 @@ final class ScramSaslServer extends AbstractSaslServer {
         } catch (UnsupportedCallbackException e) {
             final Callback callback = e.getCallback();
             if (callback == nameCallback) {
-                throw new SaslException("Callback handler does not support user name", e);
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
             } else if (callback == passwordCallback) {
                 return; // PasswordCallback not supported
             } else {
-                throw new SaslException("Callback handler failed for unknown reason", e);
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
             }
         }
 
@@ -551,18 +548,18 @@ final class ScramSaslServer extends AbstractSaslServer {
         iterationCount = algorithmSpec.getIterationCount();
         salt = algorithmSpec.getSalt();
         if (iterationCount < minimumIterationCount) {
-            throw new SaslException("Iteration count " + iterationCount + " is below the minimum of " + minimumIterationCount);
+            throw log.saslIterationCountIsTooLow(getMechanismName(), iterationCount, minimumIterationCount);
         } else if (iterationCount > maximumIterationCount) {
-            throw new SaslException("Iteration count " + iterationCount + " is above the maximum of " + maximumIterationCount);
+            throw log.saslIterationCountIsTooHigh(getMechanismName(), iterationCount, maximumIterationCount);
         }
         if (salt == null) {
-            throw new SaslException("Salt must be specified");
+            throw log.saslSaltMustBeSpecified(getMechanismName());
         }
         try {
             saltedPassword = ScramUtil.calculateHi(mac, passwordChars, salt, 0, salt.length, iterationCount);
             Arrays.fill(passwordChars, (char)0); // wipe out the password
         } catch (InvalidKeyException e) {
-            throw new SaslException("Invalid MAC initialization key");
+            throw log.saslInvalidMacInitializationKey(getMechanismName());
         }
     }
 
@@ -577,9 +574,5 @@ final class ScramSaslServer extends AbstractSaslServer {
         setNegotiationState(FAILED_STATE);
         mac.reset();
         messageDigest.reset();
-    }
-
-    static SaslException invalidClientMessage() {
-        return new SaslException("Invalid client message");
     }
 }

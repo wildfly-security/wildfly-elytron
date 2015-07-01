@@ -18,10 +18,12 @@
 
 package org.wildfly.security.sasl.anonymous;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
 import java.nio.charset.StandardCharsets;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 
@@ -65,21 +67,21 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
                 } else {
                     // sanity check
                     if (length > 1020) {
-                        throw new SaslException("Authentication name string is too long");
+                        throw log.saslAuthenticationNameTooLong(getMechanismName());
                     }
                     String name = new String(message, StandardCharsets.UTF_8);
                     if (name.length() > 255) {
-                        throw new SaslException("Authentication name string is too long");
+                        throw log.saslAuthenticationNameTooLong(getMechanismName());
                     }
                     final AnonymousAuthorizationCallback callback = new AnonymousAuthorizationCallback(name);
                     handleCallbacks(callback);
                     if (! callback.isAuthorized()) {
-                        throw new SaslException("Authorization for anonymous access is denied");
+                        throw log.saslAnonymousAuthorizationDenied(getMechanismName());
                     }
                     negotiationComplete();
                     return null;
                 }
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 }

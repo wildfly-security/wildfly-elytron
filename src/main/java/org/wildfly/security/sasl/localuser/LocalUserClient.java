@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.localuser;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,14 +27,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.wildfly.security.sasl.util.AbstractSaslClient;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.CodePointIterator;
-
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.sasl.util.AbstractSaslClient;
+import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -89,7 +92,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         while (t < 8) {
                             int r = stream.read(challenge, t, 8-t);
                             if (r < 0) {
-                                throw new SaslException("Invalid server challenge");
+                                throw log.saslInvalidServerMessage(getMechanismName());
                             } else {
                                 t += r;
                             }
@@ -98,7 +101,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         safeClose(stream);
                     }
                 } catch (IOException e) {
-                    throw new SaslException("Failed to read server challenge", e);
+                    throw log.saslFailedToReadChallengeFile(getMechanismName(), e);
                 }
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;
@@ -119,7 +122,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                 negotiationComplete();
                 return response;
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 
     private static void safeClose(Closeable c) {

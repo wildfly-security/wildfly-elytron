@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
@@ -40,10 +41,10 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
     PrivilegedSaslServer(final SaslServer delegate, final AccessControlContext accessControlContext) {
         super(delegate);
         if (delegate == null) {
-            throw new IllegalArgumentException("delegate is null");
+            throw log.nullParameter("delegate");
         }
         if (accessControlContext == null) {
-            throw new IllegalArgumentException("accessControlContext is null");
+            throw log.nullParameter("accessControlContext");
         }
         this.accessControlContext = accessControlContext;
     }

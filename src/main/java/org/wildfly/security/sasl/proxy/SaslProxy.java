@@ -24,6 +24,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.common.Assert;
+
 /**
  * A proxy between an incoming and outgoing (upstream) SASL authentication.  Each received response from the downstream
  * client is proxied to the upstream server, and each received challenge from the upstream server is proxied to the
@@ -77,7 +79,7 @@ public final class SaslProxy {
             synchronized (lock) {
                 for (;;) switch (state) {
                     case ST_FAILED: {
-                        throw log.saslProxyAuthenticationFailed();
+                        throw log.saslProxyAuthenticationFailed(getMechanismName());
                     }
                     case ST_DONE: {
                         return null;
@@ -88,7 +90,7 @@ public final class SaslProxy {
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             state = ST_FAILED;
-                            throw log.saslProxyAuthenticationFailed();
+                            throw log.saslProxyAuthenticationFailed(getMechanismName());
                         }
                         break;
                     }
@@ -99,7 +101,7 @@ public final class SaslProxy {
                         message = challenge;
                         lock.notifyAll();
                     }
-                    default: throw new IllegalStateException();
+                    default: throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -111,11 +113,11 @@ public final class SaslProxy {
         }
 
         public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-            throw new IllegalStateException("Wrap/unwrap is unsupported");
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
 
         public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-            throw new IllegalStateException("Wrap/unwrap is unsupported");
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
 
         public Object getNegotiatedProperty(final String propName) {
@@ -153,7 +155,7 @@ public final class SaslProxy {
             synchronized (lock) {
                 for (;;) switch (state) {
                     case ST_FAILED: {
-                        throw log.saslProxyAuthenticationFailed();
+                        throw log.saslProxyAuthenticationFailed(getMechanismName());
                     }
                     case ST_DONE: {
                         return null;
@@ -164,7 +166,7 @@ public final class SaslProxy {
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             state = ST_FAILED;
-                            throw log.saslProxyAuthenticationFailed();
+                            throw log.saslProxyAuthenticationFailed(getMechanismName());
                         }
                         break;
                     }
@@ -175,7 +177,7 @@ public final class SaslProxy {
                         message = response;
                         lock.notifyAll();
                     }
-                    default: throw new IllegalStateException();
+                    default: throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -192,15 +194,15 @@ public final class SaslProxy {
                     return authorizationID;
                 }
             }
-            throw new IllegalStateException();
+            throw Assert.unreachableCode();
         }
 
         public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-            throw new IllegalStateException("Wrap/unwrap is unsupported");
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
 
         public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-            throw new IllegalStateException("Wrap/unwrap is unsupported");
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
 
         public Object getNegotiatedProperty(final String propName) {
@@ -256,7 +258,7 @@ public final class SaslProxy {
     public void upstreamServerComplete(String authorizationID) {
         synchronized (lock) {
             if (state == ST_DONE) {
-                throw new IllegalStateException();
+                throw Assert.unreachableCode();
             }
             state = ST_DONE;
             this.authorizationID = authorizationID;

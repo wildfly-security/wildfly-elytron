@@ -22,6 +22,7 @@ import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.GeneralName.*;
 import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -90,7 +91,7 @@ class EntityUtil {
             }
             encoder.endSetOf();
         } catch (CertificateEncodingException e) {
-            throw new ASN1Exception(e.getMessage());
+            throw new ASN1Exception(e.getMessage(), e);
         }
     }
 
@@ -154,7 +155,7 @@ class EntityUtil {
                 omitParametersField = true;
                 break;
             }
-            default: throw new ASN1Exception("Unrecognised algorithm");
+            default: throw log.asnUnrecognisedAlgorithm();
         }
         encodeAlgorithmIdentifier(encoder, algorithmOid(algorithm), omitParametersField);
     }
@@ -216,7 +217,7 @@ class EntityUtil {
             encoder.encodeImplicit(generalName.getType());
             encoder.encodeObjectIdentifier(((RegisteredID) generalName).getName());
         } else {
-            throw new ASN1Exception("Invalid general name type");
+            throw log.asnInvalidGeneralNameType();
         }
     }
 
@@ -263,7 +264,7 @@ class EntityUtil {
             encodeGeneralName(encoder, new DirectoryName(subjectName));
         }
         if (subjectAltNames != null) {
-            for (List altName : subjectAltNames) {
+            for (List<?> altName : subjectAltNames) {
                 encodeGeneralName(encoder, convertToGeneralName(altName));
             }
         }
@@ -337,10 +338,10 @@ class EntityUtil {
             try {
                 encoder.writeEncoded(((CertificateTrustedAuthority) trustedAuthority).getIdentifier().getEncoded());
             } catch (CertificateEncodingException e) {
-                throw new ASN1Exception(e.getMessage());
+                throw new ASN1Exception(e.getMessage(), e);
             }
         } else {
-            throw new ASN1Exception("Invalid trusted authority type");
+            throw log.asnInvalidTrustedAuthorityType();
         }
     }
 
@@ -445,7 +446,7 @@ class EntityUtil {
                                 break out;
                             }
                             break;
-                        default: throw new ASN1Exception("Invalid general name type");
+                        default: throw log.asnInvalidGeneralNameType();
                     }
                 }
             }
@@ -465,7 +466,7 @@ class EntityUtil {
      */
     public static X509Certificate[] decodeX509CertificateChain(final DERDecoder decoder) throws ASN1Exception {
         if (decoder.peekType() != SET_TYPE) {
-            throw new ASN1Exception("Unexpected ASN.1 tag encountered");
+            throw log.asnUnexpectedTag();
         }
         byte[] certChain = decoder.drainElement();
         try {
@@ -475,7 +476,7 @@ class EntityUtil {
             List<? extends Certificate> certs = certPath.getCertificates();
             return certs.toArray(new X509Certificate[certs.size()]);
         } catch (CertificateException e) {
-            throw new ASN1Exception(e.getMessage());
+            throw new ASN1Exception(e.getMessage(), e);
         }
     }
 
@@ -506,10 +507,10 @@ class EntityUtil {
                 X509Certificate peerCert = getCertificateFromUrl(decoder.decodeIA5String());
                 peerCertChain = new X509Certificate[] {peerCert};
             } catch (IOException e) {
-                throw new ASN1Exception("Unable to read certificate data", e);
+                throw log.asnUnableToReadCertificateData(e);
             }
         } else {
-            throw new ASN1Exception("Unexpected ASN.1 tag encountered");
+            throw log.asnUnexpectedTag();
         }
         return peerCertChain;
     }
@@ -530,7 +531,7 @@ class EntityUtil {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             cert = (X509Certificate) certFactory.generateCertificate(in);
         } catch (CertificateException e) {
-            throw new IOException("Unable to read certificate", e);
+            throw log.asnUnableToReadCertificateFromUrl(certUrl, e);
         } finally {
             safeClose(in);
         }
@@ -568,7 +569,7 @@ class EntityUtil {
                                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
                                     trustedAuthority = new CertificateTrustedAuthority((X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert)));
                                 } catch (CertificateException e) {
-                                    throw new ASN1Exception(e.getMessage());
+                                    throw new ASN1Exception(e.getMessage(), e);
                                 }
                                 break out;
                             }
@@ -594,7 +595,7 @@ class EntityUtil {
                                 break out;
                             }
                             break;
-                        default: throw new ASN1Exception("Invalid general name type");
+                        default: throw log.asnInvalidGeneralNameType();
                     }
                 }
             }
@@ -641,7 +642,7 @@ class EntityUtil {
         } catch (CertificateParsingException e) {
             // Ignore unless the subject name is empty
             if (certSubjectName == null) {
-                throw new IllegalStateException("Unable to determine name", e);
+                throw log.unableToDetermineSubjectName(e);
             }
         }
         List<GeneralName> certNames;
@@ -686,7 +687,7 @@ class EntityUtil {
                 return new IPAddress((String) name);
             case REGISTERED_ID:
                 return new RegisteredID((String) name);
-            default: throw new ASN1Exception("Invalid general name type");
+            default: throw log.asnInvalidGeneralNameType();
         }
     }
 

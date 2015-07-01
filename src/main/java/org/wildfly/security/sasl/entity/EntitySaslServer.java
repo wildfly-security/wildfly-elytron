@@ -40,6 +40,7 @@ import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -83,7 +84,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
     public String getAuthorizationID() {
         if (! isComplete()) {
-            throw log.saslAuthenticationNotComplete();
+            throw log.saslAuthenticationNotComplete(getMechanismName());
         }
         return authorizationID;
     }
@@ -92,7 +93,7 @@ final class EntitySaslServer extends AbstractSaslServer {
         switch (state) {
             case ST_CHALLENGE: {
                 if ((response != null) && (response.length != 0)) {
-                    throw new SaslException("Non-empty message when sending challenge");
+                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
                 }
                 // Construct TokenBA1, where:
                 // TokenBA1 ::= SEQUENCE {
@@ -131,7 +132,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
                     encoder.endSequence();
                 } catch (ASN1Exception e) {
-                    throw new SaslException("Unable to generate initial token", e);
+                    throw log.saslUnableToCreateResponseTokenWithCause(getMechanismName(), e);
                 }
                 setNegotiationState(ST_PROCESS_RESPONSE);
                 return tokenBA1.toArray();
@@ -165,7 +166,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(clientCertChain, clientCert.getPublicKey().getAlgorithm());
                     handleCallbacks(verifyPeerTrustedCallback);
                     if (! verifyPeerTrustedCallback.isVerified()) {
-                        throw new SaslException("Client authenticity cannot be verified");
+                        throw log.saslAuthenticationFailed(getMechanismName());
                     }
 
                     // Determine the authorization identity
@@ -206,14 +207,14 @@ final class EntitySaslServer extends AbstractSaslServer {
                         signature.update(tbsDataAB.toArray());
                         if (! signature.verify(clientSignature)) {
                             setNegotiationState(FAILED_STATE);
-                            throw new SaslException("Client authenticity cannot be verified");
+                            throw log.saslAuthenticationFailed(getMechanismName());
                         }
                     } catch (SignatureException | InvalidKeyException e) {
-                        throw new SaslException("Unable to verify client signature", e);
+                        throw log.saslUnableToVerifyClientSignature(getMechanismName(), e);
                     }
                     decoder.endSequence();
                 } catch (ASN1Exception e) {
-                    throw new SaslException("Invalid client message", e);
+                    throw log.saslInvalidClientMessageWithCause(getMechanismName(), e);
                 }
 
                 // Get the server's certificate data, if necessary
@@ -234,10 +235,10 @@ final class EntitySaslServer extends AbstractSaslServer {
                             try {
                                 serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
                             } catch (IOException e) {
-                                throw new SaslException("Unable to obtain server certificate from URL", e);
+                                throw log.saslUnableToObtainServerCertificate(getMechanismName(), serverCertUrl, e);
                             }
                         } else {
-                            throw new SaslException("Invalid server certificate data");
+                            throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
                         }
                     }
                     privateKey = (PrivateKey) privateKeyCallback.getCredential();
@@ -245,14 +246,14 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                 // Verify that entityB matches the server's distinguishing identifier
                 if ((entityB != null) && (! EntityUtil.matchGeneralNames(entityB, serverCert))) {
-                    throw new SaslException("Server identifier mismatch");
+                    throw log.saslServerIdentifierMismatch(getMechanismName());
                 }
 
                 // Check the authorization id
                 AuthorizeCallback authorizeCallback = new AuthorizeCallback(clientName, authorizationID);
                 handleCallbacks(authorizeCallback);
                 if (! authorizeCallback.isAuthorized()) {
-                    throw log.saslAuthorizationFailed(clientName, authorizationID);
+                    throw log.saslAuthorizationFailed(getMechanismName(), clientName, authorizationID);
                 }
 
                 if (mutual) {
@@ -292,7 +293,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                         } catch (CertificateParsingException e) {
                             // Ingore unless the subject name is empty
                             if (clientName.isEmpty()) {
-                                throw new SaslException("Unable to determine client name", e);
+                                throw log.saslUnableToDetermineClientName(getMechanismName(), e);
                             }
                         }
                         encoder.encodeImplicit(0);
@@ -306,13 +307,13 @@ final class EntitySaslServer extends AbstractSaslServer {
                             // Use a certificate URL instead
                             encoder.encodeIA5String(serverCertUrl);
                         } else {
-                            throw new SaslException("Invalid server certificate data");
+                            throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
                         }
                         encoder.endExplicit();
 
                         // Private key
                         if (privateKey == null) {
-                            throw new SaslException("Private key is null");
+                            throw log.saslCallbackHandlerNotProvidedPrivateKey(getMechanismName());
                         }
 
                         // TBSDataBA
@@ -332,7 +333,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                             signature.update(tbsDataBA.toArray());
                             signatureBytes = signature.sign();
                         } catch (SignatureException | InvalidKeyException e) {
-                            throw new SaslException("Unable to create signature", e);
+                            throw log.saslUnableToCreateSignature(getMechanismName(), e);
                         }
 
                         encoder.startSequence();
@@ -342,7 +343,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                         encoder.endSequence();
                     } catch (ASN1Exception e) {
-                        throw new SaslException("Unable to create response token", e);
+                        throw log.saslUnableToCreateResponseTokenWithCause(getMechanismName(), e);
                     }
                     negotiationComplete();
                     return tokenBA2.toArray();
@@ -352,11 +353,11 @@ final class EntitySaslServer extends AbstractSaslServer {
                 }
             } case COMPLETE_STATE: {
                   if (response != null && response.length != 0) {
-                      throw new SaslException("Client sent extra response");
+                      throw log.saslClientSentExtraMessage(getMechanismName());
                   }
                   return null;
             }
-            default: throw new IllegalStateException();
         }
+        throw Assert.impossibleSwitchCase(state);
     }
 }

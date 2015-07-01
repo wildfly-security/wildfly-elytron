@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -80,7 +82,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         try {
             tryHandleCallbacks(callbacks);
         } catch (UnsupportedCallbackException e) {
-            throw new SaslException("Callback handler cannot support callback " + e.getCallback().getClass(), e);
+            throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
         }
     }
 
@@ -97,7 +99,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         } catch (SaslException | UnsupportedCallbackException e) {
             throw e;
         } catch (Throwable t) {
-            throw new SaslException("Callback handler invocation failed", t);
+            throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
         }
     }
 
@@ -168,9 +170,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         boolean ok = false;
         try {
             if (state == COMPLETE_STATE) {
-                throw new SaslException("SASL negotiation already complete");
+                throw log.saslMessageAfterComplete(getMechanismName());
             } else if (state == FAILED_STATE) {
-                throw new SaslException("SASL negotiation failed");
+                throw log.saslAuthenticationFailed(getMechanismName());
             }
             byte[] result = evaluateMessage(state, message);
             ok = true;
@@ -206,7 +208,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
-            throw new IllegalStateException("Wrapping is not configured");
+            throw log.wrappingNotConfigured(getMechanismName());
         }
         if(len == 0) {
             return NO_BYTES;
@@ -227,7 +229,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         SaslWrapper wrapper = this.wrapper;
         if (wrapper == null) {
-            throw new IllegalStateException("Wrapping is not configured");
+            throw log.wrappingNotConfigured(getMechanismName());
         }
         if(len == 0) {
             return NO_BYTES;
@@ -251,7 +253,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      */
     protected void assertComplete() {
         if (isComplete() == false) {
-            throw new IllegalStateException("Authentication is not yet complete.");
+            throw log.saslAuthenticationNotComplete(getMechanismName());
         }
     }
 

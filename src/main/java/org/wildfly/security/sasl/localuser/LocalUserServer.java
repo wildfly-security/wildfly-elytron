@@ -35,10 +35,13 @@ import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util._private.Arrays2;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -173,14 +176,14 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
                 } catch (IOException e) {
-                    throw new SaslException("Failed to create challenge file", e);
+                    throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
                 }
 
                 final FileOutputStream fos;
                 try {
                     fos = new FileOutputStream(challengeFile);
                 } catch (FileNotFoundException e) {
-                    throw new SaslException("Failed to create challenge file", e);
+                    throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
                 }
                 boolean ok = false;
                 final byte[] bytes;
@@ -192,7 +195,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         fos.close();
                         ok = true;
                     } catch (IOException e) {
-                        throw new SaslException("Failed to create challenge file", e);
+                        throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
                     }
                 } finally {
                     if (!ok) {
@@ -212,10 +215,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 deleteChallenge();
                 final int length = message.length;
                 if (length < 8) {
-                    throw new SaslException("Invalid response");
+                    throw log.saslInvalidClientMessage(getMechanismName());
                 }
                 if (!Arrays.equals(challengeBytes, Arrays.copyOf(message, 8))) {
-                    throw new SaslException("Invalid response");
+                    throw log.saslAuthenticationRejectedInvalidProof(getMechanismName());
                 }
                 String authenticationRealm;
                 String authenticationId;
@@ -236,7 +239,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     authenticationId = defaultUser;
                 }
                 if (authenticationId == null) {
-                    throw new SaslException("No authentication ID given");
+                    throw log.saslAuthenticationNameIsEmpty(getMechanismName());
                 }
                 if (authorizationId == null) {
                     // If no authorization ID is specifed default to authentication ID
@@ -251,11 +254,11 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     handleCallbacks(realmCallback, nameCallback, authorizeCallback);
                 }
                 if (!authorizeCallback.isAuthorized()) {
-                    throw new SaslException("User " + authorizationId + " is not authorized");
+                    throw log.saslAuthorizationFailed(getMechanismName(), authenticationId, authorizationId);
                 }
                 negotiationComplete();
                 return null;
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 }
