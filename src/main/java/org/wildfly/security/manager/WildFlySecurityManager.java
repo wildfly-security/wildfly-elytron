@@ -105,11 +105,7 @@ public final class WildFlySecurityManager extends SecurityManager {
 
     static {
         PD_STACK = doPrivileged(new GetAccessibleDeclaredFieldAction(AccessControlContext.class, "context"));
-        INSTANCE = doPrivileged(new PrivilegedAction<WildFlySecurityManager>() {
-            public WildFlySecurityManager run() {
-                return new WildFlySecurityManager();
-            }
-        });
+        INSTANCE = doPrivileged((PrivilegedAction<WildFlySecurityManager>) WildFlySecurityManager::new);
         boolean result = false;
         int offset = 0;
         try {
@@ -1459,26 +1455,22 @@ public final class WildFlySecurityManager extends SecurityManager {
         }
     };
 
-    private static final PrivilegedAction<Object> PA_TRAMPOLINE1 = new PrivilegedAction<Object>() {
-        public Object run() {
-            final Context ctx = CTX.get();
-            final ParametricPrivilegedAction<Object, Object> a = ctx.action1;
-            final Object p = ctx.parameter;
-            ctx.action1 = null;
-            ctx.parameter = null;
-            return a.run(p);
-        }
+    private static final PrivilegedAction<Object> PA_TRAMPOLINE1 = () -> {
+        final Context ctx = CTX.get();
+        final ParametricPrivilegedAction<Object, Object> a = ctx.action1;
+        final Object p = ctx.parameter;
+        ctx.action1 = null;
+        ctx.parameter = null;
+        return a.run(p);
     };
 
-    private static final PrivilegedExceptionAction<Object> PA_TRAMPOLINE2 = new PrivilegedExceptionAction<Object>() {
-        public Object run() throws Exception {
-            final Context ctx = CTX.get();
-            final ParametricPrivilegedExceptionAction<Object, Object> a = ctx.action2;
-            final Object p = ctx.parameter;
-            ctx.action2 = null;
-            ctx.parameter = null;
-            return a.run(p);
-        }
+    private static final PrivilegedExceptionAction<Object> PA_TRAMPOLINE2 = () -> {
+        final Context ctx = CTX.get();
+        final ParametricPrivilegedExceptionAction<Object, Object> a = ctx.action2;
+        final Object p = ctx.parameter;
+        ctx.action2 = null;
+        ctx.parameter = null;
+        return a.run(p);
     };
 
     /**

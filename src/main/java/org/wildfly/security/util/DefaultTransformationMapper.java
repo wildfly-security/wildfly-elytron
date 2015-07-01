@@ -25,7 +25,6 @@ import static org.wildfly.security.util.TransformationSpec.NO_KEY;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 
 /**
@@ -50,16 +49,13 @@ public class DefaultTransformationMapper implements TransformationMapper {
 
         // sort all transformation arrays descending by strength
         for (String mech : transformations.keySet()) {
-            Arrays.sort(transformations.get(mech), new Comparator<TransformationSpec>() {
-                @Override
-                public int compare(TransformationSpec o1, TransformationSpec o2) {
-                    if (o1.getStrength() < o2.getStrength()) {
-                        return 1;
-                    } else if (o1.getStrength() > o2.getStrength()) {
-                        return -1;
-                    } else {
-                        return 0;
-                    }
+            Arrays.sort(transformations.get(mech), (o1, o2) -> {
+                if (o1.getStrength() < o2.getStrength()) {
+                    return 1;
+                } else if (o1.getStrength() > o2.getStrength()) {
+                    return -1;
+                } else {
+                    return 0;
                 }
             });
         }
