@@ -741,4 +741,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 226, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
+
+    @Message(id = 227, value = "Ldap-backed realm failed to obtain identity from server.")
+    RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(@Cause Throwable cause);
 }
