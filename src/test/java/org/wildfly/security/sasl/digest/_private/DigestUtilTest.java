@@ -96,15 +96,15 @@ public class DigestUtilTest {
     @Test
     public void testCreate3desSubKey() throws Exception {
         byte[] input1 = CodePointIterator.ofString("FFFFFFFFFFFFFF").hexDecode().drain();
-        byte[] output1 = create3desSubKey(input1, 0, 7);
+        byte[] output1 = create3desSubKey(input1, 0);
         assertEquals("FEFEFEFEFEFEFEFE".toLowerCase(), ByteIterator.ofBytes(output1).hexEncode().drainToString());
 
         byte[] input2 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
-        byte[] output2 = create3desSubKey(input2, 0, 7);
+        byte[] output2 = create3desSubKey(input2, 0);
         assertEquals("D6E54919F22A929D".toLowerCase(), ByteIterator.ofBytes(output2).hexEncode().drainToString());
 
         byte[] input3 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
-        byte[] output3 = create3desSubKey(input3, 7, 7);
+        byte[] output3 = create3desSubKey(input3, 7);
         assertEquals("C2CE15E04986DFD5".toLowerCase(), ByteIterator.ofBytes(output3).hexEncode().drainToString());
     }
 

@@ -44,6 +44,7 @@ import org.wildfly.security.util.TransformationSpec;
 import org.wildfly.security.util._private.Arrays2;
 
 import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  *
@@ -64,7 +65,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     private FORMAT format;
     protected String digestURI;
     private Charset charset = StandardCharsets.ISO_8859_1;
-    protected MessageDigest md5;
+    protected MessageDigest digest;
 
     // selected cipher
     protected String cipher;
@@ -105,9 +106,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         hmacMD5 = getHmac();
 
         try {
-            this.md5 = MessageDigest.getInstance(HASH_algorithm);
+            this.digest = MessageDigest.getInstance(HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Algorithm not supported", e);
+            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
         }
 
         this.format = format;
@@ -195,11 +196,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             // parsing keyword
             if (insideKey) {
                 if (b == ',') {
-                    throw new SaslException("DIGEST-MD5 keyword cannot contain ',' " + key.toString());
+                    throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
                 }
                 else if (b == '=') {
                     if (key.length() == 0) {
-                        throw new SaslException("DIGEST-MD5 keyword cannot be empty");
+                        throw log.saslKeywordCannotBeEmpty(getMechanismName());
                     }
                     insideKey = false;
                     i = skipWhiteSpace(challenge, i + 1);
@@ -211,7 +212,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                         }
                     }
                     else {
-                        throw new SaslException("No value found for keyword: " + key.toString());
+                        throw log.saslNoValueFoundForKeyword(getMechanismName(), key.toString());
                     }
                 }
                 else if (isWhiteSpace(b)) {
@@ -219,11 +220,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
                     if (i < challenge.length) {
                         if (challenge[i] != '=') {
-                            throw new SaslException("'=' expected after keyword: " + key.toString());
+                            throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
                         }
                     }
                     else {
-                         throw new SaslException("'=' expected after keyword: " + key.toString());
+                        throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
                     }
                 }
                 else {
@@ -240,7 +241,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                         i++;
                     }
                     else {
-                        throw new SaslException("Unmatched quote found for value: " + value.toString());
+                        throw log.saslUnmatchedQuoteFoundForValue(getMechanismName(), value.toString());
                     }
                 }
                 else if (b == '"') {
@@ -269,7 +270,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             // expect separator
             else if (expectSeparator) {
                 String val = new String(value.toArray(), charset);
-                throw new SaslException("Expecting comma or linear whitespace after quoted string: \"" + val + "\"");
+                throw log.saslExpectingCommaOrLinearWhitespaceAfterQuoted(getMechanismName(), val);
             }
             else {
                 value.append(b);
@@ -278,7 +279,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         }
 
         if (insideQuotedValue) {
-            throw new SaslException("Unmatched quote found for value: " + value.toString());
+            throw log.saslUnmatchedQuoteFoundForValue(getMechanismName(), value.toString());
         }
 
         if (key.length() > 0) {
@@ -371,11 +372,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw new SaslException("MessageType must equal to 1, but is different");
+            throw log.saslMessageTypeMustEqual(getMechanismName(), 1, messageType);
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw new SaslException("Bad sequence number while unwrapping");
+            throw log.saslBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum);
         }
 
         byte[] extractedMessageMac = new byte[10];
@@ -418,7 +419,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
             cipheredPart = wrapCipher.update(toCipher);
         } catch (Exception e) {
-            throw new SaslException("Problem during crypt.", e);
+            throw log.saslProblemDuringCrypt(getMechanismName(), e);
         }
 
         byte[] result = new byte[cipheredPart.length + 6];
@@ -436,18 +437,18 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw new SaslException("MessageType must equal to 1, but is different");
+            throw log.saslMessageTypeMustEqual(getMechanismName(), 1, messageType);
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw new SaslException("Bad sequence number while unwrapping");
+            throw log.saslBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum);
         }
 
         byte[] clearText = null;
         try {
             clearText = unwrapCipher.update(message, offset, len - 6);
         } catch (Exception e) {
-            throw new SaslException("Problem during decrypt.", e);
+            throw log.saslProblemDuringDecrypt(getMechanismName(), e);
         }
 
         byte[] hmac = new byte[10];
@@ -503,8 +504,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         } else {
             key.append(format == FORMAT.CLIENT ? SERVER_MAGIC_INTEGRITY : CLIENT_MAGIC_INTEGRITY);
         }
-        md5.reset();
-        return md5.digest(key.toArray());
+        digest.reset();
+        return digest.digest(key.toArray());
     }
 
     private static final String CLIENT_MAGIC_CONFIDENTIALITY = "Digest H(A1) to client-to-server sealing key magic constant";
@@ -521,43 +522,36 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
         if (wrap) {
             key.append(format == FORMAT.CLIENT ? CLIENT_MAGIC_CONFIDENTIALITY : SERVER_MAGIC_CONFIDENTIALITY);
-            hmacKey = md5.digest(key.toArray());
+            hmacKey = digest.digest(key.toArray());
         } else {
             key.append(format == FORMAT.CLIENT ? SERVER_MAGIC_CONFIDENTIALITY : CLIENT_MAGIC_CONFIDENTIALITY);
-            hmacKey = md5.digest(key.toArray());
-        }
-
-
-        byte[] cipherKeyBytes;
-        byte[] IV = null;                             // Initial Vector
-        if (cipher.startsWith("rc")) {
-            cipherKeyBytes = hmacKey.clone();
-        } else if (cipher.equals("des")) {
-            cipherKeyBytes = Arrays.copyOf(hmacKey, 7);    // first 7 bytes
-            IV = Arrays.copyOfRange(hmacKey, 8, 16);  // last 8 bytes
-        } else if (cipher.equals("3des")) {
-            cipherKeyBytes = Arrays.copyOf(hmacKey, 14);   // first 14 bytes
-            IV = Arrays.copyOfRange(hmacKey, 8, 16);  // last 8 bytes
-        } else {
-            throw new SaslException("Unknown ciper (" + cipher + ")");
+            hmacKey = digest.digest(key.toArray());
         }
 
         TransformationMapper trans = new DefaultTransformationMapper();
         Cipher ciph;
+        byte[] cipherKeyBytes;
+        byte[] IV = null; // Initial Vector
         SecretKey cipherKey;
+
         try {
             ciph = Cipher.getInstance(trans.getTransformationSpec(Digest.DIGEST_MD5, cipher).getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 
             if (cipher.startsWith("rc")) {
+                cipherKeyBytes = hmacKey.clone();
                 cipherKey = new SecretKeySpec(cipherKeyBytes, alg);
             } else if (cipher.equals("des")) {
-                cipherKey = createDesSecretKey(cipherKeyBytes, 0, cipherKeyBytes.length);
+                cipherKeyBytes = Arrays.copyOf(hmacKey, 7); // first 7 bytes
+                IV = Arrays.copyOfRange(hmacKey, 8, 16); // last 8 bytes
+                cipherKey = createDesSecretKey(cipherKeyBytes);
             } else if (cipher.equals("3des")) {
-                cipherKey = create3desSecretKey(cipherKeyBytes, 0, cipherKeyBytes.length);
+                cipherKeyBytes = Arrays.copyOf(hmacKey, 14); // first 14 bytes
+                IV = Arrays.copyOfRange(hmacKey, 8, 16); // last 8 bytes
+                cipherKey = create3desSecretKey(cipherKeyBytes);
             } else {
-                throw new SaslException("Unsupported cipher (" + cipher + ")");
+                throw log.saslUnknownCipher(getMechanismName(), cipher);
             }
 
             if (IV != null) {
@@ -566,7 +560,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 ciph.init((wrap ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE), cipherKey, secureRandomGenerator);
             }
         } catch (Exception e) {
-            throw new SaslException("Problem getting required cipher. Check your transformation mapper settings.", e);
+            throw log.saslProblemGettingRequiredCipher(getMechanismName(), e);
         }
 
         return ciph;
@@ -586,7 +580,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
           return Mac.getInstance(HMAC_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("", e);
+            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
         }
     }
 

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.text.Normalizer;
 
 import org.wildfly.security.util.ByteStringBuilder;
@@ -106,13 +108,13 @@ public final class StringPrep {
 
     public static void forbidNonAsciiSpaces(int input) {
         if (mapCodePointToSpace(input)) {
-            throw new IllegalArgumentException("Invalid non-ASCII space");
+            throw log.invalidNonAsciiSpace(input);
         }
     }
 
     public static void forbidAsciiControl(int input) {
         if (input < 0x20 || input == 0x7F) {
-            throw new IllegalArgumentException("Invalid ASCII control");
+            throw log.invalidAsciiControl(input);
         }
     }
 
@@ -129,37 +131,37 @@ public final class StringPrep {
             || input >= 0xFFF9 && input <= 0xFFFC
             || input >= 0x01D173 && input <= 0x01D17A
         ) {
-            throw new IllegalArgumentException("Invalid non-ASCII control");
+            throw log.invalidNonAsciiControl(input);
         }
     }
 
     public static void forbidPrivateUse(int input) {
         if (input >= 0xE000 && input <= 0xF8FF || input >= 0xF0000 && input <= 0xFFFFD || input >= 0x100000 && input <= 0x10FFFD) {
-            throw new IllegalArgumentException("Invalid private use character");
+            throw log.invalidPrivateUseCharacter(input);
         }
     }
 
     public static void forbidNonCharacter(int input) {
         if ((input & 0xFFFE) == 0xFFFE || input >= 0xFDD0 && input <= 0xFDEF) {
-            throw new IllegalArgumentException("Invalid non-character code point");
+            throw log.invalidNonCharacterCodePoint(input);
         }
     }
 
     public static void forbidSurrogate(int input) {
         if (input >= 0xD800 && input <= 0xDFFF) {
-            throw new IllegalArgumentException("Invalid surrogate code point");
+            throw log.invalidSurrogateCodePoint(input);
         }
     }
 
     public static void forbidInappropriateForPlainText(int input) {
         if (input >= 0xFFF9 && input <= 0xFFFD) {
-            throw new IllegalArgumentException("Invalid plain text code point");
+            throw log.invalidPlainTextCodePoint(input);
         }
     }
 
     public static void forbidInappropriateForCanonicalRepresentation(int input) {
         if (input >= 0x2FF0 && input <= 0x2FFB) {
-            throw new IllegalArgumentException("Invalid non-canonical code point");
+            throw log.invalidNonCanonicalCodePoint(input);
         }
     }
 
@@ -168,19 +170,19 @@ public final class StringPrep {
             || input >= 0x200E && input <= 0x200F
             || input >= 0x202A && input <= 0x202E
             || input >= 0x206A && input <= 0x206F) {
-            throw new IllegalArgumentException("Invalid control character");
+            throw log.invalidControlCharacter(input);
         }
     }
 
     public static void forbidTagging(int input) {
         if (input == 0x0E0001 || input >= 0x0E0020 && input <= 0x0E007F) {
-            throw new IllegalArgumentException("Invalid tagging character");
+            throw log.invalidTaggingCharacter(input);
         }
     }
 
     public static void forbidUnassigned(int input) {
         if (Character.getType(input) == Character.UNASSIGNED) {
-            throw new IllegalArgumentException("Unassigned code point");
+            throw log.unassignedCodePoint(input);
         }
     }
 
@@ -206,21 +208,21 @@ public final class StringPrep {
             int cp;
             if (Character.isHighSurrogate(ch)) {
                 if (i == len) {
-                    throw new IllegalArgumentException("Invalid surrogate pair (high at end of string)");
+                    throw log.invalidSurrogatePairHightAtEnd(ch);
                 }
                 char low = string.charAt(i++);
                 if (!Character.isLowSurrogate(low)) {
-                    throw new IllegalArgumentException("Invalid surrogate pair (second is not low)");
+                    throw log.invalidSurrogatePairSecondIsNotLow(ch, low);
                 }
                 cp = Character.toCodePoint(ch, low);
             } else if (Character.isLowSurrogate(ch)) {
-                throw new IllegalArgumentException("Invalid surrogate pair (low without high)");
+                throw log.invalidSurrogatePairLowWithoutHigh(ch);
             } else {
                 cp = ch;
             }
 
             if (! Character.isValidCodePoint(cp)) {
-                throw new IllegalArgumentException("Invalid code point");
+                throw log.invalidCodePoint(cp);
             }
 
             assert Character.MIN_CODE_POINT <= cp && cp <= Character.MAX_CODE_POINT;
@@ -232,17 +234,17 @@ public final class StringPrep {
                     if (first) {
                         isRALString = true;
                     } else if (!isRALString) {
-                        throw new IllegalArgumentException("Disallowed R/AL directionality character in L string");
+                        throw log.disallowedRalDirectionalityInL();
                     }
                     break;
                 case Character.DIRECTIONALITY_LEFT_TO_RIGHT: // L character
                     if (isRALString) {
-                        throw new IllegalArgumentException("Disallowed L directionality character in R/AL string");
+                        throw log.disallowedLDirectionalityInRal();
                     }
                     break;
                 default: // neutral character
                     if (i == len && isRALString) {
-                        throw new IllegalArgumentException("Missing trailing R/AL directionality character");
+                        throw log.missingTrailingRal();
                     }
             }
             if (first) {
@@ -271,19 +273,19 @@ public final class StringPrep {
             else if (isSet(profile, UNMAP_SCRAM_LOGIN_CHARS) || isSet(profile, UNMAP_GS2_LOGIN_CHARS)) {
                 if (cp == '=') {
                     if (i + 1 >= len) {
-                        throw new IllegalArgumentException("Invalid escape sequence");
+                        throw log.invalidEscapeSequence();
                     }
                     char ch1 = string.charAt(i++);
                     char ch2 = string.charAt(i++);
 
-                    if(ch1 == '3' && ch2 == 'D'){
+                    if (ch1 == '3' && ch2 == 'D') {
                         target.append('=');
                         continue;
-                    }else if(ch1 == '2' && ch2 == 'C'){
+                    } else if (ch1 == '2' && ch2 == 'C') {
                         target.append(',');
                         continue;
-                    }else{
-                        throw new IllegalArgumentException("Invalid escape sequence");
+                    } else {
+                        throw log.invalidEscapeSequence();
                     }
                 }
             }

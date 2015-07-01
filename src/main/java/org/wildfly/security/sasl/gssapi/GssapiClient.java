@@ -35,6 +35,8 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.MessageProp;
 import org.jboss.logging.Logger;
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
@@ -44,7 +46,7 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 public class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
-    private static final Logger log = Logger.getLogger("org.wildfly.security.sasl.gssapi.client");
+    private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.client");
 
     private static final int INITIAL_CHALLENGE_STATE = 1;
     private static final int CHALLENGE_RESPONSE_STATE = 2;
@@ -68,7 +70,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             // The client can use other name types but this should be added to the config.
             acceptorName = manager.createName(acceptorNameString, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
         } catch (GSSException e) {
-            throw new SaslException("Unable to create name for acceptor.", e);
+            throw log.saslUnableToCreateNameForAcceptor(getMechanismName(), e);
         }
 
         // Pull the credential if we have it.
@@ -86,7 +88,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
         try {
             gssContext = manager.createContext(acceptorName, KERBEROS_V5, credential, GSSContext.INDEFINITE_LIFETIME);
         } catch (GSSException e) {
-            throw new SaslException("Unable to crate GSSContexr", e);
+            throw log.saslUnableToCreateGssContext(getMechanismName(), e);
         }
 
         try {
@@ -137,7 +139,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             }
 
         } catch (GSSException e) {
-            throw new SaslException("Unable to set request flags.", e);
+            throw log.saslUnableToSetGssContextRequestFlags(getMechanismName(), e);
         }
 
         // Channel Binding Is Not Supported
@@ -161,7 +163,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
             }
         }
 
-        throw new SaslException("No mutually agreeable security layer found.");
+        throw log.saslInsufficientQopsAvailable(getMechanismName());
     }
 
     private boolean isCompatibleWithGssContext(final QOP qop) {
@@ -198,7 +200,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 // provides the first token from the client
                 assert gssContext.isEstablished() == false;
                 if (message.length > 0) {
-                    throw new SaslException("GSSAPI is a client first mechanism, unexpected server challenge received.");
+                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
                 }
 
                 try {
@@ -213,7 +215,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
 
                     return response;
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to create output token.", e);
+                    throw log.saslUnableToCreateResponseToken(getMechanismName(), e);
                 }
             case CHALLENGE_RESPONSE_STATE:
                 // This state is to handle the subsequent exchange of tokens up until the point the
@@ -232,7 +234,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to handle response from server.", e);
+                    throw log.saslUnableToHandleResponseFromServer(getMechanismName(), e);
                 }
             case SECURITY_LAYER_NEGOTIATION_STATE:
                 assert gssContext.isEstablished();
@@ -241,7 +243,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                 try {
                     byte[] unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
                     if (unwrapped.length != 4) {
-                        throw new SaslException("Bad length of message for negotiating security layer.");
+                        throw log.saslBadLengthOfMessageForNegotiatingSecurityLayer(getMechanismName());
                     }
 
                     byte qopByte = unwrapped[0];
@@ -250,9 +252,7 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                     log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
                     if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
                             && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
-                        throw new SaslException(String.format(
-                                "Invalid message size received when no security layer supported by server '%d'",
-                                maxBuffer));
+                        throw log.saslReceivedMaxMessageSizeWhenNoSecurityLayer(getMechanismName(), maxBuffer);
                     }
                     maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
 
@@ -284,12 +284,12 @@ public class GssapiClient extends AbstractGssapiMechanism implements SaslClient 
                     negotiationComplete();
                     return response;
                 } catch (IOException e) {
-                    throw new SaslException("Unable to construct response for server.", e);
+                    throw log.saslUnableToCreateResponseToken(getMechanismName(), e);
                 } catch (GSSException e) {
-                    throw new SaslException("Unable to unwrap security layer negotiation message.", e);
+                    throw log.saslUnableToUnwrapSecurityLayerNegotiationMessage(getMechanismName(), e);
                 }
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 
 }

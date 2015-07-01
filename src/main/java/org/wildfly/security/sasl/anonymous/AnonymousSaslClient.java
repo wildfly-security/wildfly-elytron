@@ -18,12 +18,14 @@
 
 package org.wildfly.security.sasl.anonymous;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -55,19 +57,19 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
         switch (state) {
             case INITIAL_STATE:
                 if (message != null && message.length > 0) {
-                    throw new SaslException("Invalid challenge received from server");
+                    throw log.saslInvalidServerMessage(getMechanismName());
                 }
                 NameCallback nameCallback = new NameCallback("Authentication name");
                 handleCallbacks(nameCallback);
                 String name = nameCallback.getName();
                 if (name == null) {
-                    throw new SaslException("Authentication name is missing");
+                    throw log.saslNotProvidedUserName(getMechanismName());
                 }
                 if (name.length() > 255) {
-                    throw new SaslException("Authentication name string is too long");
+                    throw log.saslAuthenticationNameTooLong(getMechanismName());
                 }
                 if (name.isEmpty()) {
-                    throw new SaslException("Authentication name is empty");
+                    throw log.saslAuthenticationNameIsEmpty(getMechanismName());
                 }
                 ByteStringBuilder b = new ByteStringBuilder();
                 StringPrep.encode(name, b, 0
@@ -86,6 +88,6 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
                 negotiationComplete();
                 return b.toArray();
         }
-        throw new SaslException("Invalid state");
+        throw Assert.impossibleSwitchCase(state);
     }
 }

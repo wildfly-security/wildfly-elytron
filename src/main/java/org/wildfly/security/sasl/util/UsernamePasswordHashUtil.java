@@ -113,7 +113,7 @@ public class UsernamePasswordHashUtil {
     }
 
     /**
-     * Takes the supplied username, realm and password and generates the digested { username ':' realm ':' password}
+     * Takes the supplied username, realm and password and generates the digested { username ':' realm ':' password }
      *
      * @param userName             The username to use in the generated hash.
      * @param realm                The realm to use in the generated hash.
@@ -139,7 +139,7 @@ public class UsernamePasswordHashUtil {
 
             return digest.digest(baos.toByteArray());
         } catch (IOException e) {
-            throw new IllegalStateException("The ByteArrayOutputStream should not be throwing this IOException", e);
+            throw new IllegalStateException(e);
         }
     }
 

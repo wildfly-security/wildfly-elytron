@@ -17,16 +17,12 @@
  */
 package org.wildfly.security.sasl.digest._private;
 
-import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.sasl.digest.Digest;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
-import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -40,6 +36,11 @@ import javax.crypto.spec.DESKeySpec;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
+
+import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.digest.Digest;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
@@ -195,7 +196,7 @@ public final class DigestUtil {
         Arrays.fill(retValue, (byte) '0');
         byte[] hex = Integer.toString(input, 16).getBytes(StandardCharsets.UTF_8);
         if (hex.length > totalLength) {
-            throw new IllegalArgumentException("totalLength ("+totalLength+") is less than length of conversion result.");
+            throw log.requiredNegativePadding(totalLength, hex.length);
         }
 
         int from = totalLength - hex.length;
@@ -210,7 +211,7 @@ public final class DigestUtil {
         try {
             mac.init(ks);
         } catch (InvalidKeyException e) {
-            throw new SaslException("Invalid key provided", e);
+            throw log.saslInvalidKeyForDigestHMAC();
         }
         byte[] buffer = new byte[len + 4];
         integerByteOrdered(sequenceNumber, buffer, 0, 4);
@@ -221,9 +222,8 @@ public final class DigestUtil {
     }
 
     public static void integerByteOrdered(int num, byte[] buf, int offset, int len) {
-        if (len > 4 || len < 1) {
-            throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
-        }
+        assert len >= 1 && len <= 4;
+
         for (int i = len - 1; i >= 0; i--) {
             buf[offset + i] = (byte) (num & 0xff);
             num >>>= 8;
@@ -231,9 +231,8 @@ public final class DigestUtil {
     }
 
     public static int decodeByteOrderedInteger(byte[] buf, int offset, int len) {
-        if (len > 4 || len < 1) {
-            throw new IllegalArgumentException("integerByteOrdered can handle up to 4 bytes");
-        }
+        assert len >= 1 && len <= 4;
+
         int result = buf[offset];
         for (int i = 1; i < len; i++) {
             result <<= 8;
@@ -242,10 +241,9 @@ public final class DigestUtil {
         return result;
     }
 
-    static byte[] create3desSubKey(byte[] keyBits, int offset, int len) {
-        if (len != 7) {
-            throw new InvalidParameterException("Only 7 byte long keyBits are transformable to 3des subkey");
-        }
+    static byte[] create3desSubKey(byte[] keyBits, int offset) {
+        assert keyBits.length >= offset + 7;
+
         byte[] subkey = new byte[8];
         subkey[0] = fixParityBit((byte)                          (keyBits[offset]   & 0xFF));
         subkey[1] = fixParityBit((byte)(keyBits[offset]   << 7 | (keyBits[offset+1] & 0xFF) >> 1));
@@ -263,18 +261,15 @@ public final class DigestUtil {
      *
      * @param keyBits
      * @param offset
-     * @param len
      * @return
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeyException
      * @throws InvalidKeySpecException
      */
-    public static SecretKey createDesSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
-        if (len != 7) {
-            throw new InvalidParameterException("Only 7 bytes long keyBits are transformable to des key");
-        }
+    public static SecretKey createDesSecretKey(byte[] keyBits) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        assert keyBits.length >= 7;
 
-        KeySpec spec = new DESKeySpec(create3desSubKey(keyBits, 0, 7), 0);
+        KeySpec spec = new DESKeySpec(create3desSubKey(keyBits, 0), 0);
         SecretKeyFactory desFact = SecretKeyFactory.getInstance("DES");
 
         return desFact.generateSecret(spec);
@@ -284,22 +279,18 @@ public final class DigestUtil {
      * Create 3des secret key according to http://www.cryptosys.net/3des.html.
      *
      * @param keyBits
-     * @param offset
-     * @param len
      * @return
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeyException
      * @throws InvalidKeySpecException
      */
-    public static SecretKey create3desSecretKey(byte[] keyBits, int offset, int len) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
-        if (len != 14) {
-            throw new InvalidParameterException("Only 14 bytes long keyBits are transformable to 3des key option2");
-        }
+    public static SecretKey create3desSecretKey(byte[] keyBits) throws NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
+        assert keyBits.length >= 14;
 
         byte[] key = new byte[24];
-        System.arraycopy(create3desSubKey(keyBits, 0, 7), 0, key, 0, 8);   // subkey1
-        System.arraycopy(create3desSubKey(keyBits, 7, 7), 0, key, 8, 8);   // subkey2
-        System.arraycopy(key, 0, key, 16, 8);                              // subkey3 == subkey1 (in option2 of 3des key
+        System.arraycopy(create3desSubKey(keyBits, 0), 0, key, 0, 8);   // subkey1
+        System.arraycopy(create3desSubKey(keyBits, 7), 0, key, 8, 8);   // subkey2
+        System.arraycopy(key, 0, key, 16, 8);                           // subkey3 == subkey1 (in option2 of 3des key)
 
         KeySpec spec = new DESedeKeySpec(key, 0);
         SecretKeyFactory desFact = SecretKeyFactory.getInstance("DESede");

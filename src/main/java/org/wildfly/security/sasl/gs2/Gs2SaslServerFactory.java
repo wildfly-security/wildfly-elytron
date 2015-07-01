@@ -63,7 +63,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         try {
             supportedMechs = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
-            throw new SaslException(e.getMessage());
+            throw log.saslGettingSupportedMechanismsFailed(e);
         }
         if (! Gs2Util.isIncluded(mechanism, supportedMechs)) return null;
         final String bindingType = channelBindingCallback.getBindingType();

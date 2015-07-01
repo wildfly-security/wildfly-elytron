@@ -60,11 +60,11 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
         if (complete) {
-            throw log.saslMessageAfterComplete();
+            throw log.saslMessageAfterComplete(getMechanismName());
         }
         complete = true;
         if (challenge.length > 0) {
-            throw log.saslInvalidMessageReceived();
+            throw log.saslInvalidMessageReceived(getMechanismName());
         }
         final NameCallback nameCallback = new NameCallback("Login name");
         final PasswordCallback passwordCallback = new PasswordCallback("Password", false);
@@ -73,15 +73,15 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
         } catch (SaslException e) {
             throw e;
         } catch (IOException | UnsupportedCallbackException e) {
-            throw log.saslClientSideAuthenticationFailed(e);
+            throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
         }
         final String name = nameCallback.getName();
         if (name == null) {
-            throw log.saslNoLoginNameGiven();
+            throw log.saslNoLoginNameGiven(getMechanismName());
         }
         final char[] password = passwordCallback.getPassword();
         if (password == null) {
-            throw log.saslNoPasswordGiven();
+            throw log.saslNoPasswordGiven(getMechanismName());
         }
         try {
             final ByteStringBuilder b = new ByteStringBuilder();
@@ -94,7 +94,7 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
             StringPrep.encode(password, b, StringPrep.PROFILE_SASL_STORED);
             return b.toArray();
         } catch (IllegalArgumentException ex) {
-            throw log.saslMalformedFields(ex);
+            throw log.saslMalformedFields(getMechanismName(), ex);
         }
     }
 
@@ -104,17 +104,17 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslAuthenticationNotComplete();
+            throw log.saslAuthenticationNotComplete(getMechanismName());
         } else {
-            throw log.saslNoSecurityLayer();
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslAuthenticationNotComplete();
+            throw log.saslAuthenticationNotComplete(getMechanismName());
         } else {
-            throw log.saslNoSecurityLayer();
+            throw log.saslNoSecurityLayer(getMechanismName());
         }
     }
 

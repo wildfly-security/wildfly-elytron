@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.entity;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
@@ -40,7 +41,7 @@ public abstract class TrustedAuthority {
 
     TrustedAuthority(final int type) {
         if (type < 0 || type > 4) {
-            throw new IllegalArgumentException("Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)");
+            throw log.invalidValueForTrustedAuthorityType();
         }
         this.type = type;
     }

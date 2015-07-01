@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.scram;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -27,8 +29,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
@@ -70,23 +72,23 @@ class ScramUtil {
     public static int parsePosInt(final ByteIterator i) {
         int a, c;
         if (! i.hasNext()) {
-            throw new NumberFormatException("Empty number");
+            throw log.emptyNumber();
         }
         c = i.next();
         if (c >= '1' && c <= '9') {
             a = c - '0';
         } else {
-            throw new NumberFormatException("Invalid numeric character");
+            throw log.invalidNumericCharacter();
         }
         while (i.hasNext()) {
             c = i.next();
             if (c >= '0' && c <= '9') {
                 a = (a << 3) + (a << 1) + (c - '0');
                 if (a < 0) {
-                    throw new NumberFormatException("Too big");
+                    throw log.tooBigNumber();
                 }
             } else {
-                throw new NumberFormatException("Invalid numeric character");
+                throw log.invalidNumericCharacter();
             }
         }
         return a;
@@ -121,20 +123,15 @@ class ScramUtil {
         }
     }
 
-    static char[] getTwoWayPasswordChars(Password password) throws SaslException {
+    static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws SaslException {
         if (password == null) {
-            throw new SaslException("No password provided");
-        }
-        PasswordFactory pf;
-        try {
-            pf = PasswordFactory.getInstance(password.getAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
-            throw new SaslException("Invalid password algorithm");
+            throw log.saslNoPasswordGiven(mechName);
         }
         try {
+            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
             return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
-        } catch (InvalidKeySpecException e) {
-            throw new SaslException("Unsupported password algorithm type");
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw log.saslCannotGetTwoWayPasswordChars(mechName, e);
         }
     }
 

@@ -68,7 +68,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         try {
             supportedMechanisms = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
-            throw new SaslException(e.getMessage());
+            throw log.saslGettingSupportedMechanismsFailed(e);
         }
         final String bindingType = callback.getBindingType();
         final byte[] bindingData = callback.getBindingData();
