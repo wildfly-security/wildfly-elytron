@@ -33,17 +33,15 @@ class DefaultAuthenticationContextProvider {
     static final AuthenticationContext DEFAULT;
 
     static {
-        DEFAULT = doPrivileged(new PrivilegedAction<AuthenticationContext>() {
-            public AuthenticationContext run() {
-                ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-                if (classLoader == null) {
-                    classLoader = DefaultAuthenticationContextProvider.class.getClassLoader();
-                }
-                try {
-                    return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
-                } catch (Throwable t) {
-                    throw new InvalidAuthenticationConfigurationException(t);
-                }
+        DEFAULT = doPrivileged((PrivilegedAction<AuthenticationContext>) () -> {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader == null) {
+                classLoader = DefaultAuthenticationContextProvider.class.getClassLoader();
+            }
+            try {
+                return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
+            } catch (Throwable t) {
+                throw new InvalidAuthenticationConfigurationException(t);
             }
         });
     }

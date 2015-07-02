@@ -20,7 +20,6 @@ package org.wildfly.security.ssl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -724,13 +723,11 @@ public abstract class CipherSuiteSelector {
             if (! enabled.isEmpty()) {
                 final ArrayList<String> list = new ArrayList<>(enabled);
                 // stable sort
-                Collections.sort(list, new Comparator<String>() {
-                    public int compare(final String o1, final String o2) {
-                        final MechanismDatabase database = MechanismDatabase.getInstance();
-                        final MechanismDatabase.Entry e1 = database.getCipherSuite(o1);
-                        final MechanismDatabase.Entry e2 = database.getCipherSuite(o2);
-                        return Integer.signum(e1.getAlgorithmBits() - e2.getAlgorithmBits());
-                    }
+                Collections.sort(list, (o1, o2) -> {
+                    final MechanismDatabase database = MechanismDatabase.getInstance();
+                    final MechanismDatabase.Entry e1 = database.getCipherSuite(o1);
+                    final MechanismDatabase.Entry e2 = database.getCipherSuite(o2);
+                    return Integer.signum(e1.getAlgorithmBits() - e2.getAlgorithmBits());
                 });
                 enabled.clear();
                 enabled.addAll(list);

@@ -100,7 +100,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                         KeyMapper keyMapper = (KeyMapper) mapper;
 
                         if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
-                            return executeAuthenticationQuery(configuration, resultSet -> keyMapper.getCredentialSupport(resultSet));
+                            return executeAuthenticationQuery(configuration, keyMapper::getCredentialSupport);
                         }
                     }
                 }
@@ -158,7 +158,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Object givenCredential) {
-            Object credential = executeAuthenticationQuery(configuration, resultSet -> passwordMapper.map(resultSet));
+            Object credential = executeAuthenticationQuery(configuration, passwordMapper::map);
 
             String algorithm = passwordMapper.getAlgorithm();
 

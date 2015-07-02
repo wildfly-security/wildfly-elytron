@@ -36,11 +36,7 @@ import org.wildfly.security.auth.AuthenticationContext;
 public final class AuthenticationContextSaslServer extends AbstractDelegatingSaslServer {
 
     private AuthenticationContext context;
-    private ParametricPrivilegedExceptionAction<byte[], byte[]> responseAction = new ParametricPrivilegedExceptionAction<byte[], byte[]>() {
-        public byte[] run(final byte[] parameter) throws Exception {
-            return delegate.evaluateResponse(parameter);
-        }
-    };
+    private ParametricPrivilegedExceptionAction<byte[], byte[]> responseAction = delegate::evaluateResponse;
 
     /**
      * Construct a new instance.

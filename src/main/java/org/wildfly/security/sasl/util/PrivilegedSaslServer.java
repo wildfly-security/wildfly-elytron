@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.security.manager.WildFlySecurityManager.doPrivilegedWithParameter;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
@@ -30,6 +31,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.ParametricPrivilegedExceptionAction;
 
 /**
  * A {@code SaslServer} which evaluates responses and wrap/unwrap requests in an privileged context.
@@ -52,11 +54,7 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
 
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         try {
-            return doPrivileged(new PrivilegedExceptionAction<byte[]>() {
-                public byte[] run() throws Exception {
-                    return delegate.evaluateResponse(response);
-                }
-            }, accessControlContext);
+            return doPrivilegedWithParameter(response, (ParametricPrivilegedExceptionAction<byte[], byte[]>) delegate::evaluateResponse, accessControlContext);
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();
@@ -70,11 +68,7 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         try {
-            return doPrivileged(new PrivilegedExceptionAction<byte[]>() {
-                public byte[] run() throws Exception {
-                    return delegate.unwrap(incoming, offset, len);
-                }
-            });
+            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.unwrap(incoming, offset, len));
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();
@@ -88,11 +82,7 @@ public final class PrivilegedSaslServer extends AbstractDelegatingSaslServer imp
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         try {
-            return doPrivileged(new PrivilegedExceptionAction<byte[]>() {
-                public byte[] run() throws Exception {
-                    return delegate.wrap(outgoing, offset, len);
-                }
-            });
+            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.wrap(outgoing, offset, len));
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();
