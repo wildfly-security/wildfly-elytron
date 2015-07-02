@@ -21,11 +21,11 @@ package org.wildfly.security.sasl.util;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
-import java.security.Security;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -42,15 +42,20 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
 
     private static final String serviceType = SaslClientFactory.class.getSimpleName();
 
+    private final Supplier<Provider[]> providerSupplier;
+
     /**
      * Construct a new instance.
+     *
+     * @param providerSupplier the provider supplier
      */
-    public SecurityProviderSaslClientFactory() {
+    public SecurityProviderSaslClientFactory(final Supplier<Provider[]> providerSupplier) {
+        this.providerSupplier = providerSupplier;
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         SaslClient saslClient;
-        for (Provider currentProvider : Security.getProviders()) {
+        for (Provider currentProvider : providerSupplier.get()) {
             for (Provider.Service service : currentProvider.getServices()) {
                 if (serviceType.equals(service.getType())) {
                     try {
@@ -68,7 +73,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
 
     public String[] getMechanismNames(final Map<String, ?> props) {
         final Set<String> names = new LinkedHashSet<>();
-        for (Provider currentProvider : Security.getProviders()) {
+        for (Provider currentProvider : providerSupplier.get()) {
             for (Provider.Service service : currentProvider.getServices()) {
                 if (serviceType.equals(service.getType())) {
                     try {
