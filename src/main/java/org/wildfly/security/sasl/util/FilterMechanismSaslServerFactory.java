@@ -65,7 +65,8 @@ public final class FilterMechanismSaslServerFactory extends AbstractDelegatingSa
         Assert.checkNotNullParam("mechanisms", mechanisms);
         final HashSet<String> set = new HashSet<String>(mechanisms.length);
         Collections.addAll(set, mechanisms);
-        predicate = name -> set.contains(name) == include;
+        Predicate<String> predicate = set::contains;
+        this.predicate = include ? predicate : predicate.negate();
     }
 
     /**
@@ -79,7 +80,8 @@ public final class FilterMechanismSaslServerFactory extends AbstractDelegatingSa
         super(delegate);
         Assert.checkNotNullParam("mechanisms", mechanisms);
         final HashSet<String> set = new HashSet<String>(mechanisms);
-        predicate = name -> set.contains(name) == include;
+        Predicate<String> predicate = set::contains;
+        this.predicate = include ? predicate : predicate.negate();
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
