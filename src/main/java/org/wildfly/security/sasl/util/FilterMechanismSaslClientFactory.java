@@ -18,8 +18,6 @@
 
 package org.wildfly.security.sasl.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +29,8 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
+
+import org.wildfly.common.Assert;
 
 /**
  * A {@link SaslClientFactory} which filters available mechanisms (either inclusively or exclusively) from a delegate
@@ -51,9 +51,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
      */
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, String... mechanisms) {
         super(delegate);
-        if (mechanisms == null) {
-            throw log.nullParameter("mechanisms");
-        }
+        Assert.checkNotNullParam("mechanisms", mechanisms);
         this.include = include;
         final HashSet<String> set = new HashSet<String>(mechanisms.length);
         Collections.addAll(set, mechanisms);
@@ -69,9 +67,7 @@ public final class FilterMechanismSaslClientFactory extends AbstractDelegatingSa
      */
     public FilterMechanismSaslClientFactory(final SaslClientFactory delegate, boolean include, Collection<String> mechanisms) {
         super(delegate);
-        if (mechanisms == null) {
-            throw log.nullParameter("mechanisms");
-        }
+        Assert.checkNotNullParam("mechanisms", mechanisms);
         this.include = include;
         this.mechanisms = new HashSet<String>(mechanisms);
     }
