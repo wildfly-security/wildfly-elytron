@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,6 +108,36 @@ public final class VaultManager {
     public void unregisterVault(final URI vaultUri) throws VaultException {
         VaultURIParser parser = new VaultURIParser(vaultUri);
         unregisterVault(parser.getName());
+    }
+
+    /**
+     * Returns {@link Enumeration} of Vault names handled by this {@code VaultManager}
+     * @return vault names empty {@code Enumeration<String>} if {@code VaultManager} is empty.
+     */
+    public Enumeration<String> listVaults() {
+        return vaults.keys();
+    }
+
+    /**
+     * Checks whether specified Vault is registered with this {@link VaultManager}.
+     *
+     * @param name of Vault to check existence
+     * @return {@code true} if the Vault is registered, {@code false} otherwise
+     */
+    public boolean checkVaultExist(String name) {
+        return vaults.containsKey(name);
+    }
+
+    /**
+     * Initializes and loads vault.
+     *
+     * Vaults are lazy loaded/initialized. This method enables clients to load and initialize it on demand.
+     *
+     * @param name of vault to initialize
+     * @throws VaultException when something goes wrong
+     */
+    public void initializeVault(String name) throws VaultException {
+        getStorage(name);
     }
 
     private PasswordStorage getDefaultPasswordStorage() throws NoSuchAlgorithmException {
