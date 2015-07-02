@@ -252,6 +252,17 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Determine if the current authentication identity actually exists in the realm.
+     *
+     * @return {@code true} if the identity exists, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm failed to access the identity
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public boolean exists() throws RealmUnavailableException, IllegalStateException {
+        return stateRef.get().getRealmIdentity().exists();
+    }
+
+    /**
      * Determine if the given principal refers to the same identity as the currently set authentication name.
      *
      * @param principal the authentication name
