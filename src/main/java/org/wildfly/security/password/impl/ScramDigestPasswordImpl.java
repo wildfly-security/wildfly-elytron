@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -218,7 +220,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
                 return hmac;
             }
             default:
-                throw new NoSuchAlgorithmException("Invalid algorithm: " + algorithm);
+                throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 }

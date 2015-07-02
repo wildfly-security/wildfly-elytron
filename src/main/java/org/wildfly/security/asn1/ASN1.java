@@ -18,6 +18,8 @@
 
 package org.wildfly.security.asn1;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import org.wildfly.security.util._private.Arrays2;
 
 /**
@@ -246,7 +248,7 @@ public class ASN1 {
                     break;
                 }
                 default: {
-                    throw new IllegalArgumentException("Unknown tag type: " + type);
+                    throw log.asnUnknownTagType(type);
 //                    builder.append("[unknown(").append(type).append(")]");
 //                    decoder.decodeOctetString();
 //                    break;
@@ -275,7 +277,7 @@ public class ASN1 {
                 if ('A' <= b && b <= 'Z' || 'a' <= b && b <= 'z' || '0' <= b && b <= '9') {
                     return;
                 }
-                throw new ASN1Exception("Unexpected character byte for printable string");
+                throw log.asnUnexpectedCharacterByteForPrintableString();
             }
         }
     }

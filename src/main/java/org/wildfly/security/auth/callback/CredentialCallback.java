@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -90,7 +92,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      */
     public void setCredential(final Object credential) {
         if (! isCredentialSupported(credential)) {
-            throw new IllegalArgumentException("Invalid credential type specified");
+            throw log.invalidCredentialTypeSpecified();
         }
         this.credential = credential;
     }

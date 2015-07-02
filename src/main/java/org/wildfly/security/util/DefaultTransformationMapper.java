@@ -18,6 +18,7 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.util.TransformationSpec.HIGH_STRENGTH;
 import static org.wildfly.security.util.TransformationSpec.MEDIUM_STRENGTH;
 import static org.wildfly.security.util.TransformationSpec.LOW_STRENGTH;
@@ -82,11 +83,11 @@ public class DefaultTransformationMapper implements TransformationMapper {
     public TransformationSpec getTransformationSpec(String provider, String mechanism, String token)
             throws IllegalArgumentException {
         if (token == null) {
-            throw new IllegalArgumentException("Token cannot be null");
+            throw log.nullParameter("token");
         }
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
-            throw new IllegalArgumentException(String.format("Mechanism %s not supported.", mechanism));
+            throw log.mechanismNotSupported(mechanism);
         }
         for (TransformationSpec t : ts) {
             if (token.equals(t.getToken()) && (provider == null || provider.equals(t.getProvider()))) {
@@ -118,11 +119,11 @@ public class DefaultTransformationMapper implements TransformationMapper {
             throws IllegalArgumentException {
 
         if (tokens == null) {
-            throw new IllegalArgumentException("Tokens need to be specified");
+            throw log.nullParameter("tokens");
         }
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
-            throw new IllegalArgumentException(String.format("Mechanism %s not supported.", mechanism));
+            throw log.mechanismNotSupported(mechanism);
         }
 
         ArrayList<TransformationSpec> tf = new ArrayList<TransformationSpec>(ts.length);
@@ -160,11 +161,11 @@ public class DefaultTransformationMapper implements TransformationMapper {
             String... tokens) throws IllegalArgumentException {
 
         if (tokens == null) {
-            throw new IllegalArgumentException("Tokens need to be specified");
+            throw log.nullParameter("tokens");
         }
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
-            throw new IllegalArgumentException(String.format("Mechanism %s not supported.", mechanism));
+            throw log.mechanismNotSupported(mechanism);
         }
 
         ArrayList<TransformationSpec> tf = new ArrayList<TransformationSpec>(ts.length);

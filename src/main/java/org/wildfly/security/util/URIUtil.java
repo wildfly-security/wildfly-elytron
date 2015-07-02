@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -51,7 +53,7 @@ public final class URIUtil {
                 return hostString;
             }
         }
-        throw new IllegalArgumentException("Invalid socket address type for URI");
+        throw log.invalidSocketAddressTypeForUri();
     }
 
     /**
@@ -72,7 +74,7 @@ public final class URIUtil {
                 return port;
             }
         }
-        throw new IllegalArgumentException("Invalid socket address type for URI");
+        throw log.invalidSocketAddressTypeForUri();
     }
 
     /**

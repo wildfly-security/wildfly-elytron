@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util._private;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.AbstractList;
 
 /**
@@ -35,7 +37,7 @@ public final class UnmodifiableArrayList<T> extends AbstractList<T> {
         try {
             return items[index];
         } catch (ArrayIndexOutOfBoundsException e) {
-            throw new IndexOutOfBoundsException("Invalid index " + index);
+            throw log.invalidIndex(index);
         }
     }
 

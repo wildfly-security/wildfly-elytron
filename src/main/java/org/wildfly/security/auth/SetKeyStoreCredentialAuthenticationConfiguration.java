@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -67,7 +69,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             try {
                 entry = entryFactory.create();
             } catch (GeneralSecurityException e) {
-                throw new IOException("Unable to read credential", e);
+                throw log.unableToReadCredential(e);
             }
             if (entry instanceof PasswordEntry) {
                 credentialCallback.setCredential(((PasswordEntry) entry).getPassword());
@@ -97,7 +99,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             try {
                 entry = entryFactory.create();
             } catch (GeneralSecurityException e) {
-                throw new IOException("Unable to read credential", e);
+                throw log.unableToReadCredential(e);
             }
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
@@ -105,13 +107,13 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 try {
                     passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
                 } catch (NoSuchAlgorithmException e) {
-                    throw new IOException("Unable to read credential", e);
+                    throw log.unableToReadCredential(e);
                 }
                 final ClearPasswordSpec keySpec;
                 try {
                     keySpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                 } catch (InvalidKeySpecException e) {
-                    throw new IOException("Unable to read credential", e);
+                    throw log.unableToReadCredential(e);
                 }
                 ((PasswordCallback) callback).setPassword(keySpec.getEncodedPassword());
                 return;

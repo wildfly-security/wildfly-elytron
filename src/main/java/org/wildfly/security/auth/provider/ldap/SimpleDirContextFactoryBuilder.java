@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -145,7 +147,7 @@ public class SimpleDirContextFactoryBuilder {
         assertNotBuilt();
 
         if (providerUrl == null) {
-            throw new IllegalStateException("No provider URL has been set.");
+            throw log.noProviderUrlSet();
         }
 
         built = true;
@@ -154,7 +156,7 @@ public class SimpleDirContextFactoryBuilder {
 
     private void assertNotBuilt() {
         if (built) {
-            throw new IllegalStateException("This builder has already been built.");
+            throw log.builderAlreadyBuilt();
         }
     }
 
@@ -173,19 +175,19 @@ public class SimpleDirContextFactoryBuilder {
             try {
                 handler.handle(new Callback[] {nameCallback, passwordCallback});
             } catch (Exception e) {
-                throw new RuntimeException("Could not obtain credentials.", e);
+                throw log.couldNotObtainCredentialWithCause(e);
             }
 
             String securityPrincipal = nameCallback.getName();
 
             if (securityPrincipal == null) {
-                throw new IllegalArgumentException("Could not not obtain security principal.");
+                throw log.couldNotObtainPrincipal();
             }
 
             char[] securityCredential = passwordCallback.getPassword();
 
             if (securityCredential == null) {
-                throw new IllegalArgumentException("Could not not obtain security credential.");
+                throw log.couldNotObtainCredential();
             }
 
             return createDirContext(securityPrincipal, securityCredential, mode);

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
@@ -303,11 +305,11 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     static byte[] bcrypt(final int cost, final byte[] salt, final byte[] password) {
 
         if (cost < 4 || cost > 31)
-            throw new IllegalArgumentException("Invalid number of rounds. Must be an int between 4 and 31");
+            throw log.invalidNumberOfRoundsMustBeIntBetween(4, 31);
         if (salt == null || salt.length != BCRYPT_SALT_SIZE)
-            throw new IllegalArgumentException("Invalid salt. Must be a 16 byte array");
+            throw log.invalidSaltMustBeByteArray(16);
         if (password == null)
-            throw new IllegalArgumentException("Invalid null password");
+            throw log.nullParameter("password");
 
         // check if null has been appended to the password. If not, add a null byte for compatibility with C implementations
         byte[] key = password.clone();
@@ -537,7 +539,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
         CyclicByteBuffer(byte[] buffer) {
             if (buffer == null || buffer.length == 0)
-                throw new IllegalArgumentException("Buffer cannot be null or empty");
+                throw log.nullOrEmptyParameter("buffer");
             this.buffer = buffer;
             this.position = 0;
         }

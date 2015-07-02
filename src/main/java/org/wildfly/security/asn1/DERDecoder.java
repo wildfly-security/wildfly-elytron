@@ -18,6 +18,7 @@
 
 package org.wildfly.security.asn1;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
 import java.io.UnsupportedEncodingException;
@@ -79,7 +80,7 @@ public class DERDecoder implements ASN1Decoder {
     public void endSequence() throws ASN1Exception {
         DecoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SEQUENCE_TYPE)) {
-            throw new IllegalStateException("No sequence to end");
+            throw log.noSequenceToEnd();
         }
         endConstructedElement(lastState.getNextElementIndex());
         states.removeLast();
@@ -96,7 +97,7 @@ public class DERDecoder implements ASN1Decoder {
     public void endSet() throws ASN1Exception {
         DecoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SET_TYPE)) {
-            throw new IllegalStateException("No set to end");
+            throw log.noSetToEnd();
         }
         endConstructedElement(lastState.getNextElementIndex());
         states.removeLast();
@@ -130,7 +131,7 @@ public class DERDecoder implements ASN1Decoder {
         DecoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
                 || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
-            throw new IllegalStateException("No explicitly tagged element to end");
+            throw log.noExplicitlyTaggedElementToEnd();
         }
         endConstructedElement(lastState.getNextElementIndex());
         states.removeLast();
@@ -145,7 +146,7 @@ public class DERDecoder implements ASN1Decoder {
                 bi.next();
             }
             if (i != (nextElementIndex - pos)) {
-                throw new ASN1Exception("Unexpected end of input");
+                throw log.asnUnexpectedEndOfInput();
             }
         } else if (pos > nextElementIndex) {
             // Shouldn't happen
@@ -159,7 +160,7 @@ public class DERDecoder implements ASN1Decoder {
         int length = readLength();
         byte[] result = new byte[length];
         if ((length != 0) && (bi.drain(result, 0, length) != length)) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         return result;
     }
@@ -175,12 +176,12 @@ public class DERDecoder implements ASN1Decoder {
         int length = readLength();
         byte[] octets = new byte[length];
         if ((length != 0) && (bi.drain(octets, 0, length) != length)) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         try {
             return new String(octets, charSet);
         } catch (UnsupportedEncodingException e) {
-            throw new ASN1Exception(e.getMessage());
+            throw new ASN1Exception(e.getMessage(), e);
         }
     }
 
@@ -196,7 +197,7 @@ public class DERDecoder implements ASN1Decoder {
         int length = readLength();
         byte[] result = new byte[length];
         if ((length != 0) && (bi.drain(result, 0, length) != length)) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         return result;
     }
@@ -209,7 +210,7 @@ public class DERDecoder implements ASN1Decoder {
 
         int numUnusedBits = bi.next();
         if (numUnusedBits < 0 || numUnusedBits > 7) {
-            throw new ASN1Exception("Invalid number of unused bits");
+            throw log.asnInvalidNumberOfUnusedBits();
         }
 
         if (numUnusedBits == 0) {
@@ -240,7 +241,7 @@ public class DERDecoder implements ASN1Decoder {
         int length = readLength();
         int numUnusedBits = bi.next();
         if (numUnusedBits < 0 || numUnusedBits > 7) {
-            throw new ASN1Exception("Invalid number of unused bits");
+            throw log.asnInvalidNumberOfUnusedBits();
         }
 
         int k = 0, next;
@@ -277,7 +278,7 @@ public class DERDecoder implements ASN1Decoder {
             result[c++] = (byte) b;
         }
         if (c < length) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         return result;
     }
@@ -341,7 +342,7 @@ public class DERDecoder implements ASN1Decoder {
         readTag(NULL_TYPE);
         int length = readLength();
         if (length != 0) {
-            throw new ASN1Exception("Non-zero length encountered for null type tag");
+            throw log.asnNonZeroLengthForNullTypeTag();
         }
     }
 
@@ -385,7 +386,7 @@ public class DERDecoder implements ASN1Decoder {
             bi.next();
         }
         if (i != length) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
     }
 
@@ -430,7 +431,7 @@ public class DERDecoder implements ASN1Decoder {
         int length = readLength();
         byte[] value = new byte[length];
         if ((length != 0) && (bi.drain(value) != length)) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         return value;
     }
@@ -449,7 +450,7 @@ public class DERDecoder implements ASN1Decoder {
         }
         byte[] element = new byte[length];
         if ((length != 0) && (bi.drain(element) != length)) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
         return element;
     }
@@ -466,7 +467,7 @@ public class DERDecoder implements ASN1Decoder {
                 int octet = bi.next();
                 if ((octet & 0x7f) == 0) {
                     // Bits 7 to 1 of the first subsequent octet cannot be 0
-                    throw new ASN1Exception("Invalid high-tag-number form");
+                    throw log.asnInvalidHighTagNumberForm();
                 }
                 while ((octet >= 0) && ((octet & 0x80) != 0)) {
                     tagNumber |= (octet & 0x7f);
@@ -477,7 +478,7 @@ public class DERDecoder implements ASN1Decoder {
             }
             return (tagClass | constructed | tagNumber);
         } catch (NoSuchElementException e) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
     }
 
@@ -492,7 +493,7 @@ public class DERDecoder implements ASN1Decoder {
             while ((bi.offset() != currOffset) && bi.hasPrev()) {
                 bi.prev();
             }
-            throw new ASN1Exception("Unexpected ASN.1 tag encountered");
+            throw log.asnUnexpectedTag();
         }
     }
 
@@ -503,7 +504,7 @@ public class DERDecoder implements ASN1Decoder {
                 // Long form
                 int numOctets = length & 0x7f;
                 if (numOctets > 4) {
-                    throw new ASN1Exception("Length encoding exceeds 4 bytes");
+                    throw log.asnLengthEncodingExceeds4bytes();
                 }
                 length = 0;
                 int nextOctet;
@@ -514,7 +515,7 @@ public class DERDecoder implements ASN1Decoder {
             }
             return length;
         } catch (NoSuchElementException e) {
-            throw new ASN1Exception("Unexpected end of input");
+            throw log.asnUnexpectedEndOfInput();
         }
     }
 

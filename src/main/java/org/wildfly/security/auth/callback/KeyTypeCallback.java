@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.Serializable;
 
 /**
@@ -41,7 +43,7 @@ public final class KeyTypeCallback implements ExtendedCallback, Serializable {
      */
     public KeyTypeCallback(final String keyType) {
         if (keyType == null) {
-            throw new IllegalArgumentException("key type is null");
+            throw log.nullParameter("keyType");
         }
         this.keyType = keyType;
     }

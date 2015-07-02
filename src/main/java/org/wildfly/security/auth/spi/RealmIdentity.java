@@ -18,7 +18,10 @@
 
 package org.wildfly.security.auth.spi;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import org.wildfly.common.Assert;
+
 
 /**
  * A representation of a pre-authentication identity.
@@ -152,7 +155,7 @@ public interface RealmIdentity {
 
             public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
                 // todo: exception hierarchy
-                throw new IllegalStateException("User does not exist");
+                throw log.userDoesNotExist();
             }
         };
     }

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 
@@ -47,7 +48,7 @@ class UserPasswordPasswordUtil {
 
     public static Password parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword == null || userPassword.length == 0) {
-            throw new IllegalArgumentException("userPassword can not be null or empty.");
+            throw log.nullOrEmptyParameter("userPassword");
         }
 
         if (userPassword[0] != '{') {
@@ -124,7 +125,7 @@ class UserPasswordPasswordUtil {
         int digestLength = expectedDigestLengthBytes(algorithm);
         int saltLength = decoded.length - digestLength;
         if (saltLength < 1) {
-            throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
+            throw log.insufficientDataToFormDigestAndSalt();
         }
 
         byte[] digest = new byte[digestLength];
@@ -137,13 +138,13 @@ class UserPasswordPasswordUtil {
 
     private static Password createCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword.length != 20) {
-            throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
+            throw log.insufficientDataToFormDigestAndSalt();
         }
 
         final int lo = Base64Alphabet.MOD_CRYPT.decode(userPassword[7] & 0xff);
         final int hi = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
         if (lo == -1 || hi == -1) {
-            throw new IllegalArgumentException(String.format("Invalid salt (%s%s)", (char) lo, (char) hi));
+            throw log.invalidSalt((char) lo, (char) hi);
         }
         short salt = (short) (lo | hi << 6);
         byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
@@ -153,7 +154,7 @@ class UserPasswordPasswordUtil {
 
     private static Password createBsdCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
         if (userPassword.length != 27) {
-            throw new InvalidKeySpecException("Insufficient data to form a digest and a salt.");
+            throw log.insufficientDataToFormDigestAndSalt();
         }
 
         int b0 = Base64Alphabet.MOD_CRYPT.decode(userPassword[8] & 0xff);
@@ -161,7 +162,7 @@ class UserPasswordPasswordUtil {
         int b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[10] & 0xff);
         int b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[11] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
-            throw new IllegalArgumentException(String.format("Invalid rounds (%s%s%s%s)", (char) b0, (char) b1, (char) b2, (char) b3));
+            throw log.invalidRounds((char) b0, (char) b1, (char) b2, (char) b3);
         }
         int iterationCount = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
@@ -170,7 +171,7 @@ class UserPasswordPasswordUtil {
         b2 = Base64Alphabet.MOD_CRYPT.decode(userPassword[14] & 0xff);
         b3 = Base64Alphabet.MOD_CRYPT.decode(userPassword[15] & 0xff);
         if (b0 == -1 || b1 == -1 || b2 == -1 || b3 == -1) {
-            throw new IllegalArgumentException(String.format("Invalid salt (%s%s%s%s)", (char) b0, (char) b1, (char) b2, (char) b3));
+            throw log.invalidSalt((char) b0, (char) b1, (char) b2, (char) b3);
         }
         int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
@@ -191,7 +192,7 @@ class UserPasswordPasswordUtil {
             case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
                 return 64;
             default:
-                throw new IllegalArgumentException("Unrecognised algorithm.");
+                throw log.unrecognizedAlgorithm(algorithm);
         }
     }
 }

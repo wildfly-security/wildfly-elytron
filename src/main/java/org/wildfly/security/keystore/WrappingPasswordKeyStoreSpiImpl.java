@@ -18,6 +18,8 @@
 
 package org.wildfly.security.keystore;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
@@ -63,16 +65,16 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
         if (key instanceof Password) {
             engineSetEntry(alias, new PasswordEntry((Password) key), password == null ? null : new KeyStore.PasswordProtection(password));
         } else {
-            throw new KeyStoreException("Secret keys not supported");
+            throw log.secretKeysNotSupported();
         }
     }
 
     public void engineSetKeyEntry(final String alias, final byte[] key, final Certificate[] chain) throws KeyStoreException {
-        throw new KeyStoreException("Direct key storage not supported");
+        throw log.directKeyStorageNotSupported();
     }
 
     public void engineSetCertificateEntry(final String alias, final Certificate cert) throws KeyStoreException {
-        throw new KeyStoreException("Direct key storage not supported");
+        throw log.directKeyStorageNotSupported();
     }
 
     public KeyStore.Entry engineGetEntry(final String alias, final KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
@@ -85,7 +87,7 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
 
     public void engineSetEntry(final String alias, final KeyStore.Entry entry, final KeyStore.ProtectionParameter protParam) throws KeyStoreException {
         if (! (entry instanceof PasswordEntry)) {
-            throw new KeyStoreException("Only password storage is supported");
+            throw log.onlyPasswordStorageIsSupported();
         }
         try {
             delegate.setEntry(alias, new KeyStore.SecretKeyEntry(encoded(((PasswordEntry) entry).getPassword())), protParam);

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.EnumSet;
 
 /**
@@ -93,7 +95,7 @@ public enum Authentication {
     static Authentication require(final String name) {
         final Authentication authentication = forName(name);
         if (authentication == null) {
-            throw new IllegalArgumentException("Unknown authentication name " + name);
+            throw log.unknownAuthenticationName(name);
         }
         return authentication;
     }

@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 package org.wildfly.security.password.impl;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
 
 import java.security.InvalidKeyException;
@@ -72,7 +74,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         try {
             this.digest = userRealmPasswordDigest(getMessageDigest(algorithm), spec.getUsername(), spec.getRealm(), password);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -110,7 +112,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
             byte[] guessDigest = userRealmPasswordDigest(getMessageDigest(algorithm), username, realm, guess);
             return Arrays.equals(digest, guessDigest);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -130,7 +132,7 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
             case ALGORITHM_DIGEST_SHA_512:
                 return MessageDigest.getInstance("SHA-512");
             default:
-                throw new NoSuchAlgorithmException("Invalid algorithm " + algorithm);
+                throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 

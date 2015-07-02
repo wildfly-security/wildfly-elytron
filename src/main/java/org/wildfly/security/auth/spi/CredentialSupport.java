@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.spi;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.EnumSet;
 
 /**
@@ -172,7 +174,7 @@ public enum CredentialSupport {
             }
         }
 
-        throw new IllegalArgumentException("Invalid combination of obtainable and verifiable.");
+        throw log.invalidCombinationOfObtainableAndVerifiable();
     }
 
     private static final int fullSize = values().length;

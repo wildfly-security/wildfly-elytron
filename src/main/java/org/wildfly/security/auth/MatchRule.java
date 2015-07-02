@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.net.URI;
 
 /**
@@ -292,7 +294,7 @@ public abstract class MatchRule {
      */
     public final MatchRule matchPort(int port) {
         if (port <= 0 || port > 65535) {
-            throw new IllegalArgumentException("Invalid port number");
+            throw log.invalidPortNumber(port);
         }
         return new MatchPortRule(this, port);
     }

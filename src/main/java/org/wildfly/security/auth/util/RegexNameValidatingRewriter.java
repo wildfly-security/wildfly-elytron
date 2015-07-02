@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.regex.Pattern;
 
 /**
@@ -44,7 +46,7 @@ public final class RegexNameValidatingRewriter implements NameRewriter {
 
     public String rewriteName(final String original) throws IllegalArgumentException {
         if (pattern.matcher(original).find() != match) {
-            throw new IllegalArgumentException("Invalid name");
+            throw log.invalidName();
         }
         return original;
     }

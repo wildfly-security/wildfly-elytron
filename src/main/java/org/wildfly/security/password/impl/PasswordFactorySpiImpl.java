@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
 import static org.wildfly.security.password.interfaces.ClearPassword.*;
@@ -318,7 +319,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
         }
-        throw new InvalidKeySpecException("Unknown algorithm or incompatible PasswordSpec");
+        throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
     }
 
     @Override
@@ -532,7 +533,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 break;
             }
         }
-        throw new InvalidKeyException("Unknown password type or algorithm");
+        throw log.invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
     }
 
     @Override

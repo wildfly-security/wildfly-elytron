@@ -18,6 +18,8 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.EnumSet;
 
 /**
@@ -113,7 +115,7 @@ public enum Encryption {
     static Encryption require(final String name) {
         final Encryption encryption = forName(name);
         if (encryption == null) {
-            throw new IllegalArgumentException("Unknown encryption name " + name);
+            throw log.unknownEncryptionName(name);
         }
         return null;
     }

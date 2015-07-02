@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
@@ -204,7 +205,7 @@ public final class PasswordUtil {
 
     private static StringBuilder getCryptStringToBuilder(Password password) throws InvalidKeySpecException {
         if (password == null) {
-            throw new IllegalArgumentException("password is null");
+            throw log.nullParameter("password");
         }
         final StringBuilder b = new StringBuilder();
         if (password instanceof BCryptPassword) {
@@ -272,7 +273,7 @@ public final class PasswordUtil {
                     break;
                 }
                 default: {
-                    throw new InvalidKeySpecException("Unrecognized key spec algorithm");
+                    throw log.invalidKeySpecUnrecognizedKeySpecAlgorithm();
                 }
             }
             ByteIterator.ofBytes(spec.getHash(), MD5_IDX).base64Encode(Base64Alphabet.MOD_CRYPT_LE, false).drainTo(b);
@@ -291,7 +292,7 @@ public final class PasswordUtil {
                     break;
                 }
                 default: {
-                    throw new InvalidKeySpecException("Unrecognized key spec algorithm");
+                    throw log.invalidKeySpecUnrecognizedKeySpecAlgorithm();
                 }
             }
             final int iterationCount = spec.getIterationCount();
@@ -305,21 +306,21 @@ public final class PasswordUtil {
             b.append('$');
             ByteIterator.ofBytes(spec.getHash(), interleave).base64Encode(Base64Alphabet.MOD_CRYPT_LE, false).drainTo(b);
         } else {
-            throw new InvalidKeySpecException("Password spec cannot be rendered as a string");
+            throw log.invalidKeySpecPasswordSpecCannotBeRenderedAsString();
         }
         return b;
     }
 
     public static Password parseCryptString(String cryptString) throws InvalidKeySpecException {
         if (cryptString == null) {
-            throw new IllegalArgumentException("cryptString is null");
+            throw log.nullParameter("cryptString");
         }
         return parseCryptString(cryptString.toCharArray());
     }
 
     public static Password parseCryptString(char[] cryptString) throws InvalidKeySpecException {
         if (cryptString == null) {
-            throw new IllegalArgumentException("cryptString is null");
+            throw log.nullParameter("cryptString");
         }
         final int algorithmId = doIdentifyAlgorithm(cryptString);
         switch (algorithmId) {
@@ -362,7 +363,7 @@ public final class PasswordUtil {
             {
                 return parseSimpleDigestPasswordString(algorithmId, cryptString);
             }
-            default: throw new InvalidKeySpecException("Unknown crypt string algorithm");
+            default: throw log.invalidKeySpecUnknownCryptStringAlgorithm();
         }
     }
 
@@ -405,18 +406,18 @@ public final class PasswordUtil {
                             }
                         }
                     } else {
-                        throw new InvalidKeySpecException("Invalid character encountered");
+                        throw log.invalidKeySpecInvalidCharacterEncountered();
                     }
                 }
                 if (! reader.hasNext()) {
-                    throw new InvalidKeySpecException("No iteration count terminator given");
+                    throw log.invalidKeySpecNoIterationCountTerminatorGiven();
                 }
                 reader.next(); // skip $
             } else {
                 iterationCount = defaultIterations;
             }
         } catch (NoSuchElementException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of input string");
+            throw log.invalidKeySpecUnexpectedEndOfInputString();
         }
         return max(minIterations, iterationCount);
     }
@@ -524,17 +525,17 @@ public final class PasswordUtil {
 
             byte[] salt = r.delimitedBy('$').drainToString().getBytes(StandardCharsets.ISO_8859_1);
             if (! r.hasNext()) {
-                throw new InvalidKeySpecException("No salt terminator given");
+                throw log.invalidKeySpecNoSaltTerminatorGiven();
             }
             r.next(); // skip $
             final byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(table.length).drain();
             if (decoded.length != table.length) {
-                throw new IllegalArgumentException("Invalid hash length");
+                throw log.invalidHashLength();
             }
             byte[] hash = ByteIterator.ofBytes(decoded, table).drain();
             return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithm, new UnixSHACryptPasswordSpec(hash, salt, iterationCount));
-        } catch (NoSuchElementException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of password string", ignored);
+        } catch (NoSuchElementException e) {
+            throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
     }
 
@@ -546,18 +547,18 @@ public final class PasswordUtil {
         try {
             final byte[] salt = r.delimitedBy('$').drainToString().getBytes(StandardCharsets.ISO_8859_1);
             if (! r.hasNext()) {
-                throw new InvalidKeySpecException("No salt terminator given");
+                throw log.invalidKeySpecNoSaltTerminatorGiven();
             }
             r.next(); // skip $
             final byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
             if (decoded.length != MD5_IDX.length) {
-                throw new IllegalArgumentException("Invalid hash length");
+                throw log.invalidHashLength();
             }
 
             byte[] hash = ByteIterator.ofBytes(decoded, MD5_IDX_REV).drain();
             return PASSWORD_FACTORY_SPI.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new UnixMD5CryptPasswordSpec(hash, salt));
-        } catch (NoSuchElementException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of password string");
+        } catch (NoSuchElementException e) {
+            throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
     }
 
@@ -579,7 +580,7 @@ public final class PasswordUtil {
             }
             final byte[] salt = r.delimitedBy('$').drainToString().getBytes(StandardCharsets.ISO_8859_1);
             if (! r.hasNext()) {
-                throw new InvalidKeySpecException("No salt terminator given");
+                throw log.invalidKeySpecNoSaltTerminatorGiven();
             }
             r.next();
 
@@ -594,13 +595,13 @@ public final class PasswordUtil {
 
             byte[] decoded = r.base64Decode(Base64Alphabet.MOD_CRYPT_LE, false).limitedTo(MD5_IDX_REV.length).drain();
             if (decoded.length != MD5_IDX.length) {
-                throw new IllegalArgumentException("Invalid hash length");
+                throw log.invalidHashLength();
             }
 
             byte[] hash = ByteIterator.ofBytes(decoded, MD5_IDX_REV).drain();
             return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithm, new SunUnixMD5CryptPasswordSpec(hash, salt, iterationCount));
-        } catch (NoSuchElementException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of password string");
+        } catch (NoSuchElementException e) {
+            throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
     }
 
@@ -611,7 +612,7 @@ public final class PasswordUtil {
         if (cryptString[2] != '$') {
             minor = cryptString[2];
             if (minor != 'a' && minor != 'x' && minor != 'y') {
-                throw new InvalidKeySpecException("Invalid minor version");
+                throw log.invalidKeySpecInvalidMinorVersion();
             }
             assert cryptString[3] == '$';
         }
@@ -621,11 +622,11 @@ public final class PasswordUtil {
             // read the bcrypt cost (number of rounds in log format)
             int cost = Integer.parseInt(r.limitedTo(2).drainToString());
             if (r.hasNext() && r.peekNext() != '$') {
-                throw new InvalidKeySpecException("Invalid cost: must be a two digit integer");
+                throw log.invalidKeySpecCostMustBeTwoDigitInteger();
             }
             // discard the '$'
             if (! r.hasNext()) {
-                throw new InvalidKeySpecException("Unexpected end of password string");
+                throw log.invalidKeySpecUnexpectedEndOfPasswordString();
             }
             r.next();
 
@@ -636,8 +637,8 @@ public final class PasswordUtil {
             byte[] decodedPassword = r.limitedTo(31).base64Decode(Base64Alphabet.BCRYPT, false).drain();
 
             return PASSWORD_FACTORY_SPI.engineGeneratePassword(BCryptPassword.ALGORITHM_BCRYPT, new BCryptPasswordSpec(decodedPassword, decodedSalt, cost));
-        } catch (NoSuchElementException ignored) {
-            throw new InvalidKeySpecException("Unexpected end of password string");
+        } catch (NoSuchElementException e) {
+            throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
     }
 

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.Principal;
 
 /**
@@ -46,7 +48,7 @@ public interface CredentialDecoder {
      */
     static CredentialDecoder aggregate(final CredentialDecoder... decoders) {
         if (decoders == null) {
-            throw new IllegalArgumentException("decoders is null");
+            throw log.nullParameter("decoders");
         }
         return credential -> {
             Principal result;

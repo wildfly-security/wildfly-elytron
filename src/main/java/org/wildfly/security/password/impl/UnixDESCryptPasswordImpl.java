@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -45,7 +47,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         salt = spec.getSalt();
         final byte[] hash = spec.getHash();
         if (hash == null || hash.length != 8) {
-            throw new InvalidKeySpecException("DES crypt password hash must be 64 bits");
+            throw log.invalidKeySpecDesCryptPasswordHashMustBeBytes(8); // TODO
         }
         this.hash = hash.clone();
     }
@@ -64,14 +66,14 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
             final byte[] saltBytes = ((HashedPasswordAlgorithmSpec) parameterSpec).getSalt();
             if (saltBytes != null) {
                 if (saltBytes.length != 2) {
-                    throw new InvalidParameterSpecException("Salt must be two bytes (12 bits)");
+                    throw log.invalidParameterSpecSaltMustBeBytesBits(2, 12);
                 }
                 salt = (short) ((saltBytes[0] & 0x0f) << 8 | saltBytes[1] & 0xff);
             } else {
                 salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
             }
         } else {
-            throw new InvalidParameterSpecException("Unsupported parameter spec");
+            throw log.invalidParameterSpecUnsupportedParameterSpec();
         }
         this.salt = salt;
         this.hash = generateHash(salt, spec.getPassword());
@@ -81,7 +83,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         salt = password.getSalt();
         final byte[] hash = password.getHash();
         if (hash == null || hash.length != 8) {
-            throw new InvalidKeyException("DES crypt password hash must be 64 bits");
+            throw log.invalidKeyDesCryptPasswordHashMustBeBytes(8);
         }
         this.hash = hash;
     }

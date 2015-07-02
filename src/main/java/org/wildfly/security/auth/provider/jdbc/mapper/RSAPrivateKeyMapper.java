@@ -17,9 +17,7 @@
  */
 package org.wildfly.security.auth.provider.jdbc.mapper;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security.auth.provider.jdbc.KeyMapper;
-import org.wildfly.security.auth.spi.CredentialSupport;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +25,10 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.sql.ResultSet;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.auth.provider.jdbc.KeyMapper;
+import org.wildfly.security.auth.spi.CredentialSupport;
 
 /**
  * A {@link KeyMapper} that knows how to map columns to a RSA {@link PrivateKey}.
@@ -84,7 +86,7 @@ public class RSAPrivateKeyMapper implements KeyMapper {
                 privateKey = resultSet.getObject(getPrivateKey());
             }
         } catch (Exception e) {
-            throw new RuntimeException("Could not RSA key from query.", e);
+            throw log.couldNotGetRsaKeyFromQuery(e);
         }
 
         if (privateKey != null) {
@@ -92,9 +94,9 @@ public class RSAPrivateKeyMapper implements KeyMapper {
                 KeyFactory kf = KeyFactory.getInstance(KEY_ALGORITHM);
                 return kf.generatePrivate(new PKCS8EncodedKeySpec((byte[]) privateKey));
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Invalid algorithm [" + KEY_ALGORITHM + "].", e);
+                throw log.invalidAlgorithm(KEY_ALGORITHM, e);
             } catch (InvalidKeySpecException e) {
-                throw new RuntimeException("Could not parse private key.", e);
+                throw log.couldNotParsePrivateKey(e);
             }
         }
 
