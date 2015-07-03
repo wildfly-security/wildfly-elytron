@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.security.auth.spi.Attributes;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -36,15 +37,16 @@ import org.wildfly.security.password.PasswordFactory;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
- * passwords.  Since this security realm implementation holds all names in memory, it may not be the best choice
+ * entries.  Since this security realm implementation holds all names in memory, it may not be the best choice
  * for very large security realms.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
+
     private final NameRewriter[] rewriters;
-    private volatile Map<String, Password> map = Collections.emptyMap();
+    private volatile Map<String, SimpleRealmEntry> map = Collections.emptyMap();
 
     /**
      * Construct a new instance.
@@ -56,13 +58,34 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     /**
-     * Set the password map.  Note that the password map must <b>not</b> be modified after calling this method.
+     * Set the realm entry map.  Note that the entry map must <b>not</b> be modified after calling this method.
      * If it needs to be changed, pass in a new map that is a copy of the old map with the required changes.
      *
      * @param passwordMap the password map
      */
-    public void setPasswordMap(final Map<String, Password> passwordMap) {
+    public void setPasswordMap(final Map<String, SimpleRealmEntry> passwordMap) {
         map = passwordMap;
+    }
+
+    /**
+     * Set the password map to contain a single entry.
+     *
+     * @param name the entry name
+     * @param password the password
+     * @param attributes the identity attributes
+     */
+    public void setPasswordMap(final String name, final Password password, final Attributes attributes) {
+        map = Collections.singletonMap(name, new SimpleRealmEntry(password, attributes));
+    }
+
+    /**
+     * Set the password map to contain a single entry.
+     *
+     * @param name the entry name
+     * @param password the password
+     */
+    public void setPasswordMap(final String name, final Password password) {
+        map = Collections.singletonMap(name, new SimpleRealmEntry(password));
     }
 
     @Override
@@ -89,7 +112,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
-
     private class SimpleMapRealmIdentity implements RealmIdentity {
 
         private final String name;
@@ -104,25 +126,33 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
-            final Password password = map.get(name);
+            final SimpleRealmEntry entry = map.get(name);
+            if (entry == null) return CredentialSupport.UNSUPPORTED;
+            final Password password = entry.getPassword();
             return credentialType.isInstance(password) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
         @Override
         public <C> C getCredential(Class<C> credentialType) {
-            final Password password = map.get(name);
+            final SimpleRealmEntry entry = map.get(name);
+            if (entry == null) return null;
+            final Password password = entry.getPassword();
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
         }
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() {
-            return new AuthorizationIdentity() {
-            };
+            final SimpleRealmEntry entry = map.get(name);
+            return entry == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(entry.getAttributes());
         }
 
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
             if (credential instanceof char[]) try {
-                final Password password = map.get(name);
+                final SimpleRealmEntry entry = map.get(name);
+                if (entry == null) {
+                    return false;
+                }
+                final Password password = entry.getPassword();
                 return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RealmUnavailableException(e);
@@ -132,7 +162,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         public boolean exists() throws RealmUnavailableException {
-            return true;
+            return map.containsKey(name);
         }
     }
 }
