@@ -108,4 +108,16 @@ public interface RoleMapper {
             return rolesToMap;
         };
     }
+
+    /**
+     * Create a role mapper that always returns the same set of roles regardless of the input.
+     *
+     * @param roles the set of roles to always be returned (must not be {@code null})
+     * @return the constant role mapper (not {@code null})
+     */
+    static RoleMapper constant(Set<String> roles) {
+        Assert.checkNotNullParam("roles", roles);
+        return r -> roles;
+    }
+
 }
