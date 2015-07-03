@@ -92,8 +92,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9, value = "No authentication is in progress")
     IllegalStateException noAuthenticationInProgress();
 
-    @Message(id = 10, value = "No successful authentication on this context")
-    IllegalStateException noSuccessfulAuthentication();
+    @Message(id = 10, value = "Authentication already complete on this context")
+    IllegalStateException alreadyComplete();
 
     @Message(id = 11, value = "Authentication already initiated on this context")
     IllegalStateException alreadyInitiated();

@@ -17,7 +17,6 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -31,7 +30,6 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import javax.sql.DataSource;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -57,7 +55,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
-        return new JdbcRealmIdentity(new NamePrincipal(name));
+        return new JdbcRealmIdentity(name);
     }
 
     @Override
@@ -81,15 +79,14 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
     private class JdbcRealmIdentity implements RealmIdentity {
 
-        private final Principal principal;
+        private final String name;
 
-        public JdbcRealmIdentity(Principal name) {
-            this.principal = name;
+        public JdbcRealmIdentity(String name) {
+            this.name = name;
         }
 
-        @Override
-        public Principal getPrincipal() throws RealmUnavailableException {
-            return this.principal;
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -154,7 +151,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return new JdbcAuthorizationIdentity(getPrincipal());
+            return new JdbcAuthorizationIdentity(name);
         }
 
         private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Object givenCredential) {
@@ -223,13 +220,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
             try {
                 preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setString(1, getPrincipal().getName());
+                preparedStatement.setString(1, getName());
                 resultSet = preparedStatement.executeQuery();
                 return resultSetCallback.handle(resultSet);
             } catch (SQLException e) {
                 throw new RuntimeException("Could not execute query [" + sql + "].", e);
-            } catch (RealmUnavailableException e) {
-                throw new RuntimeException("Realm is unavailable.", e);
             } catch (Exception e) {
                 throw new RuntimeException("Unexpected error when processing authentication query [" + sql + "].", e);
             } finally {
@@ -241,15 +236,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         private class JdbcAuthorizationIdentity implements AuthorizationIdentity {
 
-            private Principal principal;
+            private String name;
 
-            public JdbcAuthorizationIdentity(Principal principal) {
-                this.principal = principal;
-            }
-
-            @Override
-            public Principal getPrincipal() {
-                return this.principal;
+            JdbcAuthorizationIdentity(final String name) {
+                this.name = name;
             }
         }
     }

@@ -51,6 +51,8 @@ import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -62,6 +64,7 @@ import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 
 /**
@@ -99,7 +102,14 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
         Assert.checkNotNullParam("mechanismName", mechanismName);
         Assert.checkNotNullParam("protocol", protocol);
-        return new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory).createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, createCallbackHandler());
+        final AuthenticationCompleteCallbackSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
+        final CallbackHandler callbackHandler;
+        if (mechanismName.equals(AbstractAnonymousFactory.ANONYMOUS)) {
+            callbackHandler = createAnonymousCallbackHandler();
+        } else {
+            callbackHandler = createCallbackHandler();
+        }
+        return factory.createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, callbackHandler);
     }
 
     /**
@@ -135,6 +145,29 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Set the authentication to anonymous, completing the authentication process.
+     *
+     * @throws IllegalStateException if the authentication is already complete
+     */
+    public void anonymous() throws IllegalStateException {
+        State oldState;
+        oldState = stateRef.get();
+        if (oldState.isDone()) {
+            throw ElytronMessages.log.alreadyComplete();
+        }
+        final CompleteState completeState = new CompleteState(domain.getAnonymousSecurityIdentity());
+        while (! stateRef.compareAndSet(oldState, completeState)) {
+            oldState = stateRef.get();
+            if (oldState.isDone()) {
+                throw ElytronMessages.log.alreadyComplete();
+            }
+        }
+        if (oldState.getId() == ASSIGNED_ID) {
+            oldState.getRealmIdentity().dispose();
+        }
+    }
+
+    /**
      * Set the authentication name for this authentication.  Calling this method initiates authentication.
      *
      * @param name the authentication name
@@ -147,28 +180,35 @@ public final class ServerAuthenticationContext {
         State oldState;
         do {
             oldState = stateRef.get();
-            if (oldState != INITIAL) {
-                throw ElytronMessages.log.alreadyInitiated();
+            if (oldState.isDone()) {
+                throw ElytronMessages.log.alreadyComplete();
             }
-        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
-        name = domain.getPreRealmRewriter().rewriteName(name);
-        String realmName = domain.getRealmMapper().getRealmMapping(name);
-        if (realmName == null) {
-            realmName = domain.getDefaultRealmName();
-        }
-        RealmInfo realmInfo = domain.getRealmInfo(realmName);
-        name = domain.getPostRealmRewriter().rewriteName(name);
-        name = realmInfo.getNameRewriter().rewriteName(name);
-        final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+        } while (! stateRef.compareAndSet(oldState, IN_PROGRESS));
         boolean ok = false;
         try {
-            if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(realmInfo, realmIdentity))) {
-                throw Assert.unreachableCode();
+            name = domain.getPreRealmRewriter().rewriteName(name);
+            String realmName = domain.getRealmMapper().getRealmMapping(name);
+            if (realmName == null) {
+                realmName = domain.getDefaultRealmName();
             }
-            ok = true;
+            final NamePrincipal principal = new NamePrincipal(name);
+            RealmInfo realmInfo = domain.getRealmInfo(realmName);
+            name = domain.getPostRealmRewriter().rewriteName(name);
+            name = realmInfo.getNameRewriter().rewriteName(name);
+            final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
+            final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+            try {
+                if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(principal, realmInfo, realmIdentity))) {
+                    throw Assert.unreachableCode();
+                }
+                ok = true;
+            } finally {
+                if (! ok) realmIdentity.dispose();
+            }
         } finally {
-            if (! ok) realmIdentity.dispose();
+            if (! ok) {
+                stateRef.compareAndSet(IN_PROGRESS, oldState);
+            }
         }
     }
 
@@ -182,17 +222,24 @@ public final class ServerAuthenticationContext {
      */
     public void setAuthenticationPrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("principal", principal);
-        State oldState;
-        do {
-            oldState = stateRef.get();
-            if (oldState != INITIAL) {
-                throw ElytronMessages.log.alreadyInitiated();
-            }
-        } while (! stateRef.compareAndSet(INITIAL, IN_PROGRESS));
         String name = domain.getPrincipalDecoder().getName(principal);
         if (name == null) {
             throw ElytronMessages.log.unrecognizedPrincipalType(principal);
         }
+        setAuthenticationName(name);
+    }
+
+    /**
+     * Determine if the given name refers to the same identity as the currently set authentication name.
+     *
+     * @param name the authentication name
+     * @return {@code true} if the name matches the current identity, {@code false} otherwise
+     * @throws IllegalArgumentException if the name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public boolean isSameName(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        Assert.checkNotNullParam("name", name);
         name = domain.getPreRealmRewriter().rewriteName(name);
         String realmName = domain.getRealmMapper().getRealmMapping(name);
         if (realmName == null) {
@@ -201,17 +248,33 @@ public final class ServerAuthenticationContext {
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = domain.getPostRealmRewriter().rewriteName(name);
         name = realmInfo.getNameRewriter().rewriteName(name);
-        final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
-        boolean ok = false;
-        try {
-            if (! stateRef.compareAndSet(IN_PROGRESS, new NameAssignedState(realmInfo, realmIdentity))) {
-                throw Assert.unreachableCode();
-            }
-            ok = true;
-        } finally {
-            if (! ok) realmIdentity.dispose();
-        }
+        return stateRef.get().getAuthenticationPrincipal().getName().equals(name);
+    }
+
+    /**
+     * Determine if the current authentication identity actually exists in the realm.
+     *
+     * @return {@code true} if the identity exists, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm failed to access the identity
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public boolean exists() throws RealmUnavailableException, IllegalStateException {
+        return stateRef.get().getRealmIdentity().exists();
+    }
+
+    /**
+     * Determine if the given principal refers to the same identity as the currently set authentication name.
+     *
+     * @param principal the authentication name
+     * @return {@code true} if the name matches the current identity, {@code false} otherwise
+     * @throws IllegalArgumentException if the name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was already set
+     */
+    public boolean isSamePrincipal(Principal principal) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        Assert.checkNotNullParam("principal", principal);
+        String name = domain.getPrincipalDecoder().getName(principal);
+        return name != null && isSameName(name);
     }
 
     /**
@@ -223,12 +286,74 @@ public final class ServerAuthenticationContext {
         State oldState;
         do {
             oldState = stateRef.get();
-            if (oldState != IN_PROGRESS && oldState.getId() != ASSIGNED_ID) {
+            if (oldState.isDone()) {
+                throw ElytronMessages.log.alreadyComplete();
+            }
+            if (! oldState.isStarted()) {
                 throw ElytronMessages.log.noAuthenticationInProgress();
             }
         } while (!stateRef.compareAndSet(oldState, FAILED));
         if (oldState.getId() == ASSIGNED_ID) {
             oldState.getRealmIdentity().dispose();
+        }
+    }
+
+    /**
+     * Attempt to authorize an authentication attempt.  If the authorization is successful (meaning, the authenticated
+     * user is the same as the authorize user, or otherwise possesses a sufficient {@link RunAsPrincipalPermission}),
+     * {@code true} is returned and the context is placed in the "successful" state as if {@link #succeed()} had been
+     * called.  If the authorization fails, {@code false} is returned and the context is placed in the "failed" state
+     * as if {@link #fail()} had been called.
+     *
+     * @param name the authorization name
+     * @return {@code true} if the authorization succeeded, {@code false} otherwise
+     * @throws IllegalArgumentException if the name is syntactically invalid
+     * @throws RealmUnavailableException if the realm is not available
+     * @throws IllegalStateException if the authentication name was not set or authentication was already complete
+     */
+    public boolean authorize(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
+        State oldState = stateRef.get();
+        if (oldState.isDone()) {
+            throw ElytronMessages.log.alreadyComplete();
+        }
+        if (! oldState.isStarted()) {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+        Assert.checkNotNullParam("name", name);
+        name = domain.getPreRealmRewriter().rewriteName(name);
+        String realmName = domain.getRealmMapper().getRealmMapping(name);
+        if (realmName == null) {
+            realmName = domain.getDefaultRealmName();
+        }
+        Principal principal = new NamePrincipal(name);
+        if (oldState.getAuthenticationPrincipal().equals(principal)) {
+            // it's the same identity; just succeed
+            succeed();
+            return true;
+        }
+        RealmInfo realmInfo = domain.getRealmInfo(realmName);
+        name = domain.getPostRealmRewriter().rewriteName(name);
+        name = realmInfo.getNameRewriter().rewriteName(name);
+        final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
+        final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+        final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
+        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity);
+        if (securityIdentity.getPermissions().implies(new RunAsPrincipalPermission(name))) {
+            CompleteState newState = new CompleteState(securityIdentity);
+            while (! stateRef.compareAndSet(oldState, newState)) {
+                oldState = stateRef.get();
+                if (oldState.isDone()) {
+                    throw ElytronMessages.log.alreadyComplete();
+                }
+                if (! oldState.isStarted()) {
+                    throw ElytronMessages.log.noAuthenticationInProgress();
+                }
+            }
+            oldState.getRealmIdentity().dispose();
+            return true;
+        } else {
+            fail();
+            return false;
         }
     }
 
@@ -240,19 +365,34 @@ public final class ServerAuthenticationContext {
      */
     public void succeed() throws IllegalStateException, RealmUnavailableException {
         State oldState = stateRef.get();
-        if (oldState.getId() != ASSIGNED_ID) {
+        if (oldState.isDone()) {
+            throw ElytronMessages.log.alreadyComplete();
+        }
+        if (! oldState.isStarted()) {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
         RealmInfo realmInfo = oldState.getRealmInfo();
         final AuthorizationIdentity authorizationIdentity = oldState.getRealmIdentity().getAuthorizationIdentity();
-        CompleteState newState = new CompleteState(new SecurityIdentity(domain, realmInfo, authorizationIdentity));
+        CompleteState newState = new CompleteState(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity));
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
-            if (oldState.getId() != ASSIGNED_ID) {
+            if (oldState.isDone()) {
+                throw ElytronMessages.log.alreadyComplete();
+            }
+            if (! oldState.isStarted()) {
                 throw ElytronMessages.log.noAuthenticationInProgress();
             }
         }
         oldState.getRealmIdentity().dispose();
+    }
+
+    /**
+     * Determine if authentication was already completed on this context.
+     *
+     * @return {@code true} if authentication was completed; {@code false} otherwise
+     */
+    public boolean isDone() {
+        return stateRef.get().isDone();
     }
 
     /**
@@ -310,9 +450,51 @@ public final class ServerAuthenticationContext {
         return stateRef.get().verifyCredential(credential);
     }
 
+    CallbackHandler createAnonymousCallbackHandler() {
+        return new CallbackHandler() {
+            @Override
+            public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                handleOne(callbacks, 0);
+            }
+
+            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException {
+                if (idx == callbacks.length) {
+                    return;
+                }
+                Callback callback = callbacks[idx];
+                if (callback instanceof AnonymousAuthorizationCallback) {
+                    // anonymous is always allowed; disable anonymous authentication in the mechanism filters.
+                    anonymous();
+                    ((AnonymousAuthorizationCallback) callback).setAuthorized(true);
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof AuthenticationCompleteCallback) {
+                    if (! isDone()) {
+                        if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                            succeed();
+                        } else {
+                            fail();
+                        }
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SocketAddressCallback) {
+                    final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
+                    if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
+                        // todo: filter by IP address
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SecurityIdentityCallback) {
+                    ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
+                    handleOne(callbacks, idx + 1);
+                } else {
+                    CallbackUtil.unsupported(callback);
+                }
+            }
+        };
+    }
+
+
     CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
-            private String assignedName;
 
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -326,25 +508,16 @@ public final class ServerAuthenticationContext {
                 Callback callback = callbacks[idx];
                 if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-                    final String authenticationID = authorizeCallback.getAuthenticationID();
                     final String authorizationID = authorizeCallback.getAuthorizationID();
-                    // TODO: perform a proper authorization permission check
-                    authorizeCallback.setAuthorized(authenticationID.equals(authorizationID));
+                    authorizeCallback.setAuthorized(authorize(authorizationID));
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof NameCallback) {
                     // login name
                     final String name = ((NameCallback) callback).getDefaultName();
-                    if (assignedName != null) {
-                        if (! assignedName.equals(name)) {
-                            throw ElytronMessages.log.alreadyInitiated();
-                        }
-                    } else {
-                        assignedName = name;
-                        try {
-                            setAuthenticationName(name);
-                        } catch (Exception e) {
-                            throw new IOException(e);
-                        }
+                    try {
+                        setAuthenticationName(name);
+                    } catch (Exception e) {
+                        throw new IOException(e);
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PeerPrincipalCallback) {
@@ -418,14 +591,13 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof AnonymousAuthorizationCallback) {
-                    ((AnonymousAuthorizationCallback) callback).setAuthorized(domain.isAnonymousAllowed());
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
-                    if (((AuthenticationCompleteCallback) callback).succeeded()) {
-                        succeed();
-                    } else {
-                        fail();
+                    if (! isDone()) {
+                        if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                            succeed();
+                        } else {
+                            fail();
+                        }
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
@@ -455,7 +627,7 @@ public final class ServerAuthenticationContext {
 
         abstract SecurityIdentity getAuthorizedIdentity();
 
-        abstract Principal getAuthenticationPrincipal() throws RealmUnavailableException;
+        abstract Principal getAuthenticationPrincipal();
 
         abstract CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException;
 
@@ -466,13 +638,21 @@ public final class ServerAuthenticationContext {
         abstract RealmInfo getRealmInfo();
 
         abstract RealmIdentity getRealmIdentity();
+
+        abstract boolean isDone();
+
+        abstract boolean isStarted();
     }
 
     static final class SimpleState extends State {
         private final int id;
+        private final boolean done;
+        private final boolean started;
 
-        SimpleState(final int id) {
+        SimpleState(final int id, final boolean done, final boolean started) {
             this.id = id;
+            this.done = done;
+            this.started = started;
         }
 
         @Override
@@ -482,7 +662,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noSuccessfulAuthentication();
+            throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
@@ -513,6 +693,16 @@ public final class ServerAuthenticationContext {
         @Override
         RealmIdentity getRealmIdentity() {
             throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+
+        @Override
+        boolean isDone() {
+            return done;
+        }
+
+        @Override
+        boolean isStarted() {
+            return started;
         }
     }
 
@@ -562,13 +752,25 @@ public final class ServerAuthenticationContext {
         RealmIdentity getRealmIdentity() {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
+
+        @Override
+        boolean isDone() {
+            return true;
+        }
+
+        @Override
+        boolean isStarted() {
+            return true;
+        }
     }
 
     static final class NameAssignedState extends State {
+        private final Principal authenticationPrincipal;
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
 
-        NameAssignedState(final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+        NameAssignedState(final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+            this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
         }
@@ -580,12 +782,12 @@ public final class ServerAuthenticationContext {
 
         @Override
         SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noSuccessfulAuthentication();
+            throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
-        Principal getAuthenticationPrincipal() throws RealmUnavailableException {
-            return realmIdentity.getPrincipal();
+        Principal getAuthenticationPrincipal() {
+            return authenticationPrincipal;
         }
 
         @Override
@@ -612,9 +814,19 @@ public final class ServerAuthenticationContext {
         RealmIdentity getRealmIdentity() {
             return realmIdentity;
         }
+
+        @Override
+        boolean isDone() {
+            return false;
+        }
+
+        @Override
+        boolean isStarted() {
+            return true;
+        }
     }
 
-    private static final SimpleState INITIAL = new SimpleState(INITIAL_ID);
-    private static final SimpleState IN_PROGRESS = new SimpleState(IN_PROGRESS_ID);
-    private static final SimpleState FAILED = new SimpleState(FAILED_ID);
+    private static final SimpleState INITIAL = new SimpleState(INITIAL_ID, false, false);
+    private static final SimpleState IN_PROGRESS = new SimpleState(IN_PROGRESS_ID, false, true);
+    private static final SimpleState FAILED = new SimpleState(FAILED_ID, true, true);
 }

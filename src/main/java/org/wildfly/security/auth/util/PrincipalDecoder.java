@@ -37,6 +37,20 @@ public interface PrincipalDecoder {
     String getName(Principal principal);
 
     /**
+     * Add a name rewriter to this principal decoder.  If the name is decoded, it will then be rewritten with the
+     * given rewriter.
+     *
+     * @param nameRewriter the name rewriter
+     * @return the combined decoder
+     */
+    default PrincipalDecoder withRewriter(NameRewriter nameRewriter) {
+        return principal -> {
+            final String name = this.getName(principal);
+            return name == null ? null : nameRewriter.rewriteName(name);
+        };
+    }
+
+    /**
      * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
      * matches the credential; this result will be returned.
      *

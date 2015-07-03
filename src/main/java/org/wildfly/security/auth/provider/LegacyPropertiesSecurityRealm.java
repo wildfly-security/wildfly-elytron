@@ -87,9 +87,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         return new RealmIdentity() {
 
-            @Override
-            public Principal getPrincipal() throws RealmUnavailableException {
-                return accountEntry != null ? principal : null;
+            public String getName() {
+                return name;
             }
 
             @Override
@@ -347,11 +346,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         private PropertiesAuthorizationIdentity(Principal principal) {
             this.principal = principal;
-        }
-
-        @Override
-        public Principal getPrincipal() {
-            return principal;
         }
     }
 

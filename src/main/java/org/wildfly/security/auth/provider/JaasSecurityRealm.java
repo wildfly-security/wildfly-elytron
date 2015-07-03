@@ -145,9 +145,8 @@ public class JaasSecurityRealm implements SecurityRealm {
             this.principal = principal;
         }
 
-        @Override
-        public Principal getPrincipal() throws RealmUnavailableException {
-            return this.principal;
+        public String getName() {
+            return principal.getName();
         }
 
         @Override
@@ -247,11 +246,6 @@ public class JaasSecurityRealm implements SecurityRealm {
             this.subject = subject;
             // check if the subject has a caller principal group - if it has then we should use that principal.
             this.callerPrincipal = getCallerPrincipal(subject);
-        }
-
-        @Override
-        public Principal getPrincipal() {
-            return this.callerPrincipal != null ? this.callerPrincipal : this.principal;
         }
 
         /**

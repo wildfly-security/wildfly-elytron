@@ -19,7 +19,6 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -37,7 +36,7 @@ import javax.naming.directory.SearchResult;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.x500.X500Principal;
+
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
@@ -104,17 +103,8 @@ class LdapSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        @Override
-        public Principal getPrincipal() throws RealmUnavailableException {
-            if (this.identity == null || !principalMapping.cachePrincipal) {
-                this.identity = getIdentity(this.name);
-            }
-
-            if (this.identity != null) {
-                return this.identity.toPrincipal();
-            }
-
-            return null;
+        public String getName() {
+            return name;
         }
 
         @Override
@@ -181,13 +171,6 @@ class LdapSecurityRealm implements SecurityRealm {
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() {
             return new AuthorizationIdentity() {
-                public Principal getPrincipal() {
-                    if (identity != null) {
-                        return identity.toPrincipal();
-                    }
-
-                    return null;
-                }
             };
         }
 
@@ -238,7 +221,11 @@ class LdapSecurityRealm implements SecurityRealm {
 
         @Override
         public boolean exists() throws RealmUnavailableException {
-            return getPrincipal() != null;
+            if (identity == null) {
+                identity = getIdentity(name);
+            }
+
+            return identity != null;
         }
 
         private LdapIdentity getIdentity(String name) throws RealmUnavailableException {
@@ -300,7 +287,7 @@ class LdapSecurityRealm implements SecurityRealm {
             LdapIdentity(String simpleName, String distinguishedName) {
                 this.simpleName = simpleName;
                 this.distinguishedName = distinguishedName;
-                this.principal = createPrincipal(this.simpleName, distinguishedName);
+                this.principal = null;
             }
 
             String getDistinguishedName() {
@@ -310,14 +297,6 @@ class LdapSecurityRealm implements SecurityRealm {
             Principal toPrincipal() {
                 return this.principal;
             }
-
-            private Principal createPrincipal(String simpleName, String distinguishedName) {
-                if (principalMapping.principalUseDn) {
-                    return new X500Principal(distinguishedName);
-                } else {
-                    return new NamePrincipal(simpleName);
-                }
-            }
         }
     }
 
@@ -325,23 +304,18 @@ class LdapSecurityRealm implements SecurityRealm {
 
         private final String searchDn;
         private final boolean searchRecursive;
-        private final boolean principalUseDn;
         private final String nameAttribute;
-        private final boolean cachePrincipal;
         private final String passwordAttribute;
         public int searchTimeLimit;
 
-        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, boolean principalUseDn,
-                                String nameAttribute, String passwordAttribute, boolean cachePrincipal) {
+        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String nameAttribute, String passwordAttribute) {
             Assert.checkNotNullParam("nameAttribute", nameAttribute);
             Assert.checkNotNullParam("passwordAttribute", passwordAttribute);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
             this.searchTimeLimit = searchTimeLimit;
-            this.principalUseDn = principalUseDn;
             this.nameAttribute = nameAttribute;
             this.passwordAttribute = passwordAttribute;
-            this.cachePrincipal = cachePrincipal;
         }
     }
 }

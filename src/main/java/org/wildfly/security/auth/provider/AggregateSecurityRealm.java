@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.provider;
 
-import java.security.Principal;
-
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
 import org.wildfly.security.auth.spi.RealmIdentity;
@@ -54,7 +52,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         try {
             final RealmIdentity authorizationIdentity = authorizationRealm.createRealmIdentity(name);
             try {
-                final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
+                final Identity identity = new Identity(name, authenticationIdentity, authorizationIdentity);
                 ok = true;
                 return identity;
             } finally {
@@ -71,16 +69,18 @@ public final class AggregateSecurityRealm implements SecurityRealm {
 
     static final class Identity implements RealmIdentity {
 
+        private final String name;
         private final RealmIdentity authenticationIdentity;
         private final RealmIdentity authorizationIdentity;
 
-        Identity(final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
+        Identity(final String name, final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
+            this.name = name;
             this.authenticationIdentity = authenticationIdentity;
             this.authorizationIdentity = authorizationIdentity;
         }
 
-        public Principal getPrincipal() throws RealmUnavailableException {
-            return authenticationIdentity.getPrincipal();
+        public String getName() {
+            return name;
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
@@ -100,7 +100,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return authorizationIdentity.exists() ? authorizationIdentity.getAuthorizationIdentity() : AuthorizationIdentity.emptyIdentity(getPrincipal());
+            return authorizationIdentity.exists() ? authorizationIdentity.getAuthorizationIdentity() : AuthorizationIdentity.EMPTY;
         }
 
         public void dispose() {

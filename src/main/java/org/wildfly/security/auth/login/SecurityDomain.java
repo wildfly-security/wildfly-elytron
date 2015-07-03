@@ -34,6 +34,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.spi.Attributes;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -84,7 +85,7 @@ public final class SecurityDomain {
         // todo configurable
         anonymousAllowed = false;
         final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
-        anonymousIdentity = new SecurityIdentity(this, realmInfo, AuthorizationIdentity.ANONYMOUS);
+        anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY);
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
@@ -303,8 +304,7 @@ public final class SecurityDomain {
 
     PermissionCollection mapPermissions(SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
-        AuthorizationIdentity authorizationIdentity = securityIdentity.getAuthorizationIdentity();
-        Principal principal = authorizationIdentity.getPrincipal();
+        Principal principal = securityIdentity.getPrincipal();
         Set<String> roles = securityIdentity.getRoles();
 
         return this.permissionMapper.mapPermissions(principal, roles);

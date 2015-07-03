@@ -21,7 +21,9 @@ package org.wildfly.security.auth.permission;
 import java.security.Permission;
 
 /**
- * The permission to run as another principal within some security domain.
+ * The permission to run as another principal within some security domain.  Note that this permission is checked relative
+ * to the security domain that the user is authenticated to.  The principal name is the effective name after all rewrite
+ * operations have taken place.
  */
 public final class RunAsPrincipalPermission extends Permission {
 
@@ -30,18 +32,20 @@ public final class RunAsPrincipalPermission extends Permission {
     /**
      * Construct a new instance.
      *
-     * @param name the principal name
-     * @param securityDomainName the security domain name
+     * @param name the principal name, or {@code *} for global run-as permissions
      */
-    public RunAsPrincipalPermission(final String name, final String securityDomainName) {
-        super(compileName(name, securityDomainName));
+    public RunAsPrincipalPermission(final String name) {
+        super(name);
     }
 
-    private static String compileName(final String name, final String securityDomainName) {
-        if (securityDomainName.indexOf(':') != -1) {
-            throw new IllegalArgumentException("Security domain name is invalid");
-        }
-        return securityDomainName + ":" + name;
+    /**
+     * Construct a new instance.
+     *
+     * @param name the principal name, or {@code *} for global run-as permissions
+     * @param ignored the permission actions (ignored)
+     */
+    public RunAsPrincipalPermission(final String name, @SuppressWarnings("unused") final String ignored) {
+        this(name);
     }
 
     /**
@@ -51,7 +55,17 @@ public final class RunAsPrincipalPermission extends Permission {
      * @return {@code true} if this permission implies the other permission, {@code false} otherwise
      */
     public boolean implies(final Permission permission) {
-        return equals(permission);
+        return permission instanceof RunAsPrincipalPermission && implies((RunAsPrincipalPermission) permission);
+    }
+
+    /**
+     * Determine whether this permission implies another permission.
+     *
+     * @param permission the other permission
+     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
+     */
+    public boolean implies(final RunAsPrincipalPermission permission) {
+        return permission != null && (permission.getName().equals(getName()) || "*".equals(getName()));
     }
 
     /**

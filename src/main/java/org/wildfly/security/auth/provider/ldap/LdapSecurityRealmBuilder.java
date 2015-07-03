@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.spi.RealmIdentity;
 import org.wildfly.security.auth.util.NameRewriter;
 
 import java.util.LinkedList;
@@ -120,9 +119,7 @@ public class LdapSecurityRealmBuilder {
 
         private String searchDn = null;
         private boolean searchRecursive = false;
-        private boolean principalUseDn = false;
         private String nameAttribute;
-        private boolean cachePrincipal = false;
         private String passwordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
         private int searchTimeLimit = 10000;
 
@@ -171,19 +168,6 @@ public class LdapSecurityRealmBuilder {
         }
 
         /**
-         * <p>Indicate if the principal obtained from {@link RealmIdentity#getPrincipal()} should be a {@link javax.security.auth.x500.X500Principal} instance.
-         * Otherwise a {@link org.wildfly.security.auth.principal.NamePrincipal} is returned with user's simple name.
-         *
-         * <p>Use this option if you want to obtain principal names based on their X.500 format just like they are represented in LDAP.
-         *
-         * @return this builder
-         */
-        public PrincipalMappingBuilder useX500Principal() {
-            this.principalUseDn = true;
-            return this;
-        }
-
-        /**
          * Set the name of the attribute in LDAP that holds the user name.
          *
          * @param nameAttribute the name attribute
@@ -207,25 +191,12 @@ public class LdapSecurityRealmBuilder {
         }
 
         /**
-         * <p>Indicate if the principal obtained from {@link RealmIdentity#getPrincipal()} should be cached.
-         *
-         * <p>In this case, the LDAP server will be queried once while building the principal instance for the first time.
-         * Subsequent calls to {@link RealmIdentity#getPrincipal()} will always return the same instance.
-         *
-         * @return this builder
-         */
-        public PrincipalMappingBuilder cachePrincipal() {
-            this.cachePrincipal = true;
-            return this;
-        }
-
-        /**
          * Build this principal mapping.
          *
          * @return a {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.PrincipalMapping} instance with all the configuration.
          */
         public LdapSecurityRealm.PrincipalMapping build() {
-            return new LdapSecurityRealm.PrincipalMapping(searchDn, searchRecursive, searchTimeLimit, principalUseDn, nameAttribute, this.passwordAttribute, cachePrincipal);
+            return new LdapSecurityRealm.PrincipalMapping(searchDn, searchRecursive, searchTimeLimit, nameAttribute, this.passwordAttribute);
         }
     }
 }
