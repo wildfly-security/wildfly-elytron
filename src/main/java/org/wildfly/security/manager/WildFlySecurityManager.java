@@ -292,7 +292,7 @@ public final class WildFlySecurityManager extends SecurityManager {
             try {
                 protectionDomain = clazz.getProtectionDomain();
                 if (protectionDomain != null) {
-                    if (! (protectionDomain.implies(perm))) {
+                    if (! protectionDomain.implies(perm)) {
                         final CodeSource codeSource = protectionDomain.getCodeSource();
                         final ClassLoader classLoader = protectionDomain.getClassLoader();
                         final Principal[] principals = protectionDomain.getPrincipals();
@@ -531,7 +531,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         return false;
     }
 
-    @Deprecated
+    @Deprecated @SuppressWarnings("deprecation")
     public void checkMemberAccess(final Class<?> clazz, final int which) {
         final Context ctx = CTX.get();
         if (doCheck(ctx)) {
