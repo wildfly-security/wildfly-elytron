@@ -53,6 +53,7 @@ public interface RoleMapper {
      * @return the intersection role mapper
      */
     default RoleMapper and(RoleMapper other) {
+        Assert.checkNotNullParam("other", other);
         RoleMapper left = this;
         return rolesToMap -> new IntersectionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
     }
@@ -64,6 +65,7 @@ public interface RoleMapper {
      * @return the union role mapper
      */
     default RoleMapper or(RoleMapper other) {
+        Assert.checkNotNullParam("other", other);
         RoleMapper left = this;
         return rolesToMap -> new UnionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
     }
@@ -76,6 +78,7 @@ public interface RoleMapper {
      * @return the difference role mapper
      */
     default RoleMapper xor(RoleMapper other) {
+        Assert.checkNotNullParam("other", other);
         RoleMapper left = this;
         return rolesToMap -> new DisjunctionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
     }
@@ -88,6 +91,7 @@ public interface RoleMapper {
      * @return the difference role mapper
      */
     default RoleMapper minus(RoleMapper other) {
+        Assert.checkNotNullParam("other", other);
         RoleMapper left = this;
         return rolesToMap -> new DifferenceSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
     }
