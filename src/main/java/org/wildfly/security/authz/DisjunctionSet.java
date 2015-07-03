@@ -25,18 +25,18 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 
-class DifferenceSet extends AbstractSet<String> implements Set<String> {
+class DisjunctionSet extends AbstractSet<String> implements Set<String> {
 
     private final Set<String> left;
     private final Set<String> right;
 
-    DifferenceSet(final Set<String> left, final Set<String> right) {
+    DisjunctionSet(final Set<String> left, final Set<String> right) {
         this.left = left;
         this.right = right;
     }
 
     public boolean contains(final Object o) {
-        return o instanceof String && left.contains(o) && ! right.contains(o);
+        return o instanceof String && left.contains(o) != right.contains(o);
     }
 
     public boolean isEmpty() {
@@ -45,6 +45,7 @@ class DifferenceSet extends AbstractSet<String> implements Set<String> {
 
     public Iterator<String> iterator() {
         final Iterator<String> leftIterator = left.iterator();
+        final Iterator<String> rightIterator = right.iterator();
         return new Iterator<String>() {
             String next;
 
@@ -56,6 +57,13 @@ class DifferenceSet extends AbstractSet<String> implements Set<String> {
                     if (leftIterator.hasNext()) {
                         next = leftIterator.next();
                         if (! right.contains(next)) {
+                            return true;
+                        }
+                        next = null;
+                        // fall out and re-loop
+                    } else if (rightIterator.hasNext()) {
+                        next = rightIterator.next();
+                        if (! left.contains(next)) {
                             return true;
                         }
                         next = null;

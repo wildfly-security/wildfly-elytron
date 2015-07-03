@@ -68,12 +68,25 @@ public interface RoleMapper {
     }
 
     /**
-     * Create a role mapper which is the symmetric difference (logical "xor") of the results of this and the given role mapper.
+     * Create a role mapper which is the symmetric difference (or disjunction, or logical "xor") of the results of this
+     * and the given role mapper.
      *
      * @param other the other role mapper
      * @return the difference role mapper
      */
     default RoleMapper xor(RoleMapper other) {
+        RoleMapper left = this;
+        return rolesToMap -> new DisjunctionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+    }
+
+    /**
+     * Create a role mapper which contains all the roles mapped by this mapper, minus the roles mapped by the given
+     * role mapper.
+     *
+     * @param other the other role mapper
+     * @return the difference role mapper
+     */
+    default RoleMapper minus(RoleMapper other) {
         RoleMapper left = this;
         return rolesToMap -> new DifferenceSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
     }
