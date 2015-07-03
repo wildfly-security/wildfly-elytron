@@ -105,7 +105,7 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public Principal getPrincipal() {
+        public Principal getPrincipal() throws RealmUnavailableException {
             if (this.identity == null || !principalMapping.cachePrincipal) {
                 this.identity = getIdentity(this.name);
             }
@@ -241,7 +241,7 @@ class LdapSecurityRealm implements SecurityRealm {
             return getPrincipal() != null;
         }
 
-        private LdapIdentity getIdentity(String name) {
+        private LdapIdentity getIdentity(String name) throws RealmUnavailableException {
             DirContext context = null;
             NamingEnumeration<SearchResult> searchResult = null;
 
@@ -277,7 +277,7 @@ class LdapSecurityRealm implements SecurityRealm {
                     return new LdapIdentity(simpleName, result.getNameInNamespace());
                 }
             } catch (NamingException e) {
-                throw new RuntimeException("Could not obtain principal.", e);
+                throw log.ldapRealmFailedObtainIdentityFromServer(e);
             } finally {
                 if (searchResult != null) {
                     try {

@@ -204,7 +204,11 @@ public class SimpleDirContextFactoryBuilder {
             // set any additional connection property
             if (connectionProperties != null) {
                 for (Object key : connectionProperties.keySet()) {
-                    env.put(key.toString(), connectionProperties.getProperty(key.toString()));
+                    Object value = connectionProperties.get(key.toString());
+
+                    if (value != null) {
+                        env.put(key.toString(), value.toString());
+                    }
                 }
             }
 
