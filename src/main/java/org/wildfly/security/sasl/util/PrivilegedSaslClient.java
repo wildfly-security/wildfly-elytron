@@ -68,7 +68,7 @@ public final class PrivilegedSaslClient extends AbstractDelegatingSaslClient imp
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         try {
-            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.unwrap(incoming, offset, len));
+            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.unwrap(incoming, offset, len), accessControlContext);
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();
@@ -82,7 +82,7 @@ public final class PrivilegedSaslClient extends AbstractDelegatingSaslClient imp
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         try {
-            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.wrap(outgoing, offset, len));
+            return doPrivileged((PrivilegedExceptionAction<byte[]>) () -> delegate.wrap(outgoing, offset, len), accessControlContext);
         } catch (PrivilegedActionException pae) {
             try {
                 throw pae.getCause();
