@@ -61,10 +61,10 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * Set the realm entry map.  Note that the entry map must <b>not</b> be modified after calling this method.
      * If it needs to be changed, pass in a new map that is a copy of the old map with the required changes.
      *
-     * @param passwordMap the password map
+     * @param map the password map
      */
-    public void setPasswordMap(final Map<String, SimpleRealmEntry> passwordMap) {
-        map = passwordMap;
+    public void setPasswordMap(final Map<String, SimpleRealmEntry> map) {
+        this.map = map;
     }
 
     /**
