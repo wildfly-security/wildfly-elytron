@@ -29,7 +29,8 @@ import org.wildfly.common.Assert;
  *     <li>Mapping one naming scheme to another (e.g. "user@realm" to/from "realm/user" or similar)</li>
  *     <li>Removing a realm component (e.g. "user@realm" to "user")</li>
  * </ul>
- * A name rewriter may also be used to perform a validation step on the syntax of the name.
+ * A name rewriter may also be used to perform a validation step on the syntax of the name.  If the rewriter returns
+ * {@code null}, the name is not valid according to the rules of the rewriter.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -45,13 +46,53 @@ public interface NameRewriter {
      * Rewrite a name.  Must not return {@code null}.
      *
      * @param original the original name (must not be {@code null})
-     * @return the rewritten name (must not be {@code null})
-     * @throws IllegalArgumentException if the name is syntactically invalid
+     * @return the rewritten name, or {@code null} if the name is invalid
      */
-    String rewriteName(String original) throws IllegalArgumentException;
+    String rewriteName(String original);
 
     /**
-     * Create a name rewriter which aggregates the given name rewriters.
+     * Create a name rewriter which chains the given name rewriters; the name will be rewritten through the given rewriters
+     * in order and then returned.  If any rewriter returns {@code null}, then {@code null} is returned.
+     *
+     * @param rewriter1 the first name rewriter (must not be {@code null})
+     * @param rewriter2 the second name rewriter (must not be {@code null})
+     * @return the name rewriter (not {@code null})
+     */
+    static NameRewriter chain(NameRewriter rewriter1, NameRewriter rewriter2) {
+        Assert.checkNotNullParam("rewriter1", rewriter1);
+        Assert.checkNotNullParam("rewriter2", rewriter2);
+        return n -> {
+            if (n != null) n = rewriter1.rewriteName(n);
+            if (n != null) n = rewriter2.rewriteName(n);
+            return n;
+        };
+    }
+
+    /**
+     * Create a name rewriter which chains the given name rewriters; the name will be rewritten through the given rewriters
+     * in order and then returned.  If any rewriter returns {@code null}, then {@code null} is returned.
+     *
+     * @param nameRewriters the name rewriters (must not be {@code null}, cannot have {@code null} elements)
+     * @return the name rewriter (not {@code null})
+     */
+    static NameRewriter chain(NameRewriter... nameRewriters) {
+        Assert.checkNotNullParam("nameRewriters", nameRewriters);
+        final NameRewriter[] clone = nameRewriters.clone();
+        for (int i = 0; i < clone.length; i++) {
+            Assert.checkNotNullArrayParam("nameRewriters", i, clone[i]);
+        }
+        return n -> {
+            for (NameRewriter r : clone) {
+                if (n == null) return null;
+                n = r.rewriteName(n);
+            }
+            return n;
+        };
+    }
+
+    /**
+     * Create a name rewriter which aggregates the given name rewriters; the first rewriter which successfully rewrites
+     * the name is used.  If all the rewriters return {@code null}, then {@code null} is returned.
      *
      * @param rewriter1 the first name rewriter (must not be {@code null})
      * @param rewriter2 the second name rewriter (must not be {@code null})
@@ -60,11 +101,16 @@ public interface NameRewriter {
     static NameRewriter aggregate(NameRewriter rewriter1, NameRewriter rewriter2) {
         Assert.checkNotNullParam("rewriter1", rewriter1);
         Assert.checkNotNullParam("rewriter2", rewriter2);
-        return n -> rewriter2.rewriteName(rewriter1.rewriteName(n));
+        return n -> {
+            String rn = rewriter1.rewriteName(n);
+            if (rn == null) rn = rewriter2.rewriteName(n);
+            return rn;
+        };
     }
 
     /**
-     * Create a name rewriter which aggregates the given name rewriters.
+     * Create a name rewriter which aggregates the given name rewriters; the first rewriter which successfully rewrites
+     * the name is used.  If all the rewriters return {@code null}, then {@code null} is returned.
      *
      * @param nameRewriters the name rewriters (must not be {@code null}, cannot have {@code null} elements)
      * @return the name rewriter (not {@code null})
@@ -76,8 +122,15 @@ public interface NameRewriter {
             Assert.checkNotNullArrayParam("nameRewriters", i, clone[i]);
         }
         return n -> {
-            for (NameRewriter r : clone) n = r.rewriteName(n);
-            return n;
+            if (n == null) return null;
+            String rn;
+            for (NameRewriter r : clone) {
+                rn = r.rewriteName(n);
+                if (rn != null) {
+                    return rn;
+                }
+            }
+            return null;
         };
     }
 

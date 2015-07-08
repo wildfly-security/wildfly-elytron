@@ -106,10 +106,14 @@ public final class SecurityDomain {
      * @param name the name to map
      * @return the identity for the name
      * @throws RealmUnavailableException if the realm is not able to perform the mapping
+     * @throws IllegalArgumentException if the name is not valid
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
         Assert.checkNotNullParam("name", name);
         name = this.preRealmRewriter.rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         String realmName = realmMapper.getRealmMapping(name);
         if (realmName == null) {
             realmName = defaultRealmName;
@@ -117,6 +121,9 @@ public final class SecurityDomain {
         SecurityRealm securityRealm = getRealm(realmName);
         assert securityRealm != null;
         name = this.postRealmRewriter.rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         return securityRealm.createRealmIdentity(name);
     }
 

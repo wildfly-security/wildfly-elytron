@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
@@ -183,6 +185,9 @@ public final class ServerAuthenticationContext {
         boolean ok = false;
         try {
             name = domain.getPreRealmRewriter().rewriteName(name);
+            if (name == null) {
+                throw log.invalidName();
+            }
             String realmName = domain.getRealmMapper().getRealmMapping(name);
             if (realmName == null) {
                 realmName = domain.getDefaultRealmName();
@@ -190,7 +195,13 @@ public final class ServerAuthenticationContext {
             final NamePrincipal principal = new NamePrincipal(name);
             RealmInfo realmInfo = domain.getRealmInfo(realmName);
             name = domain.getPostRealmRewriter().rewriteName(name);
+            if (name == null) {
+                throw log.invalidName();
+            }
             name = realmInfo.getNameRewriter().rewriteName(name);
+            if (name == null) {
+                throw log.invalidName();
+            }
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
             final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
             try {
@@ -237,13 +248,22 @@ public final class ServerAuthenticationContext {
     public boolean isSameName(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("name", name);
         name = domain.getPreRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         String realmName = domain.getRealmMapper().getRealmMapping(name);
         if (realmName == null) {
             realmName = domain.getDefaultRealmName();
         }
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = domain.getPostRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         name = realmInfo.getNameRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         return stateRef.get().getAuthenticationPrincipal().getName().equals(name);
     }
 
@@ -317,6 +337,9 @@ public final class ServerAuthenticationContext {
         }
         Assert.checkNotNullParam("name", name);
         name = domain.getPreRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         String realmName = domain.getRealmMapper().getRealmMapping(name);
         if (realmName == null) {
             realmName = domain.getDefaultRealmName();
@@ -329,7 +352,13 @@ public final class ServerAuthenticationContext {
         }
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = domain.getPostRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         name = realmInfo.getNameRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();

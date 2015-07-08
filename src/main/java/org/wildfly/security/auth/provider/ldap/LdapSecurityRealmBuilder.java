@@ -20,9 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.util.LinkedList;
-import java.util.List;
-
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.NameRewriter;
 
 /**
@@ -34,7 +32,7 @@ public class LdapSecurityRealmBuilder {
 
     private boolean built = false;
     private DirContextFactory dirContextFactory;
-    private List<NameRewriter> nameRewriters = new LinkedList<NameRewriter>();
+    private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
     private LdapSecurityRealm.PrincipalMapping principalMapping;
 
     private LdapSecurityRealmBuilder() {
@@ -66,13 +64,14 @@ public class LdapSecurityRealmBuilder {
     /**
      * Add a name rewriter to this builder.
      *
-     * @param nameReWriter the name rewriter
+     * @param nameRewriter the name rewriter
      * @return this builder
      */
-    public LdapSecurityRealmBuilder addNameRewriter(final NameRewriter nameReWriter) {
+    public LdapSecurityRealmBuilder setNameRewriter(final NameRewriter nameRewriter) {
+        Assert.checkNotNullParam("nameRewriter", nameRewriter);
         assertNotBuilt();
 
-        this.nameRewriters.add(nameReWriter);
+        this.nameRewriter = nameRewriter;
 
         return this;
     }
@@ -105,7 +104,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, nameRewriters, principalMapping);
+        return new LdapSecurityRealm(dirContextFactory, nameRewriter, principalMapping);
     }
 
     private void assertNotBuilt() {

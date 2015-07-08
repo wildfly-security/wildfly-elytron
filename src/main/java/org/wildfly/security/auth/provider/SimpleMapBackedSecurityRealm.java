@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.CredentialSupport;
@@ -45,16 +47,24 @@ import org.wildfly.security.password.PasswordFactory;
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
-    private final NameRewriter[] rewriters;
+    private final NameRewriter rewriter;
     private volatile Map<String, SimpleRealmEntry> map = Collections.emptyMap();
 
     /**
      * Construct a new instance.
      *
-     * @param rewriters the name rewriters to use
+     * @param rewriter the name rewriter to use (cannot be {@code null})
      */
-    public SimpleMapBackedSecurityRealm(final NameRewriter... rewriters) {
-        this.rewriters = rewriters.clone();
+    public SimpleMapBackedSecurityRealm(final NameRewriter rewriter) {
+        Assert.checkNotNullParam("rewriter", rewriter);
+        this.rewriter = rewriter;
+    }
+
+    /**
+     * Construct a new instance.
+     */
+    public SimpleMapBackedSecurityRealm() {
+        this(NameRewriter.IDENTITY_REWRITER);
     }
 
     /**
@@ -90,8 +100,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity createRealmIdentity(String name) {
-        for (NameRewriter rewriter : rewriters) {
-            name = rewriter.rewriteName(name);
+        name = rewriter.rewriteName(name);
+        if (name == null) {
+            throw ElytronMessages.log.invalidName();
         }
         return new SimpleMapRealmIdentity(name);
     }
