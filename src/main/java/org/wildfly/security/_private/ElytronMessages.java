@@ -947,6 +947,39 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
 
+    @Message(id = 5150, value = "[%s] SASL authorization ID is too long")
+    SaslException saslAuthorizationIdTooLong(String mechName);
+
+    @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
+    SaslException saslInvalidOTPAlgorithm(String algorithm);
+
+    @Message(id = 5152, value = "Invalid OTP response type")
+    SaslException saslInvalidOTPResponseType();
+
+    @Message(id = 5153, value = "[%s] Incorrect parity in SASL client message")
+    SaslException saslIncorrectParity(String mechName);
+
+    @Message(id = 5154, value = "[%s] Invalid character in seed")
+    SaslException saslInvalidCharacterInSeed(String mechName);
+
+    @Message(id = 5155, value = "Invalid OTP seed, must be between 1 and 16 characters long")
+    SaslException saslInvalidOTPSeed();
+
+    @Message(id = 5156, value = "Invalid OTP pass phrase, must be between 10 and 63 characters long")
+    SaslException saslInvalidOTPPassPhrase();
+
+    @Message(id = 5157, value = "Invalid OTP sequence number")
+    SaslException saslInvalidOTPSequenceNumber();
+
+    @Message(id = 5158, value = "Invalid OTP")
+    SaslException saslInvalidOTP();
+
+    @Message(id = 5159, value = "OTP pass phrase and seed must not match")
+    SaslException saslOTPPassPhraseAndSeedMustNotMatch();
+
+    @Message(id = 5160, value = "Invalid OTP alternate dictionary")
+    SaslException saslInvalidOTPAlternateDictionary();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
