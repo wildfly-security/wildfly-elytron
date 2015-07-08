@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.server.CredentialSupport;
 
 /**
  * Within LDAP credentials could be stored in different ways, splitting out a CredentialLoader allows different strategies to be

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.login;
+package org.wildfly.security.auth.server;
 
 import java.security.PermissionCollection;
 import java.security.Principal;
@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
-import org.wildfly.security.auth.spi.AuthorizationIdentity;
+import org.wildfly.security.authz.AuthorizationIdentity;
 
 /**
  * A loaded and authenticated security identity.

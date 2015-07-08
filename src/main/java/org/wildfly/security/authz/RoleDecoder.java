@@ -22,8 +22,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.wildfly.security.auth.spi.Attributes;
-
 /**
  * A decoder to extract role information from an identity's attributes.
  *

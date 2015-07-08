@@ -40,11 +40,11 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.spi.AuthorizationIdentity;
-import org.wildfly.security.auth.spi.CredentialSupport;
-import org.wildfly.security.auth.spi.RealmIdentity;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
-import org.wildfly.security.auth.spi.SecurityRealm;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.manager.WildFlySecurityManager;
 import org.wildfly.security.password.interfaces.ClearPassword;
 

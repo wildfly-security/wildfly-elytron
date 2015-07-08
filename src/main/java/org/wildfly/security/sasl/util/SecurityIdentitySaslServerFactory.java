@@ -28,7 +28,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
-import org.wildfly.security.auth.login.SecurityIdentity;
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**

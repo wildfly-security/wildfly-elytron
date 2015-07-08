@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.RealmMapper;
 
 /**
  * A simple regular expression-based realm mapper.  The realm name pattern must contain a single capture group which

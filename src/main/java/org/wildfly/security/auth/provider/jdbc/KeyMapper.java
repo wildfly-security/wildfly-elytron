@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.server.CredentialSupport;
 
 import java.sql.ResultSet;
 

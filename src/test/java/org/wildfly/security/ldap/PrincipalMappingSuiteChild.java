@@ -24,9 +24,9 @@ import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
-import org.wildfly.security.auth.spi.RealmIdentity;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
-import org.wildfly.security.auth.spi.SecurityRealm;
+import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SecurityRealm;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

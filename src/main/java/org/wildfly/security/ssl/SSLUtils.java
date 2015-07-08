@@ -36,7 +36,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.login.SecurityIdentity;
+import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
  * SSL factories and utilities.

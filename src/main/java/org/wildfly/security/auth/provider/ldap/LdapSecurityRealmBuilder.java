@@ -23,7 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.auth.server.NameRewriter;
 
 /**
  * Builder for the security realm implementation backed by LDAP.

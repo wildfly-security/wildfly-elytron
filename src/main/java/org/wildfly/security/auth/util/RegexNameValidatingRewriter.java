@@ -22,6 +22,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.regex.Pattern;
 
+import org.wildfly.security.auth.server.NameRewriter;
+
 /**
  * A regular expression-based name validation rewriter.  Always returns the original name
  * if the name is valid.

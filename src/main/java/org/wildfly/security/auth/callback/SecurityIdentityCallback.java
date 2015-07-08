@@ -20,7 +20,7 @@ package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
 
-import org.wildfly.security.auth.login.SecurityIdentity;
+import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
  * A server-side callback used to pass a realm identity from the callback handler to the authentication mechanism.  If

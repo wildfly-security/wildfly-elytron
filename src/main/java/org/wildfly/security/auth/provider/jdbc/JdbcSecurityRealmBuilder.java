@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider.jdbc;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.wildfly.security.auth.server.RealmIdentity;
+
 /**
  * A builder class to that creates {@link JdbcSecurityRealm} instances.
  *
@@ -51,7 +53,7 @@ public class JdbcSecurityRealmBuilder {
     /**
      * <p>A SQL SELECT statement that will be used to return data from a database based on the authentication name.
      *
-     * <p>When authenticating, validating or obtaining credentials for a {@link org.wildfly.security.auth.spi.RealmIdentity},
+     * <p>When authenticating, validating or obtaining credentials for a {@link RealmIdentity},
      * this query will be used. You must provide a SELECT with a single query parameter as follows:
      *
      * <pre>

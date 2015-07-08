@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.login;
+package org.wildfly.security.auth.server;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -53,11 +53,7 @@ import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.spi.AuthorizationIdentity;
-import org.wildfly.security.auth.spi.CredentialSupport;
-import org.wildfly.security.auth.spi.RealmIdentity;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
-import org.wildfly.security.auth.spi.SecurityRealm;
+import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;

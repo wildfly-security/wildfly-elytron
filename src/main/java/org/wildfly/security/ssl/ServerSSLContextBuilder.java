@@ -32,9 +32,9 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.login.SecurityDomain;
-import org.wildfly.security.auth.util.CredentialDecoder;
-import org.wildfly.security.auth.util.PrincipalDecoder;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.CredentialDecoder;
+import org.wildfly.security.auth.server.PrincipalDecoder;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**

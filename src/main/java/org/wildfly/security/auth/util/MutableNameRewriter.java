@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.util;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.NameRewriter;
 
 /**
  * A delegating name rewriter with a mutable delegation target.

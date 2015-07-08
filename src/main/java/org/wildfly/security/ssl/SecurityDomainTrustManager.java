@@ -31,11 +31,11 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.login.SecurityDomain;
-import org.wildfly.security.auth.login.ServerAuthenticationContext;
-import org.wildfly.security.auth.spi.CredentialSupport;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
-import org.wildfly.security.auth.util.CredentialDecoder;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
+import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.CredentialDecoder;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

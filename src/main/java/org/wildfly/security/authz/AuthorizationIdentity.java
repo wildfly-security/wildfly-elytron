@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.spi;
+package org.wildfly.security.authz;
 
 /**
  * A realm's authorization identity.  Objects of this class represent an active identity which may be examined for

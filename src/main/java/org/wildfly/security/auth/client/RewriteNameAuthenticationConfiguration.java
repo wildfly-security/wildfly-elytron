@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.auth.server.NameRewriter;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

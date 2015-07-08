@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.server.CredentialSupport;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.

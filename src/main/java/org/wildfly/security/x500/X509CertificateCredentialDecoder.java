@@ -22,7 +22,7 @@ import java.security.cert.X509Certificate;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.util.CredentialDecoder;
+import org.wildfly.security.auth.server.CredentialDecoder;
 
 /**
  * A credential decoder which can decode an {@link X509Certificate} into an {@link X500Principal}.

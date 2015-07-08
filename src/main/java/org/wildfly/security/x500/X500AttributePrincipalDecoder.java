@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.util.PrincipalDecoder;
+import org.wildfly.security.auth.server.PrincipalDecoder;
 
 /**
  * A principal decoder which decodes an attribute from an X.500 principal.
