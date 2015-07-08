@@ -25,6 +25,8 @@ import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
 import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
+import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_MD5;
+import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
@@ -133,6 +135,8 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
     }
 
     private void putSaslMechanismImplementations() {
