@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.spi.AuthorizationIdentity;
 import org.wildfly.security.auth.spi.CredentialSupport;
@@ -171,13 +173,13 @@ public class JdbcSecurityRealm implements SecurityRealm {
                     } else if (ClearPassword.class.isInstance(givenCredential)) {
                         guessCredentialChars = ((ClearPassword) givenCredential).getPassword();
                     } else {
-                        throw new RuntimeException("Password-based credentials must be either a String, char[] or ClearPassword.");
+                        throw log.passwordBasedCredentialsMustBeStringCharsOrClearPassword();
                     }
 
                     return passwordFactory.verify((Password) credential, guessCredentialChars);
                 }
             } catch (InvalidKeyException e) {
-                throw new RuntimeException("Invalid password key for algorithm [" + algorithm + "].", e);
+                throw log.invalidPasswordKeyForAlgorithm(algorithm, e);
             }
 
             return false;
@@ -187,7 +189,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
             try {
                 return PasswordFactory.getInstance(algorithm);
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("Could not obtain PasswordFactory for algorithm [" + algorithm + "].", e);
+                throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithm, e);
             }
         }
 
@@ -197,7 +199,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                 DataSource dataSource = configuration.getDataSource();
                 connection = dataSource.getConnection();
             } catch (Exception e) {
-                throw new RuntimeException("Could not open connection.", e);
+                throw log.couldNotOpenConnection(e);
             }
             return connection;
         }
@@ -224,9 +226,9 @@ public class JdbcSecurityRealm implements SecurityRealm {
                 resultSet = preparedStatement.executeQuery();
                 return resultSetCallback.handle(resultSet);
             } catch (SQLException e) {
-                throw new RuntimeException("Could not execute query [" + sql + "].", e);
+                throw log.couldNotExecuteQuery(sql, e);
             } catch (Exception e) {
-                throw new RuntimeException("Unexpected error when processing authentication query [" + sql + "].", e);
+                throw log.unexpectedErrorWhenProcessingAuthenticationQuery(sql, e);
             } finally {
                 safeClose(resultSet);
                 safeClose(preparedStatement);

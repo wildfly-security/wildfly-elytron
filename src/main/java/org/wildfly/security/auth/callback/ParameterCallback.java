@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.callback;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
@@ -81,7 +83,7 @@ public final class ParameterCallback implements ExtendedCallback, Serializable {
      */
     public void setParameterSpec(final AlgorithmParameterSpec parameterSpec) {
         if (! isParameterSupported(parameterSpec)) {
-            throw new IllegalArgumentException("Invalid credential type specified");
+            throw log.invalidCredentialTypeSpecified();
         }
         this.parameterSpec = parameterSpec;
     }

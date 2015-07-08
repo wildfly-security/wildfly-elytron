@@ -18,10 +18,12 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.util.NameRewriter;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import org.wildfly.security.auth.util.NameRewriter;
 
 /**
  * Builder for the security realm implementation backed by LDAP.
@@ -96,10 +98,10 @@ public class LdapSecurityRealmBuilder {
     public LdapSecurityRealm build() {
         assertNotBuilt();
         if (dirContextFactory == null) {
-            throw new IllegalStateException("No DirContextFactory set.");
+            throw log.noDirContextFactorySet();
         }
         if (principalMapping == null) {
-            throw new IllegalStateException("No principal mapping definition.");
+            throw log.noPrincipalMappingDefinition();
         }
 
         built = true;
@@ -108,7 +110,7 @@ public class LdapSecurityRealmBuilder {
 
     private void assertNotBuilt() {
         if (built) {
-            throw new IllegalStateException("Builder has already been built.");
+            throw log.builderAlreadyBuilt();
         }
     }
 

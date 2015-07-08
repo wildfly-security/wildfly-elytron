@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -77,7 +79,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         try {
             return getDigestOf(algorithm, chars);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -95,7 +97,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
             case ALGORITHM_SIMPLE_DIGEST_SHA_256: return MessageDigest.getInstance("SHA-256");
             case ALGORITHM_SIMPLE_DIGEST_SHA_384: return MessageDigest.getInstance("SHA-384");
             case ALGORITHM_SIMPLE_DIGEST_SHA_512: return MessageDigest.getInstance("SHA-512");
-            default: throw new NoSuchAlgorithmException();
+            default: throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 
@@ -103,7 +105,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         try {
             return Arrays.equals(digest, getDigestOf(algorithm, guess));
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 

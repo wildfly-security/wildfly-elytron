@@ -44,6 +44,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
@@ -205,7 +206,7 @@ public class PasswordKeyMapper implements KeyMapper {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Could not obtain credential.", e);
+            throw log.couldNotObtainCredentialWithCause(e);
         }
 
         if (hash != null) {
@@ -226,7 +227,7 @@ public class PasswordKeyMapper implements KeyMapper {
                     return toScramDigestPassword(hash, salt, iterationCount, passwordFactory);
                 }
             } catch (InvalidKeySpecException e) {
-                throw new RuntimeException("Invalid password key specification for algorithm [" + algorithm + "].", e);
+                throw log.invalidPasswordKeySpecificationForAlgorithm(algorithm, e);
             }
         }
 
@@ -235,7 +236,7 @@ public class PasswordKeyMapper implements KeyMapper {
 
     private Object toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
-            throw new RuntimeException("Salt is expected when creating [" + ScramDigestPassword.class + "] passwords.");
+            throw log.saltIsExpectedWhenCreatingPasswords(ScramDigestPassword.class.getSimpleName());
         }
 
         ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(hash, salt, iterationCount);
@@ -249,7 +250,7 @@ public class PasswordKeyMapper implements KeyMapper {
 
     private Object toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
-            throw new RuntimeException("Salt is expected when creating [" + SaltedSimpleDigestPassword.class + "] passwords.");
+            throw log.saltIsExpectedWhenCreatingPasswords(SaltedSimpleDigestPassword.class.getSimpleName());
         }
 
         SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(hash, salt);
@@ -264,7 +265,7 @@ public class PasswordKeyMapper implements KeyMapper {
         try {
             return PasswordFactory.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Could not obtain PasswordFactory for algorithm [" + algorithm + "].", e);
+            throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithm, e);
         }
     }
 
@@ -342,6 +343,6 @@ public class PasswordKeyMapper implements KeyMapper {
             }
         }
 
-        throw new InvalidKeyException("Unknown password type or algorithm");
+        throw log.unknownPasswordTypeOrAlgorithm(algorithm);
     }
 }

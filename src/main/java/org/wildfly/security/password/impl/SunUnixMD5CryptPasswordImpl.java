@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -93,10 +95,10 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
 
     SunUnixMD5CryptPasswordImpl(final String algorithm, final byte[] clonedHash, final byte[] clonedSalt, final int iterationCount) {
         if (algorithm == null) {
-            throw new IllegalArgumentException("Algorithm is null");
+            throw log.nullParameter("algorithm");
         }
         if (!algorithm.equals(ALGORITHM_SUN_CRYPT_MD5) && !algorithm.equals(ALGORITHM_SUN_CRYPT_MD5_BARE_SALT)) {
-            throw new IllegalArgumentException("Unsupported algorithm given");
+            throw log.unrecognizedAlgorithm(algorithm);
         }
 
         this.algorithm = algorithm;
@@ -167,7 +169,7 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
         try {
             test = sunMD5Crypt(getAlgorithm(), getNormalizedPasswordBytes(guess), getSalt(), getIterationCount());
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+            throw log.invalidKeyCannotVerifyPassword(e);
         }
         return Arrays.equals(getHash(), test);
     }

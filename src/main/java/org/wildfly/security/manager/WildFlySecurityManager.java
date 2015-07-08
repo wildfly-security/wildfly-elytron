@@ -22,6 +22,8 @@
 
 package org.wildfly.security.manager;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.FileDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -536,7 +538,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         final Context ctx = CTX.get();
         if (doCheck(ctx)) {
             if (clazz == null) {
-                throw new NullPointerException("class can't be null");
+                throw log.nullParameter("class");
             }
             if (which != Member.PUBLIC) {
                 /* The default sec mgr implementation makes some ugly assumptions about call stack depth that we must

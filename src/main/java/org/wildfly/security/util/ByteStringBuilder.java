@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -342,7 +344,7 @@ public final class ByteStringBuilder {
         do {
             // not enough space... grow by 1.5x
             cl = cl + (cl + 1 >> 1);
-            if (cl < 0) throw new IllegalStateException("Too large");
+            if (cl < 0) throw log.tooLarge();
         } while (cl - length < count);
         this.content = Arrays.copyOf(content, cl);
     }

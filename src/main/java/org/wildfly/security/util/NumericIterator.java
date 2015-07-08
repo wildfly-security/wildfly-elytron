@@ -75,23 +75,23 @@ abstract class NumericIterator {
                 }
                 int b0 = NumericIterator.this.next();
                 if (b0 == '=') {
-                    throw new DecodeException("Unexpected padding");
+                    throw log.unexpectedPadding();
                 }
                 if (! NumericIterator.this.hasNext()) {
                     if (requirePadding) {
-                        throw new DecodeException("Expected padding");
+                        throw log.expectedPadding();
                     } else {
-                        throw new DecodeException("Incomplete decode");
+                        throw log.incompleteDecode();
                     }
                 }
                 int b1 = NumericIterator.this.next();
                 if (b1 == '=') {
-                    throw new DecodeException("Unexpected padding");
+                    throw log.unexpectedPadding();
                 }
                 o0 = calc0(b0, b1);
                 if (! NumericIterator.this.hasNext()) {
                     if (requirePadding) {
-                        throw new DecodeException("Expected padding");
+                        log.expectedPadding();
                     }
                     state = 9;
                     return true;
@@ -99,10 +99,10 @@ abstract class NumericIterator {
                 int b2 = NumericIterator.this.next();
                 if (b2 == '=') {
                     if (! NumericIterator.this.hasNext()) {
-                        throw new DecodeException("Expected two padding characters");
+                        throw log.expectedTwoPaddingCharacters();
                     }
                     if (NumericIterator.this.next() != '=') {
-                        throw new DecodeException("Expected two padding characters");
+                        throw log.expectedTwoPaddingCharacters();
                     }
                     state = 6;
                     return true;
@@ -110,7 +110,7 @@ abstract class NumericIterator {
                 o1 = calc1(b1, b2);
                 if (! NumericIterator.this.hasNext()) {
                     if (requirePadding) {
-                        throw new DecodeException("Expected padding");
+                        log.expectedPadding();
                     }
                     state = 7;
                     return true;
@@ -900,7 +900,7 @@ abstract class NumericIterator {
                     final int d1 = alphabet.decode(b1);
                     // d0 = r0[5..0]
                     // d1 = r1[3..0] + r0[7..6]
-                    if (d0 == -1 || d1 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d0 == -1 || d1 == -1) throw log.invalidBase64Character();
                     return (d0 | d1 << 6) & 0xff;
                 }
 
@@ -909,7 +909,7 @@ abstract class NumericIterator {
                     final int d2 = alphabet.decode(b2);
                     // d1 = r1[3..0] + r0[7..6]
                     // d2 = r2[1..0] + r1[7..4]
-                    if (d1 == -1 || d2 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d1 == -1 || d2 == -1) throw log.invalidBase64Character();
                     return (d1 >> 2 | d2 << 4) & 0xff;
                 }
 
@@ -918,7 +918,7 @@ abstract class NumericIterator {
                     final int d3 = alphabet.decode(b3);
                     // d2 = r2[1..0] + r1[7..4]
                     // d3 = r2[7..2]
-                    if (d2 == -1 || d3 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d2 == -1 || d3 == -1) throw log.invalidBase64Character();
                     return (d2 >> 4 | d3 << 2) & 0xff;
                 }
             };
@@ -929,7 +929,7 @@ abstract class NumericIterator {
                     final int d1 = alphabet.decode(b1);
                     // d0 = r0[7..2]
                     // d1 = r0[1..0] + r1[7..4]
-                    if (d0 == -1 || d1 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d0 == -1 || d1 == -1) throw log.invalidBase64Character();
                     return (d0 << 2 | d1 >> 4) & 0xff;
                 }
 
@@ -938,7 +938,7 @@ abstract class NumericIterator {
                     final int d2 = alphabet.decode(b2);
                     // d1 = r0[1..0] + r1[7..4]
                     // d2 = r1[3..0] + r2[7..6]
-                    if (d1 == -1 || d2 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d1 == -1 || d2 == -1) throw log.invalidBase64Character();
                     return (d1 << 4 | d2 >> 2) & 0xff;
                 }
 
@@ -947,7 +947,7 @@ abstract class NumericIterator {
                     final int d3 = alphabet.decode(b3);
                     // d2 = r1[3..0] + r2[7..6]
                     // d3 = r2[5..0]
-                    if (d2 == -1 || d3 == -1) throw new DecodeException("Invalid base 64 character");
+                    if (d2 == -1 || d3 == -1) throw log.invalidBase64Character();
                     return (d2 << 6 | d3) & 0xff;
                 }
             };

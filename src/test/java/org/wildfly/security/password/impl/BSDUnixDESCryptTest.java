@@ -60,7 +60,7 @@ public class BSDUnixDESCryptTest {
 
         // An InvalidKeySpecException should be thrown when creating a BSDUnixDESCryptPassword using the invalid spec
         exception.expect(InvalidKeySpecException.class);
-        exception.expectMessage("BSD DES crypt password hash must be 64 bits");
+        exception.expectMessage("BSD DES crypt password hash must be 8 bytes");
         BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, invalidSpec);
     }
 
@@ -76,7 +76,7 @@ public class BSDUnixDESCryptTest {
 
         // An InvalidKeySpecException should be thrown when creating a BSDUnixDESCryptPassword using the invalid spec
         exception.expect(InvalidKeySpecException.class);
-        exception.expectMessage("Salt must be three bytes (24 bits)");
+        exception.expectMessage("Salt must be 3 bytes");
         BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, invalidSpec);
     }
 

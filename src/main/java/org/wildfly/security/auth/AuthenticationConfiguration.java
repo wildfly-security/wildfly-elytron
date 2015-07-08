@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
@@ -60,10 +62,10 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
-import org.wildfly.security.ssl.SSLUtils;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
-import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.ssl.ProtocolSelector;
+import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.util.ServiceLoaderSupplier;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -426,7 +428,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePort(int port) {
-        if (port < 1 || port > 65535) throw new IllegalArgumentException("Invalid port " + port);
+        if (port < 1 || port > 65535) throw log.invalidPortNumber(port);
         return new SetPortAuthenticationConfiguration(this, port);
     }
 

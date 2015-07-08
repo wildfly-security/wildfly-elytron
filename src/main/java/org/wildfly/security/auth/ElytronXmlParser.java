@@ -31,7 +31,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.Provider;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -65,8 +64,8 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 import org.wildfly.security.util.ServiceLoaderSupplier;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 
 /**
  * A parser for the Elytron XML schema.
@@ -293,12 +292,12 @@ public final class ElytronXmlParser {
             final String ext = _extends;
             rule = () -> {
                 final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
+                if (factory == null) throw log.missingReferenceInExtends();
                 return factory.create().getMatchRule();
             };
             configuration = () -> {
                 final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                if (factory == null) throw new IllegalArgumentException("Missing reference in extends");
+                if (factory == null) throw log.missingReferenceInExtends();
                 return factory.create().getConfiguration();
             };
         }
@@ -705,7 +704,7 @@ public final class ElytronXmlParser {
                 return new KeyStoreEntrySecurityFactory(() -> {
                     final SecurityFactory<KeyStore> keyStoreSecurityFactory = keyStoresMap.get(finalKeyStoreName);
                     if (keyStoreSecurityFactory == null) {
-                        throw new IllegalArgumentException("Unknown key store specified");
+                        throw log.unknownKeyStoreSpecified();
                     }
                     return keyStoreSecurityFactory.create();
                 }, alias, keyStoreCredential == null ? null : () -> {
@@ -1082,7 +1081,7 @@ public final class ElytronXmlParser {
             try (InputStream fis = createStream()) {
                 keyStore.load(fis, passwordFactory.create());
             } catch (IOException e) {
-                throw new KeyStoreException("Failed to load keystore data", e);
+                throw log.failedToLoadKeyStoreData(e);
             }
             return keyStore;
         }

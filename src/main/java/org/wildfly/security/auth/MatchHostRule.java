@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.net.URI;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -34,7 +36,7 @@ class MatchHostRule extends MatchRule {
     MatchHostRule(final MatchRule parent, final String hostSpec) {
         super(parent);
         if (! validHostSpecPattern.matcher(hostSpec).matches()) {
-            throw new IllegalArgumentException("Invalid host specification");
+            throw log.invalidHostSpec(hostSpec);
         }
         if (hostSpec.endsWith(".")) {
             this.hostSpec = hostSpec.substring(0, hostSpec.length() - 1).toLowerCase(Locale.ENGLISH);

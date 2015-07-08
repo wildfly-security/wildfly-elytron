@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -66,7 +68,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         try {
             this.digest = digestOf(algorithm, salt, spec.getEncodedPassword());
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -85,7 +87,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         try {
             this.digest = digestOf(algorithm, salt, password);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeySpecException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeySpecNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -117,7 +119,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         try {
             return Arrays.equals(digest, digestOf(algorithm, salt, guess));
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("No such MessageDigest algorithm for " + algorithm);
+            throw log.invalidKeyNoSuchMessageDigestAlgorithm(algorithm);
         }
     }
 
@@ -159,7 +161,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
                 return MessageDigest.getInstance("SHA-512");
             default:
-                throw new NoSuchAlgorithmException("Invalid algorithm " + algorithm);
+                throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 
@@ -178,7 +180,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
                 return true;
             default:
-                throw new NoSuchAlgorithmException("Invalid algorithm " + algorithm);
+                throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 

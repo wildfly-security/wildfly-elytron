@@ -18,6 +18,8 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.EnumSet;
 
 /**
@@ -113,7 +115,7 @@ public enum KeyAgreement {
     static KeyAgreement require(final String name) {
         final KeyAgreement keyAgreement = forName(name);
         if (keyAgreement == null) {
-            throw new IllegalArgumentException("Unknown key exchange name " + name);
+            throw log.unknownKeyExchangeName(name);
         }
         return keyAgreement;
     }

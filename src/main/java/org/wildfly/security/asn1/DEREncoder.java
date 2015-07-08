@@ -18,6 +18,7 @@
 
 package org.wildfly.security.asn1;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
 import java.math.BigInteger;
@@ -104,7 +105,7 @@ public class DEREncoder implements ASN1Encoder {
     public void endSequence() throws IllegalStateException {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SEQUENCE_TYPE)) {
-            throw new IllegalStateException("No sequence to end");
+            throw log.noSequenceToEnd();
         }
         endConstructedElement();
     }
@@ -114,7 +115,7 @@ public class DEREncoder implements ASN1Encoder {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() == SEQUENCE_TYPE)
                 || (lastState.getTag() == SET_TYPE) || ((lastState.getTag() & CONSTRUCTED_MASK) == 0)) {
-            throw new IllegalStateException("No explicitly tagged element to end");
+            throw log.noExplicitlyTaggedElementToEnd();
         }
         endConstructedElement();
     }
@@ -156,7 +157,7 @@ public class DEREncoder implements ASN1Encoder {
     private void endSet(Comparator<EncoderState> comparator) {
         EncoderState lastState = states.peekLast();
         if ((lastState == null) || (lastState.getTag() != SET_TYPE)) {
-            throw new IllegalStateException("No set to end");
+            throw log.noSetToEnd();
         }
 
         // The child elements of a set must be encoded in ascending order by tag
@@ -285,7 +286,7 @@ public class DEREncoder implements ASN1Encoder {
     public void encodeObjectIdentifier(String objectIdentifier) throws ASN1Exception {
         int len = objectIdentifier.length();
         if (len == 0) {
-            throw new ASN1Exception("OID must have at least 2 components");
+            throw log.asnOidMustHaveAtLeast2Components();
         }
 
         int offs = 0;
@@ -317,11 +318,11 @@ public class DEREncoder implements ASN1Encoder {
                             numComponents++;
                             continue a;
                         } else {
-                            throw new ASN1Exception("Invalid OID character");
+                            throw log.asnInvalidOidCharacter();
                         }
                         if (idx == len) {
                             if (numComponents == 0) {
-                                throw new ASN1Exception("OID must have at least 2 components");
+                                throw log.asnOidMustHaveAtLeast2Components();
                             }
                             encodeOIDComponent(bi, contents, numComponents, first);
                             writeElement(OBJECT_IDENTIFIER_TYPE, contents);
@@ -340,14 +341,14 @@ public class DEREncoder implements ASN1Encoder {
                 numComponents++;
                 t = 0L;
             } else {
-                throw new ASN1Exception("Invalid OID character");
+                throw log.asnInvalidOidCharacter();
             }
             if (idx == len) {
                 if (c == '.') {
-                    throw new ASN1Exception("Invalid OID character");
+                    throw log.asnInvalidOidCharacter();
                 }
                 if (numComponents == 0) {
-                    throw new ASN1Exception("OID must have at least 2 components");
+                    throw log.asnOidMustHaveAtLeast2Components();
                 }
                 encodeOIDComponent(t, contents, numComponents, first);
                 writeElement(OBJECT_IDENTIFIER_TYPE, contents);
@@ -408,7 +409,7 @@ public class DEREncoder implements ASN1Encoder {
 
     private int validateFirstOIDComponent(long value) throws ASN1Exception {
         if (value < 0 || value > 2) {
-            throw new ASN1Exception("Invalid value for first OID component; expected 0, 1, or 2");
+            throw log.asnInvalidValueForFirstOidComponent();
         }
         return (int) value;
     }
@@ -416,20 +417,20 @@ public class DEREncoder implements ASN1Encoder {
     private int validateFirstOIDComponent(BigInteger value) throws ASN1Exception  {
         if ((value.compareTo(BigInteger.valueOf(0)) == -1)
                 || (value.compareTo(BigInteger.valueOf(2)) == 1)) {
-            throw new ASN1Exception("Invalid value for first OID component; expected 0, 1, or 2");
+            throw log.asnInvalidValueForFirstOidComponent();
         }
         return value.intValue();
     }
 
     private void validateSecondOIDComponent(long second, int first) throws ASN1Exception  {
         if ((first < 2) && (second > 39)) {
-            throw new ASN1Exception("Invalid value for second OID component; expected a value between 0 and 39 (inclusive)");
+            throw log.asnInvalidValueForSecondOidComponent();
         }
     }
 
     private void validateSecondOIDComponent(BigInteger second, int first) throws ASN1Exception {
         if ((first < 2) && (second.compareTo(BigInteger.valueOf(39)) == 1)) {
-            throw new ASN1Exception("Invalid value for second OID component; expected a value between 0 and 39 (inclusive)");
+            throw log.asnInvalidValueForSecondOidComponent();
         }
     }
 
@@ -530,7 +531,7 @@ public class DEREncoder implements ASN1Encoder {
     private int writeLength(int length, ByteStringBuilder dest) throws ASN1Exception {
         int numLengthOctets;
         if (length < 0) {
-            throw new ASN1Exception("Invalid length");
+            throw log.asnInvalidLength();
         } else if (length <= 127) {
             // Short form
             numLengthOctets = 1;

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -73,7 +75,7 @@ public final class PasswordFactory {
                 return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
             }
         }
-        throw new NoSuchAlgorithmException();
+        throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
     }
 
     /**
@@ -100,7 +102,7 @@ public final class PasswordFactory {
      */
     public static PasswordFactory getInstance(String algorithm, Provider provider) throws NoSuchAlgorithmException {
         final Provider.Service service = provider.getService("PasswordFactory", algorithm);
-        if (service == null) throw new NoSuchAlgorithmException(algorithm);
+        if (service == null) throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
     }
 

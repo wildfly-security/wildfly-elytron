@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.util;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,7 +58,7 @@ public class SimpleRegexRealmMapper implements RealmMapper {
         Assert.checkNotNullParam("delegate", delegate);
         final int groupCount = realmNamePattern.matcher("").groupCount();
         if (groupCount < 1) {
-            throw new IllegalArgumentException("Pattern requires a capture group");
+            throw log.patternRequiresCaptureGroup();
         }
         this.realmNamePattern = realmNamePattern;
         this.delegate = delegate;

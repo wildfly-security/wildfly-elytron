@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
@@ -48,7 +50,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         this.iterationCount = passwordSpec.getIterationCount();
         final byte[] hash = passwordSpec.getHash();
         if (hash == null || hash.length != BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE) {
-            throw new InvalidKeySpecException("BSD DES crypt password hash must be 64 bits");
+            throw log.invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE);
         }
         this.hash = hash.clone();
     }
@@ -68,7 +70,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         final int saltInt;
         if (saltBytes != null) {
             if (saltBytes.length != BSDUnixDESCryptPassword.BSD_CRYPT_DES_SALT_SIZE) {
-                throw new InvalidParameterSpecException("Salt must be three bytes (24 bits)");
+                throw log.invalidParameterSpecSaltMustBeBytes(BSDUnixDESCryptPassword.BSD_CRYPT_DES_SALT_SIZE);
             }
             saltInt = (saltBytes[0] & 0xff) << 16 | (saltBytes[1] & 0xff) << 8 | (saltBytes[2] & 0xff);
         } else {
@@ -84,7 +86,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         this.iterationCount = password.getIterationCount();
         final byte[] hash = password.getHash();
         if (hash == null || hash.length != BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE) {
-            throw new InvalidKeyException("BSD DES crypt password hash must be 64 bits");
+            throw log.invalidKeyBsdDesCryptPasswordHashMustBeBytes(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE);
         }
         this.hash = hash.clone();
     }
@@ -374,7 +376,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         int[] currentSchedule;
 
         if (iterationCount < 1 || iterationCount > 16777215) {
-            throw new IllegalArgumentException("Invalid number of rounds. Must be an integer between 1 and 16777215, inclusive");
+            throw log.invalidNumberOfRoundsMustBeIntBetween(1, 16777215);
         }
 
         if (!tablesInitialized) {

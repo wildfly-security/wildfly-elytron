@@ -18,6 +18,8 @@
 
 package org.wildfly.security;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.GeneralSecurityException;
 
 /**
@@ -35,7 +37,7 @@ public final class OneTimeSecurityFactory<T> implements SecurityFactory<T> {
         T val = obj;
         if (val == null) {
             if (Thread.holdsLock(this)) {
-                throw new IllegalStateException("Cannot instantiate self-referential factory");
+                throw log.cannotInstantiateSelfReferentialFactory();
             }
             synchronized (this) {
                 val = obj;

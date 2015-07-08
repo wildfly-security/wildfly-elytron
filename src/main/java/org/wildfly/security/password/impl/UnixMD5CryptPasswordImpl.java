@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -114,7 +116,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         try {
             test = encode(guessAsBytes, getSalt());
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+            throw log.invalidKeyCannotVerifyPassword(e);
         }
         return Arrays.equals(getHash(), test);
     }

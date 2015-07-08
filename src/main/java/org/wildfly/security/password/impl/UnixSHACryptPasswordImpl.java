@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -55,10 +56,10 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     UnixSHACryptPasswordImpl(String algorithm, byte[] clonedSalt, int iterationCount, byte[] hash) {
         if (algorithm == null) {
-            throw new IllegalArgumentException("Algorithm is null");
+            throw log.nullParameter("algorithm");
         }
         if (!ALGORITHM_CRYPT_SHA_256.equals(algorithm) && !ALGORITHM_CRYPT_SHA_512.equals(algorithm)) {
-            throw new IllegalArgumentException("Unsupported algorithm given");
+            throw log.unrecognizedAlgorithm(algorithm);
         }
 
         this.salt = clonedSalt;
@@ -124,7 +125,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         if (keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class)) {
             return keySpecType.cast(new UnixSHACryptPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
         } else {
-            throw new InvalidKeySpecException("Expected to get a UnixSHACryptPasswordSpec as spec, got " + keySpecType.getName());
+            throw log.invalidKeySpecExpectedSpecGotSpec(UnixSHACryptPasswordSpec.class.getName(), keySpecType.getName());
         }
     }
 
@@ -135,7 +136,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
             byte[] encodedGuess = doEncode(algorithm, password, salt, iterationCount);
             return Arrays.equals(getHash(), encodedGuess);
         } catch (NoSuchAlgorithmException e) {
-            throw new InvalidKeyException("Cannot verify password", e);
+            throw log.invalidKeyCannotVerifyPassword(e);
         }
     }
 
@@ -395,7 +396,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         switch (algorithm) {
             case ALGORITHM_CRYPT_SHA_256: return MessageDigest.getInstance("SHA-256");
             case ALGORITHM_CRYPT_SHA_512: return MessageDigest.getInstance("SHA-512");
-            default: throw new NoSuchAlgorithmException(algorithm);
+            default: throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 
@@ -403,7 +404,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         switch (algorithm) {
             case ALGORITHM_CRYPT_SHA_256: return 32;
             case ALGORITHM_CRYPT_SHA_512: return 64;
-            default: throw new NoSuchAlgorithmException(algorithm);
+            default: throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
     }
 }

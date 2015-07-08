@@ -190,7 +190,7 @@ class LdapSecurityRealm implements SecurityRealm {
                 ClearPassword clearPassword = (ClearPassword) credential;
                 password = clearPassword.getPassword();
             } else {
-                throw new RuntimeException("Invalid credential type. You must provide a char[], String or " + ClearPassword.class + ".");
+                throw log.passwordBasedCredentialsMustBeStringCharsOrClearPassword();
             }
 
             DirContext dirContext = null;
@@ -258,7 +258,7 @@ class LdapSecurityRealm implements SecurityRealm {
                     SearchResult result = searchResult.next();
 
                     if (searchResult.hasMore()) {
-                        throw new NamingException("Search returned too many results.");
+                        throw log.searchReturnedTooManyResults();
                     }
 
                     return new LdapIdentity(simpleName, result.getNameInNamespace());

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
@@ -271,7 +273,7 @@ public final class AuthenticationContext {
      */
     public <T> T run(PrivilegedAction<T> action) {
         if (action == null) {
-            throw new NullPointerException("action is null");
+            throw log.nullParameter("action");
         }
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
@@ -295,7 +297,7 @@ public final class AuthenticationContext {
      */
     public <T> T run(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         if (action == null) {
-            throw new NullPointerException("action is null");
+            throw log.nullParameter("action");
         }
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
@@ -332,7 +334,7 @@ public final class AuthenticationContext {
      */
     public <T, P> T run(P parameter, ParametricPrivilegedAction<T, P> action) {
         if (action == null) {
-            throw new NullPointerException("action is null");
+            throw log.nullParameter("action");
         }
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
@@ -358,7 +360,7 @@ public final class AuthenticationContext {
      */
     public <T, P> T run(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         if (action == null) {
-            throw new NullPointerException("action is null");
+            throw log.nullParameter("action");
         }
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {

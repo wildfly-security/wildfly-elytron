@@ -18,6 +18,7 @@
 
 package org.wildfly.security.x500;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
 import java.security.Principal;
@@ -101,7 +102,7 @@ public final class X500PrincipalUtil {
         }
         decoder.endSequence();
         if (decoder.hasNextElement()) {
-            throw new IllegalArgumentException("Unexpected trailing garbage in X.500 principal");
+            throw log.unexpectedTrailingGarbageInX500principal();
         }
         String[] result = len == 0 ? NO_STRINGS : new String[len];
         for (int i = 0; i < len; i ++) {
