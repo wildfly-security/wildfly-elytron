@@ -102,16 +102,8 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
-        while (reader.hasNext()) {
-            switch (reader.next()) {
-                case COMMENT:
-                case PROCESSING_INSTRUCTION: {
-                    break;
-                }
-                case START_DOCUMENT: {
-                    // expected
-                    break;
-                }
+        if (reader.hasNext()) {
+            switch (reader.nextTag()) {
                 case START_ELEMENT: {
                     switch (reader.getNamespaceURI()) {
                         case NS_ELYTRON_1_0: break;
@@ -143,12 +135,11 @@ public final class ElytronXmlParser {
                     }
                 }
                 default: {
-                    if (reader.isWhiteSpace()) break;
                     throw reader.unexpectedContent();
                 }
             }
         }
-        throw reader.unexpectedDocumentEnd();
+        return new FixedSecurityFactory<>(AuthenticationContext.EMPTY);
     }
 
     // authentication client types
