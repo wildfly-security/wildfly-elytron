@@ -25,7 +25,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
-import org.wildfly.security.auth.AuthenticationContext;
+import org.wildfly.security.auth.client.AuthenticationContext;
 
 /**
  * A delegating {@link SaslClient} which establishes a specific {@link AuthenticationContext} for the duration

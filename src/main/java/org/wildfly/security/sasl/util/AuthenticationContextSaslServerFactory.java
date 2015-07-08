@@ -25,7 +25,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.auth.AuthenticationContext;
+import org.wildfly.security.auth.client.AuthenticationContext;
 
 /**
  * A delegating {@link SaslServerFactory} which establishes a specific {@link AuthenticationContext} for the duration
