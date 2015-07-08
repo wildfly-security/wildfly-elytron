@@ -980,6 +980,21 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5160, value = "Invalid OTP alternate dictionary")
     SaslException saslInvalidOTPAlternateDictionary();
 
+    @Message(id = 5161, value = "[%s] Unable to retrieve password for \"%s\"")
+    SaslException saslUnableToRetrievePassword(String mechName, String userName);
+
+    @Message(id = 5162, value = "[%s] Unable to update password for \"%s\"")
+    SaslException saslUnableToUpdatePassword(String mechName, String userName);
+
+    @Message(id = 5163, value = "[%s] SASL server timed out")
+    SaslException saslServerTimedOut(String mechName);
+
+    @Message(id = 5164, value = "Multiple simultaneous OTP authentications are not allowed")
+    SaslException saslMultipleSimultaneousOTPAuthenticationsNotAllowed();
+
+    @Message(id = 5165, value = "OTP re-initialization failed")
+    SaslException saslOTPReinitializationFailed(@Cause Throwable cause);
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
