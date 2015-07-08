@@ -20,6 +20,8 @@ package org.wildfly.security.auth.util;
 
 import java.security.Principal;
 
+import org.wildfly.common.Assert;
+
 /**
  * A decoder for extracting a simple name from a principal.
  *
@@ -70,6 +72,30 @@ public interface PrincipalDecoder {
                 }
             }
             return null;
+        };
+    }
+
+    /**
+     * Create a principal decoder which concatenates the results of two principal decoders.  If one decoder is not able
+     * to decode the principal, {@code null} is returned.
+     *
+     * @param former the former decoder
+     * @param joinString the string to use to join the results
+     * @param latter the latter decoder
+     * @return the concatenated result
+     */
+    static PrincipalDecoder concatenating(final PrincipalDecoder former, final String joinString, final PrincipalDecoder latter) {
+        Assert.checkNotNullParam("former", former);
+        Assert.checkNotNullParam("joinString", joinString);
+        Assert.checkNotNullParam("latter", latter);
+        return principal -> {
+            final String formerName = former.getName(principal);
+            final String latterName = latter.getName(principal);
+            if (formerName == null || latterName == null) {
+                return null;
+            } else {
+                return formerName + joinString + latterName;
+            }
         };
     }
 
