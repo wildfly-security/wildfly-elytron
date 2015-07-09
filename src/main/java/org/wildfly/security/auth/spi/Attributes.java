@@ -23,6 +23,7 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,12 @@ import java.util.Spliterators;
 import org.wildfly.common.Assert;
 
 /**
- * A collection of string attributes.
+ * <p>A collection of string attributes.
+ *
+ * <p>By default, this interface provides a default implementation for all methods that perform writes to the collection. The default
+ * implementation will always throw a {@link UnsupportedOperationException}, which means the collection is <em>read-only</em> by default.
+ *
+ * <p>If an implementation needs to also support writes it must override and implement all these default methods.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -44,43 +50,34 @@ public interface Attributes {
      * Empty, read-only attribute collection.
      */
     Attributes EMPTY = new Attributes() {
+        @Override
         public Collection<Entry> entries() {
             return Collections.emptySet();
         }
 
+        @Override
         public int size(final String key) {
             return 0;
         }
 
+        @Override
         public boolean remove(final String key) {
             return false;
         }
 
-        public void add(final String key, final int idx, final String value) {
-            throw Assert.unsupported();
-        }
-
+        @Override
         public String get(final String key, final int idx) {
             return null;
         }
 
-        public String set(final String key, final int idx, final String value) {
-            throw Assert.unsupported();
-        }
-
-        public String remove(final String key, final int idx) {
-            throw Assert.unsupported();
-        }
-
+        @Override
         public Entry get(final String key) {
             return new SimpleAttributesEntry(this, key);
         }
 
+        @Override
         public int size() {
             return 0;
-        }
-
-        public void clear() {
         }
     };
 
@@ -101,22 +98,13 @@ public interface Attributes {
     int size(String key);
 
     /**
-     * Remove all values for the given key from this collection.
+     * Get the collection of values for the given key.  The result may implement {@link SetEntry} if the values
+     * are distinct (for example, a role or group set).
      *
-     * @param key the key
-     * @return {@code true} if the key was found, {@code false} otherwise
+     * @param key the attribute name
+     * @return the (possibly empty) attribute value collection
      */
-    boolean remove(String key);
-
-    /**
-     * Add a mapping for the given key at the given position.
-     *
-     * @param key the key
-     * @param idx the index
-     * @param value the mapping value
-     * @throws IndexOutOfBoundsException if {@code idx} is less than 0 or greater than or equal to {@code size(key)}
-     */
-    void add(String key, int idx, String value);
+    Entry get(String key);
 
     /**
      * Get the mapping for the given key at the given position.
@@ -129,6 +117,37 @@ public interface Attributes {
     String get(String key, int idx);
 
     /**
+     * Get the number of keys in this attribute collection.
+     *
+     * @return the number of keys
+     */
+    int size();
+
+    /**
+     * Remove all values for the given key from this collection.
+     *
+     * @param key the key
+     * @return {@code true} if the key was found, {@code false} otherwise
+     * @throws UnsupportedOperationException if this method is not implemented and the operation is not supported
+     */
+    default boolean remove(String key) {
+        throw Assert.unsupported();
+    }
+
+    /**
+     * Add a mapping for the given key at the given position.
+     *
+     * @param key the key
+     * @param idx the index
+     * @param value the mapping value
+     * @throws IndexOutOfBoundsException if {@code idx} is less than 0 or greater than or equal to {@code size(key)}
+     * @throws UnsupportedOperationException if this method is not implemented and the operation is not supported
+     */
+    default void add(String key, int idx, String value) {
+        throw Assert.unsupported();
+    }
+
+    /**
      * Modify the mapping for the given key at the given position.
      *
      * @param key the key
@@ -136,8 +155,11 @@ public interface Attributes {
      * @param value the mapping value
      * @return the previous mapping value
      * @throws IndexOutOfBoundsException if {@code idx} is less than 0 or greater than or equal to {@code size(key)}
+     * @throws UnsupportedOperationException if this method is not implemented and the operation is not supported
      */
-    String set(String key, int idx, String value);
+    default String set(String key, int idx, String value) {
+        throw Assert.unsupported();
+    }
 
     /**
      * Remove and return the mapping for the given key at the given position.  All later entries for that key are shifted
@@ -147,20 +169,20 @@ public interface Attributes {
      * @param idx the index
      * @return the previous mapping value
      * @throws IndexOutOfBoundsException if {@code idx} is less than 0 or greater than or equal to {@code size(key)}
+     * @throws UnsupportedOperationException if this method is not implemented and the operation is not supported
      */
-    String remove(String key, int idx);
-
-    /**
-     * Get the number of keys in this attribute collection.
-     *
-     * @return the number of keys
-     */
-    int size();
+    default String remove(String key, int idx) {
+        throw Assert.unsupported();
+    }
 
     /**
      * Clear this collection, resetting its size to zero.
+     *
+     * @throws UnsupportedOperationException if this method is not implemented and the operation is not supported
      */
-    void clear();
+    default void clear() {
+        throw Assert.unsupported();
+    }
 
     /**
      * Remove all values for the given key from this collection, copying the values into a list which is returned.
@@ -576,13 +598,67 @@ public interface Attributes {
     }
 
     /**
-     * Get the collection of values for the given key.  The result may implement {@link SetEntry} if the values
-     * are distinct (for example, a role or group set).
+     * Returns a read-only instance of this instance.
      *
-     * @param key the attribute name
-     * @return the (possibly empty) attribute value collection
+     * @return a read-only instance of this instance.
      */
-    Entry get(String key);
+    default Attributes asReadOnly() {
+        return new Attributes() {
+            private Map<String, Entry> entryCache = new HashMap<>();
+            private Collection<Entry> cachedEntries;
+
+            @Override
+            public Collection<Entry> entries() {
+                if (this.cachedEntries != null) {
+                    return this.cachedEntries;
+                }
+
+                return this.cachedEntries = new AbstractCollection<Entry>() {
+                    @Override
+                    public Iterator<Entry> iterator() {
+                        Iterator<String> iterator = Attributes.this.keySet().iterator();
+
+                        return new Iterator<Entry>() {
+                            @Override
+                            public boolean hasNext() {
+                                return iterator.hasNext();
+                            }
+
+                            @Override
+                            public Entry next() {
+                                return get(iterator.next());
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return Attributes.this.keySet().size();
+                    }
+                };
+            }
+
+            @Override
+            public int size(String key) {
+                return Attributes.this.size(key);
+            }
+
+            @Override
+            public String get(String key, int idx) {
+                return Attributes.this.get(key, idx);
+            }
+
+            @Override
+            public int size() {
+                return Attributes.this.size();
+            }
+
+            @Override
+            public Entry get(String key) {
+                return this.entryCache.computeIfAbsent(key, s -> new SimpleAttributesEntry(this, s));
+            }
+        };
+    }
 
     /**
      * The entry collection for a mapping.
