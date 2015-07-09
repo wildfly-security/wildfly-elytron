@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Locale;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -144,7 +145,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 }
                 final CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(response);
                 final CodePointIterator di = cpi.delimitedBy(':');
-                final String responseType = di.drainToString().toLowerCase();
+                final String responseType = di.drainToString().toLowerCase(Locale.ENGLISH);
                 final byte[] currentHash;
                 OneTimePasswordSpec passwordSpec;
                 String algorithm;

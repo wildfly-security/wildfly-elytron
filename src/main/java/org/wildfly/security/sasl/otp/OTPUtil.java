@@ -26,8 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 import javax.security.sasl.SaslException;
@@ -44,6 +43,7 @@ class OTPUtil {
     public static final int[] DELIMS = new int[] {'\n', '\r', '\t', ' '};
     public static final String[] RESPONSE_TYPES = new String[] { WORD_RESPONSE, INIT_WORD_RESPONSE, HEX_RESPONSE, INIT_HEX_RESPONSE };
 
+    private static final int FOUR_LETTER_WORDS_OFFSET = 571;
     private static final byte[] randomCharDictionary;
     static {
         byte[] dict = new byte[36];
@@ -101,7 +101,7 @@ class OTPUtil {
      * @throws SaslException if the given OTP algorithm is invalid
      */
     public static byte[] generateOTP(String algorithm, String passPhrase, String seed, int sequenceNumber) throws SaslException {
-        return generateOTP(algorithm, passPhrase.getBytes(StandardCharsets.UTF_8), seed.toLowerCase().getBytes(StandardCharsets.US_ASCII), sequenceNumber);
+        return generateOTP(algorithm, passPhrase.getBytes(StandardCharsets.UTF_8), seed.toLowerCase(Locale.ENGLISH).getBytes(StandardCharsets.US_ASCII), sequenceNumber);
     }
 
     /**
@@ -246,13 +246,14 @@ class OTPUtil {
         for (int i = 0; i < 6; i++) {
             word = di.drainToString();
             if (useStandardDictionary) {
-                if (INVERSE_STANDARD_DICTIONARY.containsKey(word.toUpperCase())) {
-                    dictionaryIndex = INVERSE_STANDARD_DICTIONARY.get(word.toUpperCase());
-                } else if (i == 0) {
-                    // The first word could not be found, switch to using an alternate dictionary instead
-                    useStandardDictionary = false;
-                } else {
-                    throw log.saslInvalidOTP();
+                dictionaryIndex = searchStandardDictionary(word);
+                if (dictionaryIndex < 0) {
+                    if (i == 0) {
+                        // The first word could not be found, switch to using an alternate dictionary instead
+                        useStandardDictionary = false;
+                    } else {
+                        throw log.saslInvalidOTP();
+                    }
                 }
             }
             if (! useStandardDictionary) {
@@ -274,6 +275,20 @@ class OTPUtil {
             }
         }
         return longToEightBytes(otpValue);
+    }
+
+    /**
+     * Search the standard OTP dictionary for the given word.
+     *
+     * @param word the word to search for
+     * @return the index of the word if it is found and a value less than 0 otherwise
+     */
+    private static int searchStandardDictionary(String word) {
+        if (word.length() < 4) {
+            return Arrays.binarySearch(STANDARD_DICTIONARY, 0, FOUR_LETTER_WORDS_OFFSET, word.toUpperCase(Locale.ENGLISH));
+        } else {
+            return Arrays.binarySearch(STANDARD_DICTIONARY, FOUR_LETTER_WORDS_OFFSET, STANDARD_DICTIONARY.length, word.toUpperCase(Locale.ENGLISH));
+        }
     }
 
     /**
@@ -356,9 +371,8 @@ class OTPUtil {
         if ((dictionary == null) || (dictionary.length != DICTIONARY_SIZE)) {
             throw log.saslInvalidOTPAlternateDictionary();
         }
-        List<String> standardDictionaryList = Arrays.asList(STANDARD_DICTIONARY);
         for (int i = 0; i < dictionary.length; i++) {
-            if (standardDictionaryList.contains(dictionary[i].toUpperCase())) {
+            if (searchStandardDictionary(dictionary[i]) >= 0) {
                 throw log.saslInvalidOTPAlternateDictionary();
             }
         }
@@ -470,14 +484,6 @@ class OTPUtil {
             shift -= 8;
         }
         return b;
-    }
-
-    private static HashMap<String, Integer> inverseDictionary(final String[] dictionary) {
-        final HashMap<String, Integer> inverseDictionary = new HashMap<String, Integer>(dictionary.length);
-        for (int i = 0; i < dictionary.length; i++) {
-            inverseDictionary.put(dictionary[i], i);
-        }
-        return inverseDictionary;
     }
 
     // The standard OTP dictionary as defined in RFC 1760 (https://tools.ietf.org/html/rfc1760)
@@ -739,6 +745,4 @@ class OTPUtil {
         "WORM",  "WORN",  "WOVE",  "WRIT",  "WYNN",  "YALE",  "YANG",  "YANK",
         "YARD",  "YARN",  "YAWL",  "YAWN",  "YEAH",  "YEAR",  "YELL",  "YOGA",
         "YOKE" };
-
-    private static final HashMap<String, Integer> INVERSE_STANDARD_DICTIONARY = inverseDictionary(STANDARD_DICTIONARY);
 }
