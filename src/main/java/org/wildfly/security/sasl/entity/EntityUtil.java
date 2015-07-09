@@ -91,7 +91,7 @@ class EntityUtil {
             }
             encoder.endSetOf();
         } catch (CertificateEncodingException e) {
-            throw new ASN1Exception(e.getMessage(), e);
+            throw new ASN1Exception(e);
         }
     }
 
@@ -338,7 +338,7 @@ class EntityUtil {
             try {
                 encoder.writeEncoded(((CertificateTrustedAuthority) trustedAuthority).getIdentifier().getEncoded());
             } catch (CertificateEncodingException e) {
-                throw new ASN1Exception(e.getMessage(), e);
+                throw new ASN1Exception(e);
             }
         } else {
             throw log.asnInvalidTrustedAuthorityType();
@@ -476,7 +476,7 @@ class EntityUtil {
             List<? extends Certificate> certs = certPath.getCertificates();
             return certs.toArray(new X509Certificate[certs.size()]);
         } catch (CertificateException e) {
-            throw new ASN1Exception(e.getMessage(), e);
+            throw new ASN1Exception(e);
         }
     }
 
@@ -569,7 +569,7 @@ class EntityUtil {
                                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
                                     trustedAuthority = new CertificateTrustedAuthority((X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert)));
                                 } catch (CertificateException e) {
-                                    throw new ASN1Exception(e.getMessage(), e);
+                                    throw new ASN1Exception(e);
                                 }
                                 break out;
                             }

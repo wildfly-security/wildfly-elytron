@@ -21,7 +21,7 @@ package org.wildfly.security.sasl.external;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -58,13 +58,11 @@ final class ExternalSaslServer implements SaslServer {
         String authorizationId;
         if (response.length == 0) {
             authorizationId = null;
-        } else try {
-            authorizationId = Normalizer.normalize(new String(response, "UTF-8"), Normalizer.Form.NFKC);
+        } else {
+            authorizationId = Normalizer.normalize(new String(response, StandardCharsets.UTF_8), Normalizer.Form.NFKC);
             if (authorizationId.indexOf(0) != -1) {
                 throw log.saslUserNameContainsInvalidCharacter(getMechanismName());
             }
-        } catch (UnsupportedEncodingException e) {
-            throw log.saslUserNameDecodeFailed(getMechanismName(), "UTF-8");
         }
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, authorizationId);
         try {

@@ -181,7 +181,7 @@ public class DERDecoder implements ASN1Decoder {
         try {
             return new String(octets, charSet);
         } catch (UnsupportedEncodingException e) {
-            throw new ASN1Exception(e.getMessage(), e);
+            throw new ASN1Exception(e);
         }
     }
 

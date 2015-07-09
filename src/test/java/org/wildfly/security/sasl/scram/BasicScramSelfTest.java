@@ -132,7 +132,7 @@ public class BasicScramSelfTest extends BaseTestCase {
         testAuthentication(Scram.SCRAM_SHA_1_PLUS, serverHandler, clientHandler, "user", props, props);
     }
 
-    public void testAuthentication(String mechanism, CallbackHandler serverHandler, CallbackHandler clientHandler, String authorizationId, Map<String, ?> serverProps, Map<String, ?> clientProps) throws Exception {
+    private void testAuthentication(String mechanism, CallbackHandler serverHandler, CallbackHandler clientHandler, String authorizationId, Map<String, ?> serverProps, Map<String, ?> clientProps) throws Exception {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);

@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.UTF_8;
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.parseUserPassword;
 
 import java.security.spec.InvalidKeySpecException;
@@ -115,8 +114,6 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                     if (credentialType.isInstance(password)) {
                         return credentialType.cast(password);
                     }
-
-                    System.out.println(new String(value, UTF_8));
                 }
 
                 return null;

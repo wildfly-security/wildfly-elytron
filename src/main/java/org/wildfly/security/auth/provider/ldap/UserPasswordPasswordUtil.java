@@ -22,7 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
 
 import org.wildfly.security.password.Password;
@@ -40,8 +40,6 @@ import org.wildfly.security.util.CodePointIterator;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 class UserPasswordPasswordUtil {
-
-    static final Charset UTF_8 = Charset.forName("UTF-8");
 
     private UserPasswordPasswordUtil() {
     }
@@ -107,7 +105,7 @@ class UserPasswordPasswordUtil {
     }
 
     private static Password createClearPassword(byte[] userPassword) {
-        return ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, new String(userPassword, UTF_8).toCharArray());
+        return ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, new String(userPassword, StandardCharsets.UTF_8).toCharArray());
     }
 
     private static Password createSimpleDigestPassword(String algorithm, int prefixSize, byte[] userPassword)
