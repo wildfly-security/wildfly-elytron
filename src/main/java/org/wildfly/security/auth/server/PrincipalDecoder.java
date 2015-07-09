@@ -42,7 +42,7 @@ public interface PrincipalDecoder {
 
     /**
      * Add a name rewriter to this principal decoder.  If the name is decoded, it will then be rewritten with the
-     * given rewriter.
+     * given rewriter.  If the rewriter deems the name invalid, then the name will be considered not decoded.
      *
      * @param nameRewriter the name rewriter
      * @return the combined decoder

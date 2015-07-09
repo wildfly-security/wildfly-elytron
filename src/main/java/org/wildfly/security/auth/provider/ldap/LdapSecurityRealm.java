@@ -51,22 +51,23 @@ import static org.wildfly.security._private.ElytronMessages.log;
 class LdapSecurityRealm implements SecurityRealm {
 
     private final DirContextFactory dirContextFactory;
-    private final List<NameRewriter> nameRewriters;
+    private final NameRewriter nameRewriter;
     private final PrincipalMapping principalMapping;
     private final List<CredentialLoader> credentialLoaders = new ArrayList<>();
 
-    LdapSecurityRealm(final DirContextFactory dirContextFactory, final List<NameRewriter> nameRewriters,
+    LdapSecurityRealm(final DirContextFactory dirContextFactory, final NameRewriter nameRewriter,
             final PrincipalMapping principalMapping) {
         this.dirContextFactory = dirContextFactory;
-        this.nameRewriters = nameRewriters;
+        this.nameRewriter = nameRewriter;
         this.principalMapping = principalMapping;
         this.credentialLoaders.add(new UserPasswordCredentialLoader(this.principalMapping.passwordAttribute));
     }
 
     @Override
     public RealmIdentity createRealmIdentity(String name) {
-        for (NameRewriter current : nameRewriters) {
-            name = current.rewriteName(name);
+        name = nameRewriter.rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
         }
 
         return new LdapRealmIdentity(name);

@@ -142,6 +142,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             throw ElytronMessages.log.invalidEmptyName();
         }
         final String finalName = nameRewriter.rewriteName(name);
+        if (finalName == null) {
+            throw ElytronMessages.log.invalidName();
+        }
         return new Identity(finalName, pathFor(finalName));
     }
 

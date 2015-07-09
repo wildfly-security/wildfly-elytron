@@ -45,7 +45,7 @@ public final class MutableNameRewriter implements NameRewriter {
     public MutableNameRewriter() {
     }
 
-    public String rewriteName(final String original) throws IllegalArgumentException {
+    public String rewriteName(final String original) {
         return target.rewriteName(original);
     }
 
