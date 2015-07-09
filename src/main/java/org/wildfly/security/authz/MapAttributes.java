@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.spi;
+package org.wildfly.security.authz;
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;

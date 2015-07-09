@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.util;
+package org.wildfly.security.auth.server;
 
 /**
  * A realm mapper.  Examines the user name and translates it into a realm name.

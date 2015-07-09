@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.spi;
+package org.wildfly.security.auth.server;
 
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.

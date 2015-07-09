@@ -19,7 +19,7 @@ package org.wildfly.security.auth.provider.jdbc.mapper;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
-import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;

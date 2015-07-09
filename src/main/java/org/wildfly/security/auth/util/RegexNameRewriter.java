@@ -21,6 +21,8 @@ package org.wildfly.security.auth.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.wildfly.security.auth.server.NameRewriter;
+
 /**
  * A simple regular expression-based name rewriter.
  */

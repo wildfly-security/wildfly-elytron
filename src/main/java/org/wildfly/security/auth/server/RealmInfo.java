@@ -15,15 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.login;
+package org.wildfly.security.auth.server;
 
-import org.wildfly.security.auth.spi.SecurityRealm;
-import org.wildfly.security.auth.util.NameRewriter;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 
 /**
- * <p>Holds the reference to a {@link org.wildfly.security.auth.spi.SecurityRealm} and the configuration associated with it.</p>
+ * <p>Holds the reference to a {@link SecurityRealm} and the configuration associated with it.</p>
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */

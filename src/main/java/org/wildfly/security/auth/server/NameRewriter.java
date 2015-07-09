@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.util;
+package org.wildfly.security.auth.server;
 
 import org.wildfly.common.Assert;
 

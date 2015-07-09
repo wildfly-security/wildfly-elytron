@@ -54,7 +54,7 @@ import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.util.DecodeException;
 
 /**

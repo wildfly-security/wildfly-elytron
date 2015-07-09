@@ -19,7 +19,7 @@
 package org.wildfly.security.auth.provider;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.spi.Attributes;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.password.Password;
 
 /**

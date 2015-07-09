@@ -56,7 +56,7 @@ import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.util.ElytronAuthenticator;
-import org.wildfly.security.auth.util.NameRewriter;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;

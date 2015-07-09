@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.login;
+package org.wildfly.security.auth.server;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -35,16 +35,8 @@ import javax.security.sasl.SaslServerFactory;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
-import org.wildfly.security.auth.spi.Attributes;
-import org.wildfly.security.auth.spi.AuthorizationIdentity;
-import org.wildfly.security.auth.spi.CredentialSupport;
-import org.wildfly.security.auth.spi.RealmIdentity;
-import org.wildfly.security.auth.spi.RealmUnavailableException;
-import org.wildfly.security.auth.spi.SecurityRealm;
-import org.wildfly.security.auth.spi.SupportLevel;
-import org.wildfly.security.auth.util.NameRewriter;
-import org.wildfly.security.auth.util.PrincipalDecoder;
-import org.wildfly.security.auth.util.RealmMapper;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;

@@ -28,7 +28,7 @@ import java.sql.ResultSet;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
-import org.wildfly.security.auth.spi.CredentialSupport;
+import org.wildfly.security.auth.server.CredentialSupport;
 
 /**
  * A {@link KeyMapper} that knows how to map columns to a RSA {@link PrivateKey}.

@@ -23,8 +23,10 @@ import java.security.Policy;
 import java.security.Principal;
 import java.util.Set;
 
+import org.wildfly.security.auth.server.SecurityDomain;
+
 /**
- * A permission mapper is responsible to enable permission mapping to a {@link org.wildfly.security.auth.login.SecurityDomain}
+ * A permission mapper is responsible to enable permission mapping to a {@link SecurityDomain}
  * in order to obtain and check permissions based on an previously authorized identity and any other authorization information (eg.: roles)
  * associated with it.
  *
