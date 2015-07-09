@@ -38,11 +38,12 @@ import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.util.CodePointIterator;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
@@ -205,7 +206,7 @@ public class PasswordKeyMapper implements KeyMapper {
                     iterationCount = resultSet.getInt(getIterationCount());
                 }
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             throw log.couldNotObtainCredentialWithCause(e);
         }
 
@@ -269,9 +270,9 @@ public class PasswordKeyMapper implements KeyMapper {
         }
     }
 
-    private byte[] toByteArray(Object value) throws UnsupportedEncodingException {
+    private byte[] toByteArray(Object value) {
         if (String.class.isInstance(value)) {
-            return value.toString().getBytes("UTF-8");
+            return value.toString().getBytes(StandardCharsets.UTF_8);
         } else if (byte[].class.isInstance(value)) {
             return (byte[]) value;
         }

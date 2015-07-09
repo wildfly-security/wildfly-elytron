@@ -90,19 +90,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new BCryptPasswordImpl((BCryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new BCryptPasswordImpl((ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new BCryptPasswordImpl((EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -113,19 +113,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new UnixMD5CryptPasswordImpl((UnixMD5CryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new UnixMD5CryptPasswordImpl((ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new UnixMD5CryptPasswordImpl((EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -137,19 +137,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new SunUnixMD5CryptPasswordImpl(algorithm, (SunUnixMD5CryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new SunUnixMD5CryptPasswordImpl((ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new SunUnixMD5CryptPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -161,19 +161,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new UnixSHACryptPasswordImpl(algorithm, (UnixSHACryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new UnixSHACryptPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new UnixSHACryptPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException | NoSuchAlgorithmException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -199,19 +199,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new SimpleDigestPasswordImpl(algorithm, (SimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new SimpleDigestPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new SimpleDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -231,19 +231,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new SaltedSimpleDigestPasswordImpl(algorithm, (SaltedSimpleDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new SaltedSimpleDigestPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new SaltedSimpleDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 }
                 break;
@@ -275,19 +275,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new BSDUnixDESCryptPasswordImpl((BSDUnixDESCryptPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new BSDUnixDESCryptPasswordImpl((ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new BSDUnixDESCryptPasswordImpl((EncryptablePasswordSpec) keySpec);
                     } catch (InvalidParameterSpecException | IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else {
                     break;
@@ -299,19 +299,19 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     try {
                         return new ScramDigestPasswordImpl(algorithm, (ScramDigestPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof ClearPasswordSpec) {
                     try {
                         return new ScramDigestPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 } else if (keySpec instanceof EncryptablePasswordSpec) {
                     try {
                         return new ScramDigestPasswordImpl(algorithm, (EncryptablePasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
-                        throw new InvalidKeySpecException(e.getMessage());
+                        throw new InvalidKeySpecException(e);
                     }
                 }
                 else {

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.ssl;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,8 +32,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import org.wildfly.security._private.ElytronMessages;
 
 class MechanismDatabase {
     private static final MechanismDatabase INSTANCE = new MechanismDatabase();
@@ -74,39 +74,39 @@ class MechanismDatabase {
             if (strings.length == 1 && strings[0].startsWith("alias:")) {
                 aliases.put(name, strings[0].substring(6));
             } else if (strings.length != 11) {
-                ElytronMessages.log.warnf("Invalid string count for mechanism database entry \"%s\"", name);
+                log.warnInvalidStringCountForMechanismDatabaseEntry(name);
             } else {
                 boolean ok = true;
                 final String openSslName = strings[0];
                 final KeyAgreement kex = KeyAgreement.forName(strings[1]);
                 if (kex == null) {
-                    ElytronMessages.log.warnf("Invalid key exchange \"%s\" for mechanism database entry \"%s\"", strings[1], name);
+                    log.warnInvalidKeyExchangeForMechanismDatabaseEntry(strings[1], name);
                     ok = false;
                 }
                 final Authentication auth = Authentication.forName(strings[2]);
                 if (auth == null) {
-                    ElytronMessages.log.warnf("Invalid authentication \"%s\" for mechanism database entry \"%s\"", strings[2], name);
+                    log.warnInvalidAuthenticationForMechanismDatabaseEntry(strings[2], name);
                     ok = false;
                 }
                 final Encryption enc = Encryption.forName(strings[3]);
                 if (enc == null) {
-                    ElytronMessages.log.warnf("Invalid encryption \"%s\" for mechanism database entry \"%s\"", strings[3], name);
+                    log.warnInvalidEncryptionForMechanismDatabaseEntry(strings[3], name);
                     ok = false;
                 }
                 final Digest digest = Digest.forName(strings[4]);
                 if (digest == null) {
-                    ElytronMessages.log.warnf("Invalid digest \"%s\" for mechanism database entry \"%s\"", strings[4], name);
+                    log.warnInvalidDigestForMechanismDatabaseEntry(strings[4], name);
                     ok = false;
                 }
                 final Protocol prot = Protocol.forName(strings[5]);
                 if (prot == null) {
-                    ElytronMessages.log.warnf("Invalid protocol \"%s\" for mechanism database entry \"%s\"", strings[5], name);
+                    log.warnInvalidProtocolForMechanismDatabaseEntry(strings[5], name);
                     ok = false;
                 }
                 final boolean export = Boolean.parseBoolean(strings[6]);
                 final SecurityLevel level = SecurityLevel.forName(strings[7]);
                 if (level == null) {
-                    ElytronMessages.log.warnf("Invalid level \"%s\" for mechanism database entry \"%s\"", strings[7], name);
+                    log.warnInvalidLevelForMechanismDatabaseEntry(strings[7], name);
                     ok = false;
                 }
                 final boolean fips = Boolean.parseBoolean(strings[8]);
@@ -114,7 +114,7 @@ class MechanismDatabase {
                 try {
                     strBits = Integer.parseInt(strings[9], 10);
                 } catch (NumberFormatException ignored) {
-                    ElytronMessages.log.warnf("Invalid strength bits \"%s\" for mechanism database entry \"%s\"", strings[9], name);
+                    log.warnInvalidStrengthBitsForMechanismDatabaseEntry(strings[9], name);
                     strBits = 0;
                     ok = false;
                 }
@@ -122,19 +122,19 @@ class MechanismDatabase {
                 try {
                     algBits = Integer.parseInt(strings[10], 10);
                 } catch (NumberFormatException ignored) {
-                    ElytronMessages.log.warnf("Invalid algorithm bits \"%s\" for mechanism database entry \"%s\"", strings[10], name);
+                    log.warnInvalidAlgorithmBitsForMechanismDatabaseEntry(strings[10], name);
                     algBits = 0;
                     ok = false;
                 }
                 if (ok) {
                     final Entry entry = new Entry(name, openSslName, new ArrayList<String>(0), kex, auth, enc, digest, prot, export, level, fips, strBits, algBits);
                     if (entriesByStdName.containsKey(name)) {
-                        ElytronMessages.log.warnf("Invalid duplicate mechanism database entry \"%s\"", name);
+                        log.warnInvalidDuplicateMechanismDatabaseEntry(name);
                     } else {
                         entriesByStdName.put(name, entry);
                     }
                     if (entriesByOSSLName.containsKey(openSslName)) {
-                        ElytronMessages.log.warnf("Invalid duplicate OpenSSL-style alias \"%s\" for mechanism database entry \"%s\" (original is \"%s\")", openSslName, name, entriesByOSSLName.get(openSslName).getName());
+                        log.warnInvalidDuplicateOpenSslStyleAliasForMechanismDatabaseEntry(openSslName, name, entriesByOSSLName.get(openSslName).getName());
                     } else {
                         entriesByOSSLName.put(openSslName, entry);
                     }
@@ -158,9 +158,9 @@ class MechanismDatabase {
             String name = entry.getKey();
             String value = entry.getValue();
             if (entriesByStdName.containsKey(name)) {
-                ElytronMessages.log.warnf("Invalid duplicate mechanism database entry \"%s\"", name);
+                log.warnInvalidDuplicateMechanismDatabaseEntry(name);
             } else if (! entriesByStdName.containsKey(value)) {
-                ElytronMessages.log.warnf("Invalid alias \"%s\" for missing mechanism database entry \"%s\"", value, name);
+                log.warnInvalidAliasForMissingMechanismDatabaseEntry(value, name);
             } else {
                 final Entry dbEntry = entriesByStdName.get(value);
                 dbEntry.getAliases().add(name);
