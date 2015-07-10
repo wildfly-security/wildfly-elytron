@@ -46,22 +46,24 @@ public final class AuthenticationCompleteCallbackSaslServerFactory extends Abstr
         super(delegate);
     }
 
+    @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final SaslServer delegateSaslServer = delegate.createSaslServer(mechanism, protocol, serverName, props, cbh);
         return delegateSaslServer == null ? null : new AbstractDelegatingSaslServer(delegateSaslServer) {
             private final AtomicBoolean complete = new AtomicBoolean();
 
+            @Override
             public byte[] evaluateResponse(final byte[] response) throws SaslException {
                 try {
                     final byte[] challenge = delegate.evaluateResponse(response);
                     if (isComplete() && complete.compareAndSet(false, true)) try {
-                        cbh.handle(new Callback[] { new AuthenticationCompleteCallback(true) });
+                        cbh.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
                     } catch (Throwable ignored) {
                     }
                     return challenge;
                 } catch (SaslException | RuntimeException | Error e) {
                     if (isComplete() && complete.compareAndSet(false, true)) try {
-                        cbh.handle(new Callback[] { new AuthenticationCompleteCallback(false) });
+                        cbh.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
                     } catch (Throwable ignored) {
                     }
                     throw e;
