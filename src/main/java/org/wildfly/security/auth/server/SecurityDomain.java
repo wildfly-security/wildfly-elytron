@@ -114,10 +114,7 @@ public final class SecurityDomain {
         if (name == null) {
             throw log.invalidName();
         }
-        String realmName = realmMapper.getRealmMapping(name);
-        if (realmName == null) {
-            realmName = defaultRealmName;
-        }
+        String realmName = mapRealmName(name);
         SecurityRealm securityRealm = getRealm(realmName);
         assert securityRealm != null;
         name = this.postRealmRewriter.rewriteName(name);
@@ -309,16 +306,13 @@ public final class SecurityDomain {
         return this.permissionMapper.mapPermissions(principal, roles);
     }
 
-    String getDefaultRealmName() {
-        return defaultRealmName;
-    }
-
     NameRewriter getPreRealmRewriter() {
         return preRealmRewriter;
     }
 
-    RealmMapper getRealmMapper() {
-        return realmMapper;
+    String mapRealmName(String name) {
+        String realm = realmMapper.getRealmMapping(name);
+        return realm != null ? realm : defaultRealmName;
     }
 
     NameRewriter getPostRealmRewriter() {
