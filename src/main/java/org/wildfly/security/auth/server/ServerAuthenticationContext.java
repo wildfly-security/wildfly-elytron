@@ -188,10 +188,7 @@ public final class ServerAuthenticationContext {
             if (name == null) {
                 throw log.invalidName();
             }
-            String realmName = domain.getRealmMapper().getRealmMapping(name);
-            if (realmName == null) {
-                realmName = domain.getDefaultRealmName();
-            }
+            String realmName = domain.mapRealmName(name);
             final NamePrincipal principal = new NamePrincipal(name);
             RealmInfo realmInfo = domain.getRealmInfo(realmName);
             name = domain.getPostRealmRewriter().rewriteName(name);
@@ -251,10 +248,7 @@ public final class ServerAuthenticationContext {
         if (name == null) {
             throw log.invalidName();
         }
-        String realmName = domain.getRealmMapper().getRealmMapping(name);
-        if (realmName == null) {
-            realmName = domain.getDefaultRealmName();
-        }
+        String realmName = domain.mapRealmName(name);
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = domain.getPostRealmRewriter().rewriteName(name);
         if (name == null) {
@@ -340,10 +334,7 @@ public final class ServerAuthenticationContext {
         if (name == null) {
             throw log.invalidName();
         }
-        String realmName = domain.getRealmMapper().getRealmMapping(name);
-        if (realmName == null) {
-            realmName = domain.getDefaultRealmName();
-        }
+        String realmName = domain.mapRealmName(name);
         Principal principal = new NamePrincipal(name);
         if (oldState.getAuthenticationPrincipal().equals(principal)) {
             // it's the same identity; just succeed
