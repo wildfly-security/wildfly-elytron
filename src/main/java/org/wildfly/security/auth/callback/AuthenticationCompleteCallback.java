@@ -66,4 +66,14 @@ public final class AuthenticationCompleteCallback implements ExtendedCallback, S
     public boolean failed() {
         return ! success;
     }
+
+    /**
+     * Replace the deserialized instance with the sppropriate singleton instance.
+     *
+     * @return The singleton instance.
+     */
+    Object readResolve() {
+        return success ? SUCCEEDED : FAILED;
+    }
+
 }
