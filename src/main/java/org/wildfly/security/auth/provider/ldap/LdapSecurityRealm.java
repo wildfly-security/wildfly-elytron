@@ -19,27 +19,43 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-
-import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -56,7 +72,7 @@ class LdapSecurityRealm implements SecurityRealm {
     private final List<CredentialLoader> credentialLoaders = new ArrayList<>();
 
     LdapSecurityRealm(final DirContextFactory dirContextFactory, final NameRewriter nameRewriter,
-            final PrincipalMapping principalMapping) {
+                      final PrincipalMapping principalMapping) {
         this.dirContextFactory = dirContextFactory;
         this.nameRewriter = nameRewriter;
         this.principalMapping = principalMapping;
@@ -97,15 +113,16 @@ class LdapSecurityRealm implements SecurityRealm {
 
     private class LdapRealmIdentity implements RealmIdentity {
 
-        private String name;
+        private final String name;
         private LdapIdentity identity;
 
-        private LdapRealmIdentity(final String name) {
+        LdapRealmIdentity(final String name) {
             this.name = name;
         }
 
+        @Override
         public String getName() {
-            return name;
+            return this.name;
         }
 
         @Override
@@ -170,9 +187,11 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public AuthorizationIdentity getAuthorizationIdentity() {
-            return new AuthorizationIdentity() {
-            };
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            if (!exists()) {
+                return AuthorizationIdentity.EMPTY;
+            }
+            return AuthorizationIdentity.basicIdentity(this.identity.attributes);
         }
 
         @Override
@@ -222,81 +241,302 @@ class LdapSecurityRealm implements SecurityRealm {
 
         @Override
         public boolean exists() throws RealmUnavailableException {
-            if (identity == null) {
-                identity = getIdentity(name);
+            if (this.identity == null) {
+                this.identity = getIdentity(this.name);
             }
 
-            return identity != null;
+            boolean exists = this.identity != null;
+
+            if (!exists) {
+                log.debugf("Principal [%s] does not exists.", this.name);
+            }
+
+            return exists;
         }
 
-        private LdapIdentity getIdentity(String name) throws RealmUnavailableException {
+        private LdapIdentity getIdentity(String principalName) throws RealmUnavailableException {
+            log.debugf("Trying to create identity for principal [%s].", this.name);
             DirContext context = null;
-            NamingEnumeration<SearchResult> searchResult = null;
 
             try {
-                SearchControls searchControls = new SearchControls();
-
-                searchControls.setSearchScope(principalMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
-                searchControls.setTimeLimit(principalMapping.searchTimeLimit);
-
-                searchControls.setReturningAttributes(new String[] {principalMapping.nameAttribute});
+                context = dirContextFactory.obtainDirContext(null);
 
                 String searchDn = principalMapping.searchDn;
-                String simpleName = name;
+                String name = principalName;
 
-                if (name.startsWith(principalMapping.nameAttribute)) {
-                    simpleName = name.substring(principalMapping.nameAttribute.length() + 1, name.indexOf(','));
-                    searchDn = name.substring(name.indexOf(',') + 1);
+                if (principalName.startsWith(principalMapping.rdnIdentifier)) {
+                    LdapName ldapName = new LdapName(principalName);
+                    int rdnIdentifierPosition = ldapName.size() - 1;
+                    Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
+
+                    name = rdnIdentifier.getValue().toString();
+                    ldapName.remove(rdnIdentifierPosition);
+                    searchDn = ldapName.toString();
                 }
 
-                Object[] filterArg = new Object[] {simpleName};
-                String filter = String.format("(%s={0})", principalMapping.nameAttribute);
+                final DirContext finalContext = context;
 
-                context = dirContextFactory.obtainDirContext(null); // TODO - Referral Mode
-                searchResult = context.search(searchDn, filter, filterArg, searchControls);
+                LdapSearch ldapSearch = new LdapSearch(searchDn, String.format("(%s={0})", principalMapping.rdnIdentifier), name);
 
-                if (searchResult.hasMore()) {
-                    SearchResult result = searchResult.next();
+                ldapSearch.setReturningAttributes(
+                        principalMapping.attributes.stream()
+                                .map(PrincipalMappingBuilder.Attribute::getLdapName)
+                                .toArray(String[]::new));
 
-                    if (searchResult.hasMore()) {
-                        throw log.searchReturnedTooManyResults();
+                try (
+                    Stream<LdapIdentity> identityStream = ldapSearch.search(context)
+                            .map(result -> {
+                                MapAttributes identityAttributes = new MapAttributes();
+
+                                identityAttributes.addAll(extractSingleAttributes(result));
+                                identityAttributes.addAll(extractFilteredAttributes(result, finalContext));
+
+                                return new LdapIdentity(result.getNameInNamespace(), identityAttributes.asReadOnly());
+                            });
+                ) {
+                    Optional<LdapIdentity> optional = identityStream.findFirst();
+
+                    if (optional.isPresent()) {
+                        LdapIdentity identity = optional.get();
+
+                        if (log.isDebugEnabled()) {
+                            log.debugf("Successfully created identity for principal [%s].", principalName);
+
+                            if (identity.attributes.isEmpty()) {
+                                log.debugf("Identity [%s] does not have any attributes.", principalName);
+                            } else {
+                                log.debugf("Identity [%s] attributes are:", principalName);
+                                identity.attributes.keySet().forEach(key -> {
+                                    org.wildfly.security.authz.Attributes.Entry values = identity.attributes.get(key);
+                                    values.forEach(value -> log.debugf("    Attribute [%s] value [%s].", key, value));
+                                });
+                            }
+
+                        }
+
+                        return identity;
                     }
 
-                    return new LdapIdentity(simpleName, result.getNameInNamespace());
+                    return null;
                 }
+
             } catch (NamingException e) {
                 throw log.ldapRealmFailedObtainIdentityFromServer(e);
             } finally {
-                if (searchResult != null) {
-                    try {
-                        searchResult.close();
-                    } catch (NamingException ignore) {
-                    }
-                }
                 dirContextFactory.returnContext(context);
             }
+        }
 
-            return null;
+        private Map<String, Collection<String>> extractFilteredAttributes(SearchResult result, DirContext context) {
+            String principalDn = result.getNameInNamespace();
+
+            return extractAttributes(attribute -> attribute.getFilter() != null, attribute -> {
+                Collection<String> values = new ArrayList<>();
+
+                String searchDn = attribute.getSearchDn();
+
+                if (searchDn == null) {
+                    searchDn = principalMapping.searchDn;
+                }
+
+                LdapSearch search = new LdapSearch(searchDn, attribute.getFilter(), principalDn);
+
+                search.setReturningAttributes(attribute.getLdapName());
+
+                try (
+                    Stream<SearchResult> searchResult = search.search(context);
+                ) {
+                    searchResult.forEach(entry -> {
+                        String valueRdn = attribute.getRdn();
+
+                        if (valueRdn != null) {
+                            String entryDn = entry.getNameInNamespace();
+
+                            try {
+                                for (Rdn rdn : new LdapName(entryDn).getRdns()) {
+                                    if (rdn.getType().equalsIgnoreCase(valueRdn)) {
+                                        values.add(rdn.getValue().toString());
+                                        break;
+                                    }
+                                }
+                            } catch (Exception cause) {
+                                throw log.ldapRealmInvalidRdnForAttribute(attribute.getName(), entryDn, valueRdn);
+                            }
+                        } else {
+                            Attributes entryAttributes = entry.getAttributes();
+                            Attribute ldapAttribute = entryAttributes.get(attribute.getLdapName());
+                            NamingEnumeration<?> attributeValues = null;
+
+                            try {
+                                attributeValues = ldapAttribute.getAll();
+
+                                while (attributeValues.hasMore()) {
+                                    values.add(attributeValues.next().toString());
+                                }
+                            } catch (Exception cause) {
+                                throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
+                            } finally {
+                                if (attributeValues != null) {
+                                    try {
+                                        attributeValues.close();
+                                    } catch (NamingException ignore) {
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (Exception cause) {
+                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
+                }
+
+                return values;
+            });
+        }
+
+        private Map<String, Collection<String>> extractSingleAttributes(SearchResult searchResult) {
+            return extractAttributes(attribute -> attribute.getFilter() == null, attribute -> {
+                Attributes returnedAttributes = searchResult.getAttributes();
+                NamingEnumeration<? extends Attribute> attributesEnum = returnedAttributes.getAll();
+                Collection<String> values = new ArrayList<>();
+
+                try {
+                    while (attributesEnum.hasMore()) {
+                        Attribute ldapAttribute = attributesEnum.next();
+
+                        if (!ldapAttribute.getID().equalsIgnoreCase(attribute.getLdapName())) {
+                            continue;
+                        }
+
+                        NamingEnumeration<?> attributeValues = ldapAttribute.getAll();
+
+                        try {
+                            while (attributeValues.hasMore()) {
+                                String value = attributeValues.next().toString();
+                                String valueRdn = attribute.getRdn();
+
+                                if (valueRdn != null) {
+                                    try {
+                                        for (Rdn rdn : new LdapName(value).getRdns()) {
+                                            if (rdn.getType().equalsIgnoreCase(valueRdn)) {
+                                                value = rdn.getValue().toString();
+                                                break;
+                                            }
+                                        }
+                                    } catch (Exception cause) {
+                                        throw log.ldapRealmInvalidRdnForAttribute(attribute.getName(), value, valueRdn);
+                                    }
+                                }
+
+                                values.add(value);
+                            }
+                        } finally {
+                            if (attributeValues != null) {
+                                try {
+                                    attributeValues.close();
+                                } catch (NamingException ignore) {
+                                }
+                            }
+                        }
+                    }
+                } catch (NamingException cause) {
+                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(searchResult.getNameInNamespace(), cause);
+                }
+
+                return values;
+            });
+        }
+
+        private SearchControls createSearchControls(String... returningAttributes) {
+            SearchControls searchControls = new SearchControls();
+
+            searchControls.setSearchScope(principalMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+            searchControls.setTimeLimit(principalMapping.searchTimeLimit);
+            searchControls.setReturningAttributes(returningAttributes);
+
+            return searchControls;
+        }
+
+        private Map<String, Collection<String>> extractAttributes(Predicate<PrincipalMappingBuilder.Attribute> filter, Function<PrincipalMappingBuilder.Attribute, Collection<String>> valueFunction) {
+            return principalMapping.attributes.stream()
+                    .filter(filter)
+                    .collect(Collectors.toMap(attribute -> attribute.getName(), valueFunction, (m1, m2) -> {
+                        List<String> merged = new ArrayList<>(m1);
+
+                        merged.addAll(m2);
+
+                        return merged;
+                    }));
         }
 
         private class LdapIdentity {
 
-            private final String simpleName;
             private final String distinguishedName;
-            private final Principal principal;
+            private final org.wildfly.security.authz.Attributes attributes;
 
-            LdapIdentity(String simpleName, String distinguishedName) {
-                this.simpleName = simpleName;
+            LdapIdentity(String distinguishedName, org.wildfly.security.authz.Attributes attributes) {
                 this.distinguishedName = distinguishedName;
-                this.principal = null;
+                this.attributes = attributes;
             }
 
             String getDistinguishedName() {
                 return this.distinguishedName;
             }
+        }
 
-            Principal toPrincipal() {
-                return this.principal;
+        private class LdapSearch {
+
+            private final String[] filterArgs;
+            private final String searchDn;
+            private final String filter;
+            private String[] returningAttributes;
+
+            public LdapSearch(String searchDn, String filter, String... filterArgs) {
+                this.searchDn = searchDn;
+                this.filter = filter;
+                this.filterArgs = filterArgs;
+            }
+
+            public Stream<SearchResult> search(DirContext context) throws RealmUnavailableException {
+                log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]", this.filter, this.searchDn, this.filterArgs, this.returningAttributes);
+
+                try {
+                    NamingEnumeration<SearchResult> result = context.search(searchDn, filter, filterArgs,
+                            createSearchControls(this.returningAttributes));
+
+                    return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
+                        @Override
+                        public boolean tryAdvance(Consumer<? super SearchResult> action) {
+                            try {
+                                if (!result.hasMore()) {
+                                    return false;
+                                }
+
+                                SearchResult entry = result.next();
+
+                                log.debugf("Found entry [%s].", entry.getNameInNamespace());
+
+                                action.accept(entry);
+
+                                return true;
+                            } catch (NamingException e) {
+                                throw new RuntimeException("Error while consuming results from search. SearchDn [" + searchDn + "], Filter [" + filter + "], Filter Args [" + filterArgs + "].", e);
+                            }
+                        }
+                    }, false).onClose(() -> {
+                        if (result != null) {
+                            try {
+                                result.close();
+                            } catch (NamingException ignore) {
+                            }
+                        }
+                    });
+                } catch (Exception cause) {
+                    throw log.ldapRealmFailedObtainIdentityFromServer(cause);
+                }
+            }
+
+            public void setReturningAttributes(String... returningAttributes) {
+                this.returningAttributes = returningAttributes;
             }
         }
     }
@@ -305,18 +545,21 @@ class LdapSecurityRealm implements SecurityRealm {
 
         private final String searchDn;
         private final boolean searchRecursive;
-        private final String nameAttribute;
+        private final String rdnIdentifier;
         private final String passwordAttribute;
-        public int searchTimeLimit;
+        private final List<PrincipalMappingBuilder.Attribute> attributes;
+        public final int searchTimeLimit;
 
-        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String nameAttribute, String passwordAttribute) {
-            Assert.checkNotNullParam("nameAttribute", nameAttribute);
+        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier,
+                                String passwordAttribute, List<PrincipalMappingBuilder.Attribute> attributes) {
+            Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             Assert.checkNotNullParam("passwordAttribute", passwordAttribute);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
             this.searchTimeLimit = searchTimeLimit;
-            this.nameAttribute = nameAttribute;
+            this.rdnIdentifier = rdnIdentifier;
             this.passwordAttribute = passwordAttribute;
+            this.attributes = attributes;
         }
     }
 }

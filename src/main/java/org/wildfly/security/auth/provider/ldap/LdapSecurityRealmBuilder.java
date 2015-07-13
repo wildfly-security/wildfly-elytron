@@ -23,6 +23,10 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.NameRewriter;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Builder for the security realm implementation backed by LDAP.
  *
@@ -81,7 +85,7 @@ public class LdapSecurityRealmBuilder {
      *
      * @return the builder for the principal mapping
      */
-    public LdapSecurityRealmBuilder principalMapping(LdapSecurityRealm.PrincipalMapping principalMapping) {
+    public LdapSecurityRealmBuilder setPrincipalMapping(LdapSecurityRealm.PrincipalMapping principalMapping) {
         assertNotBuilt();
 
         this.principalMapping = principalMapping;
@@ -123,6 +127,7 @@ public class LdapSecurityRealmBuilder {
         private String nameAttribute;
         private String passwordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
         private int searchTimeLimit = 10000;
+        private List<Attribute> attributes = new ArrayList<>();
 
         public static PrincipalMappingBuilder builder() {
             return new PrincipalMappingBuilder();
@@ -132,7 +137,7 @@ public class LdapSecurityRealmBuilder {
          * <p>Set the name of the context to be used when executing queries.
          *
          * <p>This option is specially useful when authenticating users based on names that don't use a X.500 format such as <em>plainUser</em>.
-         * In this case, you must also provide {@link #setNameAttribute(String)} with the attribute name that contains the user name.</p>
+         * In this case, you must also provide {@link #setRdnIdentifier(String)} with the attribute name that contains the user name.</p>
          *
          * <p>If the names used to authenticate users are based on the X.500 format, this configuration can be suppressed.
          *
@@ -153,7 +158,7 @@ public class LdapSecurityRealmBuilder {
          * @return this builder
          */
         public PrincipalMappingBuilder searchRecursive() {
-            this.searchRecursive = false;
+            this.searchRecursive = true;
             return this;
         }
 
@@ -174,7 +179,7 @@ public class LdapSecurityRealmBuilder {
          * @param nameAttribute the name attribute
          * @return this builder
          */
-        public PrincipalMappingBuilder setNameAttribute(final String nameAttribute) {
+        public PrincipalMappingBuilder setRdnIdentifier(final String nameAttribute) {
             this.nameAttribute = nameAttribute;
             return this;
         }
@@ -192,12 +197,125 @@ public class LdapSecurityRealmBuilder {
         }
 
         /**
+         * Define an attribute mapping configuration.
+         *
+         * @param attributes one or more {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute} configuration
+         * @return this builder
+         */
+        public PrincipalMappingBuilder map(Attribute... attributes) {
+            this.attributes.addAll(Arrays.asList(attributes));
+            return this;
+        }
+
+        /**
          * Build this principal mapping.
          *
          * @return a {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.PrincipalMapping} instance with all the configuration.
          */
         public LdapSecurityRealm.PrincipalMapping build() {
-            return new LdapSecurityRealm.PrincipalMapping(searchDn, searchRecursive, searchTimeLimit, nameAttribute, this.passwordAttribute);
+            return new LdapSecurityRealm.PrincipalMapping(
+                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, this.passwordAttribute, this.attributes);
+        }
+
+        public static class Attribute {
+
+            private final String ldapName;
+            private final String searchDn;
+            private final String filter;
+            private String name;
+            private String rdn;
+
+            /**
+             * Create an attribute mapping based on the given attribute in LDAP.
+             *
+             * @param ldapName the name of the attribute in LDAP from where values are obtained
+             * @return this builder
+             */
+            public static Attribute from(String ldapName) {
+                Assert.checkNotNullParam("ldapName", ldapName);
+                return new Attribute(ldapName);
+            }
+
+            /**
+             * <p>Create an attribute mapping based on the results of the given {@code filter}.
+             *
+             * <p>The {@code filter} <em>may</em> have one and exactly one <em>{0}</em> string that will be used to replace with the distinguished
+             * name of the identity. In this case, the filter is specially useful when the values for this attribute should be obtained from a
+             * separated entry. For instance, retrieving roles from entries with a object class of <em>groupOfNames</em> where the identity's DN is
+             * a value of a <em>member</em> attribute.
+             *
+             * @param searchDn the name of the context to be used when executing the filter
+             * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
+             * @param ldapName the name of the attribute in LDAP from where the values are obtained
+             * @return this builder
+             */
+            public static Attribute fromFilter(String searchDn, String filter, String ldapName) {
+                Assert.checkNotNullParam("searchDn", searchDn);
+                Assert.checkNotNullParam("filter", filter);
+                Assert.checkNotNullParam("ldapName", ldapName);
+                return new Attribute(searchDn, filter, ldapName);
+            }
+
+            /**
+             * <p>The behavior is exactly the same as {@link #fromFilter(String, String, String)}, except that it uses the
+             * same name of the context defined in {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder#setSearchDn(String)}.
+             *
+             * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
+             * @param ldapName the name of the attribute in LDAP from where the values are obtained
+             * @return this builder
+             */
+            public static Attribute fromFilter(String filter, String ldapName) {
+                Assert.checkNotNullParam("filter", filter);
+                Assert.checkNotNullParam("ldapName", ldapName);
+                return new Attribute(null, filter, ldapName);
+            }
+
+            Attribute(String ldapName) {
+                this(null, null, ldapName);
+            }
+
+            Attribute(String searchDn, String filter, String ldapName) {
+                Assert.checkNotNullParam("ldapName", ldapName);
+                this.searchDn = searchDn;
+                this.filter = filter;
+                this.ldapName = ldapName.toUpperCase();
+            }
+
+            public Attribute asRdn(String rdn) {
+                Assert.checkNotNullParam("rdn", rdn);
+                this.rdn = rdn;
+                return this;
+            }
+
+            public Attribute to(String name) {
+                Assert.checkNotNullParam("to", name);
+                this.name = name;
+                return this;
+            }
+
+            String getLdapName() {
+                return this.ldapName;
+            }
+
+            String getName() {
+                if (this.name == null) {
+                    return this.ldapName;
+                }
+
+                return this.name;
+            }
+
+            String getSearchDn() {
+                return this.searchDn;
+            }
+
+            String getFilter() {
+                return this.filter;
+            }
+
+            String getRdn() {
+                return this.rdn;
+            }
         }
     }
 }

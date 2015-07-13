@@ -31,7 +31,6 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 
 import static org.jboss.logging.Logger.Level.WARN;
-import javax.naming.NamingException;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
@@ -271,9 +270,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
 
-    @Message(id = 1059, value = "Search returned too many results")
-    NamingException searchReturnedTooManyResults();
-
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
@@ -339,6 +335,15 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
+
+    @Message(id = 5149, value = "Ldap-backed realm failed to obtain identity from server")
+    RuntimeException ldapRealmFailedObtainIdentityFromServer(@Cause Throwable cause);
+
+    @Message(id = 8029, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
+    RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
+
+    @Message(id = 8030, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
+    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn);
 
     /* keystore package */
 
@@ -942,9 +947,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
 
-    @Message(id = 5149, value = "Ldap-backed realm failed to obtain identity from server")
-    RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(@Cause Throwable cause);
-
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
@@ -1101,5 +1103,4 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8028, value = "Invalid algorithm \"%s\"")
     NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
-
 }
