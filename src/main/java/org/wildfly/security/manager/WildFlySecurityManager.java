@@ -1575,6 +1575,6 @@ public final class WildFlySecurityManager extends SecurityManager {
         } finally {
             ctx.entered = false;
         }
-        return (T) doPrivileged(PA_TRAMPOLINE1, combined);
+        return (T) doPrivileged(PA_TRAMPOLINE2, combined);
     }
 }
