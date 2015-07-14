@@ -33,7 +33,6 @@ import java.util.Set;
  */
 public abstract class ProtocolSelector {
 
-    static final ProtocolSelector DEFAULT_SELECTOR = empty().add(Protocol.TLSv1, Protocol.TLSv1_1, Protocol.TLSv1_2, Protocol.TLSv1_3);
     private final ProtocolSelector prev;
 
     ProtocolSelector(final ProtocolSelector prev) {
@@ -64,6 +63,11 @@ public abstract class ProtocolSelector {
     public static ProtocolSelector defaultProtocols() {
         return DEFAULT_SELECTOR;
     }
+
+
+    /* -- Put this after the EMPTY selector for proper static ordering -- */
+    static final ProtocolSelector DEFAULT_SELECTOR = empty().add(Protocol.TLSv1, Protocol.TLSv1_1, Protocol.TLSv1_2, Protocol.TLSv1_3);
+
 
     /* -- delete -- */
 

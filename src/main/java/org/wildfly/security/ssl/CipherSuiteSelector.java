@@ -58,8 +58,8 @@ public abstract class CipherSuiteSelector {
         return EMPTY;
     }
 
-    static final CipherSuiteSelector OPENSSL_DEFAULT = openSslAll().deleteFully(CipherSuitePredicate.matchOpenSslDefaultDeletes());
     static final CipherSuiteSelector OPENSSL_ALL = empty().add(CipherSuitePredicate.matchOpenSslAll());
+    static final CipherSuiteSelector OPENSSL_DEFAULT = openSslAll().deleteFully(CipherSuitePredicate.matchOpenSslDefaultDeletes());
 
     /**
      * Get the cipher selector which OpenSSL defines as {@code DEFAULT}.
@@ -215,7 +215,9 @@ public abstract class CipherSuiteSelector {
         final LinkedHashMap<MechanismDatabase.Entry, String> supportedMap = new LinkedHashMap<>(supportedMechanisms.length);
         for (String supportedMechanism : supportedMechanisms) {
             final MechanismDatabase.Entry entry = database.getCipherSuite(supportedMechanism);
-            supportedMap.put(entry, supportedMechanism);
+            if (entry != null) {
+                supportedMap.put(entry, supportedMechanism);
+            }
         }
         final LinkedHashSet<String> enabledSet = new LinkedHashSet<String>(supportedMap.size());
         doEvaluate(enabledSet, supportedMap);
