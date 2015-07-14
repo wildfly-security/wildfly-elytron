@@ -510,7 +510,7 @@ public final class SecurityDomain {
         private final SecurityRealm realm;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
-        private RoleDecoder roleDecoder = RoleDecoder.EMPTY;
+        private RoleDecoder roleDecoder = RoleDecoder.DEFAULT;
 
         RealmBuilder(final String name, final SecurityRealm realm) {
             this.name = name;
