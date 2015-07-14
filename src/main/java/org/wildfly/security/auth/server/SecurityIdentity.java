@@ -28,6 +28,7 @@ import java.util.concurrent.Callable;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 
 /**
@@ -197,6 +198,15 @@ public final class SecurityIdentity {
      */
     public PermissionCollection getPermissions() {
         return this.securityDomain.mapPermissions(this);
+    }
+
+    /**
+     * Get the attributes associated with this identity.
+     *
+     * @return a read-only instance of {@link Attributes} with all attributes associated with this identity
+     */
+    public Attributes getAttributes() {
+        return this.authorizationIdentity.getAttributes().asReadOnly();
     }
 
     /**
