@@ -31,6 +31,10 @@ public final class AuthenticationCompleteCallback implements ExtendedCallback, S
 
     private static final long serialVersionUID = -8336218311376736914L;
 
+    public static final AuthenticationCompleteCallback SUCCEEDED = new AuthenticationCompleteCallback(true);
+
+    public static final AuthenticationCompleteCallback FAILED = new AuthenticationCompleteCallback(false);
+
     /**
      * @serial The flag indicating whether the authentication was successful.
      */
@@ -41,7 +45,7 @@ public final class AuthenticationCompleteCallback implements ExtendedCallback, S
      *
      * @param success {@code true} if the authentication was successful, {@code false} otherwise
      */
-    public AuthenticationCompleteCallback(final boolean success) {
+    private AuthenticationCompleteCallback(final boolean success) {
         this.success = success;
     }
 
@@ -62,4 +66,14 @@ public final class AuthenticationCompleteCallback implements ExtendedCallback, S
     public boolean failed() {
         return ! success;
     }
+
+    /**
+     * Replace the deserialized instance with the sppropriate singleton instance.
+     *
+     * @return The singleton instance.
+     */
+    Object readResolve() {
+        return success ? SUCCEEDED : FAILED;
+    }
+
 }
