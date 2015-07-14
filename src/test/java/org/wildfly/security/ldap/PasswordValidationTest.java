@@ -18,11 +18,9 @@
 
 package org.wildfly.security.ldap;
 
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.password.Password;
@@ -35,26 +33,18 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class UserVerifyPasswordSuiteChild {
+public class PasswordValidationTest {
 
-    private DirContextFactory dirContextFactory;
-
-    @Before
-    public void createRealm() {
-        dirContextFactory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
-                .setSecurityPrincipal(LdapTestSuite.SERVER_DN)
-                .setSecurityCredential(LdapTestSuite.SERVER_CREDENTIAL)
-                .build();
-    }
+    @ClassRule
+    public static DirContextFactoryRule dirContextFactoryRule = new DirContextFactoryRule();
 
     @Test
     public void testPlainUserWithSimpleName() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                .setDirContextFactory(dirContextFactoryRule.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setNameAttribute("uid")
+                                .setRdnIdentifier("uid")
                                 .build()
                 )
                 .build();
@@ -70,9 +60,9 @@ public class UserVerifyPasswordSuiteChild {
     @Test
     public void testPlainUserWithX500Name() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                                .setNameAttribute("uid")
+                .setDirContextFactory(dirContextFactoryRule.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                                .setRdnIdentifier("uid")
                                 .build()
                 )
                 .build();
@@ -88,10 +78,10 @@ public class UserVerifyPasswordSuiteChild {
     @Test
     public void testVerifyStringPassword() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                .setDirContextFactory(dirContextFactoryRule.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setNameAttribute("uid")
+                                .setRdnIdentifier("uid")
                                 .build()
                 )
                 .build();
@@ -104,10 +94,10 @@ public class UserVerifyPasswordSuiteChild {
     @Test
     public void testVerifyCharArrayPassword() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                .setDirContextFactory(dirContextFactoryRule.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setNameAttribute("uid")
+                                .setRdnIdentifier("uid")
                                 .build()
                 )
                 .build();
@@ -120,10 +110,10 @@ public class UserVerifyPasswordSuiteChild {
     @Test (expected = RuntimeException.class)
     public void testVerifyInvalidPasswordType() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                .setDirContextFactory(dirContextFactoryRule.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setNameAttribute("uid")
+                                .setRdnIdentifier("uid")
                                 .build()
                 )
                 .build();

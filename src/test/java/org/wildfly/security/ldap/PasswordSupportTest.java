@@ -18,12 +18,10 @@
 
 package org.wildfly.security.ldap;
 
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -49,35 +47,26 @@ import static org.junit.Assert.assertTrue;
  *
  * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
  *
- * Note: Verify {@link ConnectionSuiteChild} is working first before focusing on errors in this test case.
+ * Note: Verify {@link TestEnvironmentTest} is working first before focusing on errors in this test case.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class UserPasswordSuiteChild {
+public class PasswordSupportTest {
 
+    @ClassRule
+    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
     private static SecurityRealm simpleToDnRealm;
 
     @BeforeClass
     public static void createRealm() {
-        DirContextFactory dirContextFactory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
-                .setSecurityPrincipal(LdapTestSuite.SERVER_DN)
-                .setSecurityCredential(LdapTestSuite.SERVER_CREDENTIAL)
-                .build();
-
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
-                .principalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                    .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                    .setNameAttribute("uid")
-                    .build()
+                .setDirContextFactory(dirContextFactory.create())
+                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
+                                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                                .setRdnIdentifier("uid")
+                                .build()
                 )
                 .build();
-    }
-
-    @AfterClass
-    public static void removeRealm() {
-        simpleToDnRealm = null;
     }
 
     @Test
@@ -164,5 +153,4 @@ public class UserPasswordSuiteChild {
         assertTrue("Valid Password", factory.verify(translated, password));
         assertFalse("Invalid Password", factory.verify(translated, "LetMeIn".toCharArray()));
     }
-
 }

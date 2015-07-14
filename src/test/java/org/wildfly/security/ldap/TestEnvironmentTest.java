@@ -18,9 +18,9 @@
 
 package org.wildfly.security.ldap;
 
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
-import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
@@ -36,12 +36,10 @@ import static org.junit.Assert.fail;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class ConnectionSuiteChild {
+public class TestEnvironmentTest {
 
-    @Test
-    public void testServer() throws NamingException {
-        testUser(LdapTestSuite.SERVER_DN, LdapTestSuite.SERVER_CREDENTIAL);
-    }
+    @ClassRule
+    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
 
     @Test
     public void testPlain() throws NamingException {
@@ -84,12 +82,7 @@ public class ConnectionSuiteChild {
         System.setProperty("com.sun.jndi.ldap.connect.pool.timeout", "300000");
         System.setProperty("com.sun.jndi.ldap.connect.pool.debug", "all");
 
-        DirContextFactory factory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LdapTestSuite.LDAP_PORT))
-                .setSecurityPrincipal(principal)
-                .setSecurityCredential(credential)
-                .setConnectionProperties(additionalConnectionProperties)
-                .build();
+        DirContextFactory factory = dirContextFactory.create(principal, credential);
 
         DirContext context = factory.obtainDirContext(null);
         assertNotNull(context);

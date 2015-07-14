@@ -214,7 +214,25 @@ public class SimpleDirContextFactoryBuilder {
                 }
             }
 
-            return new InitialDirContext(env);
+            if (log.isDebugEnabled()) {
+                log.debugf("Creating [" + InitialDirContext.class + "] with environment:");
+                env.forEach((key, value) -> {
+                    log.debugf("    Property [%s] with Value [%s]", key, value);
+                });
+            }
+
+            InitialDirContext context;
+
+            try {
+                context = new InitialDirContext(env);
+            } catch (NamingException ne) {
+                log.debugf(ne, "Could not create [%s]. Failed to connect to LDAP server.", InitialDirContext.class);
+                throw ne;
+            }
+
+            log.debugf("[%s] successfully created. Connection established to LDAP server.", context);
+
+            return context;
         }
 
         @Override
@@ -226,6 +244,7 @@ public class SimpleDirContextFactoryBuilder {
             if (context instanceof InitialDirContext) {
                 try {
                     context.close();
+                    log.debugf("Context [%s] was closed. Connection closed or just returned to the pool.", context);
                 } catch (NamingException ignored) {
                 }
             }
