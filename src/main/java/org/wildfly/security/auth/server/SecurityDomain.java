@@ -20,6 +20,8 @@ package org.wildfly.security.auth.server;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Security;
+import java.security.Provider;
 import java.security.PermissionCollection;
 import java.security.Principal;
 import java.util.Collections;
@@ -28,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.security.sasl.SaslServerFactory;
@@ -64,6 +67,7 @@ public final class SecurityDomain {
     private final PrincipalDecoder principalDecoder;
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
+    private final Supplier<Provider[]> providers;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -74,6 +78,7 @@ public final class SecurityDomain {
         this.permissionMapper = builder.permissionMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
+        this.providers = builder.providers;
         // todo configurable
         anonymousAllowed = false;
         final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
@@ -190,6 +195,15 @@ public final class SecurityDomain {
             realmInfo = this.realmMap.get(this.defaultRealmName);
         }
         return realmInfo;
+    }
+
+    /**
+     * Get the {@link Provider} instances associated with this security domain.
+     *
+     * @return the {@link Provider} instances associated with this security domain.
+     */
+    Provider[] getProviders() {
+        return providers.get();
     }
 
     CredentialSupport getCredentialSupport(final Class<?> credentialType) {
@@ -341,6 +355,7 @@ public final class SecurityDomain {
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
+        private Supplier<Provider[]> providers = () -> Security.getProviders();
 
         Builder() {
         }
@@ -463,6 +478,13 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("defaultRealmName", defaultRealmName);
             assertNotBuilt();
             this.defaultRealmName = defaultRealmName;
+
+            return this;
+        }
+
+        public Builder setProviders(final Supplier<Provider[]> providers) {
+            assertNotBuilt();
+            this.providers = providers;
 
             return this;
         }
