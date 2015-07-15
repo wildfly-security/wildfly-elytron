@@ -19,11 +19,11 @@ package org.wildfly.security.ldap;
 
 import org.junit.ClassRule;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.authz.AuthorizationIdentity;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -42,7 +42,7 @@ public abstract class AbstractAttributeMappingTest {
         assertNotNull("Attribute [" + lastName.getKey() + "] not found.", lastName);
 
         for (String expectedValue : expectedValues) {
-            assertTrue("Value [" + expectedValue  + "] for attribute [" + lastName.getKey() + "] not found.", lastName.contains(expectedValue));
+            assertTrue("Value [" + expectedValue + "] for attribute [" + lastName.getKey() + "] not found.", lastName.contains(expectedValue));
         }
     }
 
@@ -51,20 +51,31 @@ public abstract class AbstractAttributeMappingTest {
     }
 
     protected void assertAttributes(String principalName, AssertResultHandler handler, LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute... expectedAttributes) throws RealmUnavailableException {
-        SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(this.dirContextFactory.create())
-                .setPrincipalMapping(builder()
-                        .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                        .searchRecursive()
-                        .setRdnIdentifier("uid")
-                        .map(expectedAttributes)
-                        .build()).build();
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(principalName);
+        SecurityDomain.Builder builder = SecurityDomain.builder();
 
-        assertTrue("Principal [" + principalName + "] does not exist.", realmIdentity.exists());
+        builder.setDefaultRealmName("default")
+                .addRealm("default",
+                        LdapSecurityRealmBuilder.builder()
+                                .setDirContextFactory(this.dirContextFactory.create())
+                                .setPrincipalMapping(builder()
+                                        .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                                        .searchRecursive()
+                                        .setRdnIdentifier("uid")
+                                        .map(expectedAttributes)
+                                        .build()).build());
 
-        AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-        Attributes attributes = authorizationIdentity.getAttributes();
+        SecurityDomain securityDomain = builder.build();
+
+        ServerAuthenticationContext serverAuthenticationContext = securityDomain.createNewAuthenticationContext();
+
+        serverAuthenticationContext.setAuthenticationName(principalName);
+
+        assertTrue("Principal [" + principalName + "] does not exist.", serverAuthenticationContext.exists());
+
+        serverAuthenticationContext.authorize(principalName);
+
+        SecurityIdentity securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
+        Attributes attributes = securityIdentity.getAttributes();
 
         if (expectedAttributes.length == 0) {
             assertTrue("No attributes expected.", attributes.isEmpty());
