@@ -1162,7 +1162,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9504, value = "Opening quote has to be the first character in parameter value \"%s\"")
     IllegalArgumentException vaultParameterOpeningQuote(String uri);
 
-    @Message(id = 95058, value = "Closing quote has to be the last character of parameter value \"%s\"")
+    @Message(id = 9505, value = "Closing quote has to be the last character of parameter value \"%s\"")
     IllegalArgumentException vaultParameterClosingQuote(String uri);
 
     @Message(id = 9506, value = "Unexpected end of parameter part of \"%s\"")
@@ -1171,63 +1171,63 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9507, value = "Parameter name expected, but is missing \"%s\"")
     IllegalArgumentException vaultParameterNameExpected(String uri);
 
-    @Message(id = 235, value = "Vault \"%s\" does not exist")
+    @Message(id = 9508, value = "Vault \"%s\" does not exist")
     VaultException vaultDoesNotExist(String name);
 
-    @Message(id = 236, value = "Vault Exception")
+    @Message(id = 9509, value = "Vault Exception")
     VaultException vaultException(@Cause Exception cause);
 
     @LogMessage
-    @Message(id = 237, value = "Vault \"%s\" of type \"%s\" is initialized")
+    @Message(id = 9510, value = "Vault \"%s\" of type \"%s\" is initialized")
     void logVaultInitialized(String vaultName, String type);
 
-    @Message(id = 238, value = "Following configuration attributes are not supported by vault " + KeystorePasswordStorage.NAME + "=\"%s\" \n\"%s\"")
+    @Message(id = 9511, value = "Following configuration attributes are not supported by vault " + KeystorePasswordStorage.NAME + "=\"%s\" \n\"%s\"")
     StorageException unsupportedPasswordStorageConfigurationAttributes(String vaultName, String attributes);
 
-    @Message(id = 239, value = "Cannot read vault storage file for " + KeystorePasswordStorage.NAME + "=\"%s\" (\"%s\")")
+    @Message(id = 9512, value = "Cannot read vault storage file for " + KeystorePasswordStorage.NAME + "=\"%s\" (\"%s\")")
     StorageException cannotReadVaultStorage(String vaultName, String fileName, @Cause Exception cause);
 
-    @Message(id = 240, value = "Cannot write vault storage file for " + KeystorePasswordStorage.NAME + "=\"%s\" (\"%s\")")
+    @Message(id = 9513, value = "Cannot write vault storage file for " + KeystorePasswordStorage.NAME + "=\"%s\" (\"%s\")")
     StorageException cannotWriteVaultStorage(String vaultName, String fileName);
 
-    @Message(id = 241, value = "Vault " + KeystorePasswordStorage.NAME + "=\"%s\" has to be initialized before the first usage")
+    @Message(id = 9514, value = "Vault " + KeystorePasswordStorage.NAME + "=\"%s\" has to be initialized before the first usage")
     VaultException vaultIsNotInitialized(String name);
 
-    @Message(id = 242, value = "Vault " + KeystorePasswordStorage.NAME + "=\"%s\" doesn't contain admin key under alias \"%s\"")
+    @Message(id = 9515, value = "Vault " + KeystorePasswordStorage.NAME + "=\"%s\" doesn't contain admin key under alias \"%s\"")
     StorageException vaultAdminKeyNotPresent(String name, String alias);
 
-    @Message(id = 243, value = "Reloadable vault is read only, change settings and restart vault service (" + KeystorePasswordStorage.NAME + "=\"%s\")")
+    @Message(id = 9516, value = "Reloadable vault is read only, change settings and restart vault service (" + KeystorePasswordStorage.NAME + "=\"%s\")")
     StorageException reloadableVaultIsReadOnly(String name);
 
-    @Message(id = 244, value = "Problem to instantiate password class")
+    @Message(id = 9517, value = "Problem to instantiate password class")
     VaultException passwordClassProblem(@Cause Exception cause);
 
-    @Message(id = 245, value = "Specified class is not an instance of %s")
+    @Message(id = 9518, value = "Specified class is not an instance of %s")
     VaultException wrongPasswordClass(String className);
 
-    @Message(id = 246, value = "Password class not specified")
+    @Message(id = 9519, value = "Password class not specified")
     IllegalArgumentException passwordClassNotSpecified();
 
-    @Message(id = 247, value = "Secured attribute \"%s\" cannot be found in password storage \"%s\"")
+    @Message(id = 9520, value = "Secured attribute \"%s\" cannot be found in password storage \"%s\"")
     StorageException securedAttributeNotFound(String attribute, String storageName);
 
-    @Message(id = 248, value = "ExtCallback must have exactly one parameter")
+    @Message(id = 9521, value = "ExtCallback must have exactly one parameter")
     VaultException extCallbackWrongParameterCount();
 
-    @Message(id = 249, value = "CmdCallback must have one or more parameters")
+    @Message(id = 9522, value = "CmdCallback must have one or more parameters")
     VaultException cmdCallbackWrongParameterCount();
 
-    @Message(id = 250, value = "Callback \"%s\" is not supported by VaultManager. Use supported types or make your Callback implement org.wildfly.security.vault.Parametrized.")
+    @Message(id = 9523, value = "Callback \"%s\" is not supported by VaultManager. Use supported types or make your Callback implement org.wildfly.security.vault.Parametrized.")
     VaultException callbackNotSupported(String callbackName);
 
-    @Message(id = 251, value = "More than one fragment defined for Vault URI")
+    @Message(id = 9524, value = "More than one fragment defined for Vault URI")
     String moreThanOneFragmentDefined();
 
-    @Message(id = 252, value = "Password cache for external commands not supported")
+    @Message(id = 9525, value = "Password cache for external commands not supported")
     VaultException cacheForExternalCommandsNotSupported();
 
     @LogMessage
-    @Message(id = 253, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    @Message(id = 9526, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
     void warnWrongBase64EncodedString(String base64);
 
 }
