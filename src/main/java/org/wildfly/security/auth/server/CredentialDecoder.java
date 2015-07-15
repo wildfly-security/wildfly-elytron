@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.common.Assert;
 
 import java.security.Principal;
 
@@ -47,9 +47,7 @@ public interface CredentialDecoder {
      * @return the aggregated decoder
      */
     static CredentialDecoder aggregate(final CredentialDecoder... decoders) {
-        if (decoders == null) {
-            throw log.nullParameter("decoders");
-        }
+        Assert.checkNotNullParam("decoders", decoders);
         return credential -> {
             Principal result;
             for (CredentialDecoder decoder : decoders) {

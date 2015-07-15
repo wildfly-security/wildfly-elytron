@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.common.Assert;
 
 import java.io.Serializable;
 import java.net.SocketAddress;
@@ -49,14 +49,8 @@ public final class SocketAddressCallback implements ExtendedCallback, Serializab
      * @param kind the disposition of the endpoint
      */
     public SocketAddressCallback(final SocketAddress address, final Kind kind) {
-        if (address == null) {
-            throw log.nullParameter("address");
-        }
-        if (kind == null) {
-            throw log.nullParameter("kind");
-        }
-        this.address = address;
-        this.kind = kind;
+        this.address = Assert.checkNotNullParam("address", address);
+        this.kind = Assert.checkNotNullParam("kind", kind);
     }
 
     /**

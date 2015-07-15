@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.server;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.security.Principal;
 
 import org.wildfly.common.Assert;
@@ -62,9 +60,7 @@ public interface PrincipalDecoder {
      * @return the aggregated decoder
      */
     static PrincipalDecoder aggregate(final PrincipalDecoder... decoders) {
-        if (decoders == null) {
-            throw log.nullParameter("decoders");
-        }
+        Assert.checkNotNullParam("decoders", decoders);
         return principal -> {
             String result;
             for (PrincipalDecoder decoder : decoders) {

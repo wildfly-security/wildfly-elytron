@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import org.wildfly.common.Assert;
+
 import static org.wildfly.security.util.Alphabet.*;
 
 import java.io.ByteArrayOutputStream;
@@ -1491,7 +1493,7 @@ public abstract class ByteIterator extends NumericIterator {
                     return '=';
                 }
                 default: {
-                    throw new IllegalStateException();
+                    throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -1558,7 +1560,7 @@ public abstract class ByteIterator extends NumericIterator {
                     return '=';
                 }
                 default: {
-                    throw new IllegalStateException();
+                    throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -1626,7 +1628,9 @@ public abstract class ByteIterator extends NumericIterator {
                     state = 0xc;
                     return '=';
                 }
-                default: throw new IllegalStateException();
+                default: {
+                    throw Assert.impossibleSwitchCase(state);
+                }
             }
         }
 
@@ -1673,7 +1677,9 @@ public abstract class ByteIterator extends NumericIterator {
                 case 0xe: {
                     return '=';
                 }
-                default: throw new IllegalStateException();
+                default: {
+                    throw Assert.impossibleSwitchCase(state);
+                }
             }
         }
 
@@ -1899,7 +1905,7 @@ public abstract class ByteIterator extends NumericIterator {
                     return '=';
                 }
                 default: {
-                    throw new IllegalStateException();
+                    throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -2004,7 +2010,7 @@ public abstract class ByteIterator extends NumericIterator {
                     return '=';
                 }
                 default: {
-                    throw new IllegalStateException();
+                    throw Assert.impossibleSwitchCase(state);
                 }
             }
         }
@@ -2139,7 +2145,9 @@ public abstract class ByteIterator extends NumericIterator {
                         return c6;
                     }
                 }
-                default: throw new IllegalStateException();
+                default: {
+                    throw Assert.impossibleSwitchCase(state);
+                }
             }
         }
 
@@ -2238,7 +2246,9 @@ public abstract class ByteIterator extends NumericIterator {
                 case 0x2c: {
                     return addPadding ? '=' : c6;
                 }
-                default: throw new IllegalStateException();
+                default: {
+                    throw Assert.impossibleSwitchCase(state);
+                }
             }
         }
 

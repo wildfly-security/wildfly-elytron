@@ -18,14 +18,13 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.Version;
@@ -272,9 +271,7 @@ public final class AuthenticationContext {
      * @return the action return value
      */
     public <T> T run(PrivilegedAction<T> action) {
-        if (action == null) {
-            throw log.nullParameter("action");
-        }
+        Assert.checkNotNullParam("action", action);
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             return action.run();
@@ -296,9 +293,7 @@ public final class AuthenticationContext {
      * @throws PrivilegedActionException if the action throws an exception
      */
     public <T> T run(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-        if (action == null) {
-            throw log.nullParameter("action");
-        }
+        Assert.checkNotNullParam("action", action);
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             try {
@@ -333,9 +328,7 @@ public final class AuthenticationContext {
      * @return the action return value
      */
     public <T, P> T run(P parameter, ParametricPrivilegedAction<T, P> action) {
-        if (action == null) {
-            throw log.nullParameter("action");
-        }
+        Assert.checkNotNullParam("action", action);
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             return action.run(parameter);
@@ -359,9 +352,7 @@ public final class AuthenticationContext {
      * @throws PrivilegedActionException if the action throws an exception
      */
     public <T, P> T run(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
-        if (action == null) {
-            throw log.nullParameter("action");
-        }
+        Assert.checkNotNullParam("action", action);
         final AuthenticationContext oldSubj = currentIdentityContext.get();
         if (oldSubj == this) {
             try {

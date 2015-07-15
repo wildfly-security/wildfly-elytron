@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.callback;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.common.Assert;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -43,9 +43,7 @@ public final class PeerPrincipalCallback implements ExtendedCallback, Serializab
      * @param principal the peer principal
      */
     public PeerPrincipalCallback(final Principal principal) {
-        if (principal == null) {
-            throw log.nullParameter("principal");
-        }
+        Assert.checkNotNullParam("principal", principal);
         this.principal = principal;
     }
 

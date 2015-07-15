@@ -22,7 +22,8 @@
 
 package org.wildfly.security.permission;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.common.Assert;
+
 import static org.wildfly.security.manager._private.SecurityMessages.permission;
 
 import java.util.Arrays;
@@ -196,12 +197,8 @@ public final class PermissionActions {
      * @throws IllegalArgumentException if the string contained an invalid action
      */
     public static <E extends Enum<E>> EnumSet<E> parseActionStringToSet(Class<E> actionType, String actionString) throws IllegalArgumentException {
-        if (actionString == null) {
-            throw log.nullParameter("actionString");
-        }
-        if (actionType == null) {
-            throw log.nullParameter("actionType");
-        }
+        Assert.checkNotNullParam("actionType", actionType);
+        Assert.checkNotNullParam("actionString", actionString);
         final SetMatchAction<E> matchAction = new SetMatchAction<>(EnumSet.noneOf(actionType));
         doParse(actionType, actionString, matchAction);
         return matchAction.getSet();
@@ -220,12 +217,8 @@ public final class PermissionActions {
      * @throws IllegalArgumentException if the string contained an invalid action
      */
     public static <E extends Enum<E>> int parseActionStringToInt(Class<E> actionType, String actionString) throws IllegalArgumentException {
-        if (actionString == null) {
-            throw log.nullParameter("actionString");
-        }
-        if (actionType == null) {
-            throw log.nullParameter("actionType");
-        }
+        Assert.checkNotNullParam("actionType", actionType);
+        Assert.checkNotNullParam("actionString", actionString);
         final IntMatchAction<E> matchAction = new IntMatchAction<>();
         doParse(actionType, actionString, matchAction);
         return matchAction.getResult();
@@ -244,12 +237,8 @@ public final class PermissionActions {
      * @throws IllegalArgumentException if the string contained an invalid action
      */
     public static <E extends Enum<E>> long parseActionStringToLong(Class<E> actionType, String actionString) throws IllegalArgumentException {
-        if (actionString == null) {
-            throw log.nullParameter("actionString");
-        }
-        if (actionType == null) {
-            throw log.nullParameter("actionType");
-        }
+        Assert.checkNotNullParam("actionType", actionType);
+        Assert.checkNotNullParam("actionString", actionString);
         final LongMatchAction<E> matchAction = new LongMatchAction<>();
         doParse(actionType, actionString, matchAction);
         return matchAction.getResult();

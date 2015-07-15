@@ -25,6 +25,7 @@ import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPasswor
 import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -45,9 +46,8 @@ class UserPasswordPasswordUtil {
     }
 
     public static Password parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
-        if (userPassword == null || userPassword.length == 0) {
-            throw log.nullOrEmptyParameter("userPassword");
-        }
+        Assert.checkNotNullParam("userPassword", userPassword);
+        if (userPassword.length == 0) throw log.emptyParameter("userPassword");
 
         if (userPassword[0] != '{') {
             return createClearPassword(userPassword);
