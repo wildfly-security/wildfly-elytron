@@ -24,7 +24,10 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,17 +92,14 @@ public final class ServerAuthenticationContext {
      * method initiates authentication.
      *
      * @param saslServerFactory the SASL server factory
-     * @param serverName the server name, or {@code null} to create an unbound SASL server (if allowed by the mechanism)
      * @param mechanismName the selected mechanism name
-     * @param protocol the protocol which is currently in use
      * @return the SASL server
      * @throws SaslException if creating the SASL server failed for some reason
      * @throws IllegalStateException if authentication was already initiated on this context
      */
-    public SaslServer createSaslServer(SaslServerFactory saslServerFactory, String serverName, String mechanismName, String protocol) throws SaslException, IllegalStateException {
+    public SaslServer createSaslServer(SaslServerFactory saslServerFactory, String mechanismName) throws SaslException, IllegalStateException {
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
         Assert.checkNotNullParam("mechanismName", mechanismName);
-        Assert.checkNotNullParam("protocol", protocol);
         final AuthenticationCompleteCallbackSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
         final CallbackHandler callbackHandler;
         if (mechanismName.equals(AbstractAnonymousFactory.ANONYMOUS)) {
@@ -107,7 +107,17 @@ public final class ServerAuthenticationContext {
         } else {
             callbackHandler = createCallbackHandler();
         }
-        return factory.createSaslServer(mechanismName, protocol, serverName, QUERY_ALL, callbackHandler);
+        return factory.createSaslServer(mechanismName, "unknown", null, QUERY_ALL, callbackHandler);
+    }
+
+    /**
+     * Query all the available SASL server authentication mechanism names.
+     *
+     * @param saslServerFactory the SASL server to query
+     * @return the collection of mechanism names
+     */
+    public Collection<String> querySaslServerMechanismNames(SaslServerFactory saslServerFactory) {
+        return new LinkedHashSet<>(Arrays.asList(saslServerFactory.getMechanismNames(QUERY_ALL)));
     }
 
     /**
