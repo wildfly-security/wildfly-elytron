@@ -123,4 +123,12 @@ public final class WildFlySasl {
      * separated by a comma character (",").
      */
     public static final String SUPPORTED_CIPHER_NAMES = "org.jboss.security.sasl.digest.ciphers";
+
+    /**
+     * A property used to provide an alternate dictionary to the OTP SASL mechanism. Each dictionary word should
+     * be separated by a space character (U+0020).
+     *
+     * Note: This is a client only property and is not used server side.
+     */
+    public static final String OTP_ALTERNATE_DICTIONARY = "wildfly.sasl.otp.alternate-dictionary";
 }

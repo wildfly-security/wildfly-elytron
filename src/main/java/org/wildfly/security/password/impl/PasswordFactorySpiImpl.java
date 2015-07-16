@@ -23,6 +23,7 @@ import static org.wildfly.security.password.interfaces.BCryptPassword.*;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.*;
 import static org.wildfly.security.password.interfaces.ClearPassword.*;
 import static org.wildfly.security.password.interfaces.DigestPassword.*;
+import static org.wildfly.security.password.interfaces.OneTimePassword.*;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
@@ -43,6 +44,7 @@ import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
@@ -54,6 +56,7 @@ import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
@@ -318,6 +321,13 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     break;
                 }
             }
+            case ALGORITHM_OTP_MD5:
+            case ALGORITHM_OTP_SHA1: {
+                if (keySpec instanceof OneTimePasswordSpec) {
+                    return new OneTimePasswordImpl(algorithm, (OneTimePasswordSpec) keySpec);
+                }
+                break;
+            }
         }
         throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
     }
@@ -400,6 +410,10 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SCRAM_SHA_1:
             case ALGORITHM_SCRAM_SHA_256: {
                 return (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm()));
+            }
+            case ALGORITHM_OTP_MD5:
+            case ALGORITHM_OTP_SHA1: {
+                return (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm()));
             }
             default: {
                 return false;
@@ -529,6 +543,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof ScramDigestPassword && algorithm.equals(password.getAlgorithm())) {
                     return new ScramDigestPasswordImpl((ScramDigestPassword) password);
+                }
+                break;
+            }
+            case ALGORITHM_OTP_MD5:
+            case ALGORITHM_OTP_SHA1: {
+                if (password instanceof OneTimePasswordImpl && algorithm.equals(password.getAlgorithm())) {
+                    return password;
+                } else if (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm())) {
+                    return new OneTimePasswordImpl((OneTimePassword) password);
                 }
                 break;
             }
