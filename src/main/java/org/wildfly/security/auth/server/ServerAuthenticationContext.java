@@ -36,6 +36,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -526,7 +527,6 @@ public final class ServerAuthenticationContext {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
                     final String authorizationID = authorizeCallback.getAuthorizationID();
                     authorizeCallback.setAuthorized(authorize(authorizationID));
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof NameCallback) {
                     // login name
                     final String name = ((NameCallback) callback).getDefaultName();
@@ -535,7 +535,6 @@ public final class ServerAuthenticationContext {
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PeerPrincipalCallback) {
                     // login name
                     final Principal principal = ((PeerPrincipalCallback) callback).getPrincipal();
@@ -544,7 +543,6 @@ public final class ServerAuthenticationContext {
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PasswordVerifyCallback) {
                     final PasswordVerifyCallback passwordVerifyCallback = (PasswordVerifyCallback) callback;
                     // need a plain password
@@ -564,7 +562,6 @@ public final class ServerAuthenticationContext {
                         // try to fall back to another credential type
                         throw new FastUnsupportedCallbackException(callback);
                     }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
@@ -582,8 +579,6 @@ public final class ServerAuthenticationContext {
                         throw new FastUnsupportedCallbackException(callback);
                     }
                     passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
-
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
                     for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
@@ -596,7 +591,6 @@ public final class ServerAuthenticationContext {
                         }
                     }
                     // otherwise just fall out; some mechanisms will try again with different credentials
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CredentialVerifyCallback) {
                     CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
 
@@ -606,7 +600,6 @@ public final class ServerAuthenticationContext {
                     }
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
                         if (((AuthenticationCompleteCallback) callback).succeeded()) {
@@ -615,19 +608,18 @@ public final class ServerAuthenticationContext {
                             fail();
                         }
                     }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
                     final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
                     if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
                         // todo: filter by IP address
                     }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SecurityIdentityCallback) {
                     ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
-                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof RealmCallback) {
                 } else {
                     CallbackUtil.unsupported(callback);
                 }
+                handleOne(callbacks, idx + 1);
             }
         };
     }

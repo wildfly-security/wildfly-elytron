@@ -25,6 +25,7 @@ import java.util.Map;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
 import javax.security.sasl.Sasl;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
@@ -62,6 +63,10 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
             } catch (GeneralSecurityException e) {
                 // fall out
             }
+        } else if (callback instanceof RealmCallback) {
+            RealmCallback realmCallback = (RealmCallback) callback;
+            realmCallback.setText(realmCallback.getDefaultText());
+            return;
         }
         super.handleCallback(callbacks, index);
     }
