@@ -338,7 +338,7 @@ public abstract class AuthenticationConfiguration {
         try {
             return password == null ? this : usePassword(PasswordFactory.getInstance("clear").generatePassword(new ClearPasswordSpec(password)));
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException();
+            throw new IllegalStateException(e);
         }
     }
 

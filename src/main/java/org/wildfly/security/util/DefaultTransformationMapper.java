@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import org.wildfly.common.Assert;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.util.TransformationSpec.HIGH_STRENGTH;
 import static org.wildfly.security.util.TransformationSpec.MEDIUM_STRENGTH;
@@ -82,9 +84,7 @@ public class DefaultTransformationMapper implements TransformationMapper {
     @Override
     public TransformationSpec getTransformationSpec(String provider, String mechanism, String token)
             throws IllegalArgumentException {
-        if (token == null) {
-            throw log.nullParameter("token");
-        }
+        Assert.checkNotNullParam("token", token);
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
             throw log.mechanismNotSupported(mechanism);
@@ -118,9 +118,7 @@ public class DefaultTransformationMapper implements TransformationMapper {
     public TransformationSpec[] getTransformationSpecByStrength(String provider, String mechanism, String... tokens)
             throws IllegalArgumentException {
 
-        if (tokens == null) {
-            throw log.nullParameter("tokens");
-        }
+        Assert.checkNotNullParam("tokens", tokens);
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
             throw log.mechanismNotSupported(mechanism);
@@ -160,9 +158,7 @@ public class DefaultTransformationMapper implements TransformationMapper {
     public TransformationSpec[] getTransformationSpecWithStrength(String provider, String mechanism, int strength,
             String... tokens) throws IllegalArgumentException {
 
-        if (tokens == null) {
-            throw log.nullParameter("tokens");
-        }
+        Assert.checkNotNullParam("tokens", tokens);
         TransformationSpec[] ts = transformations.get(mechanism);
         if (ts == null) {
             throw log.mechanismNotSupported(mechanism);

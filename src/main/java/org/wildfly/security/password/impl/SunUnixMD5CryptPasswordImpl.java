@@ -28,6 +28,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -94,9 +95,7 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
             + "Be all my sins remember'd.\n\0"; // trailing null character is needed
 
     SunUnixMD5CryptPasswordImpl(final String algorithm, final byte[] clonedHash, final byte[] clonedSalt, final int iterationCount) {
-        if (algorithm == null) {
-            throw log.nullParameter("algorithm");
-        }
+        Assert.checkNotNullParam("algorithm", algorithm);
         if (!algorithm.equals(ALGORITHM_SUN_CRYPT_MD5) && !algorithm.equals(ALGORITHM_SUN_CRYPT_MD5_BARE_SALT)) {
             throw log.unrecognizedAlgorithm(algorithm);
         }

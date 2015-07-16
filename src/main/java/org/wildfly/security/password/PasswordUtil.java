@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
@@ -204,9 +205,7 @@ public final class PasswordUtil {
     }
 
     private static StringBuilder getCryptStringToBuilder(Password password) throws InvalidKeySpecException {
-        if (password == null) {
-            throw log.nullParameter("password");
-        }
+        Assert.checkNotNullParam("password", password);
         final StringBuilder b = new StringBuilder();
         if (password instanceof BCryptPassword) {
             BCryptPassword spec = (BCryptPassword) password;
@@ -312,16 +311,12 @@ public final class PasswordUtil {
     }
 
     public static Password parseCryptString(String cryptString) throws InvalidKeySpecException {
-        if (cryptString == null) {
-            throw log.nullParameter("cryptString");
-        }
+        Assert.checkNotNullParam("cryptString", cryptString);
         return parseCryptString(cryptString.toCharArray());
     }
 
     public static Password parseCryptString(char[] cryptString) throws InvalidKeySpecException {
-        if (cryptString == null) {
-            throw log.nullParameter("cryptString");
-        }
+        Assert.checkNotNullParam("cryptString", cryptString);
         final int algorithmId = doIdentifyAlgorithm(cryptString);
         switch (algorithmId) {
             case A_CRYPT_MD5: {
@@ -494,7 +489,7 @@ public final class PasswordUtil {
             case A_DIGEST_SHA_256:
             case A_DIGEST_SHA_384:
             case A_DIGEST_SHA_512: initialLen = "[sha-XXX]".length(); break;
-            default: throw new IllegalStateException();
+            default: throw Assert.impossibleSwitchCase(algorithmId);
         }
         byte[] bytes = CodePointIterator.ofChars(cryptString, 0, initialLen).base64Decode().drain();
         final String algorithmName = getAlgorithmNameString(algorithmId);

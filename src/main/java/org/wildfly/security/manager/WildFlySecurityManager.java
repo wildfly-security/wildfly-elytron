@@ -22,8 +22,6 @@
 
 package org.wildfly.security.manager;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.FileDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -46,6 +44,7 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.manager.action.ClearPropertyAction;
@@ -537,9 +536,7 @@ public final class WildFlySecurityManager extends SecurityManager {
     public void checkMemberAccess(final Class<?> clazz, final int which) {
         final Context ctx = CTX.get();
         if (doCheck(ctx)) {
-            if (clazz == null) {
-                throw log.nullParameter("class");
-            }
+            Assert.checkNotNullParam("class", clazz);
             if (which != Member.PUBLIC) {
                 /* The default sec mgr implementation makes some ugly assumptions about call stack depth that we must
                  * unfortunately replicate (and improve upon).  Here are the stack elements we expect to see:

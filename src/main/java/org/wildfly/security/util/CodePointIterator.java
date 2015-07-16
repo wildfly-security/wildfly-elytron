@@ -18,6 +18,8 @@
 
 package org.wildfly.security.util;
 
+import org.wildfly.common.Assert;
+
 import static org.wildfly.security.util.Alphabet.*;
 
 import java.util.NoSuchElementException;
@@ -558,7 +560,7 @@ public abstract class CodePointIterator extends NumericIterator {
                         return 0b10_000000 | cp >> 6 & 0x3f;
                     }
                     default: {
-                        throw new IllegalStateException();
+                        throw Assert.impossibleSwitchCase(st);
                     }
                 }
             }
@@ -593,7 +595,7 @@ public abstract class CodePointIterator extends NumericIterator {
                         return 0b10_000000 | cp >> 12 & 0x3f;
                     }
                     default: {
-                        throw new IllegalStateException();
+                        throw Assert.impossibleSwitchCase(st);
                     }
                 }
             }
@@ -649,7 +651,7 @@ public abstract class CodePointIterator extends NumericIterator {
                         return 0b10_000000 | cp >> 6 & 0x3f;
                     }
                     default: {
-                        throw new IllegalStateException();
+                        throw Assert.impossibleSwitchCase(st);
                     }
                 }
             }
@@ -688,7 +690,7 @@ public abstract class CodePointIterator extends NumericIterator {
                         return 0b10_000000 | cp >> 12 & 0x3f;
                     }
                     default: {
-                        throw new IllegalStateException();
+                        throw Assert.impossibleSwitchCase(st);
                     }
                 }
             }

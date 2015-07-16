@@ -30,6 +30,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -55,9 +56,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     UnixSHACryptPasswordImpl(String algorithm, byte[] clonedSalt, int iterationCount, byte[] hash) {
-        if (algorithm == null) {
-            throw log.nullParameter("algorithm");
-        }
+        Assert.checkNotNullParam("algorithm", algorithm);
         if (!ALGORITHM_CRYPT_SHA_256.equals(algorithm) && !ALGORITHM_CRYPT_SHA_512.equals(algorithm)) {
             throw log.unrecognizedAlgorithm(algorithm);
         }

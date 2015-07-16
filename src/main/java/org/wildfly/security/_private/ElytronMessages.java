@@ -75,22 +75,19 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2, value = "Parse error")
     String parseError();
 
-    @Message(id = 3, value = "Parameter %s is null")
-    IllegalArgumentException nullParameter(String parameter);
+    @Message(id = 3, value = "Parameter %s is empty")
+    IllegalArgumentException emptyParameter(String parameter);
 
-    @Message(id = 4, value = "Parameter %s is null or empty")
-    IllegalArgumentException nullOrEmptyParameter(String parameter);
-
-    @Message(id = 5, value = "This builder has already been built")
+    @Message(id = 4, value = "This builder has already been built")
     IllegalStateException builderAlreadyBuilt();
 
-    @Message(id = 6, value = "Unrecognized algorithm \"%s\"")
+    @Message(id = 5, value = "Unrecognized algorithm \"%s\"")
     IllegalArgumentException unrecognizedAlgorithm(String algorithm);
 
-    @Message(id = 7, value = "Cannot instantiate self-referential factory")
+    @Message(id = 6, value = "Cannot instantiate self-referential factory")
     IllegalStateException cannotInstantiateSelfReferentialFactory();
 
-    @Message(id = 8, value = "Unexpected trailing garbage in X.500 principal")
+    @Message(id = 7, value = "Unexpected trailing garbage in X.500 principal")
     IllegalArgumentException unexpectedTrailingGarbageInX500principal();
 
     /* auth package */
@@ -1128,8 +1125,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8020, value = "Invalid number of rounds. Must be an integer between %d and %d, inclusive")
     IllegalArgumentException invalidNumberOfRoundsMustBeIntBetween(int min, int max);
 
-    @Message(id = 8021, value = "Invalid salt. Must be a %d byte array")
-    IllegalArgumentException invalidSaltMustBeByteArray(int length);
+    @Message(id = 8021, value = "Invalid salt: must be %d bytes long")
+    IllegalArgumentException invalidSaltMustBeBytesLong(int length);
 
     @Message(id = 8022, value = "BSD DES crypt password hash must be %d bytes")
     InvalidKeySpecException invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(int bytes);

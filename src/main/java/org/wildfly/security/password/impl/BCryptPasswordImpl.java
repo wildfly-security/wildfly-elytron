@@ -26,6 +26,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
@@ -304,12 +305,13 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      */
     static byte[] bcrypt(final int cost, final byte[] salt, final byte[] password) {
 
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("password", password);
+
         if (cost < 4 || cost > 31)
             throw log.invalidNumberOfRoundsMustBeIntBetween(4, 31);
-        if (salt == null || salt.length != BCRYPT_SALT_SIZE)
-            throw log.invalidSaltMustBeByteArray(16);
-        if (password == null)
-            throw log.nullParameter("password");
+        if (salt.length != BCRYPT_SALT_SIZE)
+            throw log.invalidSaltMustBeBytesLong(BCRYPT_SALT_SIZE);
 
         // check if null has been appended to the password. If not, add a null byte for compatibility with C implementations
         byte[] key = password.clone();
@@ -538,8 +540,8 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
         private int position;
 
         CyclicByteBuffer(byte[] buffer) {
-            if (buffer == null || buffer.length == 0)
-                throw log.nullOrEmptyParameter("buffer");
+            Assert.checkNotNullParam("buffer", buffer);
+            if (buffer.length == 0) throw log.emptyParameter("buffer");
             this.buffer = buffer;
             this.position = 0;
         }
