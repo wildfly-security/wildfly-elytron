@@ -70,7 +70,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;
-        this.clientQops = qops == null ? new String[] {QOP_AUTH} : qops;
+        this.clientQops = qops == null ? QOP_VALUES : qops;
         this.demandedCiphers = ciphers == null ? new String[] {} : ciphers;
         try {
             this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanism));

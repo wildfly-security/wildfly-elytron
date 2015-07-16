@@ -255,7 +255,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         final NameCallback nameCallback = new NameCallback("User name", userName);
         final CredentialCallback credentialCallback = new CredentialCallback(DigestPassword.class);
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
-        final RealmCallback realmCallback = new RealmCallback("User realm");
+        final RealmCallback realmCallback = new RealmCallback("User realm", clientRealm);
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authzid==null ? userName : authzid);
 
         byte[] digest_urp;
