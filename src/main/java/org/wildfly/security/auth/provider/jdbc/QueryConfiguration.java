@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
+import org.wildfly.common.Assert;
+
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,12 +33,15 @@ public class QueryConfiguration {
 
     private final DataSource dataSource;
     private String sql;
-    private List<ColumnMapper> keys = new ArrayList<>();
+    private List<ColumnMapper> columnMappers = new ArrayList<>();
 
-    QueryConfiguration(String sql, DataSource dataSource, List<ColumnMapper> configuration) {
+    QueryConfiguration(String sql, DataSource dataSource, List<ColumnMapper> columnMappers) {
+        Assert.checkNotNullParam("sql", sql);
+        Assert.checkNotNullParam("dataSource", dataSource);
+        Assert.checkNotNullParam("columnMappers", columnMappers);
         this.sql = sql;
         this.dataSource = dataSource;
-        this.keys = configuration;
+        this.columnMappers = columnMappers;
     }
 
     /**
@@ -44,7 +49,7 @@ public class QueryConfiguration {
      *
      * @return
      */
-    public String getSql() {
+    String getSql() {
         return this.sql;
     }
 
@@ -53,7 +58,7 @@ public class QueryConfiguration {
      *
      * @return
      */
-    public DataSource getDataSource() {
+    DataSource getDataSource() {
         return this.dataSource;
     }
 
@@ -62,7 +67,19 @@ public class QueryConfiguration {
      *
      * @return
      */
-    public List<ColumnMapper> getColumnMappers() {
-        return Collections.unmodifiableList(this.keys);
+    List<ColumnMapper> getColumnMappers() {
+        return Collections.unmodifiableList(this.columnMappers);
+    }
+
+    <T extends ColumnMapper> List<T> getColumnMappers(Class<T> mapperType) {
+        List<T> attributeMappers = new ArrayList<>();
+
+        for (ColumnMapper columnMapper : this.columnMappers) {
+            if (mapperType.isInstance(columnMapper)) {
+                attributeMappers.add(mapperType.cast(columnMapper));
+            }
+        }
+
+        return attributeMappers;
     }
 }

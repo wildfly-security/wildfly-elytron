@@ -143,13 +143,17 @@ public class PasswordKeyMapper implements KeyMapper {
 
     @Override
     public CredentialSupport getCredentialSupport(ResultSet resultSet) {
-        Object map = map(resultSet);
+        try {
+            Object map = map(resultSet);
 
-        if (map != null) {
-            return CredentialSupport.FULLY_SUPPORTED;
+            if (map != null) {
+                return CredentialSupport.FULLY_SUPPORTED;
+            }
+
+            return CredentialSupport.UNSUPPORTED;
+        } catch (SQLException cause) {
+            throw log.couldNotObtainCredentialWithCause(cause);
         }
-
-        return CredentialSupport.UNSUPPORTED;
     }
 
     /**
@@ -189,25 +193,21 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public Object map(ResultSet resultSet) {
+    public Object map(ResultSet resultSet) throws SQLException {
         byte[] hash = null;
         byte[] salt = null;
         int iterationCount = 0;
 
-        try {
-            if (resultSet.next()) {
-                hash = toByteArray(resultSet.getObject(getHash()));
+        if (resultSet.next()) {
+            hash = toByteArray(resultSet.getObject(getHash()));
 
-                if (getSalt() > 0) {
-                    salt = toByteArray(resultSet.getObject(getSalt()));
-                }
-
-                if (getIterationCount() > 0) {
-                    iterationCount = resultSet.getInt(getIterationCount());
-                }
+            if (getSalt() > 0) {
+                salt = toByteArray(resultSet.getObject(getSalt()));
             }
-        } catch (SQLException e) {
-            throw log.couldNotObtainCredentialWithCause(e);
+
+            if (getIterationCount() > 0) {
+                iterationCount = resultSet.getInt(getIterationCount());
+            }
         }
 
         if (hash != null) {

@@ -17,14 +17,15 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
+import org.wildfly.security.auth.provider.jdbc.mapper.AttributeMapper;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
-import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -37,6 +38,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * Security realm implementation backed by a database.
@@ -63,15 +67,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
     @Override
     public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
         for (QueryConfiguration configuration : this.queryConfiguration) {
-            for (ColumnMapper mapper : configuration.getColumnMappers()) {
-                if (KeyMapper.class.isInstance(mapper)) {
-                    KeyMapper keyMapper = (KeyMapper) mapper;
-
-                    if (credentialType.equals(keyMapper.getKeyType())) {
-                        // by default, all credential types are supported if they have a corresponding mapper.
-                        // however, we don't know if an account or realm identity has a specific credential or not.
-                        return CredentialSupport.UNKNOWN;
-                    }
+            for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                if (credentialType.equals(keyMapper.getKeyType())) {
+                    // by default, all credential types are supported if they have a corresponding mapper.
+                    // however, we don't know if an account or realm identity has a specific credential or not.
+                    return CredentialSupport.UNKNOWN;
                 }
             }
         }
@@ -82,6 +82,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
     private class JdbcRealmIdentity implements RealmIdentity {
 
         private final String name;
+        private JdbcIdentity identity;
 
         public JdbcRealmIdentity(String name) {
             this.name = name;
@@ -94,13 +95,9 @@ public class JdbcSecurityRealm implements SecurityRealm {
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (ColumnMapper mapper : configuration.getColumnMappers()) {
-                    if (KeyMapper.class.isInstance(mapper)) {
-                        KeyMapper keyMapper = (KeyMapper) mapper;
-
-                        if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
-                            return executeAuthenticationQuery(configuration, keyMapper::getCredentialSupport);
-                        }
+                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                    if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
+                        return executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
                     }
                 }
             }
@@ -111,13 +108,9 @@ public class JdbcSecurityRealm implements SecurityRealm {
         @Override
         public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (ColumnMapper mapper : configuration.getColumnMappers()) {
-                    if (KeyMapper.class.isInstance(mapper)) {
-                        KeyMapper keyMapper = (KeyMapper) mapper;
-
-                        if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
-                            return executeAuthenticationQuery(configuration, resultSet -> (C) keyMapper.map(resultSet));
-                        }
+                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                    if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
+                        return executePrincipalQuery(configuration, resultSet -> credentialType.cast(keyMapper.map(resultSet)));
                     }
                 }
             }
@@ -127,17 +120,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         @Override
         public boolean verifyCredential(Object credential) throws RealmUnavailableException {
-            if (credential == null) {
-                return false;
-            }
-
-            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (ColumnMapper mapper : configuration.getColumnMappers()) {
-                    if (KeyMapper.class.isInstance(mapper)) {
-                        KeyMapper credentialMapper = (KeyMapper) mapper;
-
-                        if (Password.class.isAssignableFrom(credentialMapper.getKeyType())) {
-                            PasswordKeyMapper passwordMapper = (PasswordKeyMapper) mapper;
+            if (credential != null) {
+                for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
+                    for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                        if (Password.class.isAssignableFrom(keyMapper.getKeyType())) {
+                            PasswordKeyMapper passwordMapper = (PasswordKeyMapper) keyMapper;
                             return verifyPassword(configuration, passwordMapper, credential);
                         }
                     }
@@ -148,17 +135,61 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         public boolean exists() throws RealmUnavailableException {
-            return true;
+            return getIdentity() != null;
         }
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return new JdbcAuthorizationIdentity(name);
+            if (!exists()) {
+                return AuthorizationIdentity.EMPTY;
+            }
+
+            return AuthorizationIdentity.basicIdentity(this.identity.attributes);
+        }
+
+        private JdbcIdentity getIdentity() {
+            if (this.identity == null) {
+                JdbcSecurityRealm.this.queryConfiguration.stream()
+                        .map(queryConfiguration -> {
+                            return executePrincipalQuery(queryConfiguration, resultSet -> {
+                                if (resultSet.next()) {
+                                    MapAttributes attributes = new MapAttributes();
+
+                                    do {
+                                        queryConfiguration.getColumnMappers(AttributeMapper.class).forEach(attributeMapper -> {
+                                            try {
+                                                Object value = attributeMapper.map(resultSet);
+
+                                                if (value != null) {
+                                                    attributes.addFirst(attributeMapper.getName(), value.toString());
+                                                }
+                                            } catch (SQLException cause) {
+                                                throw log.ldapRealmFailedObtainAttributes(this.name, cause);
+                                            }
+                                        });
+                                    } while (resultSet.next());
+
+                                    return attributes;
+                                }
+
+                                return null;
+                            });
+                        }).collect(Collectors.reducing((lAttribute, rAttribute) -> {
+                    MapAttributes attributes = new MapAttributes(lAttribute);
+
+                    for (Attributes.Entry rEntry : rAttribute.entries()) {
+                        attributes.get(rEntry.getKey()).addAll(rEntry);
+                    }
+
+                    return attributes;
+                })).ifPresent(attributes -> this.identity = new JdbcIdentity(attributes));
+            }
+
+            return this.identity;
         }
 
         private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Object givenCredential) {
-            Object credential = executeAuthenticationQuery(configuration, passwordMapper::map);
-
+            Object credential = executePrincipalQuery(configuration, passwordMapper::map);
             String algorithm = passwordMapper.getAlgorithm();
 
             try {
@@ -166,9 +197,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                     PasswordFactory passwordFactory = getPasswordFactory(algorithm);
                     char[] guessCredentialChars;
 
-                    if (String.class.equals(givenCredential.getClass())) {
-                        guessCredentialChars = givenCredential.toString().toCharArray();
-                    } else if (char[].class.equals(givenCredential.getClass())) {
+                    if (char[].class.equals(givenCredential.getClass())) {
                         guessCredentialChars = (char[]) givenCredential;
                     } else if (ClearPassword.class.isInstance(givenCredential)) {
                         guessCredentialChars = ((ClearPassword) givenCredential).getPassword();
@@ -194,59 +223,46 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         private Connection getConnection(QueryConfiguration configuration) {
-            Connection connection;
             try {
                 DataSource dataSource = configuration.getDataSource();
-                connection = dataSource.getConnection();
+                return dataSource.getConnection();
             } catch (Exception e) {
                 throw log.couldNotOpenConnection(e);
             }
-            return connection;
         }
 
-        private void safeClose(AutoCloseable closeable) {
-            try {
-                if (closeable != null) {
-                    closeable.close();
-                }
-            } catch (Exception ignore) {
-
-            }
-        }
-
-        private <E> E executeAuthenticationQuery(QueryConfiguration configuration, ResultSetCallback<E> resultSetCallback) {
+        private <E> E executePrincipalQuery(QueryConfiguration configuration, ResultSetCallback<E> resultSetCallback) {
             String sql = configuration.getSql();
-            Connection connection = getConnection(configuration);
-            PreparedStatement preparedStatement = null;
-            ResultSet resultSet = null;
 
-            try {
-                preparedStatement = connection.prepareStatement(sql);
+            try (
+                    Connection connection = getConnection(configuration);
+                    PreparedStatement preparedStatement = connection.prepareStatement(sql)
+            ) {
                 preparedStatement.setString(1, getName());
-                resultSet = preparedStatement.executeQuery();
-                return resultSetCallback.handle(resultSet);
+
+                try (
+                        ResultSet resultSet = preparedStatement.executeQuery()
+                ) {
+                    return resultSetCallback.handle(resultSet);
+                }
             } catch (SQLException e) {
                 throw log.couldNotExecuteQuery(sql, e);
             } catch (Exception e) {
                 throw log.unexpectedErrorWhenProcessingAuthenticationQuery(sql, e);
-            } finally {
-                safeClose(resultSet);
-                safeClose(preparedStatement);
-                safeClose(connection);
             }
         }
 
-        private class JdbcAuthorizationIdentity implements AuthorizationIdentity {
+        private class JdbcIdentity {
 
-            private String name;
+            private final Attributes attributes;
 
-            JdbcAuthorizationIdentity(final String name) {
-                this.name = name;
+            JdbcIdentity(Attributes attributes) {
+                this.attributes = attributes;
             }
         }
     }
 
     private interface ResultSetCallback<E> {
-         E handle(ResultSet resultSet);
+        E handle(ResultSet resultSet) throws SQLException;
     }
 }
