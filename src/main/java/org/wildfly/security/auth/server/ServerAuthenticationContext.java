@@ -36,6 +36,7 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
+import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -582,7 +583,6 @@ public final class ServerAuthenticationContext {
                         throw new FastUnsupportedCallbackException(callback);
                     }
                     passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
-
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
@@ -624,6 +624,8 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SecurityIdentityCallback) {
                     ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof RealmCallback) {
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
