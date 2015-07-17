@@ -26,7 +26,6 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -34,6 +33,9 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
@@ -41,6 +43,9 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
+import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
@@ -57,6 +62,7 @@ import org.wildfly.security.util.CodePointIterator;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class PasswordUtil {
+
     private PasswordUtil() {}
 
     // we cheat heavily so you don't have to
@@ -64,22 +70,38 @@ public final class PasswordUtil {
 
     // the order or value of these numbers is not important, just their uniqueness
 
-    private static final int A_CRYPT_MD5                = 1;
-    private static final int A_BCRYPT                   = 2;
-    private static final int A_BSD_NT_HASH              = 3;
-    private static final int A_CRYPT_SHA_256            = 4;
-    private static final int A_CRYPT_SHA_512            = 5;
-    private static final int A_SUN_CRYPT_MD5            = 6;
-    private static final int A_APACHE_HTDIGEST          = 7;
-    private static final int A_BSD_CRYPT_DES            = 8;
-    private static final int A_CRYPT_DES                = 9;
-    private static final int A_DIGEST_MD2               = 10;
-    private static final int A_DIGEST_MD5               = 11;
-    private static final int A_DIGEST_SHA_1             = 12;
-    private static final int A_DIGEST_SHA_256           = 13;
-    private static final int A_DIGEST_SHA_384           = 14;
-    private static final int A_DIGEST_SHA_512           = 15;
-    private static final int A_SUN_CRYPT_MD5_BARE_SALT  = 16;
+    private static final int A_CRYPT_MD5                            = 1;
+    private static final int A_BCRYPT                               = 2;
+    private static final int A_BSD_NT_HASH                          = 3;
+    private static final int A_CRYPT_SHA_256                        = 4;
+    private static final int A_CRYPT_SHA_512                        = 5;
+    private static final int A_SUN_CRYPT_MD5                        = 6;
+    private static final int A_APACHE_HTDIGEST                      = 7;
+    private static final int A_BSD_CRYPT_DES                        = 8;
+    private static final int A_CRYPT_DES                            = 9;
+    private static final int A_SUN_CRYPT_MD5_BARE_SALT              = 10;
+    private static final int A_SIMPLE_DIGEST_MD2                    = 11;
+    private static final int A_SIMPLE_DIGEST_MD5                    = 12;
+    private static final int A_SIMPLE_DIGEST_SHA_1                  = 13;
+    private static final int A_SIMPLE_DIGEST_SHA_256                = 14;
+    private static final int A_SIMPLE_DIGEST_SHA_384                = 15;
+    private static final int A_SIMPLE_DIGEST_SHA_512                = 16;
+    private static final int A_SIMPLE_PASSWORD_SALT_DIGEST_MD5      = 17;
+    private static final int A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_1    = 18;
+    private static final int A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_256  = 19;
+    private static final int A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_384  = 20;
+    private static final int A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_512  = 21;
+    private static final int A_SIMPLE_SALT_PASSWORD_DIGEST_MD5      = 22;
+    private static final int A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_1    = 23;
+    private static final int A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_256  = 24;
+    private static final int A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_384  = 25;
+    private static final int A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_512  = 26;
+    private static final int A_DIGEST_MD5                           = 27;
+    private static final int A_DIGEST_SHA                           = 28;
+    private static final int A_DIGEST_SHA_256                       = 29;
+    private static final int A_DIGEST_SHA_512                       = 30;
+    private static final int A_SCRAM_SHA_1                          = 31;
+    private static final int A_SCRAM_SHA_256                        = 32;
 
     private static int doIdentifyAlgorithm(char[] chars) {
         if (chars.length < 5) {
@@ -120,6 +142,33 @@ public final class PasswordUtil {
                     } else {
                         return 0;
                     }
+                } else if (isElytronCryptString(chars)) {
+                    String algorithm = getAlgorithmFromElytronCryptString(chars);
+                    switch (algorithm) {
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD2:                      return A_SIMPLE_DIGEST_MD2;
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5:                      return A_SIMPLE_DIGEST_MD5;
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_1:                    return A_SIMPLE_DIGEST_SHA_1;
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_256:                  return A_SIMPLE_DIGEST_SHA_256;
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_384:                  return A_SIMPLE_DIGEST_SHA_384;
+                        case SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512:                  return A_SIMPLE_DIGEST_SHA_512;
+                        case SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5:         return A_SIMPLE_PASSWORD_SALT_DIGEST_MD5;
+                        case SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:       return A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_1;
+                        case SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:     return A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_256;
+                        case SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:     return A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_384;
+                        case SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:     return A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_512;
+                        case SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_MD5:         return A_SIMPLE_SALT_PASSWORD_DIGEST_MD5;
+                        case SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:       return A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_1;
+                        case SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:     return A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_256;
+                        case SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:     return A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_384;
+                        case SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:     return A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_512;
+                        case DigestPassword.ALGORITHM_DIGEST_MD5:                                   return A_DIGEST_MD5;
+                        case DigestPassword.ALGORITHM_DIGEST_SHA:                                   return A_DIGEST_SHA;
+                        case DigestPassword.ALGORITHM_DIGEST_SHA_256:                               return A_DIGEST_SHA_256;
+                        case DigestPassword.ALGORITHM_DIGEST_SHA_512:                               return A_DIGEST_SHA_512;
+                        case ScramDigestPassword.ALGORITHM_SCRAM_SHA_1:                             return A_SCRAM_SHA_1;
+                        case ScramDigestPassword.ALGORITHM_SCRAM_SHA_256:                           return A_SCRAM_SHA_256;
+                        default:                                                                    return 0;
+                    }
                 } else {
                     return 0;
                 }
@@ -134,21 +183,6 @@ public final class PasswordUtil {
             }
         } else if (chars[0] == '_') {
             return A_BSD_CRYPT_DES;
-        } else if (chars[0] == '[') {
-            int idx = indexOf(chars, ']');
-            if (idx != -1) {
-                switch (new String(chars, 1, idx - 1).toLowerCase(Locale.US)) {
-                    case "md2": return A_DIGEST_MD2;
-                    case "md5": return A_DIGEST_MD5;
-                    case "sha-1": return A_DIGEST_SHA_1;
-                    case "sha-256": return A_DIGEST_SHA_256;
-                    case "sha-384": return A_DIGEST_SHA_384;
-                    case "sha-512": return A_DIGEST_SHA_512;
-                    default: return 0;
-                }
-            } else {
-                return 0;
-            }
         } else if (chars.length == 13) {
             return A_CRYPT_DES;
         } else {
@@ -169,23 +203,39 @@ public final class PasswordUtil {
 
     static String getAlgorithmNameString(final int id) {
         switch (id) {
-            case A_CRYPT_MD5:               return "crypt-md5";
-            case A_BCRYPT:                  return "bcrypt";
-            case A_BSD_NT_HASH:             return "bsd-nt-hash";
-            case A_CRYPT_SHA_256:           return ALGORITHM_CRYPT_SHA_256;
-            case A_CRYPT_SHA_512:           return ALGORITHM_CRYPT_SHA_512;
-            case A_SUN_CRYPT_MD5:           return ALGORITHM_SUN_CRYPT_MD5;
-            case A_APACHE_HTDIGEST:         return "apache-htdigest";
-            case A_BSD_CRYPT_DES:           return "bsd-crypt-des";
-            case A_CRYPT_DES:               return "crypt-des";
-            case A_DIGEST_MD2:              return "digest-md2";
-            case A_DIGEST_MD5:              return "digest-md5";
-            case A_DIGEST_SHA_1:            return "digest-sha-1";
-            case A_DIGEST_SHA_256:          return "digest-sha-256";
-            case A_DIGEST_SHA_384:          return "digest-sha-384";
-            case A_DIGEST_SHA_512:          return "digest-sha-512";
-            case A_SUN_CRYPT_MD5_BARE_SALT: return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
-            default: return null;
+            case A_CRYPT_MD5:                               return "crypt-md5";
+            case A_BCRYPT:                                  return "bcrypt";
+            case A_BSD_NT_HASH:                             return "bsd-nt-hash";
+            case A_CRYPT_SHA_256:                           return ALGORITHM_CRYPT_SHA_256;
+            case A_CRYPT_SHA_512:                           return ALGORITHM_CRYPT_SHA_512;
+            case A_SUN_CRYPT_MD5:                           return ALGORITHM_SUN_CRYPT_MD5;
+            case A_APACHE_HTDIGEST:                         return "apache-htdigest";
+            case A_BSD_CRYPT_DES:                           return "bsd-crypt-des";
+            case A_CRYPT_DES:                               return "crypt-des";
+            case A_SIMPLE_DIGEST_MD2:                       return "simple-digest-md2";
+            case A_SIMPLE_DIGEST_MD5:                       return "simple-digest-md5";
+            case A_SIMPLE_DIGEST_SHA_1:                     return "simple-digest-sha-1";
+            case A_SIMPLE_DIGEST_SHA_256:                   return "simple-digest-sha-256";
+            case A_SIMPLE_DIGEST_SHA_384:                   return "simple-digest-sha-384";
+            case A_SIMPLE_DIGEST_SHA_512:                   return "simple-digest-sha-512";
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_MD5:         return "password-salt-digest-md5";
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_1:       return "password-salt-digest-sha-1";
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_256:     return "password-salt-digest-sha-256";
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_384:     return "password-salt-digest-sha-384";
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_512:     return "password-salt-digest-sha-512";
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_MD5:         return "salt-password-digest-md5";
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_1:       return "salt-password-digest-sha-1";
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_256:     return "salt-password-digest-sha-256";
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_384:     return "salt-password-digest-sha-384";
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_512:     return "salt-password-digest-sha-512";
+            case A_DIGEST_MD5:                              return "digest-md5";
+            case A_DIGEST_SHA:                              return "digest-sha";
+            case A_DIGEST_SHA_256:                          return "digest-sha-256";
+            case A_DIGEST_SHA_512:                          return "digest-sha-512";
+            case A_SCRAM_SHA_1:                             return "scram-sha-1";
+            case A_SCRAM_SHA_256:                           return "scram-sha-256";
+            case A_SUN_CRYPT_MD5_BARE_SALT:                 return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
+            default:                                        return null;
         }
     }
 
@@ -232,8 +282,24 @@ public final class PasswordUtil {
             ByteIterator.ofBytes(spec.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).drainTo(b);
         } else if (password instanceof SimpleDigestPassword) {
             final SimpleDigestPassword spec = (SimpleDigestPassword) password;
-            final String algorithm = spec.getAlgorithm();
-            b.append('[').append(algorithm).append(']');
+            appendAlgorithmToElytronCryptString(b, spec.getAlgorithm());
+            ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
+        } else if (password instanceof SaltedSimpleDigestPassword) {
+            final SaltedSimpleDigestPassword spec = (SaltedSimpleDigestPassword) password;
+            appendAlgorithmToElytronCryptString(b, spec.getAlgorithm());
+            ByteIterator.ofBytes(spec.getSalt()).base64Encode().drainTo(b).append(':');
+            ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
+        } else if (password instanceof DigestPassword) {
+            final DigestPassword spec = (DigestPassword) password;
+            appendAlgorithmToElytronCryptString(b, spec.getAlgorithm());
+            ByteIterator.ofBytes((spec.getUsername()).getBytes()).base64Encode().drainTo(b).append(':');
+            ByteIterator.ofBytes((spec.getRealm()).getBytes()).base64Encode().drainTo(b).append(':');
+            ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
+        } else if (password instanceof ScramDigestPassword) {
+            final ScramDigestPassword spec = (ScramDigestPassword) password;
+            appendAlgorithmToElytronCryptString(b, spec.getAlgorithm());
+            b.append(spec.getIterationCount()).append(':');
+            ByteIterator.ofBytes(spec.getSalt()).base64Encode().drainTo(b).append(':');
             ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
         } else if (password instanceof UnixDESCryptPassword) {
             final UnixDESCryptPassword spec = (UnixDESCryptPassword) password;
@@ -310,6 +376,12 @@ public final class PasswordUtil {
         return b;
     }
 
+    private static void appendAlgorithmToElytronCryptString(StringBuilder b, String algorithm) {
+        b.append("$ely$");
+        ByteIterator.ofBytes(algorithm.getBytes()).base64Encode().drainTo(b);
+        b.append("$");
+    }
+
     public static Password parseCryptString(String cryptString) throws InvalidKeySpecException {
         Assert.checkNotNullParam("cryptString", cryptString);
         return parseCryptString(cryptString.toCharArray());
@@ -349,14 +421,39 @@ public final class PasswordUtil {
             case A_CRYPT_DES: {
                 return parseUnixDESCryptPasswordString(cryptString);
             }
-            case A_DIGEST_MD2:
+            case A_SIMPLE_DIGEST_MD2:
+            case A_SIMPLE_DIGEST_MD5:
+            case A_SIMPLE_DIGEST_SHA_1:
+            case A_SIMPLE_DIGEST_SHA_256:
+            case A_SIMPLE_DIGEST_SHA_384:
+            case A_SIMPLE_DIGEST_SHA_512:
+            {
+                return parseSimpleDigestPasswordString(cryptString);
+            }
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_MD5:
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_1:
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_256:
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_384:
+            case A_SIMPLE_PASSWORD_SALT_DIGEST_SHA_512:
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_MD5:
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_1:
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_256:
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_384:
+            case A_SIMPLE_SALT_PASSWORD_DIGEST_SHA_512:
+            {
+                return parseSimpleSaltedDigestPasswordString(cryptString);
+            }
             case A_DIGEST_MD5:
-            case A_DIGEST_SHA_1:
+            case A_DIGEST_SHA:
             case A_DIGEST_SHA_256:
-            case A_DIGEST_SHA_384:
             case A_DIGEST_SHA_512:
             {
-                return parseSimpleDigestPasswordString(algorithmId, cryptString);
+                return parseDigestPasswordString(cryptString);
+            }
+            case A_SCRAM_SHA_1:
+            case A_SCRAM_SHA_256:
+            {
+                return parseScramDigestPasswordString(cryptString);
             }
             default: throw log.invalidKeySpecUnknownCryptStringAlgorithm();
         }
@@ -480,20 +577,37 @@ public final class PasswordUtil {
 
     private static final int[] SHA_512_IDX_REV = inverse(SHA_512_IDX);
 
-    private static Password parseSimpleDigestPasswordString(final int algorithmId, final char[] cryptString) throws InvalidKeySpecException {
-        final int initialLen;
-        switch (algorithmId) {
-            case A_DIGEST_MD2:
-            case A_DIGEST_MD5: initialLen = "[mdX]".length(); break;
-            case A_DIGEST_SHA_1: initialLen = "[sha-1]".length(); break;
-            case A_DIGEST_SHA_256:
-            case A_DIGEST_SHA_384:
-            case A_DIGEST_SHA_512: initialLen = "[sha-XXX]".length(); break;
-            default: throw Assert.impossibleSwitchCase(algorithmId);
-        }
-        byte[] bytes = CodePointIterator.ofChars(cryptString, 0, initialLen).base64Decode().drain();
-        final String algorithmName = getAlgorithmNameString(algorithmId);
-        return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithmName, new SimpleDigestPasswordSpec(bytes));
+    private static Password parseSimpleDigestPasswordString(final char[] cryptString) throws InvalidKeySpecException {
+        byte[] bytes = getContentFromElytronCryptString(cryptString).base64Decode().drain();
+        return PASSWORD_FACTORY_SPI.engineGeneratePassword(getAlgorithmFromElytronCryptString(cryptString), new SimpleDigestPasswordSpec(bytes));
+    }
+
+    private static Password parseSimpleSaltedDigestPasswordString(final char[] cryptString) throws InvalidKeySpecException {
+        CodePointIterator r = getContentFromElytronCryptString(cryptString);
+        byte[] salt = r.delimitedBy(':').base64Decode().drain();
+        r.next();
+        byte[] digest = r.base64Decode().drain();
+        return PASSWORD_FACTORY_SPI.engineGeneratePassword(getAlgorithmFromElytronCryptString(cryptString), new SaltedSimpleDigestPasswordSpec(digest, salt));
+    }
+
+    private static Password parseScramDigestPasswordString(final char[] cryptString) throws InvalidKeySpecException {
+        CodePointIterator r = getContentFromElytronCryptString(cryptString);
+        int cost = Integer.parseInt(r.delimitedBy(':').drainToString());
+        r.next();
+        byte[] salt = r.delimitedBy(':').base64Decode().drain();
+        r.next();
+        byte[] digest = r.base64Decode().drain();
+        return PASSWORD_FACTORY_SPI.engineGeneratePassword(getAlgorithmFromElytronCryptString(cryptString), new ScramDigestPasswordSpec(digest, salt, cost));
+    }
+
+    private static Password parseDigestPasswordString(final char[] cryptString) throws InvalidKeySpecException {
+        CodePointIterator r = getContentFromElytronCryptString(cryptString);
+        String username = r.delimitedBy(':').base64Decode().asUtf8String().drainToString();
+        r.next();
+        String realm = r.base64Decode().asUtf8String().drainToString();
+        r.next();
+        byte[] digest = r.base64Decode().drain();
+        return PASSWORD_FACTORY_SPI.engineGeneratePassword(getAlgorithmFromElytronCryptString(cryptString), new DigestPasswordSpec(username, realm, digest));
     }
 
     private static Password parseUnixSHA256CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
@@ -697,4 +811,24 @@ public final class PasswordUtil {
         return randomSalt;
     }
 
+    private static String getAlgorithmFromElytronCryptString(char[] chars) {
+        checkElytronCryptString(chars);
+        return CodePointIterator.ofChars(chars, 5, lastIndexOf(chars, '$') - 5).base64Decode().asUtf8String().drainToString();
+    }
+
+    private static CodePointIterator getContentFromElytronCryptString(char[] chars) {
+        checkElytronCryptString(chars);
+        int lastIndexOf = lastIndexOf(chars, '$');
+        return CodePointIterator.ofChars(chars, lastIndexOf + 1);
+    }
+
+    private static void checkElytronCryptString(char[] chars) {
+        if (!isElytronCryptString(chars)) {
+            throw new IllegalArgumentException("The given chars does not contain an $ely$ header.");
+        }
+    }
+
+    private static boolean isElytronCryptString(char[] chars) {
+        return (chars[0] == '$' && chars[1] == 'e' && chars[2] == 'l' && chars[3] == 'y');
+    }
 }
