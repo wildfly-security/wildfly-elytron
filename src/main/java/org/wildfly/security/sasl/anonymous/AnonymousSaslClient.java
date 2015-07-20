@@ -59,7 +59,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
                 if (message != null && message.length > 0) {
                     throw log.saslInvalidServerMessage(getMechanismName());
                 }
-                NameCallback nameCallback = new NameCallback("Authentication name");
+                NameCallback nameCallback = new NameCallback("Authentication name", "anonymous");
                 handleCallbacks(nameCallback);
                 String name = nameCallback.getName();
                 if (name == null) {
