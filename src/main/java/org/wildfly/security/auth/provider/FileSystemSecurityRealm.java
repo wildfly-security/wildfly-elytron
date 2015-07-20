@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -73,6 +74,8 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
+import org.wildfly.security.password.interfaces.OneTimePassword;
+import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -469,7 +472,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 do {
                     streamWriter.writeCharacters("\n        ");
                     final Object credential = credIter.next();
-                    if (credential instanceof Password) {
+                    if (credential instanceof OneTimePassword) {
+                        final OneTimePassword otp = (OneTimePassword) credential;
+                        otp.getHash();
+                        streamWriter.writeStartElement(ELYTRON_1_0, "otp");
+                        streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
+                        streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).hexEncode().drainToString());
+                        streamWriter.writeAttribute("seed", new String(otp.getSeed(), StandardCharsets.US_ASCII));
+                        streamWriter.writeAttribute("sequence", Integer.toString(otp.getSequenceNumber()));
+                        streamWriter.writeEndElement();
+                    } else if (credential instanceof Password) {
                         streamWriter.writeStartElement(ELYTRON_1_0, "password");
                         Password password = (Password) credential;
                         String format;
@@ -630,6 +642,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     credentials.add(parsePrivateKey(streamReader));
                 } else if ("certificate".equals(streamReader.getLocalName())) {
                     credentials.add(parseCertificate(streamReader));
+                } else if ("otp".equals(streamReader.getLocalName())) {
+                    credentials.add(parseOtp(streamReader));
                 } else {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
@@ -691,7 +705,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 } catch (InvalidKeySpecException e) {
                     throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), getName());
                 } catch (NoSuchAlgorithmException e) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), getName(), e);
                 }
             });
         }
@@ -718,6 +732,45 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
             });
+        }
+
+        private Password parseOtp(final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+            String algorithm = null;
+            byte[] hash = null;
+            byte[] seed = null;
+            int sequenceNumber = 0;
+
+            final int attributeCount = streamReader.getAttributeCount();
+            for (int i = 0; i < attributeCount; i ++) {
+                if (streamReader.getAttributeNamespace(i) != null) {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                }
+                final String localName = streamReader.getAttributeLocalName(i);
+                if ("algorithm".equals(localName)) {
+                    algorithm = streamReader.getAttributeValue(i);
+                } else if ("hash".equals(localName)) {
+                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).hexDecode().drain();
+                } else if ("seed".equals(localName)) {
+                    seed = streamReader.getAttributeValue(i).getBytes(StandardCharsets.US_ASCII);
+                } else if ("sequence".equals(localName)) {
+                    sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
+                } else {
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                }
+            }
+
+            if (streamReader.nextTag() != END_ELEMENT) {
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+            }
+
+            try {
+                PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
+                return passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
+            } catch (InvalidKeySpecException e) {
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path, streamReader.getLocation().getLineNumber(), getName(), e);
+            } catch (NoSuchAlgorithmException e) {
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), getName(), e);
+            }
         }
 
         private Attributes parseAttributes(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
