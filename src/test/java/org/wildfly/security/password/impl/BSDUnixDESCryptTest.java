@@ -36,7 +36,7 @@ import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * Tests for the BSD variant of Unix DES Crypt.
@@ -95,7 +95,7 @@ public class BSDUnixDESCryptTest {
 
         // Use the new password to obtain a spec but specify an invalid key spec type
         exception.expect(InvalidKeySpecException.class);
-        PasswordSpec spec = spi.engineGetKeySpec(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, password, UnixDESCryptPasswordSpec.class);
+        PasswordSpec spec = spi.engineGetKeySpec(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, password, SaltedHashPasswordSpec.class);
     }
 
     @Test

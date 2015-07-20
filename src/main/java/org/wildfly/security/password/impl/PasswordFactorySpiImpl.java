@@ -57,12 +57,10 @@ import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
-import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
@@ -112,9 +110,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
             case ALGORITHM_CRYPT_MD5: {
-                if (keySpec instanceof UnixMD5CryptPasswordSpec) {
+                if (keySpec instanceof SaltedHashPasswordSpec) {
                     try {
-                        return new UnixMD5CryptPasswordImpl((UnixMD5CryptPasswordSpec) keySpec);
+                        return new UnixMD5CryptPasswordImpl((SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -230,9 +228,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
             case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512:
-                if (keySpec instanceof SaltedSimpleDigestPasswordSpec) {
+                if (keySpec instanceof SaltedHashPasswordSpec) {
                     try {
-                        return new SaltedSimpleDigestPasswordImpl(algorithm, (SaltedSimpleDigestPasswordSpec) keySpec);
+                        return new SaltedSimpleDigestPasswordImpl(algorithm, (SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -251,9 +249,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
                 break;
             case ALGORITHM_CRYPT_DES: {
-                if (keySpec instanceof UnixDESCryptPasswordSpec) {
+                if (keySpec instanceof SaltedHashPasswordSpec) {
                     try {
-                        return new UnixDESCryptPasswordImpl((UnixDESCryptPasswordSpec) keySpec);
+                        return new UnixDESCryptPasswordImpl((SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }

@@ -1,7 +1,7 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
- * as indicated by the @author tags.
+ *
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.security.password.spec;
 
 /**
- * A {@link PasswordSpec} for a password represented by a simple digest including a salt.
+ * A {@link PasswordSpec} for a password represented by a hash with a salt.
  *
- * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public final class SaltedSimpleDigestPasswordSpec implements PasswordSpec {
+public class SaltedHashPasswordSpec implements PasswordSpec {
 
-    private final byte[] digest;
+    private final byte[] hash;
     private final byte[] salt;
 
-    public SaltedSimpleDigestPasswordSpec(final byte[] digest, final byte[] salt) {
-        this.digest = digest;
+    public SaltedHashPasswordSpec(final byte[] hash, final byte[] salt) {
+        this.hash = hash;
         this.salt = salt;
     }
 
-    public byte[] getDigest() {
-        return digest;
+    public byte[] getHash() {
+        return this.hash;
     }
 
     public byte[] getSalt() {
-        return salt;
+        return this.salt;
     }
-
 }

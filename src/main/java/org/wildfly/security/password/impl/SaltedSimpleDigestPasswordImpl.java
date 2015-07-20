@@ -32,8 +32,8 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 
 /**
  * A {@code Password} implementation for {@link SaltedSimpleDigestPassword}.
@@ -54,8 +54,8 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         this.salt = salt;
     }
 
-    SaltedSimpleDigestPasswordImpl(final String algorithm, final SaltedSimpleDigestPasswordSpec spec) {
-        this(algorithm, spec.getSalt().clone(), spec.getDigest().clone());
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final SaltedHashPasswordSpec spec) {
+        this(algorithm, spec.getSalt().clone(), spec.getHash().clone());
     }
 
     SaltedSimpleDigestPasswordImpl(final SaltedSimpleDigestPassword password) {
@@ -108,8 +108,8 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(SaltedSimpleDigestPasswordSpec.class)) {
-            return keySpecType.cast(new SaltedSimpleDigestPasswordSpec(digest.clone(), salt.clone()));
+        if (keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new SaltedHashPasswordSpec(digest.clone(), salt.clone()));
         }
         throw new InvalidKeySpecException();
     }
@@ -125,7 +125,7 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(SaltedSimpleDigestPasswordSpec.class);
+        return keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class);
     }
 
     private static byte[] digestOf(final String algorithm, final byte[] salt, final char[] password)

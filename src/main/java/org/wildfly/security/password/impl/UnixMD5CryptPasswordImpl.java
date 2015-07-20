@@ -33,7 +33,7 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.UnixMD5CryptPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * Implementation of the Unix MD5 Crypt password.
@@ -60,7 +60,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this(password.getHash().clone(), truncatedClone(password.getSalt()));
     }
 
-    UnixMD5CryptPasswordImpl(final UnixMD5CryptPasswordSpec spec) {
+    UnixMD5CryptPasswordImpl(final SaltedHashPasswordSpec spec) {
         this(spec.getHash().clone(), truncatedClone(spec.getSalt()));
     }
 
@@ -103,8 +103,8 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(UnixMD5CryptPasswordSpec.class)) {
-            return keySpecType.cast(new UnixMD5CryptPasswordSpec(getHash(), getSalt()));
+        if (keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new SaltedHashPasswordSpec(getHash(), getSalt()));
         }
         throw new InvalidKeySpecException();
     }
@@ -123,7 +123,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(UnixMD5CryptPasswordSpec.class);
+        return keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class);
     }
 
     /**
