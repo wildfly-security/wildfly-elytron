@@ -18,7 +18,11 @@
 
 package org.wildfly.security.sasl.scram;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -31,17 +35,18 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.test.ServerCallbackHandler;
 import org.wildfly.security.util.CodePointIterator;
+
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 /**
  * Test of server side of SCRAM mechanism.
@@ -70,15 +75,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testRfc5802example() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                .setUserName("user")
+                .setPassword("pencil".toCharArray())
+                .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -99,18 +102,17 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     @Test
     public void testBadUsername() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-        CallbackHandler cbh = new ServerCallbackHandler("baduser", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("baduser")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
-            fail("SaslException not throwed");
+            fail("SaslException not thrown");
         } catch (SaslException e) {
         }
         assertFalse(saslServer.isComplete());
@@ -123,14 +125,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testBadPassword() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pen".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pen".toCharArray())
+                        .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -140,7 +139,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
                 .getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
-            fail("SaslException not throwed");
+            fail("SaslException not thrown");
         } catch (SaslException e) {
         }
         assertFalse(saslServer.isComplete());
@@ -156,6 +155,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
+        //Use the test callback handler here since it does some extra validation of the authzid
         CallbackHandler cbh = new ServerCallbackHandler("admin", "clear", new ClearPasswordSpec("pencil".toCharArray()), "user");
         final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslServer);
@@ -171,7 +171,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertEquals("v=xzTfS758LckdRoQKN/ZFY/Bauxo=", new String(message));
 
         assertTrue(saslServer.isComplete());
-        assertEquals(saslServer.getAuthorizationID(),"user");
+        assertEquals(saslServer.getAuthorizationID(), "user");
     }
 
     /**
@@ -181,14 +181,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testUnallowedAuthorizationId() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "n,a=admin,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -197,8 +194,9 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ=".getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
-            fail("SaslException not throwed");
+            fail("SaslException not thrown");
         } catch (SaslException e) {
+            e.printStackTrace();
         }
         assertFalse(saslServer.isComplete());
     }
@@ -210,14 +208,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testMismatchedAuthorizationId() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -241,14 +236,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testMismatchedAuthorizationIdBlank() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -272,14 +264,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testDifferentNonceAttack() throws Exception {
         mockNonceSalt("differentNonceVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        CallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost",
-                Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -305,6 +294,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
+        //Use the test callback handler here since it does some extra validation of the authzid
         CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray()), "strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301");
         final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "protocol", "server", Collections.emptyMap(), cbh);
         assertNotNull(saslServer);
@@ -325,15 +315,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingCorrectY() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
 
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -352,18 +340,18 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingIncorrectY() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-
-        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        cbh.setBinding("sameType", new byte[]{0x12,',',0x00});
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .setChannelBinding("sameType", new byte[]{0x12,',', 0x00})
+                        .setProperties(props)
+                        .build();
+
 
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         try {
@@ -379,18 +367,21 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingCorrect() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        cbh.setBinding("same-type", new byte[]{(byte)0x00,(byte)0x2C,(byte)0xFF});
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .setChannelBinding("same-type", new byte[]{(byte) 0x00, (byte) 0x2C, (byte) 0xFF})
+                        .setProperties(props)
+                        .build();
+
 
         byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -413,13 +404,16 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        ServerCallbackHandler cbh = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        cbh.setBinding("same-type", new byte[]{(byte)0x99,(byte)0x99});
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, Object> props = new HashMap<>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
-        final SaslServer saslServer = serverFactory.createSaslServer(Scram.SCRAM_SHA_1_PLUS, "test", "localhost", props, cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .setChannelBinding("same-type", new byte[]{(byte)0x99,(byte)0x99})
+                        .setProperties(props)
+                        .build();
+
 
         byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -435,4 +429,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertFalse(saslServer.isComplete());
     }
 
+    private SaslServerFactory getServerFactory() {
+        return obtainSaslServerFactory(ScramSaslServerFactory.class);
+    }
 }

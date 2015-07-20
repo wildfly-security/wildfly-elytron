@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.scram.ScramCallbackHandlerUtils.createClientCallbackHandler;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -35,16 +36,16 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ClientCallbackHandler;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
+import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
+
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 /**
  * Test of client side of SCRAM mechanism.
@@ -74,7 +75,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("user", "pencil".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("user", "pencil".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, null, "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -103,7 +104,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("admin", "secret".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("admin", "secret".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, "user", "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -132,7 +133,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("admin", "secret".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("admin", "secret".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, "user", "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -160,7 +161,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("admin", "secret".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("admin", "secret".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, "user", "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -192,7 +193,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4", "strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4", "strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, "strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4", "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -218,11 +219,11 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
     public void testBindingCorrectY() throws Exception {
         mockNonce("fyko+d2lbbFgONRv9qkxdawL");
 
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
+        CallbackHandler cbh = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
-
-        ClientCallbackHandler cbh = new ClientCallbackHandler("user", "pencil".toCharArray());
-        cbh.setBinding("same-type", new byte[]{0x12,',',0x00});
+        clientFactory = new ChannelBindingSaslClientFactory(clientFactory, "same-type", new byte[]{0x12,',',0x00});
+        assertNotNull(clientFactory);
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, null, "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
@@ -248,11 +249,12 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
     public void testBindingCorrectP() throws Exception {
         mockNonce("fyko+d2lbbFgONRv9qkxdawL");
 
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
-        assertNotNull(clientFactory);
 
-        ClientCallbackHandler cbh = new ClientCallbackHandler("user", "pencil".toCharArray());
-        cbh.setBinding("same-type", new byte[]{0x12,',',0x00});
+        CallbackHandler cbh = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
+        assertNotNull(clientFactory);
+        clientFactory = new ChannelBindingSaslClientFactory(clientFactory, "same-type", new byte[]{0x12,',',0x00});
+        assertNotNull(clientFactory);
         Map<String, String> props = new HashMap<String, String>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1_PLUS }, null, "protocol", "localhost", props, cbh);
@@ -283,7 +285,7 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        CallbackHandler cbh = new ClientCallbackHandler("admin", "secret".toCharArray());
+        CallbackHandler cbh = createClientCallbackHandler("admin", "secret".toCharArray());
         final SaslClient saslClient = clientFactory.createSaslClient(new String[] { Scram.SCRAM_SHA_1 }, "user", "protocol", "localhost", Collections.emptyMap(), cbh);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);

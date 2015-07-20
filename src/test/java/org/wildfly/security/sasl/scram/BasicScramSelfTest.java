@@ -20,6 +20,8 @@ package org.wildfly.security.sasl.scram;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
+import static org.wildfly.security.sasl.scram.ScramCallbackHandlerUtils.createClientCallbackHandler;
 
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -32,22 +34,24 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ClientCallbackHandler;
-import org.wildfly.security.sasl.test.ServerCallbackHandler;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
-
-import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
+import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -57,6 +61,7 @@ public class BasicScramSelfTest extends BaseTestCase {
 
     private static final Provider provider = new WildFlyElytronProvider();
     private static final Map<String, Object> EMPTY = Collections.<String, Object>emptyMap();
+
 
     @BeforeClass
     public static void registerPasswordProvider() {
@@ -80,68 +85,122 @@ public class BasicScramSelfTest extends BaseTestCase {
 
     @Test
     public void testAuthenticationSha1ClearPassword() throws Exception {
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", "pencil".toCharArray());
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
-        testAuthentication(Scram.SCRAM_SHA_1, serverHandler, clientHandler, "user", EMPTY, EMPTY);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+    }
+
+    @Test(expected = SaslException.class)
+    public void testAuthenticationSha1ClearPasswordBadUsername() throws Exception {
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
+        CallbackHandler clientHandler = createClientCallbackHandler("wrong", "pencil".toCharArray());
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
+    }
+
+    @Test(expected = SaslException.class)
+    public void testAuthenticationSha1ClearPasswordBadPassword() throws Exception {
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "wrong".toCharArray());
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
     }
 
     @Test
     public void testAuthenticationSha1ClearCredentialPassword() throws Exception {
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
-        testAuthentication(Scram.SCRAM_SHA_1, serverHandler, clientHandler, "user", EMPTY, EMPTY);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
     }
 
     @Test
     public void testAuthenticationSha1ClearCredential() throws Exception {
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", null, "clear", new ClearPasswordSpec("pencil".toCharArray()));
-        testAuthentication(Scram.SCRAM_SHA_1, serverHandler, clientHandler, "user", EMPTY, EMPTY);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword("pencil".toCharArray())
+                        .build();
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        Password password = passwordFactory.generatePassword(new ClearPasswordSpec("pencil".toCharArray()));
+        CallbackHandler clientHandler = createClientCallbackHandler("user", password);
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
     }
 
     @Test
     public void testAuthenticationSha1ScramCredential() throws Exception {
-        byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
-        byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
-        testAuthentication(Scram.SCRAM_SHA_1, serverHandler, clientHandler, "user", EMPTY, EMPTY);
+        byte[] digest = new byte[]{(byte) 0x1d, (byte) 0x96, (byte) 0xee, (byte) 0x3a, (byte) 0x52, (byte) 0x9b, (byte) 0x5a, (byte) 0x5f, (byte) 0x9e, (byte) 0x47, (byte) 0xc0, (byte) 0x1f, (byte) 0x22, (byte) 0x9a, (byte) 0x2c, (byte) 0xb8, (byte) 0xa6, (byte) 0xe1, (byte) 0x5f, (byte) 0x7d};
+        byte[] salt = new byte[]{(byte) 0x41, (byte) 0x25, (byte) 0xc2, (byte) 0x47, (byte) 0xe4, (byte) 0x3a, (byte) 0xb1, (byte) 0xe9, (byte) 0x3c, (byte) 0x6d, (byte) 0xff, (byte) 0x76};
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1)
+                        .setUserName("user")
+                        .setPassword(ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096))
+                        .build();
+
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        testAuthentication(Scram.SCRAM_SHA_1, saslServer, clientHandler, "user", EMPTY);
     }
 
     @Test
     public void testAuthenticationSha1ScramCredentialBindingData() throws Exception {
-        byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
-        byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
-        serverHandler.setBinding("type1", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x10});
-        clientHandler.setBinding("type1", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x10});
-        testAuthentication(Scram.SCRAM_SHA_1_PLUS, serverHandler, clientHandler, "user", EMPTY, EMPTY);
+        byte[] digest = new byte[]{(byte) 0x1d, (byte) 0x96, (byte) 0xee, (byte) 0x3a, (byte) 0x52, (byte) 0x9b, (byte) 0x5a, (byte) 0x5f, (byte) 0x9e, (byte) 0x47, (byte) 0xc0, (byte) 0x1f, (byte) 0x22, (byte) 0x9a, (byte) 0x2c, (byte) 0xb8, (byte) 0xa6, (byte) 0xe1, (byte) 0x5f, (byte) 0x7d};
+        byte[] salt = new byte[]{(byte) 0x41, (byte) 0x25, (byte) 0xc2, (byte) 0x47, (byte) 0xe4, (byte) 0x3a, (byte) 0xb1, (byte) 0xe9, (byte) 0x3c, (byte) 0x6d, (byte) 0xff, (byte) 0x76};
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = new ChannelBindingSaslClientFactory(obtainSaslClientFactory(), "type1", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x10});
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword(ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096))
+                        .setChannelBinding("type1", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x10})
+                        .build();
+
+        testAuthentication(Scram.SCRAM_SHA_1_PLUS, saslServer, clientFactory, clientHandler, "user", EMPTY);
     }
 
     @Test
     public void testAuthenticationSha1ScramCredentialBindingDataRequired() throws Exception {
-        byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
-        byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
-        ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
-        serverHandler.setBinding("same-type2", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x12});
-        clientHandler.setBinding("same-type2", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x12});
+        byte[] digest = new byte[]{(byte) 0x1d, (byte) 0x96, (byte) 0xee, (byte) 0x3a, (byte) 0x52, (byte) 0x9b, (byte) 0x5a, (byte) 0x5f, (byte) 0x9e, (byte) 0x47, (byte) 0xc0, (byte) 0x1f, (byte) 0x22, (byte) 0x9a, (byte) 0x2c, (byte) 0xb8, (byte) 0xa6, (byte) 0xe1, (byte) 0x5f, (byte) 0x7d};
+        byte[] salt = new byte[]{(byte) 0x41, (byte) 0x25, (byte) 0xc2, (byte) 0x47, (byte) 0xe4, (byte) 0x3a, (byte) 0xb1, (byte) 0xe9, (byte) 0x3c, (byte) 0x6d, (byte) 0xff, (byte) 0x76};
+        CallbackHandler clientHandler = createClientCallbackHandler("user", "pencil".toCharArray());
+        SaslClientFactory clientFactory = new ChannelBindingSaslClientFactory(obtainSaslClientFactory(), "same-type2", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x12});
         Map<String, String> props = new HashMap<String, String>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
-        testAuthentication(Scram.SCRAM_SHA_1_PLUS, serverHandler, clientHandler, "user", props, props);
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, Scram.SCRAM_SHA_1_PLUS)
+                        .setUserName("user")
+                        .setPassword(ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096))
+                        .setChannelBinding("same-type2", new byte[]{(byte) 0xFE, (byte) 0xDC, (byte) 0x12})
+                        .setProperties(new HashMap<>(props))
+                        .build();
+
+        testAuthentication(Scram.SCRAM_SHA_1_PLUS, saslServer, clientFactory, clientHandler, "user", props);
     }
 
-    private void testAuthentication(String mechanism, CallbackHandler serverHandler, CallbackHandler clientHandler, String authorizationId, Map<String, ?> serverProps, Map<String, ?> clientProps) throws Exception {
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
+    private void testAuthentication(String mechanism, SaslServer saslServer, CallbackHandler clientHandler, String authorizationId, Map<String, ?> clientProps) throws Exception {
+        final SaslClientFactory clientFactory = obtainSaslClientFactory();
+        assertNotNull(clientFactory);
+        testAuthentication(mechanism, saslServer, clientFactory, clientHandler, authorizationId, clientProps);
+    }
+
+    private void testAuthentication(String mechanism, SaslServer saslServer, SaslClientFactory clientFactory, CallbackHandler clientHandler, String authorizationId, Map<String, ?> clientProps) throws Exception {
+        Assert.assertEquals(mechanism, saslServer.getMechanismName());
+
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(mechanism, "test", "localhost", serverProps, serverHandler);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { mechanism }, authorizationId, "test", "localhost", clientProps, clientHandler);
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[]{mechanism}, authorizationId, "test", "localhost", clientProps, clientHandler);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof ScramSaslClient);
         byte[] message = AbstractSaslParticipant.NO_BYTES;
@@ -152,5 +211,11 @@ public class BasicScramSelfTest extends BaseTestCase {
         } while (message != null);
         assertTrue(saslServer.isComplete());
         assertTrue(saslClient.isComplete());
+    }
+
+    private SaslClientFactory obtainSaslClientFactory() {
+        final SaslClientFactory clientFactory = obtainSaslClientFactory(ScramSaslClientFactory.class);
+        Assert.assertTrue(clientFactory instanceof ScramSaslClientFactory);
+        return clientFactory;
     }
 }
