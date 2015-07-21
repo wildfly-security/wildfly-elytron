@@ -36,7 +36,8 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * A {@link org.wildfly.security.password.Password} implementation for {@link org.wildfly.security.password.interfaces.ScramDigestPassword}.
@@ -64,8 +65,12 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         this(password.getAlgorithm(), password.getDigest().clone(), password.getSalt().clone(), password.getIterationCount());
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final ScramDigestPasswordSpec spec) {
-        this(algorithm, spec.getDigest().clone(), spec.getSalt().clone(), spec.getIterationCount());
+    ScramDigestPasswordImpl(final String algorithm, final IteratedSaltedHashPasswordSpec spec) {
+        this(algorithm, spec.getHash().clone(), spec.getSalt().clone(), spec.getIterationCount());
+    }
+
+    ScramDigestPasswordImpl(final String algorithm, final SaltedHashPasswordSpec spec) {
+        this(algorithm, spec.getHash().clone(), spec.getSalt().clone(), DEFAULT_ITERATION_COUNT);
     }
 
     ScramDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
@@ -125,7 +130,7 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(ScramDigestPasswordSpec.class);
+        return keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class);
     }
 
     @Override
@@ -140,8 +145,8 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(ScramDigestPasswordSpec.class)) {
-            return keySpecType.cast(new ScramDigestPasswordSpec(this.getDigest(), this.getSalt(), this.getIterationCount()));
+        if (keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new IteratedSaltedHashPasswordSpec(this.getDigest(), this.getSalt(), this.getIterationCount()));
         }
         throw new InvalidKeySpecException();
     }

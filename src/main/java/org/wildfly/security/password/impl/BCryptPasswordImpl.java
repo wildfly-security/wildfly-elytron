@@ -29,10 +29,11 @@ import java.util.Arrays;
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
-import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * <p>
@@ -57,8 +58,12 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
         this(bCryptPassword.getHash().clone(), bCryptPassword.getSalt().clone(), bCryptPassword.getIterationCount());
     }
 
-    BCryptPasswordImpl(final BCryptPasswordSpec passwordSpec) {
-        this(passwordSpec.getHashBytes().clone(), passwordSpec.getSalt().clone(), passwordSpec.getIterationCount());
+    BCryptPasswordImpl(final IteratedSaltedHashPasswordSpec passwordSpec) {
+        this(passwordSpec.getHash().clone(), passwordSpec.getSalt().clone(), passwordSpec.getIterationCount());
+    }
+
+    BCryptPasswordImpl(final SaltedHashPasswordSpec passwordSpec) {
+        this(passwordSpec.getHash().clone(), passwordSpec.getSalt().clone(), DEFAULT_ITERATION_COUNT);
     }
 
     BCryptPasswordImpl(final ClearPasswordSpec clearPasswordSpec) {
@@ -107,8 +112,8 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(BCryptPasswordSpec.class)) {
-            return keySpecType.cast(new BCryptPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
+        if (keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new IteratedSaltedHashPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
         }
         throw new InvalidKeySpecException();
     }
@@ -121,7 +126,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(BCryptPasswordSpec.class);
+        return keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class);
     }
 
     private static final int[] Parray = {

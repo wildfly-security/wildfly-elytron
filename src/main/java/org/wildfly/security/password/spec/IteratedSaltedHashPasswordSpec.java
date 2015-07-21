@@ -1,7 +1,7 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
- * as indicated by the @author tags.
+ *
+ * Copyright 2015 Red Hat, Inc. and/or its affiliates.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.security.password.spec;
 
-public final class UnixSHACryptPasswordSpec implements PasswordSpec {
-    private final byte[] hashBytes;
+/**
+ * A {@link PasswordSpec} for a password represented by a hash with a salt and a iteration count or cost.
+ *
+ * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ */
+public class IteratedSaltedHashPasswordSpec implements PasswordSpec {
+
+    private final byte[] hash;
     private final byte[] salt;
     private final int iterationCount;
 
-    /**
-     * Creates a new password specification, with the parameters that will be used
-     * when hashing the plain text.
-     *
-     * @param hashBytes         the plain text, as bytes
-     * @param salt              the salt. If none is provided, a new one is randomly generated
-     * @param iterationCount    the iteration count
-     */
-    public UnixSHACryptPasswordSpec(final byte[] hashBytes, final byte[] salt, final int iterationCount) {
-        this.hashBytes = hashBytes;
+    public IteratedSaltedHashPasswordSpec(byte[] hash, byte[] salt, int iterationCount) {
+        this.hash = hash;
         this.salt = salt;
         this.iterationCount = iterationCount;
     }
 
     public byte[] getHash() {
-        return hashBytes;
+        return this.hash;
     }
 
     public byte[] getSalt() {
-        return salt;
+        return this.salt;
     }
 
     public int getIterationCount() {
-        return iterationCount;
+        return this.iterationCount;
     }
 }

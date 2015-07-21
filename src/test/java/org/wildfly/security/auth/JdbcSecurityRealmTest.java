@@ -39,8 +39,8 @@ import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -231,7 +231,7 @@ public class JdbcSecurityRealmTest {
         String userName = "john";
         String userPassword = "scram_digest_abcd1234";
 
-        ScramDigestPasswordSpec passwordSpec = createScramDigestPasswordTable(userName, userPassword);
+        IteratedSaltedHashPasswordSpec passwordSpec = createScramDigestPasswordTable(userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .authenticationQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
@@ -251,7 +251,7 @@ public class JdbcSecurityRealmTest {
         ScramDigestPassword storedPassword = realmIdentity.getCredential(ScramDigestPassword.class);
 
         assertNotNull(storedPassword);
-        assertArrayEquals(passwordSpec.getDigest(), storedPassword.getDigest());
+        assertArrayEquals(passwordSpec.getHash(), storedPassword.getDigest());
         assertArrayEquals(passwordSpec.getSalt(), storedPassword.getSalt());
         assertEquals(passwordSpec.getIterationCount(), storedPassword.getIterationCount());
     }
@@ -422,7 +422,7 @@ public class JdbcSecurityRealmTest {
         }
     }
 
-    private ScramDigestPasswordSpec createScramDigestPasswordTable(String userName, String userPassword) throws Exception {
+    private IteratedSaltedHashPasswordSpec createScramDigestPasswordTable(String userName, String userPassword) throws Exception {
         try (
             Connection connection = this.dataSource.getConnection();
             Statement statement = connection.createStatement();
@@ -440,10 +440,10 @@ public class JdbcSecurityRealmTest {
             HashedPasswordAlgorithmSpec algoSpec = new HashedPasswordAlgorithmSpec(4096, salt);
             EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(userPassword.toCharArray(), algoSpec);
             ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
-            ScramDigestPasswordSpec keySpec = factory.getKeySpec(scramPassword, ScramDigestPasswordSpec.class);
+            IteratedSaltedHashPasswordSpec keySpec = factory.getKeySpec(scramPassword, IteratedSaltedHashPasswordSpec.class);
 
             preparedStatement.setString(1, userName);
-            preparedStatement.setBytes(2, keySpec.getDigest());
+            preparedStatement.setBytes(2, keySpec.getHash());
             preparedStatement.setBytes(3, keySpec.getSalt());
             preparedStatement.setInt(4, keySpec.getIterationCount());
             preparedStatement.execute();

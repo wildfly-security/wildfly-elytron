@@ -52,17 +52,13 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
-import org.wildfly.security.password.spec.BCryptPasswordSpec;
-import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
-import org.wildfly.security.password.spec.SunUnixMD5CryptPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
 
 /**
  * The Elytron-provided password factory SPI implementation, which supports all the provided password types.
@@ -87,9 +83,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
             case ALGORITHM_BCRYPT: {
-                if (keySpec instanceof BCryptPasswordSpec) {
+                if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
-                        return new BCryptPasswordImpl((BCryptPasswordSpec) keySpec);
+                        return new BCryptPasswordImpl((IteratedSaltedHashPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
+                } else if (keySpec instanceof SaltedHashPasswordSpec) {
+                    try {
+                        return new BCryptPasswordImpl((SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -134,9 +136,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SUN_CRYPT_MD5:
             case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                if (keySpec instanceof SunUnixMD5CryptPasswordSpec) {
+                if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
-                        return new SunUnixMD5CryptPasswordImpl(algorithm, (SunUnixMD5CryptPasswordSpec) keySpec);
+                        return new SunUnixMD5CryptPasswordImpl(algorithm, (IteratedSaltedHashPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
+                } else if (keySpec instanceof SaltedHashPasswordSpec) {
+                    try {
+                        return new SunUnixMD5CryptPasswordImpl(algorithm, (SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -158,9 +166,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_CRYPT_SHA_256:
             case ALGORITHM_CRYPT_SHA_512: {
-                if (keySpec instanceof UnixSHACryptPasswordSpec) {
+                if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
-                        return new UnixSHACryptPasswordImpl(algorithm, (UnixSHACryptPasswordSpec) keySpec);
+                        return new UnixSHACryptPasswordImpl(algorithm, (IteratedSaltedHashPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
+                } else if (keySpec instanceof SaltedHashPasswordSpec) {
+                    try {
+                        return new UnixSHACryptPasswordImpl(algorithm, (SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -272,9 +286,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
             case ALGORITHM_BSD_CRYPT_DES: {
-                if (keySpec instanceof BSDUnixDESCryptPasswordSpec) {
+                if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
-                        return new BSDUnixDESCryptPasswordImpl((BSDUnixDESCryptPasswordSpec) keySpec);
+                        return new BSDUnixDESCryptPasswordImpl((IteratedSaltedHashPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
+                } else if (keySpec instanceof SaltedHashPasswordSpec) {
+                    try {
+                        return new BSDUnixDESCryptPasswordImpl((SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
@@ -296,9 +316,15 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
             case ALGORITHM_SCRAM_SHA_1:
             case ALGORITHM_SCRAM_SHA_256: {
-                if (keySpec instanceof ScramDigestPasswordSpec) {
+                if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
-                        return new ScramDigestPasswordImpl(algorithm, (ScramDigestPasswordSpec) keySpec);
+                        return new ScramDigestPasswordImpl(algorithm, (IteratedSaltedHashPasswordSpec) keySpec);
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        throw new InvalidKeySpecException(e);
+                    }
+                } else if (keySpec instanceof SaltedHashPasswordSpec) {
+                    try {
+                        return new ScramDigestPasswordImpl(algorithm, (SaltedHashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
