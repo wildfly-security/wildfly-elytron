@@ -43,8 +43,8 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -147,13 +147,13 @@ public class SaltedSimpleDigestPasswordTest {
 
         validatePassword(tsdp, preDigested, pf);
 
-        assertTrue("Convertable to key spec", pf.convertibleToKeySpec(tsdp, SaltedSimpleDigestPasswordSpec.class));
-        SaltedSimpleDigestPasswordSpec tsdps = pf.getKeySpec(tsdp, SaltedSimpleDigestPasswordSpec.class);
+        assertTrue("Convertable to key spec", pf.convertibleToKeySpec(tsdp, SaltedHashPasswordSpec.class));
+        SaltedHashPasswordSpec tsdps = pf.getKeySpec(tsdp, SaltedHashPasswordSpec.class);
         assertTrue("Salt Correctly Passed", Arrays.equals(salt, tsdps.getSalt()));
-        assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdps.getDigest()));
+        assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, tsdps.getHash()));
 
         // Digest into Spec -> Password
-        tsdps = new SaltedSimpleDigestPasswordSpec(preDigested, salt);
+        tsdps = new SaltedHashPasswordSpec(preDigested, salt);
         tsdp = (SaltedSimpleDigestPassword) pf.generatePassword(tsdps);
 
         validatePassword(tsdp, preDigested, pf);

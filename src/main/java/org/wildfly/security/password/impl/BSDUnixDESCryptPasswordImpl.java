@@ -20,6 +20,7 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
@@ -28,10 +29,11 @@ import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
-import org.wildfly.security.password.spec.BSDUnixDESCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * Implementation of the BSD variant of the Unix DES Crypt password.
@@ -45,14 +47,23 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     private final int salt;
     private final byte[] hash;
 
-    BSDUnixDESCryptPasswordImpl(final BSDUnixDESCryptPasswordSpec passwordSpec) throws InvalidKeySpecException {
-        this.salt = passwordSpec.getSalt();
-        this.iterationCount = passwordSpec.getIterationCount();
-        final byte[] hash = passwordSpec.getHash();
+    BSDUnixDESCryptPasswordImpl(int salt, int iterationCount, byte[] hash) throws InvalidKeySpecException {
+        this.salt = salt;
+        this.iterationCount = iterationCount;
+
         if (hash == null || hash.length != BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE) {
             throw log.invalidKeySpecBsdDesCryptPasswordHashMustBeBytes(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE);
         }
+
         this.hash = hash.clone();
+    }
+
+    BSDUnixDESCryptPasswordImpl(final IteratedSaltedHashPasswordSpec passwordSpec) throws InvalidKeySpecException {
+        this(ByteBuffer.wrap(passwordSpec.getSalt()).getInt(), passwordSpec.getIterationCount(), passwordSpec.getHash());
+    }
+
+    BSDUnixDESCryptPasswordImpl(final SaltedHashPasswordSpec passwordSpec) throws InvalidKeySpecException {
+        this(ByteBuffer.wrap(passwordSpec.getSalt()).getInt(), DEFAULT_ITERATION_COUNT, passwordSpec.getHash());
     }
 
     BSDUnixDESCryptPasswordImpl(final ClearPasswordSpec passwordSpec) {
@@ -92,8 +103,8 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(BSDUnixDESCryptPasswordSpec.class)) {
-            return keySpecType.cast(new BSDUnixDESCryptPasswordSpec(hash.clone(), salt, iterationCount));
+        if (keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new IteratedSaltedHashPasswordSpec(hash.clone(), ByteBuffer.allocate(4).putInt(salt).array(), iterationCount));
         }
         throw new InvalidKeySpecException();
     }
@@ -103,7 +114,7 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(BSDUnixDESCryptPasswordSpec.class);
+        return keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class);
     }
 
     public String getAlgorithm() {

@@ -33,8 +33,8 @@ import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.SaltedSimpleDigestPasswordSpec;
-import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -240,7 +240,7 @@ public class PasswordKeyMapper implements KeyMapper {
             throw log.saltIsExpectedWhenCreatingPasswords(ScramDigestPassword.class.getSimpleName());
         }
 
-        ScramDigestPasswordSpec saltedSimpleDigestPasswordSpec = new ScramDigestPasswordSpec(hash, salt, iterationCount);
+        IteratedSaltedHashPasswordSpec saltedSimpleDigestPasswordSpec = new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 
@@ -254,7 +254,7 @@ public class PasswordKeyMapper implements KeyMapper {
             throw log.saltIsExpectedWhenCreatingPasswords(SaltedSimpleDigestPassword.class.getSimpleName());
         }
 
-        SaltedSimpleDigestPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedSimpleDigestPasswordSpec(hash, salt);
+        SaltedHashPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedHashPasswordSpec(hash, salt);
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 

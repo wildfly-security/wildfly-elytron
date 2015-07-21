@@ -20,6 +20,7 @@ package org.wildfly.security.apacheds;
 
 import static org.junit.Assert.assertTrue;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -35,7 +36,7 @@ import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -78,7 +79,7 @@ public class CryptCompatibilityTest {
 
         byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
-        UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
+        SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
 
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);
@@ -103,7 +104,7 @@ public class CryptCompatibilityTest {
 
         byte[] digest = CodePointIterator.ofUtf8Bytes(digestBase64).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
-        UnixDESCryptPasswordSpec spec = new UnixDESCryptPasswordSpec(digest, salt);
+        SaltedHashPasswordSpec spec = new SaltedHashPasswordSpec(digest, ByteBuffer.allocate(2).putShort(salt).array());
 
         PasswordFactory pf = PasswordFactory.getInstance(UnixDESCryptPassword.ALGORITHM_CRYPT_DES);
         UnixDESCryptPassword password = (UnixDESCryptPassword) pf.generatePassword(spec);

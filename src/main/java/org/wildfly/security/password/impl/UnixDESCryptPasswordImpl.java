@@ -20,6 +20,7 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -32,7 +33,7 @@ import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.UnixDESCryptPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -43,8 +44,8 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     private final short salt;
     private final byte[] hash;
 
-    UnixDESCryptPasswordImpl(final UnixDESCryptPasswordSpec spec) throws InvalidKeySpecException {
-        salt = spec.getSalt();
+    UnixDESCryptPasswordImpl(final SaltedHashPasswordSpec spec) throws InvalidKeySpecException {
+        salt = ByteBuffer.wrap(spec.getSalt()).getShort();
         final byte[] hash = spec.getHash();
         if (hash == null || hash.length != 8) {
             throw log.invalidKeySpecDesCryptPasswordHashMustBeBytes(8); // TODO
@@ -89,8 +90,8 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(UnixDESCryptPasswordSpec.class)) {
-            return keySpecType.cast(new UnixDESCryptPasswordSpec(hash.clone(), salt));
+        if (keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new SaltedHashPasswordSpec(hash.clone(), ByteBuffer.allocate(2).putShort(this.salt).array()));
         }
         throw new InvalidKeySpecException();
     }
@@ -100,7 +101,7 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(UnixDESCryptPasswordSpec.class);
+        return keySpecType.isAssignableFrom(SaltedHashPasswordSpec.class);
     }
 
     public String getAlgorithm() {

@@ -33,10 +33,10 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
-import org.wildfly.security.password.spec.BCryptPasswordSpec;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 
 /**
  * <p>
@@ -156,7 +156,7 @@ public class BCryptPasswordTest {
         BCryptPassword password = (BCryptPassword) factory.generatePassword(spec);
 
         // check if a salt has been generated and if the default iteration count is being used.
-        BCryptPasswordSpec bcryptSpec = factory.getKeySpec(password, BCryptPasswordSpec.class);
+        IteratedSaltedHashPasswordSpec bcryptSpec = factory.getKeySpec(password, IteratedSaltedHashPasswordSpec.class);
         Assert.assertNotNull(bcryptSpec.getSalt());
         Assert.assertEquals(BCRYPT_SALT_SIZE, bcryptSpec.getSalt().length);
         Assert.assertEquals(DEFAULT_ITERATION_COUNT, bcryptSpec.getIterationCount());

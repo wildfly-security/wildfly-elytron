@@ -36,7 +36,8 @@ import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
-import org.wildfly.security.password.spec.UnixSHACryptPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
  * @author <a href="mailto:juraci.javadoc@kroehling.de">Juraci Paixão Kröhling</a>
@@ -67,8 +68,12 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this.hash = hash;
     }
 
-    UnixSHACryptPasswordImpl(final String algorithm, final UnixSHACryptPasswordSpec spec) {
+    UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedHashPasswordSpec spec) {
         this(algorithm, truncatedClone(spec.getSalt()), min(999_999_999, max(1_000, spec.getIterationCount())), spec.getHash().clone());
+    }
+
+    UnixSHACryptPasswordImpl(final String algorithm, final SaltedHashPasswordSpec spec) {
+        this(algorithm, truncatedClone(spec.getSalt()), min(999_999_999, max(1_000, DEFAULT_ITERATION_COUNT)), spec.getHash().clone());
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
@@ -121,10 +126,10 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <S extends KeySpec> S getKeySpec(Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class)) {
-            return keySpecType.cast(new UnixSHACryptPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
+        if (keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class)) {
+            return keySpecType.cast(new IteratedSaltedHashPasswordSpec(this.getHash(), this.getSalt(), this.getIterationCount()));
         } else {
-            throw log.invalidKeySpecExpectedSpecGotSpec(UnixSHACryptPasswordSpec.class.getName(), keySpecType.getName());
+            throw log.invalidKeySpecExpectedSpecGotSpec(IteratedSaltedHashPasswordSpec.class.getName(), keySpecType.getName());
         }
     }
 
@@ -141,7 +146,7 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(UnixSHACryptPasswordSpec.class);
+        return keySpecType.isAssignableFrom(IteratedSaltedHashPasswordSpec.class);
     }
 
     static byte[] doEncode(final String algorithm, final byte[] password, final byte[] salt, final int iterationCount) throws NoSuchAlgorithmException {

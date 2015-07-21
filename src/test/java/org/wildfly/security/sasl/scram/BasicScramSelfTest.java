@@ -40,7 +40,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.ScramDigestPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.ClientCallbackHandler;
@@ -103,7 +103,7 @@ public class BasicScramSelfTest extends BaseTestCase {
     public void testAuthenticationSha1ScramCredential() throws Exception {
         byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
         byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new ScramDigestPasswordSpec(digest, salt, 4096));
+        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
         ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
         testAuthentication(Scram.SCRAM_SHA_1, serverHandler, clientHandler, "user", EMPTY, EMPTY);
     }
@@ -112,7 +112,7 @@ public class BasicScramSelfTest extends BaseTestCase {
     public void testAuthenticationSha1ScramCredentialBindingData() throws Exception {
         byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
         byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new ScramDigestPasswordSpec(digest, salt, 4096));
+        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
         ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
         serverHandler.setBinding("type1", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x10});
         clientHandler.setBinding("type1", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x10});
@@ -123,7 +123,7 @@ public class BasicScramSelfTest extends BaseTestCase {
     public void testAuthenticationSha1ScramCredentialBindingDataRequired() throws Exception {
         byte[] digest = new byte[]{(byte)0x1d, (byte)0x96, (byte)0xee, (byte)0x3a, (byte)0x52, (byte)0x9b, (byte)0x5a, (byte)0x5f, (byte)0x9e, (byte)0x47, (byte)0xc0, (byte)0x1f, (byte)0x22, (byte)0x9a, (byte)0x2c, (byte)0xb8, (byte)0xa6, (byte)0xe1, (byte)0x5f, (byte)0x7d};
         byte[] salt = new byte[]{(byte)0x41, (byte)0x25, (byte)0xc2, (byte)0x47, (byte)0xe4, (byte)0x3a, (byte)0xb1, (byte)0xe9, (byte)0x3c, (byte)0x6d, (byte)0xff, (byte)0x76};
-        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new ScramDigestPasswordSpec(digest, salt, 4096));
+        ServerCallbackHandler serverHandler = new ServerCallbackHandler("user", ALGORITHM_SCRAM_SHA_1, new IteratedSaltedHashPasswordSpec(digest, salt, 4096));
         ClientCallbackHandler clientHandler = new ClientCallbackHandler("user", "pencil".toCharArray());
         serverHandler.setBinding("same-type2", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x12});
         clientHandler.setBinding("same-type2", new byte[]{(byte)0xFE, (byte)0xDC, (byte)0x12});
