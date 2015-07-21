@@ -43,7 +43,7 @@ import org.wildfly.security._private.ElytronMessages;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
+class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
     private static final ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.sasl.gssapi.server");
 
