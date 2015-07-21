@@ -18,6 +18,15 @@
 
 package org.wildfly.security.sasl.digest;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH_CONF;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_VALUES;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.digestResponse;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.messageDigestAlgorithm;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -38,9 +47,6 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteStringBuilder;
-
-import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
-import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -262,7 +268,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         try {
 
             // first try pre-digested credential
-            tryHandleCallbacks(realmCallback, nameCallback, authorizeCallback, credentialCallback);
+            tryHandleCallbacks(realmCallback, nameCallback, credentialCallback, authorizeCallback);
             DigestPassword password = (DigestPassword) credentialCallback.getCredential();
             digest_urp = password.getDigest();
 
