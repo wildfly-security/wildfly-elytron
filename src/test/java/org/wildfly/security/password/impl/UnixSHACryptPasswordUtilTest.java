@@ -36,7 +36,7 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGO
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
@@ -79,7 +79,7 @@ public class UnixSHACryptPasswordUtilTest {
         assertEquals(cryptString, PasswordUtil.getCryptString(parsed));
         UnixSHACryptPassword password = (UnixSHACryptPassword) parsed;
         final String algorithm = password.getAlgorithm();
-        UnixSHACryptPassword comparePassword = (UnixSHACryptPassword) factorySpi.engineGeneratePassword(algorithm, new EncryptablePasswordSpec("Hello world!".toCharArray(), new HashedPasswordAlgorithmSpec(10000, password.getSalt())));
+        UnixSHACryptPassword comparePassword = (UnixSHACryptPassword) factorySpi.engineGeneratePassword(algorithm, new EncryptablePasswordSpec("Hello world!".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10000, password.getSalt())));
         assertEquals(cryptString, PasswordUtil.getCryptString(comparePassword));
         assertEquals(password.getIterationCount(), comparePassword.getIterationCount());
         assertArrayEquals(password.getSalt(), comparePassword.getSalt());
@@ -94,7 +94,7 @@ public class UnixSHACryptPasswordUtilTest {
 
     private String generate(String alg, String salt, String passwd, int iterationCount) throws InvalidKeySpecException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final Password password = spi.engineGeneratePassword(alg, new EncryptablePasswordSpec(passwd.toCharArray(), new HashedPasswordAlgorithmSpec(iterationCount, salt.getBytes(UTF_8))));
+        final Password password = spi.engineGeneratePassword(alg, new EncryptablePasswordSpec(passwd.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt.getBytes(UTF_8))));
         return PasswordUtil.getCryptString(password);
     }
 

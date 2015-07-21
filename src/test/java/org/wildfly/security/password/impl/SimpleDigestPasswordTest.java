@@ -39,7 +39,7 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -147,11 +147,11 @@ public class SimpleDigestPasswordTest {
 
         validatePassword(simplePassword, password, preDigested, factory);
 
-        assertTrue("Convertable to key spec", factory.convertibleToKeySpec(simplePassword, SimpleDigestPasswordSpec.class));
-        SimpleDigestPasswordSpec simpleSpec = factory.getKeySpec(simplePassword, SimpleDigestPasswordSpec.class);
+        assertTrue("Convertable to key spec", factory.convertibleToKeySpec(simplePassword, HashPasswordSpec.class));
+        HashPasswordSpec simpleSpec = factory.getKeySpec(simplePassword, HashPasswordSpec.class);
         assertTrue("Digest Correctly Generated", Arrays.equals(preDigested, simpleSpec.getDigest()));
 
-        simpleSpec = new SimpleDigestPasswordSpec(preDigested);
+        simpleSpec = new HashPasswordSpec(preDigested);
         simplePassword = (SimpleDigestPassword) factory.generatePassword(simpleSpec);
 
         validatePassword(simplePassword, password, preDigested, factory);

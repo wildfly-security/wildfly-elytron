@@ -111,7 +111,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 } else if (credentialType.isAssignableFrom(DigestPassword.class)) {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     if (plainText) {
-                        AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(ALGORITHM_DIGEST_MD5, accountEntry.getName(), loadedState.getRealmName());
+                        AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
 
                         passwordSpec = new  EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
                     } else {

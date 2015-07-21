@@ -33,7 +33,7 @@ import org.junit.rules.ExpectedException;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -72,7 +72,7 @@ public class BSDUnixDESCryptTest {
         byte[] salt = new byte[2];
         salt[0] = (byte) 10;
         salt[1] = (byte) 20;
-        EncryptablePasswordSpec invalidSpec = new EncryptablePasswordSpec("password".toCharArray(), new HashedPasswordAlgorithmSpec(100, salt));
+        EncryptablePasswordSpec invalidSpec = new EncryptablePasswordSpec("password".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(100, salt));
 
         // An InvalidKeySpecException should be thrown when creating a BSDUnixDESCryptPassword using the invalid spec
         exception.expect(InvalidKeySpecException.class);
@@ -91,7 +91,7 @@ public class BSDUnixDESCryptTest {
         salt[1] = (byte) (saltInt >> 8);
         salt[2] = (byte) (saltInt);
         BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES,
-                new EncryptablePasswordSpec("password".toCharArray(), new HashedPasswordAlgorithmSpec(100, salt)));
+                new EncryptablePasswordSpec("password".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(100, salt)));
 
         // Use the new password to obtain a spec but specify an invalid key spec type
         exception.expect(InvalidKeySpecException.class);
@@ -109,7 +109,7 @@ public class BSDUnixDESCryptTest {
         salt[1] = (byte) (saltInt >> 8);
         salt[2] = (byte) (saltInt);
         BSDUnixDESCryptPasswordImpl password = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES,
-                new EncryptablePasswordSpec("password".toCharArray(), new HashedPasswordAlgorithmSpec(100, salt)));
+                new EncryptablePasswordSpec("password".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(100, salt)));
 
         // The new password should only be convertible to IteratedSaltedHashPasswordSpec
         assertTrue(spi.engineConvertibleToKeySpec(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, password, IteratedSaltedHashPasswordSpec.class));
@@ -145,7 +145,7 @@ public class BSDUnixDESCryptTest {
         salt[1] = (byte) (password.getSalt() >> 8);
         salt[2] = (byte) (password.getSalt());
         BSDUnixDESCryptPasswordImpl password2 = (BSDUnixDESCryptPasswordImpl) spi.engineGeneratePassword(algorithm,
-                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(password.getIterationCount(), salt)));
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), salt)));
         assertEquals(password.getSalt(), password2.getSalt());
         assertArrayEquals(password.getHash(), password2.getHash());
 
@@ -196,7 +196,7 @@ public class BSDUnixDESCryptTest {
         salt[0] = (byte) (saltInt >> 16);
         salt[1] = (byte) (saltInt >> 8);
         salt[2] = (byte) (saltInt);
-        EncryptablePasswordSpec invalidSpec = new EncryptablePasswordSpec("password".toCharArray(), new HashedPasswordAlgorithmSpec(17_777_200, salt));
+        EncryptablePasswordSpec invalidSpec = new EncryptablePasswordSpec("password".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(17_777_200, salt));
 
         // An IllegalArgumentException should occur when creating a BSDUnixDESCryptPasswordImpl using the invalid spec
         exception.expect(InvalidKeySpecException.class);

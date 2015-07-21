@@ -37,7 +37,7 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.ByteIterator;
@@ -164,7 +164,7 @@ public class ScramDigestPasswordTest {
 
         // use an encryptable spec to hash the password and compare the results with the expected hash.
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
-        HashedPasswordAlgorithmSpec algoSpec = new HashedPasswordAlgorithmSpec(iterationCount, decodedSalt);
+        IteratedSaltedPasswordAlgorithmSpec algoSpec = new IteratedSaltedPasswordAlgorithmSpec(iterationCount, decodedSalt);
         EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(password, algoSpec);
         ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
         validatePassword(factory, password, scramPassword, decodedDigest, decodedSalt, iterationCount);

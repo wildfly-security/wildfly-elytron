@@ -35,7 +35,7 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
@@ -86,10 +86,10 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     }
 
     ScramDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getPassword(), (HashedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+        this(algorithm, spec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
     }
 
-    private ScramDigestPasswordImpl(final String algorithm, final char[] password, final HashedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+    private ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
         this.algorithm = algorithm;
         this.salt = spec.getSalt() == null ? PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone();
         this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();

@@ -35,7 +35,7 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 
 /**
@@ -88,7 +88,7 @@ public class BCryptPasswordTest {
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
         password = (BCryptPassword) factory.generatePassword(new EncryptablePasswordSpec("".toCharArray(),
-                new HashedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+                new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
@@ -111,7 +111,7 @@ public class BCryptPasswordTest {
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
         password = (BCryptPassword) factory.generatePassword(new EncryptablePasswordSpec(correctPassword,
-                new HashedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+                new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
@@ -134,7 +134,7 @@ public class BCryptPasswordTest {
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
         password = (BCryptPassword) factory.generatePassword(new EncryptablePasswordSpec(correctPassword,
-                new HashedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+                new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
@@ -189,7 +189,7 @@ public class BCryptPasswordTest {
         // now use the EncryptablePasswordSpec to build a new password and check if the hashed bytes matches those that
         // were parsed and stored in the spec.
         password = (BCryptPassword) factory.generatePassword(new EncryptablePasswordSpec(correctPassword,
-                new HashedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+                new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
@@ -205,7 +205,7 @@ public class BCryptPasswordTest {
         // hash a password that is too long (size > 72 bytes).
         String longKey = "01234567890123456789012345678901234567890123456789012345678901234567890123456789";
         BCryptPassword password = (BCryptPassword) factory.generatePassword(
-                new EncryptablePasswordSpec(longKey.toCharArray(), new HashedPasswordAlgorithmSpec(6, salt)));
+                new EncryptablePasswordSpec(longKey.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(6, salt)));
 
         // another long password that shares the first 72 bytes with the original password should yield the same hash.
         String longKeyAlt = "012345678901234567890123456789012345678901234567890123456789012345678901xxxxxxxxyyyyzzzzzz";

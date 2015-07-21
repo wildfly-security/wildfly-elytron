@@ -57,7 +57,7 @@ import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
 /**
@@ -210,9 +210,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_SIMPLE_DIGEST_SHA_256:
             case ALGORITHM_SIMPLE_DIGEST_SHA_384:
             case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
-                if (keySpec instanceof SimpleDigestPasswordSpec) {
+                if (keySpec instanceof HashPasswordSpec) {
                     try {
-                        return new SimpleDigestPasswordImpl(algorithm, (SimpleDigestPasswordSpec) keySpec);
+                        return new SimpleDigestPasswordImpl(algorithm, (HashPasswordSpec) keySpec);
                     } catch (IllegalArgumentException | NullPointerException e) {
                         throw new InvalidKeySpecException(e);
                     }
