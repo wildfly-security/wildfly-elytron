@@ -59,7 +59,6 @@ final class Gs2SaslClient extends AbstractSaslClient {
     private final byte[] bindingData;
     private final String bindingType;
     private final Oid mechanism;
-    private final GSSManager gssManager;
     private GSSContext gssContext;
     private ByteStringBuilder gs2HeaderExcludingNonStdFlag;
 
@@ -69,10 +68,9 @@ final class Gs2SaslClient extends AbstractSaslClient {
         this.bindingType = bindingType;
         this.plus = plus;
         this.bindingData = bindingData;
-        this.gssManager = gssManager;
 
         try {
-            mechanism = Gs2.getMechanismForSaslName(mechanismName);
+            mechanism = Gs2.getMechanismForSaslName(gssManager, mechanismName);
         } catch (GSSException e) {
             throw log.saslMechanismToOidMappingFailed(getMechanismName(), e);
         }

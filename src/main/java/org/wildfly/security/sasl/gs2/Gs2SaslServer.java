@@ -21,8 +21,6 @@ package org.wildfly.security.sasl.gs2;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
-import java.util.Map;
-
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
@@ -60,20 +58,18 @@ final class Gs2SaslServer extends AbstractSaslServer {
     private final String bindingType;
     private final byte[] bindingData;
     private final Oid mechanism;
-    private final GSSManager gssManager;
     private GSSContext gssContext;
     private String authorizationID;
 
     Gs2SaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler,
-            final Map<String, ?> props, final GSSManager gssManager, final boolean plus, final String bindingType, final byte[] bindingData) throws SaslException {
+            final GSSManager gssManager, final boolean plus, final String bindingType, final byte[] bindingData) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.plus = plus;
         this.bindingType = bindingType;
         this.bindingData = bindingData;
-        this.gssManager = gssManager;
 
         try {
-            mechanism = Gs2.getMechanismForSaslName(mechanismName);
+            mechanism = Gs2.getMechanismForSaslName(gssManager, mechanismName);
         } catch (GSSException e) {
             throw log.saslMechanismToOidMappingFailed(getMechanismName(), e);
         }
