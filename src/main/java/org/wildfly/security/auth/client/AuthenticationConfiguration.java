@@ -564,6 +564,10 @@ public abstract class AuthenticationConfiguration {
         return keyManager == null ? without(SSLClientKeyManagerConfiguration.class) : new SSLClientKeyManagerConfiguration(this, new FixedSecurityFactory<>(keyManager));
     }
 
+    public AuthenticationConfiguration useRealm(String realm) {
+        return realm == null ? this : new SetRealmAuthenticationConfiguration(this, realm);
+    }
+
     // client methods
 
     CallbackHandler getCallbackHandler() {
