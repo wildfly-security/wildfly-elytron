@@ -20,6 +20,9 @@ package org.wildfly.security.password.impl;
 
 import org.junit.Test;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
@@ -33,9 +36,6 @@ import static org.junit.Assert.assertTrue;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_256;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
-import org.wildfly.security.password.PasswordUtil;
-import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
@@ -46,44 +46,48 @@ public class UnixSHACryptPasswordUtilTest {
 
     @Test
     public void shouldParseSpecWithoutRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPassword) PasswordUtil.parseCryptString("$6$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
+        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPassword) ModularCrypt.decode("$6$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
     public void shouldParseSpecWithRounds() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        assertEquals("Didn't parse the number of rounds correctly", 10_000, ((UnixSHACryptPassword) PasswordUtil.parseCryptString("$6$rounds=10000$saltstring$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
+        assertEquals("Didn't parse the number of rounds correctly", 10_000, ((UnixSHACryptPassword) ModularCrypt.decode("$6$rounds=10000$saltstring$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
     public void shouldTruncateSaltAt16Chars() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPassword) PasswordUtil.parseCryptString("$6$rounds=5000$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
+        assertEquals("Didn't parse the number of rounds correctly", 5_000, ((UnixSHACryptPassword) ModularCrypt.decode("$6$rounds=5000$toolongsaltstrin$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
     public void shouldIncreaseIterationCountIfLowerThan1000() throws NoSuchAlgorithmException, InvalidKeySpecException {
-        assertEquals("Didn't increase the number of rounds", 1_000, ((UnixSHACryptPassword) PasswordUtil.parseCryptString("$6$rounds=10$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
+        assertEquals("Didn't increase the number of rounds", 1_000, ((UnixSHACryptPassword) ModularCrypt.decode("$6$rounds=10$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
     public void shouldDecreaseIterationCountIfBiggerThan999999999() throws NoSuchAlgorithmException, InvalidKeySpecException {
         // this test is being kept as a way to mark that this behavior is intended, but it's not tested with the
         // usual tests because it would run the hashing with 999,999,999 iterations
-        assertEquals("Didn't decrease the number of rounds", 999_999_999, ((UnixSHACryptPassword) PasswordUtil.parseCryptString("$6$rounds=1000000000$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
+        assertEquals("Didn't decrease the number of rounds", 999_999_999, ((UnixSHACryptPassword) ModularCrypt.decode("$6$rounds=1000000000$roundstoobig$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).getIterationCount());
     }
 
     @Test
     public void shouldVerifyOnMatchingHashes() throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException, InvalidKeySpecException {
         String cryptString = "$5$rounds=10000$saltstringsaltst$3xv.VbSHBb41AL9AvLeujZkZRBAwqFMz2.opqey6IcA";
         final PasswordFactorySpiImpl factorySpi = new PasswordFactorySpiImpl();
-        final Password parsed = PasswordUtil.parseCryptString(cryptString);
-        assertEquals(cryptString, PasswordUtil.getCryptString(parsed));
+        final Password parsed = ModularCrypt.decode(cryptString);
+        assertEquals(cryptString, ModularCrypt.encodeAsString(parsed));
         UnixSHACryptPassword password = (UnixSHACryptPassword) parsed;
         final String algorithm = password.getAlgorithm();
         UnixSHACryptPassword comparePassword = (UnixSHACryptPassword) factorySpi.engineGeneratePassword(algorithm, new EncryptablePasswordSpec("Hello world!".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10000, password.getSalt())));
-        assertEquals(cryptString, PasswordUtil.getCryptString(comparePassword));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(comparePassword));
         assertEquals(password.getIterationCount(), comparePassword.getIterationCount());
         assertArrayEquals(password.getSalt(), comparePassword.getSalt());
         assertArrayEquals(password.getHash(), comparePassword.getHash());
+
+        // password is in raw form, need to translate first before verifying
+        password = (UnixSHACryptPassword) factorySpi.engineTranslatePassword(algorithm, password);
+
         assertTrue(factorySpi.engineVerify(algorithm, password, "Hello world!".toCharArray()));
     }
 
@@ -95,7 +99,7 @@ public class UnixSHACryptPasswordUtilTest {
     private String generate(String alg, String salt, String passwd, int iterationCount) throws InvalidKeySpecException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
         final Password password = spi.engineGeneratePassword(alg, new EncryptablePasswordSpec(passwd.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt.getBytes(UTF_8))));
-        return PasswordUtil.getCryptString(password);
+        return ModularCrypt.encodeAsString(password);
     }
 
     @Test

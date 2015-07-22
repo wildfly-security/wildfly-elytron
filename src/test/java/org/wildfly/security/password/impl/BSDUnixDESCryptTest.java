@@ -30,13 +30,13 @@ import java.security.spec.InvalidKeySpecException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * Tests for the BSD variant of Unix DES Crypt.
@@ -120,21 +120,24 @@ public class BSDUnixDESCryptTest {
         String cryptString = "_rH..saltodLocONXC9c";
 
         // Get the spec by parsing the crypt string
-        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) PasswordUtil.parseCryptString(cryptString);
+        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) ModularCrypt.decode(cryptString);
         assertEquals(1_271, password.getIterationCount());
         assertEquals(BSDUnixDESCryptPassword.BSD_CRYPT_DES_HASH_SIZE, password.getHash().length);
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws InvalidKeyException, InvalidKeySpecException {
-        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) PasswordUtil.parseCryptString(cryptString);
+        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
+        BSDUnixDESCryptPassword password = (BSDUnixDESCryptPassword) ModularCrypt.decode(cryptString);
+        final String algorithm = password.getAlgorithm();
+
+        // password is in raw form, need to translate first before verifying
+        password = (BSDUnixDESCryptPassword) spi.engineTranslatePassword(algorithm, password);
 
         // Use the spec to generate a BSDUnixDESCryptPasswordImpl and then verify the hash
         // using the correct password
-        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
 
@@ -151,7 +154,7 @@ public class BSDUnixDESCryptTest {
 
         // Use the new password to obtain a spec and then check if this spec yields the same
         // crypt string
-        assertEquals(cryptString, PasswordUtil.getCryptString(password2));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password2));
     }
 
     @Test

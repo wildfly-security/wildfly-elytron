@@ -28,10 +28,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
 import org.junit.Test;
-import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * Tests for the Sun variant of Unix MD5 Crypt. The expected results for
@@ -47,11 +47,11 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5$zrdhpMlZ$$wBvMOEqbSjU.hu5T2VEP01";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
+        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
         assertEquals(0, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test
@@ -59,11 +59,11 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5,rounds=1000$saltstring$$1wGsmnKgDGdu03LxKu0VI1";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
+        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
         assertEquals(1_000, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test
@@ -71,19 +71,22 @@ public class SunUnixMD5CryptTest {
         String cryptString = "$md5,rounds=1500$saltstring$F9DNxgHVXWaeLS9zUaWXd.";
 
         // Get the spec by parsing the crypt string
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
+        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
         assertEquals(1_500, password.getIterationCount());
 
         // Use the spec to build a new crypt string and compare it to the original
-        assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     private void generateAndVerify(String cryptString, String correctPassword) throws NoSuchAlgorithmException,  InvalidKeyException, InvalidKeySpecException {
-        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) PasswordUtil.parseCryptString(cryptString);
+        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
+        SunUnixMD5CryptPassword password = (SunUnixMD5CryptPassword) ModularCrypt.decode(cryptString);
+        final String algorithm = password.getAlgorithm();
+
+        // password is in raw form, need to translate first before verifying
+        password = (SunUnixMD5CryptPassword) spi.engineTranslatePassword(algorithm, password);
 
         // Use the spec to generate a SunUnixMD5CryptPasswordImpl and then verify the hash using the correct password
-        final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final String algorithm = password.getAlgorithm();
         assertTrue(spi.engineVerify(algorithm, password, correctPassword.toCharArray()));
         assertFalse(spi.engineVerify(algorithm, password, "wrongpassword".toCharArray()));
 
@@ -93,7 +96,7 @@ public class SunUnixMD5CryptTest {
         assertArrayEquals(password.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same crypt string
-        assertEquals(cryptString, PasswordUtil.getCryptString(password2));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(password2));
     }
 
     @Test

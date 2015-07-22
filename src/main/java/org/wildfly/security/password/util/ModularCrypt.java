@@ -16,48 +16,37 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password;
+package org.wildfly.security.password.util;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 
-import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Locale;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
-import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
-import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
- * Helper utility methods for operations on passwords.
+ * Helper utility methods for operation on passwords based on the Modular Crypt Format(MCF).
  *
  * @author <a href="mailto:jpkroehling.javadoc@redhat.com">Juraci Paixão Kröhling</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PasswordUtil {
-    private PasswordUtil() {}
-
-    // we cheat heavily so you don't have to
-    private static final PasswordFactorySpi PASSWORD_FACTORY_SPI = new PasswordFactorySpiImpl();
+public final class ModularCrypt {
+    private ModularCrypt() {}
 
     // the order or value of these numbers is not important, just their uniqueness
 
@@ -70,13 +59,7 @@ public final class PasswordUtil {
     private static final int A_APACHE_HTDIGEST          = 7;
     private static final int A_BSD_CRYPT_DES            = 8;
     private static final int A_CRYPT_DES                = 9;
-    private static final int A_DIGEST_MD2               = 10;
-    private static final int A_DIGEST_MD5               = 11;
-    private static final int A_DIGEST_SHA_1             = 12;
-    private static final int A_DIGEST_SHA_256           = 13;
-    private static final int A_DIGEST_SHA_384           = 14;
-    private static final int A_DIGEST_SHA_512           = 15;
-    private static final int A_SUN_CRYPT_MD5_BARE_SALT  = 16;
+    private static final int A_SUN_CRYPT_MD5_BARE_SALT  = 10;
 
     private static int doIdentifyAlgorithm(char[] chars) {
         if (chars.length < 5) {
@@ -131,21 +114,6 @@ public final class PasswordUtil {
             }
         } else if (chars[0] == '_') {
             return A_BSD_CRYPT_DES;
-        } else if (chars[0] == '[') {
-            int idx = indexOf(chars, ']');
-            if (idx != -1) {
-                switch (new String(chars, 1, idx - 1).toLowerCase(Locale.US)) {
-                    case "md2": return A_DIGEST_MD2;
-                    case "md5": return A_DIGEST_MD5;
-                    case "sha-1": return A_DIGEST_SHA_1;
-                    case "sha-256": return A_DIGEST_SHA_256;
-                    case "sha-384": return A_DIGEST_SHA_384;
-                    case "sha-512": return A_DIGEST_SHA_512;
-                    default: return 0;
-                }
-            } else {
-                return 0;
-            }
         } else if (chars.length == 13) {
             return A_CRYPT_DES;
         } else {
@@ -175,29 +143,33 @@ public final class PasswordUtil {
             case A_APACHE_HTDIGEST:         return "apache-htdigest";
             case A_BSD_CRYPT_DES:           return "bsd-crypt-des";
             case A_CRYPT_DES:               return "crypt-des";
-            case A_DIGEST_MD2:              return "digest-md2";
-            case A_DIGEST_MD5:              return "digest-md5";
-            case A_DIGEST_SHA_1:            return "digest-sha-1";
-            case A_DIGEST_SHA_256:          return "digest-sha-256";
-            case A_DIGEST_SHA_384:          return "digest-sha-384";
-            case A_DIGEST_SHA_512:          return "digest-sha-512";
             case A_SUN_CRYPT_MD5_BARE_SALT: return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
             default: return null;
         }
     }
 
-    public static String identifyAlgorithm(String string) {
-        return identifyAlgorithm(string.toCharArray());
-    }
-
-    public static char[] getCryptStringChars(Password password) throws InvalidKeySpecException {
+    /**
+     * Encode the given {@link Password} to a char array.
+     *
+     * @param password the password to encode
+     * @return a char array representing the encoded password
+     * @throws InvalidKeySpecException if the given password is not supported or could be encoded
+     */
+    public static char[] encode(Password password) throws InvalidKeySpecException {
         StringBuilder b = getCryptStringToBuilder(password);
         char[] chars = new char[b.length()];
         b.getChars(0, b.length(), chars, 0);
         return chars;
     }
 
-    public static String getCryptString(Password password) throws InvalidKeySpecException {
+    /**
+     * Encode the given {@link Password} to a string.
+     *
+     * @param password the password to encode
+     * @return a string representing the encoded password
+     * @throws InvalidKeySpecException if the given password is not supported or could be encoded
+     */
+    public static String encodeAsString(Password password) throws InvalidKeySpecException {
         return getCryptStringToBuilder(password).toString();
     }
 
@@ -227,11 +199,6 @@ public final class PasswordUtil {
             b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 12) & 0x3f));
             b.appendCodePoint(Base64Alphabet.MOD_CRYPT.encode((salt >> 18) & 0x3f));
             ByteIterator.ofBytes(spec.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).drainTo(b);
-        } else if (password instanceof SimpleDigestPassword) {
-            final SimpleDigestPassword spec = (SimpleDigestPassword) password;
-            final String algorithm = spec.getAlgorithm();
-            b.append('[').append(algorithm).append(']');
-            ByteIterator.ofBytes(spec.getDigest()).base64Encode().drainTo(b);
         } else if (password instanceof UnixDESCryptPassword) {
             final UnixDESCryptPassword spec = (UnixDESCryptPassword) password;
             final short salt = spec.getSalt();
@@ -307,12 +274,26 @@ public final class PasswordUtil {
         return b;
     }
 
-    public static Password parseCryptString(String cryptString) throws InvalidKeySpecException {
+    /**
+     * Decode the given string and creates a {@link Password} instance.
+     *
+     * @param encoded the string representing the encoded format of the password
+     * @return a {@link Password} instance created from the given string
+     * @throws InvalidKeySpecException if the given password is not supported or could be decoded
+     */
+    public static Password decode(String cryptString) throws InvalidKeySpecException {
         Assert.checkNotNullParam("cryptString", cryptString);
-        return parseCryptString(cryptString.toCharArray());
+        return decode(cryptString.toCharArray());
     }
 
-    public static Password parseCryptString(char[] cryptString) throws InvalidKeySpecException {
+    /**
+     * Decode the given char array and creates a {@link Password} instance.
+     *
+     * @param encoded the char array representing the encoded format of the password
+     * @return a {@link Password} instance created from the given string
+     * @throws InvalidKeySpecException if the given password is not supported or could be decoded
+     */
+    public static Password decode(char[] cryptString) throws InvalidKeySpecException {
         Assert.checkNotNullParam("cryptString", cryptString);
         final int algorithmId = doIdentifyAlgorithm(cryptString);
         switch (algorithmId) {
@@ -346,35 +327,7 @@ public final class PasswordUtil {
             case A_CRYPT_DES: {
                 return parseUnixDESCryptPasswordString(cryptString);
             }
-            case A_DIGEST_MD2:
-            case A_DIGEST_MD5:
-            case A_DIGEST_SHA_1:
-            case A_DIGEST_SHA_256:
-            case A_DIGEST_SHA_384:
-            case A_DIGEST_SHA_512:
-            {
-                return parseSimpleDigestPasswordString(algorithmId, cryptString);
-            }
             default: throw log.invalidKeySpecUnknownCryptStringAlgorithm();
-        }
-    }
-
-    static class IByteArrayInputStream extends ByteArrayInputStream {
-        private final int[] interleave;
-
-        IByteArrayInputStream(final byte[] buf, final int[] interleave) {
-            super(buf);
-            this.interleave = interleave;
-        }
-
-        IByteArrayInputStream(final byte[] buf, final int offset, final int length, final int[] interleave) {
-            super(buf, offset, length);
-            this.interleave = interleave;
-        }
-
-        @Override
-        public synchronized int read() {
-            return (pos < count) ? (buf[interleave[pos++]] & 0xff) : -1;
         }
     }
 
@@ -477,22 +430,6 @@ public final class PasswordUtil {
 
     private static final int[] SHA_512_IDX_REV = inverse(SHA_512_IDX);
 
-    private static Password parseSimpleDigestPasswordString(final int algorithmId, final char[] cryptString) throws InvalidKeySpecException {
-        final int initialLen;
-        switch (algorithmId) {
-            case A_DIGEST_MD2:
-            case A_DIGEST_MD5: initialLen = "[mdX]".length(); break;
-            case A_DIGEST_SHA_1: initialLen = "[sha-1]".length(); break;
-            case A_DIGEST_SHA_256:
-            case A_DIGEST_SHA_384:
-            case A_DIGEST_SHA_512: initialLen = "[sha-XXX]".length(); break;
-            default: throw Assert.impossibleSwitchCase(algorithmId);
-        }
-        byte[] bytes = CodePointIterator.ofChars(cryptString, 0, initialLen).base64Decode().drain();
-        final String algorithmName = getAlgorithmNameString(algorithmId);
-        return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithmName, new HashPasswordSpec(bytes));
-    }
-
     private static Password parseUnixSHA256CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
         assert cryptString[0] == '$'; // previously tested by doIdentifyAlgorithm
         assert cryptString[1] == '5'; // previously tested by doIdentifyAlgorithm
@@ -525,7 +462,7 @@ public final class PasswordUtil {
                 throw log.invalidHashLength();
             }
             byte[] hash = ByteIterator.ofBytes(decoded, table).drain();
-            return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithm, new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount));
+            return UnixSHACryptPassword.createRaw(algorithm, salt, hash, iterationCount);
         } catch (NoSuchElementException e) {
             throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
@@ -548,7 +485,7 @@ public final class PasswordUtil {
             }
 
             byte[] hash = ByteIterator.ofBytes(decoded, MD5_IDX_REV).drain();
-            return PASSWORD_FACTORY_SPI.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new SaltedHashPasswordSpec(hash, salt));
+            return UnixMD5CryptPassword.createRaw(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, salt, hash);
         } catch (NoSuchElementException e) {
             throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
@@ -591,7 +528,7 @@ public final class PasswordUtil {
             }
 
             byte[] hash = ByteIterator.ofBytes(decoded, MD5_IDX_REV).drain();
-            return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithm, new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount));
+            return SunUnixMD5CryptPassword.createRaw(algorithm, salt, hash, iterationCount);
         } catch (NoSuchElementException e) {
             throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
@@ -628,7 +565,7 @@ public final class PasswordUtil {
             // the final 31 characters correspond to the encoded password - it is mapped to a 23-byte array after decoding.
             byte[] decodedPassword = r.limitedTo(31).base64Decode(Base64Alphabet.BCRYPT, false).drain();
 
-            return PASSWORD_FACTORY_SPI.engineGeneratePassword(BCryptPassword.ALGORITHM_BCRYPT, new IteratedSaltedHashPasswordSpec(decodedPassword, decodedSalt, cost));
+            return BCryptPassword.createRaw(BCryptPassword.ALGORITHM_BCRYPT, decodedPassword, decodedSalt, cost);
         } catch (NoSuchElementException e) {
             throw log.invalidKeySpecUnexpectedEndOfPasswordStringWithCause(e);
         }
@@ -641,10 +578,9 @@ public final class PasswordUtil {
         int s0 = Base64Alphabet.MOD_CRYPT.decode(r.next());
         int s1 = Base64Alphabet.MOD_CRYPT.decode(r.next());
         short salt = (short) (s0 | s1 << 6);
-        ByteBuffer saltBytes = ByteBuffer.allocate(2).putShort(salt);
         // 64 bit hash
         byte[] hash = r.base64Decode(Base64Alphabet.MOD_CRYPT, false).limitedTo(8).drain();
-        return PASSWORD_FACTORY_SPI.engineGeneratePassword(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, new SaltedHashPasswordSpec(hash, saltBytes.array()));
+        return UnixDESCryptPassword.createRaw(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, salt, hash);
     }
 
     private static Password parseBSDUnixDESCryptPasswordString(char[] cryptString) throws InvalidKeySpecException {
@@ -672,15 +608,7 @@ public final class PasswordUtil {
 
         // The final 11 characters correspond to the encoded password - this is decoded to a 64-bit hash
         byte[] hash = r.base64Decode(Base64Alphabet.MOD_CRYPT, false).limitedTo(11).drain();
-        ByteBuffer saltBytes = ByteBuffer.allocate(4);
-        return PASSWORD_FACTORY_SPI.engineGeneratePassword(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, new IteratedSaltedHashPasswordSpec(hash, saltBytes.putInt(salt).array(), iterationCount));
-    }
-
-    private static int indexOf(final char[] chars, final char c) {
-        for (int i = 0; i < chars.length; i ++) {
-            if (chars[i] == c) return i;
-        }
-        return -1;
+        return BSDUnixDESCryptPassword.createRaw(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
     }
 
     private static int lastIndexOf(final char[] chars, final char c) {
@@ -689,11 +617,4 @@ public final class PasswordUtil {
         }
         return -1;
     }
-
-    public static byte[] generateRandomSalt(int saltSize) {
-        byte[] randomSalt = new byte[saltSize];
-        ThreadLocalRandom.current().nextBytes(randomSalt);
-        return randomSalt;
-    }
-
 }

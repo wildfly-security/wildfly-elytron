@@ -27,7 +27,8 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.util.PasswordUtil;
+import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
@@ -291,7 +292,7 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
      * </p>
      * <p>
      * This implementation differs from the above algorithm in that it returns the encrypted ctext in its raw form. The
-     * {@link org.wildfly.security.password.PasswordUtil} class can be used to obtain the hashed password in its crypt
+     * {@link ModularCrypt} class can be used to obtain the hashed password in its crypt
      * string format (i.e. $2a$cost$encodedSaltencodedPassword).
      * </p>
      * <p>

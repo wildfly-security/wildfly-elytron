@@ -150,8 +150,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1019, value = "Filesystem-backed realm encountered invalid password format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidPasswordFormat(String format, Path path, int lineNumber, String name);
 
-    @Message(id = 1020, value = "Filesystem-backed realm failed to rename \"%s\" to \"%s\"")
-    RealmUnavailableException fileSystemRealmRenameFailed(String name, String finalName, @Cause IOException e);
+    @Message(id = 8031, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
+
+    @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
+    RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
 
     @Message(id = 1021, value = "Filesystem-backed realm failed to delete identity \"%s\"")
     RealmUnavailableException fileSystemRealmDeleteFailed(String name, @Cause IOException e);
@@ -1148,4 +1151,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8028, value = "Invalid algorithm \"%s\"")
     NoSuchAlgorithmException noSuchAlgorithmInvalidAlgorithm(String algorithm);
+
+    @Message(id = 8032, value = "Could not obtain key spec encoding identifier.")
+    IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
 }

@@ -31,12 +31,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * <p>
@@ -65,19 +65,20 @@ public class BCryptPasswordTest {
         String cryptString = "$2a$12$D4G5f18o7aMMfwasBL7GpuQWuP3pkrZrOAnqP.bmezbMng.QwJ/pG";
 
         // get the spec by parsing the crypt string.
-        BCryptPassword password = (BCryptPassword) PasswordUtil.parseCryptString(cryptString);
+        PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(cryptString));
         Assert.assertEquals(12, password.getIterationCount());
         Assert.assertEquals(BCryptPassword.BCRYPT_SALT_SIZE, password.getSalt().length);
 
         // use the spec to build a new crypt string and compare it to the original one.
-        Assert.assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test
     public void testHashEmptyString() throws Exception {
         String cryptString = "$2a$08$HqWuK6/Ng6sg9gQzbLrgb.Tl.ZHfXLhvt/SgVyWhQqgqcZ7ZuUtye";
-        BCryptPassword password = (BCryptPassword) PasswordUtil.parseCryptString(cryptString);
         PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(cryptString));
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         Assert.assertTrue(factory.verify(password, "".toCharArray()));
@@ -92,15 +93,17 @@ public class BCryptPasswordTest {
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
-        Assert.assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test
     public void testHashSimpleString() throws Exception {
         String cryptString = "$2a$10$fVH8e28OQRj9tqiDXs1e1uxpsjN0c7II7YPKXua2NAKYvM6iQk7dq";
         char[] correctPassword = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        BCryptPassword password = (BCryptPassword) PasswordUtil.parseCryptString(cryptString);
         PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(cryptString));
+
+        password = (BCryptPassword) factory.translate(password);
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         Assert.assertTrue(factory.verify(password, correctPassword));
@@ -115,15 +118,15 @@ public class BCryptPasswordTest {
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
-        Assert.assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test
     public void testHashComplexString() throws Exception {
         String cryptString = "$2a$12$WApznUOJfkEGSmYRfnkrPOr466oFDCaj4b6HY3EXGvfxm43seyhgC";
         char[] correctPassword = "~!@#$%^&*()      ~!@#$%^&*()PNBFRD".toCharArray();
-        BCryptPassword password = (BCryptPassword) PasswordUtil.parseCryptString(cryptString);
         PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(cryptString));
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         Assert.assertTrue(factory.verify(password, correctPassword));
@@ -138,7 +141,7 @@ public class BCryptPasswordTest {
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
-        Assert.assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     /**
@@ -177,8 +180,8 @@ public class BCryptPasswordTest {
     public void testHashAgainstPassLib() throws Exception {
         String cryptString = "$2a$12$NT0I31Sa7ihGEWpka9ASYeEFkhuTNeBQ2xfZskIiiJeyFXhRgS.Sy";
         char[] correctPassword = "password".toCharArray();
-        BCryptPassword password = (BCryptPassword) PasswordUtil.parseCryptString(cryptString);
         PasswordFactory factory = PasswordFactory.getInstance(ALGORITHM_BCRYPT);
+        BCryptPassword password = (BCryptPassword) factory.translate(ModularCrypt.decode(cryptString));
 
         // use the obtained spec to build a BCryptPasswordImpl, then verify the hash using the correct password.
         Assert.assertTrue(factory.verify(password, correctPassword));
@@ -193,7 +196,7 @@ public class BCryptPasswordTest {
         Assert.assertArrayEquals(password.getHash(), password.getHash());
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
-        Assert.assertEquals(cryptString, PasswordUtil.getCryptString(password));
+        Assert.assertEquals(cryptString, ModularCrypt.encodeAsString(password));
     }
 
     @Test

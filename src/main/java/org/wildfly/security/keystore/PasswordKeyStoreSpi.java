@@ -49,7 +49,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.util.ModularCrypt;
 
 /**
  * A password file formatted {@link KeyStore} implementation.
@@ -192,7 +192,7 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
                 final char[] chars;
                 final String alias = entry.getKey();
                 try {
-                    chars = PasswordUtil.getCryptStringChars(pw);
+                    chars = ModularCrypt.encode(pw);
                 } catch (InvalidKeySpecException e) {
                     throw log.keyStoreFailedToTranslate(alias, e);
                 }
@@ -261,13 +261,13 @@ public final class PasswordKeyStoreSpi extends KeyStoreSpi {
                             // finished
                             char[] c = new char[b.length()];
                             b.getChars(0, b.length(), c, 0);
-                            final String algorithm = PasswordUtil.identifyAlgorithm(c);
+                            final String algorithm = ModularCrypt.identifyAlgorithm(c);
                             if (algorithm == null) {
                                 throw log.noAlgorithmForPassword(alias);
                             }
                             final Password pw;
                             try {
-                                pw = PasswordUtil.parseCryptString(c);
+                                pw = ModularCrypt.decode(c);
                             } catch (InvalidKeySpecException e) {
                                 throw log.noAlgorithmForPassword(alias);
                             }

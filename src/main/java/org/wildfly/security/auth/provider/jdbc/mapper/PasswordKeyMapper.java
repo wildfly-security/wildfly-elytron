@@ -21,7 +21,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -219,7 +219,7 @@ public class PasswordKeyMapper implements KeyMapper {
                 if (ClearPassword.class.equals(credentialType)) {
                     return toClearPassword(hash, passwordFactory);
                 } else if (BCryptPassword.class.equals(credentialType)) {
-                    return PasswordUtil.parseCryptString(toCharArray(hash));
+                    return passwordFactory.translate(ModularCrypt.decode(toCharArray(hash)));
                 } else if (SaltedSimpleDigestPassword.class.equals(credentialType)) {
                     return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
                 } else if (SimpleDigestPassword.class.equals(credentialType)) {
@@ -227,7 +227,7 @@ public class PasswordKeyMapper implements KeyMapper {
                 } else if (ScramDigestPassword.class.equals(credentialType)) {
                     return toScramDigestPassword(hash, salt, iterationCount, passwordFactory);
                 }
-            } catch (InvalidKeySpecException e) {
+            } catch (InvalidKeySpecException | InvalidKeyException e) {
                 throw log.invalidPasswordKeySpecificationForAlgorithm(algorithm, e);
             }
         }
