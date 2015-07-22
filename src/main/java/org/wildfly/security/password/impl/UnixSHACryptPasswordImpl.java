@@ -22,6 +22,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -410,5 +412,13 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
             case ALGORITHM_CRYPT_SHA_512: return 64;
             default: throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return UnixSHACryptPassword.createRaw(algorithm, salt, hash, iterationCount);
     }
 }

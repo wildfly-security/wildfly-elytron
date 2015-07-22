@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -184,4 +186,11 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         }
     }
 
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return SaltedSimpleDigestPassword.createRaw(algorithm, digest, salt);
+    }
 }

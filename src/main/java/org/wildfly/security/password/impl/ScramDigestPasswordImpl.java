@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -45,6 +47,8 @@ import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
 class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDigestPassword {
+
+    private static final long serialVersionUID = 5831469808883867480L;
 
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
     private static final String HMAC_SHA256_ALGORITHM = "HmacSHA256";
@@ -227,5 +231,13 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
             default:
                 throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return ScramDigestPassword.createRaw(algorithm, digest, salt, iterationCount);
     }
 }

@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
@@ -599,5 +601,13 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
         b[offset++] = (byte) (iValue >>> 16 & 0xff);
         b[offset++] = (byte) (iValue >>> 8 & 0xff);
         b[offset  ] = (byte) (iValue & 0xff);
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return BSDUnixDESCryptPassword.createRaw(getAlgorithm(), hash, salt, iterationCount);
     }
 }
