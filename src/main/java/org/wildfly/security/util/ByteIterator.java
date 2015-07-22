@@ -101,6 +101,40 @@ public abstract class ByteIterator extends NumericIterator {
      */
     public abstract int offset();
 
+    public int getBE16() throws NoSuchElementException {
+        return next() << 8 | next();
+    }
+
+    public int getBE32() throws NoSuchElementException {
+        return next() << 24 | next() << 16 | next() << 8 | next();
+    }
+
+    public long getBE64() throws NoSuchElementException {
+        return (long)next() << 52 | (long)next() << 48 | (long)next() << 40 | (long)next() << 32 | (long)next() << 24 | (long)next() << 16 | (long)next() << 8 | (long)next();
+    }
+
+    public int getPackedBE32() throws NoSuchElementException {
+        int v = next();
+        int t = 0;
+        while ((v & 0x80) != 0) {
+            t = t << 7 | v & 0x7f;
+            v = next();
+        }
+        t = t << 7 | v;
+        return t;
+    }
+
+    public long getPackedBE64() throws NoSuchElementException {
+        int v = next();
+        long t = 0;
+        while ((v & 0x80) != 0) {
+            t = t << 7 | (long)(v & 0x7f);
+            v = next();
+        }
+        t = t << 7 | v;
+        return t;
+    }
+
     public ByteStringBuilder appendTo(final ByteStringBuilder builder) {
         final byte[] buffer = OP_BUFFER.get();
         int cnt = drain(buffer);
