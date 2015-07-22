@@ -47,7 +47,7 @@ import org.wildfly.security.auth.callback.ParameterCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -80,7 +80,7 @@ final class ScramSaslServer extends AbstractSaslServer {
     private byte[] serverFirstMessage;
     private byte[] saltedPassword;
     private byte[] salt;
-    private HashedPasswordAlgorithmSpec algorithmSpec;
+    private IteratedSaltedPasswordAlgorithmSpec algorithmSpec;
     private int iterationCount;
     private final boolean sendErrors = false;
     private int clientFirstMessageBareStart;
@@ -478,10 +478,10 @@ final class ScramSaslServer extends AbstractSaslServer {
 
     private void getSaltedPasswordFromTwoWay(NameCallback nameCallback, ByteStringBuilder b) throws SaslException {
         CredentialCallback credentialCallback = new CredentialCallback(TwoWayPassword.class);
-        final ParameterCallback parameterCallback = new ParameterCallback(HashedPasswordAlgorithmSpec.class);
+        final ParameterCallback parameterCallback = new ParameterCallback(IteratedSaltedPasswordAlgorithmSpec.class);
         try {
             tryHandleCallbacks(nameCallback, parameterCallback, credentialCallback);
-            algorithmSpec = (HashedPasswordAlgorithmSpec) parameterCallback.getParameterSpec();
+            algorithmSpec = (IteratedSaltedPasswordAlgorithmSpec) parameterCallback.getParameterSpec();
             if (algorithmSpec == null) throw new FastUnsupportedCallbackException(parameterCallback);
         } catch (UnsupportedCallbackException e) {
             Callback callback = e.getCallback();
@@ -492,7 +492,7 @@ final class ScramSaslServer extends AbstractSaslServer {
             } else if (callback == parameterCallback) {
                 // one more try, with default parameters
                 salt = ScramUtil.generateSalt(16, getRandom());
-                algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
+                algorithmSpec = new IteratedSaltedPasswordAlgorithmSpec(minimumIterationCount, salt);
                 try {
                     tryHandleCallbacks(nameCallback, credentialCallback);
                 } catch (UnsupportedCallbackException ex) {
@@ -532,7 +532,7 @@ final class ScramSaslServer extends AbstractSaslServer {
         }
 
         salt = ScramUtil.generateSalt(16, getRandom());
-        algorithmSpec = new HashedPasswordAlgorithmSpec(minimumIterationCount, salt);
+        algorithmSpec = new IteratedSaltedPasswordAlgorithmSpec(minimumIterationCount, salt);
 
         char[] passwordChars = passwordCallback.getPassword();
         passwordCallback.clearPassword();

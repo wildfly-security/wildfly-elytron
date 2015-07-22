@@ -26,7 +26,7 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HashedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
+public final class IteratedSaltedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
 
     // TODO - This could extend SaltedPasswordAlgorithmSpec but final classes makes type detection safer.
 
@@ -41,7 +41,7 @@ public final class HashedPasswordAlgorithmSpec implements AlgorithmParameterSpec
      * @param iterationCount the iteration count
      * @param salt the salt bytes
      */
-    public HashedPasswordAlgorithmSpec(final int iterationCount, final byte[] salt) {
+    public IteratedSaltedPasswordAlgorithmSpec(final int iterationCount, final byte[] salt) {
         this.iterationCount = iterationCount;
         this.salt = salt;
     }

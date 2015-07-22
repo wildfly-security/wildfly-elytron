@@ -32,7 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
 /**
@@ -63,8 +63,8 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         short salt;
         if (parameterSpec == null) {
             salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
-        } else if (parameterSpec instanceof HashedPasswordAlgorithmSpec) {
-            final byte[] saltBytes = ((HashedPasswordAlgorithmSpec) parameterSpec).getSalt();
+        } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+            final byte[] saltBytes = ((IteratedSaltedPasswordAlgorithmSpec) parameterSpec).getSalt();
             if (saltBytes != null) {
                 if (saltBytes.length != 2) {
                     throw log.invalidParameterSpecSaltMustBeBytesBits(2, 12);

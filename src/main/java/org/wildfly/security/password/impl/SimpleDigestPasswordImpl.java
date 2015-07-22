@@ -31,7 +31,7 @@ import java.util.Arrays;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -48,7 +48,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         this.digest = digest;
     }
 
-    SimpleDigestPasswordImpl(final String algorithm, final SimpleDigestPasswordSpec spec) {
+    SimpleDigestPasswordImpl(final String algorithm, final HashPasswordSpec spec) {
         this(algorithm, spec.getDigest().clone());
     }
 
@@ -69,8 +69,8 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {
-        if (keySpecType.isAssignableFrom(SimpleDigestPasswordSpec.class)) {
-            return keySpecType.cast(new SimpleDigestPasswordSpec(digest.clone()));
+        if (keySpecType.isAssignableFrom(HashPasswordSpec.class)) {
+            return keySpecType.cast(new HashPasswordSpec(digest.clone()));
         }
         throw new InvalidKeySpecException();
     }
@@ -110,7 +110,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     }
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
-        return keySpecType.isAssignableFrom(SimpleDigestPasswordSpec.class);
+        return keySpecType.isAssignableFrom(HashPasswordSpec.class);
     }
 
     public String getAlgorithm() {

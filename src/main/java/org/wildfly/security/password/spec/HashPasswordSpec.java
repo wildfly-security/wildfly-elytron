@@ -18,10 +18,10 @@
 
 package org.wildfly.security.password.spec;
 
-public final class SimpleDigestPasswordSpec implements PasswordSpec {
+public final class HashPasswordSpec implements PasswordSpec {
     private final byte[] digest;
 
-    public SimpleDigestPasswordSpec(final byte[] digest) {
+    public HashPasswordSpec(final byte[] digest) {
         this.digest = digest;
     }
 

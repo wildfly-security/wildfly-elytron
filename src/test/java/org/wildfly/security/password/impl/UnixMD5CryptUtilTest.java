@@ -33,7 +33,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * Tests for UnixMD5CryptUtil.
@@ -63,7 +63,7 @@ public class UnixMD5CryptUtilTest {
 
         // Create a new password using EncryptablePasswordSpec
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new EncryptablePasswordSpec(passwordStr.toCharArray(), new HashedPasswordAlgorithmSpec(0, salt)));
+        final Password password = spi.engineGeneratePassword(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5, new EncryptablePasswordSpec(passwordStr.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(0, salt)));
 
         // Check if the salt was truncated in the resulting crypt string
         final String cryptString = PasswordUtil.getCryptString(password);
@@ -82,7 +82,7 @@ public class UnixMD5CryptUtilTest {
 
         // Create a new password using EncryptablePasswordSpec and check if the hash matches the hash from the spec
         UnixMD5CryptPasswordImpl password2 = (UnixMD5CryptPasswordImpl) spi.engineGeneratePassword(algorithm,
-                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(0, password.getSalt())));
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(0, password.getSalt())));
         assertArrayEquals(password.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same crypt string

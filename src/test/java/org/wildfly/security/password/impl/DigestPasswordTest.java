@@ -88,7 +88,7 @@ public class DigestPasswordTest {
         byte[] preDigested = CodePointIterator.ofString(expectedHexDigest).hexDecode().drain();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
-        DigestPasswordAlgorithmSpec dpas = new DigestPasswordAlgorithmSpec(algorithm, USERNAME, REALM);
+        DigestPasswordAlgorithmSpec dpas = new DigestPasswordAlgorithmSpec(USERNAME, REALM);
         EncryptablePasswordSpec encryptableSpec = new EncryptablePasswordSpec(PASSWORD.toCharArray(), dpas);
 
         DigestPassword digestPassword = (DigestPassword) factory.generatePassword(encryptableSpec);

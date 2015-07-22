@@ -38,7 +38,7 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
@@ -437,7 +437,7 @@ public class JdbcSecurityRealmTest {
         ) {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
             PasswordFactory factory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256);
-            HashedPasswordAlgorithmSpec algoSpec = new HashedPasswordAlgorithmSpec(4096, salt);
+            IteratedSaltedPasswordAlgorithmSpec algoSpec = new IteratedSaltedPasswordAlgorithmSpec(4096, salt);
             EncryptablePasswordSpec encSpec = new EncryptablePasswordSpec(userPassword.toCharArray(), algoSpec);
             ScramDigestPassword scramPassword = (ScramDigestPassword) factory.generatePassword(encSpec);
             IteratedSaltedHashPasswordSpec keySpec = factory.getKeySpec(scramPassword, IteratedSaltedHashPasswordSpec.class);
@@ -468,7 +468,7 @@ public class JdbcSecurityRealmTest {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
             PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
-                    new EncryptablePasswordSpec(userPassword.toCharArray(), new HashedPasswordAlgorithmSpec(10, salt))
+                    new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, salt))
             );
             String cryptString = PasswordUtil.getCryptString(bCryptPassword);
 

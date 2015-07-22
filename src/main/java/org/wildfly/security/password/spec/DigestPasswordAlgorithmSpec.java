@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
- * A {@link PasswordSpec} for a password represented by digesting it with a username and realm as defined by RFC2617 and
+ * A {@link AlgorithmParameterSpec} for a password represented by digesting it with a username and realm as defined by RFC2617 and
  * RFC2831.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
@@ -31,18 +31,12 @@ public final class DigestPasswordAlgorithmSpec implements AlgorithmParameterSpec
 
     private static final long serialVersionUID = 4925821569951433413L;
 
-    private final String algorithm;
     private final String username;
     private final String realm;
 
-    public DigestPasswordAlgorithmSpec(String algorithm, String username, String realm) {
-        this.algorithm = algorithm;
+    public DigestPasswordAlgorithmSpec(String username, String realm) {
         this.username = username;
         this.realm = realm;
-    }
-
-    public String getAlgorithm() {
-        return algorithm;
     }
 
     public String getUsername() {

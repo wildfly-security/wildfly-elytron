@@ -35,7 +35,7 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.util.CodePointIterator;
 
 import java.nio.charset.StandardCharsets;
@@ -245,8 +245,8 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     private Object toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        SimpleDigestPasswordSpec simpleDigestPasswordSpec = new SimpleDigestPasswordSpec(hash);
-        return passwordFactory.generatePassword(simpleDigestPasswordSpec);
+        HashPasswordSpec hashPasswordSpec = new HashPasswordSpec(hash);
+        return passwordFactory.generatePassword(hashPasswordSpec);
     }
 
     private Object toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {

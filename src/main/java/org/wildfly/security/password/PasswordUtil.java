@@ -42,7 +42,7 @@ import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.SimpleDigestPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
@@ -490,7 +490,7 @@ public final class PasswordUtil {
         }
         byte[] bytes = CodePointIterator.ofChars(cryptString, 0, initialLen).base64Decode().drain();
         final String algorithmName = getAlgorithmNameString(algorithmId);
-        return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithmName, new SimpleDigestPasswordSpec(bytes));
+        return PASSWORD_FACTORY_SPI.engineGeneratePassword(algorithmName, new HashPasswordSpec(bytes));
     }
 
     private static Password parseUnixSHA256CryptPasswordString(char[] cryptString) throws InvalidKeySpecException {

@@ -33,7 +33,7 @@ import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 
@@ -127,10 +127,10 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
     }
 
     SunUnixMD5CryptPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, spec.getPassword(), (HashedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+        this(algorithm, spec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
     }
 
-    private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final HashedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
+    private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
         this(algorithm, password, spec.getSalt() == null ? PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone(), spec.getIterationCount());
     }
 

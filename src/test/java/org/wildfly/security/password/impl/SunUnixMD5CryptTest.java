@@ -31,7 +31,7 @@ import org.junit.Test;
 import org.wildfly.security.password.PasswordUtil;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.HashedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * Tests for the Sun variant of Unix MD5 Crypt. The expected results for
@@ -89,7 +89,7 @@ public class SunUnixMD5CryptTest {
 
         // Create a new password using EncryptablePasswordSpec and check if the hash matches the hash from the spec
         SunUnixMD5CryptPasswordImpl password2 = (SunUnixMD5CryptPasswordImpl) spi.engineGeneratePassword(algorithm,
-                new EncryptablePasswordSpec(correctPassword.toCharArray(), new HashedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
+                new EncryptablePasswordSpec(correctPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(password.getIterationCount(), password.getSalt())));
         assertArrayEquals(password.getHash(), password2.getHash());
 
         // Use the new password to obtain a spec and then check if this spec yields the same crypt string
