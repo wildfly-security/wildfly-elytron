@@ -25,6 +25,7 @@ import static org.wildfly.security.util.Alphabet.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -1207,6 +1208,28 @@ public abstract class ByteIterator extends NumericIterator {
     }
 
     /**
+     * Convenience method to directly drain a certain number of bytes to a UTF-8 string.  If fewer than {@code count}
+     * bytes are available, only the available bytes will be used to construct the string.
+     *
+     * @param count the maximum number of bytes to consume
+     * @return the UTF-8 string
+     */
+    public String drainToUtf8(int count) {
+        return new String(drain(count), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Convenience method to directly drain a certain number of bytes to a Latin-1 string.  If fewer than {@code count}
+     * bytes are available, only the available bytes will be used to construct the string.
+     *
+     * @param count the maximum number of bytes to consume
+     * @return the Latin-1 string
+     */
+    public String drainToLatin1(int count) {
+        return new String(drain(count), StandardCharsets.ISO_8859_1);
+    }
+
+    /**
      * Get a byte iterator for a byte array.
      *
      * @param bytes the array
@@ -1321,6 +1344,20 @@ public abstract class ByteIterator extends NumericIterator {
                 System.arraycopy(bytes, offs + idx, dst, offs, cnt);
                 idx += cnt;
                 return cnt;
+            }
+
+            public String drainToUtf8(final int count) {
+                int cnt = Math.min(len - idx, count);
+                String s = new String(bytes, idx, cnt, StandardCharsets.UTF_8);
+                idx += cnt;
+                return s;
+            }
+
+            public String drainToLatin1(final int count) {
+                int cnt = Math.min(len - idx, count);
+                String s = new String(bytes, idx, cnt, StandardCharsets.ISO_8859_1);
+                idx += cnt;
+                return s;
             }
 
             public ByteStringBuilder appendTo(final ByteStringBuilder builder) {
