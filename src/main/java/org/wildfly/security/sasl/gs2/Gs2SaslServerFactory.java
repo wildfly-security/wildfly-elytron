@@ -44,6 +44,23 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 @MetaInfServices(value = SaslServerFactory.class)
 public final class Gs2SaslServerFactory implements SaslServerFactory {
+    private final GSSManager gssManager;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param gssManager the GSS manager to use
+     */
+    public Gs2SaslServerFactory(final GSSManager gssManager) {
+        this.gssManager = gssManager;
+    }
+
+    /**
+     * Construct a new instance with the default GSS manager.
+     */
+    public Gs2SaslServerFactory() {
+        this(GSSManager.getInstance());
+    }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler cbh) throws SaslException {
@@ -58,7 +75,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         } catch (UnsupportedCallbackException e) {
             // Ignored
         }
-        GSSManager gssManager = GSSManager.getInstance();
+        GSSManager gssManager = this.gssManager;
         final String[] supportedMechs;
         try {
             supportedMechs = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
@@ -75,7 +92,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
             plus = true;
         }
         if (bindingRequired && ! plus) return null;
-        final Gs2SaslServer server = new Gs2SaslServer(mechanism, protocol, serverName, cbh, props, gssManager, plus, bindingType, bindingData);
+        final Gs2SaslServer server = new Gs2SaslServer(mechanism, protocol, serverName, cbh, gssManager, plus, bindingType, bindingData);
         server.init();
         return server;
     }
@@ -83,7 +100,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
     public String[] getMechanismNames(final Map<String, ?> props) {
         String[] names;
         try {
-            names = Gs2Util.getSupportedSaslNamesForMechanisms(GSSManager.getInstance().getMechs());
+            names = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
             return WildFlySasl.NO_NAMES;
         }

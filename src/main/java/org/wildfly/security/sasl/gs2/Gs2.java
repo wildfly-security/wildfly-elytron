@@ -134,7 +134,7 @@ public final class Gs2 {
      * mechanism name
      * @throws GSSException if the given SASL name cannot be mapped to an object identifier
      */
-    public static Oid getMechanismForSaslName(String saslMechanismName) throws GSSException {
+    public static Oid getMechanismForSaslName(GSSManager gssManager, String saslMechanismName) throws GSSException {
         int plusSuffixIndex = saslMechanismName.indexOf(PLUS_SUFFIX);
         if (plusSuffixIndex != -1) {
             saslMechanismName = saslMechanismName.substring(0, plusSuffixIndex);
@@ -145,7 +145,7 @@ public final class Gs2 {
         if (saslMechanismName.equals(SPNEGO)) {
             return OID_SPNEGO;
         }
-        Oid[] mechanisms = GSSManager.getInstance().getMechs();
+        Oid[] mechanisms = gssManager.getMechs();
         if (mechanisms == null) {
             throw new GSSException(GSSException.BAD_MECH);
         }

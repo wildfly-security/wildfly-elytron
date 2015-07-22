@@ -432,8 +432,8 @@ public class Gs2Test extends BaseTestCase {
 
     @Test
     public void testGetMechanismForSaslName() throws Exception {
-        assertEquals(OID_KRB5, Gs2.getMechanismForSaslName("GS2-KRB5-PLUS"));
-        assertEquals(OID_SPNEGO, Gs2.getMechanismForSaslName("SPNEGO"));
+        assertEquals(OID_KRB5, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "GS2-KRB5-PLUS"));
+        assertEquals(OID_SPNEGO, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "SPNEGO"));
     }
 
     private SaslServer getSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,

@@ -26,10 +26,10 @@ import org.wildfly.security.sasl.util.AbstractSaslFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class AbstractGssapiFactory extends AbstractSaslFactory {
+class AbstractGssapiFactory extends AbstractSaslFactory {
 
     /**
-     * The name of the ANONYMOUS SASL mechanism.
+     * The name of the GSSAPI SASL mechanism.
      */
     public static final String GSSAPI = "GSSAPI";
 
