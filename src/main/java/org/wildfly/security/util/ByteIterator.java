@@ -1164,6 +1164,36 @@ public abstract class ByteIterator extends NumericIterator {
         return drainTo(new ByteArrayOutputStream()).toByteArray();
     }
 
+    /**
+     * Drain up to {@code count} bytes from this iterator, returning the result.
+     *
+     * @param count the number of bytes to read
+     * @return the array of consumed bytes (may be smaller than {@code count})
+     */
+    public byte[] drain(int count) {
+        if (count == 0) return NO_BYTES;
+        final byte[] b = new byte[count];
+        final int cnt = drain(b);
+        return cnt == 0 ? NO_BYTES : cnt < b.length ? Arrays.copyOf(b, cnt) : b;
+    }
+
+    /**
+     * Drain exactly {@code count} bytes from this iterator, returning the result.
+     *
+     * @param count the number of bytes to read
+     * @return the array of consumed bytes
+     * @throws NoSuchElementException if there are not enough bytes to fill the array
+     */
+    public byte[] drainAll(int count) throws NoSuchElementException {
+        if (count == 0) return NO_BYTES;
+        final byte[] b = new byte[count];
+        final int cnt = drain(b);
+        if (cnt < b.length) {
+            throw new NoSuchElementException();
+        }
+        return b;
+    }
+
     public int drain(byte[] dst) {
         return drain(dst, 0, dst.length);
     }
