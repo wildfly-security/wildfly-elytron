@@ -30,6 +30,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -51,7 +52,7 @@ class PlainSaslClient implements SaslClient, SaslWrapper {
     }
 
     public String getMechanismName() {
-        return PlainSasl.PLAIN;
+        return SaslMechanismInformation.Names.PLAIN;
     }
 
     public boolean hasInitialResponse() {
