@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.anonymous;
 
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * A base class for the anonymous factories to verify from the properties supplied if anonymous
@@ -29,15 +30,10 @@ import org.wildfly.security.sasl.util.AbstractSaslFactory;
 public abstract class AbstractAnonymousFactory extends AbstractSaslFactory {
 
     /**
-     * The name of the ANONYMOUS SASL mechanism.
-     */
-    public static final String ANONYMOUS = "ANONYMOUS";
-
-    /**
      * Construct a new instance.
      */
     protected AbstractAnonymousFactory() {
-        super(ANONYMOUS);
+        super(SaslMechanismInformation.Names.ANONYMOUS);
     }
 
     protected boolean isDictionarySusceptible() {

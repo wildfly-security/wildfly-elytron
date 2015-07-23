@@ -66,8 +66,8 @@ import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * Server-side authentication context.
@@ -103,7 +103,7 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("mechanismName", mechanismName);
         final AuthenticationCompleteCallbackSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
         final CallbackHandler callbackHandler;
-        if (mechanismName.equals(AbstractAnonymousFactory.ANONYMOUS)) {
+        if (mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             callbackHandler = createAnonymousCallbackHandler();
         } else {
             callbackHandler = createCallbackHandler();

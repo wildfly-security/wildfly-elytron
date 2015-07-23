@@ -26,6 +26,7 @@ import javax.security.sasl.SaslServerFactory;
 import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The server factory for the anonymous SASL mechanism.
@@ -43,7 +44,7 @@ public class AnonymousServerFactory extends AbstractAnonymousFactory implements 
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure anonymous is required don't return a SaslServer
-        if (ANONYMOUS.equals(mechanism) == false || matches(props) == false) {
+        if (SaslMechanismInformation.Names.ANONYMOUS.equals(mechanism) == false || matches(props) == false) {
             return null;
         }
 
