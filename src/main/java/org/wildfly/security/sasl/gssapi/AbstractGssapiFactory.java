@@ -19,7 +19,7 @@
 package org.wildfly.security.sasl.gssapi;
 
 import org.wildfly.security.sasl.util.AbstractSaslFactory;
-
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * Common factory for the GSSAPI mechanism.
@@ -29,15 +29,10 @@ import org.wildfly.security.sasl.util.AbstractSaslFactory;
 class AbstractGssapiFactory extends AbstractSaslFactory {
 
     /**
-     * The name of the GSSAPI SASL mechanism.
-     */
-    public static final String GSSAPI = "GSSAPI";
-
-    /**
      * Construct a new instance.
      */
     protected AbstractGssapiFactory() {
-        super(GSSAPI);
+        super(SaslMechanismInformation.Names.GSSAPI);
     }
 
     @Override

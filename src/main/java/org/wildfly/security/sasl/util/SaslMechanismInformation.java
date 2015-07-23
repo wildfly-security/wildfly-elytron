@@ -75,6 +75,7 @@ public final class SaslMechanismInformation {
         public static final String SAML20 = "SAML20";
         public static final String SECURID = "SECURID";
         public static final String PLAIN = "PLAIN";
+        public static final String GSSAPI = "GSSAPI";
 
         private Names() {}
     }
