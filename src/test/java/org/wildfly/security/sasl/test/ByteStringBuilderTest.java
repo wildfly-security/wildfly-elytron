@@ -26,6 +26,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -304,4 +305,55 @@ public class ByteStringBuilderTest {
         assertTrue(b.capacity() >= 30);
     }
 
+    private byte[] bytes(int... ints) {
+        final byte[] bytes = new byte[ints.length];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) ints[i];
+        }
+        return bytes;
+    }
+
+    @Test
+    public void testPacked() throws Exception {
+        ByteStringBuilder b = new ByteStringBuilder();
+        b.appendPackedUnsignedBE(0);
+        Assert.assertArrayEquals(bytes(0), b.toArray());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x12);
+        Assert.assertArrayEquals(bytes(0x12), b.toArray());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x123);
+        Assert.assertArrayEquals(bytes(0x82, 0x23), b.toArray());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x1234);
+        Assert.assertArrayEquals(bytes(0xA4, 0x34), b.toArray());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x12345);
+        Assert.assertArrayEquals(bytes(0x84, 0xC6, 0x45), b.toArray());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x1234567);
+        Assert.assertArrayEquals(bytes(0x89, 0x8d, 0x8a, 0x67), b.toArray());
+    }
+
+    @Test
+    public void testPackedInOut() throws Exception {
+        ByteStringBuilder b = new ByteStringBuilder();
+        b.appendPackedUnsignedBE(0);
+        Assert.assertEquals(0, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x12);
+        Assert.assertEquals(0x12, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x123);
+        Assert.assertEquals(0x123, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x1234);
+        Assert.assertEquals(0x1234, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x12345);
+        Assert.assertEquals(0x12345, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+        b.setLength(0);
+        b.appendPackedUnsignedBE(0x1234567);
+        Assert.assertEquals(0x1234567, ByteIterator.ofBytes(b.toArray()).getPackedBE32());
+    }
 }

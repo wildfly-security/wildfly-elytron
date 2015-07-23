@@ -25,6 +25,7 @@ import static org.wildfly.security.util.Alphabet.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -100,6 +101,40 @@ public abstract class ByteIterator extends NumericIterator {
      * @return the byte offset
      */
     public abstract int offset();
+
+    public int getBE16() throws NoSuchElementException {
+        return next() << 8 | next();
+    }
+
+    public int getBE32() throws NoSuchElementException {
+        return next() << 24 | next() << 16 | next() << 8 | next();
+    }
+
+    public long getBE64() throws NoSuchElementException {
+        return (long)next() << 52 | (long)next() << 48 | (long)next() << 40 | (long)next() << 32 | (long)next() << 24 | (long)next() << 16 | (long)next() << 8 | (long)next();
+    }
+
+    public int getPackedBE32() throws NoSuchElementException {
+        int v = next();
+        int t = 0;
+        while ((v & 0x80) != 0) {
+            t = t << 7 | v & 0x7f;
+            v = next();
+        }
+        t = t << 7 | v;
+        return t;
+    }
+
+    public long getPackedBE64() throws NoSuchElementException {
+        int v = next();
+        long t = 0;
+        while ((v & 0x80) != 0) {
+            t = t << 7 | (long)(v & 0x7f);
+            v = next();
+        }
+        t = t << 7 | v;
+        return t;
+    }
 
     public ByteStringBuilder appendTo(final ByteStringBuilder builder) {
         final byte[] buffer = OP_BUFFER.get();
@@ -1130,6 +1165,36 @@ public abstract class ByteIterator extends NumericIterator {
         return drainTo(new ByteArrayOutputStream()).toByteArray();
     }
 
+    /**
+     * Drain up to {@code count} bytes from this iterator, returning the result.
+     *
+     * @param count the number of bytes to read
+     * @return the array of consumed bytes (may be smaller than {@code count})
+     */
+    public byte[] drain(int count) {
+        if (count == 0) return NO_BYTES;
+        final byte[] b = new byte[count];
+        final int cnt = drain(b);
+        return cnt == 0 ? NO_BYTES : cnt < b.length ? Arrays.copyOf(b, cnt) : b;
+    }
+
+    /**
+     * Drain exactly {@code count} bytes from this iterator, returning the result.
+     *
+     * @param count the number of bytes to read
+     * @return the array of consumed bytes
+     * @throws NoSuchElementException if there are not enough bytes to fill the array
+     */
+    public byte[] drainAll(int count) throws NoSuchElementException {
+        if (count == 0) return NO_BYTES;
+        final byte[] b = new byte[count];
+        final int cnt = drain(b);
+        if (cnt < b.length) {
+            throw new NoSuchElementException();
+        }
+        return b;
+    }
+
     public int drain(byte[] dst) {
         return drain(dst, 0, dst.length);
     }
@@ -1140,6 +1205,28 @@ public abstract class ByteIterator extends NumericIterator {
             dst[offs + i] = (byte) next();
         }
         return len;
+    }
+
+    /**
+     * Convenience method to directly drain a certain number of bytes to a UTF-8 string.  If fewer than {@code count}
+     * bytes are available, only the available bytes will be used to construct the string.
+     *
+     * @param count the maximum number of bytes to consume
+     * @return the UTF-8 string
+     */
+    public String drainToUtf8(int count) {
+        return new String(drain(count), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Convenience method to directly drain a certain number of bytes to a Latin-1 string.  If fewer than {@code count}
+     * bytes are available, only the available bytes will be used to construct the string.
+     *
+     * @param count the maximum number of bytes to consume
+     * @return the Latin-1 string
+     */
+    public String drainToLatin1(int count) {
+        return new String(drain(count), StandardCharsets.ISO_8859_1);
     }
 
     /**
@@ -1257,6 +1344,20 @@ public abstract class ByteIterator extends NumericIterator {
                 System.arraycopy(bytes, offs + idx, dst, offs, cnt);
                 idx += cnt;
                 return cnt;
+            }
+
+            public String drainToUtf8(final int count) {
+                int cnt = Math.min(len - idx, count);
+                String s = new String(bytes, idx, cnt, StandardCharsets.UTF_8);
+                idx += cnt;
+                return s;
+            }
+
+            public String drainToLatin1(final int count) {
+                int cnt = Math.min(len - idx, count);
+                String s = new String(bytes, idx, cnt, StandardCharsets.ISO_8859_1);
+                idx += cnt;
+                return s;
             }
 
             public ByteStringBuilder appendTo(final ByteStringBuilder builder) {

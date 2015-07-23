@@ -228,6 +228,30 @@ public final class ByteStringBuilder {
         return this;
     }
 
+    public ByteStringBuilder appendPackedUnsignedBE(int v) {
+        if (v > 0) {
+            final int bits = Integer.numberOfTrailingZeros(Integer.highestOneBit(v)) + 1;
+            final int size = (bits + 7) / 7;
+            for (int x = 0, b = (size - 1) * 7; x < size - 1; x ++, b -= 7) {
+                doAppend((byte) (0x80 | v >>> b));
+            }
+        }
+        doAppend((byte) (~0x80 & v));
+        return this;
+    }
+
+    public ByteStringBuilder appendPackedUnsignedBE(long v) {
+        if (v > 0) {
+            final int bits = Long.numberOfTrailingZeros(Long.highestOneBit(v)) + 1;
+            final int size = (bits + 7) / 7;
+            for (int x = 0, b = (size - 1) * 7; x < size - 1; x ++, b -= 7) {
+                doAppend((byte) (0x80L | v >>> b));
+            }
+        }
+        doAppend((byte) (~0x80L & v));
+        return this;
+    }
+
     public ByteStringBuilder appendBE(short s) {
         doAppend((byte) (s >>> 8));
         doAppend((byte) s);
