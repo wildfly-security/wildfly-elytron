@@ -52,6 +52,8 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
 
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
     private static final String HMAC_SHA256_ALGORITHM = "HmacSHA256";
+    private static final String HMAC_SHA384_ALGORITHM = "HmacSHA384";
+    private static final String HMAC_SHA512_ALGORITHM = "HmacSHA512";
 
     private final String algorithm;
     private final byte[] digest;
@@ -225,6 +227,18 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
             case ALGORITHM_SCRAM_SHA_256: {
                 Mac hmac = Mac.getInstance(HMAC_SHA256_ALGORITHM);
                 Key key = new SecretKeySpec(password, HMAC_SHA256_ALGORITHM);
+                hmac.init(key);
+                return hmac;
+            }
+            case ALGORITHM_SCRAM_SHA_384: {
+                Mac hmac = Mac.getInstance(HMAC_SHA384_ALGORITHM);
+                Key key = new SecretKeySpec(password, HMAC_SHA384_ALGORITHM);
+                hmac.init(key);
+                return hmac;
+            }
+            case ALGORITHM_SCRAM_SHA_512: {
+                Mac hmac = Mac.getInstance(HMAC_SHA512_ALGORITHM);
+                Key key = new SecretKeySpec(password, HMAC_SHA512_ALGORITHM);
                 hmac.init(key);
                 return hmac;
             }
