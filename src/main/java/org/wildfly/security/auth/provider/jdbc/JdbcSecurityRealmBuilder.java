@@ -51,21 +51,21 @@ public class JdbcSecurityRealmBuilder {
     }
 
     /**
-     * <p>A SQL SELECT statement that will be used to return data from a database based on the authentication name.
+     * <p>A SQL SELECT statement that will be used to return data from a database based on the principal's name.
      *
      * <p>When authenticating, validating or obtaining credentials for a {@link RealmIdentity},
      * this query will be used. You must provide a SELECT with a single query parameter as follows:
      *
      * <pre>
-     *     JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder().authenticationQuery("SELECT password FROM user_bcrypt_password where name = ?")
+     *     JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder().principalQuery("SELECT password FROM user_bcrypt_password where name = ?")
      * </pre>
      *
-     * <p>Where the query parameter value would be the authentication name.
+     * <p>Where the query parameter value would be the principal's name.
      *
      * @param sql the authentication query
      * @return this builder
      */
-    public QueryBuilder authenticationQuery(String sql) {
+    public QueryBuilder principalQuery(String sql) {
         QueryBuilder builder = new QueryBuilder(sql, this);
 
         this.queries.add(builder);

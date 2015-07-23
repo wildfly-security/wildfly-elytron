@@ -15,15 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth;
+package org.wildfly.security.auth.provider.jdbc;
 
-import org.hsqldb.jdbc.JDBCDataSource;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
-import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.provider.jdbc.JdbcSecurityRealm;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.provider.jdbc.mapper.RSAPrivateKeyMapper;
 import org.wildfly.security.auth.server.CredentialSupport;
@@ -45,9 +40,7 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
-import java.security.Provider;
 import java.security.PublicKey;
-import java.security.Security;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -63,28 +56,10 @@ import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SAL
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class JdbcSecurityRealmTest {
+public class PasswordSupportTest {
 
-    private static final Provider elytronProvider = new WildFlyElytronProvider();
-
-    @BeforeClass
-    public static void registerProvider() {
-        Security.addProvider(elytronProvider);
-    }
-
-    @AfterClass
-    public static void removeProvider() {
-        Security.removeProvider(elytronProvider.getName());
-    }
-
-    private JDBCDataSource dataSource;
-
-    @Before
-    public void onBefore() throws Exception {
-        this.dataSource = new JDBCDataSource();
-        this.dataSource.setDatabase("mem:elytron-jdbc-realm-test");
-        this.dataSource.setUser("sa");
-    }
+    @ClassRule
+    public static final DataSourceRule dataSourceRule = new DataSourceRule();
 
     @Test
     public void testVerifyAndObtainClearPasswordCredential() throws Exception {
@@ -94,9 +69,9 @@ public class JdbcSecurityRealmTest {
         createClearPasswordTable(userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT password FROM user_clear_password WHERE name = ?")
+                .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
                     .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
-                    .from(this.dataSource)
+                    .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class));
@@ -109,7 +84,6 @@ public class JdbcSecurityRealmTest {
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
 
         assertTrue(realmIdentity.verifyCredential(password));
-        assertTrue(realmIdentity.verifyCredential(userPassword));
         assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
         Password invalidPassword = passwordFactory.generatePassword(new ClearPasswordSpec("badpasswd".toCharArray()));
@@ -130,11 +104,11 @@ public class JdbcSecurityRealmTest {
         String cryptString = createBcryptPasswordTable(userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT password FROM user_bcrypt_password where name = ?")
+                .principalQuery("SELECT password FROM user_bcrypt_password where name = ?")
                 .withMapper(
                         new PasswordKeyMapper(BCryptPassword.ALGORITHM_BCRYPT, 1)
                 )
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class));
@@ -142,8 +116,8 @@ public class JdbcSecurityRealmTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class));
-        assertTrue(realmIdentity.verifyCredential(userPassword));
-        assertFalse(realmIdentity.verifyCredential("invalid"));
+        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyCredential("invalid".toCharArray()));
 
         BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class);
 
@@ -171,11 +145,11 @@ public class JdbcSecurityRealmTest {
         SaltedSimpleDigestPassword password = createSaltedDigestPasswordTable(algorithm, userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT digest, salt FROM user_salted_digest_password where name = ?")
+                .principalQuery("SELECT digest, salt FROM user_salted_digest_password where name = ?")
                 .withMapper(
                         new PasswordKeyMapper(algorithm, 1, 2)
                 )
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SaltedSimpleDigestPassword.class));
@@ -183,7 +157,7 @@ public class JdbcSecurityRealmTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SaltedSimpleDigestPassword.class));
-        assertTrue(realmIdentity.verifyCredential(userPassword));
+        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
         SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential(SaltedSimpleDigestPassword.class);
 
@@ -206,11 +180,11 @@ public class JdbcSecurityRealmTest {
         SimpleDigestPassword password = createSimpleDigestPasswordTable(algorithm, userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT digest FROM user_simple_digest_password where name = ?")
+                .principalQuery("SELECT digest FROM user_simple_digest_password where name = ?")
                 .withMapper(
                         new PasswordKeyMapper(algorithm, 1)
                 )
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SimpleDigestPassword.class));
@@ -218,7 +192,7 @@ public class JdbcSecurityRealmTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SimpleDigestPassword.class));
-        assertTrue(realmIdentity.verifyCredential(userPassword));
+        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
         SimpleDigestPassword storedPassword = realmIdentity.getCredential(SimpleDigestPassword.class);
 
@@ -234,11 +208,11 @@ public class JdbcSecurityRealmTest {
         IteratedSaltedHashPasswordSpec passwordSpec = createScramDigestPasswordTable(userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
+                .principalQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
                 .withMapper(
                         new PasswordKeyMapper(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, 1, 2, 3)
                 )
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ScramDigestPassword.class));
@@ -246,7 +220,7 @@ public class JdbcSecurityRealmTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ScramDigestPassword.class));
-        assertTrue(realmIdentity.verifyCredential(userPassword));
+        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
         ScramDigestPassword storedPassword = realmIdentity.getCredential(ScramDigestPassword.class);
 
@@ -267,13 +241,12 @@ public class JdbcSecurityRealmTest {
         createRSAKeysTable(userName, privateKey, publicKey);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
+                .principalQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
                 .withMapper(new RSAPrivateKeyMapper(1))
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
-
         PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class);
 
         assertNotNull(identityPrivateKey);
@@ -295,10 +268,10 @@ public class JdbcSecurityRealmTest {
         createClearPasswordTable(userName, userPassword);
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT pk.privateKey, cp.password FROM user_rsa_keys pk INNER JOIN user_clear_password cp on cp.name = pk.name WHERE pk.name = ?")
+                .principalQuery("SELECT pk.privateKey, cp.password FROM user_rsa_keys pk INNER JOIN user_clear_password cp on cp.name = pk.name WHERE pk.name = ?")
                 .withMapper(new RSAPrivateKeyMapper(1))
                 .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 2))
-                .from(this.dataSource)
+                .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class));
@@ -328,12 +301,12 @@ public class JdbcSecurityRealmTest {
         createClearPasswordTable();
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
-                .authenticationQuery("SELECT password FROM user_clear_password WHERE name = ?")
+                .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
                     .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
-                    .from(this.dataSource)
-                .authenticationQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
+                    .from(dataSourceRule.getDataSource())
+                .principalQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
                     .withMapper(new RSAPrivateKeyMapper(1))
-                    .from(this.dataSource)
+                    .from(dataSourceRule.getDataSource())
                 .build();
 
         assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class));
@@ -351,7 +324,7 @@ public class JdbcSecurityRealmTest {
 
     private void createRSAKeysTable(String userName, PrivateKey privateKey, PublicKey publicKey) throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_rsa_keys");
@@ -359,7 +332,7 @@ public class JdbcSecurityRealmTest {
         }
 
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_rsa_keys (name, privateKey, publicKey) VALUES (?, ?, ?)");
         ) {
             preparedStatement.setString(1, userName);
@@ -371,7 +344,7 @@ public class JdbcSecurityRealmTest {
 
     private SaltedSimpleDigestPassword createSaltedDigestPasswordTable(String algorithm, String userName, String userPassword) throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_salted_digest_password");
@@ -379,7 +352,7 @@ public class JdbcSecurityRealmTest {
         }
 
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_salted_digest_password (name, digest, salt) VALUES (?, ?, ?)");
         ) {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
@@ -399,7 +372,7 @@ public class JdbcSecurityRealmTest {
 
     private SimpleDigestPassword createSimpleDigestPasswordTable(String algorithm, String userName, String userPassword) throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_simple_digest_password");
@@ -407,7 +380,7 @@ public class JdbcSecurityRealmTest {
         }
 
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_simple_digest_password (name, digest) VALUES (?, ?)");
         ) {
             EncryptablePasswordSpec eps = new EncryptablePasswordSpec(userPassword.toCharArray(), null);
@@ -424,7 +397,7 @@ public class JdbcSecurityRealmTest {
 
     private IteratedSaltedHashPasswordSpec createScramDigestPasswordTable(String userName, String userPassword) throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_scram_digest_password");
@@ -432,7 +405,7 @@ public class JdbcSecurityRealmTest {
         }
 
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_scram_digest_password (name, digest, salt, iterationCount) VALUES (?, ?, ?, ?)");
         ) {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
@@ -454,7 +427,7 @@ public class JdbcSecurityRealmTest {
 
     private String createBcryptPasswordTable(String userName, String userPassword) throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_bcrypt_password");
@@ -462,7 +435,7 @@ public class JdbcSecurityRealmTest {
         }
 
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_password (name, password) VALUES (?, ?)");
         ) {
             byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
@@ -487,7 +460,7 @@ public class JdbcSecurityRealmTest {
 
     private void insertUserWithClearPassword(String userName, String password) throws SQLException {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("INSERT INTO user_clear_password (name, password) VALUES ('" + userName + "','" + password + "')");
@@ -496,7 +469,7 @@ public class JdbcSecurityRealmTest {
 
     private void createClearPasswordTable() throws Exception {
         try (
-            Connection connection = this.dataSource.getConnection();
+            Connection connection = dataSourceRule.getDataSource().getConnection();
             Statement statement = connection.createStatement();
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS user_clear_password");

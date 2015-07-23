@@ -63,8 +63,8 @@ public class QueryBuilder extends JdbcSecurityRealmBuilder {
 
 
     @Override
-    public QueryBuilder authenticationQuery(String sql) {
-        return this.parent.authenticationQuery(sql);
+    public QueryBuilder principalQuery(String sql) {
+        return this.parent.principalQuery(sql);
     }
 
     @Override

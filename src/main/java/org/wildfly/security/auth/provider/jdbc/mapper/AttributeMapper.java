@@ -15,25 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.auth.provider.jdbc;
+package org.wildfly.security.auth.provider.jdbc.mapper;
+
+import org.wildfly.security.auth.provider.jdbc.ColumnMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * A column mapper is responsible to provide the mapping between a column in a table to some internal representation. For instance,
- * mapping a column to a specific credential type or attribute.
- *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public interface ColumnMapper {
+public class AttributeMapper implements ColumnMapper {
 
-    /**
-     * Maps the given {@link ResultSet} to some internal representation.
-     *
-     * @param resultSet the result set previously created based on a query
-     * @return the resulting object mapped from the given {@link ResultSet}
-     * @throws SQLException if any error occurs when manipulating the given {@link ResultSet}
-     */
-    Object map(ResultSet resultSet) throws SQLException;
+    private final int index;
+    private final String name;
+
+    public AttributeMapper(int index, String name) {
+        this.index = index;
+        this.name = name;
+    }
+
+    @Override
+    public Object map(ResultSet resultSet) throws SQLException {
+        return resultSet.getString(this.index);
+    }
+
+    public String getName() {
+        return this.name;
+    }
 }
