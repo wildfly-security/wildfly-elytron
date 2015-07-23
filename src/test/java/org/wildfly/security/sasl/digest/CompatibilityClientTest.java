@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.digest.DigestCallbackHandlerUtils.createClearPwdClientCallbackHandler;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -33,16 +34,15 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ClientCallbackHandler;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
+
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 /**
  * Test of client side of the Digest mechanism.
@@ -75,7 +75,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testRfc2831example1() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -99,7 +99,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testRfc2831example2() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
@@ -124,7 +124,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testAuthorizedAuthorizationId() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
@@ -149,7 +149,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthInt() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-int");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -204,7 +204,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -259,7 +259,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConfRc4() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -314,7 +314,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -369,7 +369,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -424,7 +424,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConfRc440() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -479,7 +479,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testQopAuthConfUnknown() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
@@ -503,7 +503,8 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testMoreRealmsFromServer() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray(), "elwood.innosoft.com");
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", "elwood.innosoft.com");
+
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -527,7 +528,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testNoRealmsFromServer() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -550,7 +551,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     @Test
     public void testNoServerNonce() throws Exception {
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -571,7 +572,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testBlankServerNonce() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -595,7 +596,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testUtf8Charset() throws Exception {
         mockNonce("cn\u0438\u4F60\uD83C\uDCA1");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("\u0438\u4F60\uD83C\uDCA1", "\u0438\u4F60\uD83C\uDCA1".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("\u0438\u4F60\uD83C\uDCA1", "\u0438\u4F60\uD83C\uDCA1", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -619,7 +620,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testMoreRealmsWithEscapedDelimiters() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray(), "first realm");
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", "first realm");
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "protocol name", "server name", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -643,7 +644,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     public void testWrongStepThreeRspauth() throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("chris", "secret".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("chris", "secret", null);
         client = Sasl.createSaslClient(new String[] { DIGEST }, null, "imap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
         assertFalse(client.isComplete());
 
@@ -672,7 +673,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf,auth-int,auth");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("user", "password", null);
         SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
         assertFalse(client.isComplete());
 
@@ -699,7 +700,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf,auth,auth-int");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("user", "password", null);
         SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
         assertFalse(client.isComplete());
 
@@ -725,7 +726,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("user", "password".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("user", "password", null);
         SaslClient client = Sasl.createSaslClient(new String[] { DIGEST }, "user", "TestProtocol", "TestServer", clientProps, clientCallback);
         assertFalse(client.isComplete());
 

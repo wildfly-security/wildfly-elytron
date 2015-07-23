@@ -18,7 +18,13 @@
 
 package org.wildfly.security.sasl.digest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.digest.DigestCallbackHandlerUtils.createClearPwdClientCallbackHandler;
+import static org.wildfly.security.sasl.digest.DigestCallbackHandlerUtils.createDigestPwdClientCallbackHandler;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +36,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
@@ -47,8 +55,7 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ClientCallbackHandler;
-import org.wildfly.security.sasl.test.ServerCallbackHandler;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.UsernamePasswordHashUtil;
 
@@ -61,7 +68,7 @@ public class DigestTest extends BaseTestCase {
 
     private static Logger log = Logger.getLogger(DigestTest.class);
 
-    private static final String DIGEST = "DIGEST-MD5";
+    private static final String DIGEST = SaslMechanismInformation.Names.DIGEST_MD5;
 
     private static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
 
@@ -90,7 +97,11 @@ public class DigestTest extends BaseTestCase {
         Map<String, Object> props = new HashMap<String, Object>();
 
         // If we specify DIGEST with no policy restrictions an DigestSaslServer should be returned.
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler serverCallback = new CallbackHandler() {
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+            }
+        };
         SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", props, serverCallback);
         assertEquals(DigestSaslServer.class, server.getClass());
     }
@@ -116,13 +127,19 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(SaslMechanismInformation.Names.DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
-        SaslClient client = Sasl.createSaslClient(new String[]{ SaslMechanismInformation.Names.DIGEST_MD5 }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
+        SaslClient client = Sasl.createSaslClient(new String[]{ DIGEST }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
@@ -133,17 +150,19 @@ public class DigestTest extends BaseTestCase {
         assertTrue(server.isComplete());
         assertEquals("George", server.getAuthorizationID());
     }
-
     /**
      * Test a successful exchange using the DIGEST mechanism but the default realm.
      */
     @Test
     public void testSuccessfulExchange_DefaultRealm() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -163,12 +182,17 @@ public class DigestTest extends BaseTestCase {
     @Test
     @Ignore("ELY-91")
     public void testSuccessfulExchange_AlternativeProtocol() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put("org.wildfly.security.sasl.digest.alternative_protocols", "OtherProtocol DifferentProtocol");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "OtherProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -187,12 +211,17 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "bad".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("bad".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -211,12 +240,16 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadUsername() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("Borris", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("Borris")
+                .setPassword("gpwd".toCharArray())
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -235,12 +268,19 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadRealm() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(), "BadRealm");
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "BadRealm");
+
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -259,19 +299,24 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testRealmSelection() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, DigestServerFactory.realmsArrayToProperty(new String[] { "realm1", "second realm", "last\\ " }));
-        SaslServer server = Sasl.createSaslServer(SaslMechanismInformation.Names.DIGEST_MD5, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(),"last\\ ");
-        SaslClient client = Sasl.createSaslClient(new String[]{ SaslMechanismInformation.Names.DIGEST_MD5 }, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "last\\ ");
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
         log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
         server.evaluateResponse(message);
         assertTrue(server.isComplete());
         assertEquals("George", server.getAuthorizationID());
@@ -286,13 +331,18 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_PreHashedServer() throws Exception {
-        CallbackHandler serverCallback = getServerCallbackHandler("George", "TestRealm", "gpwd");
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
@@ -313,19 +363,25 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_DefaultRealm_PreHashedServer() throws Exception {
-        CallbackHandler serverCallback = getServerCallbackHandler("George", "TestServer", "gpwd");
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestServer"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
+
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
         log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
         message = server.evaluateResponse(message);
         log.debug("Server response:"+ new String(message, StandardCharsets.ISO_8859_1));
         client.evaluateChallenge(message);
@@ -339,20 +395,25 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword_PreHashedServer() throws Exception {
-        CallbackHandler serverCallback = getServerCallbackHandler("George", "TestRealm", "gpwd");
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "bad".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "bad", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Challenge:" + new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
         try {
             server.evaluateResponse(message);
             fail("Expection exception not thrown.");
@@ -366,20 +427,25 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadUsername_PreHashedServer() throws Exception {
-        CallbackHandler serverCallback = getServerCallbackHandler("Borris", "TestRealm", "gpwd");
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("Borris")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "bad", null);
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Challenge:" + new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
         try {
             server.evaluateResponse(message);
             fail("Expection exception not thrown.");
@@ -392,20 +458,25 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadRealm_PreHashedServer() throws Exception {
-        CallbackHandler serverCallback = getServerCallbackHandler("George", "TestRealm", "gpwd");
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray(), "BadRealm");
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "BadRealm");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(client.hasInitialResponse());
         byte[] message = server.evaluateResponse(new byte[0]);
-        log.debug("Challenge:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Challenge:" + new String(message, StandardCharsets.ISO_8859_1));
         message = client.evaluateChallenge(message);
-        log.debug("Client response:"+ new String(message, StandardCharsets.ISO_8859_1));
+        log.debug("Client response:" + new String(message, StandardCharsets.ISO_8859_1));
         try {
             server.evaluateResponse(message);
             fail("Expection exception not thrown.");
@@ -422,13 +493,18 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_PreHashedClient() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
 
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = getClientCallbackHandler("George", "TestRealm", null, "gpwd");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestRealm", null);
 
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
@@ -449,11 +525,15 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_DefaultRealm_PreHashedClient() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestServer"))
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
 
-        CallbackHandler clientCallback = getClientCallbackHandler("George", "TestServer", null, "gpwd");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestServer", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
@@ -472,12 +552,17 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword_PreHashedClient() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = getClientCallbackHandler("George", "TestServer", null, "bad");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "bad", "TestRealm", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
 
@@ -499,12 +584,17 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadUsername_PreHashedClient() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = getClientCallbackHandler("Borris", "TestRealm", null, "gpwd");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("Borris", "gpwd", "TestRealm", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
@@ -525,12 +615,18 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testBadRealm_PreHashedClient() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "TestRealm");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = getClientCallbackHandler("George", "BadRealm", "BadRealm", "gpwd");
+        CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "BadRealm", "BadRealm");
+
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", clientProps, clientCallback);
@@ -551,13 +647,19 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchangeWithIntegrityCheck() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-int");
         serverProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
+
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-int");
         clientProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
@@ -594,13 +696,18 @@ public class DigestTest extends BaseTestCase {
     }
 
     private void testSuccessulExchangeWithPrivacyProtection(String clientCipher)throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-conf");
         serverProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
-        SaslServer server = Sasl.createSaslServer(DIGEST, "TestProtocol", "TestServer", serverProps, serverCallback);
+        SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
+                .setUserName("George")
+                .setPassword("gpwd".toCharArray())
+                .setProperties(serverProps)
+                .setProtocol("TestProtocol")
+                .setServerName("TestServer")
+                .build();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
         Map<String, Object> clientProps = new HashMap<String, Object>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         clientProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, clientCipher);
@@ -623,15 +730,10 @@ public class DigestTest extends BaseTestCase {
         Assert.assertArrayEquals(new byte[]{(byte)0xAB,(byte)0xCD,(byte)0xEF}, server.unwrap(message, 0, message.length));
     }
 
-    private CallbackHandler getClientCallbackHandler(String username, String realm, String sendedRealm, String password) throws NoSuchAlgorithmException {
+    private KeySpec getDigestKeySpec(String username, String password, String realm) throws NoSuchAlgorithmException {
         byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
-        KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
-        return new ClientCallbackHandler(username, sendedRealm, DigestPassword.ALGORITHM_DIGEST_MD5, keySpec);
+        return new DigestPasswordSpec(username, realm, urpHash);
     }
 
-    private CallbackHandler getServerCallbackHandler(String username, String realm, String password) throws NoSuchAlgorithmException {
-        byte[] urpHash = new UsernamePasswordHashUtil().generateHashedURP(username, realm, password.toCharArray());
-        KeySpec keySpec = new DigestPasswordSpec(username, realm, urpHash);
-        return new ServerCallbackHandler(username, DigestPassword.ALGORITHM_DIGEST_MD5, keySpec);
-    }
+
 }
