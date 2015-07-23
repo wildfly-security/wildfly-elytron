@@ -18,9 +18,18 @@
 
 package org.wildfly.security.sasl.digest;
 
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.security.sasl.SaslException;
+import javax.security.sasl.SaslServer;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -31,16 +40,9 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
 
 /**
  * Test of server side of the Digest mechanism.
@@ -79,6 +81,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("imap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA6MG9tEQGm2hh\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -108,6 +111,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -137,6 +141,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -168,6 +173,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -199,6 +205,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-int\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -257,6 +264,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -315,6 +323,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -373,6 +382,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -431,6 +441,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -490,6 +501,8 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProperties(serverProps)
                         .build();
 
+        assertFalse(server.isComplete());
+
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",qop=\"auth-conf\",charset=utf-8,cipher=\"3des,rc4,des,rc4-56,rc4-40\",algorithm=md5-sess", new String(message1, "UTF-8"));
         assertFalse(server.isComplete());
@@ -546,6 +559,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -576,6 +590,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"elwood.innosoft.com\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -606,6 +621,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"other-realm\",realm=\"elwood.innosoft.com\",realm=\"next-realm\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -637,6 +653,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"other-realm\",realm=\"elwood.innosoft.com\",realm=\"next-realm\",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -666,6 +683,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("\u0438\u4F60\uD83C\uDCA1").setServerName("realm.\u0438\u4F60\uD83C\uDCA1.com")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"realm.\u0438\u4F60\uD83C\uDCA1.com\",nonce=\"sn\u0438\u4F60\uD83C\uDCA1\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
@@ -695,6 +713,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setProtocol("protocol name").setServerName("server name")
                         .setProperties(serverProps)
                         .build();
+        assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
         assertEquals("realm=\"first realm\",realm=\"second\\\\ realm\",realm=\" with spaces \",realm=\" \",nonce=\"OA9BSXrbuRhWay\",charset=utf-8,algorithm=md5-sess", new String(message1, "UTF-8"));
