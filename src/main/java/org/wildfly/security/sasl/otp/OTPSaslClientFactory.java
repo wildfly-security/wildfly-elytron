@@ -31,6 +31,7 @@ import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -44,7 +45,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         if (OTP.isMatched(props)) {
             for (String mechanism : mechanisms) {
-                if (OTP.OTP.equals(mechanism)) {
+                if (SaslMechanismInformation.Names.OTP.equals(mechanism)) {
                     final Object rngNameValue = props.get(WildFlySasl.SECURE_RNG);
                     final String rngName = rngNameValue instanceof String ? (String) rngNameValue : null;
                     SecureRandom secureRandom = null;
@@ -70,7 +71,7 @@ public final class OTPSaslClientFactory implements SaslClientFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return OTP.isMatched(props) ? new String[] {OTP.OTP} : WildFlySasl.NO_NAMES;
+        return OTP.isMatched(props) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
     }
 
     /**
