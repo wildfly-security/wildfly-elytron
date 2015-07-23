@@ -40,7 +40,11 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
         Callback callback = callbacks[index];
         if (callback instanceof RealmCallback) {
             RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm);
+            if (realm != null) {
+                realmCallback.setText(realm);
+            } else {
+                realmCallback.setText(realmCallback.getDefaultText());
+            }
             return;
         }
         super.handleCallback(callbacks, index);
