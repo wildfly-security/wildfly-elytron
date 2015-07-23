@@ -28,6 +28,7 @@ public final class Digest {
     public static final String DIGEST_MD5 = "DIGEST-MD5";
     public static final String DIGEST_SHA = "DIGEST-SHA";
     public static final String DIGEST_SHA_256 = "DIGEST-SHA-256";
+    public static final String DIGEST_SHA_384 = "DIGEST-SHA-384";
     public static final String DIGEST_SHA_512 = "DIGEST-SHA-512";
 
     private Digest() {

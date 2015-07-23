@@ -46,6 +46,11 @@ public interface DigestPassword extends OneWayPassword {
     String ALGORITHM_DIGEST_SHA_256 = "digest-sha-256";
 
     /**
+     * The algorithm name "digest-sha-384".
+     */
+    String ALGORITHM_DIGEST_SHA_384 = "digest-sha-384";
+
+    /**
      * The algorithm name "digest-sha-512".
      */
     String ALGORITHM_DIGEST_SHA_512 = "digest-sha-512";
