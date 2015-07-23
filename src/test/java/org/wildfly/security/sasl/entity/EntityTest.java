@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.entity;
 
 import static org.junit.Assert.*;
-import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
 
 import java.io.Closeable;
@@ -66,6 +65,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.CodePointIterator;
 
 /**
@@ -119,13 +119,13 @@ public class EntityTest extends BaseTestCase {
         Map<String, Object> props = new HashMap<String, Object>();
 
         // No properties are set, an appropriate EntitySaslServer should be returned
-        SaslServer server = Sasl.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "TestProtocol", "TestServer", props, null);
+        SaslServer server = Sasl.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "TestProtocol", "TestServer", props, null);
         assertEquals(EntitySaslServer.class, server.getClass());
-        assertEquals(ENTITY_UNILATERAL_RSA_SHA1_ENC, server.getMechanismName());
+        assertEquals(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, server.getMechanismName());
 
         // If we set SERVER_AUTH to true even though a unilateral mechanism is specified, no server should be returned
         props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
-        server = Sasl.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "TestProtocol", "TestServer", props, null);
+        server = Sasl.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "TestProtocol", "TestServer", props, null);
         assertNull(server);
     }
 
@@ -139,13 +139,15 @@ public class EntityTest extends BaseTestCase {
 
         // No properties set
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ENTITY_UNILATERAL_RSA_SHA1_ENC, ENTITY_MUTUAL_RSA_SHA1_ENC, ENTITY_UNILATERAL_DSA_SHA1,
-            ENTITY_MUTUAL_DSA_SHA1, ENTITY_UNILATERAL_ECDSA_SHA1, ENTITY_MUTUAL_ECDSA_SHA1}, mechanisms);
+        assertMechanisms(new String[]{
+            SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1,
+            SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1
+        }, mechanisms);
 
         // Request server auth
         props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ENTITY_MUTUAL_RSA_SHA1_ENC, ENTITY_MUTUAL_DSA_SHA1, ENTITY_MUTUAL_ECDSA_SHA1}, mechanisms);
+        assertMechanisms(new String[]{ SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1 }, mechanisms);
     }
 
     @Test
@@ -153,23 +155,25 @@ public class EntityTest extends BaseTestCase {
         Map<String, Object> props = new HashMap<String, Object>();
 
         // No properties are set, an appropriate EntitySaslClient should be returned
-        SaslClient client = Sasl.createSaslClient(new String[]{ENTITY_UNILATERAL_RSA_SHA1_ENC}, "TestUser", "TestProtocol", "TestServer", props, null);
+        SaslClient client = Sasl.createSaslClient(new String[]{ SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC }, "TestUser", "TestProtocol", "TestServer", props, null);
         assertEquals(EntitySaslClient.class, client.getClass());
-        assertEquals(ENTITY_UNILATERAL_RSA_SHA1_ENC, client.getMechanismName());
+        assertEquals(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, client.getMechanismName());
 
         // If we set SERVER_AUTH to true even though only unilateral mechanisms are specified, no client should be returned
         props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
-        client = Sasl.createSaslClient(new String[]{ENTITY_UNILATERAL_RSA_SHA1_ENC, ENTITY_UNILATERAL_DSA_SHA1, ENTITY_UNILATERAL_ECDSA_SHA1},
+        client = Sasl.createSaslClient(new String[]{ SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1 },
                 "TestUser", "TestProtocol", "TestServer", props, null);
         assertNull(client);
 
         // If we set SERVER_AUTH to true, an appropriate EntitySaslClient should be returned
         props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
-        client = Sasl.createSaslClient(new String[]{ENTITY_UNILATERAL_RSA_SHA1_ENC, ENTITY_UNILATERAL_DSA_SHA1,
-                ENTITY_UNILATERAL_ECDSA_SHA1, ENTITY_MUTUAL_RSA_SHA1_ENC, ENTITY_MUTUAL_DSA_SHA1, ENTITY_MUTUAL_ECDSA_SHA1},
+        client = Sasl.createSaslClient(new String[]{
+                SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1
+            },
                 "TestUser", "TestProtocol", "TestServer", props, null);
         assertEquals(EntitySaslClient.class, client.getClass());
-        assertEquals(ENTITY_MUTUAL_RSA_SHA1_ENC, client.getMechanismName());
+        assertEquals(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, client.getMechanismName());
     }
 
     @Test
@@ -182,13 +186,15 @@ public class EntityTest extends BaseTestCase {
 
         // No properties set
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ENTITY_UNILATERAL_RSA_SHA1_ENC, ENTITY_MUTUAL_RSA_SHA1_ENC, ENTITY_UNILATERAL_DSA_SHA1,
-            ENTITY_MUTUAL_DSA_SHA1, ENTITY_UNILATERAL_ECDSA_SHA1, ENTITY_MUTUAL_ECDSA_SHA1}, mechanisms);
+        assertMechanisms(new String[]{
+            SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1,
+            SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1
+        }, mechanisms);
 
         // Request server auth
         props.put(Sasl.SERVER_AUTH, Boolean.toString(true));
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ENTITY_MUTUAL_RSA_SHA1_ENC, ENTITY_MUTUAL_DSA_SHA1, ENTITY_MUTUAL_ECDSA_SHA1}, mechanisms);
+        assertMechanisms(new String[]{ SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1 }, mechanisms);
     }
 
     // -- Successful authentication exchanges --
@@ -200,13 +206,13 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof EntitySaslServer);
         assertFalse(saslServer.isComplete());
 
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_UNILATERAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof EntitySaslClient);
@@ -240,13 +246,13 @@ public class EntityTest extends BaseTestCase {
         trustedAuthorities.add(new NameTrustedAuthority("cn=some authority,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us"));
         trustedAuthorities.add(new NameTrustedAuthority("cn=test authority,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us"));
         trustedAuthorities.add(new NameTrustedAuthority("cn=some other authority,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us"));
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, trustedAuthorities));
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof EntitySaslServer);
         assertFalse(saslServer.isComplete());
 
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_UNILATERAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, null, clientTrustStore));
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof EntitySaslClient);
@@ -276,9 +282,9 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_UNILATERAL_RSA_SHA1_ENC }, "cn=test client 1,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC }, "cn=test client 1,ou=jboss,o=red hat,l=raleigh,st=north carolina,c=us", "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
         assertFalse(saslServer.isComplete());
         assertFalse(saslClient.isComplete());
@@ -306,9 +312,9 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
         assertFalse(saslServer.isComplete());
         assertFalse(saslClient.isComplete());
@@ -340,9 +346,9 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver2.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver2.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, "dnsInCNServer", serverTrustStore, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "testserver2.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "testserver2.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, "dnsInCNClient", clientTrustStore));
         assertFalse(saslServer.isComplete());
         assertFalse(saslClient.isComplete());
@@ -375,9 +381,9 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         // The server name specified by the client doesn't match the server's actual name
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "anotherserver.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "anotherserver.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
 
         byte[] message = saslServer.evaluateResponse(new byte[0]);
@@ -395,9 +401,9 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, null, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
 
         byte[] message = saslServer.evaluateResponse(new byte[0]);
@@ -416,9 +422,9 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, null));
 
         byte[] message = saslServer.evaluateResponse(new byte[0]);
@@ -438,10 +444,10 @@ public class EntityTest extends BaseTestCase {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
         // A certificate that does not correspond to the client's private key will be used
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore, true));
 
         byte[] message = saslServer.evaluateResponse(new byte[0]);
@@ -461,9 +467,9 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         // A certificate that does not correspond to the server's private key will be used
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_MUTUAL_RSA_SHA1_ENC, "test", "testserver1.example.com",
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "test", "testserver1.example.com",
                 Collections.<String, Object>emptyMap(), new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null, true));
-        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { ENTITY_MUTUAL_RSA_SHA1_ENC }, null, "test", "",
+        final SaslClient saslClient = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC }, null, "test", "",
                 Collections.<String, Object>emptyMap(), new EntityClientCallbackHandler(clientKeyStore, CLIENT_KEYSTORE_ALIAS, clientTrustStore));
 
         byte[] message = saslServer.evaluateResponse(new byte[0]);
@@ -484,7 +490,7 @@ public class EntityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(EntitySaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        final SaslServer saslServer = serverFactory.createSaslServer(ENTITY_UNILATERAL_RSA_SHA1_ENC, "test", "", Collections.<String, Object>emptyMap(),
+        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "test", "", Collections.<String, Object>emptyMap(),
                 new EntityServerCallbackHandler(serverKeyStore, SERVER_KEYSTORE_ALIAS, serverTrustStore, null));
         assertNotNull(saslServer);
         assertTrue(saslServer instanceof EntitySaslServer);

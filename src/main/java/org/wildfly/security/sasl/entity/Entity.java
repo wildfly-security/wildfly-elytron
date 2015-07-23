@@ -27,14 +27,6 @@ import static org.wildfly.security.asn1.ASN1.*;
  */
 public final class Entity {
 
-    // Mechanism names
-    public static final String ENTITY_UNILATERAL_RSA_SHA1_ENC = "9798-U-RSA-SHA1-ENC";
-    public static final String ENTITY_MUTUAL_RSA_SHA1_ENC = "9798-M-RSA-SHA1-ENC";
-    public static final String ENTITY_UNILATERAL_DSA_SHA1 = "9798-U-DSA-SHA1";
-    public static final String ENTITY_MUTUAL_DSA_SHA1 = "9798-M-DSA-SHA1";
-    public static final String ENTITY_UNILATERAL_ECDSA_SHA1 = "9798-U-ECDSA-SHA1";
-    public static final String ENTITY_MUTUAL_ECDSA_SHA1 = "9798-M-ECDSA-SHA1";
-
     // Signature algorithms
     public static final String SHA1_WITH_RSA = "SHA1withRSA";
     public static final String SHA1_WITH_DSA = "SHA1withDSA";

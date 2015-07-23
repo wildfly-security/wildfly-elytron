@@ -33,6 +33,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The server factory for the ISO/IEC 9798-3 authentication SASL mechanism.
@@ -47,10 +48,10 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
         boolean mutual = false;
         final boolean serverAuth = Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
         switch (mechanism) {
-            case Entity.ENTITY_MUTUAL_RSA_SHA1_ENC:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
                 mutual = true;
                 // Fall through
-            case Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC:
                 if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_RSA);
@@ -58,10 +59,10 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                     return null;
                 }
                 break;
-            case Entity.ENTITY_MUTUAL_DSA_SHA1:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1:
                 mutual = true;
                 // Fall through
-            case Entity.ENTITY_UNILATERAL_DSA_SHA1:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1:
                 if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_DSA);
@@ -69,10 +70,10 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                     return null;
                 }
                 break;
-            case Entity.ENTITY_MUTUAL_ECDSA_SHA1:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1:
                 mutual = true;
                 // Fall through
-            case Entity.ENTITY_UNILATERAL_ECDSA_SHA1:
+            case SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1:
                 if (serverAuth && ! mutual) return null;
                 try {
                     signature = Signature.getInstance(SHA1_WITH_ECDSA);
@@ -101,18 +102,18 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
     public String[] getMechanismNames(final Map<String, ?> props) {
         if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(Sasl.SERVER_AUTH))) {
             return new String[] {
-                Entity.ENTITY_MUTUAL_RSA_SHA1_ENC,
-                Entity.ENTITY_MUTUAL_DSA_SHA1,
-                Entity.ENTITY_MUTUAL_ECDSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1,
             };
         } else {
             return new String[] {
-                Entity.ENTITY_UNILATERAL_RSA_SHA1_ENC,
-                Entity.ENTITY_MUTUAL_RSA_SHA1_ENC,
-                Entity.ENTITY_UNILATERAL_DSA_SHA1,
-                Entity.ENTITY_MUTUAL_DSA_SHA1,
-                Entity.ENTITY_UNILATERAL_ECDSA_SHA1,
-                Entity.ENTITY_MUTUAL_ECDSA_SHA1
+                SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC,
+                SaslMechanismInformation.Names.IEC_ISO_9798_U_DSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_U_ECDSA_SHA1,
+                SaslMechanismInformation.Names.IEC_ISO_9798_M_ECDSA_SHA1
             };
         }
     }
