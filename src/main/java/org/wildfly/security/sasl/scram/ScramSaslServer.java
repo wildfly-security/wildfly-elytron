@@ -19,6 +19,9 @@
 package org.wildfly.security.sasl.scram;
 
 import static java.util.Arrays.copyOfRange;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
@@ -50,6 +53,7 @@ import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -446,7 +450,31 @@ final class ScramSaslServer extends AbstractSaslServer {
     }
 
     private void getPredigestedSaltedPassword(NameCallback nameCallback) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(ScramDigestPassword.class);
+        String passwordType;
+        switch (getMechanismName()) {
+            case SaslMechanismInformation.Names.SCRAM_SHA_1:
+            case SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS: {
+                passwordType = ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
+                break;
+            }
+            case SaslMechanismInformation.Names.SCRAM_SHA_256:
+            case SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS: {
+                passwordType = ScramDigestPassword.ALGORITHM_SCRAM_SHA_256;
+                break;
+            }
+            case SaslMechanismInformation.Names.SCRAM_SHA_384:
+            case SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS: {
+                passwordType = ScramDigestPassword.ALGORITHM_SCRAM_SHA_384;
+                break;
+            }
+            case SaslMechanismInformation.Names.SCRAM_SHA_512:
+            case SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS: {
+                passwordType = ScramDigestPassword.ALGORITHM_SCRAM_SHA_512;
+                break;
+            }
+            default: throw Assert.impossibleSwitchCase(getMechanismName());
+        }
+        CredentialCallback credentialCallback = new CredentialCallback(singletonMap(ScramDigestPassword.class, singleton(passwordType)));
         try {
             tryHandleCallbacks(nameCallback, credentialCallback);
         } catch (UnsupportedCallbackException e) {
@@ -460,10 +488,14 @@ final class ScramSaslServer extends AbstractSaslServer {
             }
         }
         Password password = (Password) credentialCallback.getCredential();
-        if (password != null) {
+        if (password instanceof ScramDigestPassword) {
             // got a scram password
-            iterationCount = ((ScramDigestPassword) password).getIterationCount();
-            salt = ((ScramDigestPassword) password).getSalt();
+            final ScramDigestPassword scramDigestPassword = (ScramDigestPassword) password;
+            if (! passwordType.equals(scramDigestPassword.getAlgorithm())) {
+                return;
+            }
+            iterationCount = scramDigestPassword.getIterationCount();
+            salt = scramDigestPassword.getSalt();
             if (iterationCount < minimumIterationCount) {
                 throw log.saslIterationCountIsTooLow(getMechanismName(), iterationCount, minimumIterationCount);
             } else if (iterationCount > maximumIterationCount) {
@@ -472,12 +504,12 @@ final class ScramSaslServer extends AbstractSaslServer {
             if (salt == null) {
                 throw log.saslSaltMustBeSpecified(getMechanismName());
             }
-            saltedPassword = ((ScramDigestPassword)password).getDigest();
+            saltedPassword = scramDigestPassword.getDigest();
         }
     }
 
     private void getSaltedPasswordFromTwoWay(NameCallback nameCallback, ByteStringBuilder b) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(TwoWayPassword.class);
+        CredentialCallback credentialCallback = new CredentialCallback(singletonMap(TwoWayPassword.class, emptySet()));
         final ParameterCallback parameterCallback = new ParameterCallback(IteratedSaltedPasswordAlgorithmSpec.class);
         try {
             tryHandleCallbacks(nameCallback, parameterCallback, credentialCallback);

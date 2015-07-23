@@ -49,7 +49,7 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
         Callback callback = callbacks[index];
         if (callback instanceof CredentialCallback) {
             CredentialCallback credentialCallback = (CredentialCallback) callback;
-            if (credentialCallback.isCredentialSupported(password)) {
+            if (credentialCallback.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
                 credentialCallback.setCredential(password);
                 return;
             }

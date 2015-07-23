@@ -120,7 +120,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
+    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
         return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
@@ -138,7 +138,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return CredentialSupport.UNSUPPORTED;
             final Password password = entry.getPassword();
@@ -146,7 +146,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) {
+        public <C> C getCredential(Class<C> credentialType, final String algorithmName) {
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
             final Password password = entry.getPassword();

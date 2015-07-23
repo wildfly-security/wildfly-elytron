@@ -133,7 +133,7 @@ public class PasswordSupportTest {
 
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
-        CredentialSupport support = simpleToDnRealm.getCredentialSupport(credentialType);
+        CredentialSupport support = simpleToDnRealm.getCredentialSupport(credentialType, null);
         assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
 
         verifyPasswordSupport(realmIdentity, credentialType);
@@ -141,12 +141,12 @@ public class PasswordSupportTest {
     }
 
     private void verifyPasswordSupport(RealmIdentity identity, Class<?> credentialType) throws RealmUnavailableException {
-        CredentialSupport credentialSupport = identity.getCredentialSupport(credentialType);
+        CredentialSupport credentialSupport = identity.getCredentialSupport(credentialType, null);
         assertEquals("Identity level support", CredentialSupport.FULLY_SUPPORTED, credentialSupport);
     }
 
     private void verifyPassword(RealmIdentity identity, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        Password loadedPassword = (Password) identity.getCredential(credentialType);
+        Password loadedPassword = (Password) identity.getCredential(credentialType, null);
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         final Password translated = factory.translate(loadedPassword);

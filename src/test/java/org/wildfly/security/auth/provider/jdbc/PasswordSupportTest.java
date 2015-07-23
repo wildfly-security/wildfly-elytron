@@ -75,11 +75,11 @@ public class PasswordSupportTest {
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
@@ -91,7 +91,7 @@ public class PasswordSupportTest {
 
         assertFalse(realmIdentity.verifyCredential(invalidPassword));
 
-        ClearPassword storedPassword = realmIdentity.getCredential(ClearPassword.class);
+        ClearPassword storedPassword = realmIdentity.getCredential(ClearPassword.class, null);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getPassword(), storedPassword.getPassword());
@@ -112,15 +112,15 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class, null));
         assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
         assertFalse(realmIdentity.verifyCredential("invalid".toCharArray()));
 
-        BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class);
+        BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class, null);
 
         assertNotNull(storedPassword);
 
@@ -152,14 +152,14 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SaltedSimpleDigestPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SaltedSimpleDigestPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SaltedSimpleDigestPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SaltedSimpleDigestPassword.class, null));
         assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
-        SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential(SaltedSimpleDigestPassword.class);
+        SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential(SaltedSimpleDigestPassword.class, null);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -187,14 +187,14 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SimpleDigestPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SimpleDigestPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SimpleDigestPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SimpleDigestPassword.class, null));
         assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
-        SimpleDigestPassword storedPassword = realmIdentity.getCredential(SimpleDigestPassword.class);
+        SimpleDigestPassword storedPassword = realmIdentity.getCredential(SimpleDigestPassword.class, null);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -215,14 +215,14 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ScramDigestPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ScramDigestPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ScramDigestPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ScramDigestPassword.class, null));
         assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
 
-        ScramDigestPassword storedPassword = realmIdentity.getCredential(ScramDigestPassword.class);
+        ScramDigestPassword storedPassword = realmIdentity.getCredential(ScramDigestPassword.class, null);
 
         assertNotNull(storedPassword);
         assertArrayEquals(passwordSpec.getHash(), storedPassword.getDigest());
@@ -247,7 +247,7 @@ public class PasswordSupportTest {
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
-        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class);
+        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class, null);
 
         assertNotNull(identityPrivateKey);
         assertEquals(privateKey, identityPrivateKey);
@@ -274,17 +274,17 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class));
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class);
+        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class, null);
 
         assertNotNull(identityPrivateKey);
         assertEquals(privateKey, identityPrivateKey);
 
-        ClearPassword identityClearPassword = realmIdentity.getCredential(ClearPassword.class);
+        ClearPassword identityClearPassword = realmIdentity.getCredential(ClearPassword.class, null);
 
         assertNotNull(identityClearPassword);
     }
@@ -309,17 +309,17 @@ public class PasswordSupportTest {
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class));
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.OBTAINABLE_ONLY, realmIdentity.getCredentialSupport(PrivateKey.class));
-        assertEquals(CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class));
+        assertEquals(CredentialSupport.OBTAINABLE_ONLY, realmIdentity.getCredentialSupport(PrivateKey.class, null));
+        assertEquals(CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
 
         insertUserWithClearPassword(userName, "john_clear_abcd1234");
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
     }
 
     private void createRSAKeysTable(String userName, PrivateKey privateKey, PublicKey publicKey) throws Exception {

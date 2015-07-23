@@ -85,7 +85,7 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
         if (handler == null) {
             // we will be using the default handler that only supports char[] and String credentials.
             if (char[].class.isAssignableFrom(credentialType) || String.class.isAssignableFrom(credentialType) || ClearPassword.class.isAssignableFrom(credentialType)) {
@@ -150,12 +150,12 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getCredentialSupport(credentialType);
+        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getCredentialSupport(credentialType, algorithmName);
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             return null;
         }
 

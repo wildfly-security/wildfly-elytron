@@ -63,7 +63,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType) {
+    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
         return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
@@ -92,7 +92,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
             final KeyStore.Entry entry = getEntry(name);
             if (entry == null) {
                 return CredentialSupport.UNSUPPORTED;
@@ -118,7 +118,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(final Class<C> credentialType) {
+        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) {
             final KeyStore.Entry entry = getEntry(name);
             if (entry == null) return null;
             if (entry instanceof PasswordEntry) {

@@ -192,7 +192,7 @@ public final class SecurityDomain {
         return realmInfo;
     }
 
-    CredentialSupport getCredentialSupport(final Class<?> credentialType) {
+    CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
         SupportLevel obtainMin, obtainMax, verifyMin, verifyMax;
         obtainMin = obtainMax = verifyMin = verifyMax = null;
         Iterator<RealmInfo> iterator = realmMap.values().iterator();
@@ -202,7 +202,7 @@ public final class SecurityDomain {
                 RealmInfo realmInfo = iterator.next();
                 SecurityRealm realm = realmInfo.getSecurityRealm();
                 try {
-                    final CredentialSupport support = realm.getCredentialSupport(credentialType);
+                    final CredentialSupport support = realm.getCredentialSupport(credentialType, algorithmName);
 
                     final SupportLevel obtainable = support.obtainableSupportLevel();
                     final SupportLevel verification = support.verificationSupportLevel();
@@ -239,15 +239,6 @@ public final class SecurityDomain {
             return SupportLevel.SUPPORTED;
         } else {
             return SupportLevel.POSSIBLY_SUPPORTED;
-        }
-    }
-
-    CredentialSupport getCredentialSupport(final String realmName, final Class<?> credentialType) {
-        final SecurityRealm realm = getRealm(realmName);
-        try {
-            return realm.getCredentialSupport(credentialType);
-        } catch (RealmUnavailableException e) {
-            return CredentialSupport.UNSUPPORTED;
         }
     }
 

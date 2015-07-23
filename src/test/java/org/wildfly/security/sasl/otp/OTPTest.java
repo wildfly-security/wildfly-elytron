@@ -825,7 +825,7 @@ public class OTPTest extends BaseTestCase {
                     assertEquals("userName", name);
                 } else if (callback instanceof CredentialCallback) {
                     CredentialCallback credentialCallback = (CredentialCallback) callback;
-                    if (credentialCallback.isCredentialSupported(password)) {
+                    if (credentialCallback.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
                         credentialCallback.setCredential(password);
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {

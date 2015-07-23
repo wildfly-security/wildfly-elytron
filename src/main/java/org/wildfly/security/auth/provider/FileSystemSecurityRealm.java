@@ -215,7 +215,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         }
     }
 
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
         return CredentialSupport.UNKNOWN;
     }
 
@@ -242,7 +242,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return name;
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             List<Object> credentials = loadCredentials();
             for (Object credential : credentials) {
                 if (credentialType.isInstance(credential)) {
@@ -252,7 +252,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return CredentialSupport.UNSUPPORTED;
         }
 
-        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             List<Object> credentials = loadCredentials();
             for (Object credential : credentials) {
                 if (credentialType.isInstance(credential)) {

@@ -92,12 +92,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialType) : CredentialSupport.UNSUPPORTED;
+            public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) : CredentialSupport.UNSUPPORTED;
             }
 
             @Override
-            public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+            public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
                 if (accountEntry == null) {
                     return null;
                 }
@@ -186,7 +186,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
         if (credentialType.isAssignableFrom(ClearPassword.class)) {
             return plainText ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.VERIFIABLE_ONLY;
         } else if (credentialType.isAssignableFrom(DigestPassword.class)) {

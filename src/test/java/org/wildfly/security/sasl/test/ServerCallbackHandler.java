@@ -36,6 +36,7 @@ import org.junit.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -117,8 +118,10 @@ public class ServerCallbackHandler implements CallbackHandler {
                 try {
                     PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                     Password password = passwordFactory.generatePassword(keySpec);
-                    if (ccb.isCredentialSupported(password)) {
+                    if (ccb.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
                         ccb.setCredential(password);
+                    } else {
+                        throw new FastUnsupportedCallbackException(current);
                     }
                 } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
                     throw new IOException("Password object generation failed", e);

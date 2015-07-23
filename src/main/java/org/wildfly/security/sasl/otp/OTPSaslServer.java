@@ -18,6 +18,9 @@
 
 package org.wildfly.security.sasl.otp;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableSet;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.otp.OTP.*;
 import static org.wildfly.security.sasl.otp.OTPUtil.*;
@@ -27,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.Locale;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -101,7 +105,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // OTP extended challenge = <standard OTP challenge> ext[,<extension set id>[, ...]]
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
                 nameCallback = new NameCallback("Remote authentication name", userName);
-                final CredentialCallback credentialCallback = new CredentialCallback(OneTimePassword.class);
+                final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(OneTimePassword.class, unmodifiableSet(new LinkedHashSet<>(asList(OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)))));
                 final TimeoutCallback timeoutCallback = new TimeoutCallback();
                 handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
                 final OneTimePassword previousPassword = (OneTimePassword) credentialCallback.getCredential();

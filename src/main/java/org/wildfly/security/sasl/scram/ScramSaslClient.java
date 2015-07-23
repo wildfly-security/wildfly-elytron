@@ -25,6 +25,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -106,7 +107,7 @@ class ScramSaslClient extends AbstractSaslClient {
                 final ByteStringBuilder b = new ByteStringBuilder();
                 final String authorizationId = getAuthorizationId();
                 final NameCallback nameCallback = authorizationId == null ? new NameCallback("User name") : new NameCallback("User name", authorizationId);
-                final CredentialCallback twoWayCredentialCallback = new CredentialCallback(TwoWayPassword.class);
+                final CredentialCallback twoWayCredentialCallback = new CredentialCallback(Collections.singletonMap(TwoWayPassword.class, Collections.emptySet()));
                 final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
 
                 try {

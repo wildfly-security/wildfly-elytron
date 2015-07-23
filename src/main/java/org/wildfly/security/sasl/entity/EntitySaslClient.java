@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.entity;
 
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonMap;
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.GeneralName.*;
@@ -162,15 +164,15 @@ final class EntitySaslClient extends AbstractSaslClient {
                     KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyType(signature.getAlgorithm()));
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     trustedAuthoritiesCallback.setTrustedAuthorities(trustedAuthorities); // Server's preferred certificates
-                    CredentialCallback credentialCallback = new CredentialCallback(X509Certificate[].class);
-                    CredentialCallback privateKeyCallback = new CredentialCallback(PrivateKey.class);
+                    CredentialCallback credentialCallback = new CredentialCallback(singletonMap(X509Certificate[].class, emptySet()));
+                    CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class, emptySet()));
                     handleCallbacks(keyTypeCallback, trustedAuthoritiesCallback, credentialCallback, privateKeyCallback);
                     clientCertChain = (X509Certificate[]) credentialCallback.getCredential();
                     if ((clientCertChain != null) && (clientCertChain.length > 0)) {
                         EntityUtil.encodeX509CertificateChain(encoder, clientCertChain);
                     } else {
                         // Try obtaining a certificate URL
-                        credentialCallback = new CredentialCallback(String.class);
+                        credentialCallback = new CredentialCallback(singletonMap(String.class, emptySet()));
                         handleCallbacks(keyTypeCallback, trustedAuthoritiesCallback, credentialCallback, privateKeyCallback);
                         clientCertUrl = (String) credentialCallback.getCredential();
                         if (clientCertUrl == null) {

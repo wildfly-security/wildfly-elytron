@@ -23,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -36,7 +37,9 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
@@ -213,7 +216,16 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             nameCallback = new NameCallback("User name");
         }
 
-        final CredentialCallback credentialCallback = new CredentialCallback(DigestPassword.class);
+        final String passwordAlgorithm;
+        switch (getMechanismName()) {
+            case Digest.DIGEST_MD5:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_MD5;     break;
+            case Digest.DIGEST_SHA:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA;     break;
+            case Digest.DIGEST_SHA_256: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_256; break;
+            case Digest.DIGEST_SHA_384: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_384; break;
+            case Digest.DIGEST_SHA_512: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_512; break;
+            default: throw Assert.impossibleSwitchCase(getMechanismName());
+        }
+        final CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm)));
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
 
 
@@ -236,6 +248,10 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
             userName = nameCallback.getName();
             DigestPassword digestedPassword = (DigestPassword) credentialCallback.getCredential();
+            if (! passwordAlgorithm.equals(digestedPassword.getAlgorithm())) {
+                // cheat to try clear password instead
+                throw new FastUnsupportedCallbackException(credentialCallback);
+            }
             digestURP = digestedPassword.getDigest();
 
             if(userName == null) throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), null);

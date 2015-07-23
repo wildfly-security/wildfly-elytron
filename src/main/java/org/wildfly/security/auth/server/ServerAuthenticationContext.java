@@ -435,23 +435,26 @@ public final class ServerAuthenticationContext {
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for
-     * the current authentication identity.
+     * the current authentication identity.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
+     * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
      * @param credentialType the credential type
-     *
+     * @param algorithmName the optional algorithm name for the credential type
      * @return the level of support for this credential type
      *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
-        return stateRef.get().getCredentialSupport(credentialType);
+    public CredentialSupport getCredentialSupport(Class<?> credentialType, String algorithmName) throws RealmUnavailableException {
+        return stateRef.get().getCredentialSupport(credentialType, algorithmName);
     }
 
     /**
-     * Acquire a credential of the given type.
+     * Acquire a credential of the given type.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
+     * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
      * @param credentialType the credential type class
+     * @param algorithmName the optional algorithm name for the credential type
      * @param <C> the credential type
      *
      * @return the credential, or {@code null} if the principal has no credential of that type
@@ -459,8 +462,8 @@ public final class ServerAuthenticationContext {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
-        return stateRef.get().getCredential(credentialType);
+    public <C> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
+        return stateRef.get().getCredential(credentialType, algorithmName);
     }
 
     /**
@@ -560,9 +563,9 @@ public final class ServerAuthenticationContext {
                     final PasswordVerifyCallback passwordVerifyCallback = (PasswordVerifyCallback) callback;
                     // need a plain password
                     final char[] providedPassword = passwordVerifyCallback.getPassword();
-                    if (getCredentialSupport(char[].class).isDefinitelyVerifiable()) {
+                    if (getCredentialSupport(char[].class, null).isDefinitelyVerifiable()) {
                         passwordVerifyCallback.setVerified(verifyCredential(providedPassword));
-                    } else if (getCredentialSupport(TwoWayPassword.class).isDefinitelyVerifiable()) {
+                    } else if (getCredentialSupport(TwoWayPassword.class, null).isDefinitelyVerifiable()) {
                         try {
                             final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
                             final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
@@ -579,7 +582,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
-                    final TwoWayPassword credential = getCredential(TwoWayPassword.class);
+                    final TwoWayPassword credential = getCredential(TwoWayPassword.class, null);
                     if (credential == null) {
                         // there's a slight hope that we could get a proper credential callback
                         throw new FastUnsupportedCallbackException(callback);
@@ -597,11 +600,13 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
                     for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
-                        if (getCredentialSupport(allowedType).mayBeObtainable()) {
-                            final Object credential = getCredential(allowedType);
-                            if (credential != null) {
-                                credentialCallback.setCredential(credential);
-                                break;
+                        for (String algorithmName : credentialCallback.getAllowedAlgorithms(allowedType)) {
+                            if (getCredentialSupport(allowedType, algorithmName).mayBeObtainable()) {
+                                final Object credential = getCredential(allowedType, algorithmName);
+                                if (credential != null) {
+                                    credentialCallback.setCredential(credential);
+                                    break;
+                                }
                             }
                         }
                     }
@@ -610,10 +615,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof CredentialVerifyCallback) {
                     CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
 
-                    Object credential = credentialVerifyCallback.getCredential();
-                    if (getCredentialSupport(credential.getClass()).isDefinitelyVerifiable()) {
-                        credentialVerifyCallback.setVerified(verifyCredential(credential));
-                    }
+                    credentialVerifyCallback.setVerified(verifyCredential(credentialVerifyCallback.getCredential()));
                 } else if (callback instanceof CredentialParameterCallback) {
                     // ignore for now
                     handleOne(callbacks, idx + 1);
@@ -657,9 +659,9 @@ public final class ServerAuthenticationContext {
 
         abstract Principal getAuthenticationPrincipal();
 
-        abstract CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException;
+        abstract CredentialSupport getCredentialSupport(Class<?> credentialType, String algorithmName) throws RealmUnavailableException;
 
-        abstract <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException;
+        abstract <C> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException;
 
         abstract boolean verifyCredential(final Object credential) throws RealmUnavailableException;
 
@@ -699,12 +701,12 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        CredentialSupport getCredentialSupport(final Class<?> credentialType) {
+        CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
-        <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+        <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -757,12 +759,12 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        CredentialSupport getCredentialSupport(final Class<?> credentialType) {
+        CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
-        <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+        <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -819,13 +821,13 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
-            return realmIdentity.getCredentialSupport(credentialType);
+        CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return realmIdentity.getCredentialSupport(credentialType, algorithmName);
         }
 
         @Override
-        <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
-            return realmIdentity.getCredential(credentialType);
+        <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return realmIdentity.getCredential(credentialType, algorithmName);
         }
 
         @Override

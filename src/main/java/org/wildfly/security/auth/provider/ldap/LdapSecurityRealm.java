@@ -90,7 +90,7 @@ class LdapSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
         CredentialSupport response = CredentialSupport.UNSUPPORTED;
 
         if (Password.class.isAssignableFrom(credentialType) == false) {
@@ -126,12 +126,12 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return CredentialSupport.UNSUPPORTED;
             }
@@ -162,12 +162,12 @@ class LdapSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialType) == CredentialSupport.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
