@@ -37,7 +37,6 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.password.interfaces.DigestPassword;
