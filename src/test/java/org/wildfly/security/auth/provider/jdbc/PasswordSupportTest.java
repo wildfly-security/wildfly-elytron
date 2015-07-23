@@ -25,7 +25,7 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.PasswordUtil;
+import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
@@ -36,6 +36,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.util.PasswordUtil;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -124,8 +125,7 @@ public class PasswordSupportTest {
         assertNotNull(storedPassword);
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
-        assertEquals(cryptString, PasswordUtil.getCryptString(storedPassword));
+        assertEquals(cryptString, ModularCrypt.encodeAsString(storedPassword));
     }
 
     @Test
@@ -443,7 +443,7 @@ public class PasswordSupportTest {
             BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                     new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, salt))
             );
-            String cryptString = PasswordUtil.getCryptString(bCryptPassword);
+            String cryptString = ModularCrypt.encodeAsString(bCryptPassword);
 
             preparedStatement.setString(1, userName);
             preparedStatement.setString(2, cryptString);
