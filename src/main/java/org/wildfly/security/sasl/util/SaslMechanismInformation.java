@@ -169,6 +169,21 @@ public final class SaslMechanismInformation {
     public static final Predicate<String> SCRAM = name -> name.startsWith("SCRAM-");
 
     /**
+     * A predicate which is true when a DIGEST-family mechanism is being used.
+     */
+    public static final Predicate<String> DIGEST = name -> name.startsWith("DIGEST-");
+
+    /**
+     * A predicate which is true when a IEC/ISO-9798-family mechanism is being used.
+     */
+    public static final Predicate<String> IEC_ISO_9798 = name -> name.startsWith("9798-");
+
+    /**
+     * A predicate which is true when an EAP-family mechanism is being used.
+     */
+    public static final Predicate<String> EAP = name -> name.startsWith("EAP-");
+
+    /**
      * A predicate which is true when the mechanism supports mutual authentication.
      */
     public static final Predicate<String> MUTUAL = ((Predicate<String>) MUTUAL_MECHS::contains).or(SCRAM).or(GS2);
