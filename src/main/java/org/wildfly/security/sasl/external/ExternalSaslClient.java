@@ -26,6 +26,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 
 final class ExternalSaslClient implements SaslClient, SaslWrapper {
@@ -39,7 +40,7 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
     }
 
     public String getMechanismName() {
-        return External.EXTERNAL;
+        return SaslMechanismInformation.Names.EXTERNAL;
     }
 
     public boolean hasInitialResponse() {
