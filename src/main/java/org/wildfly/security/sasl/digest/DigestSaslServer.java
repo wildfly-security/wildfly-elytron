@@ -47,6 +47,7 @@ import javax.security.sasl.SaslServer;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -318,11 +319,11 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
     private String passwordAlgorithm(final String mechanismName) {
         switch (mechanismName) {
-            case Digest.DIGEST_SHA:     return DigestPassword.ALGORITHM_DIGEST_SHA;
-            case Digest.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
-            case Digest.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
-            case Digest.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
-            case Digest.DIGEST_MD5:     return DigestPassword.ALGORITHM_DIGEST_MD5;
+            case SaslMechanismInformation.Names.DIGEST_SHA:     return DigestPassword.ALGORITHM_DIGEST_SHA;
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            case SaslMechanismInformation.Names.DIGEST_MD5:     return DigestPassword.ALGORITHM_DIGEST_MD5;
             default: throw Assert.impossibleSwitchCase(mechanismName);
         }
     }

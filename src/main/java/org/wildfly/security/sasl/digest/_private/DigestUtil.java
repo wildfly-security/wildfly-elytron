@@ -38,7 +38,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.sasl.digest.Digest;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -60,20 +60,20 @@ public final class DigestUtil {
 
     public static String passwordAlgorithm(String digestAlgorithm) {
         switch (digestAlgorithm) {
-            case Digest.DIGEST_MD5: return DigestPassword.ALGORITHM_DIGEST_MD5;
-            case Digest.DIGEST_SHA: return DigestPassword.ALGORITHM_DIGEST_SHA;
-            case Digest.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
-            case Digest.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            case SaslMechanismInformation.Names.DIGEST_MD5: return DigestPassword.ALGORITHM_DIGEST_MD5;
+            case SaslMechanismInformation.Names.DIGEST_SHA: return DigestPassword.ALGORITHM_DIGEST_SHA;
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
             default: return null;
         }
     }
 
     public static String messageDigestAlgorithm(String digestAlgorithm) {
         switch (digestAlgorithm) {
-            case Digest.DIGEST_MD5: return "MD5";
-            case Digest.DIGEST_SHA: return "SHA";
-            case Digest.DIGEST_SHA_256: return "SHA-256";
-            case Digest.DIGEST_SHA_512: return "SHA-512";
+            case SaslMechanismInformation.Names.DIGEST_MD5: return "MD5";
+            case SaslMechanismInformation.Names.DIGEST_SHA: return "SHA";
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: return "SHA-256";
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: return "SHA-512";
             default: return null;
         }
     }

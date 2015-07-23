@@ -40,6 +40,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
@@ -136,7 +137,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         TransformationMapper trans = new DefaultTransformationMapper();
         String[] tokensToChooseFrom = ciphersFromServer.split(String.valueOf(DELIMITER));
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, tokensToChooseFrom)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(SaslMechanismInformation.Names.DIGEST_MD5, tokensToChooseFrom)) {
             // take the strongest cipher
             for (String c: demandedCiphers) {
                 if (c.equals(ts.getToken())) {
@@ -217,11 +218,11 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         final String passwordAlgorithm;
         switch (getMechanismName()) {
-            case Digest.DIGEST_MD5:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_MD5;     break;
-            case Digest.DIGEST_SHA:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA;     break;
-            case Digest.DIGEST_SHA_256: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_256; break;
-            case Digest.DIGEST_SHA_384: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_384; break;
-            case Digest.DIGEST_SHA_512: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_512; break;
+            case SaslMechanismInformation.Names.DIGEST_MD5:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_MD5;     break;
+            case SaslMechanismInformation.Names.DIGEST_SHA:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA;     break;
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_256; break;
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_384; break;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_512; break;
             default: throw Assert.impossibleSwitchCase(getMechanismName());
         }
         final CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm)));
