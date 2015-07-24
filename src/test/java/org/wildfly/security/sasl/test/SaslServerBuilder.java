@@ -23,6 +23,7 @@ package org.wildfly.security.sasl.test;
 
 import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactory;
 
+import java.security.Permissions;
 import java.security.spec.KeySpec;
 import java.util.Map;
 
@@ -54,6 +55,7 @@ public class SaslServerBuilder {
     private Password password = NULL_PASSWORD;
     private String realmName = "mainRealm";
     private String defaultRealmName = realmName;
+    private Map<String, Permissions> permissionsMap = null;
 
     //Server factory decorators
     private Map<String, Object> properties;
@@ -103,6 +105,12 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setPermissionsMap(Map<String, Permissions> permissionsMap) {
+        Assert.assertNotNull(permissionsMap);
+        this.permissionsMap = permissionsMap;
+        return this;
+    }
+
     public SaslServerBuilder setChannelBinding(final String bindingType, byte[] bindingData) {
         Assert.assertNotNull(bindingType);
         Assert.assertNotNull(bindingData);
@@ -125,9 +133,20 @@ public class SaslServerBuilder {
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         domainBuilder.addRealm(realmName, mainRealm);
         domainBuilder.setDefaultRealmName(defaultRealmName);
+
         if (username != null) {
             mainRealm.setPasswordMap(username, password);
         }
+
+        if (permissionsMap != null) {
+            domainBuilder.setPermissionMapper((principal, roles) -> {
+                if (!permissionsMap.containsKey(principal.toString())) {
+                    throw new IllegalStateException(principal.toString()+" unknown, known: "+permissionsMap.toString());
+                }
+                return permissionsMap.get(principal.toString());
+            });
+        }
+
         SecurityDomain domain = domainBuilder.build();
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
         if (properties != null && properties.size() > 0) {
@@ -173,6 +192,5 @@ public class SaslServerBuilder {
             return new byte[0];
         }
     };
-
 
 }

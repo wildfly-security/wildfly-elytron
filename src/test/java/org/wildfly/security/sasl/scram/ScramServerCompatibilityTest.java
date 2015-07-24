@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Permissions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,8 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -153,14 +156,16 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testAllowedAuthorizationId() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
-        assertNotNull(serverFactory);
+        Permissions permissions = new Permissions();
+        permissions.add(new RunAsPrincipalPermission("user"));
 
-        //Use the test callback handler here since it does some extra validation of the authzid
-        CallbackHandler cbh = new ServerCallbackHandler("admin", "clear", new ClearPasswordSpec("pencil".toCharArray()), "user");
-        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.SCRAM_SHA_1, "test", "localhost", Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setUserName("admin")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("pencil".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setPermissionsMap(Collections.singletonMap("admin", permissions))
+                        .build();
 
         byte[] message = "n,a=user,n=admin,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -182,22 +187,23 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testUnallowedAuthorizationId() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
-        final SaslServer saslServer =
+        SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setUserName("admin")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("pencil".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .build();
 
-        byte[] message = "n,a=admin,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
+        byte[] message = "n,a=user,n=admin,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
         assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
 
-        message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ=".getBytes(StandardCharsets.UTF_8);
+        //         c="n,a=user,"
+        message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=sSem09WkghLJOV/Ma5LjIqUtoo8=".getBytes(StandardCharsets.UTF_8);
         try {
             saslServer.evaluateResponse(message);
             fail("SaslException not thrown");
         } catch (SaslException e) {
-            e.printStackTrace();
         }
         assertFalse(saslServer.isComplete());
     }
@@ -427,9 +433,5 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         } catch (SaslException e) {
         }
         assertFalse(saslServer.isComplete());
-    }
-
-    private SaslServerFactory getServerFactory() {
-        return obtainSaslServerFactory(ScramSaslServerFactory.class);
     }
 }

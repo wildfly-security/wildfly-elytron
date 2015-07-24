@@ -364,7 +364,7 @@ public final class ServerAuthenticationContext {
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity);
+        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity);
         if (securityIdentity.getPermissions().implies(new RunAsPrincipalPermission(name))) {
             CompleteState newState = new CompleteState(securityIdentity);
             while (! stateRef.compareAndSet(oldState, newState)) {
