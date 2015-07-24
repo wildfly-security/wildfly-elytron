@@ -19,6 +19,7 @@
 package org.wildfly.security.sasl.util;
 
 import java.security.Provider;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiPredicate;
 
@@ -49,13 +50,13 @@ public final class MechanismProviderFilteringSaslClientFactory extends AbstractD
 
     @SuppressWarnings("unchecked")
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        final Object existingObj = props.get(SaslFactories.PROVIDER_FILTER_KEY);
-        if (existingObj instanceof BiPredicate) {
-            BiPredicate<String, Provider> existing = (BiPredicate<String, Provider>) existingObj;
-            ((Map<String,Object>)props).put(SaslFactories.PROVIDER_FILTER_KEY, predicate.and(existing));
+        BiPredicate<String, Provider> existing = SaslFactories.getProviderFilterPredicate(props);
+        final HashMap<String, Object> newProps = new HashMap<String, Object>(props);
+        if (existing != null) {
+            newProps.put(SaslFactories.PROVIDER_FILTER_KEY, predicate.and(existing));
         } else {
-            ((Map<String,Object>)props).put(SaslFactories.PROVIDER_FILTER_KEY, predicate);
+            newProps.put(SaslFactories.PROVIDER_FILTER_KEY, predicate);
         }
-        return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
+        return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, newProps, cbh);
     }
 }
