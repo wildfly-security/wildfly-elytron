@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,6 +41,8 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword {
+
+    private static final long serialVersionUID = - 8454721263222529136L;
 
     private final String algorithm;
     private final String username;
@@ -136,4 +140,11 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
         }
     }
 
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return DigestPassword.createRaw(algorithm, username, realm, digest);
+    }
 }

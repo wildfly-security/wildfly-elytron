@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
@@ -26,11 +28,13 @@ import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 
 /**
- * A {@link Password} implementation for {@link OneTimePassword}.
+ * A {@code Password} implementation for {@link OneTimePassword}.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
 class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePassword {
+
+    private static final long serialVersionUID = 5524179164918986449L;
 
     private final String algorithm;
     private final byte[] hash;
@@ -89,5 +93,13 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
         return keySpecType.isAssignableFrom(OneTimePasswordSpec.class);
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return OneTimePassword.createRaw(algorithm, hash, seed, sequenceNumber);
     }
 }

@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -223,5 +225,13 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     static MessageDigest getMD5MessageDigest() throws NoSuchAlgorithmException {
         return MessageDigest.getInstance(MD5);
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return UnixMD5CryptPassword.createRaw(getAlgorithm(), salt, hash);
     }
 }

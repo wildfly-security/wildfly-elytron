@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.spec.AlgorithmParameterSpec;
@@ -383,5 +385,13 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         b ^= t;
         results[0] = a;
         results[1] = b;
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return UnixDESCryptPassword.createRaw(getAlgorithm(), salt, hash);
     }
 }

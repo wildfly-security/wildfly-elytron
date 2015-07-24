@@ -20,6 +20,8 @@ package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
@@ -44,6 +46,8 @@ import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */
 class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword {
+
+    private static final long serialVersionUID = - 4400030650839115036L;
 
     private byte[] hash;
     private byte[] salt;
@@ -576,5 +580,13 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
             }
             return value;
         }
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return BCryptPassword.createRaw(getAlgorithm(), hash, salt, iterationCount);
     }
 }

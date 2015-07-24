@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -77,5 +79,13 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
 
     <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType) {
         return keySpecType.isAssignableFrom(ClearPasswordSpec.class);
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
+    }
+
+    Object writeReplace() {
+        return ClearPassword.createRaw(getAlgorithm(), password);
     }
 }
