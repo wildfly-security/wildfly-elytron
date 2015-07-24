@@ -21,10 +21,12 @@ package org.wildfly.security.sasl.util;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -53,10 +55,18 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
         this.providerSupplier = providerSupplier;
     }
 
+    /**
+     * Construct a new instance.  The currently installed system providers are used.
+     */
+    public SecurityProviderSaslServerFactory() {
+        this(Security::getProviders);
+    }
+
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         SaslServer saslServer;
         for (Provider currentProvider : providerSupplier.get()) {
-            for (Provider.Service service : currentProvider.getServices()) {
+            if (mechFilter.test(mechanism, currentProvider)) for (Provider.Service service : currentProvider.getServices()) {
                 if (serviceType.equals(service.getType())) {
                     try {
                         saslServer = ((SaslServerFactory) service.newInstance(null)).createSaslServer(mechanism, protocol, serverName, props, cbh);
@@ -72,12 +82,14 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
+        final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final Set<String> names = new LinkedHashSet<>();
         for (Provider currentProvider : providerSupplier.get()) {
             for (Provider.Service service : currentProvider.getServices()) {
                 if (serviceType.equals(service.getType())) {
                     try {
-                        Collections.addAll(names, ((SaslServerFactory) service.newInstance(null)).getMechanismNames(props));
+                        final String[] mechanismNames = ((SaslServerFactory) service.newInstance(null)).getMechanismNames(props);
+                        Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
                     } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
                     }
                 }

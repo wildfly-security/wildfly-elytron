@@ -18,8 +18,10 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.security.Provider;
 import java.security.Security;
 import java.util.Map;
+import java.util.function.BiPredicate;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -42,7 +44,9 @@ public final class SaslFactories {
 
     private static final SecurityProviderSaslClientFactory providerSaslClientFactory = new SecurityProviderSaslClientFactory(Security::getProviders);
     private static final SecurityProviderSaslServerFactory providerSaslServerFactory = new SecurityProviderSaslServerFactory(Security::getProviders);
-    private static final String[] NO_STRINGS = new String[0];
+
+    static final String[] NO_STRINGS = new String[0];
+    static final String PROVIDER_FILTER_KEY = "org.wildfly.internal.PFK";
 
     private static final SaslClientFactory EMPTY_SASL_CLIENT_FACTORY = new SaslClientFactory() {
         public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
@@ -142,5 +146,51 @@ public final class SaslFactories {
      */
     public static SaslServerFactory getEmptySaslServerFactory() {
         return EMPTY_SASL_SERVER_FACTORY;
+    }
+
+    /**
+     * Efficiently, recursively filter mechanisms by provider.  If the filter accepts all array elements, the original
+     * array is returned unchanged.  If the filter accepts none of the array elements, an empty array is returned.
+     *
+     * @param orig the original mech array
+     * @param idx the recursive read index (start from 0)
+     * @param len the recursive write length (start from 0)
+     * @param currentProvider the provider being tested
+     * @param mechFilter the filter predicate
+     * @return the filtered array
+     */
+    static String[] filterMechanismsByProvider(String[] orig, int idx, int len, final Provider currentProvider, final BiPredicate<String, Provider> mechFilter) {
+        if (idx == orig.length) {
+            // end of array
+            if (len == 0) {
+                // no mechs
+                return NO_STRINGS;
+            } else {
+                return idx == len ? orig : new String[len];
+            }
+        } else if (mechFilter.test(orig[idx], currentProvider)) {
+            // ok
+            String[] filtered = filterMechanismsByProvider(orig, idx + 1, len + 1, currentProvider, mechFilter);
+            if (orig != filtered) {
+                // we made a copy; populate it
+                filtered[len] = orig[idx];
+            }
+            return filtered;
+        } else {
+            // skip this element
+            return filterMechanismsByProvider(orig, idx + 1, len, currentProvider, mechFilter);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    static BiPredicate<String, Provider> getProviderFilterPredicate(final Map<String, ?> props) {
+        final Object filterObj = props.get(PROVIDER_FILTER_KEY);
+        final BiPredicate<String, Provider> mechFilter;
+        if (filterObj instanceof BiPredicate) {
+            mechFilter = (BiPredicate<String, Provider>) filterObj;
+        } else {
+            mechFilter = (s, provider) -> true;
+        }
+        return mechFilter;
     }
 }
