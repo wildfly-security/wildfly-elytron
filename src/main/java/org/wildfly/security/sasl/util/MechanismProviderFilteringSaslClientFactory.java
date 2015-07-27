@@ -59,4 +59,15 @@ public final class MechanismProviderFilteringSaslClientFactory extends AbstractD
         }
         return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, newProps, cbh);
     }
+
+    public String[] getMechanismNames(final Map<String, ?> props) {
+        BiPredicate<String, Provider> existing = SaslFactories.getProviderFilterPredicate(props);
+        final HashMap<String, Object> newProps = new HashMap<String, Object>(props);
+        if (existing != null) {
+            newProps.put(SaslFactories.PROVIDER_FILTER_KEY, predicate.and(existing));
+        } else {
+            newProps.put(SaslFactories.PROVIDER_FILTER_KEY, predicate);
+        }
+        return super.getMechanismNames(newProps);
+    }
 }
