@@ -197,7 +197,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             // parsing keyword
             if (insideKey) {
                 if (b == ',') {
-                    throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
+                    throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
                 }
                 else if (b == '=') {
                     if (key.length() == 0) {
@@ -221,11 +221,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
                     if (i < challenge.length) {
                         if (challenge[i] != '=') {
-                            throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
+                            throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
                         }
                     }
                     else {
-                        throw log.saslKeywordNotFolowedByEqual(getMechanismName(), key.toString());
+                        throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
                     }
                 }
                 else {

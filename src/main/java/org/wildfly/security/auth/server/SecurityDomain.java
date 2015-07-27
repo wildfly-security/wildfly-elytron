@@ -476,7 +476,7 @@ public final class SecurityDomain {
                 realmMap.put(realmBuilder.getName(), new RealmInfo(realmBuilder));
             }
             if (!realmMap.containsKey(defaultRealmName)) {
-                throw log.realmMapDoesntContainDefault(defaultRealmName);
+                throw log.realmMapDoesNotContainDefault(defaultRealmName);
             }
 
             assertNotBuilt();

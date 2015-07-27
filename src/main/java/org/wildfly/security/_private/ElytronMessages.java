@@ -35,9 +35,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.callback.Callback;
-import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServerFactory;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
 
@@ -72,9 +70,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1, value = "WildFly Elytron version %s")
     void logVersion(String versionString);
 
-    @Message(id = 2, value = "Parse error")
-    String parseError();
-
     @Message(id = 3, value = "Parameter %s is empty")
     IllegalArgumentException emptyParameter(String parameter);
 
@@ -104,11 +99,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1004, value = "Authentication already complete on this context")
     IllegalStateException alreadyComplete();
 
-    @Message(id = 1005, value = "Authentication already initiated on this context")
-    IllegalStateException alreadyInitiated();
-
     @Message(id = 1006, value = "Realm map does not contain mapping for default realm '%s'")
-    IllegalArgumentException realmMapDoesntContainDefault(String defaultRealm);
+    IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
     @Message(id = 1007, value = "No realm name found in properties file")
     IOException noRealmFoundInProperties();
@@ -122,9 +114,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1010, value = "Failed to instantiate custom CallbackHandler")
     RealmUnavailableException failedToInstantiateCustomHandler(@Cause Throwable cause);
-
-    @Message(id = 1011, value = "The Callback array cannot be null")
-    IllegalArgumentException invalidNullCallbackArray();
 
     @Message(id = 1012, value = "Credential cannot be converted to a password")
     FastUnsupportedCallbackException failedToConvertCredentialToPassword(@Param Callback callback);
@@ -198,15 +187,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1034, value = "Invalid credential type specified")
     IllegalStateException invalidCredentialTypeSpecified();
 
-    @Message(id = 1035, value = "Mechanism supplied multiple login names")
-    SaslException saslMechanismSuppliedMultipleLoginNames();
-
-    @Message(id = 1036, value = "Unknown user name")
-    SaslException saslUnknownUserName();
-
-    @Message(id = 1037, value = "No user identity loaded for credential verification")
-    SaslException saslNoUserIdentityLoadedForCredentialVerification();
-
     @Message(id = 1038, value = "Could get not RSA key from query")
     RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
 
@@ -246,9 +226,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1050, value = "Could not execute query \"%s\"")
     RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
-    @Message(id = 1051, value = "Realm is unavailable")
-    RuntimeException realmIsUnavailable(@Cause Throwable cause);
-
     @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
     RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
 
@@ -273,14 +250,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
-    @Message(id = 1061, value = "Could not obtain principal")
-    RuntimeException couldNotObtainPrincipalWithCause(@Cause Throwable cause);
-
     @Message(id = 1062, value = "No provider URL has been set")
     IllegalStateException noProviderUrlSet();
-
-    @Message(id = 1063, value = "Security domain name \"%s\" is invalid")
-    IllegalArgumentException securityDomainNameIsInvalid(String domainName);
 
     @Message(id = 1064, value = "Invalid name")
     IllegalArgumentException invalidName();
@@ -379,18 +350,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 2009, value = "Unable to create a new KeyStore instance")
     IOException unableToCreateKeyStore(@Cause Exception cause);
-
-    @Message(id = 2010, value = "Invalid password type for alias %s (expected %s, got %s)")
-    KeyStoreException invalidPasswordType(String alias, Class<?> expectedClass, Class<?> actualClass);
-
-    @Message(id = 2011, value = "The password entry must contain a non null realm name")
-    KeyStoreException invalidNullRealmInPasswordEntry();
-
-    @Message(id = 2012, value = "The password entry realm for alias %s must match the properties-based keystore realm. (expected %s, got %s)")
-    KeyStoreException invalidRealmNameInPasswordEntry(String alias, String keyStoreRealm, String actualRealm);
-
-    @Message(id = 2013, value = "Invalid algorithm found in password entry for alias %s (expected %s, got %s)")
-    KeyStoreException invalidAlgorithmInPasswordEntry(String alias, String expectedAlgorithm, String actualAlgorithm);
 
     @Message(id = 2014, value = "Unknown key store specified")
     IllegalArgumentException unknownKeyStoreSpecified();
@@ -515,9 +474,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5002, value = "[%s] SASL user name contains an invalid or disallowed character")
     SaslException saslUserNameContainsInvalidCharacter(String mechName);
 
-    @Message(id = 5003, value = "[%s] SASL user name could not be decoded from encoding \"%s\"")
-    SaslException saslUserNameDecodeFailed(String mechName, String encodingName);
-
     @Message(id = 5004, value = "[%s] SASL authorization failed")
     SaslException saslAuthorizationFailed(String mechName, @Cause Throwable cause);
 
@@ -560,17 +516,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
 
-    @Message(id = 5018, value = "Expected token \"%s\" at offset %d of mechanism selection string \"%s\"")
-    IllegalArgumentException mechSelectorTokenExpected(String token, int offset, String string);
-
     @Message(id = 5019, value = "[%s] Proxied SASL authentication failed")
     SaslException saslProxyAuthenticationFailed(String mechName);
-
-    @Message(id = 5020, value = "No SASL client mechanism \"%s\" is available with the current configuration from %s")
-    SaslException saslNoClientMechanism(String mechName, SaslClientFactory clientFactory);
-
-    @Message(id = 5021, value = "No SASL server mechanism \"%s\" is available with the current configuration from %s")
-    SaslException saslNoServerMechanism(String mechName, SaslServerFactory serverFactory);
 
     @Message(id = 5022, value = "[%s] Initial challenge must be empty")
     SaslException saslInitialChallengeMustBeEmpty(String mechName);
@@ -647,9 +594,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5046, value = "[%s] Invalid client message")
     SaslException saslInvalidClientMessageWithCause(String mechName, @Cause Throwable cause);
 
-    @Message(id = 5047, value = "[%s] Server rejected authentication: %s")
-    SaslException saslServerRejectedAuthentication(String mechName, String message);
-
     @Message(id = 5048, value = "[%s] Server rejected authentication")
     SaslException saslServerRejectedAuthentication(String mechName);
 
@@ -708,7 +652,7 @@ public interface ElytronMessages extends BasicLogger {
     SaslException saslNoValueFoundForKeyword(String mechName, String keyword);
 
     @Message(id = 5067, value = "[%s] '=' expected after keyword: %s")
-    SaslException saslKeywordNotFolowedByEqual(String mechName, String keyword);
+    SaslException saslKeywordNotFollowedByEqual(String mechName, String keyword);
 
     @Message(id = 5068, value = "[%s] Unmatched quote found for value: %s")
     SaslException saslUnmatchedQuoteFoundForValue(String mechName, String value);
@@ -730,9 +674,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5074, value = "[%s] Unknown cipher \"%s\"")
     SaslException saslUnknownCipher(String mechName, String cipher);
-
-    @Message(id = 5075, value = "[%s] Cipher \"%s\" unsupported by ")
-    SaslException saslUnsupportedCipher(String mechName, String cipher);
 
     @Message(id = 5076, value = "[%s] Problem getting required cipher. Check your transformation mapper settings.")
     SaslException saslProblemGettingRequiredCipher(String mechName, @Cause Throwable cause);
