@@ -31,6 +31,7 @@ import java.util.Random;
 
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
@@ -270,7 +271,7 @@ class OTPUtil {
                 otpValue |= ((((long) dictionaryIndex) & 0x7fc) >> 2);
                 parity = dictionaryIndex & 0x3;
                 if (parity != calculateParity(otpValue)) {
-                    throw log.saslIncorrectParity(OTP);
+                    throw log.saslIncorrectParity(SaslMechanismInformation.Names.OTP);
                 }
             }
         }
@@ -380,17 +381,17 @@ class OTPUtil {
 
     public static void validateUserName(String userName) throws SaslException {
         if (userName == null) {
-            throw log.saslNoLoginNameGiven(OTP);
+            throw log.saslNoLoginNameGiven(SaslMechanismInformation.Names.OTP);
         } else if (userName.length() > MAX_AUTHENTICATION_ID_LENGTH) {
-            throw log.saslAuthenticationNameTooLong(OTP);
+            throw log.saslAuthenticationNameTooLong(SaslMechanismInformation.Names.OTP);
         } else if (userName.isEmpty()) {
-            throw log.saslAuthenticationNameIsEmpty(OTP);
+            throw log.saslAuthenticationNameIsEmpty(SaslMechanismInformation.Names.OTP);
         }
     }
 
     public static void validateAuthorizationId(String authorizationId) throws SaslException {
         if ((authorizationId != null) && (authorizationId.length() > MAX_AUTHORIZATION_ID_LENGTH)) {
-            throw log.saslAuthorizationIdTooLong(OTP);
+            throw log.saslAuthorizationIdTooLong(SaslMechanismInformation.Names.OTP);
         }
     }
 
@@ -413,7 +414,7 @@ class OTPUtil {
         // Must only contain alphanumeric characters
         for (int i = 0; i < seed.length(); i++) {
             if (! Character.isLetterOrDigit(seed.charAt(i))) {
-                throw log.saslInvalidCharacterInSeed(OTP);
+                throw log.saslInvalidCharacterInSeed(SaslMechanismInformation.Names.OTP);
             }
         }
     }
@@ -436,7 +437,7 @@ class OTPUtil {
     public static void skipDelims(CodePointIterator di, CodePointIterator cpi, int...delims) throws SaslException {
         while ((! di.hasNext()) && cpi.hasNext()) {
             if (! isDelim(cpi.next(), delims)) {
-                throw log.saslInvalidMessageReceived(OTP);
+                throw log.saslInvalidMessageReceived(SaslMechanismInformation.Names.OTP);
             }
         }
     }

@@ -38,6 +38,7 @@ import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * SaslClient for the GSSAPI mechanism as defined by RFC 4752
@@ -56,7 +57,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
     GssapiClient(final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler callbackHandler, final String authorizationId) throws SaslException {
-        super(AbstractGssapiFactory.GSSAPI, protocol, serverName, props, callbackHandler, log);
+        super(SaslMechanismInformation.Names.GSSAPI, protocol, serverName, props, callbackHandler, log);
 
         this.authorizationId = authorizationId;
 

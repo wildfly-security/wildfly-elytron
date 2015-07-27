@@ -19,6 +19,8 @@
 package org.wildfly.security.auth.util;
 
 import static java.security.AccessController.doPrivileged;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonMap;
 
 import java.io.IOException;
 import java.net.Authenticator;
@@ -79,7 +81,7 @@ public final class ElytronAuthenticator extends Authenticator {
         if (authenticationConfiguration == null) return null;
         final CallbackHandler callbackHandler = client.getCallbackHandler(authenticationConfiguration);
         final NameCallback nameCallback = new NameCallback(getRequestingPrompt());
-        final CredentialCallback credentialCallback = new CredentialCallback(TwoWayPassword.class);
+        final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(TwoWayPassword.class, emptySet()));
         char[] password = null;
         try {
             callbackHandler.handle(new Callback[] { nameCallback, credentialCallback });

@@ -19,13 +19,13 @@
 package org.wildfly.security.sasl.anonymous;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
 import java.nio.charset.StandardCharsets;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -47,7 +47,7 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
      * @param callbackHandler the callback handler
      */
     public AnonymousSaslServer(final String protocol, final String serverName, final CallbackHandler callbackHandler) {
-        super(ANONYMOUS, protocol, serverName, callbackHandler);
+        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler);
         setNegotiationState(INITIAL_STATE);
     }
 

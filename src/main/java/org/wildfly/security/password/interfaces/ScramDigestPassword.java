@@ -41,6 +41,16 @@ public interface ScramDigestPassword extends OneWayPassword {
     String ALGORITHM_SCRAM_SHA_256 = "scram-sha-256";
 
     /**
+     * The algorithm "scram-sha-384".
+     */
+    String ALGORITHM_SCRAM_SHA_384 = "scram-sha-384";
+
+    /**
+     * The algorithm "scram-sha-512".
+     */
+    String ALGORITHM_SCRAM_SHA_512 = "scram-sha-512";
+
+    /**
      * The default salt size for this password type.
      */
     int DEFAULT_SALT_SIZE = 12;

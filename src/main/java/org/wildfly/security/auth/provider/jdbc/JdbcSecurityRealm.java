@@ -65,7 +65,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
         for (QueryConfiguration configuration : this.queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                 if (credentialType.equals(keyMapper.getKeyType())) {
@@ -93,7 +93,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
@@ -106,7 +106,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {

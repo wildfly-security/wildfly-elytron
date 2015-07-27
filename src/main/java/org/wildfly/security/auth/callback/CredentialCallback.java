@@ -18,18 +18,15 @@
 
 package org.wildfly.security.auth.callback;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * A callback used to acquire credentials, either for outbound or inbound authentication.  This callback
  * is required only if a default credential was not supplied.  The callback handler is expected to provide
  * a credential to this callback if one is not present.  The supplied credential should be of a <em>supported</em>
- * type; the {@link #isCredentialSupported(Object)} and {@link #isCredentialTypeSupported(Class)} methods can be
+ * type; the {@link #isCredentialSupported(Class, String)} method can be
  * used to query the types that are supported.  If no credential is available, {@code null} is set, and
  * authentication may fail.  If an unsupported credential type is set, authentication may fail.
  *
@@ -40,9 +37,9 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     private static final long serialVersionUID = 4756568346009259703L;
 
     /**
-     * @serial The set of allowed credential types.
+     * @serial The map of allowed credential types.
      */
-    private final Set<Class<?>> allowedTypes;
+    private final Map<Class<?>, Set<String>> allowedTypes;
     /**
      * @serial The credential itself.
      */
@@ -53,16 +50,8 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      *
      * @param allowedTypes the allowed types of credential
      */
-    public CredentialCallback(final Class<?>... allowedTypes) {
-        if (allowedTypes.length == 0) {
-            this.allowedTypes = Collections.emptySet();
-        } else if (allowedTypes.length == 1) {
-            this.allowedTypes = Collections.<Class<?>>singleton(allowedTypes[0]);
-        } else {
-            final Set<Class<?>> set = new LinkedHashSet<>(allowedTypes.length);
-            Collections.addAll(set, allowedTypes);
-            this.allowedTypes = Collections.unmodifiableSet(set);
-        }
+    public CredentialCallback(final Map<Class<?>, Set<String>> allowedTypes) {
+        this.allowedTypes = allowedTypes;
     }
 
     /**
@@ -71,7 +60,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param credential the default credential value, if any
      * @param allowedTypes the allowed types of credential
      */
-    public CredentialCallback(final Object credential, final Class<?>... allowedTypes) {
+    public CredentialCallback(final Object credential, final Map<Class<?>, Set<String>> allowedTypes) {
         this(allowedTypes);
         this.credential = credential;
     }
@@ -91,40 +80,37 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param credential the credential, or {@code null} if no credential is available
      */
     public void setCredential(final Object credential) {
-        if (! isCredentialSupported(credential)) {
-            throw log.invalidCredentialTypeSpecified();
-        }
         this.credential = credential;
     }
 
     /**
-     * Determine whether a credential would be supported by the authentication.
-     *
-     * @param credential the credential to test
-     * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
-     */
-    public boolean isCredentialSupported(final Object credential) {
-        return credential != null && isCredentialTypeSupported(credential.getClass());
-    }
-
-    /**
-     * Determine whether a credential type would be supported by the authentication.  A credential type is supported if
-     * the given class is equal to, or a subtype of, any of the allowed credential types.
+     * Determine whether a credential type would be supported by the authentication.
+     * The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
+     * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
      * @param credentialType the credential type to test
-     * @return {@code true} if the credential type is supported, {@code false} otherwise
+     * @param algorithm the algorithm of the credential to test, or {@code null} to test for any algorithm
+     * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
      */
-    public boolean isCredentialTypeSupported(final Class<?> credentialType) {
-        return credentialType != null && (allowedTypes.contains(credentialType) || isCredentialTypeSupported(credentialType.getSuperclass()) || isCredentialTypeSupportedArray(credentialType.getInterfaces()));
-    }
-
-    private boolean isCredentialTypeSupportedArray(final Class<?>... credentialTypes) {
-        for (Class<?> credentialType : credentialTypes) {
-            if (isCredentialTypeSupported(credentialType)) {
-                return true;
+    public boolean isCredentialSupported(final Class<?> credentialType, final String algorithm) {
+        final Set<String> set = allowedTypes.get(credentialType);
+        if (set != null) {
+            return algorithm == null || set.isEmpty() || set.contains(algorithm);
+        } else {
+            final Class<?> superclass = credentialType.getSuperclass();
+            if (superclass != Object.class && superclass != null) {
+                if (isCredentialSupported(superclass, algorithm)) {
+                    return true;
+                }
             }
+            final Class<?>[] interfaces = credentialType.getInterfaces();
+            for (Class<?> clazz : interfaces) {
+                if (isCredentialSupported(clazz, algorithm)) {
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
     }
 
     /**
@@ -133,7 +119,19 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @return the (immutable) set of allowed types
      */
     public Set<Class<?>> getAllowedTypes() {
-        return allowedTypes;
+        return allowedTypes.keySet();
+    }
+
+    /**
+     * Get the allowed algorithms for the given exact credential type.  The returned set may be empty, indicating that
+     * no algorithm is required for the given credential, or {@code null} indicating that the credential type is not
+     * supported.
+     *
+     * @param type the credential type
+     * @return the (immutable) set of allowed algorithms
+     */
+    public Set<String> getAllowedAlgorithms(Class<?> type) {
+        return allowedTypes.get(type);
     }
 
     public boolean isOptional() {

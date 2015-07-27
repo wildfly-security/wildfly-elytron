@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.entity;
 
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
@@ -220,15 +222,17 @@ final class EntitySaslServer extends AbstractSaslServer {
                 // Get the server's certificate data, if necessary
                 if ((entityB != null) || mutual) {
                     KeyTypeCallback keyTypeCallback = new KeyTypeCallback(keyType(signature.getAlgorithm()));
-                    CredentialCallback credentialCallback = new CredentialCallback(X509Certificate[].class);
-                    CredentialCallback privateKeyCallback = new CredentialCallback(PrivateKey.class);
+                    // todo: switch to org.wildfly.security.x500.X509CertificateChainPrivateCredential
+                    CredentialCallback credentialCallback = new CredentialCallback(singletonMap(X509Certificate[].class, emptySet()));
+                    // todo: match the exact key algorithm name
+                    CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class, emptySet()));
                     handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
                     serverCertChain = (X509Certificate[]) credentialCallback.getCredential();
                     if ((serverCertChain != null) && (serverCertChain.length > 0)) {
                         serverCert = serverCertChain[0];
                     } else {
                         // Try obtaining a certificate URL instead
-                        credentialCallback = new CredentialCallback(String.class);
+                        credentialCallback = new CredentialCallback(singletonMap(String.class, emptySet()));
                         handleCallbacks(keyTypeCallback, credentialCallback, privateKeyCallback);
                         serverCertUrl = (String) credentialCallback.getCredential();
                         if (serverCertUrl != null) {

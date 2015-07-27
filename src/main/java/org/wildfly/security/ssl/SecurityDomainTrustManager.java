@@ -83,7 +83,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         boolean ok = false;
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
-            final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(X509Certificate.class);
+            final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(X509Certificate.class, subjectCertificate.getSigAlgName());
             if (credentialSupport.mayBeVerifiable()) {
                 if (! authenticationContext.verifyCredential(subjectCertificate)) {
                     throw ElytronMessages.log.notTrusted(principal);

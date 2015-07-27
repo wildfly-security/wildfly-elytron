@@ -31,6 +31,7 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
@@ -47,7 +48,7 @@ final class ExternalSaslServer implements SaslServer {
     }
 
     public String getMechanismName() {
-        return External.EXTERNAL;
+        return SaslMechanismInformation.Names.EXTERNAL;
     }
 
     public byte[] evaluateResponse(final byte[] response) throws SaslException {

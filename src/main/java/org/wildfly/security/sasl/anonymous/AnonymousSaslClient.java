@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.anonymous;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.anonymous.AbstractAnonymousFactory.ANONYMOUS;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -27,6 +26,7 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -48,7 +48,7 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
      * @param authorizationId the possibly {@code null} protocol-dependent name used for authorization
      */
     protected AnonymousSaslClient(final String protocol, final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
-        super(ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true);
+        super(SaslMechanismInformation.Names.ANONYMOUS, protocol, serverName, callbackHandler, authorizationId, true);
         setNegotiationState(INITIAL_STATE);
     }
 

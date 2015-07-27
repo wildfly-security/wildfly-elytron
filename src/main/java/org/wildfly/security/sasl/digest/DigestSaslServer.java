@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -46,6 +47,7 @@ import javax.security.sasl.SaslServer;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -259,7 +261,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         // get password
         final NameCallback nameCallback = new NameCallback("User name", userName);
-        final CredentialCallback credentialCallback = new CredentialCallback(DigestPassword.class);
+        final CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm(getMechanismName()))));
         final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
         final RealmCallback realmCallback = new RealmCallback("User realm", clientRealm);
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authzid==null ? userName : authzid);
@@ -312,6 +314,17 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             }
         } else {
             throw log.saslMissingDirective(getMechanismName(), "response");
+        }
+    }
+
+    private String passwordAlgorithm(final String mechanismName) {
+        switch (mechanismName) {
+            case SaslMechanismInformation.Names.DIGEST_SHA:     return DigestPassword.ALGORITHM_DIGEST_SHA;
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            case SaslMechanismInformation.Names.DIGEST_MD5:     return DigestPassword.ALGORITHM_DIGEST_MD5;
+            default: throw Assert.impossibleSwitchCase(mechanismName);
         }
     }
 

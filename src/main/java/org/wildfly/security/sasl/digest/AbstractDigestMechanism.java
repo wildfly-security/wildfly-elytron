@@ -35,6 +35,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -154,7 +155,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             demandedCiphers = CIPHER_OPTS;
         }
         StringBuilder ciphers = new StringBuilder();
-        for (TransformationSpec ts: trans.getTransformationSpecByStrength(Digest.DIGEST_MD5, demandedCiphers)) {
+        for (TransformationSpec ts: trans.getTransformationSpecByStrength(SaslMechanismInformation.Names.DIGEST_MD5, demandedCiphers)) {
             if (ciphers.length() > 0) {
                 ciphers.append(DELIMITER);
             }
@@ -535,7 +536,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         SecretKey cipherKey;
 
         try {
-            ciph = Cipher.getInstance(trans.getTransformationSpec(Digest.DIGEST_MD5, cipher).getTransformation());
+            ciph = Cipher.getInstance(trans.getTransformationSpec(SaslMechanismInformation.Names.DIGEST_MD5, cipher).getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 

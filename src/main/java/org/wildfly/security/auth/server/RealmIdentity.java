@@ -43,23 +43,27 @@ public interface RealmIdentity {
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
-     * identity.
+     * identity.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
+     * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
      * @param credentialType the credential type
+     * @param algorithmName the optional algorithm name for the credential type
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    CredentialSupport getCredentialSupport(Class<?> credentialType) throws RealmUnavailableException;
+    CredentialSupport getCredentialSupport(Class<?> credentialType, String algorithmName) throws RealmUnavailableException;
 
     /**
-     * Acquire a credential of the given type.
+     * Acquire a credential of the given type.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
+     * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
-     * @param credentialType the credential type class
      * @param <C> the credential type
+     * @param credentialType the credential type class
+     * @param algorithmName the optional algorithm name for the credential type
      * @return the credential, or {@code null} if the principal has no credential of that type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    <C> C getCredential(Class<C> credentialType) throws RealmUnavailableException;
+    <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException;
 
     /**
      * Verify the given credential.
@@ -102,11 +106,11 @@ public interface RealmIdentity {
             return "anonymous";
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             return CredentialSupport.UNSUPPORTED;
         }
 
-        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             return null;
         }
 
@@ -137,11 +141,11 @@ public interface RealmIdentity {
                 return name;
             }
 
-            public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
+            public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
                 return CredentialSupport.UNSUPPORTED;
             }
 
-            public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
                 return null;
             }
 

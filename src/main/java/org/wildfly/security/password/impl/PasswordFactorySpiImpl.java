@@ -197,6 +197,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             case ALGORITHM_DIGEST_MD5:
             case ALGORITHM_DIGEST_SHA:
             case ALGORITHM_DIGEST_SHA_256:
+            case ALGORITHM_DIGEST_SHA_384:
             case ALGORITHM_DIGEST_SHA_512:
                 if (keySpec instanceof DigestPasswordSpec) {
                     return new DigestPasswordImpl(algorithm, (DigestPasswordSpec) keySpec);
@@ -315,7 +316,9 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
             }
             case ALGORITHM_SCRAM_SHA_1:
-            case ALGORITHM_SCRAM_SHA_256: {
+            case ALGORITHM_SCRAM_SHA_256:
+            case ALGORITHM_SCRAM_SHA_384:
+            case ALGORITHM_SCRAM_SHA_512: {
                 if (keySpec instanceof IteratedSaltedHashPasswordSpec) {
                     try {
                         return new ScramDigestPasswordImpl(algorithm, (IteratedSaltedHashPasswordSpec) keySpec);

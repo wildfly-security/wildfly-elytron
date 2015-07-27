@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.security.sasl.Sasl;
 
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -30,10 +31,10 @@ import org.wildfly.security.sasl.WildFlySasl;
 abstract class AbstractDigestFactory {
 
     private static final String[] MECHS = {
-        Digest.DIGEST_SHA_512,
-        Digest.DIGEST_SHA_256,
-        Digest.DIGEST_SHA,
-        Digest.DIGEST_MD5,
+        SaslMechanismInformation.Names.DIGEST_SHA_512,
+        SaslMechanismInformation.Names.DIGEST_SHA_256,
+        SaslMechanismInformation.Names.DIGEST_SHA,
+        SaslMechanismInformation.Names.DIGEST_MD5,
     };
     private static final String[] NO_MECHS = new String[0];
 
@@ -53,10 +54,10 @@ abstract class AbstractDigestFactory {
 
     boolean matchesMech(String mechanismName) {
         switch (mechanismName) {
-            case Digest.DIGEST_MD5:
-            case Digest.DIGEST_SHA:
-            case Digest.DIGEST_SHA_256:
-            case Digest.DIGEST_SHA_512: {
+            case SaslMechanismInformation.Names.DIGEST_MD5:
+            case SaslMechanismInformation.Names.DIGEST_SHA:
+            case SaslMechanismInformation.Names.DIGEST_SHA_256:
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: {
                 return true;
             }
         }

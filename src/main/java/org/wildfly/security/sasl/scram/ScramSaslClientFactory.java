@@ -37,6 +37,7 @@ import javax.security.sasl.SaslException;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -70,11 +71,11 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
         out: {
             for (String mechanism : mechanisms) {
                 switch (mechanism) {
-                    case Scram.SCRAM_SHA_1_PLUS:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS:
                         if (! bindingOk) break;
                         plus = true;
                         // fall thru
-                    case Scram.SCRAM_SHA_1:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_1:
                         if (bindingRequired && ! plus) break;
                         name = mechanism;
                         try {
@@ -84,11 +85,11 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
                             break;
                         }
                         break out;
-                    case Scram.SCRAM_SHA_256_PLUS:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS:
                         if (! bindingOk) break;
                         plus = true;
                         // fall thru
-                    case Scram.SCRAM_SHA_256:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_256:
                         if (bindingRequired && ! plus) break;
                         name = mechanism;
                         try {
@@ -98,11 +99,11 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
                             break;
                         }
                         break out;
-                    case Scram.SCRAM_SHA_384_PLUS:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS:
                         if (! bindingOk) break;
                         plus = true;
                         // fall thru
-                    case Scram.SCRAM_SHA_384:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_384:
                         if (bindingRequired && ! plus) break;
                         name = mechanism;
                         try {
@@ -112,11 +113,11 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
                             break;
                         }
                         break out;
-                    case Scram.SCRAM_SHA_512_PLUS:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS:
                         if (! bindingOk) break;
                         plus = true;
                         // fall thru
-                    case Scram.SCRAM_SHA_512:
+                    case SaslMechanismInformation.Names.SCRAM_SHA_512:
                         if (bindingRequired && ! plus) break;
                         name = mechanism;
                         try {
@@ -147,21 +148,21 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
     public String[] getMechanismNames(final Map<String, ?> props) {
         if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return new String[] {
-                Scram.SCRAM_SHA_1_PLUS,
-                Scram.SCRAM_SHA_256_PLUS,
-                Scram.SCRAM_SHA_384_PLUS,
-                Scram.SCRAM_SHA_512_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
             };
         } else {
             return new String[] {
-                Scram.SCRAM_SHA_1,
-                Scram.SCRAM_SHA_1_PLUS,
-                Scram.SCRAM_SHA_256,
-                Scram.SCRAM_SHA_256_PLUS,
-                Scram.SCRAM_SHA_384,
-                Scram.SCRAM_SHA_384_PLUS,
-                Scram.SCRAM_SHA_512,
-                Scram.SCRAM_SHA_512_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_1,
+                SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_256,
+                SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_384,
+                SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS,
+                SaslMechanismInformation.Names.SCRAM_SHA_512,
+                SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS,
             };
         }
     }

@@ -28,6 +28,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
@@ -40,12 +41,12 @@ import org.wildfly.security.util._private.Arrays2;
 public final class ExternalSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        return mechanism.equals(External.EXTERNAL) ? new ExternalSaslServer(cbh) : null;
+        return mechanism.equals(SaslMechanismInformation.Names.EXTERNAL) ? new ExternalSaslServer(cbh) : null;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
-            return Arrays2.of(External.EXTERNAL);
+            return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }
         if ("true".equals(props.get(Sasl.POLICY_NOACTIVE))) {
             return WildFlySasl.NO_NAMES;
@@ -62,6 +63,6 @@ public final class ExternalSaslServerFactory implements SaslServerFactory {
         if ("true".equals(props.get(Sasl.POLICY_NODICTIONARY))) {
             return WildFlySasl.NO_NAMES;
         }
-        return Arrays2.of(External.EXTERNAL);
+        return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
     }
 }

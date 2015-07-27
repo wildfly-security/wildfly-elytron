@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.security.sasl.Sasl;
 
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The {@code PLAIN} SASL mechanism as described in <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC 4616</a>.
@@ -30,14 +31,9 @@ import org.wildfly.security.sasl.WildFlySasl;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PlainSasl {
+final class PlainSasl {
 
-    /**
-     * The PLAIN mechanism name
-     */
-    public static final String PLAIN = "PLAIN";
-
-    static final String[] NAMES = { PLAIN };
+    static final String[] NAMES = { SaslMechanismInformation.Names.PLAIN };
 
     static boolean isMatched(final Map<String, ?> props) {
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {

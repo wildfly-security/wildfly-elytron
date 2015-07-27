@@ -19,7 +19,6 @@
 package org.wildfly.security.sasl.plain;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.plain.PlainSasl.PLAIN;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -33,6 +32,7 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
 import org.wildfly.security.auth.callback.PasswordVerifyCallback;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -65,7 +65,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
 
     @Override
     public String getMechanismName() {
-        return PLAIN;
+        return SaslMechanismInformation.Names.PLAIN;
     }
 
     @Override

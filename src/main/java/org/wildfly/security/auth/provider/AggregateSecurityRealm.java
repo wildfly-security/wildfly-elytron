@@ -63,8 +63,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
-        return authenticationRealm.getCredentialSupport(credentialType);
+    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+        return authenticationRealm.getCredentialSupport(credentialType, algorithmName);
     }
 
     static final class Identity implements RealmIdentity {
@@ -83,12 +83,12 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             return name;
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType) throws RealmUnavailableException {
-            return authenticationIdentity.getCredentialSupport(credentialType);
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredentialSupport(credentialType, null);
         }
 
-        public <C> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialType);
+        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialType, algorithmName);
         }
 
         public boolean verifyCredential(final Object credential) throws RealmUnavailableException {

@@ -27,6 +27,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The server factory for the OTP SASL mechanism.
@@ -37,7 +38,7 @@ import org.wildfly.security.sasl.WildFlySasl;
 public final class OTPSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        if (OTP.OTP.equals(mechanism) && OTP.isMatched(props)) {
+        if (SaslMechanismInformation.Names.OTP.equals(mechanism) && OTP.isMatched(props)) {
             final OTPSaslServer server = new OTPSaslServer(mechanism, protocol, serverName, cbh);
             server.init();
             return server;
@@ -46,6 +47,6 @@ public final class OTPSaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        return OTP.isMatched(props) ? new String[] { OTP.OTP } : WildFlySasl.NO_NAMES;
+        return OTP.isMatched(props) ? new String[] { SaslMechanismInformation.Names.OTP } : WildFlySasl.NO_NAMES;
     }
 }

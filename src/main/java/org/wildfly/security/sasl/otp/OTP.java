@@ -31,7 +31,6 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 public final class OTP {
 
-    public static final String OTP = "OTP";
     public static final String OTP_PREFIX = "otp-";
     public static final String EXT = "ext";
 

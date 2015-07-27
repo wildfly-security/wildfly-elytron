@@ -18,10 +18,13 @@
 
 package org.wildfly.security.auth.server;
 
+import java.util.Set;
+
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.util.FilterMechanismSaslServerFactory;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * A SASL server factory configuration.  The configuration is associated with a security domain, and also includes a
@@ -43,7 +46,28 @@ public final class SecurityDomainSaslConfiguration {
         Assert.checkNotNullParam("securityDomain", securityDomain);
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
         this.securityDomain = securityDomain;
-        this.saslServerFactory = saslServerFactory;
+        this.saslServerFactory = new FilterMechanismSaslServerFactory(saslServerFactory, name -> {
+            final Set<Class<?>> credentialTypes = SaslMechanismInformation.getSupportedServerCredentialTypes(name);
+            if (credentialTypes == null) {
+                // unknown, just pass
+                return true;
+            }
+            for (Class<?> credentialType : credentialTypes) {
+                final Set<String> algorithms = SaslMechanismInformation.getSupportedServerCredentialAlgorithms(name, credentialType);
+                if (algorithms.isEmpty()) {
+                    if (! securityDomain.getCredentialSupport(credentialType, null).isNotSupported()) {
+                        // some level of support exists
+                        return true;
+                    }
+                } else for (String algorithm : algorithms) {
+                    if (! securityDomain.getCredentialSupport(credentialType, algorithm).isNotSupported()) {
+                        // some level of support exists
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
     }
 
     /**

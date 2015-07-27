@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.callback;
 
+import javax.security.auth.callback.Callback;
+
 /**
  * A {@link Callback} for use where credential verification is required.
  *

@@ -27,6 +27,7 @@ import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The {@code PLAIN} SASL mechanism client factory implementation.
@@ -38,7 +39,7 @@ public final class PlainSaslClientFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         if (PlainSasl.isMatched(props)) for (String mechanism : mechanisms) {
-            if (PlainSasl.PLAIN.equals(mechanism)) {
+            if (SaslMechanismInformation.Names.PLAIN.equals(mechanism)) {
                 return new PlainSaslClient(authorizationId, cbh);
             }
         }

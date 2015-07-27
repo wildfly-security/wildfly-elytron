@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * The server factory for the plain SASL mechanism.
@@ -45,7 +46,7 @@ public class PlainSaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
         // Unless we are sure plain is required don't return a SaslServer
-        return PlainSasl.PLAIN.equals(mechanism) && PlainSasl.isMatched(props) ? new PlainSaslServer(cbh) : null;
+        return SaslMechanismInformation.Names.PLAIN.equals(mechanism) && PlainSasl.isMatched(props) ? new PlainSaslServer(cbh) : null;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {

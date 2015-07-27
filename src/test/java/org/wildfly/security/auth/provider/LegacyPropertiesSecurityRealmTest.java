@@ -92,18 +92,18 @@ public class LegacyPropertiesSecurityRealmTest {
         Password goodGuess = passwordFactory.generatePassword(new ClearPasswordSpec(ELYTRON_PASSWORD_CLEAR.toCharArray()));
         Password badGuess = passwordFactory.generatePassword(new ClearPasswordSpec("I will hack you".toCharArray()));
 
-        assertEquals("ClearPassword", CredentialSupport.FULLY_SUPPORTED, realm.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, realm.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.FULLY_SUPPORTED, realm.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, realm.getCredentialSupport(DigestPassword.class, null));
 
         RealmIdentity elytronIdentity = realm.createRealmIdentity("elytron");
-        assertEquals("ClearPassword", CredentialSupport.FULLY_SUPPORTED, elytronIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, elytronIdentity.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.FULLY_SUPPORTED, elytronIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, elytronIdentity.getCredentialSupport(DigestPassword.class, null));
 
-        ClearPassword elytronClear = elytronIdentity.getCredential(ClearPassword.class);
+        ClearPassword elytronClear = elytronIdentity.getCredential(ClearPassword.class, null);
         assertNotNull(elytronClear);
         assertEquals(ELYTRON_PASSWORD_CLEAR, new String(elytronClear.getPassword()));
 
-        DigestPassword elytronDigest = elytronIdentity.getCredential(DigestPassword.class);
+        DigestPassword elytronDigest = elytronIdentity.getCredential(DigestPassword.class, null);
         assertNotNull(elytronDigest);
         String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
         assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
@@ -114,11 +114,11 @@ public class LegacyPropertiesSecurityRealmTest {
         elytronIdentity.dispose();
 
         RealmIdentity badIdentity = realm.createRealmIdentity("noone");
-        assertEquals("ClearPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(DigestPassword.class, null));
 
-        assertNull(badIdentity.getCredential(ClearPassword.class));
-        assertNull(badIdentity.getCredential(DigestPassword.class));
+        assertNull(badIdentity.getCredential(ClearPassword.class, null));
+        assertNull(badIdentity.getCredential(DigestPassword.class, null));
 
         assertFalse(badIdentity.verifyCredential(goodGuess));
         assertFalse(badIdentity.verifyCredential(badGuess));
@@ -139,16 +139,16 @@ public class LegacyPropertiesSecurityRealmTest {
         Password goodGuess = passwordFactory.generatePassword(new ClearPasswordSpec(ELYTRON_PASSWORD_CLEAR.toCharArray()));
         Password badGuess = passwordFactory.generatePassword(new ClearPasswordSpec("I will hack you".toCharArray()));
 
-        assertEquals("ClearPassword", CredentialSupport.VERIFIABLE_ONLY, realm.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, realm.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.VERIFIABLE_ONLY, realm.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, realm.getCredentialSupport(DigestPassword.class, null));
 
         RealmIdentity elytronIdentity = realm.createRealmIdentity("elytron");
-        assertEquals("ClearPassword", CredentialSupport.VERIFIABLE_ONLY, elytronIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, elytronIdentity.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.VERIFIABLE_ONLY, elytronIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.OBTAINABLE_ONLY, elytronIdentity.getCredentialSupport(DigestPassword.class, null));
 
-        assertNull(elytronIdentity.getCredential(ClearPassword.class));
+        assertNull(elytronIdentity.getCredential(ClearPassword.class, null));
 
-        DigestPassword elytronDigest = elytronIdentity.getCredential(DigestPassword.class);
+        DigestPassword elytronDigest = elytronIdentity.getCredential(DigestPassword.class, null);
         assertNotNull(elytronDigest);
         String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
         assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
@@ -159,11 +159,11 @@ public class LegacyPropertiesSecurityRealmTest {
         elytronIdentity.dispose();
 
         RealmIdentity badIdentity = realm.createRealmIdentity("noone");
-        assertEquals("ClearPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("DigestPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(DigestPassword.class));
+        assertEquals("ClearPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("DigestPassword", CredentialSupport.UNSUPPORTED, badIdentity.getCredentialSupport(DigestPassword.class, null));
 
-        assertNull(badIdentity.getCredential(ClearPassword.class));
-        assertNull(badIdentity.getCredential(DigestPassword.class));
+        assertNull(badIdentity.getCredential(ClearPassword.class, null));
+        assertNull(badIdentity.getCredential(DigestPassword.class, null));
 
         assertFalse(badIdentity.verifyCredential(goodGuess));
         assertFalse(badIdentity.verifyCredential(badGuess));

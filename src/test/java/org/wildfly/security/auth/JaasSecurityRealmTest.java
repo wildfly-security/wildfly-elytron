@@ -71,14 +71,14 @@ public class JaasSecurityRealmTest {
         assertNotNull("Unexpected null realm identity", realmIdentity);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
-        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(char[].class));
-        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(String.class));
-        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(Object.class));
+        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(char[].class, null));
+        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(String.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.VERIFIABLE_ONLY, realmIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(Object.class, null));
 
         // the JAAS realm identity cannot be used to obtain credentials, so getCredential should always return null.
-        assertNull("Invalid non null credential", realmIdentity.getCredential(char[].class));
-        assertNull("Invalid non null credential", realmIdentity.getCredential(String.class));
+        assertNull("Invalid non null credential", realmIdentity.getCredential(char[].class, null));
+        assertNull("Invalid non null credential", realmIdentity.getCredential(String.class, null));
 
         // use the realm identity to verify all supported credentials - this will trigger a JAAS login that will use the test module.
         assertTrue(realmIdentity.verifyCredential("passwd12#$"));
@@ -123,10 +123,10 @@ public class JaasSecurityRealmTest {
         RealmIdentity realmIdentity = realm.createRealmIdentity("javajoe");
 
         // as the custom handler might be able to handle different credential types, we should get a POSSIBLY_VERIFIABLE support for any type.
-        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(char[].class));
-        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(String.class));
-        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(ClearPassword.class));
-        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(Object.class));
+        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(char[].class, null));
+        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(String.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport(Object.class, null));
 
         // verify the credentials using the custom callback handler.
         assertTrue(realmIdentity.verifyCredential("$#21pass".toCharArray()));

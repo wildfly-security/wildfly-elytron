@@ -27,7 +27,7 @@ import javax.crypto.Mac;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.wildfly.security.sasl.digest.Digest;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -43,7 +43,7 @@ public class DigestUtilTest {
 
     @Before
     public void init() throws Exception {
-        md = MessageDigest.getInstance(messageDigestAlgorithm(Digest.DIGEST_MD5));
+        md = MessageDigest.getInstance(messageDigestAlgorithm(SaslMechanismInformation.Names.DIGEST_MD5));
     }
 
     @Test

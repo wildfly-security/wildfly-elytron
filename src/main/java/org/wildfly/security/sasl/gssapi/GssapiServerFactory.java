@@ -25,6 +25,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * SaslServerFactory for the GSSAPI mechanism as defined by RFC 4752
@@ -39,7 +40,7 @@ public class GssapiServerFactory extends AbstractGssapiFactory implements SaslSe
             CallbackHandler cbh) throws SaslException {
         // TODO - We are actually required by RFC4752 to ensure we have the acceptor credential BEFORE advertising the
         // mechanism is available.
-        if (GSSAPI.equals(mechanism) && matches(props)) {
+        if (SaslMechanismInformation.Names.GSSAPI.equals(mechanism) && matches(props)) {
             GssapiServer server = new GssapiServer(protocol, serverName, props, cbh);
             server.init();
 
