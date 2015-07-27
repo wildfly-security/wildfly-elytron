@@ -45,7 +45,9 @@ import org.wildfly.security.password.PasswordFactory;
  * required failures.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @deprecated Use real callback handlers where possible
  */
+@Deprecated
 public class ServerCallbackHandler implements CallbackHandler {
 
     private final String expectedUsername;

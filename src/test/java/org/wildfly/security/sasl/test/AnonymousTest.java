@@ -23,6 +23,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -30,11 +35,11 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.ClientUtils;
+import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.anonymous.AnonymousClientFactory;
 import org.wildfly.security.sasl.anonymous.AnonymousSaslClient;
 import org.wildfly.security.sasl.anonymous.AnonymousSaslServer;
@@ -131,10 +136,9 @@ public class AnonymousTest extends BaseTestCase {
 
     @Test
     public void testSuccessfulExchange() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", (char[]) null);
-        SaslServer server = Sasl.createSaslServer(ANONYMOUS, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer();
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", (char[]) null);
+        CallbackHandler clientCallback = createClientCallbackHandler();
         SaslClient client = Sasl.createSaslClient(new String[]{ANONYMOUS}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertTrue(client.hasInitialResponse());
@@ -145,4 +149,19 @@ public class AnonymousTest extends BaseTestCase {
         assertEquals("anonymous", server.getAuthorizationID());
     }
 
+    private SaslServer createSaslServer() throws Exception {
+        return new SaslServerBuilder(AnonymousServerFactory.class, ANONYMOUS)
+                .build();
+    }
+
+    private CallbackHandler createClientCallbackHandler() throws Exception {
+        final AuthenticationContext context = AuthenticationContext.empty()
+                .with(
+                        MatchRule.ALL,
+                        AuthenticationConfiguration.EMPTY
+                                .useAnonymous());
+
+
+        return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
+    }
 }

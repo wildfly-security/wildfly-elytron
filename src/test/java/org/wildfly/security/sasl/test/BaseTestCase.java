@@ -76,7 +76,7 @@ public class BaseTestCase {
      * @param requiredServerFactory - The server factory we are looking for.
      * @return the located server factory.
      */
-    protected SaslServerFactory obtainSaslServerFactory(final Class requiredServerFactory) {
+    protected static SaslServerFactory obtainSaslServerFactory(final Class requiredServerFactory) {
         Enumeration<SaslServerFactory> serverFactories = Sasl.getSaslServerFactories();
         while (serverFactories.hasMoreElements()) {
             SaslServerFactory current = serverFactories.nextElement();

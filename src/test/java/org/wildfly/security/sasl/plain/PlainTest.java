@@ -18,7 +18,19 @@
 package org.wildfly.security.sasl.plain;
 
 import static javax.security.sasl.Sasl.POLICY_NOPLAINTEXT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -26,16 +38,13 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.junit.Test;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.ClientUtils;
+import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ClientCallbackHandler;
-import org.wildfly.security.sasl.test.ServerCallbackHandler;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
 
 /**
  * Test the server side of the Plain SASL mechanism.
@@ -95,10 +104,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("George", "gpwd".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -119,10 +127,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("George", "gpwd".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "bad".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("George", "bad".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -147,10 +154,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testBadUsername() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("Borris", "gpwd".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("Borris", "gpwd".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -158,7 +164,7 @@ public class PlainTest extends BaseTestCase {
 
         assertTrue(client.hasInitialResponse());
         byte[] message = client.evaluateChallenge(new byte[0]);
-        assertEquals("George\0George\0gpwd",new String(message, StandardCharsets.UTF_8));
+        assertEquals("George\0George\0gpwd", new String(message, StandardCharsets.UTF_8));
 
         try {
             server.evaluateResponse(message);
@@ -175,10 +181,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_NoAuthorization() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("George", "gpwd".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, null, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -199,10 +204,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_DifferentAuthorizationID() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("George", "gpwd".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("George", "gpwd".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("George", "gpwd".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("George", "gpwd".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "Borris", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -228,10 +232,9 @@ public class PlainTest extends BaseTestCase {
      */
     @Test
     public void testMaximumLength() throws Exception {
-        CallbackHandler serverCallback = new ServerCallbackHandler("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
-        SaslServer server = Sasl.createSaslServer(PLAIN, "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), serverCallback);
+        SaslServer server = createSaslServer("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
 
-        CallbackHandler clientCallback = new ClientCallbackHandler("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
+        CallbackHandler clientCallback = createClientCallbackHandler("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb".toCharArray());
         SaslClient client = Sasl.createSaslClient(new String[]{PLAIN}, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
         assertFalse(server.isComplete());
@@ -246,4 +249,23 @@ public class PlainTest extends BaseTestCase {
         assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", server.getAuthorizationID());
     }
 
+    private SaslServer createSaslServer(final String expectedUsername, final char[] expectedPassword) throws Exception {
+        return new SaslServerBuilder(PlainSaslServerFactory.class, PLAIN)
+                .setUserName(expectedUsername)
+                .setPassword(expectedPassword)
+                .build();
+  }
+
+    private CallbackHandler createClientCallbackHandler(final String username, final char[] password) throws Exception {
+        final AuthenticationContext context = AuthenticationContext.empty()
+                .with(
+                        MatchRule.ALL,
+                        AuthenticationConfiguration.EMPTY
+                                .useName(username)
+                                .usePassword(password)
+                                .allowSaslMechanisms(PLAIN));
+
+
+        return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
+    }
 }

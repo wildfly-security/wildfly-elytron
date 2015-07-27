@@ -39,7 +39,9 @@ import org.wildfly.security.password.PasswordFactory;
  * A simple CallbackHandler for testing the client side of the calls.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
+ * @deprecated Use real callback handlers where possible
  */
+@Deprecated
 public class ClientCallbackHandler implements CallbackHandler {
 
     private final String username;
