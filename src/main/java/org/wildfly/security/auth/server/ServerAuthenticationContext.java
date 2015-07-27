@@ -605,13 +605,14 @@ public final class ServerAuthenticationContext {
                                 final Object credential = getCredential(allowedType, algorithmName);
                                 if (credential != null) {
                                     credentialCallback.setCredential(credential);
-                                    break;
+                                    handleOne(callbacks, idx + 1);
+                                    return;
                                 }
                             }
                         }
                     }
-                    // otherwise just fall out; some mechanisms will try again with different credentials
-                    handleOne(callbacks, idx + 1);
+                    // otherwise just fail out; some mechanisms will try again with different credentials
+                    throw new FastUnsupportedCallbackException(callback);
                 } else if (callback instanceof CredentialVerifyCallback) {
                     CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
 
