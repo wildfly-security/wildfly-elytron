@@ -24,6 +24,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import javax.crypto.Cipher;
@@ -31,9 +32,19 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.NameCallback;
+import javax.security.auth.callback.PasswordCallback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.sasl.digest._private.DigestUtil;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
@@ -94,6 +105,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     protected byte[] wrapHmacKeyIntegrity;
     protected byte[] unwrapHmacKeyIntegrity;
 
+    protected final MessageDigest messageDigest;
+
     /**
      * @param mechanismName
      * @param protocol
@@ -106,7 +119,13 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         secureRandomGenerator = new SecureRandom();
         hmacMD5 = getHmac();
 
-        try {
+        try { // H()
+            this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanismName));
+        } catch (NoSuchAlgorithmException e) {
+            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
+        }
+
+        try { // MD5()
             this.digest = MessageDigest.getInstance(HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
@@ -582,6 +601,89 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
           return Mac.getInstance(HMAC_algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
+        }
+    }
+
+    protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
+        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm(getMechanismName()))));
+        try {
+            tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+            DigestPassword password = (DigestPassword) credentialCallback.getCredential();
+            return password.getDigest();
+        } catch (UnsupportedCallbackException e) {
+            if (e.getCallback() == credentialCallback) {
+                return null;
+            } else if (e.getCallback() == nameCallback) {
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+            } else {
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+            }
+        }
+    }
+
+    protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
+        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(TwoWayPassword.class, Collections.emptySet()));
+        try {
+            tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
+        } catch (UnsupportedCallbackException e) {
+            if (e.getCallback() == credentialCallback) {
+                return null;
+            } else if (e.getCallback() == nameCallback) {
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+            } else {
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+            }
+        }
+        TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
+        char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
+        try {
+            password.destroy();
+        } catch(DestroyFailedException e) {
+            log.credentialDestroyingFailed(e);
+        }
+        String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
+        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
+        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
+        if (passwordChars != null) Arrays.fill(passwordChars, (char)0); // wipe out the password
+        return digest_urp;
+    }
+
+    protected byte[] getSaltedPasswordFromPasswordCallback(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
+        PasswordCallback passwordCallback = new PasswordCallback("User password", false);
+        try {
+            tryHandleCallbacks(realmCallback, nameCallback, passwordCallback);
+        } catch (UnsupportedCallbackException e) {
+            if (e.getCallback() == passwordCallback) {
+                return null;
+            } else if (e.getCallback() == nameCallback) {
+                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+            } else {
+                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+            }
+        }
+        char[] passwordChars = passwordCallback.getPassword();
+        passwordCallback.clearPassword();
+        if (passwordChars == null) {
+            throw log.saslNoPasswordGiven(getMechanismName());
+        }
+        if ( ! readOnlyRealmUsername && nameCallback.getName() == null) {
+            throw log.saslNotProvidedUserName(getMechanismName());
+        }
+        String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
+        String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
+        byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
+        Arrays.fill(passwordChars, (char)0); // wipe out the password
+        return digest_urp;
+    }
+
+    private String passwordAlgorithm(final String mechanismName) {
+        switch (mechanismName) {
+            case SaslMechanismInformation.Names.DIGEST_SHA:     return DigestPassword.ALGORITHM_DIGEST_SHA;
+            case SaslMechanismInformation.Names.DIGEST_SHA_256: return DigestPassword.ALGORITHM_DIGEST_SHA_256;
+            case SaslMechanismInformation.Names.DIGEST_SHA_384: return DigestPassword.ALGORITHM_DIGEST_SHA_384;
+            case SaslMechanismInformation.Names.DIGEST_SHA_512: return DigestPassword.ALGORITHM_DIGEST_SHA_512;
+            case SaslMechanismInformation.Names.DIGEST_MD5:     return DigestPassword.ALGORITHM_DIGEST_MD5;
+            default: throw Assert.impossibleSwitchCase(mechanismName);
         }
     }
 

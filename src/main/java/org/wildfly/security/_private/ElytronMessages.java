@@ -85,6 +85,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6, value = "Unexpected trailing garbage in X.500 principal")
     IllegalArgumentException unexpectedTrailingGarbageInX500principal();
 
+    @LogMessage(level = WARN)
+    @Message(id = 8, value = "Credential destroying failed")
+    void credentialDestroyingFailed(@Cause Throwable cause);
+
     /* auth package */
 
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
