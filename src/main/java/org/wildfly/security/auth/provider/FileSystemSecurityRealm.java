@@ -27,7 +27,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -477,8 +476,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         otp.getHash();
                         streamWriter.writeStartElement(ELYTRON_1_0, "otp");
                         streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
-                        streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).hexEncode().drainToString());
-                        streamWriter.writeAttribute("seed", new String(otp.getSeed(), StandardCharsets.US_ASCII));
+                        streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
+                        streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed()).base64Encode().drainToString());
                         streamWriter.writeAttribute("sequence", Integer.toString(otp.getSequenceNumber()));
                         streamWriter.writeEndElement();
                     } else if (credential instanceof Password) {
@@ -627,8 +626,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
             }
-            int tag = streamReader.nextTag();
-            if (tag == END_ELEMENT) {
+            if (streamReader.nextTag() == END_ELEMENT) {
                 return Collections.emptyList();
             }
             List<Object> credentials = new ArrayList<>();
@@ -647,7 +645,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 } else {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
-            } while (!streamReader.isEndElement());
+            } while (streamReader.nextTag() != END_ELEMENT);
             return credentials;
         }
 
@@ -669,11 +667,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 }
             }
             final String text = streamReader.getElementText().trim();
-            C cred = function.parseCredential(algorithm, format, text);
-            if (streamReader.nextTag() != END_ELEMENT) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
-            }
-            return cred;
+            return function.parseCredential(algorithm, format, text);
         }
 
         private X509Certificate parseCertificate(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
@@ -749,9 +743,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("hash".equals(localName)) {
-                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).hexDecode().drain();
+                    hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode().drain();
                 } else if ("seed".equals(localName)) {
-                    seed = streamReader.getAttributeValue(i).getBytes(StandardCharsets.US_ASCII);
+                    seed = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode().drain();
                 } else if ("sequence".equals(localName)) {
                     sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
                 } else {

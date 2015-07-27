@@ -31,6 +31,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
@@ -38,11 +39,14 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
+import org.wildfly.security.util.CodePointIterator;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,9 +58,11 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 import static org.wildfly.security.password.interfaces.BCryptPassword.BCRYPT_SALT_SIZE;
 
 /**
@@ -249,6 +255,15 @@ public class FileSystemSecurityRealmTest {
 
         credentials.add(bCryptPassword);
 
+        byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
+        byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
+        PasswordFactory otpFactory = PasswordFactory.getInstance(OneTimePassword.ALGORITHM_OTP_SHA1);
+        OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
+                new OneTimePasswordSpec(hash, seed, 500)
+        );
+
+        credentials.add(otpPassword);
+
         newIdentity.setCredentials(credentials);
 
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
@@ -257,6 +272,13 @@ public class FileSystemSecurityRealmTest {
 
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyCredential("secretPassword".toCharArray()));
+
+        OneTimePassword otp = existingIdentity.getCredential(OneTimePassword.class, OneTimePassword.ALGORITHM_OTP_SHA1);
+        assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
+        assertArrayEquals(hash, otp.getHash());
+        assertArrayEquals(seed, otp.getSeed());
+        assertEquals(500, otp.getSequenceNumber());
+        assertNotNull(otp);
 
         AuthorizationIdentity authorizationIdentity = existingIdentity.getAuthorizationIdentity();
         Attributes existingAttributes = authorizationIdentity.getAttributes();
