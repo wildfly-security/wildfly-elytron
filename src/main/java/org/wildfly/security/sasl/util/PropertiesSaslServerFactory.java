@@ -36,14 +36,14 @@ import javax.security.sasl.SaslServerFactory;
  */
 public class PropertiesSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
-    private final Map<String, Object> properties;
+    private final Map<String, ?> properties;
 
     /**
      * Constructor
      * @param delegate the underlying SaslServerFactory
      * @param properties the properties
      */
-    public PropertiesSaslServerFactory(SaslServerFactory delegate, Map<String, Object> properties) {
+    public PropertiesSaslServerFactory(SaslServerFactory delegate, Map<String, ?> properties) {
         super(delegate);
         this.properties = new HashMap<>(properties);
     }

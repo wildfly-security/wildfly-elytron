@@ -34,14 +34,14 @@ import javax.security.sasl.SaslException;
  */
 public class PropertiesSaslClientFactory extends AbstractDelegatingSaslClientFactory {
 
-    private final Map<String, Object> properties;
+    private final Map<String, ?> properties;
 
     /**
      * Constructor
      * @param delegate the underlying SaslServerFactory
      * @param properties the properties
      */
-    public PropertiesSaslClientFactory(SaslClientFactory delegate, Map<String, Object> properties) {
+    public PropertiesSaslClientFactory(SaslClientFactory delegate, Map<String, ?> properties) {
         super(delegate);
         this.properties = new HashMap<>(properties);
     }
