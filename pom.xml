@@ -20,6 +20,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <parent>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-parent</artifactId>
+        <version>16</version>
+    </parent>
+
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.wildfly.security</groupId>
@@ -29,11 +36,22 @@
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
 
-    <parent>
-        <groupId>org.jboss</groupId>
-        <artifactId>jboss-parent</artifactId>
-        <version>16</version>
-    </parent>
+    <issueManagement>
+        <system>Jira</system>
+        <url>https://issues.jboss.org/browse/ELY</url>
+    </issueManagement>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>svm:git@github.com:wildfly-security/wildfly-elytron.git</connection>
+        <url>https://github.com/wildfly-security/wildfly-elytron</url>
+    </scm>
 
     <properties>
         <version.org.apache.directory.server>2.0.0-M17</version.org.apache.directory.server>
