@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.util;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.security.Security;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -62,19 +63,25 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
         this(Security::getProviders);
     }
 
+    @Override
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         SaslClient saslClient;
         for (Provider currentProvider : providerSupplier.get()) {
             String[] filtered = SaslFactories.filterMechanismsByProvider(mechanisms, 0, 0, currentProvider, mechFilter);
-            if (filtered.length > 0) for (Provider.Service service : currentProvider.getServices()) {
-                if (serviceType.equals(service.getType())) {
-                    try {
-                        saslClient = ((SaslClientFactory) service.newInstance(null)).createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
-                        if (saslClient != null) {
-                            return saslClient;
+            if (filtered.length > 0) {
+                Set<Service> services = currentProvider.getServices();
+                if (services != null) {
+                    for (Service service : currentProvider.getServices()) {
+                        if (serviceType.equals(service.getType())) {
+                            try {
+                                saslClient = ((SaslClientFactory) service.newInstance(null)).createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
+                                if (saslClient != null) {
+                                    return saslClient;
+                                }
+                            } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                            }
                         }
-                    } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
                     }
                 }
             }
@@ -82,16 +89,21 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
         return null;
     }
 
+    @Override
     public String[] getMechanismNames(final Map<String, ?> props) {
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final Set<String> names = new LinkedHashSet<>();
         for (Provider currentProvider : providerSupplier.get()) {
-            for (Provider.Service service : currentProvider.getServices()) {
-                if (serviceType.equals(service.getType())) {
-                    try {
-                        final String[] mechanismNames = ((SaslClientFactory) service.newInstance(null)).getMechanismNames(props);
-                        Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
-                    } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+            Set<Service> services = currentProvider.getServices();
+            if (services != null) {
+                for (Service service : services) {
+                    if (serviceType.equals(service.getType())) {
+                        try {
+                            final String[] mechanismNames = ((SaslClientFactory) service.newInstance(null)).getMechanismNames(props);
+                            Collections
+                                    .addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
+                        } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                        }
                     }
                 }
             }
