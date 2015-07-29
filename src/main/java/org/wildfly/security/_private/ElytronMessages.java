@@ -175,7 +175,7 @@ public interface ElytronMessages extends BasicLogger {
     RealmUnavailableException fileSystemRealmUnsupportedKeyFormat(String format, Path path, int lineNumber, String name);
 
     @Message(id = 1027, value = "Filesystem-backed realm encountered invalid key algorithm for format \"%s\" in path \"%s\" line %d for identity name \"%s\"")
-    RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name);
+    RealmUnavailableException fileSystemRealmUnsupportedKeyAlgorithm(String format, Path path, int lineNumber, String name, @Cause Exception e);
 
     @Message(id = 1028, value = "Invalid port number \"%d\"")
     IllegalArgumentException invalidPortNumber(int port);
@@ -336,14 +336,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
-    @Message(id = 5149, value = "Ldap-backed realm failed to obtain identity from server")
+    @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity from server")
     RuntimeException ldapRealmFailedObtainIdentityFromServer(@Cause Throwable cause);
 
-    @Message(id = 8029, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
+    @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
     RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
 
-    @Message(id = 8030, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
+    @Message(id = 1080, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
     RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn);
+
+    @Message(id = 1081, value = "Filesystem-backed realm encountered invalid OTP definition in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmInvalidOtpDefinition(Path path, int lineNumber, String name, @Cause Throwable cause);
+
+    @Message(id = 1082, value = "Filesystem-backed realm encountered invalid OTP algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
+    RealmUnavailableException fileSystemRealmInvalidOtpAlgorithm(String algorithm, Path path, int lineNumber, String name, @Cause Throwable cause);
 
     /* keystore package */
 
