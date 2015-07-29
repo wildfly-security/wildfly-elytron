@@ -86,7 +86,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalArgumentException unexpectedTrailingGarbageInX500principal();
 
     @LogMessage(level = WARN)
-    @Message(id = 8, value = "Credential destroying failed")
+    @Message(id = 7, value = "Credential destroying failed")
     void credentialDestroyingFailed(@Cause Throwable cause);
 
     /* auth package */

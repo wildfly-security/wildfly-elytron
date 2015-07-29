@@ -23,6 +23,7 @@ import java.io.IOException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
+import javax.security.sasl.RealmChoiceCallback;
 
 /**
  * @author <a href="mailto:kkhan@redhat.com">Kabir Khan</a>
@@ -40,7 +41,21 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
         Callback callback = callbacks[index];
         if (callback instanceof RealmCallback) {
             RealmCallback realmCallback = (RealmCallback) callback;
-            realmCallback.setText(realm);
+            realmCallback.setText(realm != null ? realm : realmCallback.getDefaultText());
+            return;
+        } else if (callback instanceof RealmChoiceCallback) {
+            RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callback;
+            if (realm == null) {
+                realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
+            } else {
+                String[] choices = realmChoiceCallback.getChoices();
+                for (int i = 0; i < choices.length; i++) {
+                    if (realm.equals(choices[i])) {
+                        realmChoiceCallback.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
             return;
         }
         super.handleCallback(callbacks, index);
