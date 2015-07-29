@@ -21,6 +21,7 @@ package org.wildfly.security.sasl.util;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.security.Security;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -62,18 +63,25 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
         this(Security::getProviders);
     }
 
+    @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         SaslServer saslServer;
         for (Provider currentProvider : providerSupplier.get()) {
-            if (mechFilter.test(mechanism, currentProvider)) for (Provider.Service service : currentProvider.getServices()) {
-                if (serviceType.equals(service.getType())) {
-                    try {
-                        saslServer = ((SaslServerFactory) service.newInstance(null)).createSaslServer(mechanism, protocol, serverName, props, cbh);
-                        if (saslServer != null) {
-                            return saslServer;
+            if (mechFilter.test(mechanism, currentProvider)) {
+                Set<Service> services = currentProvider.getServices();
+                if (services != null) {
+                    for (Provider.Service service : services) {
+                        if (serviceType.equals(service.getType())) {
+                            try {
+                                saslServer = ((SaslServerFactory) service.newInstance(null)).createSaslServer(mechanism,
+                                        protocol, serverName, props, cbh);
+                                if (saslServer != null) {
+                                    return saslServer;
+                                }
+                            } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                            }
                         }
-                    } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
                     }
                 }
             }
@@ -81,16 +89,20 @@ public final class SecurityProviderSaslServerFactory implements SaslServerFactor
         return null;
     }
 
+    @Override
     public String[] getMechanismNames(final Map<String, ?> props) {
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final Set<String> names = new LinkedHashSet<>();
         for (Provider currentProvider : providerSupplier.get()) {
-            for (Provider.Service service : currentProvider.getServices()) {
-                if (serviceType.equals(service.getType())) {
-                    try {
-                        final String[] mechanismNames = ((SaslServerFactory) service.newInstance(null)).getMechanismNames(props);
-                        Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
-                    } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+            Set<Service> services = currentProvider.getServices();
+            if (services != null) {
+                for (Service service : services) {
+                    if (serviceType.equals(service.getType())) {
+                        try {
+                            final String[] mechanismNames = ((SaslServerFactory) service.newInstance(null)).getMechanismNames(props);
+                            Collections.addAll(names, SaslFactories.filterMechanismsByProvider(mechanismNames, 0, 0, currentProvider, mechFilter));
+                        } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
+                        }
                     }
                 }
             }
