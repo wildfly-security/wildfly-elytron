@@ -53,6 +53,9 @@ public class VaultManagerTest {
         VAULTS.put("THREE", VAULTS_DIRECTORY + "/vault-3.jceks");
     }
 
+    /**
+     * Clean all vaults.
+     */
     public static void cleanVaults() {
         File dir = new File(VAULTS_DIRECTORY);
         dir.mkdirs();
@@ -63,6 +66,11 @@ public class VaultManagerTest {
         }
     }
 
+    /**
+     * Setup all need vaults by tests.
+     * @throws IOException when problem occurs
+     * @throws GeneralSecurityException when problem occurs
+     */
     @BeforeClass
     public static void setupVaults() throws IOException, GeneralSecurityException {
         cleanVaults();
@@ -83,16 +91,26 @@ public class VaultManagerTest {
 
     }
 
+    /**
+     * Register security provider containing {@link org.wildfly.security.storage.PasswordStorageSpi} implementation.
+     */
     @BeforeClass
     public static void register() {
         Security.addProvider(provider);
     }
 
+    /**
+     * Remove security provider.
+     */
     @AfterClass
     public static void remove() {
         Security.removeProvider(provider.getName());
     }
 
+    /**
+     * Basic vault manager test.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void basicVaultManagerStoreTest() throws Exception {
 
@@ -107,7 +125,7 @@ public class VaultManagerTest {
         String testVaultUriQuery2 = testVaultUriBase + "#db1-password2";
         String testVaultUriQuery3 = testVaultUriBase + "#db1-password3";
 
-        vm.registerNewVaultInstance(new URI(testVaultUriDefinition));
+        vm.registerNewVaultInstance(new URI(testVaultUriDefinition), null, null, null);
         vm.store(testVaultUriQuery1, password1);
         vm.store(testVaultUriQuery2, password2);
         vm.store(testVaultUriQuery3, password3);
@@ -117,6 +135,10 @@ public class VaultManagerTest {
         Assert.assertArrayEquals(password3, vm.retrieve(testVaultUriQuery3));
     }
 
+    /**
+     * Basic vault test on already existing vault.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void basicTestOnAlreadyCreatedVault() throws Exception {
         VaultManager vm = VaultManagerFactory.INSTANCE.getVaultManager();
@@ -125,7 +147,7 @@ public class VaultManagerTest {
         String testVaultUriQuery1 = testVaultUriBase + "#alias1";
         String testVaultUriQuery2 = testVaultUriBase + "#alias2";
 
-        vm.registerNewVaultInstance(new URI(testVaultUriDefinition));
+        vm.registerNewVaultInstance(new URI(testVaultUriDefinition), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("secret-password-1".toCharArray(), vm.retrieve(testVaultUriQuery1));
         Assert.assertArrayEquals("secret-password-2".toCharArray(), vm.retrieve(testVaultUriQuery2));
@@ -155,6 +177,10 @@ public class VaultManagerTest {
         }
     }
 
+    /**
+     * Test for external password callback.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testExternalPasswordClassCallback() throws Exception {
         VaultManager vm = VaultManagerFactory.INSTANCE.getVaultManager();
@@ -175,7 +201,7 @@ public class VaultManagerTest {
         String testVaultUriQuery5 = testVaultUriBase + "#db-pass-5";
         String testVaultUriQueryWrongAttr = testVaultUriBase + "#db-pass-non-existent-attr";
 
-        vm.registerNewVaultInstance(new URI(testVaultUriDefinition));
+        vm.registerNewVaultInstance(new URI(testVaultUriDefinition), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
         Assert.assertArrayEquals("2-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery2));
@@ -191,6 +217,10 @@ public class VaultManagerTest {
         }
     }
 
+    /**
+     * External password class bridge test.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testExternalPasswordClassBridgeMethod() throws Exception {
         VaultManager vm = VaultManagerFactory.INSTANCE.getVaultManager();
@@ -200,11 +230,15 @@ public class VaultManagerTest {
 
         String testVaultUriQuery1 = VaultURIParser.VAULT_SCHEME + ":" + testVaultUriBase + "#db-pass-1";
 
-        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null));
+        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
     }
 
+    /**
+     * External password class bridge test with parameters.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testExternalPasswordClassBridgeMethodWithParams() throws Exception {
         VaultManager vm = VaultManagerFactory.INSTANCE.getVaultManager();
@@ -214,11 +248,15 @@ public class VaultManagerTest {
 
         String testVaultUriQuery1 = VaultURIParser.VAULT_SCHEME + ":" + testVaultUriBase + "#db-pass-1";
 
-        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null));
+        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
     }
 
+    /**
+     * External command callback test.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testExternalCommandCallback() throws Exception {
 
@@ -236,16 +274,24 @@ public class VaultManagerTest {
 
         String testVaultUriQuery1 = VaultURIParser.VAULT_SCHEME + ":" + testVaultUriBase + "#db-pass-1";
 
-        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null));
+        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
     }
 
+    /**
+     * Masked password callback test.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testMaskedPasswordCallback() throws Exception {
         doMaskedPasswordCallbackTest("");
     }
 
+    /**
+     * Masked password test with prefix specified.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testMaskedPasswordCallbackWithPrefix() throws Exception {
         doMaskedPasswordCallbackTest(PasswordLoaderBridge.PASS_MASK_PREFIX);
@@ -267,7 +313,7 @@ public class VaultManagerTest {
 
         String testVaultUriQuery1 = VaultURIParser.VAULT_SCHEME + ":" + testVaultUriBase + "#db-pass-1";
 
-        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null));
+        vm.registerNewVaultInstance(new URI(VaultURIParser.VAULT_SCHEME, testVaultUriDefinition, null), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
     }
@@ -284,6 +330,10 @@ public class VaultManagerTest {
         return command.toString();
     }
 
+    /**
+     * Test for parametrized password callback.
+     * @throws Exception when problem occurs
+     */
     @Test
     public void testParametrizedCallbackHandler() throws Exception {
         VaultManager vm = VaultManagerFactory.INSTANCE.getVaultManager();
@@ -304,7 +354,7 @@ public class VaultManagerTest {
         String testVaultUriQuery5 = testVaultUriBase + "#db-pass-5";
         String testVaultUriQueryWrongAttr = testVaultUriBase + "#db-pass-non-existent-attr";
 
-        vm.registerNewVaultInstance(new URI(testVaultUriDefinition));
+        vm.registerNewVaultInstance(new URI(testVaultUriDefinition), null, null, null);
         // expected entries there
         Assert.assertArrayEquals("1-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery1));
         Assert.assertArrayEquals("2-secret-info".toCharArray(), vm.retrieve(testVaultUriQuery2));

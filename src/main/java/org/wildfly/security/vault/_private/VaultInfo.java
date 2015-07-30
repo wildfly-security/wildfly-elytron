@@ -32,4 +32,5 @@ class VaultInfo {
     URI vaultUri;
     String providerName;
     String storageType;
+    String base;
 }

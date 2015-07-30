@@ -20,6 +20,7 @@ package org.wildfly.security.storage;
 import org.wildfly.security.password.Password;
 
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -101,5 +102,18 @@ public abstract class PasswordStorageSpi {
      */
     public boolean isInitialized() {
         return initialized;
+    }
+
+    /**
+     * Returns {@code Set<String>} stored in this storage.
+     *
+     * It is not mandatory to override this method (throws {@link UnsupportedOperationException} by default).
+     *
+     * @return {@code Set<String>} of all keys stored in this storage
+     * @throws UnsupportedOperationException if operation to retrieve all stored keys is not supported
+     * @throws StorageException if there is any problem with internal storage
+     */
+    public Set<String> getKeys() throws UnsupportedOperationException, StorageException {
+        throw new UnsupportedOperationException();
     }
 }

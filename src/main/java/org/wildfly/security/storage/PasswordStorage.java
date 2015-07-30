@@ -24,6 +24,7 @@ import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This class represents Password Storage functionality.
@@ -37,6 +38,27 @@ public class PasswordStorage {
      * JCA service type for Password Storage.
      */
     public static final String PASSWORD_STORAGE_TYPE = "PasswordStorage";
+    /**
+     * Value of this option denotes file which is used as vault storage.
+     */
+    public static final String NAME = "elytron.name";
+    /**
+     * Value of this option denotes file which is used as vault storage.
+     */
+    public static final String STORAGE_FILE = "elytron.storage.file";
+    /**
+     * Value of this option is storage password. Could be omitted but {@code CALLBACK} has to specified.
+     */
+    public static final String STORAGE_PASSWORD = "storage.password";
+
+    /**
+     * Option name to denote base of all files used by {@link PasswordStorageSpi} implementor.
+     * It can be used to pass this value using {@link #initialize(Map)} method to the engine class.
+     * Useful for using relative name(s) of storage file(s) in the engine. It is completely optional to implement
+     * but useful when your engine is used inside something bigger (e.g. WildFly Server) to have location for
+     * password storage defined.
+     */
+    public static final String FILE_BASE = "elytron.file.base";
 
     private final Provider provider;
     private final String type;
@@ -161,6 +183,17 @@ public class PasswordStorage {
      */
     public<T extends Password> void store(String key, Class<T> passwordClass, T password) throws StorageException, UnsupportedPasswordClassException {
         spi.store(key, passwordClass, password);
+    }
+
+    /**
+     * Returns {@code Set<String>} stored in this storage.
+     *
+     * @return {@code Set<String>} of all keys stored in this storage
+     * @throws UnsupportedOperationException if operation to retrieve all stored keys is not supported
+     * @throws StorageException if there is any problem with internal storage
+     */
+    public Set<String> getKeys() throws UnsupportedOperationException, StorageException {
+        return spi.getKeys();
     }
 
     /**

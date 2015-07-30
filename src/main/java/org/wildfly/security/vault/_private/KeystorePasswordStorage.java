@@ -21,6 +21,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.storage.PasswordStorage;
 import org.wildfly.security.storage.PasswordStorageSpi;
 import org.wildfly.security.storage.StorageException;
 import org.wildfly.security.storage.UnsupportedPasswordClassException;
@@ -69,15 +70,15 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
     /**
      * Value of this option denotes file which is used as vault storage.
      */
-    public static final String NAME = "name";
+    public static final String NAME = PasswordStorage.NAME;
     /**
      * Value of this option denotes file which is used as vault storage.
      */
-    public static final String STORAGE_FILE = "storage.file";
+    public static final String STORAGE_FILE = PasswordStorage.STORAGE_FILE;
     /**
      * Value of this option is storage password. Could be omitted but {@code CALLBACK} has to specified.
      */
-    public static final String STORAGE_PASSWORD = "storage.password";
+    public static final String STORAGE_PASSWORD = PasswordStorage.STORAGE_PASSWORD;
     /**
      *  Format of this option is either {@code [class]} or {@code [class]@[module]}
      *  Default callback handler if {@link VaultCallbackHandler}.
@@ -187,7 +188,7 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
     static {
         Collections.addAll(supportedConfigurationAttributes,
                 // KeystorePasswordStorage options
-                NAME, STORAGE_FILE, STORAGE_PASSWORD,
+                NAME, STORAGE_FILE, STORAGE_PASSWORD, PasswordStorage.FILE_BASE,
                 CREATE_STORAGE, KEY_ALIAS, KEY_PASSWORD, KEY_PASSWORD_CALLBACK, KEY_PASSWORD_CALLBACK_HANDLER, KEY_PASSWORD_CALLBACK_PASSWORD_CLASS,
                 KEY_PASSWORD_MASKED, KEY_PASSWORD_SALT, KEY_PASSWORD_ITERATION, KEY_PASSWORD_PBE_ALGORITHM, KEY_PASSWORD_PBE_INITIAL_KEY,
                 KEY_SIZE, CRYPTO_ALGORITHM, RELOADABLE);
@@ -197,6 +198,7 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
     private String vaultName;
     private boolean reloadable = false;
     private File storageFile = null;
+    private String fileBase = "";
     private char[] storagePassword = null;
     private String adminKeyAlias = null;
     private SecretKey adminKey = null;
@@ -216,10 +218,16 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
 
     @Override
     public void initialize(Map<String, String> attributes) throws StorageException {
+
+        fileBase = attributes.get(PasswordStorage.FILE_BASE);
+
+        // strip potentially unsupported attributes
+        filterVaultAttributes(attributes, CALLBACK_HANDLER, CALLBACK);
+
         checkValidConfigurationAttributes(attributes.keySet());
 
-        vaultName = attributes.getOrDefault(NAME, "defaultStorageName");
-        storageFile = new File((String) attributes.get(STORAGE_FILE));
+        vaultName = attributes.getOrDefault(NAME, "vault");
+        storageFile = resolveFile(attributes.get(STORAGE_FILE), vaultName);
         storagePassword = convertPassword(attributes.get(STORAGE_PASSWORD));
         adminKeyAlias = (String) attributes.get(KEY_ALIAS);
         if (adminKeyAlias == null) {
@@ -313,6 +321,11 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
         if (storage.get(key) != null) {
             storage.remove(key);
         }
+    }
+
+    @Override
+    public Set<String> getKeys() throws UnsupportedOperationException, StorageException {
+        return Collections.unmodifiableSet(storage.keySet());
     }
 
     private <T extends Password> String resolvePasswordClassName(Class<T> passwordClass) throws UnsupportedPasswordClassException {
@@ -500,6 +513,24 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
         } catch (VaultException | IllegalAccessException | InstantiationException | IOException | UnsupportedCallbackException | NoSuchMethodException e) {
             throw new StorageException(e);
         }
+    }
+
+    private File resolveFile(String fileName, String defaultFileName) {
+        String storage = (fileBase != null && !fileBase.isEmpty() ? fileBase + "/" : "") + (fileName != null ? fileName : defaultFileName);
+        return new File(storage);
+    }
+
+    private static void filterVaultAttributes(Map<String, String> options, String... prefix) {
+        HashSet<String> toRemove = new HashSet<>();
+        for (String key: options.keySet()) {
+            for (String p: prefix) {
+                if (key.startsWith(p)) {
+                    toRemove.add(key);
+                    break;
+                }
+            }
+        }
+        options.keySet().removeAll(toRemove);
     }
 
 }
