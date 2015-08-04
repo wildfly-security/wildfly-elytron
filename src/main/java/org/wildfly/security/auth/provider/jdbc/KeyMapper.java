@@ -31,7 +31,7 @@ public interface KeyMapper extends ColumnMapper {
     /**
      * Returns the key type supported by this mapper.
      *
-     * @return
+     * @return the key type supported by this mapper.
      */
     Class<?> getKeyType();
 

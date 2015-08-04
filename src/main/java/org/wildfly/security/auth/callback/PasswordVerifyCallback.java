@@ -58,7 +58,7 @@ public class PasswordVerifyCallback extends PasswordCallback implements Extended
     /**
      * Get if this password has been verified.
      *
-     * @return {@link code true} if the password has been verified, {@code false} otherwise.
+     * @return {@code true} if the password has been verified, {@code false} otherwise.
      */
     public boolean isVerified() {
         return verified;

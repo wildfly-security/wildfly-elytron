@@ -37,7 +37,7 @@ public final class TimeoutUpdateCallback implements ExtendedCallback, Serializab
     /**
      * Construct a new instance.
      *
-     * @param the new timeout
+     * @param timeout the new timeout
      */
     public TimeoutUpdateCallback(final long timeout) {
         this.timeout = timeout;
@@ -52,6 +52,7 @@ public final class TimeoutUpdateCallback implements ExtendedCallback, Serializab
         return timeout;
     }
 
+    @Override
     public boolean isOptional() {
         return false;
     }

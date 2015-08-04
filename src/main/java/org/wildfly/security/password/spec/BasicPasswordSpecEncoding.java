@@ -48,7 +48,7 @@ public final class BasicPasswordSpecEncoding {
     /**
      * Encode the given {@link PasswordSpec} to a byte array.
      *
-     * @param password the password to encode
+     * @param passwordSpec the password spec to encode
      * @return a byte array representing the encoded password or null if no encoder was capable to encode the given password
      */
     public static byte[] encode(PasswordSpec passwordSpec) throws NoSuchAlgorithmException, InvalidKeySpecException {
