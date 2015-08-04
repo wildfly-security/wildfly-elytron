@@ -24,8 +24,10 @@ package org.wildfly.security.sasl.test;
 import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactory;
 
 import java.security.spec.KeySpec;
+import java.util.List;
 import java.util.Map;
 
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
@@ -60,6 +62,9 @@ public class SaslServerBuilder {
     private Tuple<String, byte[]> bindingTypeAndData;
     private String protocol;
     private String serverName;
+
+    //Misc
+    private List<CallbackHandler> extraCallbackHandlers;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;

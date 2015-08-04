@@ -565,7 +565,7 @@ public abstract class AuthenticationConfiguration {
     }
 
     public AuthenticationConfiguration useRealm(String realm) {
-        return realm == null ? this : new SetRealmAuthenticationConfiguration(this, realm);
+        return /*realm == null ? this : */new SetRealmAuthenticationConfiguration(this, realm);
     }
 
     // client methods
