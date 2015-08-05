@@ -37,11 +37,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -65,7 +62,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
-import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
@@ -74,7 +70,6 @@ import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.TestKDC;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
-import org.wildfly.security.sasl.util.AbstractDelegatingSaslClientFactory;
 import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
@@ -531,7 +526,27 @@ public class Gs2Test extends BaseTestCase {
     private SaslClient getSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName,
                                      final Map<String, Object> props, final String bindingType,
                                      final byte[] bindingData, final boolean passCredential) throws Exception {
-        final CallbackHandler cbh = createClientCallbackHandler(mechanisms, authorizationId);
+        GSSCredential credential = null;
+        if (passCredential) {
+            try {
+                credential = Subject.doAs(clientSubject, new PrivilegedExceptionAction<GSSCredential>() {
+                    public GSSCredential run() throws SaslException {
+                        try {
+                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, OID_KRB5, GSSCredential.INITIATE_ONLY);
+                        } catch (GSSException e) {
+                            throw new SaslException(e.getMessage());
+                        }
+                    }
+                });
+            } catch (PrivilegedActionException e) {
+                if (e.getCause() instanceof SaslException) {
+                    throw (SaslException) e.getCause();
+                } else {
+                    throw new RuntimeException(e.getCause());
+                }
+            }
+        }
+        final CallbackHandler cbh = createClientCallbackHandler(mechanisms, authorizationId, credential);
         SaslClientFactory clientFactory = obtainSaslClientFactory(Gs2SaslClientFactory.class);
         assertNotNull(clientFactory);
         if (bindingType != null || bindingData != null) {
@@ -548,10 +563,6 @@ public class Gs2Test extends BaseTestCase {
         }
         if (props != null) {
             clientFactory = new PropertiesSaslClientFactory(clientFactory, props);
-            assertNotNull(clientFactory);
-        }
-        if (passCredential) {
-            clientFactory = new Gs2SaslPassCredentialClientFactory(clientFactory, clientSubject);
             assertNotNull(clientFactory);
         }
 
@@ -571,12 +582,13 @@ public class Gs2Test extends BaseTestCase {
         }
     }
 
-    private CallbackHandler createClientCallbackHandler(final String[] mechanisms, final String authorizationId) throws Exception {
+    private CallbackHandler createClientCallbackHandler(final String[] mechanisms, final String authorizationId, final GSSCredential credential) throws Exception {
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
                         AuthenticationConfiguration.EMPTY
                                 .useAuthorizationName(authorizationId)
+                                .useGSSCredential(credential)
                                 .allowSaslMechanisms(mechanisms));
 
         return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
@@ -635,51 +647,4 @@ public class Gs2Test extends BaseTestCase {
             }
         }
     };
-
-    private static class Gs2SaslPassCredentialClientFactory extends AbstractDelegatingSaslClientFactory {
-        private Subject clientSubject;
-
-        public Gs2SaslPassCredentialClientFactory(SaslClientFactory delegate, Subject clientSubject) {
-            super(delegate);
-            this.clientSubject = clientSubject;
-        }
-
-        @Override
-        public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-            return delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbacks -> {
-                ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
-                final Iterator<Callback> iterator = list.iterator();
-                while (iterator.hasNext()) {
-                    Callback callback = iterator.next();
-                    if (callback instanceof CredentialCallback) {
-                        final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                        try {
-                            GSSCredential credential = Subject.doAs(clientSubject, new PrivilegedExceptionAction<GSSCredential>(){
-                                public GSSCredential run() throws SaslException {
-                                    try {
-                                        return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, OID_KRB5,
-                                                GSSCredential.INITIATE_ONLY);
-                                    } catch (GSSException e) {
-                                        throw new SaslException(e.getMessage());
-                                    }
-                                }
-                            });
-                            credentialCallback.setCredential(credential);
-                        } catch (PrivilegedActionException e) {
-                            if (e.getCause() instanceof SaslException) {
-                                throw (SaslException) e.getCause();
-                            } else {
-                                throw new RuntimeException(e.getCause());
-                            }
-                        }
-                        iterator.remove();
-                    }
-                }
-
-                if (!list.isEmpty()) {
-                    cbh.handle(list.toArray(new Callback[list.size()]));
-                }
-            });
-        }
-    }
 }
