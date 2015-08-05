@@ -18,13 +18,16 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import javax.security.sasl.SaslException;
 
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 
@@ -52,13 +55,18 @@ public final class ChannelBindingSaslServerFactory extends AbstractDelegatingSas
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         return delegate.createSaslServer(mechanism, protocol, serverName, props, callbacks -> {
-            for (Callback callback : callbacks) {
+            ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
+            final Iterator<Callback> iterator = list.iterator();
+            while (iterator.hasNext()) {
+                Callback callback = iterator.next();
                 if (callback instanceof ChannelBindingCallback) {
                     ((ChannelBindingCallback) callback).setBindingType(bindingType);
                     ((ChannelBindingCallback) callback).setBindingData(bindingData);
                 }
             }
-            cbh.handle(callbacks);
+            if (!list.isEmpty()) {
+                cbh.handle(list.toArray(new Callback[list.size()]));
+            }
         });
     }
 }
