@@ -52,10 +52,11 @@
 
     <xsd:complexType name="credential-type">
         <xsd:simpleContent>
-            <xsd:extension base="xsd:string"/>
+            <xsd:extension base="xsd:string">
+                <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
+                <xsd:attribute name="format" type="xsd:string" use="optional"/>
+            </xsd:extension>
         </xsd:simpleContent>
-        <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
-        <xsd:attribute name="format" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="attribute-type">
