@@ -539,6 +539,14 @@ public final class ServerAuthenticationContext {
                 if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
                     final String authorizationID = authorizeCallback.getAuthorizationID();
+
+                    if (!stateRef.get().isStarted()) {
+                        //Things like Gs2 do not use the NameCallback, and we do not want to require use of NameCallback
+                        //since non-Elytron mechanisms may be used.
+                        //Set the correct state by setting the authentication name to the one in the AuthorizeCallback,
+                        //so that the subsequent authorize() call can work
+                        setAuthenticationName(authorizeCallback.getAuthenticationID());
+                    }
                     authorizeCallback.setAuthorized(authorize(authorizationID));
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof NameCallback) {
