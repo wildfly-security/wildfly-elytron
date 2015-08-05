@@ -347,9 +347,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         // create empty identity
                         streamWriter.writeStartDocument();
                         streamWriter.writeCharacters("\n");
-                        streamWriter.writeStartElement("", "identity", ELYTRON_1_0);
+                        streamWriter.writeStartElement("identity");
                         streamWriter.writeDefaultNamespace(ELYTRON_1_0);
-                        streamWriter.setDefaultNamespace(ELYTRON_1_0);
                         streamWriter.writeEndElement();
                         streamWriter.writeEndDocument();
                     } catch (XMLStreamException e) {
@@ -461,27 +460,26 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         private void writeIdentity(final XMLStreamWriter streamWriter, final LoadedIdentity newIdentity) throws XMLStreamException, InvalidKeySpecException, NoSuchAlgorithmException, CertificateEncodingException {
             streamWriter.writeStartDocument();
             streamWriter.writeCharacters("\n");
-            streamWriter.writeStartElement("", "identity", ELYTRON_1_0);
+            streamWriter.writeStartElement("identity");
             streamWriter.writeDefaultNamespace(ELYTRON_1_0);
-            streamWriter.setDefaultNamespace(ELYTRON_1_0);
             final Iterator<Object> credIter = newIdentity.getCredentials().iterator();
             if (credIter.hasNext()) {
                 streamWriter.writeCharacters("\n    ");
-                streamWriter.writeStartElement(ELYTRON_1_0, "credentials");
+                streamWriter.writeStartElement("credentials");
                 do {
                     streamWriter.writeCharacters("\n        ");
                     final Object credential = credIter.next();
                     if (credential instanceof OneTimePassword) {
                         final OneTimePassword otp = (OneTimePassword) credential;
                         otp.getHash();
-                        streamWriter.writeStartElement(ELYTRON_1_0, "otp");
+                        streamWriter.writeStartElement("otp");
                         streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
                         streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
                         streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed()).base64Encode().drainToString());
                         streamWriter.writeAttribute("sequence", Integer.toString(otp.getSequenceNumber()));
                         streamWriter.writeEndElement();
                     } else if (credential instanceof Password) {
-                        streamWriter.writeStartElement(ELYTRON_1_0, "password");
+                        streamWriter.writeStartElement("password");
                         Password password = (Password) credential;
                         String format;
                         String algorithm = password.getAlgorithm();
@@ -506,7 +504,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         final String format = publicKey.getFormat();
                         final byte[] encoded = publicKey.getEncoded();
                         final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
-                        streamWriter.writeStartElement(ELYTRON_1_0, "public-key");
+                        streamWriter.writeStartElement("public-key");
                         streamWriter.writeAttribute("algorithm", algorithm);
                         streamWriter.writeAttribute("format", format);
                         while (iterator.hasNext()) {
@@ -519,7 +517,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         final X509Certificate certificate = (X509Certificate) credential;
                         final byte[] encoded = certificate.getEncoded();
                         final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
-                        streamWriter.writeStartElement(ELYTRON_1_0, "certificate");
+                        streamWriter.writeStartElement("certificate");
                         streamWriter.writeAttribute("algorithm", "X.509");
                         while (iterator.hasNext()) {
                             streamWriter.writeCharacters("\n            ");
@@ -535,12 +533,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             final Iterator<Attributes.Entry> entryIter = newIdentity.getAttributes().entries().iterator();
             if (entryIter.hasNext()) {
                 streamWriter.writeCharacters("\n    ");
-                streamWriter.writeStartElement(ELYTRON_1_0, "attributes");
+                streamWriter.writeStartElement("attributes");
                 do {
                     final Attributes.Entry entry = entryIter.next();
                     for (String value : entry) {
                         streamWriter.writeCharacters("\n        ");
-                        streamWriter.writeStartElement(ELYTRON_1_0, "attribute");
+                        streamWriter.writeStartElement("attribute");
                         streamWriter.writeAttribute("name", entry.getKey());
                         streamWriter.writeAttribute("value", value);
                         streamWriter.writeEndElement();
@@ -654,7 +652,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             String algorithm = null;
             String format = null;
             for (int i = 0; i < attributeCount; i ++) {
-                if (streamReader.getAttributeNamespace(i) != null) {
+                String namespace = streamReader.getAttributeNamespace(i);
+                if (namespace != null && !namespace.equals("")) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
@@ -736,7 +735,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
             final int attributeCount = streamReader.getAttributeCount();
             for (int i = 0; i < attributeCount; i ++) {
-                if (streamReader.getAttributeNamespace(i) != null) {
+                String namespace = streamReader.getAttributeNamespace(i);
+                if (namespace != null && !namespace.equals("")) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
@@ -795,7 +795,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             String value = null;
             final int attributeCount = streamReader.getAttributeCount();
             for (int i = 0; i < attributeCount; i++) {
-                if (streamReader.getAttributeNamespace(i) != null) {
+                String namespace = streamReader.getAttributeNamespace(i);
+                if (namespace != null && !namespace.equals("")) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
                 }
                 if ("name".equals(streamReader.getAttributeLocalName(i))) {
