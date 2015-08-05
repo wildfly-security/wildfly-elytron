@@ -129,7 +129,7 @@ public class SimpleDirContextFactoryBuilder {
      * <p>Set additional connection properties.
      *
      * @param connectionProperties the additional connection properties.
-     * @return
+     * @return this builder
      */
     public SimpleDirContextFactoryBuilder setConnectionProperties(Properties connectionProperties) {
         assertNotBuilt();

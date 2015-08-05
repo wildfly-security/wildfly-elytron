@@ -21,6 +21,7 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A one-time password, used by the OTP SASL mechanism.

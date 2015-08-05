@@ -277,7 +277,7 @@ public final class ModularCrypt {
     /**
      * Decode the given string and creates a {@link Password} instance.
      *
-     * @param encoded the string representing the encoded format of the password
+     * @param cryptString the string representing the encoded format of the password
      * @return a {@link Password} instance created from the given string
      * @throws InvalidKeySpecException if the given password is not supported or could be decoded
      */
@@ -289,7 +289,7 @@ public final class ModularCrypt {
     /**
      * Decode the given char array and creates a {@link Password} instance.
      *
-     * @param encoded the char array representing the encoded format of the password
+     * @param cryptString the char array representing the encoded format of the password
      * @return a {@link Password} instance created from the given string
      * @throws InvalidKeySpecException if the given password is not supported or could be decoded
      */
