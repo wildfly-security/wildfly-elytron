@@ -18,16 +18,30 @@
 
 package org.wildfly.security.sasl.gs2;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.wildfly.security.sasl.gs2.Gs2.GS2_KRB5;
+import static org.wildfly.security.sasl.gs2.Gs2.GS2_KRB5_PLUS;
+import static org.wildfly.security.sasl.gs2.Gs2.OID_KRB5;
+import static org.wildfly.security.sasl.gs2.Gs2.OID_SPNEGO;
+import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO;
+import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO_PLUS;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
-import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;
+import java.net.URI;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.Subject;
@@ -35,7 +49,6 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
-import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -53,9 +66,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.ClientUtils;
+import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.TestKDC;
 import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
+import org.wildfly.security.sasl.util.AbstractDelegatingSaslClientFactory;
+import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
+import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
+import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
+import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 
 /**
  * Client and server side tests for the GS2 SASL mechanism.
@@ -101,18 +124,16 @@ public class Gs2Test extends BaseTestCase {
         Map<String, Object> props = new HashMap<String, Object>();
 
         // No properties are set, an appropriate Gs2SaslServer should be returned
-        saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, props, null, null, true);
-        assertEquals(Gs2SaslServer.class, saslServer.getClass());
+        saslServer = getIndirectSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, props, null, null);
         assertEquals(GS2_KRB5, saslServer.getMechanismName());
 
         // Require channel binding
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
-        saslServer = getSaslServer(GS2_KRB5_PLUS, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0], true);
-        assertEquals(Gs2SaslServer.class, saslServer.getClass());
+        saslServer = getIndirectSaslServer(GS2_KRB5_PLUS, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertEquals(GS2_KRB5_PLUS, saslServer.getMechanismName());
 
         // If channel binding is required even though a non-PLUS mechanism is specified, no server should be returned
-        saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, props, null, null, true);
+        saslServer = getIndirectSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, props, null, null);
         assertNull(saslServer);
     }
 
@@ -126,12 +147,12 @@ public class Gs2Test extends BaseTestCase {
 
         // No properties set
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ GS2_KRB5, GS2_KRB5_PLUS }, mechanisms);
+        assertMechanisms(new String[]{GS2_KRB5, GS2_KRB5_PLUS}, mechanisms);
 
         // Require channel binding
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ GS2_KRB5_PLUS }, mechanisms);
+        assertMechanisms(new String[]{GS2_KRB5_PLUS}, mechanisms);
     }
 
     @Test
@@ -139,17 +160,17 @@ public class Gs2Test extends BaseTestCase {
         Map<String, Object> props = new HashMap<String, Object>();
 
         // No properties are set, an appropriate Gs2SaslClient should be returned
-        saslClient = getSaslClient(new String[]{ GS2_KRB5 }, null, "sasl", TEST_SERVER_1, props, null, null, true);
+        saslClient = getIndirectSaslClient(new String[]{GS2_KRB5}, null, "sasl", TEST_SERVER_1, props, null, null);
         assertEquals(Gs2SaslClient.class, saslClient.getClass());
         assertEquals(GS2_KRB5, saslClient.getMechanismName());
 
         // If channel binding is required even though only non-PLUS mechanisms are specified, no client should be returned
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
-        saslClient = getSaslClient(new String[]{ "GS2-DT4PIK22T6A", GS2_KRB5 }, null, "sasl", TEST_SERVER_1, props, null, null, true);
+        saslClient = getIndirectSaslClient(new String[]{"GS2-DT4PIK22T6A", GS2_KRB5}, null, "sasl", TEST_SERVER_1, props, null, null);
         assertNull(saslClient);
 
         // If channel binding is required, an appropriate Gs2SaslClient should be returned
-        saslClient = getSaslClient(new String[]{ "GS2-DT4PIK22T6A-PLUS", GS2_KRB5_PLUS }, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0], true);
+        saslClient = getIndirectSaslClient(new String[]{"GS2-DT4PIK22T6A-PLUS", GS2_KRB5_PLUS}, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertEquals(Gs2SaslClient.class, saslClient.getClass());
         assertEquals(GS2_KRB5_PLUS, saslClient.getMechanismName());
     }
@@ -169,7 +190,7 @@ public class Gs2Test extends BaseTestCase {
         // Request channel binding
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
         mechanisms = factory.getMechanismNames(props);
-        assertMechanisms(new String[]{ GS2_KRB5_PLUS }, mechanisms);
+        assertMechanisms(new String[]{GS2_KRB5_PLUS}, mechanisms);
     }
 
     // -- Successful authentication exchanges --
@@ -178,7 +199,7 @@ public class Gs2Test extends BaseTestCase {
     public void testKrb5AuthenticationWithoutChannelBinding() throws Exception {
         saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslServer);
-        assertTrue(saslServer instanceof Gs2SaslServer);
+        assertEquals(GS2_KRB5, saslServer.getMechanismName());
         assertFalse(saslServer.isComplete());
 
         saslClient = getSaslClient(new String[] { GS2_KRB5 }, null, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
@@ -209,10 +230,10 @@ public class Gs2Test extends BaseTestCase {
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
         saslServer = getSaslServer(GS2_KRB5_PLUS, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertNotNull(saslServer);
-        assertTrue(saslServer instanceof Gs2SaslServer);
+        assertEquals(GS2_KRB5_PLUS, saslServer.getMechanismName());
         assertFalse(saslServer.isComplete());
 
-        saslClient = getSaslClient(new String[] { GS2_KRB5_PLUS }, "jduke@WILDFLY.ORG", "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
+        saslClient = getSaslClient(new String[]{GS2_KRB5_PLUS}, "jduke@WILDFLY.ORG", "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof Gs2SaslClient);
         assertTrue(saslClient.hasInitialResponse());
@@ -238,14 +259,10 @@ public class Gs2Test extends BaseTestCase {
     public void testKrb5AuthenticationWithCredentialPassedIn() throws Exception {
         saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslServer);
-        assertTrue(saslServer instanceof Gs2SaslServer);
+        assertEquals(GS2_KRB5, saslServer.getMechanismName());
         assertFalse(saslServer.isComplete());
 
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(Gs2SaslClientFactory.class);
-        assertNotNull(clientFactory);
-        // A GSSCredential will be passed in
-        saslClient = clientFactory.createSaslClient(new String[] { GS2_KRB5 }, "jduke@WILDFLY.ORG", "sasl", TEST_SERVER_1,
-                Collections.<String, Object>emptyMap(), new Gs2ClientCallbackHandler(null, null, true));
+        saslClient = getSaslClient(new String[] { GS2_KRB5 }, "jduke@WILDFLY.ORG", "sasl", TEST_SERVER_1, Collections.emptyMap(), null, null, true);
         assertNotNull(saslClient);
         assertTrue(saslClient instanceof Gs2SaslClient);
         assertTrue(saslClient.hasInitialResponse());
@@ -327,7 +344,7 @@ public class Gs2Test extends BaseTestCase {
     public void testChannelBindingTypeMismatch() throws Exception {
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
-        saslClient = getSaslClient(new String[] { GS2_KRB5_PLUS }, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
+        saslClient = getSaslClient(new String[]{GS2_KRB5_PLUS}, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertNotNull(saslClient);
 
         saslServer = getSaslServer(GS2_KRB5_PLUS, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), "tls-unique-for-telnet", new byte[0]);
@@ -345,7 +362,7 @@ public class Gs2Test extends BaseTestCase {
     public void testChannelBindingDataMismatch() throws Exception {
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, Boolean.toString(true));
-        saslClient = getSaslClient(new String[] { GS2_KRB5_PLUS }, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
+        saslClient = getSaslClient(new String[]{GS2_KRB5_PLUS}, null, "sasl", TEST_SERVER_1, props, "tls-unique", new byte[0]);
         assertNotNull(saslClient);
 
         saslServer = getSaslServer(GS2_KRB5_PLUS, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), "tls-unique", new byte[1]);
@@ -364,7 +381,7 @@ public class Gs2Test extends BaseTestCase {
         saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslServer);
 
-        saslClient = getSaslClient(new String[] { GS2_KRB5 }, "bsmith@WILDFLY.ORG", "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
+        saslClient = getSaslClient(new String[]{GS2_KRB5}, "bsmith@WILDFLY.ORG", "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslClient);
 
         byte[] message = evaluateChallenge(new byte[0]);
@@ -436,18 +453,14 @@ public class Gs2Test extends BaseTestCase {
         assertEquals(OID_SPNEGO, Gs2.getMechanismForSaslName(GSSManager.getInstance(), "SPNEGO"));
     }
 
-    private SaslServer getSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
-            final String bindingType, final byte[] bindingData, final boolean indirect) throws SaslException {
+    private SaslServer getIndirectSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
+                                             final String bindingType, final byte[] bindingData) throws SaslException {
         try {
             return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {
                 public SaslServer run() throws SaslException {
-                    Gs2ServerCallbackHandler cbh = new Gs2ServerCallbackHandler(bindingType, bindingData);
-                    if (indirect) {
-                        return Sasl.createSaslServer(mechanism, protocol, serverName, props, cbh);
-                    } else {
-                        SaslServerFactory factory = obtainSaslServerFactory(Gs2SaslServerFactory.class);
-                        return factory.createSaslServer(mechanism, "sasl", TEST_SERVER_1, props, cbh);
-                    }
+                    //TODO I don't like people having to pass in a callback handler to get this information
+                    CallbackHandler cbh = new IndirectCallbackHandler(bindingType, bindingData);
+                    return Sasl.createSaslServer(mechanism, protocol, serverName, props, cbh);
                 }
             });
         } catch (PrivilegedActionException e) {
@@ -460,22 +473,45 @@ public class Gs2Test extends BaseTestCase {
     }
 
     private SaslServer getSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
-            final String bindingType, final byte[] bindingData) throws SaslException {
-        return getSaslServer(mechanism, protocol, serverName, props, bindingType, bindingData, false);
+                                     final String bindingType, final byte[] bindingData) throws SaslException {
+        final SaslServerBuilder builder = new SaslServerBuilder(Gs2SaslServerFactory.class, mechanism)
+                .setDontAssertBuiltServer();
+
+        if (protocol != null) {
+            builder.setProtocol(protocol);
+        }
+        if (serverName != null) {
+            builder.setServerName(serverName);
+        }
+        if (props != null) {
+            builder.setProperties(props);
+        }
+        if (bindingType != null || bindingData != null) {
+            builder.setChannelBinding(bindingType, bindingData);
+        }
+        try {
+            return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {
+                public SaslServer run() throws Exception {
+                    return builder.build();
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            if (e.getCause() instanceof SaslException) {
+                throw (SaslException) e.getCause();
+            } else {
+                throw new RuntimeException(e.getCause());
+            }
+        }
     }
 
-    private SaslClient getSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName,
-            final Map<String, Object> props, final String bindingType, final byte[] bindingData, final boolean indirect) throws SaslException {
+    private SaslClient getIndirectSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName,
+                                             final Map<String, Object> props, final String bindingType, final byte[] bindingData) throws SaslException {
         try {
             return Subject.doAs(clientSubject, new PrivilegedExceptionAction<SaslClient>() {
                 public SaslClient run() throws SaslException {
-                    Gs2ClientCallbackHandler cbh = new Gs2ClientCallbackHandler(bindingType, bindingData);
-                    if (indirect) {
-                        return Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
-                    } else {
-                        SaslClientFactory factory = obtainSaslClientFactory(Gs2SaslClientFactory.class);
-                        return factory.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
-                    }
+                    //TODO I don't like people having to pass in a callback handler to get this information
+                    CallbackHandler cbh = new IndirectCallbackHandler(bindingType, bindingData);
+                    return Sasl.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
                 }
             });
         } catch (PrivilegedActionException e) {
@@ -488,8 +524,62 @@ public class Gs2Test extends BaseTestCase {
     }
 
     private SaslClient getSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName,
-            final Map<String, Object> props, final String bindingType, final byte[] bindingData) throws SaslException {
+            final Map<String, Object> props, final String bindingType, final byte[] bindingData) throws Exception {
         return getSaslClient(mechanisms, authorizationId, protocol, serverName, props, bindingType, bindingData, false);
+    }
+
+    private SaslClient getSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName,
+                                     final Map<String, Object> props, final String bindingType,
+                                     final byte[] bindingData, final boolean passCredential) throws Exception {
+        final CallbackHandler cbh = createClientCallbackHandler(mechanisms, authorizationId);
+        SaslClientFactory clientFactory = obtainSaslClientFactory(Gs2SaslClientFactory.class);
+        assertNotNull(clientFactory);
+        if (bindingType != null || bindingData != null) {
+            clientFactory = new ChannelBindingSaslClientFactory(clientFactory, bindingType, bindingData);
+            assertNotNull(clientFactory);
+        }
+        if (protocol != null) {
+            clientFactory = new ProtocolSaslClientFactory(clientFactory, protocol);
+            assertNotNull(clientFactory);
+        }
+        if (serverName != null) {
+            clientFactory = new ServerNameSaslClientFactory(clientFactory, serverName);
+            assertNotNull(clientFactory);
+        }
+        if (props != null) {
+            clientFactory = new PropertiesSaslClientFactory(clientFactory, props);
+            assertNotNull(clientFactory);
+        }
+        if (passCredential) {
+            clientFactory = new Gs2SaslPassCredentialClientFactory(clientFactory, clientSubject);
+            assertNotNull(clientFactory);
+        }
+
+        final SaslClientFactory factory = clientFactory;
+        try {
+            return Subject.doAs(clientSubject, new PrivilegedExceptionAction<SaslClient>() {
+                public SaslClient run() throws SaslException {
+                    return factory.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
+                }
+            });
+        } catch (PrivilegedActionException e) {
+            if (e.getCause() instanceof SaslException) {
+                throw (SaslException) e.getCause();
+            } else {
+                throw new RuntimeException(e.getCause());
+            }
+        }
+    }
+
+    private CallbackHandler createClientCallbackHandler(final String[] mechanisms, final String authorizationId) throws Exception {
+        final AuthenticationContext context = AuthenticationContext.empty()
+                .with(
+                        MatchRule.ALL,
+                        AuthenticationConfiguration.EMPTY
+                                .useAuthorizationName(authorizationId)
+                                .allowSaslMechanisms(mechanisms));
+
+        return ClientUtils.getCallbackHandler(new URI("remote://localhost"), context);
     }
 
     private byte[] evaluateResponse(final byte[] response) throws SaslException {
@@ -524,54 +614,44 @@ public class Gs2Test extends BaseTestCase {
         }
     }
 
-    private class Gs2ServerCallbackHandler implements CallbackHandler {
+    //TODO I don't like the indirect tests having to pass in a callback handler to get this information
+    private static class IndirectCallbackHandler implements CallbackHandler {
         private final String bindingType;
         private final byte[] bindingData;
 
-        public Gs2ServerCallbackHandler(final String bindingType, final byte[] bindingData) {
+        private IndirectCallbackHandler(String bindingType, byte[] bindingData) {
             this.bindingType = bindingType;
             this.bindingData = bindingData;
         }
 
+        @Override
         public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
             for (Callback callback : callbacks) {
                 if (callback instanceof ChannelBindingCallback) {
                     final ChannelBindingCallback channelBindingCallback = (ChannelBindingCallback) callback;
                     channelBindingCallback.setBindingType(bindingType);
                     channelBindingCallback.setBindingData(bindingData);
-                } else if (callback instanceof AuthorizeCallback) {
-                    AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-                    authorizeCallback.setAuthorized(authorizeCallback.getAuthorizationID().equals(authorizeCallback.getAuthenticationID()));
-                } else {
-                    throw new UnsupportedCallbackException(callback);
                 }
             }
         }
-    }
+    };
 
-    private class Gs2ClientCallbackHandler implements CallbackHandler {
-        private final String bindingType;
-        private final byte[] bindingData;
-        private final boolean passCredential;
+    private static class Gs2SaslPassCredentialClientFactory extends AbstractDelegatingSaslClientFactory {
+        private Subject clientSubject;
 
-        public Gs2ClientCallbackHandler(final String bindingType, final byte[] bindingData) {
-            this(bindingType, bindingData, false);
+        public Gs2SaslPassCredentialClientFactory(SaslClientFactory delegate, Subject clientSubject) {
+            super(delegate);
+            this.clientSubject = clientSubject;
         }
 
-        public Gs2ClientCallbackHandler(final String bindingType, final byte[] bindingData, final boolean passCredential) {
-            this.bindingType = bindingType;
-            this.bindingData = bindingData;
-            this.passCredential = passCredential;
-        }
-
-        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            for (Callback callback : callbacks) {
-                if (callback instanceof ChannelBindingCallback) {
-                    final ChannelBindingCallback channelBindingCallback = (ChannelBindingCallback) callback;
-                    channelBindingCallback.setBindingType(bindingType);
-                    channelBindingCallback.setBindingData(bindingData);
-                } else if (callback instanceof CredentialCallback) {
-                    if (passCredential) {
+        @Override
+        public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+            return delegate.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, callbacks -> {
+                ArrayList<Callback> list = new ArrayList<>(Arrays.asList(callbacks));
+                final Iterator<Callback> iterator = list.iterator();
+                while (iterator.hasNext()) {
+                    Callback callback = iterator.next();
+                    if (callback instanceof CredentialCallback) {
                         final CredentialCallback credentialCallback = (CredentialCallback) callback;
                         try {
                             GSSCredential credential = Subject.doAs(clientSubject, new PrivilegedExceptionAction<GSSCredential>(){
@@ -584,7 +664,6 @@ public class Gs2Test extends BaseTestCase {
                                     }
                                 }
                             });
-                            assertNotNull(credential);
                             credentialCallback.setCredential(credential);
                         } catch (PrivilegedActionException e) {
                             if (e.getCause() instanceof SaslException) {
@@ -593,11 +672,14 @@ public class Gs2Test extends BaseTestCase {
                                 throw new RuntimeException(e.getCause());
                             }
                         }
+                        iterator.remove();
                     }
-                } else {
-                    throw new UnsupportedCallbackException(callback);
                 }
-            }
+
+                if (!list.isEmpty()) {
+                    cbh.handle(list.toArray(new Callback[list.size()]));
+                }
+            });
         }
     }
 }
