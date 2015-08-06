@@ -27,21 +27,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.sasl.test.SaslServerBuilder;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.wildfly.security.sasl.test.BaseTestCase;
-import org.wildfly.security.sasl.test.ServerCallbackHandler;
-import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of server side of the Digest mechanism.
@@ -52,11 +53,8 @@ import org.wildfly.security.util.CodePointIterator;
 @RunWith(JMockit.class)
 public class CompatibilityServerTest extends BaseTestCase {
 
-    protected static final String DIGEST = "DIGEST-MD5";
     protected static final String REALM_PROPERTY = "com.sun.security.sasl.digest.realm";
     protected static final String QOP_PROPERTY = "javax.security.sasl.qop";
-
-    private SaslServer server;
 
     private void mockNonce(final String nonce){
         new MockUp<AbstractDigestMechanism>(){
@@ -74,10 +72,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testRfc2831example1() throws Exception {
         mockNonce("OA6MG9tEQGm2hh");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "imap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("imap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -89,7 +92,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=ea40f60335c427b5527b84dbabcdfffd", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
-
     }
 
 
@@ -100,10 +102,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testRfc2831example2() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -115,7 +122,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=2f0b3d7c3c2e486600ef710726aa2eae", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
-
     }
 
 
@@ -126,10 +132,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testUnauthorizedAuthorizationId() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -143,7 +154,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             fail("Not throwed SaslException!");
         } catch (SaslException e) {}
         assertFalse(server.isComplete());
-
     }
 
 
@@ -154,10 +164,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testAuthorizedAuthorizationId() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -170,7 +185,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=af3ca83a805d4cfa00675a17315475c4", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
-
     }
 
 
@@ -181,11 +195,16 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthInt() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-int");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -225,7 +244,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
-
     }
 
 
@@ -236,11 +254,16 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -280,7 +303,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
-
     }
 
 
@@ -291,11 +313,16 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthConfRc4() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -335,7 +362,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
-
     }
 
 
@@ -346,11 +372,16 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -400,11 +431,16 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -444,7 +480,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
-
     }
 
 
@@ -455,11 +490,17 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testQopAuthConfRc440() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
+
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -499,7 +540,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             server.unwrap(incoming4, 0, incoming4.length);
             fail("Out of order sequencing SaslException expected!");
         } catch(SaslException e){}
-
     }
 
 
@@ -510,10 +550,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testReplayAttack() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -536,10 +581,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testBadResponse() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -552,7 +602,6 @@ public class CompatibilityServerTest extends BaseTestCase {
             fail("Not throwed SaslException!");
         } catch (SaslException e) {}
         assertFalse(server.isComplete());
-
     }
 
 
@@ -563,10 +612,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testMoreRealmsFromServer() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "other-realm elwood.innosoft.com next-realm");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -590,10 +644,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testBlankClientNonce() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "other-realm elwood.innosoft.com next-realm");
-        server = Sasl.createSaslServer(DIGEST, "acap", "elwood.innosoft.com", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -616,8 +675,14 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testUtf8Charset() throws Exception {
         mockNonce("sn\u0438\u4F60\uD83C\uDCA1");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("\u0438\u4F60\uD83C\uDCA1", "\u0438\u4F60\uD83C\uDCA1".toCharArray());
-        server = Sasl.createSaslServer(DIGEST, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", new HashMap<String, Object>(), serverCallback);
+        Map<String, Object> serverProps = new HashMap<String, Object>();
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("\u0438\u4F60\uD83C\uDCA1")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("\u0438\u4F60\uD83C\uDCA1".toCharArray()))
+                        .setProtocol("\u0438\u4F60\uD83C\uDCA1").setServerName("realm.\u0438\u4F60\uD83C\uDCA1.com")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -629,7 +694,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=9c4d137545617ba98c11aaea939b4381", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("\u0438\u4F60\uD83C\uDCA1", server.getAuthorizationID());
-
     }
 
 
@@ -640,10 +704,15 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testMoreRealmsWithEscapedDelimiters() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        CallbackHandler serverCallback = new ServerCallbackHandler("chris", "secret".toCharArray());
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(REALM_PROPERTY, "first\\ realm second\\\\\\ realm \\ with\\ spaces\\  \\ ");
-        server = Sasl.createSaslServer(DIGEST, "protocol name", "server name", serverProps, serverCallback);
+        SaslServer server =
+                new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
+                        .setUserName("chris")
+                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
+                        .setProtocol("protocol name").setServerName("server name")
+                        .setProperties(serverProps)
+                        .build();
         assertFalse(server.isComplete());
 
         byte[] message1 = server.evaluateResponse(new byte[0]);
@@ -655,7 +724,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         assertEquals("rspauth=05a18aff49b22e373bb91af7396ce345", new String(message3, "UTF-8"));
         assertTrue(server.isComplete());
         assertEquals("chris", server.getAuthorizationID());
-
     }
 
 }

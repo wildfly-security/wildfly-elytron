@@ -20,32 +20,24 @@ package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import org.wildfly.common.Assert;
+import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.security.util.DefaultTransformationMapper;
+import org.wildfly.security.util.TransformationMapper;
+import org.wildfly.security.util.TransformationSpec;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.DefaultTransformationMapper;
-import org.wildfly.security.util.TransformationMapper;
-import org.wildfly.security.util.TransformationSpec;
-
 import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -66,7 +58,6 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private final String authorizationId;
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
-    private final MessageDigest messageDigest;
 
     DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] qops, String[] ciphers) throws SaslException {
         super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
@@ -75,11 +66,6 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         this.authorizationId = authorizationId;
         this.clientQops = qops == null ? QOP_VALUES : qops;
         this.demandedCiphers = ciphers == null ? new String[] {} : ciphers;
-        try {
-            this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanism));
-        } catch (NoSuchAlgorithmException e) {
-            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
-        }
     }
 
     private void noteChallengeData(HashMap<String, byte[]> parsedChallenge) throws SaslException {
@@ -208,87 +194,42 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             digestResponse.append(DELIMITER);
         }
 
-
-        final NameCallback nameCallback;
-        if (authorizationId != null) {
-            nameCallback = new NameCallback("User name", authorizationId);
-        } else {
-            nameCallback = new NameCallback("User name");
-        }
-
-        final String passwordAlgorithm;
-        switch (getMechanismName()) {
-            case SaslMechanismInformation.Names.DIGEST_MD5:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_MD5;     break;
-            case SaslMechanismInformation.Names.DIGEST_SHA:     passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA;     break;
-            case SaslMechanismInformation.Names.DIGEST_SHA_256: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_256; break;
-            case SaslMechanismInformation.Names.DIGEST_SHA_384: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_384; break;
-            case SaslMechanismInformation.Names.DIGEST_SHA_512: passwordAlgorithm = DigestPassword.ALGORITHM_DIGEST_SHA_512; break;
-            default: throw Assert.impossibleSwitchCase(getMechanismName());
-        }
-        final CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm)));
-        final PasswordCallback passwordCallback = new PasswordCallback("User password", false);
-
-
-        String userName = null;
         String realm = null;
-        byte[] digestURP;
-        try {
-
-            // first try pre-digested credential
-            if (realms != null && realms.length > 1) {
-                final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
-                tryHandleCallbacks(realmChoiceCallBack, nameCallback, credentialCallback);
-                realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
-            } else if (realms != null && realms.length == 1) {
-                final RealmCallback realmCallback = new RealmCallback("User realm", realms[0]);
-                tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
-                realm = realmCallback.getText();
-            } else {
-                tryHandleCallbacks(nameCallback, credentialCallback);
-            }
-            userName = nameCallback.getName();
-            DigestPassword digestedPassword = (DigestPassword) credentialCallback.getCredential();
-            if (! passwordAlgorithm.equals(digestedPassword.getAlgorithm())) {
-                // cheat to try clear password instead
-                throw new FastUnsupportedCallbackException(credentialCallback);
-            }
-            digestURP = digestedPassword.getDigest();
-
-            if(userName == null) throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), null);
-            if(digestURP == null) throw log.saslNotProvidedPreDigested(getMechanismName());
-
-        } catch (UnsupportedCallbackException e) {
-
-            // clear password if pre-digested not supported
-            if (e.getCallback() == credentialCallback) {
-
-                if (realms != null && realms.length > 1) {
+        if (realms != null && realms.length > 0) {
+            try {
+                if (realms.length > 1) {
                     final RealmChoiceCallback realmChoiceCallBack = new RealmChoiceCallback("User realm", realms, 0, false);
-                    handleCallbacks(realmChoiceCallBack, nameCallback, passwordCallback);
+                    tryHandleCallbacks(realmChoiceCallBack);
                     realm = realms[realmChoiceCallBack.getSelectedIndexes()[0]];
-                } else if (realms != null && realms.length == 1) {
-                    final RealmCallback realmCallback = new RealmCallback("User realm", realms[0]);
-                    handleCallbacks(realmCallback, nameCallback, passwordCallback);
-                    realm = realmCallback.getText();
                 } else {
-                    handleCallbacks(nameCallback, passwordCallback);
+                    realm = realms[0];
                 }
-                userName = nameCallback.getName();
-                char[] clearPassword = passwordCallback.getPassword();
-                passwordCallback.clearPassword();
-
-                if(userName == null) throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), null);
-                if(clearPassword == null) log.saslNotProvidedClearPassword(getMechanismName());
-
-                digestURP = userRealmPasswordDigest(messageDigest, userName, realm, clearPassword);
-                Arrays.fill(clearPassword, (char)0); // wipe out the password
-
-            } else {
+            } catch (UnsupportedCallbackException e) {
                 throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
             }
-
         }
 
+        NameCallback nameCallback = authorizationId != null ?
+                new NameCallback("User name", authorizationId) : new NameCallback("User name");
+
+        // get password
+        RealmCallback realmCallback = realm != null ?
+                new RealmCallback("User realm", realm) : new RealmCallback("User realm");
+        byte[] digest_urp = getPredigestedSaltedPassword(realmCallback, nameCallback);
+        if (digest_urp == null) {
+            digest_urp = getSaltedPasswordFromTwoWay(realmCallback, nameCallback, false);
+        }
+        if (digest_urp == null) {
+            digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false);
+        }
+        if (digest_urp == null) {
+            throw log.saslCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null);
+        }
+        realm = realmCallback.getText();
+        String userName = nameCallback.getName();
+        if (userName == null) {
+            throw log.saslNotProvidedUserName(getMechanismName());
+        }
 
         // username
         digestResponse.append("username=\"");
@@ -333,7 +274,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         digestResponse.append(DELIMITER);
 
         // response
-        hA1 = H_A1(messageDigest, digestURP, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
+        hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authorizationId, serverHashedURPUsingcharset);
         byte[] response_value = digestResponse(messageDigest, hA1, nonce, nonceCount, cnonce, authorizationId, qop, digestURI, true);
         digestResponse.append("response=");
         digestResponse.append(response_value);

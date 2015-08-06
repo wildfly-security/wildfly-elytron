@@ -37,8 +37,11 @@ import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -110,9 +113,7 @@ public final class DigestUtil {
      *
      *
      * @param messageDigest
-     * @param username
-     * @param realm
-     * @param password
+     * @param digest_urp
      * @param nonce
      * @param cnonce
      * @param authzid
@@ -260,7 +261,6 @@ public final class DigestUtil {
      * Create DES secret key according to http://www.cryptosys.net/3des.html.
      *
      * @param keyBits
-     * @param offset
      * @return
      * @throws NoSuchAlgorithmException
      * @throws InvalidKeyException
@@ -306,6 +306,25 @@ public final class DigestUtil {
      */
     private static byte fixParityBit(byte toFix) {
         return (Integer.bitCount(toFix & 0xff) & 1) == 0 ? (byte) (toFix ^ 1) : toFix;
+    }
+
+    /**
+     * Get array of password chars from TwoWayPassword
+     *
+     * @param mechName
+     * @return
+     * @throws SaslException
+     */
+    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws SaslException {
+        if (password == null) {
+            throw log.saslNoPasswordGiven(mechName);
+        }
+        try {
+            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
+            return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            throw log.saslCannotGetTwoWayPasswordChars(mechName, e);
+        }
     }
 
 }

@@ -35,6 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -545,6 +546,11 @@ final class ScramSaslServer extends AbstractSaslServer {
         // get the clear password
         TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
         char[] passwordChars = ScramUtil.getTwoWayPasswordChars(getMechanismName(), password);
+        try {
+            password.destroy();
+        } catch(DestroyFailedException e) {
+            log.credentialDestroyingFailed(e);
+        }
         getSaltedPasswordFromPasswordChars(passwordChars, b);
     }
 
