@@ -18,6 +18,7 @@
 
 package org.wildfly.security.http;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 
@@ -129,7 +130,7 @@ public class HttpAuthenticator {
         @Override
         public void setResponseCode(int responseCode) {
             if (responseCodeAllowed == false) {
-                throw new IllegalStateException("Response code can not be set at this time.");
+                throw log.responseCodeNotNow();
             }
 
             if (this.responseCode < 0 || responseCode != OK) {

@@ -972,6 +972,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5165, value = "OTP re-initialization failed")
     SaslException saslOTPReinitializationFailed(@Cause Throwable cause);
 
+    /* http package */
+
+    @Message(id = 6000, value = "Response code can not be set at this time.")
+    IllegalStateException responseCodeNotNow();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
