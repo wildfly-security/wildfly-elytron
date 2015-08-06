@@ -32,7 +32,7 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
     private final CallbackHandler callbackHandler;
 
     SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
-        super(parent.without(SetNamePrincipalAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class));
+        super(parent.without(SetNamePrincipalAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class));
         this.callbackHandler = callbackHandler;
     }
 

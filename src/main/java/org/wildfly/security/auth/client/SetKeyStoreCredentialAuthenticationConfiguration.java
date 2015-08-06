@@ -53,7 +53,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
     }
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class));
         this.entryFactory = entryFactory;
     }
 

@@ -27,6 +27,7 @@ import java.security.Permissions;
 import java.security.spec.KeySpec;
 import java.util.Map;
 
+import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
@@ -62,6 +63,7 @@ public class SaslServerBuilder {
     private Tuple<String, byte[]> bindingTypeAndData;
     private String protocol;
     private String serverName;
+    private boolean dontAssertBuiltServer;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;
@@ -128,7 +130,11 @@ public class SaslServerBuilder {
         return this;
     }
 
-    public SaslServer build() throws Exception {
+    public SaslServerBuilder setDontAssertBuiltServer() {
+        this.dontAssertBuiltServer = true;
+        return this;
+    }
+    public SaslServer build() throws SaslException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         domainBuilder.addRealm(realmName, mainRealm);
@@ -162,7 +168,9 @@ public class SaslServerBuilder {
             factory = new ServerNameSaslServerFactory(factory, serverName);
         }
         SaslServer server = domain.createNewAuthenticationContext().createSaslServer(factory, mechanismName);
-        Assert.assertNotNull(server);
+        if (!dontAssertBuiltServer) {
+            Assert.assertNotNull(server);
+        }
         return server;
     }
 

@@ -52,6 +52,7 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.ietf.jgss.GSSCredential;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -372,6 +373,16 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
         return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given GSS-API credential to authenticate.
+     *
+     * @param credential the GSS-API credential to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
+        return credential == null ? this : new SetGSSCredentialAuthenticationConfiguration(this, credential);
     }
 
     /**

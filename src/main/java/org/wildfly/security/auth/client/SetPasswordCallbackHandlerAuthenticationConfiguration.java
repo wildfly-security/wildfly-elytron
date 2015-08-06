@@ -37,7 +37,7 @@ class SetPasswordCallbackHandlerAuthenticationConfiguration extends Authenticati
     private final CallbackHandler callbackHandler;
 
     SetPasswordCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetNamePrincipalAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class));
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetNamePrincipalAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class));
         this.callbackHandler = callbackHandler;
     }
 
