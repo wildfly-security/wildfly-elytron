@@ -476,7 +476,7 @@ public class EntityTest extends BaseTestCase {
         message = saslClient.evaluateChallenge(message);
         message = saslServer.evaluateResponse(message);
         try {
-            saslServer.evaluateResponse(message);
+            saslClient.evaluateChallenge(message);
             fail("Expected SaslException not thrown");
         } catch (SaslException expected) {
         }
