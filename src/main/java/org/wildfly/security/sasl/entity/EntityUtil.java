@@ -18,27 +18,63 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static org.wildfly.security.asn1.ASN1.*;
-import static org.wildfly.security.sasl.entity.Entity.*;
-import static org.wildfly.security.sasl.entity.GeneralName.*;
-import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
+import static org.wildfly.security.asn1.ASN1.IA5_STRING_TYPE;
+import static org.wildfly.security.asn1.ASN1.SEQUENCE_TYPE;
+import static org.wildfly.security.asn1.ASN1.SET_TYPE;
+import static org.wildfly.security.sasl.entity.Entity.SHA1_WITH_DSA;
+import static org.wildfly.security.sasl.entity.Entity.SHA1_WITH_ECDSA;
+import static org.wildfly.security.sasl.entity.Entity.SHA1_WITH_RSA;
+import static org.wildfly.security.sasl.entity.Entity.algorithmOid;
+import static org.wildfly.security.sasl.entity.GeneralName.DIRECTORY_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.DNSName;
+import static org.wildfly.security.sasl.entity.GeneralName.DNS_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.DirectoryName;
+import static org.wildfly.security.sasl.entity.GeneralName.EDIPartyName;
+import static org.wildfly.security.sasl.entity.GeneralName.EDI_PARTY_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.IPAddress;
+import static org.wildfly.security.sasl.entity.GeneralName.IP_ADDRESS;
+import static org.wildfly.security.sasl.entity.GeneralName.OTHER_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.OtherName;
+import static org.wildfly.security.sasl.entity.GeneralName.REGISTERED_ID;
+import static org.wildfly.security.sasl.entity.GeneralName.RFC822Name;
+import static org.wildfly.security.sasl.entity.GeneralName.RFC_822_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.RegisteredID;
+import static org.wildfly.security.sasl.entity.GeneralName.URIName;
+import static org.wildfly.security.sasl.entity.GeneralName.URI_NAME;
+import static org.wildfly.security.sasl.entity.GeneralName.X400Address;
+import static org.wildfly.security.sasl.entity.GeneralName.X400_ADDRESS;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.AUTHORITY_CERTIFICATE;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.AUTHORITY_NAME;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.CertificateTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.HashTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.ISSUER_KEY_HASH;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.ISSUER_NAME_HASH;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.IssuerKeyHashTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.IssuerNameHashTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.NameTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.PKCS15KeyHashTrustedAuthority;
+import static org.wildfly.security.sasl.entity.TrustedAuthority.PKCS_15_KEY_HASH;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
-import java.security.cert.CertPath;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -48,9 +84,9 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500PrincipalUtil;
+import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -708,5 +744,27 @@ class EntityUtil {
                 c.close();
             } catch (Throwable ignored) {}
         }
+    }
+
+    static boolean isCertChainTrusted(KeyStore trustStore, X509Certificate[] certChain) throws GeneralSecurityException {
+        boolean verified = false;
+        if (trustStore != null) {
+            List<String> aliases = Collections.list(trustStore.aliases());
+            out: {
+                for (X509Certificate cert : certChain) {
+                    X500Principal issuer = cert.getIssuerX500Principal();
+                    for (String alias : aliases) {
+                        if (trustStore.entryInstanceOf(alias, KeyStore.TrustedCertificateEntry.class)) {
+                            KeyStore.TrustedCertificateEntry entry = (KeyStore.TrustedCertificateEntry) trustStore.getEntry(alias, null);
+                            if (((X509Certificate) entry.getTrustedCertificate()).getSubjectX500Principal().equals(issuer)) {
+                                verified = true;
+                                break out;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return verified;
     }
 }

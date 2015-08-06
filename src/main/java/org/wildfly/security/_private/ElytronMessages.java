@@ -18,6 +18,8 @@
 
 package org.wildfly.security._private;
 
+import static org.jboss.logging.Logger.Level.WARN;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,7 +32,6 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 
-import static org.jboss.logging.Logger.Level.WARN;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
@@ -1140,4 +1141,7 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
     IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
+
+    @Message(id = 8030, value = "No compliant certificate was found for the list of trusted authorities returned by the server")
+    SaslException noCompliantCertificateFound();
 }
