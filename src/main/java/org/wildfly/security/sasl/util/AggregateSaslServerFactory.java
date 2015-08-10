@@ -58,6 +58,7 @@ public final class AggregateSaslServerFactory implements SaslServerFactory {
         this.factories = factories.toArray(new SaslServerFactory[factories.size()]);
     }
 
+    @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         for (SaslServerFactory factory : factories) {
             if (factory != null) {
@@ -70,10 +71,13 @@ public final class AggregateSaslServerFactory implements SaslServerFactory {
         return null;
     }
 
+    @Override
     public String[] getMechanismNames(final Map<String, ?> props) {
         final LinkedHashSet<String> names = new LinkedHashSet<String>();
         for (SaslServerFactory factory : factories) {
-            Collections.addAll(names, factory.getMechanismNames(props));
+            if (factory != null) {
+                Collections.addAll(names, factory.getMechanismNames(props));
+            }
         }
         return names.toArray(new String[names.size()]);
     }
