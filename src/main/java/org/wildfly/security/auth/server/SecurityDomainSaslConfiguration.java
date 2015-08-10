@@ -43,9 +43,8 @@ public final class SecurityDomainSaslConfiguration {
      * @param saslServerFactory the (optionally pre-configured) SASL server factory
      */
     public SecurityDomainSaslConfiguration(final SecurityDomain securityDomain, final SaslServerFactory saslServerFactory) {
-        Assert.checkNotNullParam("securityDomain", securityDomain);
+        this.securityDomain = Assert.checkNotNullParam("securityDomain", securityDomain);
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
-        this.securityDomain = securityDomain;
         this.saslServerFactory = new FilterMechanismSaslServerFactory(saslServerFactory, name -> {
             final Set<Class<?>> credentialTypes = SaslMechanismInformation.getSupportedServerCredentialTypes(name);
             if (credentialTypes == null) {
