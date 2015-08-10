@@ -47,9 +47,19 @@ public class PropertiesSaslClientFactory extends AbstractDelegatingSaslClientFac
     }
 
     @Override
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return delegate.getMechanismNames(combine(props, properties));
+    }
+
+    @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        Map<String, Object> merged = new HashMap<>(props);
-        merged.putAll(properties);
-        return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, merged, cbh);
+        return super.createSaslClient(mechanisms, authorizationId, protocol, serverName, combine(props, properties), cbh);
+    }
+
+    private static Map<String, ?> combine(Map<String, ?> provided, Map<String, ?> configured) {
+        Map<String, Object> combined = new HashMap<>(provided);
+        combined.putAll( configured);
+
+        return combined;
     }
 }
