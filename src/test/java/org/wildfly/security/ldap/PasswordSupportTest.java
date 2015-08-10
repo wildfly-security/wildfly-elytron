@@ -18,6 +18,7 @@
 
 package org.wildfly.security.ldap;
 
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
@@ -38,9 +40,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
@@ -64,6 +64,7 @@ public class PasswordSupportTest {
                 .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
                                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                                 .setRdnIdentifier("uid")
+                                .setOtpAttributes("otpAlgorithm","otpHash","otpSeed","otpSequence")
                                 .build()
                 )
                 .build();
@@ -129,6 +130,21 @@ public class PasswordSupportTest {
     @Test
     public void testBsdCryptUser() throws Exception {
         performSimpleNameTest("bsdCryptUser", BSDUnixDESCryptPassword.class, BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
+    }
+
+    @Test
+    public void testOneTimePasswordUser() throws Exception {
+        CredentialSupport support = simpleToDnRealm.getCredentialSupport(OneTimePassword.class, null);
+        assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
+
+        RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
+        verifyPasswordSupport(identity, OneTimePassword.class);
+
+        OneTimePassword otp = identity.getCredential(OneTimePassword.class, "otp-sha1");
+        assertNotNull(otp);
+        assertEquals(1234, otp.getSequenceNumber());
+        Assert.assertArrayEquals(new byte[] {'a','b','c','d'}, otp.getHash());
+        Assert.assertArrayEquals(new byte[] { 'e', 'f', 'g', 'h' }, otp.getSeed());
     }
 
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {

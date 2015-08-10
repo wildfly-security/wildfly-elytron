@@ -126,6 +126,10 @@ public class LdapSecurityRealmBuilder {
         private boolean searchRecursive = false;
         private String nameAttribute;
         private String passwordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
+        private String otpAlgorithmAttribute = null;
+        private String otpHashAttribute = null;
+        private String otpSeedAttribute = null;
+        private String otpSequenceAttribute = null;
         private int searchTimeLimit = 10000;
         private List<Attribute> attributes = new ArrayList<>();
 
@@ -196,6 +200,14 @@ public class LdapSecurityRealmBuilder {
             return this;
         }
 
+        public PrincipalMappingBuilder setOtpAttributes(String otpAlgorithmAttribute, String otpHashAttribute, String otpSeedAttribute, String otpSequenceAttribute) {
+            this.otpAlgorithmAttribute = otpAlgorithmAttribute;
+            this.otpHashAttribute = otpHashAttribute;
+            this.otpSeedAttribute = otpSeedAttribute;
+            this.otpSequenceAttribute = otpSequenceAttribute;
+            return this;
+        }
+
         /**
          * Define an attribute mapping configuration.
          *
@@ -214,7 +226,8 @@ public class LdapSecurityRealmBuilder {
          */
         public LdapSecurityRealm.PrincipalMapping build() {
             return new LdapSecurityRealm.PrincipalMapping(
-                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, this.passwordAttribute, this.attributes);
+                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, passwordAttribute, otpAlgorithmAttribute,
+                    otpHashAttribute, otpSeedAttribute, otpSequenceAttribute, attributes);
         }
 
         public static class Attribute {

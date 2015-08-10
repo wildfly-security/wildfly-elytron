@@ -77,6 +77,10 @@ class LdapSecurityRealm implements SecurityRealm {
         this.nameRewriter = nameRewriter;
         this.principalMapping = principalMapping;
         this.credentialLoaders.add(new UserPasswordCredentialLoader(this.principalMapping.passwordAttribute));
+        if (this.principalMapping.otpAlgorithmAttribute != null) {
+            this.credentialLoaders.add(new OtpCredentialLoader(this.principalMapping.otpAlgorithmAttribute, this.principalMapping.otpHashAttribute,
+                    this.principalMapping.otpSeedAttribute, this.principalMapping.otpSequenceAttribute));
+        }
     }
 
     @Override
@@ -545,11 +549,17 @@ class LdapSecurityRealm implements SecurityRealm {
         private final boolean searchRecursive;
         private final String rdnIdentifier;
         private final String passwordAttribute;
+        private final String otpAlgorithmAttribute;
+        private final String otpHashAttribute;
+        private final String otpSeedAttribute;
+        private final String otpSequenceAttribute;
         private final List<PrincipalMappingBuilder.Attribute> attributes;
         public final int searchTimeLimit;
 
         public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier,
-                                String passwordAttribute, List<PrincipalMappingBuilder.Attribute> attributes) {
+                                String passwordAttribute, String otpAlgorithmAttribute, String otpHashAttribute,
+                                String otpSeedAttribute, String otpSequenceAttribute,
+                                List<PrincipalMappingBuilder.Attribute> attributes) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             Assert.checkNotNullParam("passwordAttribute", passwordAttribute);
             this.searchDn = searchDn;
@@ -557,6 +567,10 @@ class LdapSecurityRealm implements SecurityRealm {
             this.searchTimeLimit = searchTimeLimit;
             this.rdnIdentifier = rdnIdentifier;
             this.passwordAttribute = passwordAttribute;
+            this.otpAlgorithmAttribute = otpAlgorithmAttribute;
+            this.otpHashAttribute = otpHashAttribute;
+            this.otpSeedAttribute = otpSeedAttribute;
+            this.otpSequenceAttribute = otpSequenceAttribute;
             this.attributes = attributes;
         }
     }

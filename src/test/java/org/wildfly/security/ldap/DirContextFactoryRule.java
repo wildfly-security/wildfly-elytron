@@ -47,7 +47,7 @@ public class DirContextFactoryRule implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 Security.addProvider(provider);
-                LdapService embeddedServer = starEmbeddedServer();
+                LdapService embeddedServer = startEmbeddedServer();
 
                 try {
                     current.evaluate();
@@ -76,7 +76,7 @@ public class DirContextFactoryRule implements TestRule {
                 .build();
     }
 
-    private LdapService starEmbeddedServer() {
+    private LdapService startEmbeddedServer() {
         try {
             return LdapService.builder()
                     .setWorkingDir(new File("./target/apache-ds/working"))
@@ -87,6 +87,7 @@ public class DirContextFactoryRule implements TestRule {
                     .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-attribute-tests.ldif"))
                     .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-role-mapping-tests.ldif"))
                     .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-group-mapping-tests.ldif"))
+                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-otp-tests.ldif"))
                     .addTcpServer("Default TCP", "localhost", LDAP_PORT)
                     .start();
         } catch (Exception e) {
