@@ -21,6 +21,8 @@
  */
 package org.wildfly.security.sasl.util;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,13 +47,23 @@ public class PropertiesSaslServerFactory extends AbstractDelegatingSaslServerFac
      */
     public PropertiesSaslServerFactory(SaslServerFactory delegate, Map<String, ?> properties) {
         super(delegate);
-        this.properties = new HashMap<>(properties);
+        this.properties = new HashMap<>(checkNotNullParam("properties", properties));
+    }
+
+    @Override
+    public String[] getMechanismNames(Map<String, ?> props) {
+        return delegate.getMechanismNames(combine(props, properties));
     }
 
     @Override
     public SaslServer createSaslServer(String mechanism, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        Map<String, Object> merged = new HashMap<>(props);
-        merged.putAll(properties);
-        return delegate.createSaslServer(mechanism, protocol, serverName, merged, cbh);
+        return delegate.createSaslServer(mechanism, protocol, serverName, combine(props, properties), cbh);
+    }
+
+    private static Map<String, ?> combine(Map<String, ?> provided, Map<String, ?> configured) {
+        Map<String, Object> combined = new HashMap<>(provided);
+        combined.putAll( configured);
+
+        return combined;
     }
 }
