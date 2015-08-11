@@ -18,6 +18,7 @@
 package org.wildfly.security.http.util;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -32,11 +33,11 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class AggregateMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+public final class AggregateServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory[] factories;
 
-    public AggregateMechanismFactory(HttpServerAuthenticationMechanismFactory... factories) {
+    public AggregateServerMechanismFactory(HttpServerAuthenticationMechanismFactory... factories) {
         this.factories = checkNotNullParam("factories", factories);
     }
 

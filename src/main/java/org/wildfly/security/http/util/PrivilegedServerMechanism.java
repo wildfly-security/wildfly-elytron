@@ -35,12 +35,12 @@ import org.wildfly.security.http.HttpServerExchange;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-final class PrivilegedHttpMechanism implements HttpServerAuthenticationMechanism {
+final class PrivilegedServerMechanism implements HttpServerAuthenticationMechanism {
 
     private final HttpServerAuthenticationMechanism mechanism;
     private final AccessControlContext accessControlContext;
 
-    PrivilegedHttpMechanism(final HttpServerAuthenticationMechanism mechanism, final AccessControlContext accessControlContext) {
+    PrivilegedServerMechanism(final HttpServerAuthenticationMechanism mechanism, final AccessControlContext accessControlContext) {
         this.mechanism = checkNotNullParam("mechanism", mechanism);
         this.accessControlContext = checkNotNullParam("accessControlContext", accessControlContext);
     }

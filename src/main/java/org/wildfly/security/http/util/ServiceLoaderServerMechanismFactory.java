@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.http.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -38,7 +38,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class ServiceLoaderMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+public final class ServiceLoaderServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final ServiceLoader<HttpServerAuthenticationMechanismFactory> serviceLoader;
 
@@ -49,7 +49,7 @@ public final class ServiceLoaderMechanismFactory implements HttpServerAuthentica
      *
      * @param serviceLoader the {@link ServiceLoader} to use to locate {@link HttpServerAuthenticationMechanismFactory} instances.
      */
-    public ServiceLoaderMechanismFactory(ServiceLoader<HttpServerAuthenticationMechanismFactory> serviceLoader) {
+    public ServiceLoaderServerMechanismFactory(ServiceLoader<HttpServerAuthenticationMechanismFactory> serviceLoader) {
         this.serviceLoader = checkNotNullParam("serviceLoader", serviceLoader);
     }
 
@@ -58,7 +58,7 @@ public final class ServiceLoaderMechanismFactory implements HttpServerAuthentica
      *
      * @param classLoader the {@link ClassLoader} to use to construct a {@link ServiceLoader}.
      */
-    public ServiceLoaderMechanismFactory(ClassLoader classLoader) {
+    public ServiceLoaderServerMechanismFactory(ClassLoader classLoader) {
         this(ServiceLoader.load(HttpServerAuthenticationMechanismFactory.class, checkNotNullParam("classLoader", classLoader)));
     }
 

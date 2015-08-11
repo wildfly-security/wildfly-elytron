@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.http.util;
 
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -40,17 +40,17 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class SecurityProviderHttpMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+public final class SecurityProviderServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private static final String SERVICE_TYPE = HttpServerAuthenticationMechanismFactory.class.getSimpleName();
 
     private final Supplier<Provider[]> providers;
 
-    public SecurityProviderHttpMechanismFactory(Supplier<Provider[]> providers) {
+    public SecurityProviderServerMechanismFactory(Supplier<Provider[]> providers) {
         this.providers = checkNotNullParam("providers", providers);
     }
 
-    public SecurityProviderHttpMechanismFactory() {
+    public SecurityProviderServerMechanismFactory() {
         this(Security::getProviders);
     }
 

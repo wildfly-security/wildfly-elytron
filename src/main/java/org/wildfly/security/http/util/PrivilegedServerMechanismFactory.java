@@ -36,18 +36,18 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class PrivilegedHttpMechanismFactory implements HttpServerAuthenticationMechanismFactory {
+public final class PrivilegedServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
     private final HttpServerAuthenticationMechanismFactory delegate;
     private final AccessControlContext accessControlContext;
 
-    public PrivilegedHttpMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate,
+    public PrivilegedServerMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate,
             final AccessControlContext accessControlContext) {
         this.delegate = checkNotNullParam("delegate", delegate);
         this.accessControlContext = checkNotNullParam("accessControlContext", accessControlContext);
     }
 
-    public PrivilegedHttpMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate) {
+    public PrivilegedServerMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate) {
         this(delegate, AccessController.getContext());
     }
 
@@ -61,7 +61,7 @@ public final class PrivilegedHttpMechanismFactory implements HttpServerAuthentic
             CallbackHandler callbackHandler) {
         HttpServerAuthenticationMechanism serverMechanism = delegate.createAuthenticationMechanism(mechanismName, properties,
                 callbackHandler);
-        return serverMechanism != null ? new PrivilegedHttpMechanism(serverMechanism, accessControlContext) : null;
+        return serverMechanism != null ? new PrivilegedServerMechanism(serverMechanism, accessControlContext) : null;
     }
 
 }
