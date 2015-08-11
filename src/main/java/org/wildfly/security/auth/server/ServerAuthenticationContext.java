@@ -24,10 +24,12 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -60,6 +62,8 @@ import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -84,6 +88,31 @@ public final class ServerAuthenticationContext {
 
     ServerAuthenticationContext(final SecurityDomain domain) {
         this.domain = domain;
+    }
+
+    /**
+     * Create a list of HTTP server side authentication mechanisms that will be used to authenticate against this security
+     * domain. The specified mechanism names should be in the list of names returned from
+     * {@link HttpServerAuthenticationMechanismFactory#getMechanismNames(Map)} for the given factory.
+     *
+     * Any mechanisms specified that are not available will be skipped.
+     *
+     * @param mechanismFactory the {@link HttpServerAuthenticationMechanismFactory} to use when instantiating the mechanisms.
+     * @param mechanismNames the names of the required mechanisms.
+     * @return A {@link List} containing instances of all of the requested mechanisms that were successfully created.
+     */
+    public List<HttpServerAuthenticationMechanism> createHttpServerMechanisms(HttpServerAuthenticationMechanismFactory mechanismFactory, String... mechanismNames) {
+        Assert.checkNotNullParam("mechanismFactory", mechanismFactory);
+        Assert.checkNotNullParam("mechanismNames", mechanismNames);
+        CallbackHandler callbackHandler = createCallbackHandler();
+        List<HttpServerAuthenticationMechanism> mechanisms = new ArrayList<HttpServerAuthenticationMechanism>(mechanismNames.length);
+        for (String currentName : mechanismNames) {
+            HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(currentName, Collections.emptyMap(), callbackHandler);
+            if (mechanism != null) {
+                mechanisms.add(mechanism);
+            }
+        }
+        return Collections.unmodifiableList(mechanisms);
     }
 
     /**
