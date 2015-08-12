@@ -804,6 +804,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
         }
 
+        @Override
+        public org.wildfly.security.authz.Attributes getAttributes() throws RealmUnavailableException {
+            if (identity == null) {
+                identity = getIdentity();
+            }
+            if (identity == null) {
+                throw log.noSuchIdentity();
+            }
+            return identity.getAttributes().asReadOnly();
+        }
+
         private class LdapIdentity {
 
             private final String distinguishedName;
@@ -816,6 +827,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             String getDistinguishedName() {
                 return this.distinguishedName;
+            }
+
+            org.wildfly.security.authz.Attributes getAttributes() {
+                return this.attributes;
             }
         }
 

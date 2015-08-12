@@ -441,6 +441,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             replaceIdentity(newIdentity);
         }
 
+        @Override
+        public Attributes getAttributes() throws RealmUnavailableException {
+            final LoadedIdentity loadedIdentity = loadIdentity(true, false);
+            if (loadedIdentity == null) {
+                throw ElytronMessages.log.fileSystemRealmNotFound(name);
+            }
+            return loadedIdentity.getAttributes().asReadOnly();
+        }
+
         private void replaceIdentity(final LoadedIdentity newIdentity) throws RealmUnavailableException {
             for (;;) {
                 final Path tempPath = tempPath();
