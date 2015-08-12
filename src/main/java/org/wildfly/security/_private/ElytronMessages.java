@@ -18,6 +18,8 @@
 
 package org.wildfly.security._private;
 
+import static org.jboss.logging.Logger.Level.WARN;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,7 +32,6 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 
-import static org.jboss.logging.Logger.Level.WARN;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
@@ -358,6 +359,13 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
 
+    @Message(id = 1088, value = "The security realm does not support attributes")
+    UnsupportedOperationException attributesNotSupportedByRealm();
+
+    @Message(id = 1089, value = "The security realm is not modifiable for identity name \"%s\"")
+    RealmUnavailableException realmIsNotModifiable(String realmIdentity);
+
+    
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
