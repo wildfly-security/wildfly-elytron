@@ -18,8 +18,12 @@
 
 package org.wildfly.security.auth.provider;
 
-import static java.nio.file.StandardOpenOption.*;
-import static javax.xml.stream.XMLStreamConstants.*;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.DSYNC;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -59,23 +63,23 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.CredentialSupport;
-import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
-import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.BasicPasswordSpecEncoding;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.password.interfaces.OneTimePassword;
-import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -606,15 +610,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             }
         }
 
-        private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
+        private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int tag = streamReader.nextTag();
             if (tag != START_ELEMENT || ! ELYTRON_1_0.equals(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
             }
-            return parseIdentityContents(streamReader, skipCredentials, skipRoles);
+            return parseIdentityContents(streamReader, skipCredentials, skipAttributes);
         }
 
-        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
+        private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
@@ -622,7 +626,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             List<Object> credentials = Collections.emptyList();
             Attributes attributes = Attributes.EMPTY;
             boolean gotCredentials = false;
-            boolean gotRoles = false;
+            boolean gotAttributes = false;
             for (;;) {
                 if (streamReader.isEndElement()) {
                     return new LoadedIdentity(name, credentials, attributes);
@@ -637,9 +641,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     } else {
                         credentials = parseCredentials(streamReader);
                     }
-                } else if (! gotRoles && "attributes".equals(streamReader.getLocalName())) {
-                    gotRoles = true;
-                    if (skipRoles) {
+                } else if (! gotAttributes && "attributes".equals(streamReader.getLocalName())) {
+                    gotAttributes = true;
+                    if (skipAttributes) {
                         consumeContent(streamReader);
                     } else {
                         attributes = parseAttributes(streamReader);
