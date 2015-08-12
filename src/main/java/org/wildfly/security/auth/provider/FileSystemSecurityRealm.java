@@ -629,6 +629,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             boolean gotAttributes = false;
             for (;;) {
                 if (streamReader.isEndElement()) {
+                    if (attributes == Attributes.EMPTY && !skipAttributes) {
+                        //Since this could be a use-case wanting to modify the attributes, make sure that we have a
+                        //modifiable version of Attributes;
+                        attributes = new MapAttributes();
+                    }
                     return new LoadedIdentity(name, credentials, attributes);
                 }
                 if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
