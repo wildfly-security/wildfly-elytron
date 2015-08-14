@@ -76,22 +76,6 @@ public class PasswordValidationTest {
     }
 
     @Test
-    public void testVerifyStringPassword() throws Exception {
-        SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactoryRule.create())
-                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setRdnIdentifier("uid")
-                                .build()
-                )
-                .build();
-
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
-
-        assertTrue(realmIdentity.verifyCredential("plainPassword"));
-    }
-
-    @Test
     public void testVerifyCharArrayPassword() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactoryRule.create())

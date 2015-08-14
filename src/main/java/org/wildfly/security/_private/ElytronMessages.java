@@ -226,8 +226,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1046, value = "Unknown password type or algorithm \"%s\"")
     InvalidKeyException unknownPasswordTypeOrAlgorithm(String algorithm);
 
-    @Message(id = 1047, value = "Password-based credentials must be either a String, char[] or ClearPassword")
-    RuntimeException passwordBasedCredentialsMustBeStringCharsOrClearPassword();
+    @Message(id = 1047, value = "Password-based credentials must be either a char[] or ClearPassword")
+    RuntimeException passwordBasedCredentialsMustBeCharsOrClearPassword();
 
     @Message(id = 1048, value = "Invalid password key for algorithm \"%s\"")
     RuntimeException invalidPasswordKeyForAlgorithm(String algorithm, @Cause Throwable cause);
