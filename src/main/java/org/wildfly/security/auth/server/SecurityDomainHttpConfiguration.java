@@ -17,8 +17,12 @@
  */
 package org.wildfly.security.auth.server;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.util._private.UnmodifiableArrayList;
 
 /**
  * A HTTP authentication mechanism configuration, the configuration is associated with the {@link SecurityDomain} and
@@ -53,6 +57,24 @@ public final class SecurityDomainHttpConfiguration {
      */
     public HttpServerAuthenticationMechanismFactory getMechanismFactory() {
         return mechanismFactory;
+    }
+
+    /**
+     * Get the list of HTTP server mechanism names that are provided by the given factory and allowed by this
+     * configuration.
+     *
+     * @return the list of mechanism names
+     */
+    public List<String> getMechanismNames() {
+        final String[] names = mechanismFactory.getMechanismNames(Collections.emptyMap());
+        // todo: filter down based on additional selection criteria
+        if (names == null || names.length == 0) {
+            return Collections.emptyList();
+        } else if (names.length == 1) {
+            return Collections.singletonList(names[0]);
+        } else {
+            return new UnmodifiableArrayList<>(names);
+        }
     }
 
 }
