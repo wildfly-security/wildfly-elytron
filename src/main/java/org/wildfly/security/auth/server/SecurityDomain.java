@@ -22,15 +22,12 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.PermissionCollection;
 import java.security.Principal;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -41,8 +38,6 @@ import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.permission.ElytronPermission;
-import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.util._private.UnmodifiableArrayList;
 
 /**
  * A security domain.  Security domains encapsulate a set of security policies.
@@ -148,25 +143,6 @@ public final class SecurityDomain {
      */
     public SSLServerSocketFactory getSslServerSocketFactory() {
         throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Get the list of SASL server mechanism names that are provided by the given factory and allowed by this
-     * configuration.
-     *
-     * @param saslServerFactory the SASL server factory
-     * @return the list of mechanism names
-     */
-    public List<String> getSaslServerMechanismNames(SaslServerFactory saslServerFactory) {
-        final String[] names = saslServerFactory.getMechanismNames(Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true"));
-        // todo: filter down based on SASL selection criteria
-        if (names == null || names.length == 0) {
-            return Collections.emptyList();
-        } else if (names.length == 1) {
-            return Collections.singletonList(names[0]);
-        } else {
-            return new UnmodifiableArrayList<>(names);
-        }
     }
 
     /**
