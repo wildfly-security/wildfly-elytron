@@ -18,13 +18,17 @@
 
 package org.wildfly.security.auth.server;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.FilterMechanismSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.util._private.UnmodifiableArrayList;
 
 /**
  * A SASL server factory configuration.  The configuration is associated with a security domain, and also includes a
@@ -86,4 +90,23 @@ public final class SecurityDomainSaslConfiguration {
     public SaslServerFactory getSaslServerFactory() {
         return saslServerFactory;
     }
+
+    /**
+     * Get the list of SASL server mechanism names that are provided by the given factory and allowed by this
+     * configuration.
+     *
+     * @return the list of mechanism names
+     */
+    public List<String> getMechanismNames() {
+        final String[] names = saslServerFactory.getMechanismNames(Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true"));
+        // todo: filter down based on SASL selection criteria
+        if (names == null || names.length == 0) {
+            return Collections.emptyList();
+        } else if (names.length == 1) {
+            return Collections.singletonList(names[0]);
+        } else {
+            return new UnmodifiableArrayList<>(names);
+        }
+    }
+
 }
