@@ -52,6 +52,7 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -980,6 +981,12 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 6000, value = "Response code can not be set at this time.")
     IllegalStateException responseCodeNotNow();
+
+    @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
+    HttpAuthenticationException incorrectlyFormattedHeader(String heanderName);
+
+    @Message(id = 6002, value = "An authentication attempt for user '%s' failed validation using mechanism '%s'.")
+    String authenticationFailed(String username, String mechanismName);
 
     /* asn1 package */
 
