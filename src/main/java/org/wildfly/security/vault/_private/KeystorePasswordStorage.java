@@ -362,11 +362,9 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
         // adminKey handling
         keyStore.setEntry(adminKeyAlias, new KeyStore.SecretKeyEntry(adminKey), adminKeyProtectionParam);
         // secret attributes
-        final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         Set<String> vaultKeys = storage.keySet();
         for (String key : vaultKeys) {
-            ClearPassword password = (ClearPassword)passwordFactory.generatePassword(new ClearPasswordSpec(byteArrayDecode(storage.get(key))));
-            keyStore.setEntry(key, new KeyStore.SecretKeyEntry(wrapPassword(password)), adminKeyProtectionParam);
+            keyStore.setEntry(key, new KeyStore.SecretKeyEntry(new SecretKeyWrap(storage.get(key))), adminKeyProtectionParam);
         }
     }
 
@@ -402,7 +400,11 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
                 String alias = storedAliases.nextElement();
                 if (!alias.equalsIgnoreCase(adminKeyAlias)) {
                     KeyStore.SecretKeyEntry secret = (KeyStore.SecretKeyEntry)vaultStorage.getEntry(alias, adminKeyProtectionParam);
-                    storage.put(alias, secret.getSecretKey().getEncoded());
+                    if (secret.getSecretKey() != null) {
+                        storage.put(alias, secret.getSecretKey().getEncoded());
+                    } else {
+                        log.warn("Stored for alias='" + alias + "' is null.");
+                    }
                 }
             }
 
@@ -495,10 +497,6 @@ public class KeystorePasswordStorage extends PasswordStorageSpi {
         } else {
             return CHARS;
         }
-    }
-
-    private SecretKey wrapPassword(final ClearPassword password) {
-        return new SecretKeyWrap(password);
     }
 
     private char[] loadKeyPassword(final Map<String, String> options) throws StorageException {

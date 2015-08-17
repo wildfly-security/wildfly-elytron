@@ -17,19 +17,19 @@
  */
 package org.wildfly.security.vault;
 
-import org.wildfly.security.vault._private.KeystorePasswordStorage;
-
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
+import org.wildfly.security.vault._private.SecretKeyWrap;
 
 /**
  * Utility class to help create {@code KeyStore} for vault tests dynamically.
@@ -118,7 +118,7 @@ public class VaultBuilder {
         return this;
     }
 
-    public void build() throws GeneralSecurityException, IOException {
+    public void build() throws Exception {
 
         if (keyPassword == null) {
             throw new IllegalStateException("keyPassword has to be specified");
@@ -146,32 +146,14 @@ public class VaultBuilder {
         for (Data d : data) {
             byte[] plainData = Normalizer.normalize(new String(d.getSecret()), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
             byte[] encryptedData = cipher.doFinal(plainData);
-            keyStore.setEntry(d.getAlias(), new KeyStore.SecretKeyEntry(wrapToSecretKey(encryptedData)), keyPP);
+            keyStore.setEntry(d.getAlias(), new KeyStore.SecretKeyEntry(new SecretKeyWrap(encryptedData)), keyPP);
         }
 
         keyStore.store(new FileOutputStream(file), storagePassword);
     }
 
-    private static SecretKey wrapToSecretKey(final byte[] buffer) {
-        return new SecretKey() {
-
-            private byte[] key = Arrays.copyOf(buffer, buffer.length);
-
-            @Override
-            public String getAlgorithm() {
-                return null;
-            }
-
-            @Override
-            public String getFormat() {
-                return null;
-            }
-
-            @Override
-            public byte[] getEncoded() {
-                return key;
-            }
-        };
+    private static char[] byteArrayDecode(byte[] buffer) {
+        return new String(buffer, StandardCharsets.UTF_8).toCharArray();
     }
 
 }

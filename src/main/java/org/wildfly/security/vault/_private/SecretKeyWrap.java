@@ -17,71 +17,50 @@
  */
 package org.wildfly.security.vault._private;
 
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
-
-import javax.crypto.SecretKey;
-import javax.security.auth.DestroyFailedException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+
+import javax.crypto.SecretKey;
+
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * Class to wrap {@link ClearPassword} to be able to store it in {@link java.security.KeyStore}
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-class SecretKeyWrap implements SecretKey, Serializable {
+public class SecretKeyWrap implements SecretKey, Serializable {
 
     private static final long serialVersionUID = -4338788143408230538L;
-    private ClearPassword password;
+    private byte[] password;
 
-    SecretKeyWrap(ClearPassword password) {
+    public SecretKeyWrap(byte[] password) {
         this.password = password;
     }
 
     @Override
     public String getAlgorithm() {
-        return password.getAlgorithm();
+        return ClearPassword.ALGORITHM_CLEAR;
     }
 
     @Override
     public String getFormat() {
-        return password.getFormat();
+        return null;
     }
 
     @Override
     public byte[] getEncoded() {
-        return password.getEncoded();
-    }
-
-    @Override
-    public void destroy() throws DestroyFailedException {
-        password.destroy();
-    }
-
-    @Override
-    public boolean isDestroyed() {
-        return password.isDestroyed();
+        return password;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(password.getEncoded());
+        out.writeObject(password != null ? password : (byte[]) null);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        byte[] encoded = (byte[]) in.readObject();
-
-        final PasswordFactory passwordFactory;
-        try {
-            passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-            password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(KeystorePasswordStorage.byteArrayDecode(encoded)));
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw new IOException(e);
-        }
+        byte[] data = (byte[]) in.readObject();
+        password = data;
     }
 }

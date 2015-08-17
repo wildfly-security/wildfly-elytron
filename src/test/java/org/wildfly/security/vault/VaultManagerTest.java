@@ -72,7 +72,7 @@ public class VaultManagerTest {
      * @throws GeneralSecurityException when problem occurs
      */
     @BeforeClass
-    public static void setupVaults() throws IOException, GeneralSecurityException {
+    public static void setupVaults() throws Exception {
         cleanVaults();
         // setup vaults that need to be complete before a test starts
         VaultBuilder.get().keyStoreFile(VAULTS.get("TWO"))
