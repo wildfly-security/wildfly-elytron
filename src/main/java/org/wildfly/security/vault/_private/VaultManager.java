@@ -118,6 +118,15 @@ public final class  VaultManager {
         }
 
         /**
+         * Checks whether this vault has been initialized.
+         * @return {@code true} if vault has already been initialized, {@code false} otherwise
+         * @throws VaultException when vault with given name doesn't exist
+         */
+        public boolean isInitialized() throws VaultException {
+            return VaultManager.this.isInitialized(name);
+        }
+
+        /**
          * Registers the vault with {@link VaultManager}.
          * It doesn't initialize the vault, just registers parameters.
          *
@@ -284,6 +293,20 @@ public final class  VaultManager {
      */
     public void initializeVault(String name) throws VaultException {
         getStorage(name);
+    }
+
+    /**
+     * Checks whether the vault is already initialized.
+     * @param name of the vault to check
+     * @return {@code true} if vault has already been initialized, {@code false} otherwise
+     * @throws VaultException when vault with given name doesn't exist
+     */
+    public boolean isInitialized(String name) throws VaultException {
+        VaultInfo vi = vaults.get(name);
+        if (vi == null) {
+            throw log.vaultDoesNotExist(name);
+        }
+        return vi.vault != null && vi.vault.isInitialized();
     }
 
     /**
