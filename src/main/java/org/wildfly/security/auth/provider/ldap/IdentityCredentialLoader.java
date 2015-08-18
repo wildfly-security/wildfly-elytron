@@ -21,7 +21,7 @@ package org.wildfly.security.auth.provider.ldap;
 import org.wildfly.security.auth.server.CredentialSupport;
 
 /**
- * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
+ * A {@link CredentialLoader} for loading credentials stored in LDAP directory.
  *
  * Implementations of this interface are instantiated for a specific identity, as a result all of the methods on this interface
  * are specific to that identity.

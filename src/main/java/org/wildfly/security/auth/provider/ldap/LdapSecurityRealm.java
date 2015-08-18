@@ -22,10 +22,10 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.password.Password;
@@ -43,8 +43,10 @@ import javax.naming.ldap.Rdn;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,33 +66,46 @@ import static org.wildfly.security._private.ElytronMessages.log;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class LdapSecurityRealm implements SecurityRealm {
+class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     private final DirContextFactory dirContextFactory;
     private final NameRewriter nameRewriter;
     private final PrincipalMapping principalMapping;
     private final List<CredentialLoader> credentialLoaders = new ArrayList<>();
+    private final List<CredentialPersister> credentialPersisters = new ArrayList<>();
 
     LdapSecurityRealm(final DirContextFactory dirContextFactory, final NameRewriter nameRewriter,
                       final PrincipalMapping principalMapping) {
+
         this.dirContextFactory = dirContextFactory;
         this.nameRewriter = nameRewriter;
         this.principalMapping = principalMapping;
         this.credentialLoaders.add(new UserPasswordCredentialLoader(this.principalMapping.passwordAttribute));
+
         if (this.principalMapping.otpAlgorithmAttribute != null) {
-            this.credentialLoaders.add(new OtpCredentialLoader(this.principalMapping.otpAlgorithmAttribute, this.principalMapping.otpHashAttribute,
-                    this.principalMapping.otpSeedAttribute, this.principalMapping.otpSequenceAttribute));
+            OtpCredentialLoader otpCredentialLoader = new OtpCredentialLoader(
+                    this.principalMapping.otpAlgorithmAttribute,
+                    this.principalMapping.otpHashAttribute,
+                    this.principalMapping.otpSeedAttribute,
+                    this.principalMapping.otpSequenceAttribute
+            );
+            this.credentialLoaders.add(otpCredentialLoader);
+            this.credentialPersisters.add(otpCredentialLoader);
         }
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(String name) {
+    public ModifiableRealmIdentity createRealmIdentity(String name) {
         name = nameRewriter.rewriteName(name);
         if (name == null) {
             throw log.invalidName();
         }
 
         return new LdapRealmIdentity(name);
+    }
+
+    @Override public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+        return null;
     }
 
     @Override
@@ -101,8 +116,8 @@ class LdapSecurityRealm implements SecurityRealm {
             return response;
         }
 
-        for (CredentialLoader current : credentialLoaders) {
-            CredentialSupport support = current.getCredentialSupport(dirContextFactory, credentialType);
+        for (CredentialLoader loader : credentialLoaders) {
+            CredentialSupport support = loader.getCredentialSupport(dirContextFactory, credentialType);
             if (support.isDefinitelyObtainable()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -115,7 +130,7 @@ class LdapSecurityRealm implements SecurityRealm {
         return response;
     }
 
-    private class LdapRealmIdentity implements RealmIdentity {
+    private class LdapRealmIdentity implements ModifiableRealmIdentity {
 
         private final String name;
         private LdapIdentity identity;
@@ -142,9 +157,9 @@ class LdapSecurityRealm implements SecurityRealm {
 
             CredentialSupport support = null;
 
-            for (CredentialLoader current : credentialLoaders) {
-                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
-                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, identity.getDistinguishedName());
+            for (CredentialLoader loader : credentialLoaders) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
+                    IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
                     CredentialSupport temp = icl.getCredentialSupport(credentialType);
                     if (temp != null && temp.isDefinitelyObtainable()) {
@@ -176,9 +191,9 @@ class LdapSecurityRealm implements SecurityRealm {
                 return null;
             }
 
-            for (CredentialLoader current : credentialLoaders) {
-                if (current.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
-                    IdentityCredentialLoader icl = current.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+            for (CredentialLoader loader : credentialLoaders) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
+                    IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
                     C credential = icl.getCredential(credentialType);
                     if (credential != null) {
@@ -188,6 +203,48 @@ class LdapSecurityRealm implements SecurityRealm {
             }
 
             return null;
+        }
+
+        private boolean persistCredential(Object credential) throws RealmUnavailableException {
+            for (CredentialPersister persister : credentialPersisters) {
+                IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                if (icp.getCredentialPersistSupport(credential)) {
+                    icp.persistCredential(credential);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void setCredential(Object credential) throws RealmUnavailableException {
+            if (!exists()) {
+                throw log.ldapRealmIdentityNotExists(name);
+            }
+
+            if ( ! persistCredential(credential)) {
+                String algorithm = credential instanceof Key ? ((Key) credential).getAlgorithm() : null;
+                throw log.ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(credential.getClass().getName(), algorithm);
+            }
+        }
+
+        @Override
+        public void setCredentials(List<Object> credentials) throws RealmUnavailableException {
+            if (!exists()) {
+                throw log.ldapRealmIdentityNotExists(name);
+            }
+
+            for (CredentialPersister persister : credentialPersisters) {
+                IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                icp.clearCredentials();
+            }
+
+            for (Object credential : credentials) {
+                if ( ! persistCredential(credential)) {
+                    String algorithm = credential instanceof Key ? ((Key) credential).getAlgorithm() : null;
+                    throw log.ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(credential.getClass().getName(), algorithm);
+                }
+            }
         }
 
         @Override
@@ -470,6 +527,18 @@ class LdapSecurityRealm implements SecurityRealm {
                     }));
         }
 
+        @Override public void delete() throws RealmUnavailableException {
+            throw Assert.unsupported();
+        }
+
+        @Override public void create() throws RealmUnavailableException {
+            throw Assert.unsupported();
+        }
+
+        @Override public void setAttributes(org.wildfly.security.authz.Attributes attributes) throws RealmUnavailableException {
+            throw Assert.unsupported();
+        }
+
         private class LdapIdentity {
 
             private final String distinguishedName;
@@ -521,7 +590,7 @@ class LdapSecurityRealm implements SecurityRealm {
 
                                 return true;
                             } catch (NamingException e) {
-                                throw new RuntimeException("Error while consuming results from search. SearchDn [" + searchDn + "], Filter [" + filter + "], Filter Args [" + filterArgs + "].", e);
+                                throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, filterArgs.toString(), e);
                             }
                         }
                     }, false).onClose(() -> {

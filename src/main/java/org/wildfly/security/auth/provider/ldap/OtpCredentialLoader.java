@@ -1,28 +1,34 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.util.Alphabet;
+import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
+import javax.naming.directory.NoSuchAttributeException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * A {@link CredentialLoader} for loading OTP credentials stored within defined attributes of LDAP entries.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class OtpCredentialLoader implements CredentialLoader {
+public class OtpCredentialLoader implements CredentialLoader, CredentialPersister {
 
     private final String algorithmAttributeName;
     private final String hashAttributeName;
@@ -40,16 +46,17 @@ public class OtpCredentialLoader implements CredentialLoader {
         this.sequenceAttributeName = sequenceAttributeName;
     }
 
-    @Override public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
-        return credentialType == OneTimePassword.class ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+    @Override
+    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
+        return OneTimePassword.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
     @Override
-    public IdentityCredentialLoader forIdentity(DirContextFactory contextFactory, String distinguishedName) {
+    public ForIdentityLoader forIdentity(DirContextFactory contextFactory, String distinguishedName) {
         return new ForIdentityLoader(contextFactory, distinguishedName);
     }
 
-    private class ForIdentityLoader implements IdentityCredentialLoader {
+    private class ForIdentityLoader implements IdentityCredentialLoader, IdentityCredentialPersister {
 
         private final DirContextFactory contextFactory;
         private final String distinguishedName;
@@ -61,12 +68,26 @@ public class OtpCredentialLoader implements CredentialLoader {
 
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType) {
-            Object credential = getCredential(credentialType);
-            // By this point it is either supported or it isn't - no in-between.
-            if (credential != null && credentialType.isInstance(credential)) {
-                return CredentialSupport.FULLY_SUPPORTED;
-            }
+            DirContext context = null;
+            try {
+                context = contextFactory.obtainDirContext(null);
 
+                Attributes attributes = context.getAttributes(distinguishedName,
+                        new String[] { algorithmAttributeName, hashAttributeName, seedAttributeName, sequenceAttributeName });
+                Attribute algorithmAttribute = attributes.get(algorithmAttributeName);
+                Attribute hashAttribute = attributes.get(hashAttributeName);
+                Attribute seedAttribute = attributes.get(seedAttributeName);
+                Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
+
+                if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null) {
+                    return CredentialSupport.FULLY_SUPPORTED;
+                }
+
+            } catch (NamingException e) {
+                // ignored
+            } finally {
+                contextFactory.returnContext(context);
+            }
             return CredentialSupport.UNSUPPORTED;
         }
 
@@ -99,12 +120,59 @@ public class OtpCredentialLoader implements CredentialLoader {
                 }
 
             } catch (NamingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
-                if (ElytronMessages.log.isTraceEnabled()) ElytronMessages.log.trace("Getting OTP credential of type "
+                if (log.isTraceEnabled()) log.trace("Getting OTP credential of type "
                         + credentialType.getName() + " failed. dn=" + distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);
             }
             return null;
+        }
+
+        @Override
+        public boolean getCredentialPersistSupport(Object credential) {
+            return credential instanceof OneTimePassword;
+        }
+
+        @Override
+        public void persistCredential(Object credential) throws RealmUnavailableException {
+            OneTimePassword password = (OneTimePassword) credential;
+            DirContext context = null;
+            try {
+                context = contextFactory.obtainDirContext(null);
+
+                Attributes attributes = new BasicAttributes();
+                attributes.put(algorithmAttributeName, password.getAlgorithm());
+                attributes.put(hashAttributeName, ByteIterator.ofBytes(password.getHash()).base64Encode().drainToString());
+                attributes.put(seedAttributeName, ByteIterator.ofBytes(password.getSeed()).base64Encode().drainToString());
+                attributes.put(sequenceAttributeName, Integer.toString(password.getSequenceNumber()));
+
+                context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
+            } catch (NamingException e) {
+                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
+            } finally {
+                contextFactory.returnContext(context);
+            }
+        }
+
+        @Override public void clearCredentials() throws RealmUnavailableException {
+            DirContext context = null;
+            try {
+                context = contextFactory.obtainDirContext(null);
+
+                Attributes attributes = new BasicAttributes();
+                attributes.put(new BasicAttribute(algorithmAttributeName));
+                attributes.put(new BasicAttribute(hashAttributeName));
+                attributes.put(new BasicAttribute(seedAttributeName));
+                attributes.put(new BasicAttribute(sequenceAttributeName));
+
+                context.modifyAttributes(distinguishedName, DirContext.REMOVE_ATTRIBUTE, attributes);
+            } catch (NoSuchAttributeException e) {
+                // ignore if already clear
+            } catch (NamingException e) {
+                throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
+            } finally {
+                contextFactory.returnContext(context);
+            }
         }
     }
 }

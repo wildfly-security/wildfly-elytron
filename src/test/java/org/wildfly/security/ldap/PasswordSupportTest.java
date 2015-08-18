@@ -21,9 +21,12 @@ package org.wildfly.security.ldap;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -36,21 +39,26 @@ import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.OneTimePasswordSpec;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
  *
- * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
+ * This test case use {@link DirContextFactoryRule} to ensure running embedded LDAP server.
  *
  * Note: Verify {@link TestEnvironmentTest} is working first before focusing on errors in this test case.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class PasswordSupportTest {
 
     @ClassRule
@@ -99,7 +107,8 @@ public class PasswordSupportTest {
 
     @Test
     public void testMd5User() throws Exception {
-        performSimpleNameTest("md5User", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5, "md5Password".toCharArray());
+        performSimpleNameTest("md5User", SimpleDigestPassword.class, SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5,
+                "md5Password".toCharArray());
     }
 
     @Test
@@ -133,7 +142,7 @@ public class PasswordSupportTest {
     }
 
     @Test
-    public void testOneTimePasswordUser() throws Exception {
+    public void testOneTimePasswordUser0() throws Exception {
         CredentialSupport support = simpleToDnRealm.getCredentialSupport(OneTimePassword.class, null);
         assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
 
@@ -143,8 +152,64 @@ public class PasswordSupportTest {
         OneTimePassword otp = identity.getCredential(OneTimePassword.class, "otp-sha1");
         assertNotNull(otp);
         assertEquals(1234, otp.getSequenceNumber());
-        Assert.assertArrayEquals(new byte[] {'a','b','c','d'}, otp.getHash());
+        Assert.assertArrayEquals(new byte[] { 'a', 'b', 'c', 'd' }, otp.getHash());
         Assert.assertArrayEquals(new byte[] { 'e', 'f', 'g', 'h' }, otp.getSeed());
+    }
+
+    @Test
+    public void testOneTimePasswordUser1Update() throws Exception {
+        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'i', 'j', 'k' }, new byte[] { 'l', 'm', 'n' }, 4321);
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
+        final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
+        assertNotNull(password);
+
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        assertNotNull(identity);
+
+        assertEquals(CredentialSupport.UNKNOWN, simpleToDnRealm.getCredentialSupport(OneTimePassword.class, "otp-sha1"));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, identity.getCredentialSupport(OneTimePassword.class, "otp-sha1"));
+
+        identity.setCredential(password);
+
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        assertNotNull(newIdentity);
+
+        verifyPasswordSupport(newIdentity, OneTimePassword.class);
+
+        OneTimePassword otp = newIdentity.getCredential(OneTimePassword.class, "otp-sha1");
+        assertNotNull(otp);
+        assertEquals(4321, otp.getSequenceNumber());
+        Assert.assertArrayEquals(new byte[] { 'i', 'j', 'k' }, otp.getHash());
+        Assert.assertArrayEquals(new byte[] { 'l', 'm', 'n' }, otp.getSeed());
+    }
+
+    @Test
+    public void testOneTimePasswordUser2SetCredentials() throws Exception {
+        OneTimePasswordSpec spec = new OneTimePasswordSpec(new byte[] { 'o', 'p', 'q' }, new byte[] { 'r', 's', 't' }, 65);
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance("otp-sha1");
+        final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
+        assertNotNull(password);
+
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        assertNotNull(identity);
+
+        identity.setCredentials(Collections.EMPTY_LIST);
+        identity.setCredentials(Collections.EMPTY_LIST); // double clearing should not fail
+
+        List<Object> credentials = new LinkedList<>();
+        credentials.add(password);
+        identity.setCredentials(credentials);
+
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        assertNotNull(newIdentity);
+
+        verifyPasswordSupport(newIdentity, OneTimePassword.class);
+
+        OneTimePassword otp = newIdentity.getCredential(OneTimePassword.class, "otp-sha1");
+        assertNotNull(otp);
+        assertEquals(65, otp.getSequenceNumber());
+        Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());
+        Assert.assertArrayEquals(new byte[] { 'r', 's', 't' }, otp.getSeed());
     }
 
     private void performSimpleNameTest(String simpleName, Class<?> credentialType, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
