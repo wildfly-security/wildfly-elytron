@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -47,6 +48,7 @@ import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.ChoiceCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
@@ -461,6 +463,19 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useKeyManagerCredential(X509KeyManager keyManager) {
         return keyManager == null ? without(SetKeyManagerCredentialAuthenticationConfiguration.class) : new SetKeyManagerCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyManager));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given choice if the given
+     * predicate evaluates to {@code true}.
+     *
+     * @param matchPredicate the predicate that should be used to determine if a choice callback type and prompt are
+     *                       relevant for the given choice
+     * @param choice the choice to use if the given predicate evaluates to {@code true}
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useChoice(BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate, String choice) {
+        return matchPredicate == null ? this : new SetChoiceAuthenticationConfiguration(this, matchPredicate, choice);
     }
 
     /**
