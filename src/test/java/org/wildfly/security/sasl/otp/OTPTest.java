@@ -27,11 +27,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_MD5;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA1;
+import static org.wildfly.security.sasl.otp.OTP.getResponseTypeChoiceIndex;
 import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_WORD_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.WORD_RESPONSE;
-import static org.wildfly.security.sasl.otp.OTPUtil.getResponseTypeChoiceIndex;
 
 import java.io.Closeable;
 import java.io.IOException;

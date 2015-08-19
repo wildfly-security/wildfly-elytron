@@ -959,7 +959,7 @@ public interface ElytronMessages extends BasicLogger {
     SaslException saslInvalidOTPAlgorithm(String algorithm);
 
     @Message(id = 5152, value = "Invalid OTP response type")
-    SaslException saslInvalidOTPResponseType();
+    IllegalArgumentException saslInvalidOTPResponseType();
 
     @Message(id = 5153, value = "[%s] Incorrect parity in SASL client message")
     SaslException saslIncorrectParity(String mechName);
