@@ -326,7 +326,7 @@ public class OTPTest extends BaseTestCase {
 
             final CallbackHandler handler =
                     createClientCallbackHandler(algorithm, "userName", "This is a test.", PasswordFormat.PASS_PHRASE, getResponseTypeChoiceIndex(INIT_HEX_RESPONSE),
-                            "ke1235".getBytes(StandardCharsets.UTF_8), "3712dcb4aa5316c1", PasswordFormat.OTP);
+                            algorithm, "ke1235".getBytes(StandardCharsets.UTF_8), 499, "3712dcb4aa5316c1", PasswordFormat.OTP);
             final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
                     Collections.<String, Object>emptyMap(), handler);
 
@@ -379,7 +379,7 @@ public class OTPTest extends BaseTestCase {
 
             final CallbackHandler handler =
                     createClientCallbackHandler(algorithm, "userName", "This is a test.", PasswordFormat.PASS_PHRASE, getResponseTypeChoiceIndex(INIT_WORD_RESPONSE),
-                            "ke1235".getBytes(StandardCharsets.UTF_8), "RED HERD NOW BEAN PA BURG", PasswordFormat.OTP);
+                            algorithm, "ke1235".getBytes(StandardCharsets.UTF_8), 499, "RED HERD NOW BEAN PA BURG", PasswordFormat.OTP);
             final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
                     Collections.<String, Object>emptyMap(), handler);
 
@@ -433,7 +433,7 @@ public class OTPTest extends BaseTestCase {
 
             final CallbackHandler handler =
                     createClientCallbackHandler(algorithm, "userName", "This is a test.", PasswordFormat.PASS_PHRASE, -1,
-                            null, "My new pass phrase", PasswordFormat.PASS_PHRASE);
+                            null, null, 0, "My new pass phrase", PasswordFormat.PASS_PHRASE);
             final SaslClient saslClient = clientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OTP}, null, "test", "testserver1.example.com",
                     Collections.<String, Object>emptyMap(), handler);
 
@@ -943,15 +943,15 @@ public class OTPTest extends BaseTestCase {
 
     private CallbackHandler createClientCallbackHandler(String algorithm, String username, String password,
                                                         PasswordFormat passwordFormat, int responseChoice) throws Exception {
-        return createClientCallbackHandler(algorithm, username, password, passwordFormat, responseChoice, null, null, null);
+        return createClientCallbackHandler(algorithm, username, password, passwordFormat, responseChoice, null, null, 0, null, null);
     }
 
-    private CallbackHandler createClientCallbackHandler(String algorithm, String username, String password,
-                                                        PasswordFormat passwordFormat, int responseChoice,
-                                                        byte[] newSeed, String newPassword, PasswordFormat newPasswordFormat) throws Exception {
+    private CallbackHandler createClientCallbackHandler(String algorithm, String username, String password, PasswordFormat passwordFormat,
+                                                        int responseChoice, String newAlgorithm, byte[] newSeed, int newSequenceNumber,
+                                                        String newPassword, PasswordFormat newPasswordFormat) throws Exception {
         OTPPasswordAndParameterCallbackHandler pwdAndParam =
-                new OTPPasswordAndParameterCallbackHandler(password, passwordFormat,
-                        newSeed, newPassword, newPasswordFormat);
+                new OTPPasswordAndParameterCallbackHandler(password, passwordFormat, newAlgorithm, newSeed, newSequenceNumber,
+                        newPassword, newPasswordFormat);
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
@@ -968,20 +968,24 @@ public class OTPTest extends BaseTestCase {
     private static class OTPPasswordAndParameterCallbackHandler implements CallbackHandler {
         private final PasswordFormat passwordFormat;
         private final String password; // The pass phrase or OTP
+        private final String newAlgorithm;
         private final byte[] newSeed;
+        private final int newSequenceNumber;
         private final PasswordFormat newPasswordFormat;
         private final String newPassword; // The new pass phrase or new OTP
         private boolean currentPasswordProvided;
 
         private OTPPasswordAndParameterCallbackHandler(String password, PasswordFormat passwordFormat) {
-            this(password, passwordFormat, null, null, null);
+            this(password, passwordFormat, null, null, 0, null, null);
         }
 
-        private OTPPasswordAndParameterCallbackHandler(String password, PasswordFormat passwordFormat,
-                                                       byte[] newSeed, String newPassword, PasswordFormat newPasswordFormat) {
+        private OTPPasswordAndParameterCallbackHandler(String password, PasswordFormat passwordFormat, String newAlgorithm, byte[] newSeed,
+                                                       int newSequenceNumber, String newPassword, PasswordFormat newPasswordFormat) {
             this.passwordFormat = passwordFormat;
             this.password = password;
+            this.newAlgorithm = newAlgorithm;
             this.newSeed = newSeed;
+            this.newSequenceNumber = newSequenceNumber;
             this.newPasswordFormat = newPasswordFormat;
             this.newPassword = newPassword;
         }
@@ -994,7 +998,8 @@ public class OTPTest extends BaseTestCase {
                     OneTimePasswordAlgorithmSpec spec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
                     if (currentPasswordProvided) {
                         // Set new password parameters
-                        OneTimePasswordAlgorithmSpec newSpec = new OneTimePasswordAlgorithmSpec(spec.getAlgorithm(), newSeed, spec.getSequenceNumber());
+                        OneTimePasswordAlgorithmSpec newSpec = new OneTimePasswordAlgorithmSpec(newAlgorithm == null ? spec.getAlgorithm() : newAlgorithm,
+                                newSeed == null ? spec.getSeed() : newSeed, newSequenceNumber < 1 ? spec.getSequenceNumber() : newSequenceNumber);
                         parameterCallback.setParameterSpec(newSpec);
                     }
                 } else if (callback instanceof PasswordCallback) {
