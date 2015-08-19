@@ -204,13 +204,11 @@ class LdapSecurityRealm implements SecurityRealm {
 
             if (char[].class.isInstance(credential)) {
                 password = (char[]) credential;
-            } else if (String.class.isInstance(credential)) {
-                password = credential.toString().toCharArray();
             } else if (ClearPassword.class.isInstance(credential)) {
                 ClearPassword clearPassword = (ClearPassword) credential;
                 password = clearPassword.getPassword();
             } else {
-                throw log.passwordBasedCredentialsMustBeStringCharsOrClearPassword();
+                throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
             }
 
             DirContext dirContext = null;

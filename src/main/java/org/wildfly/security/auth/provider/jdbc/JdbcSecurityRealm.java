@@ -202,7 +202,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                     } else if (ClearPassword.class.isInstance(givenCredential)) {
                         guessCredentialChars = ((ClearPassword) givenCredential).getPassword();
                     } else {
-                        throw log.passwordBasedCredentialsMustBeStringCharsOrClearPassword();
+                        throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
                     }
 
                     return passwordFactory.verify((Password) credential, guessCredentialChars);
