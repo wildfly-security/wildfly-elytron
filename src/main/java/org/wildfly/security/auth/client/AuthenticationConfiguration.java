@@ -579,6 +579,10 @@ public abstract class AuthenticationConfiguration {
         return new SetRealmAuthenticationConfiguration(this, realm);
     }
 
+    public AuthenticationConfiguration useExtendedChoiceCallback(int responseChoice) {
+        return new ExtendendChoiceCallbackConfiguration(this, responseChoice);
+    }
+
     // client methods
 
     CallbackHandler getCallbackHandler() {
