@@ -27,11 +27,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_MD5;
 import static org.wildfly.security.password.interfaces.OneTimePassword.ALGORITHM_OTP_SHA1;
-import static org.wildfly.security.sasl.otp.OTP.getResponseTypeChoiceIndex;
 import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_WORD_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.WORD_RESPONSE;
+import static org.wildfly.security.sasl.otp.OTP.getResponseTypeChoiceIndex;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -42,10 +42,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -66,7 +64,6 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
-import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -930,17 +927,6 @@ public class OTPTest extends BaseTestCase {
         };
     }
 
-    private enum PasswordFormat {
-        /**
-         * Pass phrase format.
-         */
-        PASS_PHRASE,
-        /**
-         * Direct OTP format (either hexadecimal or multi-word OTP).
-         */
-        OTP
-    }
-
     private CallbackHandler createClientCallbackHandler(String algorithm, String username, String password,
                                                         PasswordFormat passwordFormat, int responseChoice) throws Exception {
         return createClientCallbackHandler(algorithm, username, password, passwordFormat, responseChoice, null, null, 0, null, null);
@@ -963,69 +949,6 @@ public class OTPTest extends BaseTestCase {
 
 
         return ClientUtils.getCallbackHandler(new URI("seems://irrelevant"), context);
-    }
-
-    private static class OTPPasswordAndParameterCallbackHandler implements CallbackHandler {
-        private final PasswordFormat passwordFormat;
-        private final String password; // The pass phrase or OTP
-        private final String newAlgorithm;
-        private final byte[] newSeed;
-        private final int newSequenceNumber;
-        private final PasswordFormat newPasswordFormat;
-        private final String newPassword; // The new pass phrase or new OTP
-        private boolean currentPasswordProvided;
-
-        private OTPPasswordAndParameterCallbackHandler(String password, PasswordFormat passwordFormat) {
-            this(password, passwordFormat, null, null, 0, null, null);
-        }
-
-        private OTPPasswordAndParameterCallbackHandler(String password, PasswordFormat passwordFormat, String newAlgorithm, byte[] newSeed,
-                                                       int newSequenceNumber, String newPassword, PasswordFormat newPasswordFormat) {
-            this.passwordFormat = passwordFormat;
-            this.password = password;
-            this.newAlgorithm = newAlgorithm;
-            this.newSeed = newSeed;
-            this.newSequenceNumber = newSequenceNumber;
-            this.newPasswordFormat = newPasswordFormat;
-            this.newPassword = newPassword;
-        }
-
-        @Override
-        public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            for (Callback callback : callbacks) {
-                if (callback instanceof ParameterCallback) {
-                    ParameterCallback parameterCallback = (ParameterCallback) callback;
-                    OneTimePasswordAlgorithmSpec spec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
-                    if (currentPasswordProvided) {
-                        // Set new password parameters
-                        OneTimePasswordAlgorithmSpec newSpec = new OneTimePasswordAlgorithmSpec(newAlgorithm == null ? spec.getAlgorithm() : newAlgorithm,
-                                newSeed == null ? spec.getSeed() : newSeed, newSequenceNumber < 1 ? spec.getSequenceNumber() : newSequenceNumber);
-                        parameterCallback.setParameterSpec(newSpec);
-                    }
-                } else if (callback instanceof PasswordCallback) {
-                    PasswordCallback passwordCallback = (PasswordCallback) callback;
-                    if (passwordCallback.getPrompt().equals("Pass phrase")) {
-                        if (passwordFormat == PasswordFormat.PASS_PHRASE) {
-                            currentPasswordProvided = true;
-                            passwordCallback.setPassword(password.toCharArray());
-                        }
-                    } else if (passwordCallback.getPrompt().equals("New pass phrase")) {
-                        if (newPasswordFormat == PasswordFormat.PASS_PHRASE) {
-                            passwordCallback.setPassword(newPassword.toCharArray());
-                        }
-                    } else if (passwordCallback.getPrompt().equals("One-time password")) {
-                        if (passwordFormat == PasswordFormat.OTP) {
-                            currentPasswordProvided = true;
-                            passwordCallback.setPassword(password.toCharArray());
-                        }
-                    } else if (passwordCallback.getPrompt().equals("New one-time password")) {
-                        if (newPasswordFormat == PasswordFormat.OTP) {
-                            passwordCallback.setPassword(newPassword.toCharArray());
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private static final String[] ALTERNATE_DICTIONARY = new String[] {

@@ -365,7 +365,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1089, value = "The security realm is not modifiable for identity name \"%s\"")
     RealmUnavailableException realmIsNotModifiable(String realmIdentity);
 
-    
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
