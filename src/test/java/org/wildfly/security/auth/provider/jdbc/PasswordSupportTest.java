@@ -98,7 +98,7 @@ public class PasswordSupportTest {
     }
 
     @Test
-    public void testVerifyAndObtainBCryptPasswordCredential() throws Exception {
+    public void testVerifyAndObtainBCryptPasswordCredentialUsingModularCrypt() throws Exception {
         String userName = "john";
         String userPassword = "bcrypt_abcd1234";
 
@@ -126,6 +126,36 @@ public class PasswordSupportTest {
 
         // use the new password to obtain a spec and then check if the spec yields the same crypt string.
         assertEquals(cryptString, ModularCrypt.encodeAsString(storedPassword));
+    }
+
+    @Test
+    public void testVerifyAndObtainBCryptPasswordCredential() throws Exception {
+        String userName = "john";
+        String userPassword = "bcrypt_abcd1234";
+        byte[] salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        int iterationCount = 10;
+
+        createBcryptPasswordTable(userName, userPassword, salt, iterationCount);
+
+        JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
+                .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_password where name = ?")
+                .withMapper(
+                        new PasswordKeyMapper(BCryptPassword.ALGORITHM_BCRYPT, 1, 2, 3)
+                )
+                .from(dataSourceRule.getDataSource())
+                .build();
+
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class, null));
+
+        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class, null));
+        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyCredential("invalid".toCharArray()));
+
+        BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class, null);
+
+        assertNotNull(storedPassword);
     }
 
     @Test
@@ -450,6 +480,32 @@ public class PasswordSupportTest {
             preparedStatement.execute();
 
             return cryptString;
+        }
+    }
+
+    private void createBcryptPasswordTable(String userName, String userPassword, byte[] salt, int iterationCount) throws Exception {
+        try (
+                Connection connection = dataSourceRule.getDataSource().getConnection();
+                Statement statement = connection.createStatement();
+        ) {
+            statement.executeUpdate("DROP TABLE IF EXISTS user_bcrypt_password");
+            statement.executeUpdate("CREATE TABLE user_bcrypt_password ( id INTEGER IDENTITY, name VARCHAR(100), password OTHER, salt OTHER, iterationCount INTEGER)");
+        }
+
+        try (
+                Connection connection = dataSourceRule.getDataSource().getConnection();
+                PreparedStatement  preparedStatement = connection.prepareStatement("INSERT INTO user_bcrypt_password (name, password, salt, iterationCount) VALUES (?, ?, ?, ?)");
+        ) {
+            PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+            BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                    new EncryptablePasswordSpec(userPassword.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(iterationCount, salt))
+            );
+
+            preparedStatement.setString(1, userName);
+            preparedStatement.setBytes(2, bCryptPassword.getHash());
+            preparedStatement.setBytes(3, bCryptPassword.getSalt());
+            preparedStatement.setInt(4, bCryptPassword.getIterationCount());
+            preparedStatement.execute();
         }
     }
 

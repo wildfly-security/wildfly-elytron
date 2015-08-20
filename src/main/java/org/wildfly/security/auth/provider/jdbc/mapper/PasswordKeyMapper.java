@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.jdbc.mapper;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -219,7 +220,7 @@ public class PasswordKeyMapper implements KeyMapper {
                 if (ClearPassword.class.equals(credentialType)) {
                     return toClearPassword(hash, passwordFactory);
                 } else if (BCryptPassword.class.equals(credentialType)) {
-                    return passwordFactory.translate(ModularCrypt.decode(toCharArray(hash)));
+                    return toBcryptPassword(hash, salt, iterationCount, passwordFactory);
                 } else if (SaltedSimpleDigestPassword.class.equals(credentialType)) {
                     return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
                 } else if (SimpleDigestPassword.class.equals(credentialType)) {
@@ -233,6 +234,14 @@ public class PasswordKeyMapper implements KeyMapper {
         }
 
         return null;
+    }
+
+    private Password toBcryptPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeyException, InvalidKeySpecException {
+        if (salt == null) {
+            return passwordFactory.translate(ModularCrypt.decode(toCharArray(hash)));
+        }
+
+        return passwordFactory.generatePassword(new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount));
     }
 
     private Object toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
