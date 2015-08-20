@@ -28,10 +28,31 @@ public class HttpConstants {
     }
 
     /*
+     * Authentication Mechanism Names
+     */
+
+    public static final String BASIC = "Basic";
+
+    /*
+     * Header Fields
+     */
+
+    public static final String CHARSET = "charset";
+    public static final String REALM = "realm";
+
+    /*
+     * Header Names
+     */
+
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
+
+    /*
      * Response Codes
      */
 
     public static final int OK = 200;
+    public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
 
 }
