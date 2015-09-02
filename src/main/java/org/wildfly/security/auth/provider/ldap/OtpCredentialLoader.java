@@ -162,7 +162,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
 
                 context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
             } catch (NamingException e) {
-                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
+                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), credentialName, distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);
             }
