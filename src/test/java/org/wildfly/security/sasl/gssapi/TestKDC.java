@@ -22,6 +22,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.exception.LdapInvalidDnException;
@@ -37,7 +40,16 @@ import org.apache.directory.server.core.factory.PartitionFactory;
 import org.apache.directory.server.core.kerberos.KeyDerivationInterceptor;
 import org.apache.directory.server.kerberos.KerberosConfig;
 import org.apache.directory.server.kerberos.kdc.KdcServer;
+import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
+import org.apache.directory.server.kerberos.shared.keytab.Keytab;
+import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
 import org.apache.directory.server.protocol.shared.transport.UdpTransport;
+import org.apache.directory.shared.kerberos.KerberosTime;
+import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
+import org.apache.directory.shared.kerberos.components.EncryptionKey;
+import org.jboss.logging.Logger;
+
+import javax.security.auth.kerberos.KerberosPrincipal;
 
 /**
  * Utility class to wrap starting and stopping of the directory server and the KDC.
@@ -45,7 +57,7 @@ import org.apache.directory.server.protocol.shared.transport.UdpTransport;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class TestKDC {
-
+    private static Logger log = Logger.getLogger(TestKDC.class);
     private File workingDir;
     private DirectoryService directoryService;
     private KdcServer kdcServer;
@@ -197,6 +209,30 @@ public class TestKDC {
         stopKDC();
         stopDirectoryService();
         //cleanWorkingDir();
+    }
+
+
+    public String generateKeyTab(String keyTabFileName, String principal, String password) {
+        log.debug("Generating keytab: " + keyTabFileName);
+        List<KeytabEntry> entries = new ArrayList<>();
+        KerberosTime ktm = new KerberosTime();
+
+        for (Map.Entry<EncryptionType, EncryptionKey> keyEntry : KerberosKeyFactory.getKerberosKeys(principal, password)
+                .entrySet()) {
+            EncryptionKey key = keyEntry.getValue();
+            log.debug("Adding key=" + key);
+            entries.add(new KeytabEntry(principal, KerberosPrincipal.KRB_NT_PRINCIPAL, ktm, (byte) key.getKeyVersion(), key));
+        }
+
+        Keytab keyTab = Keytab.getInstance();
+        keyTab.setEntries(entries);
+        try {
+            File keyTabFile = new File(workingDir, keyTabFileName);
+            keyTab.write(keyTabFile);
+            return keyTabFile.getAbsolutePath();
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot create keytab: ", e);
+        }
     }
 
 }

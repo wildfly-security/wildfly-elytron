@@ -45,7 +45,7 @@ public class JdkClientJdkServer extends BaseGssapiTests {
     @BeforeClass
     public static void initialise() throws LoginException {
         clientSubject = loginClient();
-        serverSubject = loginServer();
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab);
     }
 
     @AfterClass

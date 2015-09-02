@@ -71,6 +71,8 @@ public abstract class BaseGssapiTests extends BaseTestCase {
     private static final String QOP_AUTH_INT = "auth-int";
     private static final String QOP_AUTH_CONF = "auth-conf";
 
+    static final String SERVER_KEY_TAB = "serverKeyTab";
+
     /*
      * A pair of tests just to verify that a Subject can be obtained, in the event of a failure if these tests are failing focus
      * here first.
@@ -78,7 +80,7 @@ public abstract class BaseGssapiTests extends BaseTestCase {
 
     @Test
     public void obtainServer1Subject() throws Exception {
-        Subject subject = loginServer();
+        Subject subject = loginServer(GssapiTestSuite.serverKeyTab);
         assertNotNull(subject);
     }
 

@@ -50,18 +50,24 @@ public class JaasUtil {
 
     public static Subject loginClient() throws LoginException {
         log.debug("loginClient");
-        return login("jduke", "theduke".toCharArray(), false);
+        return login("jduke", "theduke".toCharArray(), false, null);
     }
 
-    public static Subject loginServer() throws LoginException {
+    public static Subject loginServer(String keyTabFile) throws LoginException {
         log.debug("loginServer");
-        return login("sasl/test_server_1", "servicepwd".toCharArray(), true);
+        return login("sasl/test_server_1", "servicepwd".toCharArray(), true, keyTabFile);
     }
 
-    static Subject login(final String userName, final char[] password, final boolean server) throws LoginException {
+    static Subject login(final String userName, final char[] password, final boolean server, final String keyTabFile) throws LoginException {
         Subject theSubject = new Subject();
         CallbackHandler cbh = new UsernamePasswordCBH(userName, password);
-        LoginContext lc = new LoginContext("KDC", theSubject, cbh, createJaasConfiguration(server));
+        Configuration config;
+        if (server) {
+            config = createGssProxyConfiguration(userName, keyTabFile);
+        } else {
+            config = createJaasConfiguration(false);
+        }
+        LoginContext lc = new LoginContext("KDC", theSubject, cbh, config);
         lc.login();
 
         return theSubject;
@@ -88,6 +94,40 @@ public class JaasUtil {
                 } else {
                     options.put("storeKey", "true");
                     options.put("isInitiator", server ? "false" : "true");
+                    entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
+                }
+
+                return entries;
+            }
+
+        };
+    }
+
+    private static Configuration createGssProxyConfiguration(final String principal, final String keyTabFile) {
+        return new Configuration() {
+
+            @Override
+            public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
+                if ("KDC".equals(name) == false) {
+                    throw new IllegalArgumentException(String.format("Unexpected name '%s'", name));
+                }
+
+                AppConfigurationEntry[] entries = new AppConfigurationEntry[1];
+                Map<String, Object> options = new HashMap<String, Object>();
+                options.put("debug", "true");
+                options.put("refreshKrb5Config", "true");
+                options.put("useKeyTab", "true");
+                options.put("keyTab", keyTabFile);
+                options.put("doNotPrompt", "true");
+                options.put("principal", principal);
+
+                if (IS_IBM) {
+                    options.put("noAddress", "true");
+                    options.put("credsType", "acceptor");
+                    entries[0] = new AppConfigurationEntry("com.ibm.security.auth.module.Krb5LoginModule", REQUIRED, options);
+                } else {
+                    options.put("storeKey", "true");
+                    options.put("isInitiator", "false");
                     entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
                 }
 
