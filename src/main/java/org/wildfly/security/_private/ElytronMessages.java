@@ -343,6 +343,21 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1082, value = "Filesystem-backed realm encountered invalid OTP algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidOtpAlgorithm(String algorithm, Path path, int lineNumber, String name, @Cause Throwable cause);
 
+    @Message(id = 1083, value = "Ldap-backed realm cannot to obtain not existing identity \"%s\"")
+    RealmUnavailableException ldapRealmIdentityNotExists(String identity);
+
+    @Message(id = 1084, value = "Error while consuming results from search. SearchDn [%s], Filter [%s], Filter Args [%s].")
+    RuntimeException ldapRealmErrorWhileConsumingResultsFromSearch(String searchDn, String filter, String filterArgs, @Cause Throwable cause);
+
+    @Message(id = 1085, value = "No Ldap-backed realm's persister support credential of type \"%s\" and algorithm \"%s\"")
+    RealmUnavailableException ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(String type, String algorithm);
+
+    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
+    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
+
+    @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
+    RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

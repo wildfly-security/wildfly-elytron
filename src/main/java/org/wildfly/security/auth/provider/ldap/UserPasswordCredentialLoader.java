@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import static org.wildfly.security._private.ElytronMessages.*;
 import static org.wildfly.security.auth.provider.ldap.UserPasswordPasswordUtil.parseUserPassword;
 
 import java.security.spec.InvalidKeySpecException;
@@ -116,12 +117,13 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                     }
                 }
 
-                return null;
             } catch (NamingException | InvalidKeySpecException e) {
-                return null;
+                if (log.isTraceEnabled()) log.trace("Getting user-password credential of type "
+                        + credentialType.getName() + " failed. dn=" + distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);
             }
+            return null;
         }
     }
 

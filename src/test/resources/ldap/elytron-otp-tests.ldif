@@ -1,0 +1,69 @@
+version: 1
+
+# schema for OTP (OIDs are for testing only - should be replaced before production usage)
+dn: m-oid=1.3.6.1.4.1.26782.2.3.1, ou=attributetypes, cn=wildfly, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.3.6.1.4.1.26782.2.3.1
+m-name: otpAlgorithm
+m-description: OTP algorithm ("otp-sha1" for example)
+m-equality: caseIgnoreMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.15
+
+dn: m-oid=1.3.6.1.4.1.26782.2.3.4.1, ou=attributetypes, cn=wildfly, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.3.6.1.4.1.1466.115.121.1.6
+m-name: otpHash
+m-description: OTP previous hash
+m-equality: octetStringMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.40
+
+dn: m-oid=1.3.6.1.4.1.26782.2.2.3.3, ou=attributetypes, cn=wildfly, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.3.6.1.4.1.26782.2.2.3.3
+m-name: otpSeed
+m-description: OTP seed
+m-equality: octetStringMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.40
+
+dn: m-oid=1.3.6.1.4.1.26782.2.2.3.99, ou=attributetypes, cn=wildfly, ou=schema
+objectclass: metaAttributeType
+objectclass: metaTop
+objectclass: top
+m-oid: 1.3.6.1.4.1.26782.2.2.3.99
+m-name: otpSequence
+m-description: OTP sequence counter
+m-equality: integerMatch
+m-syntax: 1.3.6.1.4.1.1466.115.121.1.27
+
+dn: m-oid=1.3.6.1.4.1.26782.2.4.1, ou=objectclasses, cn=wildfly, ou=schema
+objectclass: metaObjectClass
+objectclass: metaTop
+objectclass: top
+m-oid: 1.3.6.1.4.1.26782.2.4.1
+m-name: otpToken
+m-typeObjectClass: AUXILIARY
+m-may: otpAlgorithm
+m-may: otpHash
+m-may: otpSeed
+m-may: otpSequence
+
+# testing users
+dn: uid=userWithOtp,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: person
+objectClass: organizationalPerson
+objectClass: otpToken
+cn: My First Name
+sn: My Last Name
+uid: userWithOtp
+otpAlgorithm: otp-sha1
+otpHash: YWJjZA==
+otpSeed: ZWZnaA==
+otpSequence: 1234
