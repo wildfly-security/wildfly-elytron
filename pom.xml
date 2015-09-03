@@ -31,7 +31,7 @@
 
     <groupId>org.wildfly.security</groupId>
     <artifactId>wildfly-elytron</artifactId>
-    <version>1.0.0.CR2-SNAPSHOT</version>
+    <version>1.0.0.Final</version>
 
     <name>WildFly Elytron</name>
     <description>WildFly Security SPIs</description>
@@ -261,19 +261,4 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>public-jboss</id>
-            <name>Public JBoss Repository Group</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>public-jboss-plugins</id>
-            <name>Public JBoss Repository Group</name>
-            <url>https://repository.jboss.org/nexus/content/groups/public-jboss/</url>
-        </pluginRepository>
-    </pluginRepositories>
 </project>
