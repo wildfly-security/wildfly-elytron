@@ -18,6 +18,7 @@
 
 package org.wildfly.security;
 
+import static org.wildfly.security.http.HttpConstants.BASIC;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
@@ -63,6 +64,8 @@ import java.util.ServiceLoader;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
@@ -79,6 +82,8 @@ public class WildFlyElytronProvider extends Provider {
 
     private static final long serialVersionUID = 1267015094996624988L;
 
+    private static final String HTTP_SERVER_FACTORY_TYPE = HttpServerAuthenticationMechanismFactory.class.getSimpleName();
+
     private static final String SASL_CLIENT_FACTORY_TYPE = SaslClientFactory.class.getSimpleName();
 
     private static final String SASL_SERVER_FACTORY_TYPE = SaslServerFactory.class.getSimpleName();
@@ -88,6 +93,7 @@ public class WildFlyElytronProvider extends Provider {
     public WildFlyElytronProvider() {
         super("WildFlyElytron", 1.0, "WildFly Elytron Provider");
 
+        putHttpAuthenticationMechanismImplementations();
         putKeyStoreImplementations();
         putPasswordImplementations();
         putSaslMechanismImplementations();
@@ -98,6 +104,13 @@ public class WildFlyElytronProvider extends Provider {
         final Map<String, String> emptyMap = Collections.emptyMap();
 
         putService(new Service(this, "KeyStore", "PasswordFile", PasswordKeyStoreSpi.class.getName(), emptyList, emptyMap));
+    }
+
+    private void putHttpAuthenticationMechanismImplementations() {
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, BASIC, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
     }
 
     private void putPasswordImplementations() {
