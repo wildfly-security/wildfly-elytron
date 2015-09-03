@@ -67,6 +67,7 @@ import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 
 /**
  * Client and server side tests for the ISO/IEC 9798-3 authentication SASL mechanism.
@@ -616,14 +617,15 @@ public class EntityTest extends BaseTestCase {
                         final CredentialCallback credentialCallback = (CredentialCallback) callback;
                         KeyStore ks = loadKeyStore(keyStore);
                         for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
-                            if (allowedType == X509Certificate[].class) {
+                            if (allowedType == X509CertificateChainPrivateCredential.class) {
                                 Certificate[] certChain;
                                 if (useWrongCert) {
                                     certChain = ks.getCertificateChain(WRONG_KEYSTORE_ALIAS);
                                 } else {
                                     certChain = ks.getCertificateChain(keyStoreAlias);
                                 }
-                                credentialCallback.setCredential(Arrays.copyOf(certChain, certChain.length, X509Certificate[].class));
+                                credentialCallback.setCredential(new X509CertificateChainPrivateCredential((PrivateKey) ks.getKey(keyStoreAlias, KEYSTORE_PASSWORD),
+                                        Arrays.copyOf(certChain, certChain.length, X509Certificate[].class)));
                                 break;
                             } else if (allowedType == PrivateKey.class) {
                                 credentialCallback.setCredential(ks.getKey(keyStoreAlias, KEYSTORE_PASSWORD));
@@ -675,7 +677,7 @@ public class EntityTest extends BaseTestCase {
                         final CredentialCallback credentialCallback = (CredentialCallback) callback;
                         KeyStore ks = loadKeyStore(keyStore);
                         for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
-                            if (allowedType == X509Certificate[].class) {
+                            if (allowedType == X509CertificateChainPrivateCredential.class) {
                                 Certificate[] certChain = null;
                                 if (useWrongCert) {
                                     certChain = ks.getCertificateChain(WRONG_KEYSTORE_ALIAS);
@@ -708,7 +710,8 @@ public class EntityTest extends BaseTestCase {
                                 } else {
                                     certChain = ks.getCertificateChain(keyStoreAlias);
                                 }
-                                credentialCallback.setCredential(Arrays.copyOf(certChain, certChain.length, X509Certificate[].class));
+                                credentialCallback.setCredential(new X509CertificateChainPrivateCredential((PrivateKey) ks.getKey(keyStoreAlias, KEYSTORE_PASSWORD),
+                                        Arrays.copyOf(certChain, certChain.length, X509Certificate[].class)));
                                 break;
                             } else if (allowedType == PrivateKey.class) {
                                 credentialCallback.setCredential(ks.getKey(keyStoreAlias, KEYSTORE_PASSWORD));
