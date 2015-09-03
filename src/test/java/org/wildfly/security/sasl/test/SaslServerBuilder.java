@@ -23,8 +23,10 @@ package org.wildfly.security.sasl.test;
 
 import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactory;
 
+import java.security.KeyStore;
 import java.security.Permissions;
 import java.security.spec.KeySpec;
+import java.util.List;
 import java.util.Map;
 
 import javax.security.sasl.SaslException;
@@ -38,6 +40,8 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.entity.ConfiguredEntitySaslServerFactory;
+import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.sasl.util.ChannelBindingSaslServerFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslServerFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslServerFactory;
@@ -64,6 +68,12 @@ public class SaslServerBuilder {
     private String protocol;
     private String serverName;
     private boolean dontAssertBuiltServer;
+
+    private List<TrustedAuthority> entityTrustedAuthorities;
+    private KeyStore entityTrustStore;
+    private KeyStore entityKeyStore;
+    private String entityKeyStoreAlias;
+    private char[] entityKeyStorePassword;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;
@@ -134,7 +144,23 @@ public class SaslServerBuilder {
         this.dontAssertBuiltServer = true;
         return this;
     }
+
+    public SaslServerBuilder setEntityInformation(List<TrustedAuthority> trustedAuthorities,
+                                                  KeyStore trustStore, KeyStore keyStore,
+                                                  String keyStoreAlias, char[] keyStorePassword) {
+        this.entityTrustedAuthorities = trustedAuthorities;
+        this.entityTrustStore = trustStore;
+        this.entityKeyStore = keyStore;
+        this.entityKeyStoreAlias = keyStoreAlias;
+        this.entityKeyStorePassword = keyStorePassword;
+        return this;
+    }
+
     public SaslServer build() throws SaslException {
+        return build(null);
+    }
+
+    public SaslServer build(ExtraDecorator decorator) throws SaslException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         domainBuilder.addRealm(realmName, mainRealm);
@@ -155,6 +181,11 @@ public class SaslServerBuilder {
 
         SecurityDomain domain = domainBuilder.build();
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
+
+        if (decorator != null) {
+            factory = decorator.decorate(factory);
+        }
+
         if (properties != null && properties.size() > 0) {
             factory = new PropertiesSaslServerFactory(factory, properties);
         }
@@ -167,6 +198,16 @@ public class SaslServerBuilder {
         if (serverName != null) {
             factory = new ServerNameSaslServerFactory(factory, serverName);
         }
+        if (entityTrustedAuthorities != null || entityKeyStore != null || entityTrustStore != null
+                || entityKeyStoreAlias != null || entityKeyStorePassword != null) {
+            Assert.assertNotNull(entityKeyStore);
+            Assert.assertNotNull(entityKeyStoreAlias);
+            Assert.assertNotNull(entityKeyStorePassword);
+            factory = new ConfiguredEntitySaslServerFactory(factory,
+                    entityTrustedAuthorities, entityTrustStore, entityKeyStore, entityKeyStoreAlias, entityKeyStorePassword);
+        }
+
+
         SaslServer server = domain.createNewAuthenticationContext().createSaslServer(factory, mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);
@@ -201,4 +242,7 @@ public class SaslServerBuilder {
         }
     };
 
+    public interface ExtraDecorator {
+        SaslServerFactory decorate(SaslServerFactory factory);
+    }
 }
