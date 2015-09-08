@@ -67,6 +67,7 @@
         <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.net.ssl>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.net.ssl>
+        <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
@@ -250,6 +251,13 @@
             <groupId>org.wildfly.common</groupId>
             <artifactId>wildfly-common</artifactId>
             <version>${version.org.wildfly.common}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.spec.javax.security.jacc</groupId>
+            <artifactId>jboss-jacc-api_1.5_spec</artifactId>
+            <version>${version.org.jboss.spec.org.jboss.spec.javax.security.jacc}</version>
             <scope>provided</scope>
         </dependency>
 
