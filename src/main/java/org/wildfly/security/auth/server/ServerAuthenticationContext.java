@@ -92,7 +92,7 @@ public final class ServerAuthenticationContext {
     private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
 
     //TODO Find a better home for this constant
-    public final String REALM_IDENTITY_TIMEOUT = "realm-identity-timeout";
+    public static final String REALM_IDENTITY_TIMEOUT = "realm-identity-timeout";
 
     ServerAuthenticationContext(final SecurityDomain domain) {
         this.domain = domain;
@@ -517,10 +517,22 @@ public final class ServerAuthenticationContext {
         return stateRef.get().verifyCredential(credential);
     }
 
+    /**
+     * Gets the realm identity associated with this authentication context
+     *
+     * @return the realm identity
+     * @throws RealmUnavailableException if the realm identity is not available
+     */
     public RealmIdentity getRealmIdentity() throws RealmUnavailableException {
         return stateRef.get().getRealmIdentity();
     }
 
+    /**
+     * Gets the modifiable realm identity associated with this authentication context
+     *
+     * @return the realm identity
+     * @throws RealmUnavailableException if the realm identity is not available, or modifiable
+     */
     public ModifiableRealmIdentity getModifiableRealmIdentity() throws RealmUnavailableException {
         RealmIdentity ri = getRealmIdentity();
         if (ri instanceof ModifiableRealmIdentity == false) {

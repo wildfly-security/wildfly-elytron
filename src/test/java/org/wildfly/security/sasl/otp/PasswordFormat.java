@@ -22,6 +22,8 @@
 package org.wildfly.security.sasl.otp;
 
 /**
+ * The format of a password used in OTP.
+ *
  * @author Kabir Khan
  */
 public enum PasswordFormat {

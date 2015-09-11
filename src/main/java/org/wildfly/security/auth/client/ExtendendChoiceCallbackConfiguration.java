@@ -29,6 +29,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security.auth.callback.ExtendedChoiceCallback;
 
 /**
+ * Configuration to handle the extended choice callback
+ *
  * @author Kabir Khan
  */
 class ExtendendChoiceCallbackConfiguration extends AuthenticationConfiguration {
