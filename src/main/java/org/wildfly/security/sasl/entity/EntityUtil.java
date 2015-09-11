@@ -581,7 +581,8 @@ class EntityUtil {
                         case AUTHORITY_CERTIFICATE:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, true)) {
                                 decoder.decodeImplicit(trustedAuthorityType);
-                                byte[] cert = decoder.drainElementValue();
+                                byte[] cert = decoder.drainElement();
+                                cert[0] = SEQUENCE_TYPE; // Replace the trusted authority type tag with a DER SEQUENCE tag, as required by CertificateFactory#generateCertificate
                                 try {
                                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
                                     trustedAuthority = new CertificateTrustedAuthority((X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert)));
