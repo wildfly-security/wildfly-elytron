@@ -107,7 +107,7 @@ public final class ServerAuthenticationContext {
         CallbackHandler callbackHandler = createCallbackHandler();
         List<HttpServerAuthenticationMechanism> mechanisms = new ArrayList<HttpServerAuthenticationMechanism>(mechanismNames.length);
         for (String currentName : mechanismNames) {
-            HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(currentName, Collections.emptyMap(), callbackHandler);
+            HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(currentName, domain.getCategoryRoleMappers(), callbackHandler);
             if (mechanism != null) {
                 mechanisms.add(mechanism);
             }
@@ -393,7 +393,7 @@ public final class ServerAuthenticationContext {
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity);
+        final SecurityIdentity securityIdentity = new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity, domain.getCategoryRoleMappers());
         if (securityIdentity.getPermissions().implies(new RunAsPrincipalPermission(name))) {
             CompleteState newState = new CompleteState(securityIdentity);
             while (! stateRef.compareAndSet(oldState, newState)) {
@@ -429,7 +429,7 @@ public final class ServerAuthenticationContext {
         }
         RealmInfo realmInfo = oldState.getRealmInfo();
         final AuthorizationIdentity authorizationIdentity = oldState.getRealmIdentity().getAuthorizationIdentity();
-        CompleteState newState = new CompleteState(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity));
+        CompleteState newState = new CompleteState(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity, domain.getCategoryRoleMappers()));
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
             if (oldState.isDone()) {
