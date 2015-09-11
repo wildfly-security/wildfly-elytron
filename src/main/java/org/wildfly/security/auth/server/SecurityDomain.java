@@ -29,8 +29,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import javax.net.ssl.SSLServerSocketFactory;
-
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -55,7 +53,6 @@ public final class SecurityDomain {
     private final NameRewriter preRealmRewriter;
     private final RealmMapper realmMapper;
     private final NameRewriter postRealmRewriter;
-    private final boolean anonymousAllowed;
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
     private final PrincipalDecoder principalDecoder;
@@ -84,7 +81,6 @@ public final class SecurityDomain {
         }
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
-        anonymousAllowed = false;
         final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
         anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers);
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
@@ -148,25 +144,6 @@ public final class SecurityDomain {
             throw ElytronMessages.log.unrecognizedPrincipalType(principal);
         }
         return mapName(name);
-    }
-
-    /**
-     * Get an SSL server socket factory that authenticates against this security domain.
-     *
-     * @return the server socket factory
-     */
-    public SSLServerSocketFactory getSslServerSocketFactory() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Determine whether anonymous authorization is allowed.  Note that this applies only to login authentication
-     * protocols and not transport layer security (TLS).
-     *
-     * @return {@code true} if anonymous logins are allowed, {@code false} if anonymous logins are disallowed
-     */
-    public boolean isAnonymousAllowed() {
-        return anonymousAllowed;
     }
 
     SecurityRealm getRealm(final String realmName) {
