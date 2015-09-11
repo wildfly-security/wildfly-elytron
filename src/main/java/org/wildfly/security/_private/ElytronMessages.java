@@ -194,9 +194,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1034, value = "Invalid credential type specified")
     IllegalStateException invalidCredentialTypeSpecified();
 
-    //1035
+    @Message(id = 1035, value = "Unable to create key manager")
+    IOException unableToCreateKeyManager(@Cause Exception e);
 
-    //1036
+    @Message(id = 1036, value = "Unable to create trust manager")
+    IOException unableToCreateTrustManager(@Cause Exception e);
 
     //1037
 

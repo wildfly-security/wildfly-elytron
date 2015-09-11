@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
@@ -40,6 +41,7 @@ import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -53,7 +55,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
     }
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
         this.entryFactory = entryFactory;
     }
 
@@ -77,13 +79,19 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             } else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
+                final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
                 if (certificateChain == null || certificateChain.length == 0) {
-                    credentialCallback.setCredential(privateKeyEntry.getPrivateKey());
+                    credentialCallback.setCredential(privateKey);
                     return;
                 } else {
                     final Certificate certificate = privateKeyEntry.getCertificate();
-                    if (certificate instanceof X509Certificate) {
-                        credentialCallback.setCredential(new X500PrivateCredential((X509Certificate) certificate, privateKeyEntry.getPrivateKey()));
+                    if ((certificate instanceof X509Certificate)
+                            && credentialCallback.isCredentialSupported(X500PrivateCredential.class, privateKey.getAlgorithm())) {
+                        credentialCallback.setCredential(new X500PrivateCredential((X509Certificate) certificate, privateKey));
+                        return;
+                    } else if ((certificateChain instanceof X509Certificate[])
+                            && (credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm()))) {
+                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, (X509Certificate[]) certificateChain));
                         return;
                     }
                 }
