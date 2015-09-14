@@ -56,7 +56,10 @@ import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.authz.AuthorizationCheckException;
+import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.util.DecodeException;
 
@@ -364,6 +367,12 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
+
+    @Message(id = 1088, value = "Attempting to run as \"%s\" authorization operation failed")
+    AuthorizationFailureException runAsAuthorizationFailed(@Param Principal principal, Principal targetPrincipal, @Cause Throwable cause);
+
+    @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
+    AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
     /* keystore package */
 
