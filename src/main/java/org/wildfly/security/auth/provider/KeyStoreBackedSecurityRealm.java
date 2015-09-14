@@ -87,10 +87,6 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        public String getName() {
-            return name;
-        }
-
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
             final KeyStore.Entry entry = getEntry(name);

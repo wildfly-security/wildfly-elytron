@@ -20,7 +20,6 @@ package org.wildfly.security.auth.server;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.authz.AuthorizationIdentity;
 
 /**
@@ -29,17 +28,9 @@ import org.wildfly.security.authz.AuthorizationIdentity;
  * The life of a {@code RealmIdentity} is short and is for a specific authentication attempt. A {@link SecurityRealm} creating a
  * {@code RealmIdentity} does not confirm the existence of the identity.
  *
- *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public interface RealmIdentity {
-
-    /**
-     * Get the identity's name within the realm.
-     *
-     * @return the name of the identity within the realm
-     */
-    String getName();
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
@@ -102,10 +93,6 @@ public interface RealmIdentity {
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
 
-        public String getName() {
-            return "anonymous";
-        }
-
         public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             return CredentialSupport.UNSUPPORTED;
         }
@@ -129,38 +116,28 @@ public interface RealmIdentity {
 
     /**
      * An identity for a non-existent user.
-     *
-     * @param name the identity name
-     * @return the realm identity
      */
-    static RealmIdentity nonExistentIdentity(String name) {
-        Assert.checkNotNullParam("name", name);
-        return new RealmIdentity() {
+    RealmIdentity NON_EXISTENT = new RealmIdentity() {
 
-            public String getName() {
-                return name;
-            }
+        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return CredentialSupport.UNSUPPORTED;
+        }
 
-            public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-                return CredentialSupport.UNSUPPORTED;
-            }
+        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return null;
+        }
 
-            public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-                return null;
-            }
+        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+            return false;
+        }
 
-            public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
-                return false;
-            }
+        public boolean exists() throws RealmUnavailableException {
+            return false;
+        }
 
-            public boolean exists() throws RealmUnavailableException {
-                return false;
-            }
-
-            public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-                // todo: exception hierarchy
-                throw log.userDoesNotExist();
-            }
-        };
-    }
+        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+            // todo: exception hierarchy
+            throw log.userDoesNotExist();
+        }
+    };
 }

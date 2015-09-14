@@ -133,11 +133,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return CredentialSupport.UNSUPPORTED;

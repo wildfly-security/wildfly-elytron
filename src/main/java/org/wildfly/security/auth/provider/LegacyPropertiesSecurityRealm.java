@@ -87,10 +87,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         return new RealmIdentity() {
 
-            public String getName() {
-                return name;
-            }
-
             @Override
             public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
                 return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) : CredentialSupport.UNSUPPORTED;

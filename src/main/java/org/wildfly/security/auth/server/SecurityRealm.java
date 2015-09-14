@@ -55,7 +55,7 @@ public interface SecurityRealm {
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
         public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
-            return RealmIdentity.nonExistentIdentity(name);
+            return RealmIdentity.NON_EXISTENT;
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {

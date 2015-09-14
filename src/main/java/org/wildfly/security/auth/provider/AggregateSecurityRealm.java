@@ -52,7 +52,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         try {
             final RealmIdentity authorizationIdentity = authorizationRealm.createRealmIdentity(name);
             try {
-                final Identity identity = new Identity(name, authenticationIdentity, authorizationIdentity);
+                final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
                 ok = true;
                 return identity;
             } finally {
@@ -69,18 +69,12 @@ public final class AggregateSecurityRealm implements SecurityRealm {
 
     static final class Identity implements RealmIdentity {
 
-        private final String name;
         private final RealmIdentity authenticationIdentity;
         private final RealmIdentity authorizationIdentity;
 
-        Identity(final String name, final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
-            this.name = name;
+        Identity(final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
             this.authenticationIdentity = authenticationIdentity;
             this.authorizationIdentity = authorizationIdentity;
-        }
-
-        public String getName() {
-            return name;
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {

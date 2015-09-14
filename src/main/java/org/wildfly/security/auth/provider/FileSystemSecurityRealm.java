@@ -238,11 +238,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         Identity(final String name, final Path path) {
             this.name = name;
             this.path = path;
-
-        }
-
-        public String getName() {
-            return name;
         }
 
         public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
@@ -309,9 +304,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             try {
                 Files.delete(path);
             } catch (NoSuchFileException e) {
-                throw ElytronMessages.log.fileSystemRealmNotFound(getName());
+                throw ElytronMessages.log.fileSystemRealmNotFound(name);
             } catch (IOException e) {
-                throw ElytronMessages.log.fileSystemRealmDeleteFailed(getName(), e);
+                throw ElytronMessages.log.fileSystemRealmDeleteFailed(name, e);
             }
         }
 
@@ -353,13 +348,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         streamWriter.writeEndElement();
                         streamWriter.writeEndDocument();
                     } catch (XMLStreamException e) {
-                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getName(), e);
+                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
                     }
                 } catch (FileAlreadyExistsException ignored) {
                     // try a new name
                     continue;
                 } catch (IOException e) {
-                    throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, getName(), e);
+                    throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, name, e);
                 }
                 try {
                     Files.createLink(path, tempPath);
@@ -369,9 +364,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     } catch (IOException e2) {
                         e.addSuppressed(e2);
                     }
-                    throw ElytronMessages.log.fileSystemRealmAlreadyExists(getName(), e);
+                    throw ElytronMessages.log.fileSystemRealmAlreadyExists(name, e);
                 } catch (IOException e) {
-                    throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getName(), e);
+                    throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
                 }
                 try {
                     Files.delete(tempPath);
@@ -392,7 +387,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             removeCredentialOfTheSameType(credentials, credential);
             credentials.add(credential);
 
-            final LoadedIdentity newIdentity = new LoadedIdentity(getName(), credentials, loadedIdentity.getAttributes());
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());
             replaceIdentity(newIdentity);
         }
 
@@ -417,7 +412,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            final LoadedIdentity newIdentity = new LoadedIdentity(getName(), credentials, loadedIdentity.getAttributes());
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());
             replaceIdentity(newIdentity);
         }
 
@@ -427,7 +422,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            final LoadedIdentity newIdentity = new LoadedIdentity(getName(), loadedIdentity.getCredentials(), attributes);
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, loadedIdentity.getCredentials(), attributes);
             replaceIdentity(newIdentity);
         }
 
@@ -440,7 +435,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         try (AutoCloseableXMLStreamWriterHolder holder = new AutoCloseableXMLStreamWriterHolder(xmlOutputFactory.createXMLStreamWriter(outputStream))) {
                             writeIdentity(holder.getXmlStreamWriter(), newIdentity);
                         } catch (XMLStreamException | InvalidKeySpecException | NoSuchAlgorithmException | CertificateEncodingException e) {
-                            throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getName(), e);
+                            throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
                         }
                     } catch (FileAlreadyExistsException ignored) {
                         // try a new name
@@ -451,7 +446,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         } catch (IOException e2) {
                             e.addSuppressed(e2);
                         }
-                        throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, getName(), e);
+                        throw ElytronMessages.log.fileSystemRealmFailedToOpen(tempPath, name, e);
                     }
                     try {
                         Files.delete(path);
@@ -466,9 +461,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         } catch (IOException e2) {
                             e.addSuppressed(e2);
                         }
-                        throw ElytronMessages.log.fileSystemRealmAlreadyExists(getName(), e);
+                        throw ElytronMessages.log.fileSystemRealmAlreadyExists(name, e);
                     } catch (IOException e) {
-                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, getName(), e);
+                        throw ElytronMessages.log.fileSystemRealmFailedToWrite(tempPath, name, e);
                     }
                     try {
                         Files.delete(tempPath);
@@ -597,19 +592,19 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     final XMLStreamReader streamReader = holder.getXmlStreamReader();
                     return parseIdentity(streamReader, skipCredentials, skipAttributes);
                 } catch (XMLStreamException e) {
-                    throw ElytronMessages.log.fileSystemRealmFailedToRead(path, getName(), e);
+                    throw ElytronMessages.log.fileSystemRealmFailedToRead(path, name, e);
                 }
             } catch (NoSuchFileException | FileNotFoundException ignored) {
                 return null;
             } catch (IOException e) {
-                throw ElytronMessages.log.fileSystemRealmFailedToOpen(path, getName(), e);
+                throw ElytronMessages.log.fileSystemRealmFailedToOpen(path, name, e);
             }
         }
 
         private LoadedIdentity parseIdentity(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
             final int tag = streamReader.nextTag();
             if (tag != START_ELEMENT || ! ELYTRON_1_0.equals(streamReader.getNamespaceURI()) || ! "identity".equals(streamReader.getLocalName())) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             return parseIdentityContents(streamReader, skipCredentials, skipRoles);
         }
@@ -617,7 +612,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         private LoadedIdentity parseIdentityContents(final XMLStreamReader streamReader, final boolean skipCredentials, final boolean skipRoles) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             List<Object> credentials = Collections.emptyList();
             Attributes attributes = Attributes.EMPTY;
@@ -628,7 +623,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     return new LoadedIdentity(name, credentials, attributes);
                 }
                 if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if (! gotCredentials && "credentials".equals(streamReader.getLocalName())) {
                     gotCredentials = true;
@@ -652,7 +647,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         private List<Object> parseCredentials(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             if (streamReader.nextTag() == END_ELEMENT) {
                 return Collections.emptyList();
@@ -660,7 +655,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             List<Object> credentials = new ArrayList<>();
             do {
                 if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
                     credentials.add(parsePassword(streamReader));
@@ -671,7 +666,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 } else if ("otp".equals(streamReader.getLocalName())) {
                     credentials.add(parseOtp(streamReader));
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             } while (streamReader.nextTag() != END_ELEMENT);
             return credentials;
@@ -684,7 +679,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             for (int i = 0; i < attributeCount; i ++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
                 if ("algorithm".equals(localName)) {
@@ -692,7 +687,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 } else if ("format".equals(localName)) {
                     format = streamReader.getAttributeValue(i);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             }
             final String text = streamReader.getElementText().trim();
@@ -707,7 +702,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
                     return (X509Certificate) certificateFactory.generateCertificate(CodePointIterator.ofString(text).base64Decode().asInputStream());
                 } catch (CertificateException | ClassCastException e) {
-                    throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path, streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
@@ -715,20 +710,20 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         private PrivateKey parsePrivateKey(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             return parseCredential(streamReader, (algorithm, format, text) -> {
                 if (algorithm == null) {
-                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
                 }
                 try {
                     final KeySpec keySpec;
                     if (format == null || format.equals("X.509")) {
                         keySpec = new X509EncodedKeySpec(CodePointIterator.ofString(text).base64Decode().drain());
                     } else {
-                        throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), getName());
+                        throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                     }
                     return KeyFactory.getInstance(algorithm).generatePrivate(keySpec);
                 } catch (InvalidKeySpecException e) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                 } catch (NoSuchAlgorithmException e) {
-                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), getName(), e);
+                    throw ElytronMessages.log.fileSystemRealmUnsupportedKeyAlgorithm(format, path, streamReader.getLocation().getLineNumber(), name, e);
                 }
             });
         }
@@ -744,15 +739,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         if (passwordSpec != null) {
                             return passwordFactory.generatePassword(passwordSpec);
                         } else {
-                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), getName());
+                            throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name);
                         }
                     } else if (MCF_FORMAT.equals(format)) {
                         return ModularCrypt.decode(text);
                     } else {
-                        throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), getName());
+                        throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                     }
                 } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
@@ -767,7 +762,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             for (int i = 0; i < attributeCount; i ++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
                 if ("algorithm".equals(localName)) {
@@ -779,28 +774,28 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 } else if ("sequence".equals(localName)) {
                     sequenceNumber = Integer.parseInt(streamReader.getAttributeValue(i));
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             }
 
             if (streamReader.nextTag() != END_ELEMENT) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
 
             try {
                 PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                 return passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
             } catch (InvalidKeySpecException e) {
-                throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path, streamReader.getLocation().getLineNumber(), getName(), e);
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path, streamReader.getLocation().getLineNumber(), name, e);
             } catch (NoSuchAlgorithmException e) {
-                throw ElytronMessages.log.fileSystemRealmInvalidOtpAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), getName(), e);
+                throw ElytronMessages.log.fileSystemRealmInvalidOtpAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name, e);
             }
         }
 
         private Attributes parseAttributes(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             int tag = streamReader.nextTag();
             if (tag == END_ELEMENT) {
@@ -809,12 +804,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             Attributes attributes = new MapAttributes();
             do {
                 if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("attribute".equals(streamReader.getLocalName())) {
                     parseAttribute(streamReader, attributes);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
             } while (streamReader.nextTag() == START_ELEMENT);
             return attributes;
@@ -827,25 +822,25 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             for (int i = 0; i < attributeCount; i++) {
                 String namespace = streamReader.getAttributeNamespace(i);
                 if (namespace != null && !namespace.equals("")) {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
                 }
                 if ("name".equals(streamReader.getAttributeLocalName(i))) {
                     name = streamReader.getAttributeValue(i);
                 } else if ("value".equals(streamReader.getAttributeLocalName(i))) {
                     value = streamReader.getAttributeValue(i);
                 } else {
-                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                    throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
                 }
             }
             if (name == null) {
-                throw ElytronMessages.log.fileSystemRealmMissingAttribute("name", path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("name", path, streamReader.getLocation().getLineNumber(), this.name);
             }
             if (value == null) {
-                throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmMissingAttribute("value", path, streamReader.getLocation().getLineNumber(), this.name);
             }
             attributes.addLast(name, value);
             if (streamReader.nextTag() != END_ELEMENT) {
-                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), getName());
+                throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), this.name);
             }
         }
 
