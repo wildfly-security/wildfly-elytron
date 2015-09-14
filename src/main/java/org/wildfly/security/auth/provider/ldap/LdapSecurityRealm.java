@@ -28,7 +28,6 @@ import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 import javax.naming.NamingEnumeration;
@@ -43,7 +42,6 @@ import javax.naming.ldap.Rdn;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -68,6 +66,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 class LdapSecurityRealm implements ModifiableSecurityRealm {
 
+    public final String VERIFIABLE_CREDENTIAL_NAME = "ldap-verifiable"; // TODO setable?
+
     private final DirContextFactory dirContextFactory;
     private final NameRewriter nameRewriter;
     private final PrincipalMapping principalMapping;
@@ -84,6 +84,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
         if (this.principalMapping.otpAlgorithmAttribute != null) {
             OtpCredentialLoader otpCredentialLoader = new OtpCredentialLoader(
+                    OtpCredentialLoader.DEFAULT_CREDENTIAL_NAME, // TODO setable?
                     this.principalMapping.otpAlgorithmAttribute,
                     this.principalMapping.otpHashAttribute,
                     this.principalMapping.otpSeedAttribute,
@@ -109,15 +110,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
+    public CredentialSupport getCredentialSupport(final String credentialName) {
+        Assert.checkNotNullParam("credentialName", credentialName);
         CredentialSupport response = CredentialSupport.UNSUPPORTED;
 
-        if (Password.class.isAssignableFrom(credentialType) == false) {
-            return response;
+        if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
+            return CredentialSupport.VERIFIABLE_ONLY;
         }
 
         for (CredentialLoader loader : credentialLoaders) {
-            CredentialSupport support = loader.getCredentialSupport(dirContextFactory, credentialType);
+            CredentialSupport support = loader.getCredentialSupport(dirContextFactory, credentialName);
             if (support.isDefinitelyObtainable()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -140,12 +142,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) == CredentialSupport.UNSUPPORTED) {
+            if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
+                return CredentialSupport.VERIFIABLE_ONLY;
+            }
+
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return CredentialSupport.UNSUPPORTED;
             }
@@ -153,10 +160,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             CredentialSupport support = null;
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeObtainable()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
-                    CredentialSupport temp = icl.getCredentialSupport(credentialType);
+                    CredentialSupport temp = icl.getCredentialSupport(credentialName);
                     if (temp != null && temp.isDefinitelyObtainable()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
@@ -176,21 +183,23 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) == CredentialSupport.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == CredentialSupport.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialType).mayBeObtainable()) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeObtainable()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-                    C credential = icl.getCredential(credentialType);
+                    C credential = icl.getCredential(credentialName, credentialType);
                     if (credential != null) {
                         return credential;
                     }
@@ -200,11 +209,11 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             return null;
         }
 
-        private boolean persistCredential(Object credential) throws RealmUnavailableException {
+        private boolean persistCredential(String credentialName, Object credential) throws RealmUnavailableException {
             for (CredentialPersister persister : credentialPersisters) {
                 IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
-                if (icp.getCredentialPersistSupport(credential)) {
-                    icp.persistCredential(credential);
+                if (icp.getCredentialPersistSupport(credentialName)) {
+                    icp.persistCredential(credentialName, credential);
                     return true;
                 }
             }
@@ -212,19 +221,34 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public void setCredential(Object credential) throws RealmUnavailableException {
+        public void setCredential(String credentialName, Object credential) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credential", credential);
+
             if (!exists()) {
                 throw log.ldapRealmIdentityNotExists(name);
             }
 
-            if ( ! persistCredential(credential)) {
-                String algorithm = credential instanceof Key ? ((Key) credential).getAlgorithm() : null;
-                throw log.ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(credential.getClass().getName(), algorithm);
+            if ( ! persistCredential(credentialName, credential)) {
+                throw log.ldapRealmsPersisterNotSupportCredentialName(credentialName);
             }
         }
 
         @Override
-        public void setCredentials(List<Object> credentials) throws RealmUnavailableException {
+        public void deleteCredential(String credentialName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+
+            if (!exists()) {
+                throw log.ldapRealmIdentityNotExists(name);
+            }
+
+            throw Assert.unsupported(); // TODO
+        }
+
+        @Override
+        public void setCredentials(Map<String, Object> credentials) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentials", credentials);
+
             if (!exists()) {
                 throw log.ldapRealmIdentityNotExists(name);
             }
@@ -234,10 +258,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 icp.clearCredentials();
             }
 
-            for (Object credential : credentials) {
-                if ( ! persistCredential(credential)) {
-                    String algorithm = credential instanceof Key ? ((Key) credential).getAlgorithm() : null;
-                    throw log.ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(credential.getClass().getName(), algorithm);
+            for (Map.Entry<String, Object> credentialEntry : credentials.entrySet()) {
+                if ( ! persistCredential(credentialEntry.getKey(), credentialEntry.getValue())) {
+                    throw log.ldapRealmsPersisterNotSupportCredentialName(credentialEntry.getKey());
                 }
             }
         }
@@ -251,13 +274,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credential", credential);
+            if ( ! VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
+                return false;
+            }
             if (!exists()) {
                 return false;
             }
 
             char[] password;
-
             if (char[].class.isInstance(credential)) {
                 password = (char[]) credential;
             } else if (ClearPassword.class.isInstance(credential)) {

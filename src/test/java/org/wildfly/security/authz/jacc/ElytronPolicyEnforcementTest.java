@@ -213,11 +213,12 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
     }
 
     private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {
-        Password defaultUnsecurePassword;
+        Map<String, Password> defaultUnsecurePasswords;
 
         try {
-            defaultUnsecurePassword = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
-                    .generatePassword(new ClearPasswordSpec("password".toCharArray()));
+            defaultUnsecurePasswords = Collections.singletonMap("clear",
+                    PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
+                    .generatePassword(new ClearPasswordSpec("password".toCharArray())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -226,6 +227,6 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
 
         attributes.addAll(RoleDecoder.KEY_ROLES, Arrays.asList(roles));
 
-        securityRealm.put(userName, new SimpleRealmEntry(defaultUnsecurePassword, attributes));
+        securityRealm.put(userName, new SimpleRealmEntry(defaultUnsecurePasswords, attributes));
     }
 }

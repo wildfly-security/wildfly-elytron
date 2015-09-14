@@ -48,6 +48,8 @@ import org.wildfly.security.password.PasswordFactory;
 public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     private final KeyStore keyStore;
 
+    public final char USER_CREDENTIAL_DELIMITER = '|';
+
     /**
      * Construct a new instance.
      *
@@ -63,8 +65,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
-        return credentialType.isAssignableFrom(SecretKey.class) || credentialType.isAssignableFrom(Password.class) || credentialType.isAssignableFrom(X500PrivateCredential.class) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+    public CredentialSupport getCredentialSupport(final String credentialName) {
+        return CredentialSupport.UNKNOWN;
     }
 
     private KeyStore.Entry getEntry(String name) {
@@ -88,34 +90,17 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
-            final KeyStore.Entry entry = getEntry(name);
+        public CredentialSupport getCredentialSupport(final String credentialName) {
+            final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) {
                 return CredentialSupport.UNSUPPORTED;
             }
-            if (entry instanceof PasswordEntry) {
-                final Password password = ((PasswordEntry) entry).getPassword();
-                if (credentialType.isInstance(password)) {
-                    return CredentialSupport.FULLY_SUPPORTED;
-                } else {
-                    return CredentialSupport.UNSUPPORTED;
-                }
-            } else if (entry instanceof KeyStore.PrivateKeyEntry) {
-                final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                final Certificate certificate = privateKeyEntry.getCertificate();
-                return credentialType.isInstance(privateKey) || credentialType.isInstance(certificate) || certificate instanceof X509Certificate && X500PrivateCredential.class.isAssignableFrom(credentialType) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
-            } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                return credentialType.isInstance(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
-            } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                return credentialType.isInstance(((KeyStore.SecretKeyEntry) entry).getSecretKey()) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
-            }
-            return CredentialSupport.UNSUPPORTED;
+            return CredentialSupport.FULLY_SUPPORTED;
         }
 
         @Override
-        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) {
-            final KeyStore.Entry entry = getEntry(name);
+        public <C> C getCredential(final String credentialName, final Class<C> credentialType) {
+            final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) return null;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
@@ -153,8 +138,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             };
         }
 
-        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
-            final KeyStore.Entry entry = getEntry(name);
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) return false;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();

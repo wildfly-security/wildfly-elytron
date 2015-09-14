@@ -21,6 +21,7 @@ package org.wildfly.security.ldap;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.password.Password;
@@ -28,6 +29,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -54,7 +56,10 @@ public class PasswordValidationTest {
         PasswordFactory instance = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         Password password = instance.generatePassword(passwordSpec);
 
-        assertTrue(realmIdentity.verifyCredential(password));
+        CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
+        assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
+
+        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", password));
     }
 
     @Test
@@ -72,7 +77,10 @@ public class PasswordValidationTest {
         PasswordFactory instance = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         Password password = instance.generatePassword(passwordSpec);
 
-        assertTrue(realmIdentity.verifyCredential(password));
+        CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
+        assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
+
+        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", password));
     }
 
     @Test
@@ -88,7 +96,7 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        assertTrue(realmIdentity.verifyCredential("plainPassword".toCharArray()));
+        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", "plainPassword".toCharArray()));
     }
 
     @Test (expected = RuntimeException.class)
@@ -104,6 +112,6 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        assertTrue(realmIdentity.verifyCredential(Integer.valueOf(123456)));
+        realmIdentity.verifyCredential("ldap-verifiable", Integer.valueOf(123456));
     }
 }

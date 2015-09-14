@@ -20,14 +20,12 @@ package org.wildfly.security.auth.server;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.FilterMechanismSaslServerFactory;
-import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util._private.UnmodifiableArrayList;
 
 /**
@@ -49,12 +47,17 @@ public final class SecurityDomainSaslConfiguration {
     public SecurityDomainSaslConfiguration(final SecurityDomain securityDomain, final SaslServerFactory saslServerFactory) {
         this.securityDomain = Assert.checkNotNullParam("securityDomain", securityDomain);
         Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
+
+        // TODO [ELY-292] filtering should work differently with credential names
+        this.saslServerFactory = saslServerFactory;
+        /*
         this.saslServerFactory = new FilterMechanismSaslServerFactory(saslServerFactory, name -> {
             final Set<Class<?>> credentialTypes = SaslMechanismInformation.getSupportedServerCredentialTypes(name);
             if (credentialTypes == null) {
                 // unknown, just pass
                 return true;
             }
+
             for (Class<?> credentialType : credentialTypes) {
                 final Set<String> algorithms = SaslMechanismInformation.getSupportedServerCredentialAlgorithms(name, credentialType);
                 if (algorithms.isEmpty()) {
@@ -71,6 +74,7 @@ public final class SecurityDomainSaslConfiguration {
             }
             return false;
         });
+        */
     }
 
     /**

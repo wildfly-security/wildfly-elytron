@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -31,6 +32,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.AuthenticationInformation;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.CredentialSupport;
@@ -53,7 +55,9 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     }
 
     SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
-        this(delegate instanceof X509ExtendedTrustManager ? (X509ExtendedTrustManager) delegate : new WrappingX509ExtendedTrustManager(delegate), securityDomain, credentialDecoder);
+        this(delegate instanceof X509ExtendedTrustManager ?
+                (X509ExtendedTrustManager) delegate :
+                new WrappingX509ExtendedTrustManager(delegate), securityDomain, credentialDecoder);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -83,19 +87,23 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         boolean ok = false;
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
-            final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(X509Certificate.class, subjectCertificate.getSigAlgName());
-            if (credentialSupport.mayBeVerifiable()) {
-                if (! authenticationContext.verifyCredential(subjectCertificate)) {
-                    throw ElytronMessages.log.notTrusted(principal);
+
+            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
+            builder.setMechanismType("SSL");
+            // TODO mechanismName, protocol, authenticationName
+            List<String> credentialNames = securityDomain.mapCredentials(builder.build());
+            for (String credentialName : credentialNames) {
+
+                final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(credentialName);
+                if (credentialSupport.mayBeVerifiable() && authenticationContext.verifyCredential(credentialName, subjectCertificate)) {
+                    authenticationContext.succeed();
+                    if (handshakeSession != null) {
+                        handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
+                    }
+                    ok = true;
                 }
-            } else {
-                throw ElytronMessages.log.notTrusted(principal);
             }
-            authenticationContext.succeed();
-            if (handshakeSession != null) {
-                handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
-            }
-            ok = true;
+            throw ElytronMessages.log.notTrusted(principal);
         } catch (RealmUnavailableException e) {
             throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
         } finally {

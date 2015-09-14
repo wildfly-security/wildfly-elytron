@@ -65,10 +65,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
         for (QueryConfiguration configuration : this.queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                if (credentialType.equals(keyMapper.getKeyType())) {
+                if (keyMapper.getCredentialName().equals(credentialName)) {
                     // by default, all credential types are supported if they have a corresponding mapper.
                     // however, we don't know if an account or realm identity has a specific credential or not.
                     return CredentialSupport.UNKNOWN;
@@ -89,10 +89,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
+                    if (keyMapper.getCredentialName().equals(credentialName)) {
                         return executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
                     }
                 }
@@ -102,10 +102,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getKeyType().isAssignableFrom(credentialType)) {
+                    if (keyMapper.getCredentialName().equals(credentialName)) {
                         return executePrincipalQuery(configuration, resultSet -> credentialType.cast(keyMapper.map(resultSet)));
                     }
                 }
@@ -115,12 +115,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(Object credential) throws RealmUnavailableException {
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
             if (credential != null) {
                 for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                    for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                        if (Password.class.isAssignableFrom(keyMapper.getKeyType())) {
-                            PasswordKeyMapper passwordMapper = (PasswordKeyMapper) keyMapper;
+                    for (PasswordKeyMapper passwordMapper : configuration.getColumnMappers(PasswordKeyMapper.class)) {
+                        if (passwordMapper.getCredentialName().equals(credentialName)) {
                             return verifyPassword(configuration, passwordMapper, credential);
                         }
                     }

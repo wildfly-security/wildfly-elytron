@@ -32,11 +32,6 @@ import javax.naming.directory.DirContext;
 
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
-import org.wildfly.security.password.interfaces.SimpleDigestPassword;
-import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored within the 'userPassword' attribute of LDAP entries.
@@ -46,14 +41,22 @@ import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 class UserPasswordCredentialLoader implements CredentialLoader {
 
     static final String DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME = "userPassword";
-    static Map<Class<?>, CredentialSupport> DEFAULT_CREDENTIAL_SUPPORT = new HashMap<>();
+    static Map<String, CredentialSupport> DEFAULT_CREDENTIAL_SUPPORT = new HashMap<>();
 
     static {
-        DEFAULT_CREDENTIAL_SUPPORT.put(ClearPassword.class, CredentialSupport.UNKNOWN);
-        DEFAULT_CREDENTIAL_SUPPORT.put(SimpleDigestPassword.class, CredentialSupport.UNKNOWN);
-        DEFAULT_CREDENTIAL_SUPPORT.put(SaltedSimpleDigestPassword.class, CredentialSupport.UNKNOWN);
-        DEFAULT_CREDENTIAL_SUPPORT.put(BSDUnixDESCryptPassword.class, CredentialSupport.UNKNOWN);
-        DEFAULT_CREDENTIAL_SUPPORT.put(UnixDESCryptPassword.class, CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("clear", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("md5", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("sha1", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("sha256", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("sha384", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("sha512", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("smd5", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("ssha", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("ssha256", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("ssha384", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("ssha512", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("crypt_", CredentialSupport.UNKNOWN);
+        DEFAULT_CREDENTIAL_SUPPORT.put("crypt", CredentialSupport.UNKNOWN);
     }
 
     private final String userPasswordAttributeName;
@@ -63,11 +66,17 @@ class UserPasswordCredentialLoader implements CredentialLoader {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
-        CredentialSupport response = DEFAULT_CREDENTIAL_SUPPORT.get(credentialType);
+    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
+
+        String[] credentialNameParts = credentialName.split("-");
+        if (credentialNameParts.length < 2 || ! credentialNameParts[0].equals(userPasswordAttributeName)) {
+            return CredentialSupport.UNSUPPORTED;
+        }
+
+        CredentialSupport response = DEFAULT_CREDENTIAL_SUPPORT.get(credentialNameParts[1]);
 
         if (response == null) {
-            response = CredentialSupport.UNSUPPORTED;
+            return CredentialSupport.UNSUPPORTED;
         }
 
         return response;
@@ -89,28 +98,32 @@ class UserPasswordCredentialLoader implements CredentialLoader {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
-            Object credential = getCredential(credentialType);
+        public CredentialSupport getCredentialSupport(final String credentialName) {
+            Object credential = getCredential(credentialName, Object.class);
             // By this point it is either supported or it isn't - no in-between.
-            if (credential != null && credentialType.isInstance(credential)) {
+            if (credential != null) {
                 return CredentialSupport.FULLY_SUPPORTED;
             }
-
             return CredentialSupport.UNSUPPORTED;
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) {
+        public <C> C getCredential(String credentialName, Class<C> credentialType) {
             DirContext context = null;
+            String[] credentialNameParts = credentialName.split("-");
+            if (credentialNameParts.length < 2) {
+                if (log.isTraceEnabled()) log.trace("User-password credential name \"" + credentialName + "\" is not in attribute-type form - not supported by LDAP realm");
+                return null;
+            }
             try {
                 context = contextFactory.obtainDirContext(null);
 
-                Attributes attributes = context.getAttributes(distinguishedName, new String[] { userPasswordAttributeName });
-                Attribute attribute = attributes.get(userPasswordAttributeName);
+                Attributes attributes = context.getAttributes(distinguishedName, new String[] { credentialNameParts[0] });
+                Attribute attribute = attributes.get(credentialNameParts[0]);
                 for (int i = 0; i < attribute.size(); i++) {
                     byte[] value = (byte[]) attribute.get(i);
 
-                    Password password = parseUserPassword(value);
+                    Password password = parseUserPassword(value, credentialNameParts[1]);
 
                     if (credentialType.isInstance(password)) {
                         return credentialType.cast(password);
@@ -118,7 +131,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
                 }
 
             } catch (NamingException | InvalidKeySpecException e) {
-                if (log.isTraceEnabled()) log.trace("Getting user-password credential of type "
+                if (log.isTraceEnabled()) log.trace("Getting user-password credential "
                         + credentialType.getName() + " failed. dn=" + distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);

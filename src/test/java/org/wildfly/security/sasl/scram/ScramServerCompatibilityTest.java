@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -44,7 +43,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
-import org.wildfly.security.sasl.test.ServerCallbackHandler;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.CodePointIterator;
 
@@ -301,11 +299,16 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        //Use the test callback handler here since it does some extra validation of the authzid
-        CallbackHandler cbh = new ServerCallbackHandler("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "clear", new ClearPasswordSpec("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray()), "strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301");
-        final SaslServer saslServer = serverFactory.createSaslServer(SaslMechanismInformation.Names.SCRAM_SHA_1, "protocol", "server", Collections.emptyMap(), cbh);
-        assertNotNull(saslServer);
-        assertTrue(saslServer instanceof ScramSaslServer);
+        Permissions permissions = new Permissions();
+        permissions.add(new RunAsPrincipalPermission("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301"));
+
+        final SaslServer saslServer =
+                new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
+                        .setProtocol("protocol")
+                        .setUserName("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301")
+                        .setPassword("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray())
+                        .setPermissionsMap(Collections.singletonMap("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", permissions))
+                        .build();
 
         byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);

@@ -75,6 +75,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param map the password map
      */
     public void setPasswordMap(final Map<String, SimpleRealmEntry> map) {
+        Assert.checkNotNullParam("map", map);
         this.map = map;
     }
 
@@ -85,8 +86,12 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param password the password
      * @param attributes the identity attributes
      */
-    public void setPasswordMap(final String name, final Password password, final Attributes attributes) {
-        map = Collections.singletonMap(name, new SimpleRealmEntry(password, attributes));
+    public void setPasswordMap(final String name, final String credentialName, final Password password, final Attributes attributes) {
+        Assert.checkNotNullParam("name", name);
+        Assert.checkNotNullParam("credentialName", credentialName);
+        Assert.checkNotNullParam("password", password);
+        Assert.checkNotNullParam("attributes", attributes);
+        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonMap(credentialName, password), attributes));
     }
 
     /**
@@ -95,8 +100,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param name the entry name
      * @param password the password
      */
-    public void setPasswordMap(final String name, final Password password) {
-        map = Collections.singletonMap(name, new SimpleRealmEntry(password));
+    public void setPasswordMap(final String name, final String credentialName, final Password password) {
+        Assert.checkNotNullParam("name", name);
+        Assert.checkNotNullParam("credentialName", credentialName);
+        Assert.checkNotNullParam("password", password);
+        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonMap(credentialName, password)));
     }
 
     @Override
@@ -120,8 +128,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) {
-        return Password.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+    public CredentialSupport getCredentialSupport(final String credentialName) {
+        Assert.checkNotNullParam("credentialName", credentialName);
+        return CredentialSupport.UNKNOWN;
     }
 
     private class SimpleMapRealmIdentity implements RealmIdentity {
@@ -132,19 +141,20 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) {
+        public CredentialSupport getCredentialSupport(final String credentialName) {
+            Assert.checkNotNullParam("credentialName", credentialName);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return CredentialSupport.UNSUPPORTED;
-            final Password password = entry.getPassword();
-            return credentialType.isInstance(password) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+            return entry.getPassword(credentialName) != null ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType, final String algorithmName) {
+        public <C> C getCredential(String credentialName, Class<C> credentialType) {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
-            final Password password = entry.getPassword();
+            final Password password = entry.getPassword(credentialName);
             return credentialType.isInstance(password) ? credentialType.cast(password) : null;
         }
 
@@ -155,18 +165,19 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credential", credential);
             try {
                 SimpleRealmEntry entry = map.get(name);
                 if (entry == null) {
                     return false;
                 }
 
+                final Password password = entry.getPassword(credentialName);
                 if (credential instanceof char[]) {
-                    final Password password = entry.getPassword();
                     return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
                 } else if (credential instanceof ClearPassword) {
-                    final Password password = entry.getPassword();
                     return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((ClearPassword) credential).getPassword());
                 } else {
                     return false;

@@ -41,7 +41,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(getDataSource())
                 .build();
 
@@ -59,7 +59,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear", ClearPassword.ALGORITHM_CLEAR, 1))
                     .withMapper(new AttributeMapper(2, "firstName"))
                     .withMapper(new AttributeMapper(3, "lastName"))
                     .withMapper(new AttributeMapper(4, "email"))
@@ -82,10 +82,10 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear1", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(getDataSource())
                 .principalQuery("SELECT firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear2", ClearPassword.ALGORITHM_CLEAR, 1))
                     .withMapper(new AttributeMapper(1, "firstName"))
                     .withMapper(new AttributeMapper(2, "lastName"))
                     .withMapper(new AttributeMapper(3, "email"))
@@ -112,10 +112,10 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear1", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(getDataSource())
                 .principalQuery("SELECT role_name FROM role_mapping_table WHERE user_name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear2", ClearPassword.ALGORITHM_CLEAR, 1))
                     .withMapper(new AttributeMapper(1, RoleDecoder.KEY_ROLES))
                     .from(getDataSource())
                 .build();
@@ -140,7 +140,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT role_name FROM role_mapping_table WHERE user_name = ?")
-                .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                .withMapper(new PasswordKeyMapper("clear", ClearPassword.ALGORITHM_CLEAR, 1))
                 .withMapper(new AttributeMapper(1, RoleDecoder.KEY_ROLES))
                 .from(getDataSource())
                 .build();
@@ -167,11 +167,11 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT role_name FROM role_mapping_table WHERE user_name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear1", ClearPassword.ALGORITHM_CLEAR, 1))
                     .withMapper(new AttributeMapper(1, allInOneAttributeName))
                     .from(getDataSource())
                 .principalQuery("SELECT firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear2", ClearPassword.ALGORITHM_CLEAR, 1))
                     .withMapper(new AttributeMapper(1, allInOneAttributeName))
                     .withMapper(new AttributeMapper(2, allInOneAttributeName))
                     .withMapper(new AttributeMapper(3, allInOneAttributeName))

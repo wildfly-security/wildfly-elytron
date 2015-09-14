@@ -31,19 +31,20 @@ import org.wildfly.security.auth.server.CredentialSupport;
 interface IdentityCredentialLoader {
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported, or definitely not
-     * supported.
+     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
      *
-     * @param credentialType the credential type to check
+     * @param credentialName the credential name to check
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(Class<?> credentialType);
+    CredentialSupport getCredentialSupport(String credentialName);
 
     /**
      * Acquire a credential of the given type.
      *
-     * @param credentialType the credential type
-     * @return the credential, or {@code null} if the principal has no credential of that type
+     * @param <C> the type to which should be credential casted
+     * @param credentialName the name of the credential
+     * @param credentialType the class of type to which should be credential casted
+     * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      */
-    <C> C getCredential(Class<C> credentialType);
+    <C> C getCredential(String credentialName, Class<C> credentialType);
 }

@@ -26,10 +26,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 import java.security.KeyStore;
-import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
-import java.security.cert.Certificate;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -75,42 +73,40 @@ public class KeyStoreBackedSecurityRealmTest {
         RealmIdentity realmIdentity = realm.createRealmIdentity("elytron");
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(Password.class, null));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(PrivateKey.class, null));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(Certificate.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("credential1"));
+        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport("credential2"));
 
         // as a result, the only type that will yield a non null credential is Password.
-        Password password = realmIdentity.getCredential(Password.class, null);
+        Password password = realmIdentity.getCredential("credential1", Password.class);
         assertNotNull("Invalid null password", password);
         assertTrue("Invalid password type", password instanceof UnixMD5CryptPassword);
 
         // other types must result in a null credential.
-        assertNull("Invalid non null password", realmIdentity.getCredential(PrivateKey.class, null));
-        assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class, null));
+        assertNull("Invalid non null password", realmIdentity.getCredential("credential2", Password.class));
 
         // the realm identity must be able to verify the password for the user "elytron".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("passwd12#$".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential("credential1", "passwd12#$".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential1", "wrongpass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential2", "wrongpass".toCharArray()));
 
         // now create a realm identity that represents the user "javajoe" (password is of type BCrypt).
         realmIdentity = realm.createRealmIdentity("javajoe");
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(Password.class, null));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(PrivateKey.class, null));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(Certificate.class, null));
+        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("credential2"));
+        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport("credential1"));
 
         // as a result, the only type that will yield a non null credential is Password.
-        password = realmIdentity.getCredential(Password.class, null);
+        password = realmIdentity.getCredential("credential2", Password.class);
         assertNotNull("Invalid null password", password);
         assertTrue("Invalid password type", password instanceof BCryptPassword);
 
         // other types must result in a null credential.
-        assertNull("Invalid non null password", realmIdentity.getCredential(PrivateKey.class, null));
-        assertNull("Invalid non null password", realmIdentity.getCredential(Certificate.class, null));
+        assertNull("Invalid non null password", realmIdentity.getCredential("credential1", Password.class));
 
         // the realm identity must be able to verify the password for the user "javajoe".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("$#21pass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyCredential("credential2", "$#21pass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential2", "wrongpass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential1", "$#21pass".toCharArray()));
     }
 }

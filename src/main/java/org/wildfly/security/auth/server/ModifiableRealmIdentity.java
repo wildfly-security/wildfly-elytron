@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
-import java.util.List;
+import java.util.Map;
 
 import org.wildfly.security.authz.Attributes;
 
@@ -46,21 +46,30 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
     void create() throws RealmUnavailableException;
 
     /**
-     * Replace list of credentials of this identity.  If the identity does not exist, an exception is thrown.
+     * Replace map of credentials of this identity.  If the identity does not exist, an exception is thrown.
      *
-     * @param credentials the new list of credentials
+     * @param credentials the new map of credentials
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
-    void setCredentials(List<Object> credentials) throws RealmUnavailableException;
+    void setCredentials(Map<String, Object> credentials) throws RealmUnavailableException;
 
     /**
      * Add new credential of this identity.  If the identity does not exist, an exception is thrown.
      * If credential of the same type of the same identity already exist, it is replaced.
      *
+     * @param credentialName the name of the credential
      * @param credential the new credential
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
-    void setCredential(Object credential) throws RealmUnavailableException;
+    void setCredential(String credentialName, Object credential) throws RealmUnavailableException;
+
+    /**
+     * Delete credential of this identity by name.  If the identity or credential does not exist, an exception is thrown.
+     *
+     * @param credentialName the name of the credential
+     * @throws RealmUnavailableException if updating the credentials fails for some reason
+     */
+    void deleteCredential(String credentialName) throws RealmUnavailableException;
 
     /**
      * Modify the attributes collection of this identity.  If the identity does not exist, an exception is thrown.

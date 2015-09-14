@@ -91,33 +91,38 @@ public class PasswordKeyMapper implements KeyMapper {
     private final String algorithm;
     private int salt = -1;
     private int iterationCount = -1;
+    private final String credentialName;
     private final Class<?> passwordType;
 
     /**
      * Constructs a new instance.
      *
+     * @param credentialName name of the credential which is output of this mapper
      * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
      * @param hash the column index from where the password in its clear, hash or encoded form is obtained
      * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
      */
-    public PasswordKeyMapper(String algorithm, int hash) throws InvalidKeyException {
+    public PasswordKeyMapper(String credentialName, String algorithm, int hash) throws InvalidKeyException {
+        Assert.checkNotNullParam("credentialName", credentialName);
         Assert.checkNotNullParam("algorithm", algorithm);
         Assert.checkMinimumParameter("hash", 1, hash);
         this.algorithm = algorithm;
         this.passwordType = toPasswordType(algorithm);
         this.hash = hash;
+        this.credentialName = credentialName;
     }
 
     /**
      * Constructs a new instance.
      *
+     * @param credentialName name of the credential which is output of this mapper
      * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
      * @param hash the column index from where the password in its clear, hash or encoded form is obtained
      * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
      * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
      */
-    public PasswordKeyMapper(String algorithm, int hash, int salt) throws InvalidKeyException {
-        this(algorithm, hash);
+    public PasswordKeyMapper(String credentialName, String algorithm, int hash, int salt) throws InvalidKeyException {
+        this(credentialName, algorithm, hash);
         Assert.checkMinimumParameter("salt", 1, salt);
         this.salt = salt;
     }
@@ -131,15 +136,15 @@ public class PasswordKeyMapper implements KeyMapper {
      * @param iterationCount the column index from where the iteration count or cost, if supported by the given algorithm, is obtained
      * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
      */
-    public PasswordKeyMapper(String algorithm, int hash, int salt, int iterationCount) throws InvalidKeyException {
-        this(algorithm, hash, salt);
+    public PasswordKeyMapper(String credentialName, String algorithm, int hash, int salt, int iterationCount) throws InvalidKeyException {
+        this(credentialName, algorithm, hash, salt);
         Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
         this.iterationCount = iterationCount;
     }
 
     @Override
-    public Class<?> getKeyType() {
-        return this.passwordType;
+    public String getCredentialName() {
+        return this.credentialName;
     }
 
     @Override
@@ -215,17 +220,15 @@ public class PasswordKeyMapper implements KeyMapper {
             PasswordFactory passwordFactory = getPasswordFactory(getAlgorithm());
 
             try {
-                Class<?> credentialType = getKeyType();
-
-                if (ClearPassword.class.equals(credentialType)) {
+                if (ClearPassword.class.equals(passwordType)) {
                     return toClearPassword(hash, passwordFactory);
-                } else if (BCryptPassword.class.equals(credentialType)) {
+                } else if (BCryptPassword.class.equals(passwordType)) {
                     return toBcryptPassword(hash, salt, iterationCount, passwordFactory);
-                } else if (SaltedSimpleDigestPassword.class.equals(credentialType)) {
+                } else if (SaltedSimpleDigestPassword.class.equals(passwordType)) {
                     return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
-                } else if (SimpleDigestPassword.class.equals(credentialType)) {
+                } else if (SimpleDigestPassword.class.equals(passwordType)) {
                     return toSimpleDigestPassword(hash, passwordFactory);
-                } else if (ScramDigestPassword.class.equals(credentialType)) {
+                } else if (ScramDigestPassword.class.equals(passwordType)) {
                     return toScramDigestPassword(hash, salt, iterationCount, passwordFactory);
                 }
             } catch (InvalidKeySpecException | InvalidKeyException e) {
