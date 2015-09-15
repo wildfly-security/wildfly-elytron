@@ -18,16 +18,16 @@
 
 package org.wildfly.security.auth.server;
 
+import static java.util.Collections.emptyMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.PermissionCollection;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import javax.net.ssl.SSLServerSocketFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -53,12 +53,12 @@ public final class SecurityDomain {
     private final NameRewriter preRealmRewriter;
     private final RealmMapper realmMapper;
     private final NameRewriter postRealmRewriter;
-    private final boolean anonymousAllowed;
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
     private final PrincipalDecoder principalDecoder;
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
+    private final Map<String, RoleMapper> categoryRoleMappers;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -69,10 +69,20 @@ public final class SecurityDomain {
         this.permissionMapper = builder.permissionMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
+        final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
+        final Map<String, RoleMapper> copiedRoleMappers;
+        if (originalRoleMappers.isEmpty()) {
+            copiedRoleMappers = Collections.emptyMap();
+        } else if (originalRoleMappers.size() == 1) {
+            final Map.Entry<String, RoleMapper> entry = originalRoleMappers.entrySet().iterator().next();
+            copiedRoleMappers = Collections.singletonMap(entry.getKey(), entry.getValue());
+        } else {
+            copiedRoleMappers = new HashMap<>(originalRoleMappers);
+        }
+        this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
-        anonymousAllowed = false;
         final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
-        anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY);
+        anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers);
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
@@ -134,25 +144,6 @@ public final class SecurityDomain {
             throw ElytronMessages.log.unrecognizedPrincipalType(principal);
         }
         return mapName(name);
-    }
-
-    /**
-     * Get an SSL server socket factory that authenticates against this security domain.
-     *
-     * @return the server socket factory
-     */
-    public SSLServerSocketFactory getSslServerSocketFactory() {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Determine whether anonymous authorization is allowed.  Note that this applies only to login authentication
-     * protocols and not transport layer security (TLS).
-     *
-     * @return {@code true} if anonymous logins are allowed, {@code false} if anonymous logins are disallowed
-     */
-    public boolean isAnonymousAllowed() {
-        return anonymousAllowed;
     }
 
     SecurityRealm getRealm(final String realmName) {
@@ -294,6 +285,10 @@ public final class SecurityDomain {
         return principalDecoder;
     }
 
+    Map<String, RoleMapper> getCategoryRoleMappers() {
+        return categoryRoleMappers;
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -308,6 +303,7 @@ public final class SecurityDomain {
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
+        private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
 
         Builder() {
         }
@@ -432,6 +428,25 @@ public final class SecurityDomain {
             this.defaultRealmName = defaultRealmName;
 
             return this;
+        }
+
+        /**
+         * Get the category role mapper map.
+         *
+         * @return the category role mapper map
+         */
+        public Map<String, RoleMapper> getCategoryRoleMappers() {
+            return categoryRoleMappers;
+        }
+
+        /**
+         * Set the category role mapper map.
+         *
+         * @param categoryRoleMappers the category role mapper map (must not be {@code null})
+         */
+        public void setCategoryRoleMappers(final Map<String, RoleMapper> categoryRoleMappers) {
+            Assert.checkNotNullParam("categoryRoleMappers", categoryRoleMappers);
+            this.categoryRoleMappers = categoryRoleMappers;
         }
 
         /**

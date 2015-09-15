@@ -23,13 +23,19 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.RoleMapper;
 
 /**
  * A loaded and authenticated security identity.
@@ -41,12 +47,14 @@ public final class SecurityIdentity {
     private final Principal principal;
     private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
+    private final Map<String, RoleMapper> roleMappers;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity) {
+    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
         this.securityDomain = securityDomain;
         this.principal = principal;
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
+        this.roleMappers = roleMappers;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -189,6 +197,53 @@ public final class SecurityIdentity {
      */
     public Set<String> getRoles() {
         return this.securityDomain.mapRoles(this);
+    }
+
+    /**
+     * Get the mapped roles associated with this identity.  If no role mapping exists for the given category, an
+     * empty role set is returned.
+     *
+     * @param category the role mapping category
+     * @return the category roles
+     */
+    public Set<String> getRoles(String category) {
+        final RoleMapper roleMapper = roleMappers.get(category);
+        return roleMapper == null ? Collections.emptySet() : roleMapper.mapRoles(securityDomain.mapRoles(this));
+    }
+
+    /**
+     * Attempt to create a new identity which replaces a role mapper category on the current identity.  If the given role
+     * mapper is already set on the current identity, the current identity is returned.
+     *
+     * @param category the category name
+     * @param roleMapper the role mapper to use
+     * @return the new identity
+     * @throws SecurityException if the calling class is not granted the {@link ChangeRoleMapperPermission} for the given
+     *      category name
+     */
+    public SecurityIdentity withRoleMapper(String category, RoleMapper roleMapper) {
+        Assert.checkNotNullParam("category", category);
+        Assert.checkNotNullParam("roleMapper", roleMapper);
+        final Map<String, RoleMapper> roleMappers = this.roleMappers;
+        final RoleMapper existingRoleMapper = roleMappers.get(category);
+        if (existingRoleMapper == roleMapper) {
+            // identical
+            return this;
+        }
+        // it's a change of some sort
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new ChangeRoleMapperPermission(category));
+        }
+        // authorized; next see if we can use a memory-efficient collection
+        final Map<String, RoleMapper> newMap;
+        if (roleMappers.isEmpty() || roleMappers.size() == 1 && roleMappers.keySet().iterator().next().equals(category)) {
+            newMap = Collections.singletonMap(category, roleMapper);
+        } else {
+            newMap = new HashMap<>(roleMappers);
+            newMap.put(category, roleMapper);
+        }
+        return new SecurityIdentity(securityDomain, principal, realmInfo, authorizationIdentity, newMap);
     }
 
     /**
