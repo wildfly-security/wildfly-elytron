@@ -251,8 +251,8 @@ public class Gs2Test extends BaseTestCase {
     }
 
     @Test
-    public void testKrb5AuthenticationWithCredentialPassedIn() throws Exception {
-        saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
+    public void testKrb5AuthenticationWithCredentialPassedInForClientAndServer() throws Exception {
+        saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null, true);
         assertNotNull(saslServer);
         assertEquals(GS2_KRB5, saslServer.getMechanismName());
         assertFalse(saslServer.isComplete());
@@ -469,6 +469,32 @@ public class Gs2Test extends BaseTestCase {
 
     private SaslServer getSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
                                      final String bindingType, final byte[] bindingData) throws SaslException {
+        return getSaslServer(mechanism, protocol, serverName, props, bindingType, bindingData, false);
+    }
+
+    private SaslServer getSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, Object> props,
+                                     final String bindingType, final byte[] bindingData, final boolean passCredential) throws SaslException {
+        GSSCredential credential = null;
+        if (passCredential) {
+            try {
+                credential = Subject.doAs(serverSubject, new PrivilegedExceptionAction<GSSCredential>() {
+                    public GSSCredential run() throws SaslException {
+                        try {
+                            return GSSManager.getInstance().createCredential(null, GSSCredential.INDEFINITE_LIFETIME, OID_KRB5, GSSCredential.ACCEPT_ONLY);
+                        } catch (GSSException e) {
+                            throw new SaslException(e.getMessage());
+                        }
+                    }
+                });
+            } catch (PrivilegedActionException e) {
+                if (e.getCause() instanceof SaslException) {
+                    throw (SaslException) e.getCause();
+                } else {
+                    throw new RuntimeException(e.getCause());
+                }
+            }
+        }
+
         final SaslServerBuilder builder = new SaslServerBuilder(Gs2SaslServerFactory.class, mechanism)
                 .setDontAssertBuiltServer();
 
@@ -483,6 +509,9 @@ public class Gs2Test extends BaseTestCase {
         }
         if (bindingType != null || bindingData != null) {
             builder.setChannelBinding(bindingType, bindingData);
+        }
+        if (credential != null) {
+            builder.setCredential(credential, null);
         }
         try {
             return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {
