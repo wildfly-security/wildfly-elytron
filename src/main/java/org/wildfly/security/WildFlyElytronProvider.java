@@ -70,6 +70,8 @@ import org.wildfly.security.keystore.PasswordKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
 import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.storage.PasswordStorage;
+import org.wildfly.security.vault._private.KeystorePasswordStorage;
 
 
 /**
@@ -97,6 +99,7 @@ public class WildFlyElytronProvider extends Provider {
         putKeyStoreImplementations();
         putPasswordImplementations();
         putSaslMechanismImplementations();
+        putPasswordStorageImplementations();
     }
 
     private void putKeyStoreImplementations() {
@@ -195,4 +198,9 @@ public class WildFlyElytronProvider extends Provider {
         } catch (ServiceConfigurationError | RuntimeException ignored) {}
     }
 
+    private void putPasswordStorageImplementations() {
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+        putService(new Service(this, PasswordStorage.PASSWORD_STORAGE_TYPE, KeystorePasswordStorage.KEY_STORE_PASSWORD_STORAGE, KeystorePasswordStorage.class.getName(), emptyList, emptyMap));
+    }
 }

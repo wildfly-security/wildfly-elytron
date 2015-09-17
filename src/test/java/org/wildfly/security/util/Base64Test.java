@@ -30,8 +30,8 @@ import org.junit.Test;
 import org.wildfly.security.util.Alphabet.Base64Alphabet;
 
 /**
- * Tests of encoding/decoding Base64 B (standard alphabet)
- * implemented in org.wildfly.security.util.Base64
+ * Tests of encoding/decoding {@link ByteIterator} Base64 encode/decode using various {@link Alphabet}s.
+ * implemented in org.wildfly.security.util package.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
@@ -426,8 +426,16 @@ public class Base64Test {
     }
 
     private void doEncodeDecodeTest(byte[] inputData) throws Exception {
-        byte[] outputData = ByteIterator.ofBytes(inputData).base64Encode().base64Decode().drain();
-        assertArrayEquals("Encode-Decode test failed, results are not the same.", inputData, outputData);
+        Base64Alphabet[] alphabets = new Base64Alphabet[] {
+                Alphabet.Base64Alphabet.STANDARD,
+                Alphabet.Base64Alphabet.BCRYPT,
+                Alphabet.Base64Alphabet.MOD_CRYPT,
+                Alphabet.Base64Alphabet.MOD_CRYPT_LE,
+                Alphabet.Base64Alphabet.PICKETBOX_BASE_64};
+        for (Base64Alphabet alphabet: alphabets) {
+            byte[] outputData = ByteIterator.ofBytes(inputData).base64Encode(alphabet).base64Decode(alphabet).drain();
+            assertArrayEquals("Encode-Decode test failed, results are not the same.", inputData, outputData);
+        }
     }
 
     private byte[] generateSequence(final int len) {
