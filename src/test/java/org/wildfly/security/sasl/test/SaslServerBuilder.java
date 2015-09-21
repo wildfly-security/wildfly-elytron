@@ -23,16 +23,25 @@ package org.wildfly.security.sasl.test;
 
 import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactory;
 
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Permissions;
 import java.security.spec.KeySpec;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
+import org.wildfly.security.auth.provider.FileSystemSecurityRealm;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -47,6 +56,8 @@ import org.wildfly.security.sasl.util.ServerNameSaslServerFactory;
  * @author Kabir Khan
  */
 public class SaslServerBuilder {
+    public static final String DEFAULT_REALM_NAME = "mainRealm";
+
     //Server factory info
     private final Class<? extends SaslServerFactory> serverFactoryClass;
     private final String mechanismName;
@@ -54,8 +65,9 @@ public class SaslServerBuilder {
     //Security domain info
     private String username;
     private Password password = NULL_PASSWORD;
-    private String realmName = "mainRealm";
+    private String realmName = DEFAULT_REALM_NAME;
     private String defaultRealmName = realmName;
+    private boolean modifiableRealm;
     private Map<String, Permissions> permissionsMap = null;
 
     //Server factory decorators
@@ -65,10 +77,41 @@ public class SaslServerBuilder {
     private String serverName;
     private boolean dontAssertBuiltServer;
 
+    private SecurityDomain securityDomain;
+    private BuilderReference<Closeable> closeableReference;
+    private BuilderReference<SecurityDomain> securityDomainReference;
+
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
         this.serverFactoryClass = serverFactoryClass;
         this.mechanismName = mechanismName;
     }
+
+    public SaslServerBuilder copy(boolean keepDomain) {
+        if (securityDomain == null && keepDomain) {
+            throw new IllegalStateException("Can only copy a built server when keeping domain");
+        }
+        SaslServerBuilder copy = new SaslServerBuilder(serverFactoryClass, mechanismName);
+        copy.username = username;
+        copy.password = password;
+        copy.realmName = realmName;
+        copy.defaultRealmName = defaultRealmName;
+        copy.modifiableRealm = modifiableRealm;
+        if (permissionsMap != null) {
+            copy.permissionsMap = new HashMap<>(permissionsMap);
+        }
+        if (properties != null) {
+            copy.properties = new HashMap<>(properties);
+        }
+        copy.bindingTypeAndData = bindingTypeAndData;
+        copy.protocol = protocol;
+        copy.serverName = serverName;
+        copy.dontAssertBuiltServer = dontAssertBuiltServer;
+        if (keepDomain) {
+            copy.securityDomain = securityDomain;
+        }
+        return copy;
+    }
+
 
     public SaslServerBuilder setUserName(String username) {
         this.username = username;
@@ -90,6 +133,11 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setPassword(Password password) {
+        this.password = password;
+        return this;
+    }
+
     public SaslServerBuilder setRealmName(String realmName) {
         Assert.assertNotNull(realmName);
         this.realmName = realmName;
@@ -98,6 +146,11 @@ public class SaslServerBuilder {
 
     public SaslServerBuilder setDefaultRealmName(String realmName) {
         this.defaultRealmName = realmName;
+        return this;
+    }
+
+    public SaslServerBuilder setModifiableRealm() {
+        this.modifiableRealm = true;
         return this;
     }
 
@@ -134,26 +187,25 @@ public class SaslServerBuilder {
         this.dontAssertBuiltServer = true;
         return this;
     }
-    public SaslServer build() throws SaslException {
-        final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
-        final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
-        domainBuilder.addRealm(realmName, mainRealm);
-        domainBuilder.setDefaultRealmName(defaultRealmName);
 
-        if (username != null) {
-            mainRealm.setPasswordMap(username, password);
+    public SaslServerBuilder registerCloseableReference(BuilderReference<Closeable> closeableReference) {
+        this.closeableReference = closeableReference;
+        return this;
+    }
+
+    public SaslServerBuilder registerSecurityDomainReference(BuilderReference<SecurityDomain> securityDomainReference) {
+        this.securityDomainReference = securityDomainReference;
+        return this;
+    }
+
+
+    public SaslServer build() throws IOException {
+        if (securityDomain == null) {
+            securityDomain = createSecurityDomain();
         }
-
-        if (permissionsMap != null) {
-            domainBuilder.setPermissionMapper((principal, roles) -> {
-                if (!permissionsMap.containsKey(principal.toString())) {
-                    throw new IllegalStateException(principal.toString()+" unknown, known: "+permissionsMap.toString());
-                }
-                return permissionsMap.get(principal.toString());
-            });
+        if (securityDomainReference != null) {
+            securityDomainReference.setReference(securityDomain);
         }
-
-        SecurityDomain domain = domainBuilder.build();
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
         if (properties != null && properties.size() > 0) {
             factory = new PropertiesSaslServerFactory(factory, properties);
@@ -167,11 +219,63 @@ public class SaslServerBuilder {
         if (serverName != null) {
             factory = new ServerNameSaslServerFactory(factory, serverName);
         }
-        SaslServer server = domain.createNewAuthenticationContext().createSaslServer(factory, mechanismName);
+        SaslServer server = securityDomain.createNewAuthenticationContext().createSaslServer(factory, mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);
         }
         return server;
+    }
+
+
+    private SecurityDomain createSecurityDomain() throws IOException {
+        final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
+        if (!modifiableRealm) {
+            final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
+            domainBuilder.addRealm(realmName, mainRealm);
+            if (username != null) {
+                mainRealm.setPasswordMap(username, password);
+            }
+        } else {
+            final Path root = Paths.get(".", "target", "test-domains", String.valueOf(System.currentTimeMillis())).normalize();
+            Files.createDirectories(root);
+            final FileSystemSecurityRealm mainRealm = new FileSystemSecurityRealm(root);
+            domainBuilder.addRealm(realmName, mainRealm);
+
+            ModifiableRealmIdentity realmIdentity = mainRealm.createRealmIdentity(username);
+            realmIdentity.create();
+            realmIdentity.setCredentials(Collections.singletonList(password));
+
+            if (closeableReference != null) {
+                closeableReference.setReference(new Closeable() {
+                    @Override
+                    public void close() throws IOException {
+                        delete(root.getParent().toFile());
+                    }
+                    private void delete(File file) {
+                        if (file.isDirectory()) {
+                            for (File child : file.listFiles()) {
+                                delete(child);
+                            }
+                        }
+                        file.delete();
+                    }
+                });
+            }
+        }
+
+        domainBuilder.setDefaultRealmName(defaultRealmName);
+
+
+        if (permissionsMap != null) {
+            domainBuilder.setPermissionMapper((principal, roles) -> {
+                if (!permissionsMap.containsKey(principal.toString())) {
+                    throw new IllegalStateException(principal.toString() + " unknown, known: " + permissionsMap.toString());
+                }
+                return permissionsMap.get(principal.toString());
+            });
+        }
+
+        return domainBuilder.build();
     }
 
     private static class Tuple<K, V> {
@@ -201,4 +305,15 @@ public class SaslServerBuilder {
         }
     };
 
+    public static class BuilderReference<T> {
+        private T ref;
+
+        private void setReference(T ref) {
+            this.ref = ref;
+        }
+
+        public T getReference() {
+            return ref;
+        }
+    }
 }

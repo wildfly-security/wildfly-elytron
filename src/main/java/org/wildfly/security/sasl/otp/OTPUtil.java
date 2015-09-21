@@ -332,20 +332,6 @@ class OTPUtil {
         return (parity & 0x3);
     }
 
-    public static int getResponseTypeChoiceIndex(String responseType) throws SaslException {
-        switch (responseType) {
-            case WORD_RESPONSE:
-                return 0;
-            case INIT_WORD_RESPONSE:
-                return 1;
-            case HEX_RESPONSE:
-                return 2;
-            case INIT_HEX_RESPONSE:
-                return 3;
-            default: throw log.saslInvalidOTPResponseType();
-        }
-    }
-
     public static MessageDigest getMessageDigest(String algorithm) throws NoSuchAlgorithmException {
         switch (algorithm) {
             case ALGORITHM_OTP_MD5:

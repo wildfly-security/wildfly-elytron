@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.otp;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.Map;
 
 import javax.security.sasl.Sasl;
@@ -57,6 +59,27 @@ public final class OTP {
     public static final char DICTIONARY_DELIMITER = ' ';
     public static final int DICTIONARY_SIZE = 2048;
     public static final int LOCK_TIMEOUT = 300;
+
+    /**
+     * Get the index in the response type choices list that corresponds to the given response type.
+     *
+     * @param responseType the response type
+     * @return the index in the response type choices list that corresponds to the given response type
+     * @throws IllegalArgumentException if the given response type is invalid
+     */
+    public static int getResponseTypeChoiceIndex(String responseType) throws IllegalArgumentException {
+        switch (responseType) {
+            case WORD_RESPONSE:
+                return 0;
+            case INIT_WORD_RESPONSE:
+                return 1;
+            case HEX_RESPONSE:
+                return 2;
+            case INIT_HEX_RESPONSE:
+                return 3;
+            default: throw log.saslInvalidOTPResponseType();
+        }
+    }
 
     static boolean isMatched(final Map<String, ?> props) {
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {

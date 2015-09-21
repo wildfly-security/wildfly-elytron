@@ -376,6 +376,20 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
+     * Create a new configuration which is the same as this configuration, but which uses the given callback handler
+     * to authenticate some of the callback types.
+     *
+     * @param callbackHandler the callback handler to use
+     * @param handledCallbacks the callback types handled by the callback handler
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration usePartialCallbackHandler(CallbackHandler callbackHandler,
+                                                                 Class<? extends Callback>...handledCallbacks) {
+        return callbackHandler == null ? this :
+                new SetPartialCallbackHandlerAuthenticationConfiguration(this, callbackHandler, handledCallbacks);
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which uses the given GSS-API credential to authenticate.
      *
      * @param credential the GSS-API credential to use
@@ -577,6 +591,10 @@ public abstract class AuthenticationConfiguration {
 
     public AuthenticationConfiguration useRealm(String realm) {
         return new SetRealmAuthenticationConfiguration(this, realm);
+    }
+
+    public AuthenticationConfiguration useExtendedChoiceCallback(int responseChoice) {
+        return new ExtendendChoiceCallbackConfiguration(this, responseChoice);
     }
 
     // client methods
