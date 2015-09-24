@@ -27,6 +27,7 @@ import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.GeneralName.*;
 
 import java.io.IOException;
+import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
@@ -147,7 +149,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                 X509Certificate clientCert;
                 X509Certificate[] serverCertChain = null;
                 X509Certificate serverCert = null;
-                String serverCertUrl = null;
+                URL serverCertUrl = null;
                 PrivateKey privateKey = null;
                 String clientName;
                 List<GeneralName> entityB = null;
@@ -224,28 +226,32 @@ final class EntitySaslServer extends AbstractSaslServer {
                 if ((entityB != null) || mutual) {
                     CredentialCallback credentialCallback = new CredentialCallback(singletonMap(X509CertificateChainPrivateCredential.class,
                             singleton(keyType(signature.getAlgorithm()))));
-                    handleCallbacks(credentialCallback);
-                    final X509CertificateChainPrivateCredential serverCertChainPrivateCredential = (X509CertificateChainPrivateCredential) credentialCallback.getCredential();
-                    if (serverCertChainPrivateCredential != null) {
-                        serverCertChain = serverCertChainPrivateCredential.getCertificateChain();
-                        if ((serverCertChain != null) && (serverCertChain.length > 0)) {
-                            serverCert = serverCertChain[0];
+                    try {
+                        tryHandleCallbacks(credentialCallback);
+                        final X509CertificateChainPrivateCredential serverCertChainPrivateCredential = (X509CertificateChainPrivateCredential) credentialCallback.getCredential();
+                        if (serverCertChainPrivateCredential != null) {
+                            serverCertChain = serverCertChainPrivateCredential.getCertificateChain();
+                            if ((serverCertChain != null) && (serverCertChain.length > 0)) {
+                                serverCert = serverCertChain[0];
+                            } else {
+                                throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
+                            }
+                            privateKey = serverCertChainPrivateCredential.getPrivateKey();
                         } else {
                             throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
                         }
-                        privateKey = serverCertChainPrivateCredential.getPrivateKey();
-                    } else {
+                    } catch (UnsupportedCallbackException e) {
                         // Try obtaining a certificate URL instead
-                        credentialCallback = new CredentialCallback(singletonMap(String.class, emptySet()));
+                        credentialCallback = new CredentialCallback(singletonMap(URL.class, emptySet()));
                         CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class,
                                 singleton(keyType(signature.getAlgorithm()))));
                         handleCallbacks(credentialCallback, privateKeyCallback);
-                        serverCertUrl = (String) credentialCallback.getCredential();
+                        serverCertUrl = (URL) credentialCallback.getCredential();
                         if (serverCertUrl != null) {
                             try {
                                 serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
-                            } catch (IOException e) {
-                                throw log.saslUnableToObtainServerCertificate(getMechanismName(), serverCertUrl, e);
+                            } catch (IOException e1) {
+                                throw log.saslUnableToObtainServerCertificate(getMechanismName(), serverCertUrl.toString(), e1);
                             }
                         } else {
                             throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
@@ -315,7 +321,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                             EntityUtil.encodeX509CertificateChain(encoder, serverCertChain);
                         } else if (serverCertUrl != null) {
                             // Use a certificate URL instead
-                            encoder.encodeIA5String(serverCertUrl);
+                            encoder.encodeIA5String(serverCertUrl.toString());
                         } else {
                             throw log.saslCallbackHandlerNotProvidedServerCertificate(getMechanismName());
                         }

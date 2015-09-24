@@ -28,6 +28,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
@@ -45,6 +46,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -518,20 +520,35 @@ class EntityUtil {
     /**
      * Obtain an X509Certificate using the given URL.
      *
-     * @param certUrl the URL to the X.509 certificate to use, must be a non-relative URL
+     * @param certUrl the URL to the X.509 certificate to use, as a string, must be a non-relative URL
      * @return the X.509 certificate
      * @throws IOException if the X.509 certificate cannot be obtained
      */
     public static X509Certificate getCertificateFromUrl(String certUrl) throws IOException {
+        try {
+            return getCertificateFromUrl(new URL(certUrl));
+        } catch (MalformedURLException e) {
+            throw log.asnUnableToReadCertificateFromUrl(certUrl, e);
+        }
+    }
+
+    /**
+     * Obtain an X509Certificate using the given URL.
+     *
+     * @param certUrl the URL to the X.509 certificate to use
+     * @return the X.509 certificate
+     * @throws IOException if the X.509 certificate cannot be obtained
+     */
+    public static X509Certificate getCertificateFromUrl(URL certUrl) throws IOException {
+        Assert.checkNotNullParam("certUrl", certUrl);
         X509Certificate cert;
         InputStream in = null;
         try {
-            URL url = new URL(certUrl);
-            in = url.openStream();
+            in = certUrl.openStream();
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             cert = (X509Certificate) certFactory.generateCertificate(in);
         } catch (CertificateException e) {
-            throw log.asnUnableToReadCertificateFromUrl(certUrl, e);
+            throw log.asnUnableToReadCertificateFromUrl(certUrl.toString(), e);
         } finally {
             safeClose(in);
         }
@@ -564,7 +581,8 @@ class EntityUtil {
                         case AUTHORITY_CERTIFICATE:
                             if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, trustedAuthorityType, true)) {
                                 decoder.decodeImplicit(trustedAuthorityType);
-                                byte[] cert = decoder.drainElementValue();
+                                byte[] cert = decoder.drainElement();
+                                cert[0] = SEQUENCE_TYPE; // Replace the trusted authority type tag with a DER SEQUENCE tag, as required by CertificateFactory#generateCertificate
                                 try {
                                     CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
                                     trustedAuthority = new CertificateTrustedAuthority((X509Certificate) certFactory.generateCertificate(new ByteArrayInputStream(cert)));
