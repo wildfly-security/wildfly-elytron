@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.PermissionCollection;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -33,7 +35,10 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationException;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.RoleMapper;
 
@@ -244,6 +249,54 @@ public final class SecurityIdentity {
             newMap.put(category, roleMapper);
         }
         return new SecurityIdentity(securityDomain, principal, realmInfo, authorizationIdentity, newMap);
+    }
+
+    /**
+     * Attempt to create a new identity that can be used to run as a user with the given name.
+     *
+     * @param name the name to attempt to run as
+     * @return the new security identity
+     * @throws AuthorizationException if the operation authorization failed for any reason
+     */
+    public SecurityIdentity createRunAsIdentity(String name) throws AuthorizationException {
+        Assert.checkNotNullParam("name", name);
+        // rewrite name
+        final SecurityDomain domain = this.securityDomain;
+        name = domain.getPreRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
+        String realmName = domain.mapRealmName(name);
+        Principal principal = new NamePrincipal(name);
+        if (this.principal.equals(principal)) {
+            // it's the same identity; just succeed
+            return this;
+        }
+        RealmInfo realmInfo = domain.getRealmInfo(realmName);
+        name = domain.getPostRealmRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
+        name = realmInfo.getNameRewriter().rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
+        final RunAsPrincipalPermission permission = new RunAsPrincipalPermission(name);
+        if (getPermissions().implies(permission)) {
+            try {
+                final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
+                final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+                try {
+                    return new SecurityIdentity(domain, principal, realmInfo, realmIdentity.getAuthorizationIdentity(), roleMappers);
+                } finally {
+                    realmIdentity.dispose();
+                }
+            } catch (RealmUnavailableException ex) {
+                throw log.runAsAuthorizationFailed(this.principal, principal, ex);
+            }
+        } else {
+            throw log.unauthorizedRunAs(this.principal, principal, permission);
+        }
     }
 
     /**
