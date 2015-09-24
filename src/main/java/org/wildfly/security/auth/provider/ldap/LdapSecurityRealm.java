@@ -140,11 +140,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public String getName() {
-            return this.name;
-        }
-
-        @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             if (!exists()) {
                 return null;

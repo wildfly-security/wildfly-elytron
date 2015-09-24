@@ -145,10 +145,6 @@ public class JaasSecurityRealm implements SecurityRealm {
             this.principal = principal;
         }
 
-        public String getName() {
-            return principal.getName();
-        }
-
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             return JaasSecurityRealm.this.getCredentialSupport(credentialType, algorithmName);

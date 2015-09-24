@@ -88,10 +88,6 @@ public class JdbcSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        public String getName() {
-            return name;
-        }
-
         @Override
         public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
@@ -238,7 +234,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                     Connection connection = getConnection(configuration);
                     PreparedStatement preparedStatement = connection.prepareStatement(sql)
             ) {
-                preparedStatement.setString(1, getName());
+                preparedStatement.setString(1, name);
 
                 try (
                         ResultSet resultSet = preparedStatement.executeQuery()
