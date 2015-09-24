@@ -57,6 +57,7 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
+import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -88,14 +89,20 @@ public class Gs2Test extends BaseTestCase {
     private static Subject serverSubject;
     private SaslServer saslServer;
     private SaslClient saslClient;
+    static String serverKeyTab;
+    static final String SERVER_KEY_TAB = "gs2ServerKeyTab";
+    private static Logger log = Logger.getLogger(Gs2Test.class);
 
     @BeforeClass
     public static void init() throws LoginException {
         testKdc = new TestKDC();
         testKdc.startDirectoryService();
         testKdc.startKDC();
+        serverKeyTab = testKdc.generateKeyTab(SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
+        log.debug("keytab written to:" + serverKeyTab);
+
         clientSubject = loginClient();
-        serverSubject = loginServer();
+        serverSubject = loginServer(serverKeyTab);
     }
 
     @AfterClass

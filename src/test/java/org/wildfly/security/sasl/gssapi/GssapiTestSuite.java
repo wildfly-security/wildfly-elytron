@@ -41,6 +41,7 @@ public class GssapiTestSuite {
     private static Logger log = Logger.getLogger(GssapiTestSuite.class);
 
     static TestKDC testKdc;
+    static String serverKeyTab;
 
     @BeforeClass
     public static void startServers() {
@@ -50,6 +51,8 @@ public class GssapiTestSuite {
         testKdc.startDirectoryService();
         testKdc.startKDC();
         GssapiTestSuite.testKdc = testKdc;
+        serverKeyTab = testKdc.generateKeyTab(BaseGssapiTests.SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
+        log.debug("keytab written to:" + serverKeyTab);
     }
 
     @AfterClass

@@ -46,6 +46,7 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
+import org.jboss.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -76,8 +77,11 @@ public abstract class AbstractTest {
     protected byte[] message;
     protected byte[] wrappedMessage;
     protected byte[] badMessage;
+    static String serverKeyTab;
+    static final String SERVER_KEY_TAB = "compatServerKeyTab";
 
     private static final Provider wildFlyElytronProvider = new WildFlyElytronProvider();
+    private static Logger log = Logger.getLogger(AbstractTest.class);
 
     @BeforeClass
     public static void registerProvider() {
@@ -111,9 +115,11 @@ public abstract class AbstractTest {
         testKdc = new TestKDC();
         testKdc.startDirectoryService();
         testKdc.startKDC();
+        serverKeyTab = testKdc.generateKeyTab(SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
+        log.debug("keytab written to:" + serverKeyTab);
 
         clientSubject = JaasUtil.loginClient();
-        serverSubject = JaasUtil.loginServer();
+        serverSubject = JaasUtil.loginServer(serverKeyTab);
 
     }
 
