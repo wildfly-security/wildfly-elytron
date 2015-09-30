@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
@@ -117,9 +118,15 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 } catch (NoSuchAlgorithmException e) {
                     throw log.unableToReadCredential(e);
                 }
+                final Password realPassword;
+                try {
+                    realPassword = passwordFactory.translate(password);
+                } catch (InvalidKeyException e) {
+                    throw log.unableToReadCredential(e);
+                }
                 final ClearPasswordSpec keySpec;
                 try {
-                    keySpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+                    keySpec = passwordFactory.getKeySpec(realPassword, ClearPasswordSpec.class);
                 } catch (InvalidKeySpecException e) {
                     throw log.unableToReadCredential(e);
                 }
