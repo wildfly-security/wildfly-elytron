@@ -215,7 +215,8 @@ public final class SecurityDomain {
      * @return the current security identity for this domain (not {@code null})
      */
     public SecurityIdentity getCurrentSecurityIdentity() {
-        return currentSecurityIdentity.get();
+        final SecurityIdentity identity = currentSecurityIdentity.get();
+        return identity == null ? anonymousIdentity : identity;
     }
 
     /**
@@ -229,14 +230,23 @@ public final class SecurityDomain {
 
     SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {
         try {
-            return currentSecurityIdentity.get();
+            final SecurityIdentity oldIdentity = currentSecurityIdentity.get();
+            return oldIdentity == null ? anonymousIdentity : oldIdentity;
         } finally {
-            currentSecurityIdentity.set(newIdentity);
+            if (newIdentity == anonymousIdentity) {
+                currentSecurityIdentity.remove();
+            } else {
+                currentSecurityIdentity.set(newIdentity);
+            }
         }
     }
 
     void setCurrentSecurityIdentity(SecurityIdentity newIdentity) {
-        currentSecurityIdentity.set(newIdentity);
+        if (newIdentity == anonymousIdentity) {
+            currentSecurityIdentity.remove();
+        } else {
+            currentSecurityIdentity.set(newIdentity);
+        }
     }
 
     Set<String> mapRoles(SecurityIdentity securityIdentity) {
