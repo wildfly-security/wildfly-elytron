@@ -1079,7 +1079,7 @@ public final class ElytronXmlParser {
         public KeyStore create() throws GeneralSecurityException {
             KeyStore keyStore = provider == null ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
             try (InputStream fis = createStream()) {
-                keyStore.load(fis, passwordFactory.create());
+                keyStore.load(fis, passwordFactory == null ? null : passwordFactory.create());
             } catch (IOException e) {
                 throw log.failedToLoadKeyStoreData(e);
             }
