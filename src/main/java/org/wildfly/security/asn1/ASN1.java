@@ -99,65 +99,19 @@ public class ASN1 {
      */
     public static final int TAG_NUMBER_MASK = 0x1f;
 
-    /**
-     * Object identifier for the SHA1 with RSA signature algorithm.
-     */
-    public static final String OID_SHA1_WITH_RSA = "1.2.840.113549.1.1.5";
+    // 1.2.840.10040
 
     /**
      * Object identifier for the SHA1 with DSA signature algorithm.
      */
     public static final String OID_SHA1_WITH_DSA = "1.2.840.10040.4.3";
 
+    // 1.2.840.10045
+
     /**
      * Object identifier for the SHA1 with ECDSA signature algorithm.
      */
     public static final String OID_SHA1_WITH_ECDSA = "1.2.840.10045.4.1";
-
-    /**
-     * Object identifier for the MD2 hash algorithm.
-     */
-    public static final String OID_MD2 = "1.2.840.113549.2.2";
-
-    /**
-     * Object identifier for the MD5 hash algorithm.
-     */
-    public static final String OID_MD5 = "1.2.840.113549.2.5";
-
-    /**
-     * Object identifier for the SHA1 hash algorithm.
-     */
-    public static final String OID_SHA1 = "1.3.14.3.2.26";
-
-    /**
-     * Object identifier for the MD2 with RSA signature algorithm.
-     */
-    public static final String OID_MD2_WITH_RSA = "1.2.840.113549.1.1.2";
-
-    /**
-     * Object identifier for the MD4 with RSA signature algorithm.
-     */
-    public static final String OID_MD4_WITH_RSA = "1.2.840.113549.1.1.3";
-
-    /**
-     * Object identifier for the MD5 with RSA signature algorithm.
-     */
-    public static final String OID_MD5_WITH_RSA = "1.2.840.113549.1.1.4";
-
-    /**
-     * Object identifier for the SHA-256 with RSA signature algorithm.
-     */
-    public static final String OID_SHA256_WITH_RSA = "1.2.840.113549.1.1.11";
-
-    /**
-     * Object identifier for the SHA-384 with RSA signature algorithm.
-     */
-    public static final String OID_SHA384_WITH_RSA = "1.2.840.113549.1.1.12";
-
-    /**
-     * Object identifier for the SHA-512 with RSA signature algorithm.
-     */
-    public static final String OID_SHA512_WITH_RSA = "1.2.840.113549.1.1.13";
 
     /**
      * Object identifier for the SHA-225 with ECDSA signature algorithm.
@@ -178,6 +132,62 @@ public class ASN1 {
      * Object identifier for the SHA-512 with ECDSA signature algorithm.
      */
     public static final String OID_SHA512_WITH_ECDSA = "1.2.840.10045.4.3.4";
+
+    // 1.2.840.113549.1
+
+    /**
+     * Object identifier for the MD2 with RSA signature algorithm.
+     */
+    public static final String OID_MD2_WITH_RSA = "1.2.840.113549.1.1.2";
+
+    /**
+     * Object identifier for the MD4 with RSA signature algorithm.
+     */
+    public static final String OID_MD4_WITH_RSA = "1.2.840.113549.1.1.3";
+
+    /**
+     * Object identifier for the MD5 with RSA signature algorithm.
+     */
+    public static final String OID_MD5_WITH_RSA = "1.2.840.113549.1.1.4";
+
+    /**
+     * Object identifier for the SHA1 with RSA signature algorithm.
+     */
+    public static final String OID_SHA1_WITH_RSA = "1.2.840.113549.1.1.5";
+
+    /**
+     * Object identifier for the SHA-256 with RSA signature algorithm.
+     */
+    public static final String OID_SHA256_WITH_RSA = "1.2.840.113549.1.1.11";
+
+    /**
+     * Object identifier for the SHA-384 with RSA signature algorithm.
+     */
+    public static final String OID_SHA384_WITH_RSA = "1.2.840.113549.1.1.12";
+
+    /**
+     * Object identifier for the SHA-512 with RSA signature algorithm.
+     */
+    public static final String OID_SHA512_WITH_RSA = "1.2.840.113549.1.1.13";
+
+    // 1.2.840.113549.2
+
+    /**
+     * Object identifier for the MD2 hash algorithm.
+     */
+    public static final String OID_MD2 = "1.2.840.113549.2.2";
+
+    /**
+     * Object identifier for the MD5 hash algorithm.
+     */
+    public static final String OID_MD5 = "1.2.840.113549.2.5";
+
+    // 1.3.14
+
+    /**
+     * Object identifier for the SHA1 hash algorithm.
+     */
+    public static final String OID_SHA1 = "1.3.14.3.2.26";
 
     /**
      * Format an AS.1 string from the given decoder as a string.
