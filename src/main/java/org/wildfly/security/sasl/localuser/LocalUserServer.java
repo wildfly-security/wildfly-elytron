@@ -176,14 +176,14 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 try {
                     challengeFile = File.createTempFile("local", ".challenge", basePath);
                 } catch (IOException e) {
-                    throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
+                    throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
                 }
 
                 final FileOutputStream fos;
                 try {
                     fos = new FileOutputStream(challengeFile);
                 } catch (FileNotFoundException e) {
-                    throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
+                    throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
                 }
                 boolean ok = false;
                 final byte[] bytes;
@@ -195,7 +195,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                         fos.close();
                         ok = true;
                     } catch (IOException e) {
-                        throw log.saslFailedToCreateChallengeFile(getMechanismName(), e);
+                        throw log.mechFailedToCreateChallengeFile(getMechanismName(), e).toSaslException();
                     }
                 } finally {
                     if (!ok) {
@@ -215,10 +215,10 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                 deleteChallenge();
                 final int length = message.length;
                 if (length < 8) {
-                    throw log.saslInvalidClientMessage(getMechanismName());
+                    throw log.mechInvalidClientMessage(getMechanismName()).toSaslException();
                 }
                 if (!Arrays.equals(challengeBytes, Arrays.copyOf(message, 8))) {
-                    throw log.saslAuthenticationRejectedInvalidProof(getMechanismName());
+                    throw log.mechAuthenticationRejectedInvalidProof(getMechanismName()).toSaslException();
                 }
                 String authenticationRealm;
                 String authenticationId;
@@ -239,7 +239,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     authenticationId = defaultUser;
                 }
                 if (authenticationId == null) {
-                    throw log.saslAuthenticationNameIsEmpty(getMechanismName());
+                    throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
                 }
                 if (authorizationId == null) {
                     // If no authorization ID is specifed default to authentication ID
@@ -254,7 +254,7 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
                     handleCallbacks(realmCallback, nameCallback, authorizeCallback);
                 }
                 if (!authorizeCallback.isAuthorized()) {
-                    throw log.saslAuthorizationFailed(getMechanismName(), authenticationId, authorizationId);
+                    throw log.mechAuthorizationFailed(getMechanismName(), authenticationId, authorizationId).toSaslException();
                 }
                 negotiationComplete();
                 return null;

@@ -53,7 +53,7 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw log.saslFailedToDetermineChannelBindingStatus(e);
+            throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
         } catch (UnsupportedCallbackException e) {
             // ignored
         }

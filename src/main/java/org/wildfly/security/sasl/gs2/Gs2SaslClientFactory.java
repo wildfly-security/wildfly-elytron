@@ -73,7 +73,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw log.saslFailedToDetermineChannelBindingStatus(e);
+            throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
         } catch (UnsupportedCallbackException e) {
             // Ignored
         }
@@ -82,7 +82,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         try {
             supportedMechanisms = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
         } catch (GSSException e) {
-            throw log.saslGettingSupportedMechanismsFailed(e);
+            throw log.mechGettingSupportedMechanismsFailed(e).toSaslException();
         }
         final String bindingType = callback.getBindingType();
         final byte[] bindingData = callback.getBindingData();

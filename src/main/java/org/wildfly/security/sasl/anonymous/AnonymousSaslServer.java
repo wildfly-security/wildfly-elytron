@@ -67,16 +67,16 @@ public final class AnonymousSaslServer extends AbstractSaslServer {
                 } else {
                     // sanity check
                     if (length > 1020) {
-                        throw log.saslAuthenticationNameTooLong(getMechanismName());
+                        throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
                     }
                     String name = new String(message, StandardCharsets.UTF_8);
                     if (name.length() > 255) {
-                        throw log.saslAuthenticationNameTooLong(getMechanismName());
+                        throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
                     }
                     final AnonymousAuthorizationCallback callback = new AnonymousAuthorizationCallback(name);
                     handleCallbacks(callback);
                     if (! callback.isAuthorized()) {
-                        throw log.saslAnonymousAuthorizationDenied(getMechanismName());
+                        throw log.mechAnonymousAuthorizationDenied(getMechanismName()).toSaslException();
                     }
                     negotiationComplete();
                     return null;

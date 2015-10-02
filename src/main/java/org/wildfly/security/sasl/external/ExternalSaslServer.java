@@ -53,7 +53,7 @@ final class ExternalSaslServer implements SaslServer {
 
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         if (complete) {
-            throw log.saslMessageAfterComplete(getMechanismName());
+            throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
         }
         complete = true;
         String authorizationId;
@@ -62,7 +62,7 @@ final class ExternalSaslServer implements SaslServer {
         } else {
             authorizationId = Normalizer.normalize(new String(response, StandardCharsets.UTF_8), Normalizer.Form.NFKC);
             if (authorizationId.indexOf(0) != -1) {
-                throw log.saslUserNameContainsInvalidCharacter(getMechanismName());
+                throw log.mechUserNameContainsInvalidCharacter(getMechanismName()).toSaslException();
             }
         }
         final AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, authorizationId);
@@ -71,12 +71,12 @@ final class ExternalSaslServer implements SaslServer {
         } catch (SaslException e) {
             throw e;
         } catch (IOException e) {
-            throw log.saslAuthorizationFailed(getMechanismName(), e);
+            throw log.mechAuthorizationFailed(getMechanismName(), e).toSaslException();
         } catch (UnsupportedCallbackException e) {
-            throw log.saslAuthorizationFailed(getMechanismName(), e);
+            throw log.mechAuthorizationFailed(getMechanismName(), e).toSaslException();
         }
         if (!authorizeCallback.isAuthorized()) {
-            throw log.saslAuthorizationFailed(getMechanismName(), null, authorizationId);
+            throw log.mechAuthorizationFailed(getMechanismName(), null, authorizationId).toSaslException();
         }
         this.authorizationID = authorizeCallback.getAuthorizedID();
         return AbstractSaslParticipant.NO_BYTES;
@@ -88,24 +88,24 @@ final class ExternalSaslServer implements SaslServer {
 
     public String getAuthorizationID() {
         if (! complete) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
         return authorizationID;
     }
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         } else {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         } else {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 

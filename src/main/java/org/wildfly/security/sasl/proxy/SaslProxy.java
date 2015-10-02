@@ -113,11 +113,11 @@ public final class SaslProxy {
         }
 
         public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
 
         public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
 
         public Object getNegotiatedProperty(final String propName) {
@@ -198,11 +198,11 @@ public final class SaslProxy {
         }
 
         public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
 
         public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
 
         public Object getNegotiatedProperty(final String propName) {

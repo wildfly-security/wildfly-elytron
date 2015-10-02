@@ -49,10 +49,10 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
         if (challenge.length != 0) {
-            throw log.saslInvalidMessageReceived(getMechanismName());
+            throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
         }
         if (complete) {
-            throw log.saslMessageAfterComplete(getMechanismName());
+            throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
         }
         complete = true;
         return authorizationId;
@@ -64,17 +64,17 @@ final class ExternalSaslClient implements SaslClient, SaslWrapper {
 
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         } else {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         } else {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 

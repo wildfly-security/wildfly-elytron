@@ -103,7 +103,7 @@ class ScramSaslClient extends AbstractSaslClient {
         switch (state) {
             case ST_NEW: {
                 // initial response
-                if (challenge.length != 0) throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
+                if (challenge.length != 0) throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
                 final ByteStringBuilder b = new ByteStringBuilder();
                 final String authorizationId = getAuthorizationId();
                 final NameCallback nameCallback = authorizationId == null ? new NameCallback("User name") : new NameCallback("User name", authorizationId);
@@ -120,11 +120,11 @@ class ScramSaslClient extends AbstractSaslClient {
                         handleCallbacks(nameCallback, twoWayCredentialCallback);
                         clearPassword = ScramUtil.getTwoWayPasswordChars(getMechanismName(), (TwoWayPassword) twoWayCredentialCallback.getCredential());
                     } else {
-                        throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                        throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
                     }
                 }
                 if(clearPassword == null){
-                    throw log.saslNoPasswordGiven(getMechanismName());
+                    throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
                 }
 
                 // gs2-cbind-flag
@@ -167,11 +167,11 @@ class ScramSaslClient extends AbstractSaslClient {
                     if (bi.next() == 'r' && bi.next() == '=') {
                         // nonce
                         if (! di.limitedTo(nonce.length).contentEquals(ByteIterator.ofBytes(nonce))) {
-                            throw log.saslNoncesDoNotMatch(getMechanismName());
+                            throw log.mechNoncesDoNotMatch(getMechanismName()).toSaslException();
                         }
                         final byte[] serverNonce = di.drain();
                         if (serverNonce.length < 18) {
-                            throw log.saslServerNonceIsTooShort(getMechanismName());
+                            throw log.mechServerNonceIsTooShort(getMechanismName()).toSaslException();
                         }
                         bi.next(); // skip delimiter
                         if (bi.next() == 's' && bi.next() == '=') {
@@ -181,15 +181,15 @@ class ScramSaslClient extends AbstractSaslClient {
                             if (bi.next() == 'i' && bi.next() == '=') {
                                 final int iterationCount = ScramUtil.parsePosInt(di);
                                 if (iterationCount < minimumIterationCount) {
-                                    throw log.saslIterationCountIsTooLow(getMechanismName(), iterationCount, minimumIterationCount);
+                                    throw log.mechIterationCountIsTooLow(getMechanismName(), iterationCount, minimumIterationCount).toSaslException();
                                 } else if (iterationCount > maximumIterationCount) {
-                                    throw log.saslIterationCountIsTooHigh(getMechanismName(), iterationCount, maximumIterationCount);
+                                    throw log.mechIterationCountIsTooHigh(getMechanismName(), iterationCount, maximumIterationCount).toSaslException();
                                 }
                                 if (bi.hasNext()) {
                                     if (bi.next() == ',') {
-                                        throw log.saslExtensionsUnsupported(getMechanismName());
+                                        throw log.mechExtensionsUnsupported(getMechanismName()).toSaslException();
                                     } else {
-                                        throw log.saslInvalidServerMessage(getMechanismName());
+                                        throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
                                     }
                                 }
                                 // client-final-message
@@ -260,13 +260,13 @@ class ScramSaslClient extends AbstractSaslClient {
                         }
                     }
                 } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException | InvalidKeyException ignored) {
-                    throw log.saslInvalidServerMessage(getMechanismName());
+                    throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
                 } finally {
                     Arrays.fill(clearPassword, (char)0); // wipe out the password
                     messageDigest.reset();
                     mac.reset();
                 }
-                throw log.saslInvalidServerMessage(getMechanismName());
+                throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
             }
             case ST_R2_SENT: {
                 if(trace) log.tracef("[C] Server final message: %s%n", new String(challenge, StandardCharsets.UTF_8));
@@ -279,9 +279,9 @@ class ScramSaslClient extends AbstractSaslClient {
                     c = bi.next();
                     if (c == 'e') {
                         if (bi.next() == '=') {
-                            throw log.saslServerRejectedAuthentication(di.asUtf8String().drainToString());
+                            throw log.mechServerRejectedAuthentication(di.asUtf8String().drainToString()).toSaslException();
                         }
-                        throw log.saslServerRejectedAuthentication(getMechanismName());
+                        throw log.mechServerRejectedAuthentication(getMechanismName()).toSaslException();
                     } else if (c == 'v' && bi.next() == '=') {
                         // verify server signature
                         mac.init(new SecretKeySpec(saltedPassword, mac.getAlgorithm()));
@@ -297,7 +297,7 @@ class ScramSaslClient extends AbstractSaslClient {
                         if(trace) log.tracef("[C] Recovered server signature: %s%n", ByteIterator.ofBytes(serverSignature).hexEncode().drainToString());
                         if (! di.base64Decode().contentEquals(ByteIterator.ofBytes(serverSignature))) {
                             setNegotiationState(FAILED_STATE);
-                            throw log.saslServerAuthenticityCannotBeVerified(getMechanismName());
+                            throw log.mechServerAuthenticityCannotBeVerified(getMechanismName()).toSaslException();
                         }
                         setNegotiationState(COMPLETE_STATE);
                         return null; // done
@@ -308,7 +308,7 @@ class ScramSaslClient extends AbstractSaslClient {
                     mac.reset();
                 }
                 setNegotiationState(FAILED_STATE);
-                throw log.saslInvalidServerMessage(getMechanismName());
+                throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
             }
         }
         throw Assert.impossibleSwitchCase(state);

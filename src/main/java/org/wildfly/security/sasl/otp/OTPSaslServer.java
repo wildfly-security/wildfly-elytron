@@ -81,7 +81,7 @@ final class OTPSaslServer extends AbstractSaslServer {
 
     public String getAuthorizationID() {
         if (! isComplete()) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
         return authorizationID;
     }
@@ -110,7 +110,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
                 final OneTimePassword previousPassword = (OneTimePassword) credentialCallback.getCredential();
                 if (previousPassword == null) {
-                    throw log.saslUnableToRetrievePassword(getMechanismName(), userName);
+                    throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
                 }
                 previousAlgorithm = previousPassword.getAlgorithm();
                 validateAlgorithm(previousAlgorithm);
@@ -126,7 +126,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 time = Instant.now().getEpochSecond();
                 if (time < timeout) {
                     // An authentication attempt is already in progress for this user
-                    throw log.saslMultipleSimultaneousOTPAuthenticationsNotAllowed();
+                    throw log.mechMultipleSimultaneousOTPAuthenticationsNotAllowed().toSaslException();
                 } else {
                     updateTimeout(time + LOCK_TIMEOUT);
                     locked = true;
@@ -145,7 +145,7 @@ final class OTPSaslServer extends AbstractSaslServer {
             }
             case ST_PROCESS_RESPONSE: {
                 if (Instant.now().getEpochSecond() > (time + LOCK_TIMEOUT)) {
-                    throw log.saslServerTimedOut(getMechanismName());
+                    throw log.mechServerTimedOut(getMechanismName()).toSaslException();
                 }
                 final CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(response);
                 final CodePointIterator di = cpi.delimitedBy(':');
@@ -200,14 +200,15 @@ final class OTPSaslServer extends AbstractSaslServer {
                             passwordSpec = new OneTimePasswordSpec(currentHash, previousSeed.getBytes(StandardCharsets.US_ASCII), previousSequenceNumber - 1);
                             algorithm = previousAlgorithm;
                             verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
-                            throw log.saslOTPReinitializationFailed(e);
+                            throw log.mechOTPReinitializationFailed(e).toSaslException();
                         }
                         break;
                     }
-                    default: throw log.saslInvalidOTPResponseType();
+                    default:
+                        throw log.mechInvalidOTPResponseType().toSaslException();
                 }
                 if (cpi.hasNext()) {
-                    throw log.saslInvalidMessageReceived(getMechanismName());
+                    throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
                 }
                 verifyAndUpdateCredential(currentHash, algorithm, passwordSpec);
 
@@ -218,14 +219,14 @@ final class OTPSaslServer extends AbstractSaslServer {
                 final AuthorizeCallback authorizeCallback = new AuthorizeCallback(userName, authorizationID);
                 handleCallbacks(authorizeCallback);
                 if (! authorizeCallback.isAuthorized()) {
-                    throw log.saslAuthorizationFailed(getMechanismName(), userName, authorizationID);
+                    throw log.mechAuthorizationFailed(getMechanismName(), userName, authorizationID).toSaslException();
                 }
                 negotiationComplete();
                 return null;
             }
             case COMPLETE_STATE: {
                   if (response != null && response.length != 0) {
-                      throw log.saslMessageAfterComplete(getMechanismName());
+                      throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
                   }
                   return null;
             }
@@ -253,7 +254,7 @@ final class OTPSaslServer extends AbstractSaslServer {
     private void verifyAndUpdateCredential(final byte[] currentHash, final String newAlgorithm,
             final OneTimePasswordSpec newPasswordSpec) throws SaslException {
         if (! Arrays.equals(previousHash, hashAndFold(previousAlgorithm, currentHash))) {
-            throw log.saslPasswordNotVerified(getMechanismName());
+            throw log.mechPasswordNotVerified(getMechanismName()).toSaslException();
         }
         updateCredential(newAlgorithm, newPasswordSpec);
         updateTimeout(0);
@@ -267,7 +268,7 @@ final class OTPSaslServer extends AbstractSaslServer {
             final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(newPassword);
             handleCallbacks(nameCallback, credentialUpdateCallback);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw log.saslUnableToUpdatePassword(getMechanismName(), userName);
+            throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();
         }
     }
 

@@ -74,7 +74,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
             gssContext = manager.createContext(ourCredential);
         } catch (GSSException e) {
-            throw log.saslUnableToCreateGssContext(getMechanismName(), e);
+            throw log.mechUnableToCreateGssContext(getMechanismName(), e).toSaslException();
         }
         // We don't request integrity or confidentiality as that is only
         // supported on the client side.
@@ -112,7 +112,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                         Oid actualMech = gssContext.getMech();
                         log.tracef("Negotiated mechanism %s", actualMech);
                         if (KERBEROS_V5.equals(actualMech) == false) {
-                            throw log.saslNegotiatedMechanismWasNotKerberosV5(getMechanismName());
+                            throw log.mechNegotiatedMechanismWasNotKerberosV5(getMechanismName()).toSaslException();
                         }
 
                         setNegotiationState(SECURITY_LAYER_ADVERTISER);
@@ -127,14 +127,14 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
 
                     return response;
                 } catch (GSSException e) {
-                    throw log.saslUnableToAcceptClientMessage(getMechanismName(), e);
+                    throw log.mechUnableToAcceptClientMessage(getMechanismName(), e).toSaslException();
                 }
 
             case SECURITY_LAYER_ADVERTISER:
                 // This state expects at most to be called with an empty message, it will then advertise
                 // the currently support security layer and transition to the next state to await a response
                 if (message != null && message.length > 0) {
-                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
+                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
                 }
 
                 byte[] response = new byte[4];
@@ -168,7 +168,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 }
 
                 if (supportedSecurityLayers == 0x00) {
-                    throw log.saslInsufficientQopsAvailable(getMechanismName());
+                    throw log.mechInsufficientQopsAvailable(getMechanismName()).toSaslException();
                 }
 
                 response[0] = supportedSecurityLayers;
@@ -187,7 +187,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                     MessageProp msgProp = new MessageProp(0, false);
                     response = gssContext.wrap(response, 0, 4, msgProp);
                 } catch (GSSException e) {
-                    throw log.saslUnableToGenerateChallenge(getMechanismName(), e);
+                    throw log.mechUnableToGenerateChallenge(getMechanismName(), e).toSaslException();
                 }
 
                 log.trace("Transitioning to receive chosen security layer from client");
@@ -201,17 +201,17 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 try {
                     unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
                 } catch (GSSException e) {
-                    throw log.saslUnableToUnwrapMessage(getMechanismName(), e);
+                    throw log.mechUnableToUnwrapMessage(getMechanismName(), e).toSaslException();
                 }
 
                 if (unwrapped.length < 4) {
-                    throw log.saslInvalidMessageOnUnwrapping(getMechanismName(), unwrapped.length);
+                    throw log.mechInvalidMessageOnUnwrapping(getMechanismName(), unwrapped.length).toSaslException();
                 }
 
                 // What we offered and our own list of QOP could be different so we compare against what we offered as we know we
                 // only offered it if the underlying GssContext also supports it.
                 if ((offeredSecurityLayer & unwrapped[0]) == 0x00) {
-                    throw log.saslSelectedUnofferedQop(getMechanismName());
+                    throw log.mechSelectedUnofferedQop(getMechanismName()).toSaslException();
                 }
 
                 QOP selectedQop = QOP.mapFromValue(unwrapped[0]);
@@ -220,12 +220,12 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 maxBuffer = networkOrderBytesToInt(unwrapped, 1, 3);
                 log.tracef("Client selected security layer %s, with maxBuffer of %d", selectedQop, maxBuffer);
                 if (relaxComplianceChecks == false && selectedQop == QOP.AUTH && maxBuffer != 0) {
-                    throw log.saslNoSecurityLayerButLengthReceived(getMechanismName());
+                    throw log.mechNoSecurityLayerButLengthReceived(getMechanismName()).toSaslException();
                 }
                 try {
                     maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
                 } catch (GSSException e) {
-                    throw log.saslUnableToGetMaximumSizeOfMessage(getMechanismName(), e);
+                    throw log.mechUnableToGetMaximumSizeOfMessage(getMechanismName(), e).toSaslException();
                 }
 
                 this.selectedQop = selectedQop;
@@ -234,7 +234,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 try {
                     authenticationId = gssContext.getSrcName().toString();
                 } catch (GSSException e) {
-                    throw log.saslUnableToDeterminePeerName(getMechanismName(), e);
+                    throw log.mechUnableToDeterminePeerName(getMechanismName(), e).toSaslException();
                 }
                 final String authorizationId;
                 if (unwrapped.length > 4) {
@@ -248,7 +248,7 @@ class GssapiServer extends AbstractGssapiMechanism implements SaslServer {
                 handleCallbacks(new Callback[] {cb});
 
                 if (cb.isAuthorized() == false) {
-                    throw log.saslAuthorizationFailed(getMechanismName(), authenticationId, authorizationId);
+                    throw log.mechAuthorizationFailed(getMechanismName(), authenticationId, authorizationId).toSaslException();
                 }
                 this.authorizationId = authorizationId;
 

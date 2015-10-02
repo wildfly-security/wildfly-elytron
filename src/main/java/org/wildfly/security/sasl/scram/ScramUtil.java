@@ -125,13 +125,13 @@ class ScramUtil {
 
     static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws SaslException {
         if (password == null) {
-            throw log.saslNoPasswordGiven(mechName);
+            throw log.mechNoPasswordGiven(mechName).toSaslException();
         }
         try {
             PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
             return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw log.saslCannotGetTwoWayPasswordChars(mechName, e);
+            throw log.mechCannotGetTwoWayPasswordChars(mechName, e).toSaslException();
         }
     }
 

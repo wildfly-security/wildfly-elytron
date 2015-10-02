@@ -76,7 +76,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         switch (state) {
             case ST_NEW: {
                 if ((challenge != null) && (challenge.length != 0)) {
-                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
+                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
                 }
 
                 // Construct the initial response which consists of the authorization identity, if provided,
@@ -113,12 +113,12 @@ final class OTPSaslClient extends AbstractSaslClient {
                 validateSeed(seed);
                 skipDelims(di, cpi);
                 if (! di.drainToString().startsWith(EXT)) {
-                    throw log.saslInvalidMessageReceived(getMechanismName());
+                    throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
                 }
                 if (cpi.hasNext()) {
                     skipDelims(di, cpi);
                     if (cpi.hasNext()) {
-                        throw log.saslInvalidMessageReceived(getMechanismName());
+                        throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
                     }
                 }
 
@@ -137,7 +137,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                     final String passPhrase = getPasswordFromPasswordChars(passPhraseChars);
                     validatePassPhrase(passPhrase);
                     if (seed.equals(passPhrase)) {
-                        throw log.saslOTPPassPhraseAndSeedMustNotMatch();
+                        throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                     }
                     otp = formatOTP(generateOTP(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
                 } else {
@@ -214,7 +214,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                     final String newPassPhrase = getPasswordFromPasswordChars(newPassPhraseChars);
                     validatePassPhrase(newPassPhrase);
                     if (newSeed.equals(newPassPhrase)) {
-                        throw log.saslOTPPassPhraseAndSeedMustNotMatch();
+                        throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
                     }
                     newOTP = formatOTP(generateOTP(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
                 } else {
@@ -227,7 +227,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                     newOTP = getOTP(passwordCallback);
                     OneTimePasswordAlgorithmSpec algorithmSpec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
                     if (algorithmSpec == null) {
-                        throw log.saslNoPasswordGiven(getMechanismName());
+                        throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
                     }
                     newAlgorithm = algorithmSpec.getAlgorithm();
                     validateAlgorithm(newAlgorithm);
@@ -239,7 +239,8 @@ final class OTPSaslClient extends AbstractSaslClient {
                 response.append(createInitResponse(newAlgorithm, newSeed, newSequenceNumber, newOTP));
                 break;
             }
-            default: throw log.saslInvalidOTPResponseType();
+            default:
+                throw log.mechInvalidOTPResponseType().toSaslException();
         }
         return response.toArray();
     }
@@ -265,7 +266,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         try {
             newDigestAlgorithm = messageDigestAlgorithm(newAlgorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.saslInvalidOTPAlgorithm(newAlgorithm);
+            throw log.mechInvalidOTPAlgorithm(newAlgorithm).toSaslException();
         }
         initResponse.append(newDigestAlgorithm);
         initResponse.append(' ');
@@ -283,7 +284,7 @@ final class OTPSaslClient extends AbstractSaslClient {
         if (passwordChars != null) {
             return getPasswordFromPasswordChars(passwordChars);
         } else {
-            throw log.saslNoPasswordGiven(getMechanismName());
+            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
         }
     }
 
