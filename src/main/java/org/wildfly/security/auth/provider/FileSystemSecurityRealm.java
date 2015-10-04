@@ -282,7 +282,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         final Password password = (Password) ours;
                         final String algorithm = password.getAlgorithm();
                         final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-                        return passwordFactory.verify(password, clearPassword.getPassword());
+                        if (passwordFactory.verify(password, clearPassword.getPassword())) {
+                            return true;
+                        }
                     } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
                         // try next credential
                     }

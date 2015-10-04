@@ -57,6 +57,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -229,6 +230,75 @@ public class FileSystemSecurityRealmTest {
         SaltedSimpleDigestPassword tsdp = (SaltedSimpleDigestPassword) passwordFactory.generatePassword(eps);
 
         assertCreateIdentityWithPassword(actualPassword, tsdp);
+    }
+
+    @Test
+    public void testCreateWithMultipleCredentials() throws Exception {
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        ModifiableRealmIdentity newIdentity = securityRealm.createRealmIdentity("plainUser");
+
+        newIdentity.create();
+
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
+        String bcryptPasswordStr = "bcryptPassword";
+        BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
+                new EncryptablePasswordSpec(bcryptPasswordStr.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE))));
+
+        List<Object> passwords = new ArrayList<>();
+
+        passwords.add(bCryptPassword);
+
+        newIdentity.setCredentials(passwords);
+
+        assertTrue(newIdentity.verifyCredential(bcryptPasswordStr.toCharArray()));
+
+        passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        ClearPassword clearPassword = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec("clearPassword".toCharArray()));
+
+        passwords.add(clearPassword);
+
+        newIdentity.setCredentials(passwords);
+
+        assertTrue(newIdentity.verifyCredential("clearPassword".toCharArray()));
+    }
+
+    @Test
+    public void testUpdateCredentials() throws Exception {
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        ModifiableRealmIdentity newIdentity = securityRealm.createRealmIdentity("plainUser");
+
+        newIdentity.create();
+
+        String bcryptPasswordStr = "bcryptPassword";
+        BCryptPassword bCryptPassword = (BCryptPassword) PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT)
+                .generatePassword(new EncryptablePasswordSpec(bcryptPasswordStr.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE))));
+        ClearPassword clearPassword = (ClearPassword) PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
+                .generatePassword(new ClearPasswordSpec("clearPassword".toCharArray()));
+
+        List<Object> passwords = new ArrayList<>();
+
+        passwords.add(bCryptPassword);
+        passwords.add(clearPassword);
+
+        newIdentity.setCredentials(passwords);
+
+        assertTrue(newIdentity.verifyCredential(bcryptPasswordStr.toCharArray()));
+        assertTrue(newIdentity.verifyCredential("clearPassword".toCharArray()));
+
+        passwords.remove(bCryptPassword);
+
+        BCryptPassword bCryptPasswordUpdated = (BCryptPassword) PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT)
+                .generatePassword(new EncryptablePasswordSpec((bcryptPasswordStr + "Updated").toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE))));
+
+        passwords.add(bCryptPasswordUpdated);
+
+        assertEquals(2, passwords.size());
+
+        newIdentity.setCredentials(passwords);
+
+        assertFalse(newIdentity.verifyCredential(bcryptPasswordStr.toCharArray()));
+        assertTrue(newIdentity.verifyCredential((bcryptPasswordStr + "Updated").toCharArray()));
+        assertTrue(newIdentity.verifyCredential("clearPassword".toCharArray()));
     }
 
     @Test
