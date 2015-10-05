@@ -21,12 +21,8 @@ package org.wildfly.security.sasl.scram;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Map;
 
-import javax.crypto.Mac;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -36,6 +32,8 @@ import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.scram.ScramMechanism;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -50,8 +48,6 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        String name;
-        boolean plus = false;
         final ChannelBindingCallback callback = new ChannelBindingCallback();
         try {
             cbh.handle(new Callback[] { callback });
@@ -66,83 +62,57 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
         final byte[] bindingData = callback.getBindingData();
         boolean bindingOk = bindingType != null && bindingData != null;
         boolean bindingRequired = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
-        MessageDigest messageDigest;
-        Mac mac;
-        out: {
+        int minimumIterationCount = ScramUtil.getIntProperty(props, WildFlySasl.SCRAM_MIN_ITERATION_COUNT, 4096);
+        int maximumIterationCount = ScramUtil.getIntProperty(props, WildFlySasl.SCRAM_MAX_ITERATION_COUNT, 32768);
+        try {
             for (String mechanism : mechanisms) {
                 switch (mechanism) {
                     case SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS:
                         if (! bindingOk) break;
-                        plus = true;
-                        // fall thru
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_1_PLUS.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_1:
-                        if (bindingRequired && ! plus) break;
-                        name = mechanism;
-                        try {
-                            messageDigest = MessageDigest.getInstance("SHA-1");
-                            mac = Mac.getInstance("HmacSHA1");
-                        } catch (NoSuchAlgorithmException e) {
-                            break;
-                        }
-                        break out;
+                        if (bindingRequired) break;
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_1.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS:
                         if (! bindingOk) break;
-                        plus = true;
-                        // fall thru
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_256_PLUS.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_256:
-                        if (bindingRequired && ! plus) break;
-                        name = mechanism;
-                        try {
-                            messageDigest = MessageDigest.getInstance("SHA-256");
-                            mac = Mac.getInstance("HmacSHA256");
-                        } catch (NoSuchAlgorithmException e) {
-                            break;
-                        }
-                        break out;
+                        if (bindingRequired) break;
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_256.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS:
                         if (! bindingOk) break;
-                        plus = true;
-                        // fall thru
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_384_PLUS.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_384:
-                        if (bindingRequired && ! plus) break;
-                        name = mechanism;
-                        try {
-                            messageDigest = MessageDigest.getInstance("SHA-384");
-                            mac = Mac.getInstance("HmacSHA384");
-                        } catch (NoSuchAlgorithmException e) {
-                            break;
-                        }
-                        break out;
+                        if (bindingRequired) break;
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_384.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS:
                         if (! bindingOk) break;
-                        plus = true;
-                        // fall thru
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_512_PLUS.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_512:
-                        if (bindingRequired && ! plus) break;
-                        name = mechanism;
-                        try {
-                            messageDigest = MessageDigest.getInstance("SHA-512");
-                            mac = Mac.getInstance("HmacSHA512");
-                        } catch (NoSuchAlgorithmException e) {
-                            break;
-                        }
-                        break out;
+                        if (bindingRequired) break;
+                        return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_512.createClient(
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        ));
                 }
             }
-            return null;
+        } catch (AuthenticationMechanismException e) {
+            throw e.toSaslException();
         }
-        final Object propVal = props.get(WildFlySasl.SECURE_RNG);
-        final String rngName = propVal instanceof String ? (String) propVal : null;
-        SecureRandom secureRandom = null;
-        if (rngName != null) {
-            try {
-                secureRandom = SecureRandom.getInstance(rngName);
-            } catch (NoSuchAlgorithmException ignored) {
-            }
-        }
-        final ScramSaslClient client = new ScramSaslClient(name, messageDigest, mac, secureRandom, protocol, serverName, cbh, authorizationId, props, plus, bindingType, bindingData);
-        client.init();
-        return client;
+        return null;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {

@@ -22,7 +22,9 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Map;
 import java.util.Random;
 
 import javax.crypto.Mac;
@@ -32,6 +34,7 @@ import javax.security.sasl.SaslException;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -135,4 +138,25 @@ class ScramUtil {
         }
     }
 
+    static int getIntProperty(final Map<String, ?> props, final String name, final int defVal) {
+        final Object val = props.get(name);
+        if (val == null) {
+            return defVal;
+        } else {
+            return Integer.parseInt(val.toString());
+        }
+    }
+
+    static SecureRandom getSecureRandom(final Map<String, ?> props) {
+        final Object propVal = props.get(WildFlySasl.SECURE_RNG);
+        final String rngName = propVal instanceof String ? (String) propVal : null;
+        SecureRandom secureRandom = null;
+        if (rngName != null) {
+            try {
+                secureRandom = SecureRandom.getInstance(rngName);
+            } catch (NoSuchAlgorithmException ignored) {
+            }
+        }
+        return secureRandom;
+    }
 }
