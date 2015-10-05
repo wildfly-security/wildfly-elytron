@@ -394,6 +394,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             }
 
             Map<String, Object> credentials = loadedIdentity.getCredentials();
+            if ( ! (credentials instanceof HashMap)) credentials = new HashMap<>(credentials);
             credentials.put(credentialName, credential);
 
             final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());

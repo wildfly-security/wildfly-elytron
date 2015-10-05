@@ -249,7 +249,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1050, value = "Could not execute query \"%s\"")
     RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
-    // 1051
+    @Message(id = 1051, value = "Could not resolve password algorithm for credential name \"%s\"")
+    InvalidKeyException couldNotResolveAlgorithmByCredentialName(String credentialName);
 
     @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
     RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);

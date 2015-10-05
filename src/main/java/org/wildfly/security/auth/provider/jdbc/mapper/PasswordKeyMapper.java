@@ -97,6 +97,51 @@ public class PasswordKeyMapper implements KeyMapper {
     /**
      * Constructs a new instance.
      *
+     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
+    public PasswordKeyMapper(String credentialName, int hash) throws InvalidKeyException {
+        Assert.checkNotNullParam("credentialName", credentialName);
+        Assert.checkMinimumParameter("hash", 1, hash);
+        this.algorithm = toAlgorithm(credentialName);
+        this.passwordType = toPasswordType(algorithm);
+        this.hash = hash;
+        this.credentialName = credentialName;
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
+    public PasswordKeyMapper(String credentialName, int hash, int salt) throws InvalidKeyException {
+        this(credentialName, hash);
+        Assert.checkMinimumParameter("salt", 1, salt);
+        this.salt = salt;
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
+     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
+     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
+     * @param iterationCount the column index from where the iteration count or cost, if supported by the given algorithm, is obtained
+     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
+     */
+    public PasswordKeyMapper(String credentialName, int hash, int salt, int iterationCount) throws InvalidKeyException {
+        this(credentialName, hash, salt);
+        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
+        this.iterationCount = iterationCount;
+    }
+
+    /**
+     * Constructs a new instance.
+     *
      * @param credentialName name of the credential which is output of this mapper
      * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
      * @param hash the column index from where the password in its clear, hash or encoded form is obtained
@@ -130,6 +175,7 @@ public class PasswordKeyMapper implements KeyMapper {
     /**
      * Constructs a new instance.
      *
+     * @param credentialName name of the credential which is output of this mapper
      * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
      * @param hash the column index from where the password in its clear, hash or encoded form is obtained
      * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
@@ -294,6 +340,42 @@ public class PasswordKeyMapper implements KeyMapper {
 
     private char[] toCharArray(byte[] hash) {
         return CodePointIterator.ofUtf8Bytes(hash).drainToString().toCharArray();
+    }
+
+    private String toAlgorithm(String credentialName) throws InvalidKeyException {
+        if (credentialName.endsWith(ALGORITHM_CLEAR)) return ALGORITHM_CLEAR;
+        if (credentialName.endsWith(ALGORITHM_BCRYPT)) return ALGORITHM_BCRYPT;
+        if (credentialName.endsWith(ALGORITHM_CRYPT_MD5)) return ALGORITHM_CRYPT_MD5;
+        if (credentialName.endsWith(ALGORITHM_SUN_CRYPT_MD5)) return ALGORITHM_SUN_CRYPT_MD5;
+        if (credentialName.endsWith(ALGORITHM_SUN_CRYPT_MD5_BARE_SALT)) return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
+        if (credentialName.endsWith(ALGORITHM_CRYPT_SHA_256)) return ALGORITHM_CRYPT_SHA_256;
+        if (credentialName.endsWith(ALGORITHM_CRYPT_SHA_512)) return ALGORITHM_CRYPT_SHA_512;
+        if (credentialName.endsWith(ALGORITHM_DIGEST_MD5)) return ALGORITHM_DIGEST_MD5;
+        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA)) return ALGORITHM_DIGEST_SHA;
+        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA_256)) return ALGORITHM_DIGEST_SHA_256;
+        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA_512)) return ALGORITHM_DIGEST_SHA_512;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_MD2)) return ALGORITHM_SIMPLE_DIGEST_MD2;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_MD5)) return ALGORITHM_SIMPLE_DIGEST_MD5;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_1)) return ALGORITHM_SIMPLE_DIGEST_SHA_1;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_256)) return ALGORITHM_SIMPLE_DIGEST_SHA_256;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_384)) return ALGORITHM_SIMPLE_DIGEST_SHA_384;
+        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_512)) return ALGORITHM_SIMPLE_DIGEST_SHA_512;
+        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_MD5)) return ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
+        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
+        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
+        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
+        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
+        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_MD5)) return ALGORITHM_SALT_PASSWORD_DIGEST_MD5;
+        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
+        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
+        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
+        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
+        if (credentialName.endsWith(ALGORITHM_CRYPT_DES)) return ALGORITHM_CRYPT_DES;
+        if (credentialName.endsWith(ALGORITHM_BSD_CRYPT_DES)) return ALGORITHM_BSD_CRYPT_DES;
+        if (credentialName.endsWith(ALGORITHM_SCRAM_SHA_1)) return ALGORITHM_SCRAM_SHA_1;
+        if (credentialName.endsWith(ALGORITHM_SCRAM_SHA_256)) return ALGORITHM_SCRAM_SHA_256;
+
+        throw log.couldNotResolveAlgorithmByCredentialName(credentialName);
     }
 
     /**
