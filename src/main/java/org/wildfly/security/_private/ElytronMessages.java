@@ -62,6 +62,8 @@ import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
+import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -571,7 +573,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
 
-    // 5018
+    @Message(id = 5018, value = "[%s] Channel binding data changed")
+    AuthenticationMechanismException mechChannelBindingChanged(String mechName);
 
     @Message(id = 5019, value = "[%s] Proxied SASL authentication failed")
     SaslException saslProxyAuthenticationFailed(String mechName);
@@ -655,7 +658,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5046, value = "[%s] Invalid client message")
     AuthenticationMechanismException mechInvalidClientMessageWithCause(String mechName, @Cause Throwable cause);
 
-    // 5047
+    @Message(id = 5047, value = "[%s] Authentication mechanism message is for mismatched mechanism \"%s\"")
+    AuthenticationMechanismException mechUnmatchedMechanism(String mechName, String otherMechName);
 
     @Message(id = 5048, value = "[%s] Server rejected authentication")
     AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
@@ -738,7 +742,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5074, value = "[%s] Unknown cipher \"%s\"")
     AuthenticationMechanismException mechUnknownCipher(String mechName, String cipher);
 
-    // 5075
+    @Message(id = 5075, value = "[%s] Authorization ID changed unexpectedly")
+    AuthenticationMechanismException mechAuthorizationIdChanged(String mechName);
 
     @Message(id = 5076, value = "[%s] Problem getting required cipher. Check your transformation mapper settings.")
     AuthenticationMechanismException mechProblemGettingRequiredCipher(String mechName, @Cause Throwable cause);
@@ -959,7 +964,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
 
-    // 5149
+    @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
+    AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
 
     @Message(id = 5150, value = "[%s] Authentication mechanism authorization ID is too long")
     AuthenticationMechanismException mechAuthorizationIdTooLong(String mechName);
@@ -1008,6 +1014,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5165, value = "OTP re-initialization failed")
     AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
+
+    @Message(id = 5166, value = "[%s] Server rejected authentication")
+    ScramServerException scramServerRejectedAuthentication(String mechName, @Param ScramServerErrorCode errorCode);
 
     /* http package */
 
