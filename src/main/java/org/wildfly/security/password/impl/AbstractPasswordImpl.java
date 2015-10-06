@@ -19,7 +19,9 @@
 package org.wildfly.security.password.impl;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.text.Normalizer;
@@ -39,6 +41,10 @@ abstract class AbstractPasswordImpl implements Password {
 
     abstract <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType);
 
+    Password translate(final AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        throw new InvalidAlgorithmParameterException();
+    }
+
     static byte[] getNormalizedPasswordBytes(final char[] characters) {
         return Normalizer.normalize(new String(characters), Normalizer.Form.NFKC).getBytes(StandardCharsets.UTF_8);
     }
@@ -52,6 +58,4 @@ abstract class AbstractPasswordImpl implements Password {
     public byte[] getEncoded() {
         return null;
     }
-
-
 }

@@ -20,11 +20,13 @@ package org.wildfly.security.password;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
@@ -192,5 +194,19 @@ public final class PasswordFactory {
      */
     public boolean verify(Password password, char[] guess) throws InvalidKeyException {
         return spi.engineVerify(algorithm, password, guess);
+    }
+
+    /**
+     * Transform a password with new parameters.  Not every transformation is allowed, but iterative password types
+     * generally should allow increasing the number of iterations.
+     *
+     * @param password the password
+     * @param parameterSpec the new parameters
+     * @return the transformed password
+     * @throws InvalidKeyException if the given password is invalid
+     * @throws InvalidAlgorithmParameterException if the transformation cannot be applied to the given parameters
+     */
+    public Password transform(Password password, AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        return spi.engineTransform(algorithm, password, parameterSpec);
     }
 }

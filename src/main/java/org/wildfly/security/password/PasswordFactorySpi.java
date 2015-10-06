@@ -18,7 +18,9 @@
 
 package org.wildfly.security.password;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
@@ -97,4 +99,17 @@ public abstract class PasswordFactorySpi {
      * @return {@code true} if the password is convertible, {@code false} otherwise
      */
     protected abstract <S extends KeySpec> boolean engineConvertibleToKeySpec(String algorithm, Password password, Class<S> keySpecType);
+
+    /**
+     * Transform a password with new parameters.  Not every transformation is allowed, but iterative password types
+     * generally should allow increasing the number of iterations.
+     *
+     * @param algorithm the password algorithm
+     * @param password the password
+     * @param parameterSpec the new parameters
+     * @return the transformed password
+     * @throws InvalidKeyException if the given password is invalid
+     * @throws InvalidAlgorithmParameterException if the transformation cannot be applied to the given parameters
+     */
+    protected abstract Password engineTransform(String algorithm, Password password, AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException;
 }

@@ -32,8 +32,10 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.*;
 import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.*;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
@@ -606,5 +608,16 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
             }
         }
         return false;
+    }
+
+    @Override
+    protected Password engineTransform(final String algorithm, final Password password, final AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        if (password instanceof AbstractPasswordImpl) {
+            final AbstractPasswordImpl abstractPassword = (AbstractPasswordImpl) password;
+            if (algorithm.equals(abstractPassword.getAlgorithm())) {
+                return abstractPassword.translate(parameterSpec);
+            }
+        }
+        throw new InvalidKeyException();
     }
 }
