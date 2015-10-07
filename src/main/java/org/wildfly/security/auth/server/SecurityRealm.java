@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.server;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.event.RealmEvent;
+
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
  *
@@ -63,6 +67,33 @@ public interface SecurityRealm {
         }
 
         return SupportLevel.UNSUPPORTED;
+    }
+
+    /**
+     * Handle a realm event.  These events allow the realm to act upon occurrences that are relevant to policy of
+     * the realm; for example, the realm may choose to increase password iteration count on authentication success,
+     * or change the salt of a password after a certain number of authentications.
+     * <p>
+     * The default implementation does nothing.
+     *
+     * @param event the realm event
+     */
+    default void handleRealmEvent(RealmEvent event) {}
+
+    /**
+     * Safely pass an event to a security realm, absorbing and logging any exception that occurs.
+     *
+     * @param realm the security realm to notify (not {@code null})
+     * @param event the event to send (not {@code null})
+     */
+    static void safeHandleRealmEvent(SecurityRealm realm, RealmEvent event) {
+        Assert.checkNotNullParam("realm", realm);
+        Assert.checkNotNullParam("event", event);
+        try {
+            realm.handleRealmEvent(event);
+        } catch (Throwable t) {
+            ElytronMessages.log.eventHandlerFailed(t);
+        }
     }
 
     /**
