@@ -56,6 +56,10 @@ import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.event.RealmFailedAuthenticationEvent;
+import org.wildfly.security.auth.server.event.RealmIdentityFailedAuthorizationEvent;
+import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizationEvent;
+import org.wildfly.security.auth.server.event.RealmSuccessfulAuthenticationEvent;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -273,8 +277,11 @@ public final class ServerAuthenticationContext {
                 throw ElytronMessages.log.noAuthenticationInProgress();
             }
         } while (!stateRef.compareAndSet(oldState, FAILED));
+        final RealmIdentity realmIdentity = oldState.getRealmIdentity();
+        final SecurityRealm securityRealm = oldState.getRealmInfo().getSecurityRealm();
+        SecurityRealm.safeHandleRealmEvent(securityRealm, new RealmFailedAuthenticationEvent(realmIdentity, null, null, null));
         if (oldState.getId() == ASSIGNED_ID) {
-            oldState.getRealmIdentity().dispose();
+            realmIdentity.dispose();
         }
     }
 
@@ -328,8 +335,11 @@ public final class ServerAuthenticationContext {
                 // it is impossible for the assigned state to change its identity
                 assert oldState.getRealmIdentity() == realmIdentity;
             }
+            SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentitySuccessfulAuthorizationEvent(securityIdentity.getAuthorizationIdentity(), securityIdentity.getPrincipal(), authenticationPrincipal));
+            oldState.getRealmIdentity().dispose();
             return true;
         } else {
+            SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentityFailedAuthorizationEvent(securityIdentity.getAuthorizationIdentity(), securityIdentity.getPrincipal(), authenticationPrincipal));
             return false;
         }
     }
@@ -452,7 +462,8 @@ public final class ServerAuthenticationContext {
             return;
         }
         RealmInfo realmInfo = oldState.getRealmInfo();
-        final AuthorizationIdentity authorizationIdentity = oldState.getRealmIdentity().getAuthorizationIdentity();
+        final RealmIdentity realmIdentity = oldState.getRealmIdentity();
+        final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
         CompleteState newState = new CompleteState(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity, domain.getCategoryRoleMappers()));
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
@@ -463,7 +474,8 @@ public final class ServerAuthenticationContext {
                 throw ElytronMessages.log.noAuthenticationInProgress();
             }
         }
-        oldState.getRealmIdentity().dispose();
+        SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizationIdentity, null, null, null));
+        realmIdentity.dispose();
     }
 
     /**

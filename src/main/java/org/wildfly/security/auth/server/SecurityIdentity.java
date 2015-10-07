@@ -39,6 +39,8 @@ import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.event.RealmIdentityFailedAuthorizationEvent;
+import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizationEvent;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationException;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -310,8 +312,10 @@ public final class SecurityIdentity {
             try {
                 final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
                 final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+                final AuthorizationIdentity newAuthorizationIdentity = realmIdentity.getAuthorizationIdentity();
+                SecurityRealm.safeHandleRealmEvent(securityRealm, new RealmIdentitySuccessfulAuthorizationEvent(this.authorizationIdentity, this.principal, principal));
                 try {
-                    return new SecurityIdentity(domain, principal, realmInfo, realmIdentity.getAuthorizationIdentity(), roleMappers);
+                    return new SecurityIdentity(domain, principal, realmInfo, newAuthorizationIdentity, roleMappers);
                 } finally {
                     realmIdentity.dispose();
                 }
@@ -319,6 +323,7 @@ public final class SecurityIdentity {
                 throw log.runAsAuthorizationFailed(this.principal, principal, ex);
             }
         } else {
+            SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentityFailedAuthorizationEvent(authorizationIdentity, this.principal, principal));
             throw log.unauthorizedRunAs(this.principal, principal, permission);
         }
     }
