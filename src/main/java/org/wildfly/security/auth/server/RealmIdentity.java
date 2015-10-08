@@ -20,7 +20,12 @@ package org.wildfly.security.auth.server;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A representation of a pre-authentication identity.
@@ -58,11 +63,32 @@ public interface RealmIdentity {
     /**
      * Verify the given credential.
      *
-     * @param credential the credential to verify
+     * @param guess the guess to verify
+     *
      * @return {@code true} if verification was successful, {@code false} otherwise
+     *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    boolean verifyCredential(String credentialName, Object credential) throws RealmUnavailableException;
+    default boolean verifyCredential(String credentialName, Object guess) throws RealmUnavailableException {
+        char[] passwordGuess;
+        if (guess instanceof char[]) {
+            passwordGuess = (char[]) guess;
+        } else if (guess instanceof String) {
+            passwordGuess = ((String) guess).toCharArray();
+        } else {
+            return false;
+        }
+        final Password credential = getCredential(credentialName, Password.class);
+        if (credential != null) try {
+            final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
+            final Password translated = passwordFactory.translate(credential);
+            return passwordFactory.verify(translated, passwordGuess);
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            return false;
+        } else {
+            return false;
+        }
+    }
 
     /**
      * Determine if the identity exists in lieu of verifying or acquiring a credential.  This method is intended to be
@@ -104,10 +130,6 @@ public interface RealmIdentity {
             return null;
         }
 
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
-            return false;
-        }
-
         public boolean exists() throws RealmUnavailableException {
             return true;
         }
@@ -128,10 +150,6 @@ public interface RealmIdentity {
 
         public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             return null;
-        }
-
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
-            return false;
         }
 
         public boolean exists() throws RealmUnavailableException {
