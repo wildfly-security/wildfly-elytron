@@ -109,9 +109,16 @@ public interface RealmIdentity {
      * Get an authorization identity for this pre-authenticated identity.
      *
      * @return the authorization identity (may not be {@code null})
+     *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException;
+    default AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+        if (exists()) {
+            return AuthorizationIdentity.EMPTY;
+        } else {
+            throw log.userDoesNotExist();
+        }
+    }
 
     /**
      * The anonymous realm identity.
@@ -133,10 +140,6 @@ public interface RealmIdentity {
         public boolean exists() throws RealmUnavailableException {
             return true;
         }
-
-        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return AuthorizationIdentity.EMPTY;
-        }
     };
 
     /**
@@ -154,11 +157,6 @@ public interface RealmIdentity {
 
         public boolean exists() throws RealmUnavailableException {
             return false;
-        }
-
-        public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            // todo: exception hierarchy
-            throw log.userDoesNotExist();
         }
     };
 }
