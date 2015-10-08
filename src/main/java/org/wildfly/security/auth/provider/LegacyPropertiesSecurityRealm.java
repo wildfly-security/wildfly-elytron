@@ -69,8 +69,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final Pattern HASHED_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
     private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
-    public static final String PROPERTIES_CLEAR_CREDENTIAL_NAME  = "properties-clear";
-    public static final String PROPERTIES_DIGEST_CREDENTIAL_NAME  = "properties-digest";
+    public static final String PROPERTIES_CLEAR_CREDENTIAL_NAME  = "password-clear";
+    public static final String PROPERTIES_DIGEST_CREDENTIAL_NAME  = "password-digest-md5";
 
     private final boolean plainText;
 
@@ -135,33 +135,24 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     return false;
                 }
 
-                char[] password;
-                if (char[].class.isInstance(credential)) {
-                    password = (char[]) credential;
-                } else if (ClearPassword.class.isInstance(credential)) {
-                    ClearPassword clearPassword = (ClearPassword) credential;
-                    password = clearPassword.getPassword();
-                } else {
-                    throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
-                }
+                ClearPassword testedPassword = (ClearPassword) credential;
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
                 final Password actualPassword;
-                if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName) && plainText) {
+                if (plainText) {
                     passwordFactory = getPasswordFactory(ALGORITHM_CLEAR);
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
-                } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
+                } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
 
                     byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
                     passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
-                } else {
-                    return false; // credentialName not supported by realm
                 }
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
-                    return passwordFactory.verify(actualPassword, password);
+
+                    return passwordFactory.verify(actualPassword, testedPassword.getPassword());
                 } catch (InvalidKeySpecException | InvalidKeyException | IllegalStateException e) {
                     throw new IllegalStateException(e);
                 }

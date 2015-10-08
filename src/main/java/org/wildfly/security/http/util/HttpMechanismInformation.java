@@ -38,7 +38,7 @@ public final class HttpMechanismInformation {
     public static final CredentialMapper HTTP_CREDENITAL_MAPPER = information -> {
         switch (information.getMechanismName()) {
             case Names.BASIC:
-                return Collections.singletonList("password");
+                return Collections.singletonList("password-clear");
             default:
                 return Collections.emptyList();
         }

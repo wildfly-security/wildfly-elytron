@@ -108,7 +108,7 @@ public final class SaslMechanismInformation {
             case Names.SCRAM_SHA_512_PLUS:
                 return Collections.unmodifiableList(Arrays.asList("password-scram-sha512", "password-clear"));
             case Names.PLAIN:
-                return Collections.singletonList("password");
+                return Collections.singletonList("password-clear");
             case Names.OTP:
                 return Collections.singletonList("otp");
             case Names.IEC_ISO_9798_M_DSA_SHA1:

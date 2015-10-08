@@ -147,7 +147,9 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
             callbackHandler.handle(new Callback[] { nameCallback, passwordVerifyCallback });
 
             return passwordVerifyCallback.isVerified();
-        } catch (IOException | UnsupportedCallbackException e) {
+        } catch (UnsupportedCallbackException e) {
+            return false;
+        } catch (IOException e) {
             throw new HttpAuthenticationException(e);
         } finally {
             passwordVerifyCallback.clearPassword();

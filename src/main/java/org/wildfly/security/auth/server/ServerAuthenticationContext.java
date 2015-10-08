@@ -619,24 +619,16 @@ public final class ServerAuthenticationContext {
                     List<String> credentialNames = domain.mapCredentials(information);
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).isDefinitelyVerifiable()) {
-                            final TwoWayPassword credential = getCredential(credentialName, TwoWayPassword.class);
-                            if (credential != null) {
-                                try {
-                                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-                                    final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
-                                    passwordVerifyCallback.setVerified(verifyCredential(credentialName, password));
-                                } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                                    // try to fall back to another credential type
-                                    throw new FastUnsupportedCallbackException(callback);
-                                }
-                                handleOne(callbacks, idx + 1);
-                                return;
+                            try {
+                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                                final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
+                                passwordVerifyCallback.setVerified(verifyCredential(credentialName, password));
+                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                                // try to fall back to another credential type
+                                throw new FastUnsupportedCallbackException(callback);
                             }
-                            final char[] charsCredential = getCredential(credentialName, char[].class);
-                            if (credential != null) {
-                                passwordVerifyCallback.setVerified(verifyCredential(credentialName, providedPassword));
-                            }
-                            throw new FastUnsupportedCallbackException(callback);
+                            handleOne(callbacks, idx + 1);
+                            return;
                         }
                     }
 
