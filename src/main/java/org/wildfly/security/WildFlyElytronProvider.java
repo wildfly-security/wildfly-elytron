@@ -18,7 +18,7 @@
 
 package org.wildfly.security;
 
-import static org.wildfly.security.http.HttpConstants.BASIC;
+import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;

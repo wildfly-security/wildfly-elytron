@@ -23,10 +23,13 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.unmodifiableSet;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.wildfly.security.auth.server.CredentialMapper;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
@@ -79,6 +82,48 @@ public final class SaslMechanismInformation {
 
         private Names() {}
     }
+
+    public static final CredentialMapper SASL_CREDENTIAL_MAPPER = information -> {
+        switch (information.getMechanismName()) {
+            case Names.DIGEST_MD5:
+                return Collections.unmodifiableList(Arrays.asList("password-digest-md5", "password-clear"));
+            case Names.DIGEST_SHA:
+                return Collections.unmodifiableList(Arrays.asList("password-digest-sha", "password-clear"));
+            case Names.DIGEST_SHA_256:
+                return Collections.unmodifiableList(Arrays.asList("password-digest-sha256", "password-clear"));
+            case Names.DIGEST_SHA_384:
+                return Collections.unmodifiableList(Arrays.asList("password-digest-sha384", "password-clear"));
+            case Names.DIGEST_SHA_512:
+                return Collections.unmodifiableList(Arrays.asList("password-digest-sha512", "password-clear"));
+            case Names.SCRAM_SHA_1:
+            case Names.SCRAM_SHA_1_PLUS:
+                return Collections.unmodifiableList(Arrays.asList("password-scram-sha1", "password-clear"));
+            case Names.SCRAM_SHA_256:
+            case Names.SCRAM_SHA_256_PLUS:
+                return Collections.unmodifiableList(Arrays.asList("password-scram-sha256", "password-clear"));
+            case Names.SCRAM_SHA_384:
+            case Names.SCRAM_SHA_384_PLUS:
+                return Collections.unmodifiableList(Arrays.asList("password-scram-sha384", "password-clear"));
+            case Names.SCRAM_SHA_512:
+            case Names.SCRAM_SHA_512_PLUS:
+                return Collections.unmodifiableList(Arrays.asList("password-scram-sha512", "password-clear"));
+            case Names.PLAIN:
+                return Collections.singletonList("password");
+            case Names.OTP:
+                return Collections.singletonList("otp");
+            case Names.IEC_ISO_9798_M_DSA_SHA1:
+            case Names.IEC_ISO_9798_U_DSA_SHA1:
+                return Collections.singletonList("certificate-dsa-sha1");
+            case Names.IEC_ISO_9798_M_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_U_ECDSA_SHA1:
+                return Collections.singletonList("certificate-ecdsa-sha1");
+            case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
+            case Names.IEC_ISO_9798_U_RSA_SHA1_ENC:
+                return Collections.singletonList("certificate-rsa-sha1-enc");
+            default:
+                return Collections.emptyList();
+        }
+    };
 
     private static final Set<String> MD5_MECHS = nSet(
         Names.CRAM_MD5,

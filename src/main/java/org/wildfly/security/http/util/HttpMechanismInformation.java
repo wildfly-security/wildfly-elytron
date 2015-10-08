@@ -15,38 +15,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.http;
+package org.wildfly.security.http.util;
+
+import java.util.Collections;
+
+import org.wildfly.security.auth.server.CredentialMapper;
 
 /**
- * Constants used within HTTP based authentication.
+ * Information about HTTP authentication mechanisms.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class HttpConstants {
+public final class HttpMechanismInformation {
 
-    private HttpConstants() {
+    public static final class Names {
+
+        public static final String BASIC = "Basic";
+
+        private Names() {};
     }
 
-    /*
-     * Header Fields
-     */
-
-    public static final String CHARSET = "charset";
-    public static final String REALM = "realm";
-
-    /*
-     * Header Names
-     */
-
-    public static final String AUTHORIZATION = "Authorization";
-    public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-
-    /*
-     * Response Codes
-     */
-
-    public static final int OK = 200;
-    public static final int UNAUTHORIZED = 401;
-    public static final int FORBIDDEN = 403;
+    public static final CredentialMapper HTTP_CREDENITAL_MAPPER = information -> {
+        switch (information.getMechanismName()) {
+            case Names.BASIC:
+                return Collections.singletonList("password");
+            default:
+                return Collections.emptyList();
+        }
+    };
 
 }

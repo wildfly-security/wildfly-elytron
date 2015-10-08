@@ -22,11 +22,11 @@ import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
-import static org.wildfly.security.http.HttpConstants.BASIC;
 import static org.wildfly.security.http.HttpConstants.CHARSET;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
+import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
 import static org.wildfly.security.util._private.Arrays2.indexOf;
 
 import java.io.IOException;

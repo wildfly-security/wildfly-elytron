@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security.http.HttpConstants.BASIC;
+import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
 
 import java.util.ArrayList;
 import java.util.Map;
