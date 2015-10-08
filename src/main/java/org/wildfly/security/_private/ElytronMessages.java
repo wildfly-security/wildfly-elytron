@@ -249,7 +249,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1050, value = "Could not execute query \"%s\"")
     RuntimeException couldNotExecuteQuery(String sql, @Cause Throwable cause);
 
-    // 1051
+    @Message(id = 1051, value = "Could not resolve password algorithm for credential name \"%s\"")
+    InvalidKeyException couldNotResolveAlgorithmByCredentialName(String credentialName);
 
     @Message(id = 1052, value = "Unexpected error when processing authentication query \"%s\"")
     RuntimeException unexpectedErrorWhenProcessingAuthenticationQuery(String sql, @Cause Throwable cause);
@@ -359,8 +360,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1084, value = "Error while consuming results from search. SearchDn [%s], Filter [%s], Filter Args [%s].")
     RuntimeException ldapRealmErrorWhileConsumingResultsFromSearch(String searchDn, String filter, String filterArgs, @Cause Throwable cause);
 
-    @Message(id = 1085, value = "No Ldap-backed realm's persister support credential of type \"%s\" and algorithm \"%s\"")
-    RealmUnavailableException ldapRealmsPersisterNotSupportCredentialTypeAndAlgorithm(String type, String algorithm);
+    @Message(id = 1085, value = "No Ldap-backed realm's persister support credential name \"%s\"")
+    RealmUnavailableException ldapRealmsPersisterNotSupportCredentialName(String credentialName);
 
     @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);

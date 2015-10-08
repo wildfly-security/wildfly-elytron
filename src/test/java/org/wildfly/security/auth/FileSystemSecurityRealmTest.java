@@ -55,8 +55,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.Provider;
 import java.security.Security;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -246,14 +247,14 @@ public class FileSystemSecurityRealmTest {
 
         newIdentity.setAttributes(newAttributes);
 
-        ArrayList<Object> credentials = new ArrayList<>();
+        Map<String, Object> credentials = new HashMap<>();
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                 new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
 
-        credentials.add(bCryptPassword);
+        credentials.put("bcrypt-cred", bCryptPassword);
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
         byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
@@ -261,16 +262,16 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)
         );
-        credentials.add(otpPassword);
+        credentials.put("otp-cred", otpPassword);
 
         newIdentity.setCredentials(credentials);
 
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential("secretPassword".toCharArray()));
+        assertTrue(existingIdentity.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
 
-        OneTimePassword otp = existingIdentity.getCredential(OneTimePassword.class, OneTimePassword.ALGORITHM_OTP_SHA1);
+        OneTimePassword otp = existingIdentity.getCredential("otp-cred", OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash, otp.getHash());
@@ -292,13 +293,13 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity identity1 = securityRealm.createRealmIdentity("testingUser");
         identity1.create();
 
-        ArrayList<Object> credentials = new ArrayList<>();
+        Map<String, Object> credentials = new HashMap<>();
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                 new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
-        credentials.add(bCryptPassword);
+        credentials.put("bcrypt-cred", bCryptPassword);
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
         byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
@@ -306,7 +307,7 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)
         );
-        credentials.add(otpPassword);
+        credentials.put("otp-cred", otpPassword);
 
         identity1.setCredentials(credentials);
 
@@ -320,16 +321,16 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword2 = (OneTimePassword) otpFactory2.generatePassword(
                 new OneTimePasswordSpec(hash2, seed2, 6789)
         );
-        identity2.setCredential(otpPassword2);
+        identity2.setCredential("otp-cred", otpPassword2);
 
         // checking result
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
         ModifiableRealmIdentity identity3 = securityRealm.createRealmIdentity("testingUser");
 
         assertTrue(identity3.exists());
-        assertTrue(identity3.verifyCredential("secretPassword".toCharArray()));
+        assertTrue(identity3.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
 
-        OneTimePassword otp = identity3.getCredential(OneTimePassword.class, OneTimePassword.ALGORITHM_OTP_SHA1);
+        OneTimePassword otp = identity3.getCredential("otp-cred", OneTimePassword.class);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash2, otp.getHash());
         assertArrayEquals(seed2, otp.getSeed());
@@ -337,15 +338,15 @@ public class FileSystemSecurityRealmTest {
         assertNotNull(otp);
     }
 
-    public void assertCreateIdentityWithPassword(char[] actualPassword, Password credential) throws Exception {
+    private void assertCreateIdentityWithPassword(char[] actualPassword, Password credential) throws Exception {
         FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
         ModifiableRealmIdentity newIdentity = securityRealm.createRealmIdentity("plainUser");
 
         newIdentity.create();
 
-        ArrayList<Object> credentials = new ArrayList<>();
+        Map<String, Object> credentials = new HashMap<>();
 
-        credentials.add(credential);
+        credentials.put("cred", credential);
 
         newIdentity.setCredentials(credentials);
 
@@ -354,7 +355,7 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
 
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential(actualPassword));
+        assertTrue(existingIdentity.verifyCredential("cred", actualPassword));
     }
 
     private Path getRootPath(boolean deleteIfExists) throws Exception {

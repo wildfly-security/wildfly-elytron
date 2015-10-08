@@ -25,6 +25,7 @@ import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactor
 
 import java.security.Permissions;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Map;
 
 import javax.net.ssl.X509KeyManager;
@@ -55,6 +56,8 @@ public class SaslServerBuilder {
     //Server factory info
     private final Class<? extends SaslServerFactory> serverFactoryClass;
     private final String mechanismName;
+
+    private String TESTING_CREDENTIAL = "password";
 
     //Security domain info
     private String username;
@@ -164,9 +167,10 @@ public class SaslServerBuilder {
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         domainBuilder.addRealm(realmName, mainRealm);
         domainBuilder.setDefaultRealmName(defaultRealmName);
+        domainBuilder.setCredentialMapper((information -> Arrays.asList(TESTING_CREDENTIAL)));
 
         if (username != null) {
-            mainRealm.setPasswordMap(username, password);
+            mainRealm.setPasswordMap(username, TESTING_CREDENTIAL, password);
         }
 
         if (permissionsMap != null) {

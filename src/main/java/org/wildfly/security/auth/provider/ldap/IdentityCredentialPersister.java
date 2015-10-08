@@ -15,17 +15,18 @@ public interface IdentityCredentialPersister {
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
      *
-     * @param credential the credential to check
+     * @param credentialName the credential to store
      * @return {@code true} if persisting of given credential is supported
      */
-    boolean getCredentialPersistSupport(Object credential);
+    boolean getCredentialPersistSupport(String credentialName);
 
     /**
      * Store credential of identity.
      *
+     * @param credentialName the credential to store
      * @param credential the credential
      */
-    void persistCredential(Object credential) throws RealmUnavailableException;
+    void persistCredential(String credentialName, Object credential) throws RealmUnavailableException;
 
     /**
      * Clear all supported credentials of identity.

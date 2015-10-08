@@ -39,6 +39,8 @@ public class RSAPrivateKeyMapper implements KeyMapper {
 
     private static final String KEY_ALGORITHM = "RSA";
 
+    private final String credentialName;
+
     private final int privateKey;
 
     /**
@@ -46,9 +48,11 @@ public class RSAPrivateKeyMapper implements KeyMapper {
      *
      * @param privateKey The column index from where an array of bytes are read in order to create the private key.
      */
-    public RSAPrivateKeyMapper(int privateKey) {
+    public RSAPrivateKeyMapper(String credentialName, int privateKey) {
+        Assert.checkNotNullParam("credentialName", credentialName);
         Assert.checkMinimumParameter("privateKey", 1, privateKey);
         this.privateKey = privateKey;
+        this.credentialName = credentialName;
     }
 
     /**
@@ -62,8 +66,8 @@ public class RSAPrivateKeyMapper implements KeyMapper {
     }
 
     @Override
-    public Class<?> getKeyType() {
-        return PrivateKey.class;
+    public String getCredentialName() {
+        return credentialName;
     }
 
     @Override

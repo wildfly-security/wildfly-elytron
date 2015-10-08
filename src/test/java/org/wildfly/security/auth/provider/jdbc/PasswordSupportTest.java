@@ -71,27 +71,28 @@ public class PasswordSupportTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("cred1", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred1"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred1"));
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
 
-        assertTrue(realmIdentity.verifyCredential(password));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertTrue(realmIdentity.verifyCredential("cred1", password));
+        assertTrue(realmIdentity.verifyCredential("cred1", userPassword.toCharArray()));
 
         Password invalidPassword = passwordFactory.generatePassword(new ClearPasswordSpec("badpasswd".toCharArray()));
 
-        assertFalse(realmIdentity.verifyCredential(invalidPassword));
+        assertFalse(realmIdentity.verifyCredential("cred1", invalidPassword));
+        assertFalse(realmIdentity.verifyCredential("cred2", invalidPassword));
 
-        ClearPassword storedPassword = realmIdentity.getCredential(ClearPassword.class, null);
+        ClearPassword storedPassword = realmIdentity.getCredential("cred1", ClearPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getPassword(), storedPassword.getPassword());
@@ -107,20 +108,20 @@ public class PasswordSupportTest {
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_bcrypt_password where name = ?")
                 .withMapper(
-                        new PasswordKeyMapper(BCryptPassword.ALGORITHM_BCRYPT, 1)
+                        new PasswordKeyMapper("cred2", BCryptPassword.ALGORITHM_BCRYPT, 1)
                 )
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred2"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class, null));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
-        assertFalse(realmIdentity.verifyCredential("invalid".toCharArray()));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred2"));
+        assertTrue(realmIdentity.verifyCredential("cred2", userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyCredential("cred2", "invalid".toCharArray()));
 
-        BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class, null);
+        BCryptPassword storedPassword = realmIdentity.getCredential("cred2", BCryptPassword.class);
 
         assertNotNull(storedPassword);
 
@@ -140,20 +141,20 @@ public class PasswordSupportTest {
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_password where name = ?")
                 .withMapper(
-                        new PasswordKeyMapper(BCryptPassword.ALGORITHM_BCRYPT, 1, 2, 3)
+                        new PasswordKeyMapper("cred3", BCryptPassword.ALGORITHM_BCRYPT, 1, 2, 3)
                 )
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(BCryptPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred3"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(BCryptPassword.class, null));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
-        assertFalse(realmIdentity.verifyCredential("invalid".toCharArray()));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred3"));
+        assertTrue(realmIdentity.verifyCredential("cred3", userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyCredential("cred3", "invalid".toCharArray()));
 
-        BCryptPassword storedPassword = realmIdentity.getCredential(BCryptPassword.class, null);
+        BCryptPassword storedPassword = realmIdentity.getCredential("cred3", BCryptPassword.class);
 
         assertNotNull(storedPassword);
     }
@@ -177,19 +178,19 @@ public class PasswordSupportTest {
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest, salt FROM user_salted_digest_password where name = ?")
                 .withMapper(
-                        new PasswordKeyMapper(algorithm, 1, 2)
+                        new PasswordKeyMapper("cred4", algorithm, 1, 2)
                 )
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SaltedSimpleDigestPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred4"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SaltedSimpleDigestPassword.class, null));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred4"));
+        assertTrue(realmIdentity.verifyCredential("cred4", userPassword.toCharArray()));
 
-        SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential(SaltedSimpleDigestPassword.class, null);
+        SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential("cred4", SaltedSimpleDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -212,19 +213,19 @@ public class PasswordSupportTest {
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest FROM user_simple_digest_password where name = ?")
                 .withMapper(
-                        new PasswordKeyMapper(algorithm, 1)
+                        new PasswordKeyMapper("cred5", algorithm, 1)
                 )
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(SimpleDigestPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred5"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(SimpleDigestPassword.class, null));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred5"));
+        assertTrue(realmIdentity.verifyCredential("cred5", userPassword.toCharArray()));
 
-        SimpleDigestPassword storedPassword = realmIdentity.getCredential(SimpleDigestPassword.class, null);
+        SimpleDigestPassword storedPassword = realmIdentity.getCredential("cred5", SimpleDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -240,19 +241,19 @@ public class PasswordSupportTest {
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
                 .withMapper(
-                        new PasswordKeyMapper(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, 1, 2, 3)
+                        new PasswordKeyMapper("cred6", ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, 1, 2, 3)
                 )
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ScramDigestPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred6"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ScramDigestPassword.class, null));
-        assertTrue(realmIdentity.verifyCredential(userPassword.toCharArray()));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred6"));
+        assertTrue(realmIdentity.verifyCredential("cred6", userPassword.toCharArray()));
 
-        ScramDigestPassword storedPassword = realmIdentity.getCredential(ScramDigestPassword.class, null);
+        ScramDigestPassword storedPassword = realmIdentity.getCredential("cred6", ScramDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(passwordSpec.getHash(), storedPassword.getDigest());
@@ -272,12 +273,12 @@ public class PasswordSupportTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
-                .withMapper(new RSAPrivateKeyMapper(1))
+                .withMapper(new RSAPrivateKeyMapper("cred7", 1))
                 .from(dataSourceRule.getDataSource())
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
-        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class, null);
+        PrivateKey identityPrivateKey = realmIdentity.getCredential("cred7", PrivateKey.class);
 
         assertNotNull(identityPrivateKey);
         assertEquals(privateKey, identityPrivateKey);
@@ -299,22 +300,22 @@ public class PasswordSupportTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT pk.privateKey, cp.password FROM user_rsa_keys pk INNER JOIN user_clear_password cp on cp.name = pk.name WHERE pk.name = ?")
-                .withMapper(new RSAPrivateKeyMapper(1))
-                .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 2))
+                .withMapper(new RSAPrivateKeyMapper("cred8", 1))
+                .withMapper(new PasswordKeyMapper("cred9", ClearPassword.ALGORITHM_CLEAR, 2))
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred8"));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred9"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        PrivateKey identityPrivateKey = realmIdentity.getCredential(PrivateKey.class, null);
+        PrivateKey identityPrivateKey = realmIdentity.getCredential("cred8", PrivateKey.class);
 
         assertNotNull(identityPrivateKey);
         assertEquals(privateKey, identityPrivateKey);
 
-        ClearPassword identityClearPassword = realmIdentity.getCredential(ClearPassword.class, null);
+        ClearPassword identityClearPassword = realmIdentity.getCredential("cred9", ClearPassword.class);
 
         assertNotNull(identityClearPassword);
     }
@@ -332,24 +333,24 @@ public class PasswordSupportTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("cred10", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(dataSourceRule.getDataSource())
                 .principalQuery("SELECT privateKey FROM user_rsa_keys where name = ?")
-                    .withMapper(new RSAPrivateKeyMapper(1))
+                    .withMapper(new RSAPrivateKeyMapper("cred11", 1))
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(PrivateKey.class, null));
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred10"));
+        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred11"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.OBTAINABLE_ONLY, realmIdentity.getCredentialSupport(PrivateKey.class, null));
-        assertEquals(CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport("cred10"));
+        assertEquals(CredentialSupport.OBTAINABLE_ONLY, realmIdentity.getCredentialSupport("cred11"));
 
         insertUserWithClearPassword(userName, "john_clear_abcd1234");
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport(ClearPassword.class, null));
+        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred10"));
     }
 
     private void createRSAKeysTable(String userName, PrivateKey privateKey, PublicKey publicKey) throws Exception {

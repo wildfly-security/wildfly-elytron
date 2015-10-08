@@ -32,10 +32,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -44,10 +42,10 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -218,13 +216,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         }
     }
 
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
         return CredentialSupport.UNKNOWN;
     }
 
     @FunctionalInterface
-    interface CredentialParseFunction<C> {
-        C parseCredential(String algorithm, String format, String body) throws RealmUnavailableException, XMLStreamException;
+    interface CredentialParseFunction {
+        void parseCredential(String name, String algorithm, String format, String body) throws RealmUnavailableException, XMLStreamException;
     }
 
     class Identity implements ModifiableRealmIdentity {
@@ -240,30 +238,28 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             this.path = path;
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-            List<Object> credentials = loadCredentials();
-            for (Object credential : credentials) {
-                if (credentialType.isInstance(credential)) {
-                    return CredentialSupport.FULLY_SUPPORTED;
-                }
-            }
-            return CredentialSupport.UNSUPPORTED;
+        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Map<String, Object> credentials = loadCredentials();
+            return credentials.containsKey(credentialName) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
-        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-            List<Object> credentials = loadCredentials();
-            for (Object credential : credentials) {
-                if (credentialType.isInstance(credential)) {
-                    return credentialType.cast(credential);
-                }
+        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credentialType", credentialType);
+            Map<String, Object> credentials = loadCredentials();
+            Object credential = credentials.get(credentialName);
+            if (credentialType.isInstance(credential)) {
+                return credentialType.cast(credential);
             }
             return null;
         }
 
-        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credential", credential);
             // we only know how to verify plain-text passwords
             ClearPassword clearPassword = null;
-            // we only know how to verify plain-text passwords
             if (credential instanceof char[]) {
                 try {
                     ClearPasswordSpec keySpec = new ClearPasswordSpec((char[]) credential);
@@ -276,24 +272,22 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 clearPassword = (ClearPassword) credential;
             }
             if (clearPassword != null) {
-                List<Object> credentials = loadCredentials();
-                for (Object ours : credentials) {
-                    if (ours instanceof Password) try {
-                        final Password password = (Password) ours;
-                        final String algorithm = password.getAlgorithm();
-                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-                        return passwordFactory.verify(password, clearPassword.getPassword());
-                    } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
-                        // try next credential
-                    }
+                Map<String, Object> credentials = loadCredentials();
+                Object storedCredential = credentials.get(credentialName);
+                if (storedCredential instanceof Password) try {
+                    final Password storedPassword = (Password) storedCredential;
+                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(storedPassword.getAlgorithm());
+                    return passwordFactory.verify(storedPassword, clearPassword.getPassword());
+                } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+                    // ignore
                 }
             }
             return false;
         }
 
-        private List<Object> loadCredentials() throws RealmUnavailableException {
+        private Map<String, Object> loadCredentials() throws RealmUnavailableException {
             final LoadedIdentity loadedIdentity = loadIdentity(false, true);
-            return loadedIdentity == null ? Collections.emptyList() : loadedIdentity.getCredentials();
+            return loadedIdentity == null ? Collections.emptyMap() : loadedIdentity.getCredentials();
         }
 
         public boolean exists() throws RealmUnavailableException {
@@ -377,41 +371,43 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             }
         }
 
-        public void setCredential(final Object credential) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credential", credential);
+        public void deleteCredential(final String credentialName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
             final LoadedIdentity loadedIdentity = loadIdentity(false, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
-            List<Object> credentials = loadedIdentity.getCredentials();
-            removeCredentialOfTheSameType(credentials, credential);
-            credentials.add(credential);
+
+            Map<String, Object> credentials = loadedIdentity.getCredentials();
+            credentials.remove(credentialName);
 
             final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());
             replaceIdentity(newIdentity);
         }
 
-        private void removeCredentialOfTheSameType(List<Object> credentials, Object pattern) {
-            for (Iterator iterator = credentials.iterator(); iterator.hasNext();) {
-                Object credential = iterator.next();
-                if (credential instanceof Key && pattern instanceof Key) { // keys comparison
-                    if (((Key)credential).getAlgorithm().equals(((Key)pattern).getAlgorithm())) {
-                        iterator.remove();
-                    }
-                } else { // non-keys comparison
-                    if(credential.getClass() == pattern.getClass()) {
-                        iterator.remove();
-                    }
-                }
+        public void setCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialName", credentialName);
+            Assert.checkNotNullParam("credential", credential);
+            final LoadedIdentity loadedIdentity = loadIdentity(false, false);
+            if (loadedIdentity == null) {
+                throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
+
+            Map<String, Object> credentials = loadedIdentity.getCredentials();
+            if ( ! (credentials instanceof HashMap)) credentials = new HashMap<>(credentials);
+            credentials.put(credentialName, credential);
+
+            final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());
+            replaceIdentity(newIdentity);
         }
 
-        public void setCredentials(final List<Object> credentials) throws RealmUnavailableException {
+        public void setCredentials(final Map<String, Object> credentials) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentials", credentials);
             final LoadedIdentity loadedIdentity = loadIdentity(true, false);
             if (loadedIdentity == null) {
                 throw ElytronMessages.log.fileSystemRealmNotFound(name);
             }
+
             final LoadedIdentity newIdentity = new LoadedIdentity(name, credentials, loadedIdentity.getAttributes());
             replaceIdentity(newIdentity);
         }
@@ -487,17 +483,18 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             streamWriter.writeCharacters("\n");
             streamWriter.writeStartElement("identity");
             streamWriter.writeDefaultNamespace(ELYTRON_1_0);
-            final Iterator<Object> credIter = newIdentity.getCredentials().iterator();
-            if (credIter.hasNext()) {
+
+            if (newIdentity.getCredentials().size() > 0) {
                 streamWriter.writeCharacters("\n    ");
                 streamWriter.writeStartElement("credentials");
-                do {
+                for (Map.Entry<String, Object> entry : newIdentity.getCredentials().entrySet()) {
                     streamWriter.writeCharacters("\n        ");
-                    final Object credential = credIter.next();
+                    final Object credential = entry.getValue();
                     if (credential instanceof OneTimePassword) {
                         final OneTimePassword otp = (OneTimePassword) credential;
                         otp.getHash();
                         streamWriter.writeStartElement("otp");
+                        streamWriter.writeAttribute("name", entry.getKey());
                         streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
                         streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
                         streamWriter.writeAttribute("seed", ByteIterator.ofBytes(otp.getSeed()).base64Encode().drainToString());
@@ -519,6 +516,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                             passwordString = ModularCrypt.encodeAsString(password);
                         }
 
+                        streamWriter.writeAttribute("name", entry.getKey());
                         streamWriter.writeAttribute("algorithm", algorithm);
                         streamWriter.writeAttribute("format", format);
                         streamWriter.writeCharacters(passwordString.toString());
@@ -529,7 +527,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         final String format = publicKey.getFormat();
                         final byte[] encoded = publicKey.getEncoded();
                         final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
-                        streamWriter.writeStartElement("public-key");
+                        streamWriter.writeStartElement("private-key");
+                        streamWriter.writeAttribute("name", entry.getKey());
                         streamWriter.writeAttribute("algorithm", algorithm);
                         streamWriter.writeAttribute("format", format);
                         while (iterator.hasNext()) {
@@ -543,6 +542,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         final byte[] encoded = certificate.getEncoded();
                         final CodePointIterator iterator = ByteIterator.ofBytes(encoded).base64Encode();
                         streamWriter.writeStartElement("certificate");
+                        streamWriter.writeAttribute("name", entry.getKey());
                         streamWriter.writeAttribute("algorithm", "X.509");
                         while (iterator.hasNext()) {
                             streamWriter.writeCharacters("\n            ");
@@ -551,7 +551,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         streamWriter.writeCharacters("\n        ");
                         streamWriter.writeEndElement();
                     }
-                } while (credIter.hasNext());
+                }
                 streamWriter.writeCharacters("\n    ");
                 streamWriter.writeEndElement();
             }
@@ -614,7 +614,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
-            List<Object> credentials = Collections.emptyList();
+            Map<String, Object> credentials = Collections.emptyMap();
             Attributes attributes = Attributes.EMPTY;
             boolean gotCredentials = false;
             boolean gotRoles = false;
@@ -644,27 +644,27 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             }
         }
 
-        private List<Object> parseCredentials(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+        private Map<String, Object> parseCredentials(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
             if (attributeCount > 0) {
                 throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
             }
             if (streamReader.nextTag() == END_ELEMENT) {
-                return Collections.emptyList();
+                return Collections.emptyMap();
             }
-            List<Object> credentials = new ArrayList<>();
+            Map<String, Object> credentials = new HashMap<>();
             do {
                 if (! ELYTRON_1_0.equals(streamReader.getNamespaceURI())) {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 if ("password".equals(streamReader.getLocalName())) {
-                    credentials.add(parsePassword(streamReader));
+                    parsePassword(credentials, streamReader);
                 } else if ("private-key".equals(streamReader.getLocalName())) {
-                    credentials.add(parsePrivateKey(streamReader));
+                    parsePrivateKey(credentials, streamReader);
                 } else if ("certificate".equals(streamReader.getLocalName())) {
-                    credentials.add(parseCertificate(streamReader));
+                    parseCertificate(credentials, streamReader);
                 } else if ("otp".equals(streamReader.getLocalName())) {
-                    credentials.add(parseOtp(streamReader));
+                    parseOtp(credentials, streamReader);
                 } else {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
@@ -672,8 +672,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return credentials;
         }
 
-        private <C> C parseCredential(final XMLStreamReader streamReader, CredentialParseFunction<C> function) throws RealmUnavailableException, XMLStreamException {
+        private void parseCredential(final XMLStreamReader streamReader, CredentialParseFunction function) throws RealmUnavailableException, XMLStreamException {
             final int attributeCount = streamReader.getAttributeCount();
+            String name = null;
             String algorithm = null;
             String format = null;
             for (int i = 0; i < attributeCount; i ++) {
@@ -682,7 +683,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
-                if ("algorithm".equals(localName)) {
+                if ("name".equals(localName)) {
+                    name = streamReader.getAttributeValue(i);
+                } else if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("format".equals(localName)) {
                     format = streamReader.getAttributeValue(i);
@@ -691,24 +694,25 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 }
             }
             final String text = streamReader.getElementText().trim();
-            return function.parseCredential(algorithm, format, text);
+            function.parseCredential(name, algorithm, format, text);
         }
 
-        private X509Certificate parseCertificate(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
-            return parseCredential(streamReader, (algorithm, format, text) -> {
+        private void parseCertificate(final Map<String, Object> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            parseCredential(streamReader, (name, algorithm, format, text) -> {
                 if (algorithm == null) algorithm = "X.509";
                 if (format == null) format = "X.509";
                 try {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
-                    return (X509Certificate) certificateFactory.generateCertificate(CodePointIterator.ofString(text).base64Decode().asInputStream());
+                    credentials.put(name, certificateFactory.generateCertificate(
+                            CodePointIterator.ofString(text).base64Decode().asInputStream()));
                 } catch (CertificateException | ClassCastException e) {
                     throw ElytronMessages.log.fileSystemRealmCertificateReadError(format, path, streamReader.getLocation().getLineNumber(), name);
                 }
             });
         }
 
-        private PrivateKey parsePrivateKey(final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
-            return parseCredential(streamReader, (algorithm, format, text) -> {
+        private void parsePrivateKey(final Map<String, Object> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
+            parseCredential(streamReader, (name, algorithm, format, text) -> {
                 if (algorithm == null) {
                     throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
                 }
@@ -719,7 +723,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     } else {
                         throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                     }
-                    return KeyFactory.getInstance(algorithm).generatePrivate(keySpec);
+                    credentials.put(name, KeyFactory.getInstance(algorithm).generatePrivate(keySpec));
                 } catch (InvalidKeySpecException e) {
                     throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                 } catch (NoSuchAlgorithmException e) {
@@ -728,8 +732,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             });
         }
 
-        private Password parsePassword(final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
-            return parseCredential(streamReader, (algorithm, format, text) -> {
+        private void parsePassword(final Map<String, Object> credentials, final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+            parseCredential(streamReader, (name, algorithm, format, text) -> {
                 try {
                     if (BASE64_FORMAT.equals(format)) {
                         byte[] passwordBytes = CodePointIterator.ofChars(text.toCharArray()).base64Decode().drain();
@@ -737,12 +741,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         PasswordSpec passwordSpec = BasicPasswordSpecEncoding.decode(passwordBytes);
 
                         if (passwordSpec != null) {
-                            return passwordFactory.generatePassword(passwordSpec);
+                            credentials.put(name, passwordFactory.generatePassword(passwordSpec));
                         } else {
                             throw ElytronMessages.log.fileSystemRealmInvalidPasswordAlgorithm(algorithm, path, streamReader.getLocation().getLineNumber(), name);
                         }
                     } else if (MCF_FORMAT.equals(format)) {
-                        return ModularCrypt.decode(text);
+                        credentials.put(name, ModularCrypt.decode(text));
                     } else {
                         throw ElytronMessages.log.fileSystemRealmInvalidPasswordFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                     }
@@ -752,7 +756,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             });
         }
 
-        private Password parseOtp(final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+        private void parseOtp(final Map<String, Object> credentials, final XMLStreamReader streamReader) throws XMLStreamException, RealmUnavailableException {
+            String name = null;
             String algorithm = null;
             byte[] hash = null;
             byte[] seed = null;
@@ -765,7 +770,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     throw ElytronMessages.log.fileSystemRealmInvalidContent(path, streamReader.getLocation().getLineNumber(), name);
                 }
                 final String localName = streamReader.getAttributeLocalName(i);
-                if ("algorithm".equals(localName)) {
+                if ("name".equals(localName)) {
+                    name = streamReader.getAttributeValue(i);
+                } else if ("algorithm".equals(localName)) {
                     algorithm = streamReader.getAttributeValue(i);
                 } else if ("hash".equals(localName)) {
                     hash = CodePointIterator.ofString(streamReader.getAttributeValue(i)).base64Decode().drain();
@@ -784,7 +791,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
             try {
                 PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
-                return passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
+                Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(hash, seed, sequenceNumber));
+                credentials.put(name, password);
             } catch (InvalidKeySpecException e) {
                 throw ElytronMessages.log.fileSystemRealmInvalidOtpDefinition(path, streamReader.getLocation().getLineNumber(), name, e);
             } catch (NoSuchAlgorithmException e) {
@@ -861,10 +869,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
     final class LoadedIdentity {
         private final String name;
-        private final List<Object> credentials;
+        private final Map<String, Object> credentials;
         private final Attributes attributes;
 
-        LoadedIdentity(final String name, final List<Object> credentials, final Attributes attributes) {
+        LoadedIdentity(final String name, final Map<String, Object> credentials, final Attributes attributes) {
             this.name = name;
             this.credentials = credentials;
             this.attributes = attributes;
@@ -878,7 +886,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return attributes;
         }
 
-        List<Object> getCredentials() {
+        Map<String, Object> getCredentials() {
             return credentials;
         }
     }

@@ -172,7 +172,7 @@ public class LinkPolicyConfigurationTest {
 
         attributes.addAll(RoleDecoder.KEY_ROLES, Arrays.asList(roles));
 
-        realm.setPasswordMap(userName, PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(new ClearPasswordSpec(userName.toCharArray())), attributes);
+        realm.setPasswordMap(userName, "clear", PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(new ClearPasswordSpec(userName.toCharArray())), attributes);
 
         builder.setDefaultRealmName("default");
 

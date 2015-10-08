@@ -55,6 +55,8 @@ import org.wildfly.security.password.interfaces.ClearPassword;
  */
 public class JaasSecurityRealm implements SecurityRealm {
 
+    public final String VERIFIABLE_CREDENTIAL_NAME = "jaas";
+
     private final String loginConfiguration;
 
     private CallbackHandler handler;
@@ -85,17 +87,16 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+    public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialName", credentialName);
         if (handler == null) {
             // we will be using the default handler that only supports char[] and String credentials.
-            if (char[].class.isAssignableFrom(credentialType) || String.class.isAssignableFrom(credentialType) || ClearPassword.class.isAssignableFrom(credentialType)) {
+            if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
                 return CredentialSupport.VERIFIABLE_ONLY;
-            }
-            else {
+            } else {
                 return CredentialSupport.UNSUPPORTED;
             }
-        }
-        else {
+        } else {
             // if a custom handler is set then the credential type is possibly verifiable.
             return CredentialSupport.POSSIBLY_VERIFIABLE;
         }
@@ -146,17 +147,17 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getCredentialSupport(credentialType, algorithmName);
+        public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getCredentialSupport(credentialName);
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
             return null;
         }
 
         @Override
-        public boolean verifyCredential(Object credential) throws RealmUnavailableException {
+        public boolean verifyCredential(String credentialName, Object credential) throws RealmUnavailableException {
             this.subject = null;
             boolean successfulLogin;
             final CallbackHandler callbackHandler = createCallbackHandler(principal, credential);

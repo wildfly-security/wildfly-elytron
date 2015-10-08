@@ -41,14 +41,12 @@ public interface SecurityRealm {
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
-     * supported.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
-     * algorithm name is not given, then the query is performed for any algorithm of the given type.
+     * supported.  The credential type is defined by its {@code credentialName}.
      *
-     * @param credentialType the credential type
-     * @param algorithmName the optional algorithm name for the credential type
+     * @param credentialName the credential name
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(Class<?> credentialType, String algorithmName) throws RealmUnavailableException;
+    CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException;
 
     /**
      * An empty security realm.
@@ -58,7 +56,7 @@ public interface SecurityRealm {
             return RealmIdentity.NON_EXISTENT;
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
+        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             return CredentialSupport.UNSUPPORTED;
         }
     };

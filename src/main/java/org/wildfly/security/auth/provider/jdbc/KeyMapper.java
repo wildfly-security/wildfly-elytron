@@ -29,11 +29,11 @@ import java.sql.ResultSet;
 public interface KeyMapper extends ColumnMapper {
 
     /**
-     * Returns the key type supported by this mapper.
+     * Returns the credential name supported by this mapper.
      *
-     * @return the key type supported by this mapper.
+     * @return the credential name supported by this mapper.
      */
-    Class<?> getKeyType();
+    String getCredentialName();
 
     /**
      * <p>Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not

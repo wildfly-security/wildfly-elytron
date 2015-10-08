@@ -40,7 +40,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(getDataSource())
                 .build();
 
@@ -58,7 +58,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
 
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, firstName, lastName, email FROM user_table WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper(ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(new PasswordKeyMapper("clear", ClearPassword.ALGORITHM_CLEAR, 1))
                     .from(getDataSource())
                 .build();
 

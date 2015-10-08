@@ -63,8 +63,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
-    public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-        return authenticationRealm.getCredentialSupport(credentialType, algorithmName);
+    public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        return authenticationRealm.getCredentialSupport(credentialName);
     }
 
     static final class Identity implements RealmIdentity {
@@ -77,16 +77,16 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             this.authorizationIdentity = authorizationIdentity;
         }
 
-        public CredentialSupport getCredentialSupport(final Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return authenticationIdentity.getCredentialSupport(credentialType, null);
+        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredentialSupport(credentialName);
         }
 
-        public <C> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialType, algorithmName);
+        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialName, credentialType);
         }
 
-        public boolean verifyCredential(final Object credential) throws RealmUnavailableException {
-            return authenticationIdentity.verifyCredential(credential);
+        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+            return authenticationIdentity.verifyCredential(credentialName, credential);
         }
 
         public boolean exists() throws RealmUnavailableException {

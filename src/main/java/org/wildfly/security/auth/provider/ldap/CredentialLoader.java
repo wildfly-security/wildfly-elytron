@@ -42,10 +42,10 @@ interface CredentialLoader {
      * be passed in for each call.
      *
      * @param contextFactory The dir context factory to use if a DirContext is required to query the server directly.
-     * @param credentialType the credential type
+     * @param credentialName the credential name
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType);
+    CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName);
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.

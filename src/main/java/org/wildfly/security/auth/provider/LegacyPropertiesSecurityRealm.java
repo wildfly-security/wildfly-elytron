@@ -48,7 +48,6 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
@@ -70,6 +69,9 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final Pattern HASHED_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
     private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
+    public static final String PROPERTIES_CLEAR_CREDENTIAL_NAME  = "properties-clear";
+    public static final String PROPERTIES_DIGEST_CREDENTIAL_NAME  = "properties-digest";
+
     private final boolean plainText;
 
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
@@ -88,69 +90,78 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return new RealmIdentity() {
 
             @Override
-            public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialType, algorithmName) : CredentialSupport.UNSUPPORTED;
+            public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialName) : CredentialSupport.UNSUPPORTED;
             }
 
             @Override
-            public <C> C getCredential(Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            public <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
                 if (accountEntry == null) {
                     return null;
                 }
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
-                if (credentialType.isAssignableFrom(ClearPassword.class) && plainText) {
+                if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName) && plainText) {
                     passwordFactory = getPasswordFactory(ALGORITHM_CLEAR);
-
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
-                } else if (credentialType.isAssignableFrom(DigestPassword.class)) {
+                } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     if (plainText) {
                         AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
-
                         passwordSpec = new  EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
                     } else {
-                         byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
-                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
+                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                        passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
-
                 } else {
                     return null;
                 }
 
                 try {
-                    return credentialType.cast(passwordFactory.generatePassword(passwordSpec));
+                    Password password = passwordFactory.generatePassword(passwordSpec);
+                    if (credentialType.isInstance(password)) {
+                        return credentialType.cast(password);
+                    }
+                    return null;
                 } catch (InvalidKeySpecException e) {
                     throw new IllegalStateException(e);
                 }
-
             }
 
             @Override
-            public boolean verifyCredential(Object credential) throws RealmUnavailableException {
+            public boolean verifyCredential(String credentialName, Object credential) throws RealmUnavailableException {
                 if (accountEntry == null || credential instanceof ClearPassword == false) {
                     return false;
                 }
 
-                ClearPassword testedPassword = (ClearPassword) credential;
+                char[] password;
+                if (char[].class.isInstance(credential)) {
+                    password = (char[]) credential;
+                } else if (ClearPassword.class.isInstance(credential)) {
+                    ClearPassword clearPassword = (ClearPassword) credential;
+                    password = clearPassword.getPassword();
+                } else {
+                    throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
+                }
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
                 final Password actualPassword;
-                if (plainText) {
+                if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName) && plainText) {
                     passwordFactory = getPasswordFactory(ALGORITHM_CLEAR);
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
-                } else {
+                } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
 
                     byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
                     passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
+                } else {
+                    return false; // credentialName not supported by realm
                 }
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
-
-                    return passwordFactory.verify(actualPassword, testedPassword.getPassword());
+                    return passwordFactory.verify(actualPassword, password);
                 } catch (InvalidKeySpecException | InvalidKeyException | IllegalStateException e) {
                     throw new IllegalStateException(e);
                 }
@@ -182,13 +193,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
 
     @Override
-    public CredentialSupport getCredentialSupport(Class<?> credentialType, final String algorithmName) throws RealmUnavailableException {
-        if (credentialType.isAssignableFrom(ClearPassword.class)) {
+    public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
+        if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName)) {
             return plainText ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.VERIFIABLE_ONLY;
-        } else if (credentialType.isAssignableFrom(DigestPassword.class)) {
+        } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
             return CredentialSupport.OBTAINABLE_ONLY;
         }
-
         return CredentialSupport.UNSUPPORTED;
     }
 

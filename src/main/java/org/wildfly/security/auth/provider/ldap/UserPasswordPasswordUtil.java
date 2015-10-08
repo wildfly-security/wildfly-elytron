@@ -45,7 +45,7 @@ class UserPasswordPasswordUtil {
     private UserPasswordPasswordUtil() {
     }
 
-    public static Password parseUserPassword(byte[] userPassword) throws InvalidKeySpecException {
+    public static Password parseUserPassword(byte[] userPassword, String requiredType) throws InvalidKeySpecException {
         Assert.checkNotNullParam("userPassword", userPassword);
         if (userPassword.length == 0) throw log.emptyParameter("userPassword");
 
@@ -54,47 +54,60 @@ class UserPasswordPasswordUtil {
         } else {
             if (userPassword[1] == 'm' && userPassword[2] == 'd' && userPassword[3] == '5' && userPassword[4] == '}') {
                 // {md5}
+                if ( ! "md5".equals(requiredType)) return null;
                 return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_MD5, 5, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 'h' && userPassword[3] == 'a') {
                 if (userPassword[4] == '}') {
                     // {sha}
+                    if ( ! "sha1".equals(requiredType)) return null;
                     return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_1, 5, userPassword);
                 } else if (userPassword[4] == '2' && userPassword[5] == '5' && userPassword[6] == '6' && userPassword[7] == '}') {
                     // {sha256}
+                    if ( ! "sha256".equals(requiredType)) return null;
                     return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_256, 8, userPassword);
                 } else if (userPassword[4] == '3' && userPassword[5] == '8' && userPassword[6] == '4' && userPassword[7] == '}') {
                     // {sha384}
+                    if ( ! "sha384".equals(requiredType)) return null;
                     return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_384, 8, userPassword);
                 } else if (userPassword[4] == '5' && userPassword[5] == '1' && userPassword[6] == '2' && userPassword[7] == '}') {
                     // {sha512}
+                    if ( ! "sha512".equals(requiredType)) return null;
                     return createSimpleDigestPassword(ALGORITHM_SIMPLE_DIGEST_SHA_512, 8, userPassword);
                 }
             } else if (userPassword[1] == 's' && userPassword[2] == 'm' && userPassword[3] == 'd' && userPassword[4] == '5' && userPassword[5] == '}') {
                 // {smd5}
+                if ( ! "smd5".equals(requiredType)) return null;
                 return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_MD5, 6, userPassword);
             } else if (userPassword[1] == 's' && userPassword[2] == 's' && userPassword[3] == 'h' && userPassword[4] == 'a') {
                 if (userPassword[5] == '}') {
                     // {ssha}
+                    if ( ! "ssha".equals(requiredType)) return null;
                     return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, 6, userPassword);
                 } else if (userPassword[5] == '2' && userPassword[6] == '5' && userPassword[7] == '6' && userPassword[8] == '}') {
                     // {ssha256}
+                    if ( ! "ssha256".equals(requiredType)) return null;
                     return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, 9, userPassword);
                 } else if (userPassword[5] == '3' && userPassword[6] == '8' && userPassword[7] == '4' && userPassword[8] == '}') {
                     // {ssha384}
+                    if ( ! "ssha384".equals(requiredType)) return null;
                     return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, 9, userPassword);
                 } else if (userPassword[5] == '5' && userPassword[6] == '1' && userPassword[7] == '2' && userPassword[8] == '}') {
                     // {ssha512}
+                    if ( ! "ssha512".equals(requiredType)) return null;
                     return createSaltedSimpleDigestPassword(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, 9, userPassword);
                 }
             } else if (userPassword[1] == 'c' && userPassword[2] == 'r' && userPassword[3] == 'y' && userPassword[4] == 'p' && userPassword[5] == 't' && userPassword[6] == '}') {
                 if (userPassword[7] == '_') {
                     // {crypt}_
+                    if ( ! "crypt_".equals(requiredType)) return null;
                     return createBsdCryptBasedPassword(userPassword);
                 } else {
                     // {crypt}
+                    if ( ! "crypt".equals(requiredType)) return null;
                     return createCryptBasedPassword(userPassword);
                 }
             }
+            if ( ! "clear".equals(requiredType)) return null;
             for (int i = 1; i < userPassword.length - 1; i++) {
                 if (userPassword[i] == '}') {
                     throw new InvalidKeySpecException();

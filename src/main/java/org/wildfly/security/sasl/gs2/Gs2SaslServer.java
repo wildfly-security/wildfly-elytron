@@ -82,7 +82,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         try {
             tryHandleCallbacks(credentialCallback);
             credential = (GSSCredential) credentialCallback.getCredential();
-        } catch (UnsupportedCallbackException e) {
+        } catch (UnsupportedCallbackException | IllegalStateException | SaslException e) {
             try {
                 String localNameStr = protocol + "@" + serverName;
                 GSSName localName = gssManager.createName(localNameStr, GSSName.NT_HOSTBASED_SERVICE, mechanism);

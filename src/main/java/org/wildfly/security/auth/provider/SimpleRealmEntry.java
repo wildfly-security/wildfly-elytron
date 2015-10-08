@@ -22,34 +22,36 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.password.Password;
 
+import java.util.Map;
+
 /**
  * A simple in-memory password-based entry for basic realm implementations.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class SimpleRealmEntry {
-    private final Password password;
+    private final Map<String, Password> passwords;
     private final Attributes attributes;
 
     /**
      * Construct a new instance.
      *
-     * @param password the entry password (can not be {@code null})
+     * @param passwords the entry password (can not be {@code null})
      */
-    public SimpleRealmEntry(final Password password) {
-        this(password, Attributes.EMPTY);
+    public SimpleRealmEntry(final Map<String, Password> passwords) {
+        this(passwords, Attributes.EMPTY);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param password the entry password (can not be {@code null})
+     * @param passwords the entry password (can not be {@code null})
      * @param attributes the entry attributes (can not be {@code null})
      */
-    public SimpleRealmEntry(final Password password, final Attributes attributes) {
-        Assert.checkNotNullParam("password", password);
+    public SimpleRealmEntry(final Map<String, Password> passwords, final Attributes attributes) {
+        Assert.checkNotNullParam("passwords", passwords);
         Assert.checkNotNullParam("attributes", attributes);
-        this.password = password;
+        this.passwords = passwords;
         this.attributes = attributes;
     }
 
@@ -58,8 +60,8 @@ public class SimpleRealmEntry {
      *
      * @return the entry password (not {@code null})
      */
-    public Password getPassword() {
-        return password;
+    public Password getPassword(String credentialName) {
+        return passwords.get(credentialName);
     }
 
     /**

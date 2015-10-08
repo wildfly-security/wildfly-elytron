@@ -30,16 +30,21 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 public class OtpCredentialLoader implements CredentialLoader, CredentialPersister {
 
+    public static final String DEFAULT_CREDENTIAL_NAME = "otp";
+
+    private final String myCredentialName; // name of credential defined by following LDAP attributes
     private final String algorithmAttributeName;
     private final String hashAttributeName;
     private final String seedAttributeName;
     private final String sequenceAttributeName;
 
-    public OtpCredentialLoader(String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
-        Assert.assertNotNull(algorithmAttributeName);
-        Assert.assertNotNull(hashAttributeName);
-        Assert.assertNotNull(seedAttributeName);
-        Assert.assertNotNull(sequenceAttributeName);
+    public OtpCredentialLoader(String credentialName, String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
+        Assert.checkNotNullParam("credentialName", credentialName);
+        Assert.checkNotNullParam("algorithmAttributeName", algorithmAttributeName);
+        Assert.checkNotNullParam("hashAttributeName", hashAttributeName);
+        Assert.checkNotNullParam("seedAttributeName", seedAttributeName);
+        Assert.checkNotNullParam("sequenceAttributeName", sequenceAttributeName);
+        this.myCredentialName = credentialName;
         this.algorithmAttributeName = algorithmAttributeName;
         this.hashAttributeName = hashAttributeName;
         this.seedAttributeName = seedAttributeName;
@@ -47,8 +52,8 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, Class<?> credentialType) {
-        return OneTimePassword.class.isAssignableFrom(credentialType) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
+        return myCredentialName.equals(credentialName) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
     }
 
     @Override
@@ -67,7 +72,10 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(Class<?> credentialType) {
+        public CredentialSupport getCredentialSupport(String credentialName) {
+            if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
+                return CredentialSupport.UNSUPPORTED;
+            }
             DirContext context = null;
             try {
                 context = contextFactory.obtainDirContext(null);
@@ -92,7 +100,10 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public <C> C getCredential(Class<C> credentialType) {
+        public <C> C getCredential(String credentialName, Class<C> credentialType) {
+            if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
+                return null;
+            }
             DirContext context = null;
             try {
                 context = contextFactory.obtainDirContext(null);
@@ -129,12 +140,12 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public boolean getCredentialPersistSupport(Object credential) {
-            return credential instanceof OneTimePassword;
+        public boolean getCredentialPersistSupport(String credentialName) {
+            return OtpCredentialLoader.this.myCredentialName.equals(credentialName);
         }
 
         @Override
-        public void persistCredential(Object credential) throws RealmUnavailableException {
+        public void persistCredential(String credentialName, Object credential) throws RealmUnavailableException {
             OneTimePassword password = (OneTimePassword) credential;
             DirContext context = null;
             try {
