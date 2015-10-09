@@ -71,7 +71,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             // The client can use other name types but this should be added to the config.
             acceptorName = manager.createName(acceptorNameString, GSSName.NT_HOSTBASED_SERVICE, KERBEROS_V5);
         } catch (GSSException e) {
-            throw log.saslUnableToCreateNameForAcceptor(getMechanismName(), e);
+            throw log.mechUnableToCreateNameForAcceptor(getMechanismName(), e).toSaslException();
         }
 
         // Pull the credential if we have it.
@@ -89,7 +89,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
         try {
             gssContext = manager.createContext(acceptorName, KERBEROS_V5, credential, GSSContext.INDEFINITE_LIFETIME);
         } catch (GSSException e) {
-            throw log.saslUnableToCreateGssContext(getMechanismName(), e);
+            throw log.mechUnableToCreateGssContext(getMechanismName(), e).toSaslException();
         }
 
         try {
@@ -140,7 +140,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             }
 
         } catch (GSSException e) {
-            throw log.saslUnableToSetGssContextRequestFlags(getMechanismName(), e);
+            throw log.mechUnableToSetGssContextRequestFlags(getMechanismName(), e).toSaslException();
         }
 
         // Channel Binding Is Not Supported
@@ -164,7 +164,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
             }
         }
 
-        throw log.saslInsufficientQopsAvailable(getMechanismName());
+        throw log.mechInsufficientQopsAvailable(getMechanismName()).toSaslException();
     }
 
     private boolean isCompatibleWithGssContext(final QOP qop) {
@@ -201,7 +201,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 // provides the first token from the client
                 assert gssContext.isEstablished() == false;
                 if (message.length > 0) {
-                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
+                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
                 }
 
                 try {
@@ -216,7 +216,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
 
                     return response;
                 } catch (GSSException e) {
-                    throw log.saslUnableToCreateResponseToken(getMechanismName(), e);
+                    throw log.mechUnableToCreateResponseToken(getMechanismName(), e).toSaslException();
                 }
             case CHALLENGE_RESPONSE_STATE:
                 // This state is to handle the subsequent exchange of tokens up until the point the
@@ -235,7 +235,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     }
                     return response;
                 } catch (GSSException e) {
-                    throw log.saslUnableToHandleResponseFromServer(getMechanismName(), e);
+                    throw log.mechUnableToHandleResponseFromServer(getMechanismName(), e).toSaslException();
                 }
             case SECURITY_LAYER_NEGOTIATION_STATE:
                 assert gssContext.isEstablished();
@@ -244,7 +244,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                 try {
                     byte[] unwrapped = gssContext.unwrap(message, 0, message.length, msgProp);
                     if (unwrapped.length != 4) {
-                        throw log.saslBadLengthOfMessageForNegotiatingSecurityLayer(getMechanismName());
+                        throw log.mechBadLengthOfMessageForNegotiatingSecurityLayer(getMechanismName()).toSaslException();
                     }
 
                     byte qopByte = unwrapped[0];
@@ -253,7 +253,7 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     log.tracef("Selected QOP=%s, maxBuffer=%d", selectedQop, maxBuffer);
                     if (relaxComplianceChecks == false && maxBuffer > 0 && (qopByte & QOP.AUTH_INT.getValue()) == 0
                             && (qopByte & QOP.AUTH_CONF.getValue()) == 0) {
-                        throw log.saslReceivedMaxMessageSizeWhenNoSecurityLayer(getMechanismName(), maxBuffer);
+                        throw log.mechReceivedMaxMessageSizeWhenNoSecurityLayer(getMechanismName(), maxBuffer).toSaslException();
                     }
                     maxBuffer = gssContext.getWrapSizeLimit(0, selectedQop == QOP.AUTH_CONF, maxBuffer);
 
@@ -285,9 +285,9 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
                     negotiationComplete();
                     return response;
                 } catch (IOException e) {
-                    throw log.saslUnableToCreateResponseToken(getMechanismName(), e);
+                    throw log.mechUnableToCreateResponseToken(getMechanismName(), e).toSaslException();
                 } catch (GSSException e) {
-                    throw log.saslUnableToUnwrapSecurityLayerNegotiationMessage(getMechanismName(), e);
+                    throw log.mechUnableToUnwrapSecurityLayerNegotiationMessage(getMechanismName(), e).toSaslException();
                 }
         }
         throw Assert.impossibleSwitchCase(state);

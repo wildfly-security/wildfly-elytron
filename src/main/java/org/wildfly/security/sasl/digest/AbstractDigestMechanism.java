@@ -122,13 +122,13 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try { // H()
             this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanismName));
         } catch (NoSuchAlgorithmException e) {
-            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
+            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
         }
 
         try { // MD5()
             this.digest = MessageDigest.getInstance(HASH_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
+            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
         }
 
         this.format = format;
@@ -216,11 +216,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             // parsing keyword
             if (insideKey) {
                 if (b == ',') {
-                    throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
+                    throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
                 }
                 else if (b == '=') {
                     if (key.length() == 0) {
-                        throw log.saslKeywordCannotBeEmpty(getMechanismName());
+                        throw log.mechKeywordCannotBeEmpty(getMechanismName()).toSaslException();
                     }
                     insideKey = false;
                     i = skipWhiteSpace(challenge, i + 1);
@@ -232,7 +232,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                         }
                     }
                     else {
-                        throw log.saslNoValueFoundForKeyword(getMechanismName(), key.toString());
+                        throw log.mechNoValueFoundForKeyword(getMechanismName(), key.toString()).toSaslException();
                     }
                 }
                 else if (isWhiteSpace(b)) {
@@ -240,11 +240,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
                     if (i < challenge.length) {
                         if (challenge[i] != '=') {
-                            throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
+                            throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
                         }
                     }
                     else {
-                        throw log.saslKeywordNotFollowedByEqual(getMechanismName(), key.toString());
+                        throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
                     }
                 }
                 else {
@@ -261,7 +261,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                         i++;
                     }
                     else {
-                        throw log.saslUnmatchedQuoteFoundForValue(getMechanismName(), value.toString());
+                        throw log.mechUnmatchedQuoteFoundForValue(getMechanismName(), value.toString()).toSaslException();
                     }
                 }
                 else if (b == '"') {
@@ -290,7 +290,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             // expect separator
             else if (expectSeparator) {
                 String val = new String(value.toArray(), charset);
-                throw log.saslExpectingCommaOrLinearWhitespaceAfterQuoted(getMechanismName(), val);
+                throw log.mechExpectingCommaOrLinearWhitespaceAfterQuoted(getMechanismName(), val).toSaslException();
             }
             else {
                 value.append(b);
@@ -299,7 +299,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         }
 
         if (insideQuotedValue) {
-            throw log.saslUnmatchedQuoteFoundForValue(getMechanismName(), value.toString());
+            throw log.mechUnmatchedQuoteFoundForValue(getMechanismName(), value.toString()).toSaslException();
         }
 
         if (key.length() > 0) {
@@ -392,11 +392,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw log.saslMessageTypeMustEqual(getMechanismName(), 1, messageType);
+            throw log.mechMessageTypeMustEqual(getMechanismName(), 1, messageType).toSaslException();
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw log.saslBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum);
+            throw log.mechBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum).toSaslException();
         }
 
         byte[] extractedMessageMac = new byte[10];
@@ -439,7 +439,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
             cipheredPart = wrapCipher.update(toCipher);
         } catch (Exception e) {
-            throw log.saslProblemDuringCrypt(getMechanismName(), e);
+            throw log.mechProblemDuringCrypt(getMechanismName(), e).toSaslException();
         }
 
         byte[] result = new byte[cipheredPart.length + 6];
@@ -457,18 +457,18 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         int extractedSeqNum = decodeByteOrderedInteger(message, offset + len - 4, 4);
 
         if (messageType != 1) {
-            throw log.saslMessageTypeMustEqual(getMechanismName(), 1, messageType);
+            throw log.mechMessageTypeMustEqual(getMechanismName(), 1, messageType).toSaslException();
         }
 
         if (extractedSeqNum != unwrapSeqNum) {
-            throw log.saslBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum);
+            throw log.mechBadSequenceNumberWhileUnwrapping(getMechanismName(), unwrapSeqNum, extractedSeqNum).toSaslException();
         }
 
         byte[] clearText = null;
         try {
             clearText = unwrapCipher.update(message, offset, len - 6);
         } catch (Exception e) {
-            throw log.saslProblemDuringDecrypt(getMechanismName(), e);
+            throw log.mechProblemDuringDecrypt(getMechanismName(), e).toSaslException();
         }
 
         byte[] hmac = new byte[10];
@@ -571,7 +571,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 IV = Arrays.copyOfRange(hmacKey, 8, 16); // last 8 bytes
                 cipherKey = create3desSecretKey(cipherKeyBytes);
             } else {
-                throw log.saslUnknownCipher(getMechanismName(), cipher);
+                throw log.mechUnknownCipher(getMechanismName(), cipher).toSaslException();
             }
 
             if (IV != null) {
@@ -580,7 +580,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 ciph.init((wrap ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE), cipherKey, secureRandomGenerator);
             }
         } catch (Exception e) {
-            throw log.saslProblemGettingRequiredCipher(getMechanismName(), e);
+            throw log.mechProblemGettingRequiredCipher(getMechanismName(), e).toSaslException();
         }
 
         return ciph;
@@ -600,7 +600,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         try {
           return Mac.getInstance(HMAC_algorithm);
         } catch (NoSuchAlgorithmException e) {
-            throw log.saslMacAlgorithmNotSupported(getMechanismName(), e);
+            throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
         }
     }
 
@@ -614,9 +614,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
             } else {
-                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
     }
@@ -629,9 +629,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == credentialCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
             } else {
-                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
         TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
@@ -656,18 +656,18 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             if (e.getCallback() == passwordCallback) {
                 return null;
             } else if (e.getCallback() == nameCallback) {
-                throw log.saslCallbackHandlerDoesNotSupportUserName(getMechanismName(), e);
+                throw log.mechCallbackHandlerDoesNotSupportUserName(getMechanismName(), e).toSaslException();
             } else {
-                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
         char[] passwordChars = passwordCallback.getPassword();
         passwordCallback.clearPassword();
         if (passwordChars == null) {
-            throw log.saslNoPasswordGiven(getMechanismName());
+            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
         }
         if ( ! readOnlyRealmUsername && nameCallback.getName() == null) {
-            throw log.saslNotProvidedUserName(getMechanismName());
+            throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
         }
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
         String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();

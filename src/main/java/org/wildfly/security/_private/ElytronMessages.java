@@ -61,6 +61,9 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
+import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -519,48 +522,48 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4023, value = "Too large")
     IllegalStateException tooLarge();
 
-    /* sasl package */
+    /* mechanism package */
 
-    @Message(id = 5001, value = "[%s] SASL exchange received a message after authentication was already complete")
-    SaslException saslMessageAfterComplete(String mechName);
+    @Message(id = 5001, value = "[%s] Authentication mechanism exchange received a message after authentication was already complete")
+    AuthenticationMechanismException mechMessageAfterComplete(String mechName);
 
-    @Message(id = 5002, value = "[%s] SASL user name contains an invalid or disallowed character")
-    SaslException saslUserNameContainsInvalidCharacter(String mechName);
+    @Message(id = 5002, value = "[%s] Authentication mechanism user name contains an invalid or disallowed character")
+    AuthenticationMechanismException mechUserNameContainsInvalidCharacter(String mechName);
 
     // 5003
 
-    @Message(id = 5004, value = "[%s] SASL authorization failed")
-    SaslException saslAuthorizationFailed(String mechName, @Cause Throwable cause);
+    @Message(id = 5004, value = "[%s] Authentication mechanism authorization failed")
+    AuthenticationMechanismException mechAuthorizationFailed(String mechName, @Cause Throwable cause);
 
-    @Message(id = 5005, value = "[%s] SASL authentication is not yet complete")
-    IllegalStateException saslAuthenticationNotComplete(String mechName);
+    @Message(id = 5005, value = "[%s] Authentication mechanism authentication is not yet complete")
+    IllegalStateException mechAuthenticationNotComplete(String mechName);
 
-    @Message(id = 5006, value = "[%s] SASL mechanism not support security layer (wrapping/unwrapping)")
-    SaslException saslNoSecurityLayer(String mechName);
+    @Message(id = 5006, value = "[%s] Authentication mechanism does not support security layer (wrapping/unwrapping)")
+    AuthenticationMechanismException mechNoSecurityLayer(String mechName);
 
-    @Message(id = 5007, value = "[%s] Invalid SASL negotiation message received")
-    SaslException saslInvalidMessageReceived(String mechName);
+    @Message(id = 5007, value = "[%s] Invalid authentication mechanism negotiation message received")
+    AuthenticationMechanismException mechInvalidMessageReceived(String mechName);
 
-    @Message(id = 5008, value = "[%s] No SASL login name was given")
-    SaslException saslNoLoginNameGiven(String mechName);
+    @Message(id = 5008, value = "[%s] No authentication mechanism login name was given")
+    AuthenticationMechanismException mechNoLoginNameGiven(String mechName);
 
-    @Message(id = 5009, value = "[%s] No SASL password was given")
-    SaslException saslNoPasswordGiven(String mechName);
+    @Message(id = 5009, value = "[%s] No authentication mechanism password was given")
+    AuthenticationMechanismException mechNoPasswordGiven(String mechName);
 
-    @Message(id = 5010, value = "[%s] SASL authentication failed due to one or more malformed fields")
-    SaslException saslMalformedFields(String mechName, @Cause IllegalArgumentException ex);
+    @Message(id = 5010, value = "[%s] Authentication mechanism authentication failed due to one or more malformed fields")
+    AuthenticationMechanismException mechMalformedFields(String mechName, @Cause IllegalArgumentException ex);
 
-    @Message(id = 5011, value = "[%s] SASL message is too long")
-    SaslException saslMessageTooLong(String mechName);
+    @Message(id = 5011, value = "[%s] Authentication mechanism message is too long")
+    AuthenticationMechanismException mechMessageTooLong(String mechName);
 
-    @Message(id = 5012, value = "[%s] SASL server-side authentication failed")
-    SaslException saslServerSideAuthenticationFailed(String mechName, @Cause Exception e);
+    @Message(id = 5012, value = "[%s] Authentication mechanism server-side authentication failed")
+    AuthenticationMechanismException mechServerSideAuthenticationFailed(String mechName, @Cause Exception e);
 
-    @Message(id = 5013, value = "[%s] SASL password not verified")
-    SaslException saslPasswordNotVerified(String mechName);
+    @Message(id = 5013, value = "[%s] Authentication mechanism password not verified")
+    AuthenticationMechanismException mechPasswordNotVerified(String mechName);
 
-    @Message(id = 5014, value = "[%s] SASL authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
-    SaslException saslAuthorizationFailed(String mechName, String userName, String authorizationId);
+    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
+    AuthenticationMechanismException mechAuthorizationFailed(String mechName, String userName, String authorizationId);
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, int offset, String string);
@@ -571,7 +574,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5017, value = "Token \"%s\" not allowed at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorTokenNotAllowed(String token, int offset, String string);
 
-    // 5018
+    @Message(id = 5018, value = "[%s] Channel binding data changed")
+    AuthenticationMechanismException mechChannelBindingChanged(String mechName);
 
     @Message(id = 5019, value = "[%s] Proxied SASL authentication failed")
     SaslException saslProxyAuthenticationFailed(String mechName);
@@ -581,117 +585,118 @@ public interface ElytronMessages extends BasicLogger {
     // 5021
 
     @Message(id = 5022, value = "[%s] Initial challenge must be empty")
-    SaslException saslInitialChallengeMustBeEmpty(String mechName);
+    AuthenticationMechanismException mechInitialChallengeMustBeEmpty(String mechName);
 
     @Message(id = 5023, value = "[%s] Unable to set channel binding")
-    SaslException saslUnableToSetChannelBinding(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToSetChannelBinding(String mechName, @Cause Exception e);
 
     @Message(id = 5024, value = "Failed to determine channel binding status")
-    SaslException saslFailedToDetermineChannelBindingStatus(@Cause Exception e);
+    AuthenticationMechanismException mechFailedToDetermineChannelBindingStatus(@Cause Exception e);
 
     @Message(id = 5025, value = "[%s] Mutual authentication not enabled")
-    SaslException saslMutualAuthenticationNotEnabled(String mechName);
+    AuthenticationMechanismException mechMutualAuthenticationNotEnabled(String mechName);
 
     @Message(id = 5026, value = "[%s] Unable to map SASL mechanism name to a GSS-API OID")
-    SaslException saslMechanismToOidMappingFailed(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechMechanismToOidMappingFailed(String mechName, @Cause Exception e);
 
     @Message(id = 5027, value = "[%s] Unable to dispose of GSSContext")
-    SaslException saslUnableToDisposeGssContext(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToDisposeGssContext(String mechName, @Cause Exception e);
 
     @Message(id = 5028, value = "[%s] Unable to create name for acceptor")
-    SaslException saslUnableToCreateNameForAcceptor(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToCreateNameForAcceptor(String mechName, @Cause Exception e);
 
     @Message(id = 5029, value = "[%s] Unable to create GSSContext")
-    SaslException saslUnableToCreateGssContext(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToCreateGssContext(String mechName, @Cause Exception e);
 
     @Message(id = 5030, value = "[%s] Unable to set GSSContext request flags")
-    SaslException saslUnableToSetGssContextRequestFlags(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToSetGssContextRequestFlags(String mechName, @Cause Exception e);
 
     @Message(id = 5031, value = "[%s] Unable to accept SASL client message")
-    SaslException saslUnableToAcceptClientMessage(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToAcceptClientMessage(String mechName, @Cause Exception e);
 
     @Message(id = 5032, value = "[%s] GSS-API mechanism mismatch between SASL client and server")
-    SaslException saslGssApiMechanismMismatch(String mechName);
+    AuthenticationMechanismException mechGssApiMechanismMismatch(String mechName);
 
     @Message(id = 5033, value = "[%s] Channel binding not supported for this SASL mechanism")
-    SaslException saslChannelBindingNotSupported(String mechName);
+    AuthenticationMechanismException mechChannelBindingNotSupported(String mechName);
 
     @Message(id = 5034, value = "[%s] Channel binding type mismatch between SASL client and server")
-    SaslException saslChannelBindingTypeMismatch(String mechName);
+    AuthenticationMechanismException mechChannelBindingTypeMismatch(String mechName);
 
     @Message(id = 5035, value = "[%s] Channel binding not provided by client")
-    SaslException saslChannelBindingNotProvided(String mechName);
+    AuthenticationMechanismException mechChannelBindingNotProvided(String mechName);
 
     @Message(id = 5036, value = "[%s] Unable to determine peer name")
-    SaslException saslUnableToDeterminePeerName(String mechName, @Cause Exception e);
+    AuthenticationMechanismException mechUnableToDeterminePeerName(String mechName, @Cause Exception e);
 
-    @Message(id = 5037, value = "[%s] SASL client refuses to initiate authentication")
-    SaslException saslClientRefusesToInitiateAuthentication(String mechName);
+    @Message(id = 5037, value = "[%s] Authentication mechanism client refuses to initiate authentication")
+    AuthenticationMechanismException mechClientRefusesToInitiateAuthentication(String mechName);
 
     @Message(id = 5038, value = "[%s] Nonces do not match")
-    SaslException saslNoncesDoNotMatch(String mechName);
+    AuthenticationMechanismException mechNoncesDoNotMatch(String mechName);
 
     @Message(id = 5039, value = "[%s] Server nonce is too short")
-    SaslException saslServerNonceIsTooShort(String mechName);
+    AuthenticationMechanismException mechServerNonceIsTooShort(String mechName);
 
     @Message(id = 5040, value = "[%s] Iteration count %d is below the minimum of %d")
-    SaslException saslIterationCountIsTooLow(String mechName, int iterationCount, int minimumIterationCount);
+    AuthenticationMechanismException mechIterationCountIsTooLow(String mechName, int iterationCount, int minimumIterationCount);
 
     @Message(id = 5041, value = "[%s] Iteration count %d is above the maximum of %d")
-    SaslException saslIterationCountIsTooHigh(String mechName, int iterationCount, int maximumIterationCount);
+    AuthenticationMechanismException mechIterationCountIsTooHigh(String mechName, int iterationCount, int maximumIterationCount);
 
     @Message(id = 5042, value = "[%s] Extensions unsupported")
-    SaslException saslExtensionsUnsupported(String mechName);
+    AuthenticationMechanismException mechExtensionsUnsupported(String mechName);
 
     @Message(id = 5043, value = "[%s] Invalid server message")
-    SaslException saslInvalidServerMessage(String mechName);
+    AuthenticationMechanismException mechInvalidServerMessage(String mechName);
 
     @Message(id = 5044, value = "[%s] Invalid server message")
-    SaslException saslInvalidServerMessageWithCause(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechInvalidServerMessageWithCause(String mechName, @Cause Throwable cause);
 
     @Message(id = 5045, value = "[%s] Invalid client message")
-    SaslException saslInvalidClientMessage(String mechName);
+    AuthenticationMechanismException mechInvalidClientMessage(String mechName);
 
     @Message(id = 5046, value = "[%s] Invalid client message")
-    SaslException saslInvalidClientMessageWithCause(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechInvalidClientMessageWithCause(String mechName, @Cause Throwable cause);
 
-    // 5047
+    @Message(id = 5047, value = "[%s] Authentication mechanism message is for mismatched mechanism \"%s\"")
+    AuthenticationMechanismException mechUnmatchedMechanism(String mechName, String otherMechName);
 
     @Message(id = 5048, value = "[%s] Server rejected authentication")
-    SaslException saslServerRejectedAuthentication(String mechName);
+    AuthenticationMechanismException mechServerRejectedAuthentication(String mechName);
 
     @Message(id = 5049, value = "[%s] Server authenticity cannot be verified")
-    SaslException saslServerAuthenticityCannotBeVerified(String mechName);
+    AuthenticationMechanismException mechServerAuthenticityCannotBeVerified(String mechName);
 
     @Message(id = 5050, value = "[%s] Callback handler does not support user name")
-    SaslException saslCallbackHandlerDoesNotSupportUserName(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportUserName(String mechName, @Cause Throwable cause);
 
     @Message(id = 5051, value = "[%s] Callback handler does not support credential acquisition")
-    SaslException saslCallbackHandlerDoesNotSupportCredentialAcquisition(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechCallbackHandlerDoesNotSupportCredentialAcquisition(String mechName, @Cause Throwable cause);
 
     @Message(id = 5052, value = "[%s] Callback handler does not support authorization")
-    SaslException saslAuthorizationUnsupported(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechAuthorizationUnsupported(String mechName, @Cause Throwable cause);
 
     @Message(id = 5053, value = "[%s] Callback handler failed for unknown reason")
-    SaslException saslCallbackHandlerFailedForUnknownReason(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechCallbackHandlerFailedForUnknownReason(String mechName, @Cause Throwable cause);
 
     @Message(id = 5054, value = "[%s] Salt must be specified")
-    SaslException saslSaltMustBeSpecified(String mechName);
+    AuthenticationMechanismException mechSaltMustBeSpecified(String mechName);
 
     @Message(id = 5055, value = "[%s] Authentication rejected (invalid proof)")
-    SaslException saslAuthenticationRejectedInvalidProof(String mechName);
+    AuthenticationMechanismException mechAuthenticationRejectedInvalidProof(String mechName);
 
     @Message(id = 5056, value = "[%s] Client sent extra message")
-    SaslException saslClientSentExtraMessage(String mechName);
+    AuthenticationMechanismException mechClientSentExtraMessage(String mechName);
 
     @Message(id = 5057, value = "[%s] Server sent extra message")
-    SaslException saslServerSentExtraMessage(String mechName);
+    AuthenticationMechanismException mechServerSentExtraMessage(String mechName);
 
     @Message(id = 5058, value = "[%s] Authentication failed")
-    SaslException saslAuthenticationFailed(String mechName);
+    AuthenticationMechanismException mechAuthenticationFailed(String mechName);
 
     @Message(id = 5059, value = "[%s] Invalid MAC initialization key")
-    SaslException saslInvalidMacInitializationKey(String mechName);
+    AuthenticationMechanismException mechInvalidMacInitializationKey(String mechName);
 
     @Message(id = 5060, value = "Empty number")
     NumberFormatException emptyNumber();
@@ -703,102 +708,103 @@ public interface ElytronMessages extends BasicLogger {
     NumberFormatException tooBigNumber();
 
     @Message(id = 5063, value = "[%s] Cannot get clear password from two way password")
-    SaslException saslCannotGetTwoWayPasswordChars(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechCannotGetTwoWayPasswordChars(String mechName, @Cause Throwable cause);
 
     @Message(id = 5064, value = "[%s] Hashing algorithm not supported")
-    SaslException saslMacAlgorithmNotSupported(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechMacAlgorithmNotSupported(String mechName, @Cause Throwable cause);
 
     @Message(id = 5065, value = "[%s] keyword cannot be empty")
-    SaslException saslKeywordCannotBeEmpty(String mechName);
+    AuthenticationMechanismException mechKeywordCannotBeEmpty(String mechName);
 
     @Message(id = 5066, value = "[%s] No value found for keyword: %s")
-    SaslException saslNoValueFoundForKeyword(String mechName, String keyword);
+    AuthenticationMechanismException mechNoValueFoundForKeyword(String mechName, String keyword);
 
     @Message(id = 5067, value = "[%s] '=' expected after keyword: %s")
-    SaslException saslKeywordNotFollowedByEqual(String mechName, String keyword);
+    AuthenticationMechanismException mechKeywordNotFollowedByEqual(String mechName, String keyword);
 
     @Message(id = 5068, value = "[%s] Unmatched quote found for value: %s")
-    SaslException saslUnmatchedQuoteFoundForValue(String mechName, String value);
+    AuthenticationMechanismException mechUnmatchedQuoteFoundForValue(String mechName, String value);
 
     @Message(id = 5069, value = "[%s] Expecting comma or linear whitespace after quoted string: %s")
-    SaslException saslExpectingCommaOrLinearWhitespaceAfterQuoted(String mechName, String value);
+    AuthenticationMechanismException mechExpectingCommaOrLinearWhitespaceAfterQuoted(String mechName, String value);
 
     @Message(id = 5070, value = "[%s] MessageType must equal to %d, but it is %d")
-    SaslException saslMessageTypeMustEqual(String mechName, int expected, int actual);
+    AuthenticationMechanismException mechMessageTypeMustEqual(String mechName, int expected, int actual);
 
     @Message(id = 5071, value = "[%s] Bad sequence number while unwrapping: expected %d, but %d received")
-    SaslException saslBadSequenceNumberWhileUnwrapping(String mechName, int expected, int actual);
+    AuthenticationMechanismException mechBadSequenceNumberWhileUnwrapping(String mechName, int expected, int actual);
 
     @Message(id = 5072, value = "[%s] Problem during crypt")
-    SaslException saslProblemDuringCrypt(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechProblemDuringCrypt(String mechName, @Cause Throwable cause);
 
     @Message(id = 5073, value = "[%s] Problem during decrypt")
-    SaslException saslProblemDuringDecrypt(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechProblemDuringDecrypt(String mechName, @Cause Throwable cause);
 
     @Message(id = 5074, value = "[%s] Unknown cipher \"%s\"")
-    SaslException saslUnknownCipher(String mechName, String cipher);
+    AuthenticationMechanismException mechUnknownCipher(String mechName, String cipher);
 
-    // 5075
+    @Message(id = 5075, value = "[%s] Authorization ID changed unexpectedly")
+    AuthenticationMechanismException mechAuthorizationIdChanged(String mechName);
 
     @Message(id = 5076, value = "[%s] Problem getting required cipher. Check your transformation mapper settings.")
-    SaslException saslProblemGettingRequiredCipher(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechProblemGettingRequiredCipher(String mechName, @Cause Throwable cause);
 
     @Message(id = 5077, value = "[%s] No common protection layer between client and server")
-    SaslException saslNoCommonProtectionLayer(String mechName);
+    AuthenticationMechanismException mechNoCommonProtectionLayer(String mechName);
 
     @Message(id = 5078, value = "[%s] No common cipher between client and server")
-    SaslException saslNoCommonCipher(String mechName);
+    AuthenticationMechanismException mechNoCommonCipher(String mechName);
 
     @Message(id = 5079, value = "[%s] No ciphers offered by server")
-    SaslException saslNoCiphersOfferedByServer(String mechName);
+    AuthenticationMechanismException mechNoCiphersOfferedByServer(String mechName);
 
     @Message(id = 5080, value = "[%s] Callback handler not provided user name")
-    SaslException saslNotProvidedUserName(String mechName);
+    AuthenticationMechanismException mechNotProvidedUserName(String mechName);
 
     @Message(id = 5081, value = "[%s] Callback handler not provided pre-digested password")
-    SaslException saslNotProvidedPreDigested(String mechName);
+    AuthenticationMechanismException mechNotProvidedPreDigested(String mechName);
 
     @Message(id = 5082, value = "[%s] Callback handler not provided clear password")
-    SaslException saslNotProvidedClearPassword(String mechName);
+    AuthenticationMechanismException mechNotProvidedClearPassword(String mechName);
 
     @Message(id = 5083, value = "[%s] Missing \"%s\" directive")
-    SaslException saslMissingDirective(String mechName, String directive);
+    AuthenticationMechanismException mechMissingDirective(String mechName, String directive);
 
     @Message(id = 5084, value = "[%s] nonce-count must equal to %d, but it is %d")
-    SaslException saslNonceCountMustEqual(String mechName, int expected, int actual);
+    AuthenticationMechanismException mechNonceCountMustEqual(String mechName, int expected, int actual);
 
     @Message(id = 5085, value = "[%s] Server is set to not support %s charset")
-    SaslException saslUnsupportedCharset(String mechName, String charset);
+    AuthenticationMechanismException mechUnsupportedCharset(String mechName, String charset);
 
     @Message(id = 5086, value = "[%s] Charset can be only \"utf-8\" or unspecified (to use ISO 8859-1)")
-    SaslException saslUnknownCharset(String mechName);
+    AuthenticationMechanismException mechUnknownCharset(String mechName);
 
     @Message(id = 5087, value = "[%s] Client selected realm not offered by server (%s)")
-    SaslException saslUnallowedClientRealm(String mechName, String clientRealm);
+    AuthenticationMechanismException mechDisallowedClientRealm(String mechName, String clientRealm);
 
     @Message(id = 5088, value = "[%s] Mismatched digest-uri \"%s\" Expected: \"%s\"")
-    SaslException saslMismatchedWrongDigestUri(String mechName, String actual, String expected);
+    AuthenticationMechanismException mechMismatchedWrongDigestUri(String mechName, String actual, String expected);
 
     @Message(id = 5089, value = "[%s] Unexpected qop value: \"%s\"")
-    SaslException saslUnexpectedQop(String mechName, String qop);
+    AuthenticationMechanismException mechUnexpectedQop(String mechName, String qop);
 
     @Message(id = 5090, value = "[%s] Wrapping is not configured")
     IllegalStateException wrappingNotConfigured(String mechName);
 
     @Message(id = 5091, value = "[%s] Authentication name string is too long")
-    SaslException saslAuthenticationNameTooLong(String mechName);
+    AuthenticationMechanismException mechAuthenticationNameTooLong(String mechName);
 
     @Message(id = 5092, value = "[%s] Authentication name is empty")
-    SaslException saslAuthenticationNameIsEmpty(String mechName);
+    AuthenticationMechanismException mechAuthenticationNameIsEmpty(String mechName);
 
     @Message(id = 5093, value = "[%s] Authorization for anonymous access is denied")
-    SaslException saslAnonymousAuthorizationDenied(String mechName);
+    AuthenticationMechanismException mechAnonymousAuthorizationDenied(String mechName);
 
     @Message(id = 5094, value = "Required padded length (%d) is less than length of conversion result (%d)")
     IllegalArgumentException requiredNegativePadding(int totalLength, int hexLength);
 
     @Message(id = 5095, value = "Invalid key provided for Digest HMAC computing")
-    SaslException saslInvalidKeyForDigestHMAC();
+    AuthenticationMechanismException mechInvalidKeyForDigestHMAC();
 
     @Message(id = 5096, value = "Unable to read certificate from URL \"%s\"")
     IOException asnUnableToReadCertificateFromUrl(String url, @Cause Throwable cause);
@@ -807,40 +813,40 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException unableToDetermineSubjectName(@Cause Throwable cause);
 
     @Message(id = 5098, value = "[%s] Unable to verify client signature")
-    SaslException saslUnableToVerifyClientSignature(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToVerifyClientSignature(String mechName, @Cause Throwable cause);
 
     @Message(id = 5099, value = "[%s] Unable to verify server signature")
-    SaslException saslUnableToVerifyServerSignature(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToVerifyServerSignature(String mechName, @Cause Throwable cause);
 
     @Message(id = 5100, value = "[%s] Unable to obtain other side certificate from URL \"%s\"")
-    SaslException saslUnableToObtainServerCertificate(String mechName, String url, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToObtainServerCertificate(String mechName, String url, @Cause Throwable cause);
 
     @Message(id = 5101, value = "[%s] Callback handler not provided URL of server certificate")
-    SaslException saslCallbackHandlerNotProvidedServerCertificate(String mechName);
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedServerCertificate(String mechName);
 
     @Message(id = 5102, value = "[%s] Callback handler not provided URL of client certificate")
-    SaslException saslCallbackHandlerNotProvidedClientCertificate(String mechName);
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedClientCertificate(String mechName);
 
     @Message(id = 5103, value = "[%s] Server identifier mismatch")
-    SaslException saslServerIdentifierMismatch(String mechName);
+    AuthenticationMechanismException mechServerIdentifierMismatch(String mechName);
 
     @Message(id = 5104, value = "[%s] Client identifier mismatch")
-    SaslException saslClientIdentifierMismatch(String mechName);
+    AuthenticationMechanismException mechClientIdentifierMismatch(String mechName);
 
     @Message(id = 5105, value = "[%s] Unable to determine client name")
-    SaslException saslUnableToDetermineClientName(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToDetermineClientName(String mechName, @Cause Throwable cause);
 
     @Message(id = 5106, value = "[%s] Callback handler not provided private key")
-    SaslException saslCallbackHandlerNotProvidedPrivateKey(String mechName);
+    AuthenticationMechanismException mechCallbackHandlerNotProvidedPrivateKey(String mechName);
 
     @Message(id = 5107, value = "[%s] Unable to create signature")
-    SaslException saslUnableToCreateSignature(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToCreateSignature(String mechName, @Cause Throwable cause);
 
     @Message(id = 5108, value = "[%s] Unable to create response token")
-    SaslException saslUnableToCreateResponseToken(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToCreateResponseToken(String mechName, @Cause Throwable cause);
 
     @Message(id = 5109, value = "[%s] Unable to create response token")
-    SaslException saslUnableToCreateResponseTokenWithCause(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToCreateResponseTokenWithCause(String mechName, @Cause Throwable cause);
 
     @Message(id = 5110, value = "Invalid value for trusted authority type; expected a value between 0 and 4 (inclusive)")
     IllegalArgumentException invalidValueForTrustedAuthorityType();
@@ -848,59 +854,59 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5111, value = "Invalid value for a general name type; expected a value between 0 and 8 (inclusive)")
     IllegalArgumentException invalidValueForGeneralNameType();
 
-    @Message(id = 5112, value = "Getting SASL mechanisms supported by GSS-API failed")
-    SaslException saslGettingSupportedMechanismsFailed(@Cause Throwable cause);
+    @Message(id = 5112, value = "Getting authentication mechanisms supported by GSS-API failed")
+    AuthenticationMechanismException mechGettingSupportedMechanismsFailed(@Cause Throwable cause);
 
     @Message(id = 5113, value = "Unable to initialize OID of Kerberos V5")
     RuntimeException unableToInitialiseOid(@Cause Throwable cause);
 
     @Message(id = 5114, value = "[%s] Receive buffer requested '%d' is greater than supported maximum '%d'")
-    SaslException saslReceiveBufferIsGreaterThanMaximum(String mechName, int requested, int maximum);
+    AuthenticationMechanismException mechReceiveBufferIsGreaterThanMaximum(String mechName, int requested, int maximum);
 
     @Message(id = 5115, value = "[%s] Unable to wrap message")
-    SaslException saslUnableToWrapMessage(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToWrapMessage(String mechName, @Cause Throwable cause);
 
     @Message(id = 5116, value = "[%s] Unable to unwrap message")
-    SaslException saslUnableToUnwrapMessage(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToUnwrapMessage(String mechName, @Cause Throwable cause);
 
     @Message(id = 5117, value = "[%s] Unable to unwrap security layer negotiation message")
-    SaslException saslUnableToUnwrapSecurityLayerNegotiationMessage(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToUnwrapSecurityLayerNegotiationMessage(String mechName, @Cause Throwable cause);
 
     @Message(id = 5118, value = "[%s] Invalid message of length %d on unwrapping")
-    SaslException saslInvalidMessageOnUnwrapping(String mechName, int length);
+    AuthenticationMechanismException mechInvalidMessageOnUnwrapping(String mechName, int length);
 
     @Message(id = 5119, value = "[%s] Negotiated mechanism was not Kerberos V5")
-    SaslException saslNegotiatedMechanismWasNotKerberosV5(String mechName);
+    AuthenticationMechanismException mechNegotiatedMechanismWasNotKerberosV5(String mechName);
 
     @Message(id = 5120, value = "[%s] Insufficient levels of protection available for supported security layers")
-    SaslException saslInsufficientQopsAvailable(String mechName);
+    AuthenticationMechanismException mechInsufficientQopsAvailable(String mechName);
 
     @Message(id = 5121, value = "[%s] Unable to generate security layer challenge")
-    SaslException saslUnableToGenerateChallenge(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToGenerateChallenge(String mechName, @Cause Throwable cause);
 
     @Message(id = 5122, value = "[%s] Client selected a security layer that was not offered by server")
-    SaslException saslSelectedUnofferedQop(String mechName);
+    AuthenticationMechanismException mechSelectedUnofferedQop(String mechName);
 
     @Message(id = 5123, value = "[%s] No security layer selected but message length received")
-    SaslException saslNoSecurityLayerButLengthReceived(String mechName);
+    AuthenticationMechanismException mechNoSecurityLayerButLengthReceived(String mechName);
 
     @Message(id = 5124, value = "[%s] Unable to get maximum size of message before wrap")
-    SaslException saslUnableToGetMaximumSizeOfMessage(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToGetMaximumSizeOfMessage(String mechName, @Cause Throwable cause);
 
     @Message(id = 5125, value = "[%s] Unable to handle response from server")
-    SaslException saslUnableToHandleResponseFromServer(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechUnableToHandleResponseFromServer(String mechName, @Cause Throwable cause);
 
     @Message(id = 5126, value = "[%s] Bad length of message for negotiating security layer")
-    SaslException saslBadLengthOfMessageForNegotiatingSecurityLayer(String mechName);
+    AuthenticationMechanismException mechBadLengthOfMessageForNegotiatingSecurityLayer(String mechName);
 
     @Message(id = 5127, value = "[%s] No security layer supported by server but maximum message size received: \"%d\"")
-    SaslException saslReceivedMaxMessageSizeWhenNoSecurityLayer(String mechName, int length);
+    AuthenticationMechanismException mechReceivedMaxMessageSizeWhenNoSecurityLayer(String mechName, int length);
 
     @Message(id = 5128, value = "[%s] Failed to read challenge file")
-    SaslException saslFailedToReadChallengeFile(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechFailedToReadChallengeFile(String mechName, @Cause Throwable cause);
 
     @Message(id = 5129, value = "[%s] Failed to create challenge file")
-    SaslException saslFailedToCreateChallengeFile(String mechName, @Cause Throwable cause);
+    AuthenticationMechanismException mechFailedToCreateChallengeFile(String mechName, @Cause Throwable cause);
 
     @Message(id = 5130, value = "Invalid non-ASCII space \"0x%X\"")
     IllegalArgumentException invalidNonAsciiSpace(int input);
@@ -959,55 +965,59 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5148, value = "Invalid escape sequence")
     IllegalArgumentException invalidEscapeSequence();
 
-    // 5149
+    @Message(id = 5149, value = "[%s] Authentication name changed unexpectedly")
+    AuthenticationMechanismException mechAuthenticationNameChanged(String mechName);
 
-    @Message(id = 5150, value = "[%s] SASL authorization ID is too long")
-    SaslException saslAuthorizationIdTooLong(String mechName);
+    @Message(id = 5150, value = "[%s] Authentication mechanism authorization ID is too long")
+    AuthenticationMechanismException mechAuthorizationIdTooLong(String mechName);
 
     @Message(id = 5151, value = "Invalid OTP algorithm \"%s\"")
-    SaslException saslInvalidOTPAlgorithm(String algorithm);
+    AuthenticationMechanismException mechInvalidOTPAlgorithm(String algorithm);
 
     @Message(id = 5152, value = "Invalid OTP response type")
-    SaslException saslInvalidOTPResponseType();
+    AuthenticationMechanismException mechInvalidOTPResponseType();
 
     @Message(id = 5153, value = "[%s] Incorrect parity in SASL client message")
-    SaslException saslIncorrectParity(String mechName);
+    AuthenticationMechanismException mechIncorrectParity(String mechName);
 
     @Message(id = 5154, value = "[%s] Invalid character in seed")
-    SaslException saslInvalidCharacterInSeed(String mechName);
+    AuthenticationMechanismException mechInvalidCharacterInSeed(String mechName);
 
     @Message(id = 5155, value = "Invalid OTP seed, must be between 1 and 16 characters long")
-    SaslException saslInvalidOTPSeed();
+    AuthenticationMechanismException mechInvalidOTPSeed();
 
     @Message(id = 5156, value = "Invalid OTP pass phrase, must be between 10 and 63 characters long")
-    SaslException saslInvalidOTPPassPhrase();
+    AuthenticationMechanismException mechInvalidOTPPassPhrase();
 
     @Message(id = 5157, value = "Invalid OTP sequence number")
-    SaslException saslInvalidOTPSequenceNumber();
+    AuthenticationMechanismException mechInvalidOTPSequenceNumber();
 
     @Message(id = 5158, value = "Invalid OTP")
-    SaslException saslInvalidOTP();
+    AuthenticationMechanismException mechInvalidOTP();
 
     @Message(id = 5159, value = "OTP pass phrase and seed must not match")
-    SaslException saslOTPPassPhraseAndSeedMustNotMatch();
+    AuthenticationMechanismException mechOTPPassPhraseAndSeedMustNotMatch();
 
     @Message(id = 5160, value = "Invalid OTP alternate dictionary")
-    SaslException saslInvalidOTPAlternateDictionary();
+    AuthenticationMechanismException mechInvalidOTPAlternateDictionary();
 
     @Message(id = 5161, value = "[%s] Unable to retrieve password for \"%s\"")
-    SaslException saslUnableToRetrievePassword(String mechName, String userName);
+    AuthenticationMechanismException mechUnableToRetrievePassword(String mechName, String userName);
 
     @Message(id = 5162, value = "[%s] Unable to update password for \"%s\"")
-    SaslException saslUnableToUpdatePassword(String mechName, String userName);
+    AuthenticationMechanismException mechUnableToUpdatePassword(String mechName, String userName);
 
-    @Message(id = 5163, value = "[%s] SASL server timed out")
-    SaslException saslServerTimedOut(String mechName);
+    @Message(id = 5163, value = "[%s] Authentication mechanism server timed out")
+    AuthenticationMechanismException mechServerTimedOut(String mechName);
 
     @Message(id = 5164, value = "Multiple simultaneous OTP authentications are not allowed")
-    SaslException saslMultipleSimultaneousOTPAuthenticationsNotAllowed();
+    AuthenticationMechanismException mechMultipleSimultaneousOTPAuthenticationsNotAllowed();
 
     @Message(id = 5165, value = "OTP re-initialization failed")
-    SaslException saslOTPReinitializationFailed(@Cause Throwable cause);
+    AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
+
+    @Message(id = 5166, value = "[%s] Server rejected authentication")
+    ScramServerException scramServerRejectedAuthentication(String mechName, @Param ScramServerErrorCode errorCode);
 
     /* http package */
 

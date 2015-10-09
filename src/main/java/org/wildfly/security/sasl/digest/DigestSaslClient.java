@@ -113,12 +113,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                 return clientQop;
             }
         }
-        throw log.saslNoCommonProtectionLayer(getMechanismName());
+        throw log.mechNoCommonProtectionLayer(getMechanismName()).toSaslException();
     }
 
     private String selectCipher(String ciphersFromServer) throws SaslException {
         if (ciphersFromServer == null) {
-            throw log.saslNoCiphersOfferedByServer(getMechanismName());
+            throw log.mechNoCiphersOfferedByServer(getMechanismName()).toSaslException();
         }
 
         TransformationMapper trans = new DefaultTransformationMapper();
@@ -132,7 +132,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             }
         }
 
-        throw log.saslNoCommonCipher(getMechanismName());
+        throw log.mechNoCommonCipher(getMechanismName()).toSaslException();
     }
 
 
@@ -205,7 +205,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
                     realm = realms[0];
                 }
             } catch (UnsupportedCallbackException e) {
-                throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+                throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
 
@@ -223,12 +223,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
             digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, false);
         }
         if (digest_urp == null) {
-            throw log.saslCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null);
+            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
         }
         realm = realmCallback.getText();
         String userName = nameCallback.getName();
         if (userName == null) {
-            throw log.saslNotProvidedUserName(getMechanismName());
+            throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
         }
 
         // username
@@ -245,7 +245,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // nonce
         if(nonce == null){
-            throw log.saslMissingDirective(getMechanismName(), "nonce");
+            throw log.mechMissingDirective(getMechanismName(), "nonce").toSaslException();
         }
         digestResponse.append("nonce=\"");
         digestResponse.append(nonce);
@@ -316,7 +316,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private void checkResponseAuth(HashMap<String, byte[]> parsedChallenge) throws SaslException {
         byte[] expected = digestResponse(messageDigest, hA1, nonce, getNonceCount(), cnonce, authzid, qop, digestURI, false);
         if(!Arrays.equals(expected, parsedChallenge.get("rspauth"))) {
-            throw log.saslServerAuthenticityCannotBeVerified(getMechanismName());
+            throw log.mechServerAuthenticityCannotBeVerified(getMechanismName()).toSaslException();
         }
     }
 

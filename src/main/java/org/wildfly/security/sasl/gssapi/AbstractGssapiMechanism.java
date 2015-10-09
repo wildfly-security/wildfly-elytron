@@ -77,7 +77,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
         if (props.containsKey(Sasl.MAX_BUFFER)) {
             configuredMaxReceiveBuffer = Integer.parseInt((String) props.get(Sasl.MAX_BUFFER));
             if (configuredMaxReceiveBuffer > DEFAULT_MAX_BUFFER_SIZE) {
-                throw log.saslReceiveBufferIsGreaterThanMaximum(getMechanismName(), configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE);
+                throw log.mechReceiveBufferIsGreaterThanMaximum(getMechanismName(), configuredMaxReceiveBuffer, DEFAULT_MAX_BUFFER_SIZE).toSaslException();
             }
         } else {
             configuredMaxReceiveBuffer = DEFAULT_MAX_BUFFER_SIZE;
@@ -142,7 +142,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
             log.trace("dispose");
             gssContext.dispose();
         } catch (GSSException e) {
-            throw log.saslUnableToDisposeGssContext(getMechanismName(), e);
+            throw log.mechUnableToDisposeGssContext(getMechanismName(), e).toSaslException();
         } finally {
             gssContext = null;
         }
@@ -156,7 +156,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 for (int i = 0; i < qopNames.length; i++) {
                     QOP mapped = QOP.mapFromName(qopNames[i]);
                     if (mapped == null) {
-                        throw log.saslUnexpectedQop(getMechanismName(), qopNames[i]);
+                        throw log.mechUnexpectedQop(getMechanismName(), qopNames[i]).toSaslException();
                     }
                     preferredQop[i] = mapped;
 
@@ -255,7 +255,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 log.tracef("Wrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw log.saslUnableToWrapMessage(getMechanismName(), e);
+                throw log.mechUnableToWrapMessage(getMechanismName(), e).toSaslException();
             }
         }
 
@@ -267,7 +267,7 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
                 log.tracef("Unwrapping message of length '%d' resulting message of length '%d'", len, response.length);
                 return response;
             } catch (GSSException e) {
-                throw log.saslUnableToUnwrapMessage(getMechanismName(), e);
+                throw log.mechUnableToUnwrapMessage(getMechanismName(), e).toSaslException();
             }
         }
 

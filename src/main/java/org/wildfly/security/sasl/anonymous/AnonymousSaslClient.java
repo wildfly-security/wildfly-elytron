@@ -57,19 +57,19 @@ public final class AnonymousSaslClient extends AbstractSaslClient {
         switch (state) {
             case INITIAL_STATE:
                 if (message != null && message.length > 0) {
-                    throw log.saslInvalidServerMessage(getMechanismName());
+                    throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
                 }
                 NameCallback nameCallback = new NameCallback("Authentication name", "anonymous");
                 handleCallbacks(nameCallback);
                 String name = nameCallback.getName();
                 if (name == null) {
-                    throw log.saslNotProvidedUserName(getMechanismName());
+                    throw log.mechNotProvidedUserName(getMechanismName()).toSaslException();
                 }
                 if (name.length() > 255) {
-                    throw log.saslAuthenticationNameTooLong(getMechanismName());
+                    throw log.mechAuthenticationNameTooLong(getMechanismName()).toSaslException();
                 }
                 if (name.isEmpty()) {
-                    throw log.saslAuthenticationNameIsEmpty(getMechanismName());
+                    throw log.mechAuthenticationNameIsEmpty(getMechanismName()).toSaslException();
                 }
                 ByteStringBuilder b = new ByteStringBuilder();
                 StringPrep.encode(name, b, 0

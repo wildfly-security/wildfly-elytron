@@ -38,17 +38,19 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.util.CodePointIterator;
 
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * Test of server side of SCRAM mechanism.
@@ -60,13 +62,25 @@ import mockit.integration.junit4.JMockit;
 public class ScramServerCompatibilityTest extends BaseTestCase {
 
     private void mockNonceSalt(final String nonce, final String salt){
-        new MockUp<ScramUtil>(){
+        Class<?> classToMock;
+        try {
+            classToMock = Class.forName("org.wildfly.security.mechanism.scram.ScramUtil", true, ScramClient.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new NoClassDefFoundError(e.getMessage());
+        }
+        new MockUp<Object>(classToMock) {
             @Mock
             public byte[] generateNonce(int length, Random random){
                 return nonce.getBytes(StandardCharsets.UTF_8);
             }
+        };
+        new MockUp<IteratedSaltedPasswordAlgorithmSpec>() {
             @Mock
-            public byte[] generateSalt(int length, Random random){
+            public int getIterationCount() {
+                return 4096;
+            }
+            @Mock
+            public byte[] getSalt() {
                 return CodePointIterator.ofString(salt).hexDecode().drain();
             }
         };

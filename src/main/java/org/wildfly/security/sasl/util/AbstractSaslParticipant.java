@@ -82,7 +82,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         try {
             tryHandleCallbacks(callbacks);
         } catch (UnsupportedCallbackException e) {
-            throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), e);
+            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
         }
     }
 
@@ -99,7 +99,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         } catch (SaslException | UnsupportedCallbackException e) {
             throw e;
         } catch (Throwable t) {
-            throw log.saslCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
+            throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t).toSaslException();
         }
     }
 
@@ -170,9 +170,9 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
         boolean ok = false;
         try {
             if (state == COMPLETE_STATE) {
-                throw log.saslMessageAfterComplete(getMechanismName());
+                throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
             } else if (state == FAILED_STATE) {
-                throw log.saslAuthenticationFailed(getMechanismName());
+                throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
             }
             byte[] result = evaluateMessage(state, message);
             ok = true;
@@ -253,7 +253,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      */
     protected void assertComplete() {
         if (isComplete() == false) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
     }
 

@@ -58,7 +58,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
     @Override
     public String getAuthorizationID() {
         if (! isComplete()) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         }
         return authorizedId;
     }
@@ -76,11 +76,11 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
     @Override
     public byte[] evaluateResponse(final byte[] response) throws SaslException {
         if (complete) {
-            throw log.saslMessageAfterComplete(getMechanismName());
+            throw log.mechMessageAfterComplete(getMechanismName()).toSaslException();
         }
         complete = true;
         if (response.length >= 65536) {
-            throw log.saslMessageTooLong(getMechanismName());
+            throw log.mechMessageTooLong(getMechanismName()).toSaslException();
         }
         CodePointIterator i = CodePointIterator.ofUtf8Bytes(response);
         String authorizationId;
@@ -97,7 +97,7 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
                 authorizationId = loginName;
             }
         } catch (NoSuchElementException ignored) {
-            throw log.saslInvalidMessageReceived(getMechanismName());
+            throw log.mechInvalidMessageReceived(getMechanismName()).toSaslException();
         }
 
         // The message has now been parsed, split and converted to UTF-8 Strings
@@ -113,13 +113,13 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         } catch (SaslException e) {
             throw e;
         } catch (IOException | UnsupportedCallbackException e) {
-            throw log.saslServerSideAuthenticationFailed(getMechanismName(), e);
+            throw log.mechServerSideAuthenticationFailed(getMechanismName(), e).toSaslException();
         } finally {
             pvc.clearPassword();
         }
 
         if (pvc.isVerified() == false) {
-            throw log.saslPasswordNotVerified(getMechanismName());
+            throw log.mechPasswordNotVerified(getMechanismName()).toSaslException();
         }
 
         // Now check the authorization id
@@ -130,13 +130,13 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         } catch (SaslException e) {
             throw e;
         } catch (IOException | UnsupportedCallbackException e) {
-            throw log.saslServerSideAuthenticationFailed(getMechanismName(), e);
+            throw log.mechServerSideAuthenticationFailed(getMechanismName(), e).toSaslException();
         }
 
         if (acb.isAuthorized() == true) {
             authorizedId = acb.getAuthorizedID();
         } else {
-            throw log.saslAuthorizationFailed(getMechanismName(), loginName, authorizationId);
+            throw log.mechAuthorizationFailed(getMechanismName(), loginName, authorizationId).toSaslException();
         }
         return null;
     }
@@ -144,18 +144,18 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
     @Override
     public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         } else {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
     }
 
     @Override
     public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
         if (complete) {
-            throw log.saslAuthenticationNotComplete(getMechanismName());
+            throw log.mechAuthenticationNotComplete(getMechanismName());
         } else {
-            throw log.saslNoSecurityLayer(getMechanismName());
+            throw log.mechNoSecurityLayer(getMechanismName()).toSaslException();
         }
     }
 

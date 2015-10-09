@@ -165,7 +165,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
     private byte[] validateDigestResponse(HashMap<String, byte[]> parsedDigestResponse) throws SaslException {
         if (nonceCount != 1) {
-            throw log.saslNonceCountMustEqual(getMechanismName(), 1, nonceCount);
+            throw log.mechNonceCountMustEqual(getMechanismName(), 1, nonceCount).toSaslException();
         }
 
         Charset clientCharset = StandardCharsets.ISO_8859_1;
@@ -175,10 +175,10 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
                 if (StandardCharsets.UTF_8.equals(getCharset())) {
                     clientCharset = StandardCharsets.UTF_8;
                 } else {
-                    throw log.saslUnsupportedCharset(getMechanismName(), "UTF-8");
+                    throw log.mechUnsupportedCharset(getMechanismName(), "UTF-8").toSaslException();
                 }
             } else {
-                throw log.saslUnknownCharset(getMechanismName());
+                throw log.mechUnknownCharset(getMechanismName()).toSaslException();
             }
         }
 
@@ -186,7 +186,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         if (parsedDigestResponse.get("username") != null) {
             userName = new String(parsedDigestResponse.get("username"), clientCharset);
         } else {
-            throw log.saslMissingDirective(getMechanismName(), "username");
+            throw log.mechMissingDirective(getMechanismName(), "username").toSaslException();
         }
 
         String clientRealm;
@@ -196,42 +196,42 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             clientRealm = "";
         }
         if (!arrayContains(realms, clientRealm)) {
-            throw log.saslUnallowedClientRealm(getMechanismName(), clientRealm);
+            throw log.mechDisallowedClientRealm(getMechanismName(), clientRealm).toSaslException();
         }
 
         if (parsedDigestResponse.get("nonce") == null) {
-            throw log.saslMissingDirective(getMechanismName(), "nonce");
+            throw log.mechMissingDirective(getMechanismName(), "nonce").toSaslException();
         }
 
         byte[] nonceFromClient = parsedDigestResponse.get("nonce");
         if (!Arrays.equals(nonce, nonceFromClient)) {
-            throw log.saslNoncesDoNotMatch(getMechanismName());
+            throw log.mechNoncesDoNotMatch(getMechanismName()).toSaslException();
         }
 
         if (parsedDigestResponse.get("cnonce") == null) {
-            throw log.saslMissingDirective(getMechanismName(), "cnonce");
+            throw log.mechMissingDirective(getMechanismName(), "cnonce").toSaslException();
         }
         cnonce = parsedDigestResponse.get("cnonce");
 
         if (parsedDigestResponse.get("nc") == null) {
-            throw log.saslMissingDirective(getMechanismName(), "nc");
+            throw log.mechMissingDirective(getMechanismName(), "nc").toSaslException();
         }
 
         String clientDigestURI;
         if (parsedDigestResponse.get("digest-uri") != null) {
             clientDigestURI = new String(parsedDigestResponse.get("digest-uri"), clientCharset);
             if (!clientDigestURI.equalsIgnoreCase(digestURI)) {
-                throw log.saslMismatchedWrongDigestUri(getMechanismName(), clientDigestURI, digestURI);
+                throw log.mechMismatchedWrongDigestUri(getMechanismName(), clientDigestURI, digestURI).toSaslException();
             }
         } else {
-            throw log.saslMissingDirective(getMechanismName(), "digest-uri");
+            throw log.mechMissingDirective(getMechanismName(), "digest-uri").toSaslException();
         }
 
         qop = QOP_AUTH;
         if (parsedDigestResponse.get("qop") != null) {
             qop = new String(parsedDigestResponse.get("qop"), clientCharset);
             if (!arrayContains(QOP_VALUES, qop)) {
-                throw log.saslUnexpectedQop(getMechanismName(), qop);
+                throw log.mechUnexpectedQop(getMechanismName(), qop).toSaslException();
             }
             if (qop != null && qop.equals(QOP_AUTH) == false) {
                 setWrapper(new DigestWrapper(qop.equals(QOP_AUTH_CONF)));
@@ -249,7 +249,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             digest_urp = getSaltedPasswordFromPasswordCallback(realmCallback, nameCallback, true);
         }
         if (digest_urp == null) {
-            throw log.saslCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null);
+            throw log.mechCallbackHandlerDoesNotSupportCredentialAcquisition(getMechanismName(), null).toSaslException();
         }
 
         hA1 = H_A1(messageDigest, digest_urp, nonce, cnonce, authzid, clientCharset);
@@ -258,10 +258,10 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
         // check response
         if (parsedDigestResponse.get("response") == null) {
-            throw log.saslMissingDirective(getMechanismName(), "response");
+            throw log.mechMissingDirective(getMechanismName(), "response").toSaslException();
         }
         if ( ! Arrays.equals(expectedResponse, parsedDigestResponse.get("response"))) {
-            throw log.saslAuthenticationRejectedInvalidProof(getMechanismName());
+            throw log.mechAuthenticationRejectedInvalidProof(getMechanismName()).toSaslException();
         }
 
         createCiphersAndKeys();
@@ -271,12 +271,12 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         try {
             tryHandleCallbacks(authorizeCallback);
         } catch (UnsupportedCallbackException e) {
-            throw log.saslAuthorizationUnsupported(getMechanismName(), e);
+            throw log.mechAuthorizationUnsupported(getMechanismName(), e).toSaslException();
         }
         if (authorizeCallback.isAuthorized()) {
             authzid = authorizeCallback.getAuthorizedID();
         } else {
-            throw log.saslAuthorizationFailed(getMechanismName(), userName, authzid);
+            throw log.mechAuthorizationFailed(getMechanismName(), userName, authzid).toSaslException();
         }
 
         return createResponseAuth(parsedDigestResponse);
@@ -318,13 +318,13 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         switch (state) {
             case STEP_ONE:
                 if (message != null && message.length != 0) {
-                    throw log.saslInitialChallengeMustBeEmpty(getMechanismName());
+                    throw log.mechInitialChallengeMustBeEmpty(getMechanismName()).toSaslException();
                 }
                 setNegotiationState(STEP_THREE);
                 return generateChallenge();
             case STEP_THREE:
                 if (message == null || message.length == 0) {
-                    throw log.saslClientRefusesToInitiateAuthentication(getMechanismName());
+                    throw log.mechClientRefusesToInitiateAuthentication(getMechanismName()).toSaslException();
                 }
 
                 // parse digest response

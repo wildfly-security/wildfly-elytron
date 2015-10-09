@@ -38,6 +38,7 @@ import javax.security.sasl.SaslException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.wildfly.security.mechanism.scram.ScramClient;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
@@ -59,7 +60,13 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 public class ScramClientCompatibilityTest extends BaseTestCase {
 
     private void mockNonce(final String nonce){
-        new MockUp<ScramUtil>(){
+        final Class<?> classToMock;
+        try {
+            classToMock = Class.forName("org.wildfly.security.mechanism.scram.ScramUtil", true, ScramClient.class.getClassLoader());
+        } catch (ClassNotFoundException e) {
+            throw new NoClassDefFoundError(e.getMessage());
+        }
+        new MockUp<Object>(classToMock){
             @Mock
             public byte[] generateNonce(int length, Random random){
                 return nonce.getBytes(StandardCharsets.UTF_8);
@@ -300,12 +307,12 @@ public class ScramClientCompatibilityTest extends BaseTestCase {
         message = saslClient.evaluateChallenge(message);
         assertEquals("c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=JFcfWujky5ZULVQwDmB5aHMkoME=", new String(message));
 
-        message = "e=abcd".getBytes(StandardCharsets.UTF_8);
+        message = "e=invalid-proof".getBytes(StandardCharsets.UTF_8);
         try{
             message = saslClient.evaluateChallenge(message);
-            fail("SaslException not throwed");
+            fail("SaslException not thrown");
         } catch (SaslException e) {
-            if(! e.getMessage().contains("abcd")) fail("SaslException not contain error message");
+            if(! e.getMessage().contains("invalid-proof")) fail("SaslException not contain error message (" + e.getMessage() + ")");
         }
         assertFalse(saslClient.isComplete());
     }

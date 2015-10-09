@@ -212,7 +212,7 @@ public final class DigestUtil {
         try {
             mac.init(ks);
         } catch (InvalidKeyException e) {
-            throw log.saslInvalidKeyForDigestHMAC();
+            throw log.mechInvalidKeyForDigestHMAC().toSaslException();
         }
         byte[] buffer = new byte[len + 4];
         integerByteOrdered(sequenceNumber, buffer, 0, 4);
@@ -317,13 +317,13 @@ public final class DigestUtil {
      */
     public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws SaslException {
         if (password == null) {
-            throw log.saslNoPasswordGiven(mechName);
+            throw log.mechNoPasswordGiven(mechName).toSaslException();
         }
         try {
             PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
             return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            throw log.saslCannotGetTwoWayPasswordChars(mechName, e);
+            throw log.mechCannotGetTwoWayPasswordChars(mechName, e).toSaslException();
         }
     }
 

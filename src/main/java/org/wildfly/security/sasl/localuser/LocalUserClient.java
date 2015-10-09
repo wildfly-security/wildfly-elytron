@@ -92,7 +92,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         while (t < 8) {
                             int r = stream.read(challenge, t, 8-t);
                             if (r < 0) {
-                                throw log.saslInvalidServerMessage(getMechanismName());
+                                throw log.mechInvalidServerMessage(getMechanismName()).toSaslException();
                             } else {
                                 t += r;
                             }
@@ -101,7 +101,7 @@ public final class LocalUserClient extends AbstractSaslClient {
                         safeClose(stream);
                     }
                 } catch (IOException e) {
-                    throw log.saslFailedToReadChallengeFile(getMechanismName(), e);
+                    throw log.mechFailedToReadChallengeFile(getMechanismName(), e).toSaslException();
                 }
                 String authenticationId = getAuthorizationId();
                 String authenticationRealm = null;
