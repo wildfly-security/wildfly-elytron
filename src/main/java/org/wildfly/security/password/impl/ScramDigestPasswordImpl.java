@@ -23,9 +23,11 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -33,6 +35,7 @@ import java.util.Arrays;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -140,6 +143,32 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     }
 
     @Override
+    Password translate(final AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
+        if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+            IteratedSaltedPasswordAlgorithmSpec updateSpec = (IteratedSaltedPasswordAlgorithmSpec) parameterSpec;
+            byte[] updateSalt = updateSpec.getSalt();
+            if (updateSalt != null && ! Arrays.equals(updateSalt, salt)) {
+                throw new InvalidAlgorithmParameterException();
+            }
+            int updateIterationCount = updateSpec.getIterationCount();
+            if (updateIterationCount < this.iterationCount) {
+                throw new InvalidAlgorithmParameterException();
+            }
+            if (updateIterationCount == this.iterationCount) {
+                return this;
+            }
+            byte[] digest = this.digest.clone();
+            try {
+                addIterations(digest, getMacInstance(algorithm, digest), this.iterationCount, updateIterationCount);
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                throw new InvalidKeyException(e);
+            }
+            return new ScramDigestPasswordImpl(algorithm, digest, updateSalt, updateIterationCount);
+        }
+        throw new InvalidAlgorithmParameterException();
+    }
+
+    @Override
     boolean verify(char[] guess) throws InvalidKeyException {
         try {
             byte[] output = scramDigest(this.getAlgorithm(), getNormalizedPasswordBytes(guess), this.getSalt(), this.getIterationCount());
@@ -193,18 +222,20 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         hmac.update(salt);
         hmac.update("\00\00\00\01".getBytes(StandardCharsets.UTF_8));
         byte[] hi = hmac.doFinal();
+        addIterations(hi, hmac, 1, iterationCount);
+        return hi;
+    }
 
+    static void addIterations(final byte[] hi, final Mac hmac, final int currentIterationCount, final int newIterationCount) {
         // compute U2 ... Ui, performing the xor with the previous result as we iterate.
         byte[] current = hi;
-        for (int i = 1; i < iterationCount; i++) {
+        for (int i = currentIterationCount; i < newIterationCount; i++) {
             hmac.update(current);
             current = hmac.doFinal();
             for (int j = 0; j < hi.length; j++) {
                 hi[j] ^= current[j];
             }
         }
-
-        return hi;
     }
 
     /**
