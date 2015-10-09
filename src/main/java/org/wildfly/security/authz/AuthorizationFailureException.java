@@ -27,6 +27,8 @@ import java.security.Principal;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class AuthorizationFailureException extends AuthorizationException {
+    private static final long serialVersionUID = - 5699181816026435025L;
+
     /**
      * Constructs a new {@code AuthorizationFailureException} instance with an initial message.  No cause is specified.
      *

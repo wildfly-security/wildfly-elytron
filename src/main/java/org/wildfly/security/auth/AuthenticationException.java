@@ -21,7 +21,7 @@ package org.wildfly.security.auth;
 import java.security.GeneralSecurityException;
 
 /**
- * An exception indicating that a login operation has failed.
+ * An exception indicating that an initial authentication (login) operation has failed.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
