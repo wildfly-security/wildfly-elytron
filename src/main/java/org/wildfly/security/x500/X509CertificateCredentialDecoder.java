@@ -23,6 +23,8 @@ import java.security.cert.X509Certificate;
 import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.security.auth.server.CredentialDecoder;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.X509CertificateChainCredential;
 
 /**
  * A credential decoder which can decode an {@link X509Certificate} into an {@link X500Principal}.
@@ -36,9 +38,12 @@ public final class X509CertificateCredentialDecoder implements CredentialDecoder
     private X509CertificateCredentialDecoder() {
     }
 
-    public X500Principal getPrincipalFromCredential(final Object credential) {
-        if (credential instanceof X509Certificate) {
-            return ((X509Certificate) credential).getSubjectX500Principal();
+    public X500Principal getPrincipalFromCredential(final Credential credential) {
+        if (credential instanceof X509CertificateChainCredential) {
+            final X509Certificate[] chain = ((X509CertificateChainCredential) credential).getCertificateChain();
+            if (chain.length > 0) {
+                return chain[0].getSubjectX500Principal();
+            }
         }
         return null;
     }

@@ -38,6 +38,7 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.CredentialDecoder;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -82,7 +83,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
         final X509Certificate subjectCertificate = chain[0];
-        Principal principal = credentialDecoder.getPrincipalFromCredential(subjectCertificate);
+        Principal principal = credentialDecoder.getPrincipalFromCredential(new X509CertificateChainPublicCredential(chain));
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {

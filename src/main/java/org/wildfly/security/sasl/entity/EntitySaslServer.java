@@ -53,6 +53,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -175,7 +176,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
 
                     // Determine the authorization identity
-                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(clientCert).getName(X500Principal.CANONICAL);
+                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(new X509CertificateChainPublicCredential(clientCert)).getName(X500Principal.CANONICAL);
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);

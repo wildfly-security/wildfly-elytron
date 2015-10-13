@@ -21,6 +21,7 @@ package org.wildfly.security.auth.server;
 import org.wildfly.common.Assert;
 
 import java.security.Principal;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A decoder which acquires a principal from a credential.  Implementations may indicate that the credential
@@ -37,7 +38,7 @@ public interface CredentialDecoder {
      * @param credential the credential to decode
      * @return the principal, or {@code null} if this decoder does not understand the credential
      */
-    Principal getPrincipalFromCredential(Object credential);
+    Principal getPrincipalFromCredential(Credential credential);
 
     /**
      * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
