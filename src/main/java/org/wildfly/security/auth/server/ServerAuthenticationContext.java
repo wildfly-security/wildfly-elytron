@@ -518,8 +518,8 @@ public final class ServerAuthenticationContext {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public boolean verifyCredential(String credentialName, Evidence evidence) throws RealmUnavailableException {
-        return stateRef.get().verifyCredential(credentialName, evidence);
+    public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
+        return stateRef.get().verifyEvidence(credentialName, evidence);
     }
 
     CallbackHandler createAnonymousCallbackHandler() {
@@ -664,7 +664,7 @@ public final class ServerAuthenticationContext {
 
                     List<String> credentialNames = domain.mapCredentials(information);
                     for (String credentialName : credentialNames) {
-                        evidenceVerifyCallback.setVerified(verifyCredential(credentialName, evidenceVerifyCallback.getEvidence()));
+                        evidenceVerifyCallback.setVerified(verifyEvidence(credentialName, evidenceVerifyCallback.getEvidence()));
                     }
 
                 } else if (callback instanceof CredentialParameterCallback) {
@@ -734,7 +734,7 @@ public final class ServerAuthenticationContext {
 
         abstract <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException;
 
-        abstract boolean verifyCredential(String credentialName, final Object credential) throws RealmUnavailableException;
+        abstract boolean verifyEvidence(String credentialName, final Object credential) throws RealmUnavailableException;
 
         abstract RealmInfo getRealmInfo();
 
@@ -782,7 +782,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -840,7 +840,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -902,7 +902,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
             return realmIdentity.verifyCredential(credentialName, credential);
         }
 
