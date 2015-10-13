@@ -24,42 +24,42 @@ import javax.security.auth.callback.Callback;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class CredentialVerifyCallback implements ExtendedCallback {
+public class EvidenceVerifyCallback implements ExtendedCallback {
 
-    private final Object credential;
+    private final Object evidence;
     private boolean verified;
 
     /**
      * Construct a new instance of this {@link Callback}.
      *
-     * @param credential the credential to be verified.
+     * @param evidence the evidence to be verified
      */
-    public CredentialVerifyCallback(final Object credential) {
-        this.credential = credential;
+    public EvidenceVerifyCallback(final Object evidence) {
+        this.evidence = evidence;
     }
 
     /**
-     * Get the credential being verified.
+     * Get the evidence being verified.
      *
-     * @return the credential being verified.
+     * @return the evidence being verified
      */
-    public Object getCredential() {
-        return credential;
+    public Object getEvidence() {
+        return evidence;
     }
 
     /**
-     * Set if the credential referenced here has been verified.
+     * Set if the evidence referenced here has been verified.
      *
-     * @param verified the verification state of the credential.
+     * @param verified the verification state of the evidence
      */
     public void setVerified(final boolean verified) {
         this.verified = verified;
     }
 
     /**
-     * Get the verification state for the credential referenced here.
+     * Get the verification state for the evidence referenced here.
      *
-     * @return {@code true} if the credential has been verified, {@code false} otherwise.
+     * @return {@code true} if the evidence has been verified, {@code false} otherwise
      */
     public boolean isVerified() {
         return verified;
@@ -74,7 +74,7 @@ public class CredentialVerifyCallback implements ExtendedCallback {
     }
 
     /**
-     * This {@link Callback} needs to know if credential validation was successful.
+     * This {@link Callback} needs to know if evidence validation was successful.
      */
     @Override
     public boolean needsInformation() {

@@ -54,7 +54,7 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
-import org.wildfly.security.auth.callback.CredentialVerifyCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
@@ -685,12 +685,12 @@ public final class ServerAuthenticationContext {
                     // otherwise just fail out; some mechanisms will try again with different credentials
                     throw new FastUnsupportedCallbackException(callback);
 
-                } else if (callback instanceof CredentialVerifyCallback) {
-                    CredentialVerifyCallback credentialVerifyCallback = (CredentialVerifyCallback) callback;
+                } else if (callback instanceof EvidenceVerifyCallback) {
+                    EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
                     List<String> credentialNames = domain.mapCredentials(information);
                     for (String credentialName : credentialNames) {
-                        credentialVerifyCallback.setVerified(verifyCredential(credentialName, credentialVerifyCallback.getCredential()));
+                        evidenceVerifyCallback.setVerified(verifyCredential(credentialName, evidenceVerifyCallback.getEvidence()));
                     }
 
                 } else if (callback instanceof CredentialParameterCallback) {
