@@ -63,12 +63,12 @@ import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
-import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
-import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
@@ -511,17 +511,17 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Verify the given credential.
+     * Verify the given evidence.
      *
-     * @param credential the credential to verify
+     * @param evidence the evidence to verify
      *
      * @return {@code true} if verification was successful, {@code false} otherwise
      *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public boolean verifyCredential(String credentialName, Object credential) throws RealmUnavailableException {
-        return stateRef.get().verifyCredential(credentialName, credential);
+    public boolean verifyCredential(String credentialName, Evidence evidence) throws RealmUnavailableException {
+        return stateRef.get().verifyCredential(credentialName, evidence);
     }
 
     CallbackHandler createAnonymousCallbackHandler() {
@@ -619,14 +619,7 @@ public final class ServerAuthenticationContext {
                     List<String> credentialNames = domain.mapCredentials(information);
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).isDefinitelyVerifiable()) {
-                            try {
-                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-                                final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(providedPassword));
-                                passwordVerifyCallback.setVerified(verifyCredential(credentialName, password));
-                            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                                // try to fall back to another credential type
-                                throw new FastUnsupportedCallbackException(callback);
-                            }
+                            passwordVerifyCallback.setVerified(verifyCredential(credentialName, new PasswordGuessEvidence(providedPassword)));
                             handleOne(callbacks, idx + 1);
                             return;
                         }

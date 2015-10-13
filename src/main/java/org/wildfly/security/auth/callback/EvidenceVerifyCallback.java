@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.callback;
 
+import org.wildfly.security.evidence.Evidence;
+
 import javax.security.auth.callback.Callback;
 
 /**
@@ -26,7 +28,7 @@ import javax.security.auth.callback.Callback;
  */
 public class EvidenceVerifyCallback implements ExtendedCallback {
 
-    private final Object evidence;
+    private final Evidence evidence;
     private boolean verified;
 
     /**
@@ -34,7 +36,7 @@ public class EvidenceVerifyCallback implements ExtendedCallback {
      *
      * @param evidence the evidence to be verified
      */
-    public EvidenceVerifyCallback(final Object evidence) {
+    public EvidenceVerifyCallback(final Evidence evidence) {
         this.evidence = evidence;
     }
 
@@ -43,7 +45,7 @@ public class EvidenceVerifyCallback implements ExtendedCallback {
      *
      * @return the evidence being verified
      */
-    public Object getEvidence() {
+    public Evidence getEvidence() {
         return evidence;
     }
 
