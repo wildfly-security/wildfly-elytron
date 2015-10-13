@@ -40,7 +40,7 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**

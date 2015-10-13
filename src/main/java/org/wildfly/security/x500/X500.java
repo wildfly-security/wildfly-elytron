@@ -18,12 +18,20 @@
 
 package org.wildfly.security.x500;
 
+import java.security.cert.X509Certificate;
+
 /**
  * Useful X500 constants and utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class X500 {
+
+    /**
+     * A constant array containing zero certificates.
+     */
+    public static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+
     private X500() {}
 
     // RFC 4514 attribute type strings

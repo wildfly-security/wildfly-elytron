@@ -16,24 +16,20 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.x500;
+package org.wildfly.security.credential;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 
 /**
  * A credential containing a private key and an X.509 certificate chain.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class X509CertificateChainPrivateCredential {
+public final class X509CertificateChainPrivateCredential extends AbstractX509CertificateChainCredential {
     private final PrivateKey privateKey;
-    private final X509Certificate[] certificateChain;
-
-    /**
-     * A constant array containing zero certificates.
-     */
-    public static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
 
     /**
      * Construct a new instance.
@@ -42,8 +38,12 @@ public final class X509CertificateChainPrivateCredential {
      * @param certificateChain the certificate chain (not {@code null}, cannot contain {@code null} elements)
      */
     public X509CertificateChainPrivateCredential(final PrivateKey privateKey, final X509Certificate... certificateChain) {
+        super(certificateChain);
+        Assert.checkNotNullParam("privateKey", privateKey);
+        if (! getLastCertificate().getPublicKey().getAlgorithm().equals(privateKey.getAlgorithm())) {
+            throw ElytronMessages.log.mismatchedPublicPrivateKeyAlgorithms();
+        }
         this.privateKey = privateKey;
-        this.certificateChain = certificateChain.clone();
     }
 
     /**
@@ -53,14 +53,5 @@ public final class X509CertificateChainPrivateCredential {
      */
     public PrivateKey getPrivateKey() {
         return privateKey;
-    }
-
-    /**
-     * Get a copy of the certificate chain.
-     *
-     * @return a copy of the certificate chain
-     */
-    public X509Certificate[] getCertificateChain() {
-        return certificateChain.clone();
     }
 }
