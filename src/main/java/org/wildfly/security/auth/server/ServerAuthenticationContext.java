@@ -56,7 +56,6 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.callback.PasswordVerifyCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
@@ -64,7 +63,6 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.password.PasswordFactory;
@@ -611,23 +609,6 @@ public final class ServerAuthenticationContext {
                         throw new IOException(e);
                     }
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof PasswordVerifyCallback) {
-                    final PasswordVerifyCallback passwordVerifyCallback = (PasswordVerifyCallback) callback;
-                    final char[] providedPassword = passwordVerifyCallback.getPassword();
-                    // need a plain password
-
-                    List<String> credentialNames = domain.mapCredentials(information);
-                    for (String credentialName : credentialNames) {
-                        if (getCredentialSupport(credentialName).isDefinitelyVerifiable()) {
-                            passwordVerifyCallback.setVerified(verifyCredential(credentialName, new PasswordGuessEvidence(providedPassword)));
-                            handleOne(callbacks, idx + 1);
-                            return;
-                        }
-                    }
-
-                    // otherwise just fail out; some mechanisms will try again with different credentials
-                    throw new FastUnsupportedCallbackException(callback);
-
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 

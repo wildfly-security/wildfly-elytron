@@ -36,8 +36,9 @@ import org.junit.Assert;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.callback.PasswordVerifyCallback;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 
@@ -96,9 +97,9 @@ public class ServerCallbackHandler implements CallbackHandler {
                 if (username == null || username.equals(expectedUsername) == false) {
                     throw new SaslException("Invalid username received (expected \"" + expectedUsername + "\", received \"" + username + "\"");
                 }
-            } else if (current instanceof PasswordVerifyCallback && expectedPassword != null) {
-                PasswordVerifyCallback pvc = (PasswordVerifyCallback) current;
-                pvc.setVerified(Arrays.equals(expectedPassword, pvc.getPassword()));
+            } else if (current instanceof EvidenceVerifyCallback && expectedPassword != null) {
+                EvidenceVerifyCallback pvc = (EvidenceVerifyCallback) current;
+                pvc.setVerified(Arrays.equals(expectedPassword, ((PasswordGuessEvidence)pvc.getEvidence()).getGuess()));
             } else if (current instanceof PasswordCallback && expectedPassword != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(expectedPassword);

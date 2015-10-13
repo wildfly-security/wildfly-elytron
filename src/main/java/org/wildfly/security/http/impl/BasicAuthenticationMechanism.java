@@ -40,8 +40,9 @@ import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
-import org.wildfly.security.auth.callback.PasswordVerifyCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerExchange;
@@ -141,18 +142,19 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
     private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
         nameCallback.setName(username);
-        PasswordVerifyCallback passwordVerifyCallback = new PasswordVerifyCallback(password);
+        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
 
         try {
-            callbackHandler.handle(new Callback[] { nameCallback, passwordVerifyCallback });
+            callbackHandler.handle(new Callback[] { nameCallback, evidenceVerifyCallback });
 
-            return passwordVerifyCallback.isVerified();
+            return evidenceVerifyCallback.isVerified();
         } catch (UnsupportedCallbackException e) {
             return false;
         } catch (IOException e) {
             throw new HttpAuthenticationException(e);
         } finally {
-            passwordVerifyCallback.clearPassword();
+            evidence.destroy();
         }
     }
 
