@@ -734,7 +734,7 @@ public final class ServerAuthenticationContext {
 
         abstract <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException;
 
-        abstract boolean verifyEvidence(String credentialName, final Object credential) throws RealmUnavailableException;
+        abstract boolean verifyEvidence(String credentialName, final Evidence evidence) throws RealmUnavailableException;
 
         abstract RealmInfo getRealmInfo();
 
@@ -782,7 +782,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
+        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -840,7 +840,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
+        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -902,8 +902,8 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean verifyEvidence(final String credentialName, final Object credential) throws RealmUnavailableException {
-            return realmIdentity.verifyCredential(credentialName, credential);
+        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
+            return realmIdentity.verifyEvidence(credentialName, evidence);
         }
 
         @Override

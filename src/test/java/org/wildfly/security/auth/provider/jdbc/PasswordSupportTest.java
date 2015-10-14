@@ -84,13 +84,13 @@ public class PasswordSupportTest {
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
 
-        assertTrue(realmIdentity.verifyCredential("cred1", password));
-        assertTrue(realmIdentity.verifyCredential("cred1", userPassword.toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred1", password));
+        assertTrue(realmIdentity.verifyEvidence("cred1", userPassword.toCharArray()));
 
         Password invalidPassword = passwordFactory.generatePassword(new ClearPasswordSpec("badpasswd".toCharArray()));
 
-        assertFalse(realmIdentity.verifyCredential("cred1", invalidPassword));
-        assertFalse(realmIdentity.verifyCredential("cred2", invalidPassword));
+        assertFalse(realmIdentity.verifyEvidence("cred1", invalidPassword));
+        assertFalse(realmIdentity.verifyEvidence("cred2", invalidPassword));
 
         ClearPassword storedPassword = realmIdentity.getCredential("cred1", ClearPassword.class);
 
@@ -118,8 +118,8 @@ public class PasswordSupportTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred2"));
-        assertTrue(realmIdentity.verifyCredential("cred2", userPassword.toCharArray()));
-        assertFalse(realmIdentity.verifyCredential("cred2", "invalid".toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred2", userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyEvidence("cred2", "invalid".toCharArray()));
 
         BCryptPassword storedPassword = realmIdentity.getCredential("cred2", BCryptPassword.class);
 
@@ -151,8 +151,8 @@ public class PasswordSupportTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred3"));
-        assertTrue(realmIdentity.verifyCredential("cred3", userPassword.toCharArray()));
-        assertFalse(realmIdentity.verifyCredential("cred3", "invalid".toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred3", userPassword.toCharArray()));
+        assertFalse(realmIdentity.verifyEvidence("cred3", "invalid".toCharArray()));
 
         BCryptPassword storedPassword = realmIdentity.getCredential("cred3", BCryptPassword.class);
 
@@ -188,7 +188,7 @@ public class PasswordSupportTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred4"));
-        assertTrue(realmIdentity.verifyCredential("cred4", userPassword.toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred4", userPassword.toCharArray()));
 
         SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential("cred4", SaltedSimpleDigestPassword.class);
 
@@ -223,7 +223,7 @@ public class PasswordSupportTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred5"));
-        assertTrue(realmIdentity.verifyCredential("cred5", userPassword.toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred5", userPassword.toCharArray()));
 
         SimpleDigestPassword storedPassword = realmIdentity.getCredential("cred5", SimpleDigestPassword.class);
 
@@ -251,7 +251,7 @@ public class PasswordSupportTest {
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
         assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred6"));
-        assertTrue(realmIdentity.verifyCredential("cred6", userPassword.toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("cred6", userPassword.toCharArray()));
 
         ScramDigestPassword storedPassword = realmIdentity.getCredential("cred6", ScramDigestPassword.class);
 

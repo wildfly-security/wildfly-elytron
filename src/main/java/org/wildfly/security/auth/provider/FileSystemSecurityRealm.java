@@ -65,6 +65,7 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -255,7 +256,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return null;
         }
 
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Assert.checkNotNullParam("credential", credential);
             // we only know how to verify plain-text passwords

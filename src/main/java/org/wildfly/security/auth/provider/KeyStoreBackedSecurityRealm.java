@@ -35,6 +35,7 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -138,7 +139,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             };
         }
 
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) return false;
             if (entry instanceof PasswordEntry) {

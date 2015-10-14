@@ -79,14 +79,14 @@ public class JaasSecurityRealmTest {
         assertNull("Invalid non null credential", realmIdentity.getCredential("jaas", ClearPassword.class));
 
         // use the realm identity to verify all supported credentials - this will trigger a JAAS login that will use the test module.
-        assertTrue(realmIdentity.verifyCredential("jaas", "passwd12#$"));
-        assertTrue(realmIdentity.verifyCredential("jaas", "passwd12#$".toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("jaas", "passwd12#$"));
+        assertTrue(realmIdentity.verifyEvidence("jaas", "passwd12#$".toCharArray()));
         ClearPassword clearPassword = (ClearPassword) PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).
                 generatePassword(new ClearPasswordSpec("passwd12#$".toCharArray()));
-        assertTrue(realmIdentity.verifyCredential("jaas", clearPassword));
-        assertFalse(realmIdentity.verifyCredential("jaas", "wrongpass"));
+        assertTrue(realmIdentity.verifyEvidence("jaas", clearPassword));
+        assertFalse(realmIdentity.verifyEvidence("jaas", "wrongpass"));
         // the default handler can't handle an object credential, so even if an object contains the correct password it won't be processed.
-        assertFalse(realmIdentity.verifyCredential("jaas", new Object() {
+        assertFalse(realmIdentity.verifyEvidence("jaas", new Object() {
             @Override
             public String toString() {
                 return "passwd12#$";
@@ -94,7 +94,7 @@ public class JaasSecurityRealmTest {
         }));
 
         // get the authenticated realm identity after successfully verifying the credential.
-        assertTrue(realmIdentity.verifyCredential("jaas", "passwd12#$"));
+        assertTrue(realmIdentity.verifyEvidence("jaas", "passwd12#$"));
         AuthorizationIdentity authRealmIdentity = realmIdentity.getAuthorizationIdentity();
         assertNotNull("Unexpected null authenticated realm identity", authRealmIdentity);
         // check if the authenticated identity returns the caller principal as set by the test login module.
@@ -125,15 +125,15 @@ public class JaasSecurityRealmTest {
         assertEquals("Invalid credential support", CredentialSupport.POSSIBLY_VERIFIABLE, realmIdentity.getCredentialSupport("whatever"));
 
         // verify the credentials using the custom callback handler.
-        assertTrue(realmIdentity.verifyCredential("jaas", "$#21pass".toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("jaas", "$#21pass".toCharArray()));
         // the custom callback will handle an object using its toString method.
-        assertTrue(realmIdentity.verifyCredential("jaas", new Object() {
+        assertTrue(realmIdentity.verifyEvidence("jaas", new Object() {
             @Override
             public String toString() {
                 return "$#21pass";
             }
         }));
-        assertFalse(realmIdentity.verifyCredential("jaas", "wrongpass"));
+        assertFalse(realmIdentity.verifyEvidence("jaas", "wrongpass"));
 
     }
 }

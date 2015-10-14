@@ -45,6 +45,7 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -130,7 +131,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public boolean verifyCredential(String credentialName, Object credential) throws RealmUnavailableException {
+            public boolean verifyEvidence(String credentialName, Evidence credential) throws RealmUnavailableException {
                 if (accountEntry == null || credential instanceof ClearPassword == false) {
                     return false;
                 }

@@ -23,6 +23,7 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A realm which directs authentication to one realm and authorization to another.  The authentication realm need
@@ -85,8 +86,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             return authenticationIdentity.getCredential(credentialName, credentialType);
         }
 
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
-            return authenticationIdentity.verifyCredential(credentialName, credential);
+        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
+            return authenticationIdentity.verifyEvidence(credentialName, credential);
         }
 
         public boolean exists() throws RealmUnavailableException {

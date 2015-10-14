@@ -110,8 +110,8 @@ public class LegacyPropertiesSecurityRealmTest {
         String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
         assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
 
-        assertTrue(elytronIdentity.verifyCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, goodGuess));
-        assertFalse(elytronIdentity.verifyCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, badGuess));
+        assertTrue(elytronIdentity.verifyEvidence(PROPERTIES_CLEAR_CREDENTIAL_NAME, goodGuess));
+        assertFalse(elytronIdentity.verifyEvidence(PROPERTIES_CLEAR_CREDENTIAL_NAME, badGuess));
 
         elytronIdentity.dispose();
 
@@ -122,8 +122,8 @@ public class LegacyPropertiesSecurityRealmTest {
         assertNull(badIdentity.getCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, Object.class));
         assertNull(badIdentity.getCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, Object.class));
 
-        assertFalse(badIdentity.verifyCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, goodGuess));
-        assertFalse(badIdentity.verifyCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, badGuess));
+        assertFalse(badIdentity.verifyEvidence(PROPERTIES_CLEAR_CREDENTIAL_NAME, goodGuess));
+        assertFalse(badIdentity.verifyEvidence(PROPERTIES_CLEAR_CREDENTIAL_NAME, badGuess));
 
         badIdentity.dispose();
     }
@@ -155,8 +155,8 @@ public class LegacyPropertiesSecurityRealmTest {
         String actualHex = ByteIterator.ofBytes(elytronDigest.getDigest()).hexEncode().drainToString();
         assertEquals(ELYTRON_PASSWORD_HASH, actualHex);
 
-        assertTrue(elytronIdentity.verifyCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, goodGuess));
-        assertFalse(elytronIdentity.verifyCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, badGuess));
+        assertTrue(elytronIdentity.verifyEvidence(PROPERTIES_DIGEST_CREDENTIAL_NAME, goodGuess));
+        assertFalse(elytronIdentity.verifyEvidence(PROPERTIES_DIGEST_CREDENTIAL_NAME, badGuess));
 
         elytronIdentity.dispose();
 
@@ -167,8 +167,8 @@ public class LegacyPropertiesSecurityRealmTest {
         assertNull(badIdentity.getCredential(PROPERTIES_CLEAR_CREDENTIAL_NAME, Object.class));
         assertNull(badIdentity.getCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, Object.class));
 
-        assertFalse(badIdentity.verifyCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, goodGuess));
-        assertFalse(badIdentity.verifyCredential(PROPERTIES_DIGEST_CREDENTIAL_NAME, badGuess));
+        assertFalse(badIdentity.verifyEvidence(PROPERTIES_DIGEST_CREDENTIAL_NAME, goodGuess));
+        assertFalse(badIdentity.verifyEvidence(PROPERTIES_DIGEST_CREDENTIAL_NAME, badGuess));
 
         badIdentity.dispose();
     }

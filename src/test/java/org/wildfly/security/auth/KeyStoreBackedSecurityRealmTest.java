@@ -85,9 +85,9 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential("credential2", Password.class));
 
         // the realm identity must be able to verify the password for the user "elytron".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("credential1", "passwd12#$".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential1", "wrongpass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential2", "wrongpass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyEvidence("credential1", "passwd12#$".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyEvidence("credential1", "wrongpass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyEvidence("credential2", "wrongpass".toCharArray()));
 
         // now create a realm identity that represents the user "javajoe" (password is of type BCrypt).
         realmIdentity = realm.createRealmIdentity("javajoe");
@@ -105,8 +105,8 @@ public class KeyStoreBackedSecurityRealmTest {
         assertNull("Invalid non null password", realmIdentity.getCredential("credential1", Password.class));
 
         // the realm identity must be able to verify the password for the user "javajoe".
-        assertTrue("Error validating credential", realmIdentity.verifyCredential("credential2", "$#21pass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential2", "wrongpass".toCharArray()));
-        assertFalse("Error validating credential", realmIdentity.verifyCredential("credential1", "$#21pass".toCharArray()));
+        assertTrue("Error validating credential", realmIdentity.verifyEvidence("credential2", "$#21pass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyEvidence("credential2", "wrongpass".toCharArray()));
+        assertFalse("Error validating credential", realmIdentity.verifyEvidence("credential1", "$#21pass".toCharArray()));
     }
 }

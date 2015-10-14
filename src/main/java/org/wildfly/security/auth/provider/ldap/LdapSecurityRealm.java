@@ -28,6 +28,7 @@ import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
 import javax.naming.NamingEnumeration;
@@ -274,7 +275,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Assert.checkNotNullParam("credential", credential);
             if ( ! VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {

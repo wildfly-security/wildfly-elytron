@@ -269,7 +269,7 @@ public class FileSystemSecurityRealmTest {
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
+        assertTrue(existingIdentity.verifyEvidence("bcrypt-cred", "secretPassword".toCharArray()));
 
         OneTimePassword otp = existingIdentity.getCredential("otp-cred", OneTimePassword.class);
         assertNotNull(otp);
@@ -328,7 +328,7 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity identity3 = securityRealm.createRealmIdentity("testingUser");
 
         assertTrue(identity3.exists());
-        assertTrue(identity3.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
+        assertTrue(identity3.verifyEvidence("bcrypt-cred", "secretPassword".toCharArray()));
 
         OneTimePassword otp = identity3.getCredential("otp-cred", OneTimePassword.class);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
@@ -355,7 +355,7 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
 
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential("cred", actualPassword));
+        assertTrue(existingIdentity.verifyEvidence("cred", actualPassword));
     }
 
     private Path getRootPath(boolean deleteIfExists) throws Exception {

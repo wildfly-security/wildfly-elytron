@@ -26,6 +26,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -115,7 +116,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
             if (credential != null) {
                 for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                     for (PasswordKeyMapper passwordMapper : configuration.getColumnMappers(PasswordKeyMapper.class)) {

@@ -59,7 +59,7 @@ public class PasswordValidationTest {
         CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
         assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
 
-        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", password));
+        assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", password));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class PasswordValidationTest {
         CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
         assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
 
-        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", password));
+        assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", password));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        assertTrue(realmIdentity.verifyCredential("ldap-verifiable", "plainPassword".toCharArray()));
+        assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", "plainPassword".toCharArray()));
     }
 
     @Test (expected = RuntimeException.class)
@@ -112,6 +112,6 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        realmIdentity.verifyCredential("ldap-verifiable", Integer.valueOf(123456));
+        realmIdentity.verifyEvidence("ldap-verifiable", Integer.valueOf(123456));
     }
 }
