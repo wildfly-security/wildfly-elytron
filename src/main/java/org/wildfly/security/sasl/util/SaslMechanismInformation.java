@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.wildfly.security.auth.server.CredentialMapper;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
@@ -385,55 +387,55 @@ public final class SaslMechanismInformation {
      *
      * @return the set of algorithms, or an empty set if all algorithms have equal or unknown support
      */
-    public static Set<String> getSupportedClientCredentialAlgorithms(String mechName, Class<?> credentialType) {
+    public static Set<String> getSupportedClientCredentialAlgorithms(String mechName, Class<? extends Credential> credentialType) {
         switch (mechName) {
             case Names.CRAM_MD5:
             case Names.PLAIN: {
                 return emptySet();
             }
             case Names.DIGEST_MD5: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_MD5 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_MD5 : emptySet();
             }
             case Names.DIGEST_SHA: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA : emptySet();
             }
             case Names.DIGEST_SHA_256: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_256 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_256 : emptySet();
             }
             case Names.DIGEST_SHA_384: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_384 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_384 : emptySet();
             }
             case Names.DIGEST_SHA_512: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_512 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_512 : emptySet();
             }
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_1 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_1 : emptySet();
             }
             case Names.SCRAM_SHA_256:
             case Names.SCRAM_SHA_256_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_256 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_256 : emptySet();
             }
             case Names.SCRAM_SHA_384:
             case Names.SCRAM_SHA_384_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_384 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_384 : emptySet();
             }
             case Names.SCRAM_SHA_512:
             case Names.SCRAM_SHA_512_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_512 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_512 : emptySet();
             }
             case Names.IEC_ISO_9798_M_DSA_SHA1:
             case Names.IEC_ISO_9798_U_DSA_SHA1: {
-                return credentialType == X509CertificateChainPrivateCredential.class ? JUST_DSA : emptySet();
+                return credentialType.isAssignableFrom(X509CertificateChainPrivateCredential.class) ? JUST_DSA : emptySet();
             }
             case Names.IEC_ISO_9798_M_ECDSA_SHA1:
             case Names.IEC_ISO_9798_U_ECDSA_SHA1: {
                 // todo: double-check
-                return credentialType == X509CertificateChainPrivateCredential.class ? JUST_EC : emptySet();
+                return credentialType.isAssignableFrom(X509CertificateChainPrivateCredential.class) ? JUST_EC : emptySet();
             }
             case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
-                return credentialType == X509CertificateChainPrivateCredential.class ? JUST_RSA : emptySet();
+                return credentialType.isAssignableFrom(X509CertificateChainPrivateCredential.class) ? JUST_RSA : emptySet();
             }
             default:
                 return emptySet();
@@ -450,42 +452,42 @@ public final class SaslMechanismInformation {
      *
      * @return the set of algorithms, or an empty set if all algorithms have equal or unknown support
      */
-    public static Set<String> getSupportedServerCredentialAlgorithms(String mechName, Class<?> credentialType) {
+    public static Set<String> getSupportedServerCredentialAlgorithms(String mechName, Class<? extends Credential> credentialType) {
         switch (mechName) {
             case Names.CRAM_MD5:
             case Names.PLAIN: {
                 return emptySet();
             }
             case Names.DIGEST_MD5: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_MD5 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_MD5 : emptySet();
             }
             case Names.DIGEST_SHA: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA : emptySet();
             }
             case Names.DIGEST_SHA_256: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_256 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_256 : emptySet();
             }
             case Names.DIGEST_SHA_384: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_384 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_384 : emptySet();
             }
             case Names.DIGEST_SHA_512: {
-                return credentialType == DigestPassword.class ? JUST_DIGEST_SHA_512 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_SHA_512 : emptySet();
             }
             case Names.SCRAM_SHA_1:
             case Names.SCRAM_SHA_1_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_1 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_1 : emptySet();
             }
             case Names.SCRAM_SHA_256:
             case Names.SCRAM_SHA_256_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_256 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_256 : emptySet();
             }
             case Names.SCRAM_SHA_384:
             case Names.SCRAM_SHA_384_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_384 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_384 : emptySet();
             }
             case Names.SCRAM_SHA_512:
             case Names.SCRAM_SHA_512_PLUS: {
-                return credentialType == ScramDigestPassword.class ? JUST_SCRAM_SHA_512 : emptySet();
+                return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_SCRAM_SHA_512 : emptySet();
             }
             case Names.IEC_ISO_9798_M_DSA_SHA1:
             case Names.IEC_ISO_9798_U_DSA_SHA1:
