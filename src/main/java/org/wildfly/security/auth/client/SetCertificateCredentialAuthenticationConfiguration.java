@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -29,6 +30,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -62,5 +64,10 @@ class SetCertificateCredentialAuthenticationConfiguration extends Authentication
             }
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        return types == null || types.contains(X509CertificateChainPrivateCredential.class) || super.filterOneSaslMechanism(mechanismName);
     }
 }

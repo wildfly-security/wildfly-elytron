@@ -21,6 +21,7 @@ package org.wildfly.security.auth.client;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
+import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -33,6 +34,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -70,6 +72,13 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
     void configureSaslProperties(final Map<String, Object> properties) {
         properties.put(Sasl.CREDENTIALS, password);
         super.configureSaslProperties(properties);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        String passwordAlgorithm = password.getAlgorithm();
+        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, PasswordCredential.class);
+        return (types == null || types.contains(PasswordCredential.class)) && (algorithms.isEmpty() || algorithms.contains(passwordAlgorithm)) || super.filterOneSaslMechanism(mechanismName);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {

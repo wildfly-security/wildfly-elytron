@@ -96,7 +96,9 @@ public abstract class AuthenticationConfiguration {
         void configureSaslProperties(final Map<String, Object> properties) {
         }
 
-        void filterSaslMechanisms(final Collection<String> names) {
+        boolean filterOneSaslMechanism(final String mechanismName) {
+            // nobody found a way to support this mechanism
+            return false;
         }
 
         String doRewriteUser(final String original) {
@@ -202,8 +204,8 @@ public abstract class AuthenticationConfiguration {
         parent.configureSaslProperties(properties);
     }
 
-    void filterSaslMechanisms(Collection<String> names) {
-        parent.filterSaslMechanisms(names);
+    boolean filterOneSaslMechanism(String mechanismName) {
+        return parent.filterOneSaslMechanism(mechanismName);
     }
 
     String doRewriteUser(String original) {
@@ -645,7 +647,7 @@ public abstract class AuthenticationConfiguration {
         final HashMap<String, Object> properties = new HashMap<String, Object>();
         configureSaslProperties(properties);
         final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
-        filterSaslMechanisms(mechs);
+        mechs.removeIf(n -> ! filterOneSaslMechanism(n));
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
         return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);

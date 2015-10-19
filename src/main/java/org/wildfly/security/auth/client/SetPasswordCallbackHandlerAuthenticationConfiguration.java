@@ -20,6 +20,7 @@ package org.wildfly.security.auth.client;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -28,6 +29,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -61,6 +64,11 @@ class SetPasswordCallbackHandlerAuthenticationConfiguration extends Authenticati
             return;
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        return types == null || types.contains(PasswordCredential.class) || super.filterOneSaslMechanism(mechanismName);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {

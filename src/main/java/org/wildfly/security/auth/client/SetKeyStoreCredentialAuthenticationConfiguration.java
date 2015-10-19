@@ -29,6 +29,7 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -45,6 +46,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -134,5 +136,30 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             }
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        // filter the mechanism based on the credential we have
+        final KeyStore.Entry entry;
+        try {
+            entry = entryFactory.create();
+        } catch (GeneralSecurityException e) {
+            return super.filterOneSaslMechanism(mechanismName);
+        }
+        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        if (types == null) {
+            // we don't really know anything about this mech; leave it for a superclass to figure out
+            return super.filterOneSaslMechanism(mechanismName);
+        }
+        // only these credential types really inform mech selection
+        if (entry instanceof PasswordEntry) {
+            Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, PasswordCredential.class);
+            return types.contains(PasswordCredential.class) && (algorithms.isEmpty() || algorithms.contains(((PasswordEntry) entry).getPassword().getAlgorithm())) || super.filterOneSaslMechanism(mechanismName);
+        } else if (entry instanceof KeyStore.PrivateKeyEntry) {
+            Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, X509CertificateChainPrivateCredential.class);
+            return types.contains(X509CertificateChainPrivateCredential.class) && (algorithms.isEmpty() || algorithms.contains(((KeyStore.PrivateKeyEntry) entry).getPrivateKey().getAlgorithm())) || super.filterOneSaslMechanism(mechanismName);
+        } else {
+            return super.filterOneSaslMechanism(mechanismName);
+        }
     }
 }

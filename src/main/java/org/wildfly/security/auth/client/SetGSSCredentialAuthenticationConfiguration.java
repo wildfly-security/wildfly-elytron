@@ -28,6 +28,7 @@ import javax.security.sasl.Sasl;
 import org.ietf.jgss.GSSCredential;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -56,6 +57,11 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
     void configureSaslProperties(final Map<String, Object> properties) {
         properties.put(Sasl.CREDENTIALS, credential);
         super.configureSaslProperties(properties);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        // not a sure thing but we have to try
+        return SaslMechanismInformation.GS2.test(mechanismName) || mechanismName.equals(SaslMechanismInformation.Names.GSSAPI) || super.filterOneSaslMechanism(mechanismName);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {

@@ -20,31 +20,25 @@ package org.wildfly.security.auth.client;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private static final Set<String> ONLY_ANONYMOUS = Collections.singleton("ANONYMOUS");
-
     SetAnonymousAuthenticationConfiguration(final AuthenticationConfiguration parent) {
         super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetNamePrincipalAuthenticationConfiguration.class));
     }
 
-    void filterSaslMechanisms(final Collection<String> names) {
-        // apparently no principal has been set; we only allow anonymous
-        names.retainAll(ONLY_ANONYMOUS);
-        super.filterSaslMechanisms(names);
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        return SaslMechanismInformation.Names.ANONYMOUS.equals(mechanismName) || super.filterOneSaslMechanism(mechanismName);
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {

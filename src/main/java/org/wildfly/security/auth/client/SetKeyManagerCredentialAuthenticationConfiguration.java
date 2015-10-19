@@ -43,6 +43,7 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**
@@ -102,6 +103,11 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
             return;
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        // just add entity methods; don't try and narrow down the algorithm type
+        return SaslMechanismInformation.IEC_ISO_9798.test(mechanismName) || super.filterOneSaslMechanism(mechanismName);
     }
 
     private Principal[] getAcceptableIssuers(List<TrustedAuthority> trustedAuthorities) {

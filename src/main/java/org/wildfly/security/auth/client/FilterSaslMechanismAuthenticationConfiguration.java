@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.client;
 
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -35,13 +34,8 @@ class FilterSaslMechanismAuthenticationConfiguration extends AuthenticationConfi
         this.names = names;
     }
 
-    void filterSaslMechanisms(final Collection<String> names) {
-        if (allow) {
-            names.retainAll(this.names);
-        } else {
-            names.removeAll(this.names);
-        }
-        super.filterSaslMechanisms(names);
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        return names.contains(mechanismName) ? allow : super.filterOneSaslMechanism(mechanismName);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
