@@ -124,7 +124,7 @@ public final class ServerAuthenticationContext {
 
     /**
      * Create a SASL server that will authenticate against this security domain.  The selected mechanism name should
-     * be one of the names returned by {@link SecurityDomain#getSaslServerMechanismNames(SaslServerFactory)} for the given factory.
+     * be one of the names returned by {@link #querySaslServerMechanismNames(SaslServerFactory)} for the given factory.
      * If the SASL server failed to be constructed for some reason, a {@code SaslException} is thrown.  Calling this
      * method initiates authentication.
      *
@@ -480,8 +480,7 @@ public final class ServerAuthenticationContext {
      * the current authentication identity.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
      * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
-     * @param credentialType the credential type
-     * @param algorithmName the optional algorithm name for the credential type
+     * @param credentialName the credential name
      * @return the level of support for this credential type
      *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
@@ -495,8 +494,8 @@ public final class ServerAuthenticationContext {
      * Acquire a credential of the given type.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
      * algorithm name is not given, then the query is performed for any algorithm of the given type.
      *
+     * @param credentialName the credential name
      * @param credentialType the credential type class
-     * @param algorithmName the optional algorithm name for the credential type
      * @param <C> the credential type
      *
      * @return the credential, or {@code null} if the principal has no credential of that type
