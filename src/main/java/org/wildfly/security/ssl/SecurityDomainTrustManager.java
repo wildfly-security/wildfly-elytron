@@ -92,8 +92,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
 
             AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
             builder.setMechanismType("SSL");
-            // TODO mechanismName, protocol, authenticationName
-            List<String> credentialNames = securityDomain.mapCredentials(builder.build());
+            List<String> credentialNames = authenticationContext.mapCredentials(builder.build());
             for (String credentialName : credentialNames) {
 
                 final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(credentialName);
