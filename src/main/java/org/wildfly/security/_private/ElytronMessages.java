@@ -378,6 +378,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
+    @LogMessage(level = WARN)
+    @Message(id = 1090, value = "Post-association peer context action failed")
+    void postAssociationFailed(@Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
