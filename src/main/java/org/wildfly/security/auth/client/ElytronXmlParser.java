@@ -32,10 +32,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +64,7 @@ import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X500;
 
 /**
  * A parser for the Elytron XML schema.
@@ -1144,8 +1143,8 @@ public final class ElytronXmlParser {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
-                return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
+                final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
+                return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
             }
             throw log.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
         }

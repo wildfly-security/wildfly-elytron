@@ -45,6 +45,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.x500.X500;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -83,11 +84,12 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                if (certificateChain != null && certificateChain.length != 0) {
-                    if ((certificateChain instanceof X509Certificate[])
-                            && (credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm()))) {
-                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, (X509Certificate[]) certificateChain));
+                if (certificateChain != null && certificateChain.length != 0 && credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm())) {
+                    try {
+                        final X509Certificate[] x509Certificates = X500.asX509CertificateArray(certificateChain);
+                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, x509Certificates));
                         return;
+                    } catch (ArrayStoreException ignored) {
                     }
                 }
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
