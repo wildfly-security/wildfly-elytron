@@ -38,6 +38,7 @@ import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -119,8 +120,8 @@ public class ServerCallbackHandler implements CallbackHandler {
                 try {
                     PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                     Password password = passwordFactory.generatePassword(keySpec);
-                    if (ccb.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
-                        ccb.setCredential(password);
+                    if (ccb.isCredentialSupported(PasswordCredential.class, password.getAlgorithm())) {
+                        ccb.setCredential(new PasswordCredential(password));
                     } else {
                         throw new FastUnsupportedCallbackException(current);
                     }

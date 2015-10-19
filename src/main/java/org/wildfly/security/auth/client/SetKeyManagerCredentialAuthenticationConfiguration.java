@@ -39,6 +39,7 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
@@ -52,7 +53,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
     private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
     SetKeyManagerCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.keyManagerFactory = keyManagerFactory;
     }
 
@@ -77,7 +78,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
                     throw log.unableToCreateKeyManager(e);
                 }
                 final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
+                for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
                     final Set<String> allowedAlgorithms = credentialCallback.getAllowedAlgorithms(allowedType);
                     if (allowedAlgorithms != null) {
                         final String[] keyType = allowedAlgorithms.toArray(new String[allowedAlgorithms.size()]);
@@ -85,13 +86,8 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
                         if (alias != null) {
                             final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
                             final PrivateKey privateKey = keyManager.getPrivateKey(alias);
-                            if (certificateChain == null || certificateChain.length == 0) {
-                                credentialCallback.setCredential(privateKey);
-                                break;
-                            } else {
-                                credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
-                                break;
-                            }
+                            credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+                            break;
                         }
                     }
                 }

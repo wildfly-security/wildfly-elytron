@@ -67,6 +67,7 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.TestKDC;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -518,7 +519,7 @@ public class Gs2Test extends BaseTestCase {
             builder.setChannelBinding(bindingType, bindingData);
         }
         if (credential != null) {
-            builder.setCredential(credential, null);
+            builder.setCredential(new GSSCredentialCredential(credential), null);
         }
         try {
             return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {

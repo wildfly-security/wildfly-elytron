@@ -1,6 +1,7 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A {@link CredentialPersister} for persisting credentials into LDAP directory.
@@ -26,7 +27,7 @@ public interface IdentityCredentialPersister {
      * @param credentialName the credential to store
      * @param credential the credential
      */
-    void persistCredential(String credentialName, Object credential) throws RealmUnavailableException;
+    void persistCredential(String credentialName, Credential credential) throws RealmUnavailableException;
 
     /**
      * Clear all supported credentials of identity.

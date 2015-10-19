@@ -45,10 +45,12 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.DigestPasswordSpec;
@@ -96,8 +98,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
+            public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
                 if (accountEntry == null) {
+                    return null;
+                }
+                if (!credentialType.isAssignableFrom(PasswordCredential.class)) {
                     return null;
                 }
 
@@ -120,23 +125,18 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 }
 
                 try {
-                    Password password = passwordFactory.generatePassword(passwordSpec);
-                    if (credentialType.isInstance(password)) {
-                        return credentialType.cast(password);
-                    }
-                    return null;
+                    return credentialType.cast(new PasswordCredential(passwordFactory.generatePassword(passwordSpec)));
                 } catch (InvalidKeySpecException e) {
                     throw new IllegalStateException(e);
                 }
             }
 
             @Override
-            public boolean verifyEvidence(String credentialName, Evidence credential) throws RealmUnavailableException {
-                if (accountEntry == null || credential instanceof ClearPassword == false) {
+            public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
+                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false) {
                     return false;
                 }
-
-                ClearPassword testedPassword = (ClearPassword) credential;
+                final char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
@@ -153,7 +153,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
 
-                    return passwordFactory.verify(actualPassword, testedPassword.getPassword());
+                    return passwordFactory.verify(actualPassword, guess);
                 } catch (InvalidKeySpecException | InvalidKeyException | IllegalStateException e) {
                     throw new IllegalStateException(e);
                 }

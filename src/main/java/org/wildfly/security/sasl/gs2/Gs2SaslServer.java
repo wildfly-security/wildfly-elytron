@@ -39,6 +39,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -78,10 +80,13 @@ final class Gs2SaslServer extends AbstractSaslServer {
 
         // Attempt to obtain a credential
         GSSCredential credential = null;
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(GSSCredential.class, Collections.emptySet()));
+        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(GSSCredentialCredential.class, Collections.emptySet()));
         try {
             tryHandleCallbacks(credentialCallback);
-            credential = (GSSCredential) credentialCallback.getCredential();
+            Credential credentialHolder = credentialCallback.getCredential();
+            if (credentialHolder instanceof GSSCredentialCredential) {
+                credential = ((GSSCredentialCredential) credentialHolder).getGssCredential();
+            }
         } catch (UnsupportedCallbackException | IllegalStateException | SaslException e) {
             try {
                 String localNameStr = protocol + "@" + serverName;

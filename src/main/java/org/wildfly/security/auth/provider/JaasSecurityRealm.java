@@ -45,9 +45,10 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.manager.WildFlySecurityManager;
-import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * A JAAS based {@link SecurityRealm} implementation.
@@ -120,16 +121,16 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
     }
 
-    private CallbackHandler createCallbackHandler(final Principal principal, final Object credential) throws RealmUnavailableException {
+    private CallbackHandler createCallbackHandler(final Principal principal, final Evidence evidence) throws RealmUnavailableException {
         if (handler == null) {
-            return new DefaultCallbackHandler(principal, credential);
+            return new DefaultCallbackHandler(principal, evidence);
         }
         else {
             try {
                 final CallbackHandler callbackHandler = handler.getClass().newInstance();
                 // preserve backwards compatibility: custom handlers were allowed in the past as long as they had a public setSecurityInfo method.
                 final Method setSecurityInfo = handler.getClass().getMethod("setSecurityInfo", Principal.class, Object.class);
-                setSecurityInfo.invoke(callbackHandler, principal, credential);
+                setSecurityInfo.invoke(callbackHandler, principal, evidence);
                 return callbackHandler;
             } catch (Exception e) {
                 throw ElytronMessages.log.failedToInstantiateCustomHandler(e);
@@ -153,15 +154,15 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
             return null;
         }
 
         @Override
-        public boolean verifyEvidence(String credentialName, Evidence credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
             this.subject = null;
             boolean successfulLogin;
-            final CallbackHandler callbackHandler = createCallbackHandler(principal, credential);
+            final CallbackHandler callbackHandler = createCallbackHandler(principal, evidence);
             final Subject subject = new Subject();
             final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
 
@@ -192,11 +193,11 @@ public class JaasSecurityRealm implements SecurityRealm {
     private class DefaultCallbackHandler implements CallbackHandler {
 
         private final Principal principal;
-        private final Object credential;
+        private final Evidence evidence;
 
-        private DefaultCallbackHandler(final Principal principal, final Object credential) {
+        private DefaultCallbackHandler(final Principal principal, final Evidence evidence) {
             this.principal = principal;
-            this.credential = credential;
+            this.evidence = evidence;
         }
 
         @Override
@@ -211,14 +212,8 @@ public class JaasSecurityRealm implements SecurityRealm {
                 }
                 else if (callback instanceof PasswordCallback) {
                     PasswordCallback passwordCallback = (PasswordCallback) callback;
-                    if (this.credential instanceof char[]) {
-                        passwordCallback.setPassword((char[]) credential);
-                    }
-                    else if (this.credential instanceof String) {
-                        passwordCallback.setPassword(((String) credential).toCharArray());
-                    }
-                    else if (this.credential instanceof ClearPassword) {
-                        passwordCallback.setPassword(((ClearPassword) credential).getPassword());
+                    if (this.evidence instanceof PasswordGuessEvidence) {
+                        passwordCallback.setPassword(((PasswordGuessEvidence) this.evidence).getGuess());
                     }
                     else {
                         throw ElytronMessages.log.failedToConvertCredentialToPassword(callback);

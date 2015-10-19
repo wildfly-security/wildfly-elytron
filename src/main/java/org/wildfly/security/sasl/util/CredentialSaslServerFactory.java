@@ -31,6 +31,7 @@ import javax.security.sasl.SaslServerFactory;
 ;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A {@link SaslServerFactory} which sets the server's credential.
@@ -39,7 +40,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
  */
 public final class CredentialSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
-    private final Object credential;
+    private final Credential credential;
     private final String algorithm;
 
     /**
@@ -49,7 +50,7 @@ public final class CredentialSaslServerFactory extends AbstractDelegatingSaslSer
      * @param credential the server credential to use
      * @param algorithm the algorithm of the server credential (may be {@code null})
      */
-    public CredentialSaslServerFactory(final SaslServerFactory delegate, final Object credential, final String algorithm) {
+    public CredentialSaslServerFactory(final SaslServerFactory delegate, final Credential credential, final String algorithm) {
         super(delegate);
         Assert.checkNotNullParam("credential", credential);
         this.credential = credential;

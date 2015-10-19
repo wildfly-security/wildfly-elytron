@@ -33,11 +33,13 @@ import java.security.spec.InvalidKeySpecException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.SecretKeyCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -56,7 +58,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
     }
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.entryFactory = entryFactory;
     }
 
@@ -75,32 +77,27 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 throw log.unableToReadCredential(e);
             }
             if (entry instanceof PasswordEntry) {
-                credentialCallback.setCredential(((PasswordEntry) entry).getPassword());
+                credentialCallback.setCredential(new PasswordCredential(((PasswordEntry) entry).getPassword()));
                 return;
             } else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                if (certificateChain == null || certificateChain.length == 0) {
-                    credentialCallback.setCredential(privateKey);
-                    return;
-                } else {
-                    final Certificate certificate = privateKeyEntry.getCertificate();
-                    if ((certificate instanceof X509Certificate)
-                            && credentialCallback.isCredentialSupported(X500PrivateCredential.class, privateKey.getAlgorithm())) {
-                        credentialCallback.setCredential(new X500PrivateCredential((X509Certificate) certificate, privateKey));
-                        return;
-                    } else if ((certificateChain instanceof X509Certificate[])
+                if (certificateChain != null && certificateChain.length != 0) {
+                    if ((certificateChain instanceof X509Certificate[])
                             && (credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm()))) {
                         credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, (X509Certificate[]) certificateChain));
                         return;
                     }
                 }
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                credentialCallback.setCredential(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate());
-                return;
+                final Certificate certificate = ((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate();
+                if (certificate instanceof X509Certificate) {
+                    credentialCallback.setCredential(new X509CertificateChainPublicCredential((X509Certificate) certificate));
+                    return;
+                }
             } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                credentialCallback.setCredential(((KeyStore.SecretKeyEntry) entry).getSecretKey());
+                credentialCallback.setCredential(new SecretKeyCredential(((KeyStore.SecretKeyEntry) entry).getSecretKey()));
                 return;
             }
         } else if (callback instanceof PasswordCallback) {

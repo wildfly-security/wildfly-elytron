@@ -43,6 +43,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
 import org.wildfly.security.auth.callback.TimeoutCallback;
 import org.wildfly.security.auth.callback.TimeoutUpdateCallback;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
@@ -105,10 +106,11 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // OTP extended challenge = <standard OTP challenge> ext[,<extension set id>[, ...]]
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
                 nameCallback = new NameCallback("Remote authentication name", userName);
-                final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(OneTimePassword.class, unmodifiableSet(new LinkedHashSet<>(asList(OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)))));
+                final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(PasswordCredential.class, unmodifiableSet(new LinkedHashSet<>(asList(OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)))));
                 final TimeoutCallback timeoutCallback = new TimeoutCallback();
                 handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
-                final OneTimePassword previousPassword = (OneTimePassword) credentialCallback.getCredential();
+                final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
+                final OneTimePassword previousPassword = (OneTimePassword) credential.getPassword();
                 if (previousPassword == null) {
                     throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
                 }

@@ -18,7 +18,6 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -26,7 +25,6 @@ import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.GeneralName.*;
 
-import java.io.IOException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
@@ -242,22 +240,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                             throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
                         }
                     } catch (UnsupportedCallbackException e) {
-                        // Try obtaining a certificate URL instead
-                        credentialCallback = new CredentialCallback(singletonMap(URL.class, emptySet()));
-                        CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class,
-                                singleton(keyType(signature.getAlgorithm()))));
-                        handleCallbacks(credentialCallback, privateKeyCallback);
-                        serverCertUrl = (URL) credentialCallback.getCredential();
-                        if (serverCertUrl != null) {
-                            try {
-                                serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
-                            } catch (IOException e1) {
-                                throw log.mechUnableToObtainServerCertificate(getMechanismName(), serverCertUrl.toString(), e1).toSaslException();
-                            }
-                        } else {
-                            throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
-                        }
-                        privateKey = (PrivateKey) privateKeyCallback.getCredential();
+                        throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
                     }
                 }
 

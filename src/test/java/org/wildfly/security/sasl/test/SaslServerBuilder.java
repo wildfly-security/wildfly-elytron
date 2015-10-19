@@ -37,6 +37,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.junit.Assert;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -73,7 +74,7 @@ public class SaslServerBuilder {
     private String serverName;
     private X509TrustManager trustManager;
     private X509KeyManager keyManager;
-    private Object credential;
+    private Credential credential;
     private String algorithm;
     private boolean dontAssertBuiltServer;
 
@@ -152,7 +153,7 @@ public class SaslServerBuilder {
         return this;
     }
 
-    public SaslServerBuilder setCredential(final Object credential, final String algorithmName) {
+    public SaslServerBuilder setCredential(final Credential credential, final String algorithmName) {
         this.credential = credential;
         this.algorithm = algorithmName;
         return this;

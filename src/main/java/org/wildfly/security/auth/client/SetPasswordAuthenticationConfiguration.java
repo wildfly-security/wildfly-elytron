@@ -28,6 +28,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -41,7 +42,7 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
     private final Password password;
 
     SetPasswordAuthenticationConfiguration(final AuthenticationConfiguration parent, final Password password) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.password = password;
     }
 
@@ -49,8 +50,8 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
         Callback callback = callbacks[index];
         if (callback instanceof CredentialCallback) {
             CredentialCallback credentialCallback = (CredentialCallback) callback;
-            if (credentialCallback.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
-                credentialCallback.setCredential(password);
+            if (credentialCallback.isCredentialSupported(PasswordCredential.class, password.getAlgorithm())) {
+                credentialCallback.setCredential(new PasswordCredential(password));
                 return;
             }
         } else if (callback instanceof PasswordCallback) {

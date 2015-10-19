@@ -23,6 +23,7 @@ import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -82,7 +83,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             return authenticationIdentity.getCredentialSupport(credentialName);
         }
 
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             return authenticationIdentity.getCredential(credentialName, credentialType);
         }
 

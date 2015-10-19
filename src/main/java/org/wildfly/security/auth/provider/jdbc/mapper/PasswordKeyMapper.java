@@ -20,6 +20,8 @@ package org.wildfly.security.auth.provider.jdbc.mapper;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.util.ModularCrypt;
@@ -245,7 +247,7 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public Object map(ResultSet resultSet) throws SQLException {
+    public Credential map(ResultSet resultSet) throws SQLException {
         byte[] hash = null;
         byte[] salt = null;
         int iterationCount = 0;
@@ -267,15 +269,15 @@ public class PasswordKeyMapper implements KeyMapper {
 
             try {
                 if (ClearPassword.class.equals(passwordType)) {
-                    return toClearPassword(hash, passwordFactory);
+                    return new PasswordCredential(toClearPassword(hash, passwordFactory));
                 } else if (BCryptPassword.class.equals(passwordType)) {
-                    return toBcryptPassword(hash, salt, iterationCount, passwordFactory);
+                    return new PasswordCredential(toBcryptPassword(hash, salt, iterationCount, passwordFactory));
                 } else if (SaltedSimpleDigestPassword.class.equals(passwordType)) {
-                    return toSaltedSimpleDigestPassword(hash, salt, passwordFactory);
+                    return new PasswordCredential(toSaltedSimpleDigestPassword(hash, salt, passwordFactory));
                 } else if (SimpleDigestPassword.class.equals(passwordType)) {
-                    return toSimpleDigestPassword(hash, passwordFactory);
+                    return new PasswordCredential(toSimpleDigestPassword(hash, passwordFactory));
                 } else if (ScramDigestPassword.class.equals(passwordType)) {
-                    return toScramDigestPassword(hash, salt, iterationCount, passwordFactory);
+                    return new PasswordCredential(toScramDigestPassword(hash, salt, iterationCount, passwordFactory));
                 }
             } catch (InvalidKeySpecException | InvalidKeyException e) {
                 throw log.invalidPasswordKeySpecificationForAlgorithm(algorithm, e);
@@ -293,7 +295,7 @@ public class PasswordKeyMapper implements KeyMapper {
         return passwordFactory.generatePassword(new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount));
     }
 
-    private Object toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Password toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
             throw log.saltIsExpectedWhenCreatingPasswords(ScramDigestPassword.class.getSimpleName());
         }
@@ -302,12 +304,12 @@ public class PasswordKeyMapper implements KeyMapper {
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 
-    private Object toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Password toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         HashPasswordSpec hashPasswordSpec = new HashPasswordSpec(hash);
         return passwordFactory.generatePassword(hashPasswordSpec);
     }
 
-    private Object toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Password toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         if (salt == null) {
             throw log.saltIsExpectedWhenCreatingPasswords(SaltedSimpleDigestPassword.class.getSimpleName());
         }
@@ -316,7 +318,7 @@ public class PasswordKeyMapper implements KeyMapper {
         return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
     }
 
-    private Object toClearPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
+    private Password toClearPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
         return passwordFactory.generatePassword(new ClearPasswordSpec(toCharArray(hash)));
     }
 

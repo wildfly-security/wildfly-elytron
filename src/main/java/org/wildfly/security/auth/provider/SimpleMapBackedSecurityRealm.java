@@ -21,9 +21,7 @@ package org.wildfly.security.auth.provider;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -34,10 +32,12 @@ import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -117,17 +117,6 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         return new SimpleMapRealmIdentity(name);
     }
 
-    private boolean checkType(final Set<Class<?>> supportedTypes, HashSet<Class<?>> checked, Class<?> actualType) {
-        return actualType != null && checked.add(actualType) && (supportedTypes.contains(actualType) || checkType(supportedTypes, checked, actualType.getSuperclass()) || checkInterfaces(supportedTypes, checked, actualType));
-    }
-
-    private boolean checkInterfaces(final Set<Class<?>> supportedTypes, HashSet<Class<?>> checked, final Class<?> actualType) {
-        for (Class<?> clazz : actualType.getInterfaces()) {
-            if (checkType(supportedTypes, checked, clazz)) return true;
-        }
-        return false;
-    }
-
     @Override
     public CredentialSupport getCredentialSupport(final String credentialName) {
         Assert.checkNotNullParam("credentialName", credentialName);
@@ -150,13 +139,13 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(String credentialName, Class<C> credentialType) {
+        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) {
             Assert.checkNotNullParam("credentialName", credentialName);
             Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
             final Password password = entry.getPassword(credentialName);
-            return credentialType.isInstance(password) ? credentialType.cast(password) : null;
+            return credentialType.isAssignableFrom(PasswordCredential.class) ? credentialType.cast(new PasswordCredential(password)) : null;
         }
 
         @Override
@@ -166,9 +155,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credential", credential);
+            Assert.checkNotNullParam("evidence", evidence);
             try {
                 SimpleRealmEntry entry = map.get(name);
                 if (entry == null) {
@@ -176,10 +165,8 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
                 }
 
                 final Password password = entry.getPassword(credentialName);
-                if (credential instanceof char[]) {
-                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, (char[]) credential);
-                } else if (credential instanceof ClearPassword) {
-                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((ClearPassword) credential).getPassword());
+                if (evidence instanceof PasswordGuessEvidence) {
+                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((PasswordGuessEvidence) evidence).getGuess());
                 } else {
                     return false;
                 }

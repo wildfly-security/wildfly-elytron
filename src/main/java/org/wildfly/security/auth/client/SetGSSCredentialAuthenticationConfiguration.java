@@ -27,6 +27,7 @@ import javax.security.sasl.Sasl;
 
 import org.ietf.jgss.GSSCredential;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.GSSCredentialCredential;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -36,7 +37,7 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
     private final GSSCredential credential;
 
     SetGSSCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final GSSCredential credential) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.credential = credential;
     }
 
@@ -44,8 +45,8 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
         Callback callback = callbacks[index];
         if (callback instanceof CredentialCallback) {
             CredentialCallback credentialCallback = (CredentialCallback) callback;
-            if (credentialCallback.isCredentialSupported(credential.getClass(), null)) {
-                credentialCallback.setCredential(credential);
+            if (credentialCallback.isCredentialSupported(GSSCredentialCredential.class, null)) {
+                credentialCallback.setCredential(new GSSCredentialCredential(credential));
                 return;
             }
         }

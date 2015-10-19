@@ -23,7 +23,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -454,18 +453,6 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useCertificateCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
         return credentialFactory == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : new SetCertificateCredentialAuthenticationConfiguration(this, credentialFactory);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given private key and an X.509
-     * certificate URL to authenticate.
-     *
-     * @param privateKey the client private key
-     * @param certificateUrl the URL to the client X.509 certificate to use
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useCertificateCredential(PrivateKey privateKey, URL certificateUrl) {
-        return certificateUrl == null || privateKey == null ? without(SetCertificateURLCredentialAuthenticationConfiguration.class) : new SetCertificateURLCredentialAuthenticationConfiguration(this, privateKey, certificateUrl);
     }
 
     /**

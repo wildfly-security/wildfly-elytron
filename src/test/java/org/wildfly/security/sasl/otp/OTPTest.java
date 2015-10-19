@@ -56,6 +56,7 @@ import org.wildfly.security.auth.callback.ExtendedChoiceCallback;
 import org.wildfly.security.auth.callback.ParameterCallback;
 import org.wildfly.security.auth.callback.TimeoutCallback;
 import org.wildfly.security.auth.callback.TimeoutUpdateCallback;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -826,8 +827,8 @@ public class OTPTest extends BaseTestCase {
                     assertEquals("userName", name);
                 } else if (callback instanceof CredentialCallback) {
                     CredentialCallback credentialCallback = (CredentialCallback) callback;
-                    if (credentialCallback.isCredentialSupported(password.getClass(), password.getAlgorithm())) {
-                        credentialCallback.setCredential(password);
+                    if (credentialCallback.isCredentialSupported(PasswordCredential.class, password.getAlgorithm())) {
+                        credentialCallback.setCredential(new PasswordCredential(password));
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {
                     CredentialUpdateCallback credentialUpdateCallback = (CredentialUpdateCallback) callback;
