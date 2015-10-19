@@ -403,7 +403,7 @@ public final class ElytronXmlParser {
                         configuration = () -> parentConfig.create().rewriteUser(nameRewriter);
                         break;
                     }
-                    case "require-sasl-mechanisms": {
+                    case "allow-sasl-mechanisms": {
                         gotConfig = true;
                         final String[] names = parseNamesType(reader);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
