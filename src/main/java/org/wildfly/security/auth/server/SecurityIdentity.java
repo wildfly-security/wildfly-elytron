@@ -25,6 +25,7 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.concurrent.Callable;
 import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -48,11 +50,14 @@ import org.wildfly.security.authz.RoleMapper;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SecurityIdentity {
+    static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
+
     private final SecurityDomain securityDomain;
     private final Principal principal;
     private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
     private final Map<String, RoleMapper> roleMappers;
+    private final PeerIdentity[] peerIdentities;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
         this.securityDomain = securityDomain;
@@ -60,6 +65,25 @@ public final class SecurityIdentity {
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
         this.roleMappers = roleMappers;
+        this.peerIdentities = NO_PEER_IDENTITIES;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final PeerIdentity[] newPeerIdentities) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.peerIdentities = newPeerIdentities;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = roleMappers;
+        this.peerIdentities = old.peerIdentities;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -84,7 +108,7 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            action.run();
+            PeerIdentity.runAsAll(action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -103,7 +127,7 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return action.call();
+            return PeerIdentity.runAsAll(action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -121,7 +145,7 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return action.run();
+            return PeerIdentity.runAsAll(action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -140,7 +164,7 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return action.run();
+            return PeerIdentity.runAsAll(action, peerIdentities);
         } catch (RuntimeException | PrivilegedActionException e) {
             throw e;
         } catch (Exception e) {
@@ -248,7 +272,7 @@ public final class SecurityIdentity {
             newMap = new HashMap<>(roleMappers);
             newMap.put(category, roleMapper);
         }
-        return new SecurityIdentity(securityDomain, principal, realmInfo, authorizationIdentity, newMap);
+        return new SecurityIdentity(this, newMap);
     }
 
     /**
@@ -297,6 +321,29 @@ public final class SecurityIdentity {
         } else {
             throw log.unauthorizedRunAs(this.principal, principal, permission);
         }
+    }
+
+    /**
+     * Create a new security identity which is the same as this one, but which also establishes the given peer identity
+     * in addition to the security identity.
+     *
+     * @param peerIdentity the peer identity
+     * @return the new security identity
+     */
+    public SecurityIdentity withPeerIdentity(PeerIdentity peerIdentity) {
+        if (peerIdentity == null) return this;
+        PeerIdentity[] peerIdentities = this.peerIdentities;
+        final int length = peerIdentities.length;
+        for (int i = 0; i < length; i++) {
+            if (peerIdentities[i].isSamePeerIdentityContext(peerIdentity)) {
+                PeerIdentity[] newPeerIdentities = peerIdentities.clone();
+                newPeerIdentities[i] = peerIdentity;
+                return new SecurityIdentity(this, newPeerIdentities);
+            }
+        }
+        PeerIdentity[] newPeerIdentities = Arrays.copyOf(peerIdentities, length + 1);
+        newPeerIdentities[length] = peerIdentity;
+        return new SecurityIdentity(this, newPeerIdentities);
     }
 
     /**
