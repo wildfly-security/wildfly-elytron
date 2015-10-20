@@ -31,6 +31,8 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 
 /**
@@ -99,7 +101,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
 
         @Override
         public CredentialSupport getCredentialSupport(final String credentialName) {
-            Object credential = getCredential(credentialName, Object.class);
+            Credential credential = getCredential(credentialName, Credential.class);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null) {
                 return CredentialSupport.FULLY_SUPPORTED;
@@ -108,7 +110,7 @@ class UserPasswordCredentialLoader implements CredentialLoader {
         }
 
         @Override
-        public <C> C getCredential(String credentialName, Class<C> credentialType) {
+        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) {
             DirContext context = null;
             String[] credentialNameParts = credentialName.split("-");
             if (credentialNameParts.length < 2) {
@@ -125,8 +127,8 @@ class UserPasswordCredentialLoader implements CredentialLoader {
 
                     Password password = parseUserPassword(value, credentialNameParts[1]);
 
-                    if (credentialType.isInstance(password)) {
-                        return credentialType.cast(password);
+                    if (credentialType.isAssignableFrom(PasswordCredential.class)) {
+                        return credentialType.cast(new PasswordCredential(password));
                     }
                 }
 

@@ -39,8 +39,11 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**
@@ -51,7 +54,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
     private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
     SetKeyManagerCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.keyManagerFactory = keyManagerFactory;
     }
 
@@ -76,7 +79,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
                     throw log.unableToCreateKeyManager(e);
                 }
                 final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
+                for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
                     final Set<String> allowedAlgorithms = credentialCallback.getAllowedAlgorithms(allowedType);
                     if (allowedAlgorithms != null) {
                         final String[] keyType = allowedAlgorithms.toArray(new String[allowedAlgorithms.size()]);
@@ -84,13 +87,8 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
                         if (alias != null) {
                             final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
                             final PrivateKey privateKey = keyManager.getPrivateKey(alias);
-                            if (certificateChain == null || certificateChain.length == 0) {
-                                credentialCallback.setCredential(privateKey);
-                                break;
-                            } else {
-                                credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
-                                break;
-                            }
+                            credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+                            break;
                         }
                     }
                 }
@@ -107,6 +105,11 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         super.handleCallback(callbacks, index);
     }
 
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        // just add entity methods; don't try and narrow down the algorithm type
+        return SaslMechanismInformation.IEC_ISO_9798.test(mechanismName) || super.filterOneSaslMechanism(mechanismName);
+    }
+
     private Principal[] getAcceptableIssuers(List<TrustedAuthority> trustedAuthorities) {
         if (trustedAuthorities == null) {
             return null;
@@ -115,7 +118,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         for (TrustedAuthority trustedAuthority : trustedAuthorities) {
             if (trustedAuthority instanceof TrustedAuthority.CertificateTrustedAuthority) {
                 final X509Certificate authorityCertificate = ((CertificateTrustedAuthority) trustedAuthority).getIdentifier();
-                issuers.add(X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(authorityCertificate));
+                issuers.add(X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(new X509CertificateChainPublicCredential(authorityCertificate)));
             } else if (trustedAuthority instanceof NameTrustedAuthority) {
                 final String authorityName = ((NameTrustedAuthority) trustedAuthority).getIdentifier();
                 issuers.add(new X500Principal(authorityName));

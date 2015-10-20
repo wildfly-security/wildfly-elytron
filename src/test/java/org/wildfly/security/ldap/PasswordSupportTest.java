@@ -30,6 +30,8 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
@@ -126,7 +128,7 @@ public class PasswordSupportTest {
         RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
         verifyPasswordSupport(identity, "otp", CredentialSupport.FULLY_SUPPORTED);
 
-        OneTimePassword otp = identity.getCredential("otp", OneTimePassword.class);
+        OneTimePassword otp = (OneTimePassword) identity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
         assertEquals(1234, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'a', 'b', 'c', 'd' }, otp.getHash());
@@ -146,14 +148,14 @@ public class PasswordSupportTest {
         assertEquals(CredentialSupport.UNKNOWN, simpleToDnRealm.getCredentialSupport("otp"));
         assertEquals(CredentialSupport.FULLY_SUPPORTED, identity.getCredentialSupport("otp"));
 
-        identity.setCredential("otp", password);
+        identity.setCredential("otp", new PasswordCredential(password));
 
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
         verifyPasswordSupport(newIdentity, "otp", CredentialSupport.FULLY_SUPPORTED);
 
-        OneTimePassword otp = newIdentity.getCredential("otp", OneTimePassword.class);
+        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
         assertEquals(4321, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'i', 'j', 'k' }, otp.getHash());
@@ -173,8 +175,8 @@ public class PasswordSupportTest {
         identity.setCredentials(Collections.EMPTY_MAP);
         identity.setCredentials(Collections.EMPTY_MAP); // double clearing should not fail
 
-        Map<String, Object> credentials = new HashMap<String, Object>();
-        credentials.put("otp", password);
+        Map<String, Credential> credentials = new HashMap<>();
+        credentials.put("otp", new PasswordCredential(password));
         identity.setCredentials(credentials);
 
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
@@ -182,7 +184,7 @@ public class PasswordSupportTest {
 
         verifyPasswordSupport(newIdentity, "otp", CredentialSupport.FULLY_SUPPORTED);
 
-        OneTimePassword otp = newIdentity.getCredential("otp", OneTimePassword.class);
+        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
         assertEquals(65, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());
@@ -204,7 +206,7 @@ public class PasswordSupportTest {
     }
 
     private void verifyPassword(RealmIdentity identity, String credentialName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        Password loadedPassword = identity.getCredential(credentialName, Password.class);
+        Password loadedPassword = identity.getCredential(credentialName, PasswordCredential.class).getPassword();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         final Password translated = factory.translate(loadedPassword);

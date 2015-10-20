@@ -211,7 +211,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1036, value = "Unable to create trust manager")
     IOException unableToCreateTrustManager(@Cause Exception e);
 
-    //1037
+    @Message(id = 1037, value = "Certificate chain is empty")
+    IllegalArgumentException certificateChainIsEmpty();
 
     @Message(id = 1038, value = "Could get not RSA key from query")
     RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
@@ -276,17 +277,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
 
-    // 1059
+    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
+    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
 
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
-    // 1061
+    @Message(id = 1061, value = "Public key is null")
+    IllegalArgumentException publicKeyIsNull();
 
     @Message(id = 1062, value = "No provider URL has been set")
     IllegalStateException noProviderUrlSet();
 
-    // 1063
+    @Message(id = 1063, value = "Private key is null")
+    IllegalArgumentException privateKeyIsNull();
 
     @Message(id = 1064, value = "Invalid name")
     IllegalArgumentException invalidName();

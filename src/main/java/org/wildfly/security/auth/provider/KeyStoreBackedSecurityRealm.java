@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.provider;
 
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -28,13 +29,20 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import javax.crypto.SecretKey;
-import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.KeyPairCredential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.SecretKeyCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -99,34 +107,34 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) {
             final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) return null;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
-                if (credentialType.isInstance(password)) {
-                    return credentialType.cast(password);
+                if (credentialType.isAssignableFrom(PasswordCredential.class)) {
+                    return credentialType.cast(new PasswordCredential(password));
                 }
-            }else if (entry instanceof KeyStore.PrivateKeyEntry) {
+            } else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
                 final Certificate certificate = privateKeyEntry.getCertificate();
-                if (credentialType.isInstance(privateKey)) {
-                    return credentialType.cast(privateKey);
-                } else if (credentialType.isInstance(certificate)) {
-                    return credentialType.cast(certificate);
-                } else if (credentialType.isAssignableFrom(X500PrivateCredential.class) && certificate instanceof X509Certificate) {
-                    return credentialType.cast(new X500PrivateCredential((X509Certificate) certificate, privateKey, name));
+                if (credentialType.isAssignableFrom(X509CertificateChainPublicCredential.class) && certificate instanceof X509Certificate) {
+                    return credentialType.cast(new X509CertificateChainPublicCredential((X509Certificate) certificate));
+                } else if (credentialType.isAssignableFrom(X509CertificateChainPrivateCredential.class) && certificate instanceof X509Certificate) {
+                    return credentialType.cast(new X509CertificateChainPrivateCredential(privateKey, (X509Certificate) certificate));
+                } else if (credentialType.isAssignableFrom(KeyPairCredential.class)) {
+                    return credentialType.cast(new KeyPairCredential(new KeyPair(certificate.getPublicKey(), privateKey)));
                 }
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
                 final Certificate certificate = ((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate();
-                if (credentialType.isInstance(certificate)) {
-                    return credentialType.cast(certificate);
+                if (credentialType.isAssignableFrom(X509CertificateChainPublicCredential.class) && certificate instanceof X509Certificate) {
+                    return credentialType.cast(new X509CertificateChainPublicCredential((X509Certificate) certificate));
                 }
             } else if (entry instanceof KeyStore.SecretKeyEntry) {
                 final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
-                if (credentialType.isInstance(secretKey)) {
-                    return credentialType.cast(secretKey);
+                if (credentialType.isAssignableFrom(SecretKeyCredential.class)) {
+                    return credentialType.cast(new SecretKeyCredential(secretKey));
                 }
             }
             return null;
@@ -138,14 +146,14 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             };
         }
 
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) return false;
             if (entry instanceof PasswordEntry) {
                 final Password password = ((PasswordEntry) entry).getPassword();
-                if (credential instanceof char[]) try {
+                if (evidence instanceof PasswordGuessEvidence) try {
                     PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                    return passwordFactory.verify(passwordFactory.translate(password), (char[]) credential);
+                    return passwordFactory.verify(passwordFactory.translate(password), ((PasswordGuessEvidence) evidence).getGuess());
                 } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                     throw new RealmUnavailableException(e);
                 } else {

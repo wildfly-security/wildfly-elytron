@@ -26,6 +26,9 @@ import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.BCryptPassword;
@@ -247,14 +250,14 @@ public class FileSystemSecurityRealmTest {
 
         newIdentity.setAttributes(newAttributes);
 
-        Map<String, Object> credentials = new HashMap<>();
+        Map<String, Credential> credentials = new HashMap<>();
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                 new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
 
-        credentials.put("bcrypt-cred", bCryptPassword);
+        credentials.put("bcrypt-cred", new PasswordCredential(bCryptPassword));
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
         byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
@@ -262,16 +265,16 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)
         );
-        credentials.put("otp-cred", otpPassword);
+        credentials.put("otp-cred", new PasswordCredential(otpPassword));
 
         newIdentity.setCredentials(credentials);
 
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
+        assertTrue(existingIdentity.verifyEvidence("bcrypt-cred", new PasswordGuessEvidence("secretPassword".toCharArray())));
 
-        OneTimePassword otp = existingIdentity.getCredential("otp-cred", OneTimePassword.class);
+        OneTimePassword otp = (OneTimePassword) existingIdentity.getCredential("otp-cred", PasswordCredential.class).getPassword();
         assertNotNull(otp);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash, otp.getHash());
@@ -293,13 +296,13 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity identity1 = securityRealm.createRealmIdentity("testingUser");
         identity1.create();
 
-        Map<String, Object> credentials = new HashMap<>();
+        Map<String, Credential> credentials = new HashMap<>();
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(BCryptPassword.ALGORITHM_BCRYPT);
         BCryptPassword bCryptPassword = (BCryptPassword) passwordFactory.generatePassword(
                 new EncryptablePasswordSpec("secretPassword".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(10, PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE)))
         );
-        credentials.put("bcrypt-cred", bCryptPassword);
+        credentials.put("bcrypt-cred", new PasswordCredential(bCryptPassword));
 
         byte[] hash = CodePointIterator.ofString("505d889f90085847").hexDecode().drain();
         byte[] seed = "ke1234".getBytes(StandardCharsets.US_ASCII);
@@ -307,7 +310,7 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword = (OneTimePassword) otpFactory.generatePassword(
                 new OneTimePasswordSpec(hash, seed, 500)
         );
-        credentials.put("otp-cred", otpPassword);
+        credentials.put("otp-cred", new PasswordCredential(otpPassword));
 
         identity1.setCredentials(credentials);
 
@@ -321,16 +324,16 @@ public class FileSystemSecurityRealmTest {
         OneTimePassword otpPassword2 = (OneTimePassword) otpFactory2.generatePassword(
                 new OneTimePasswordSpec(hash2, seed2, 6789)
         );
-        identity2.setCredential("otp-cred", otpPassword2);
+        identity2.setCredential("otp-cred", new PasswordCredential(otpPassword2));
 
         // checking result
         securityRealm = new FileSystemSecurityRealm(getRootPath(false), 1);
         ModifiableRealmIdentity identity3 = securityRealm.createRealmIdentity("testingUser");
 
         assertTrue(identity3.exists());
-        assertTrue(identity3.verifyCredential("bcrypt-cred", "secretPassword".toCharArray()));
+        assertTrue(identity3.verifyEvidence("bcrypt-cred", new PasswordGuessEvidence("secretPassword".toCharArray())));
 
-        OneTimePassword otp = identity3.getCredential("otp-cred", OneTimePassword.class);
+        OneTimePassword otp = (OneTimePassword) identity3.getCredential("otp-cred", PasswordCredential.class).getPassword();
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash2, otp.getHash());
         assertArrayEquals(seed2, otp.getSeed());
@@ -344,9 +347,9 @@ public class FileSystemSecurityRealmTest {
 
         newIdentity.create();
 
-        Map<String, Object> credentials = new HashMap<>();
+        Map<String, Credential> credentials = new HashMap<>();
 
-        credentials.put("cred", credential);
+        credentials.put("cred", new PasswordCredential(credential));
 
         newIdentity.setCredentials(credentials);
 
@@ -355,7 +358,7 @@ public class FileSystemSecurityRealmTest {
         ModifiableRealmIdentity existingIdentity = securityRealm.createRealmIdentity("plainUser");
 
         assertTrue(existingIdentity.exists());
-        assertTrue(existingIdentity.verifyCredential("cred", actualPassword));
+        assertTrue(existingIdentity.verifyEvidence("cred", new PasswordGuessEvidence(actualPassword)));
     }
 
     private Path getRootPath(boolean deleteIfExists) throws Exception {

@@ -17,58 +17,67 @@
  */
 package org.wildfly.security.auth.callback;
 
-import javax.security.auth.callback.PasswordCallback;
+import org.wildfly.security.evidence.Evidence;
+
+import javax.security.auth.callback.Callback;
 
 /**
- * An extension of
+ * A {@link Callback} for use where credential verification is required.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class PasswordVerifyCallback extends PasswordCallback implements ExtendedCallback {
+public class EvidenceVerifyCallback implements ExtendedCallback {
 
-    private boolean verified = false;
+    private final Evidence evidence;
+    private boolean verified;
 
     /**
-     * Constructor to create a new {@link PasswordVerifyCallback} to verify a password.
+     * Construct a new instance of this {@link Callback}.
      *
-     * @param password the password to verify.
+     * @param evidence the evidence to be verified
      */
-    public PasswordVerifyCallback(final char[] password) {
-        super("Password Verification", false);
-        super.setPassword(password);
+    public EvidenceVerifyCallback(final Evidence evidence) {
+        this.evidence = evidence;
     }
 
     /**
-     * {@link PasswordCallback#setPassword(char[])} is overriden to prevent it from being accidentally used.
+     * Get the evidence being verified.
+     *
+     * @return the evidence being verified
      */
-    @Override
-    public void setPassword(char[] password) {
-        throw new UnsupportedOperationException();
+    public Evidence getEvidence() {
+        return evidence;
     }
 
     /**
-     * Indicate if the password is verified.
+     * Set if the evidence referenced here has been verified.
      *
-     * @param verified has the password been verified.
+     * @param verified the verification state of the evidence
      */
-    public void setVerified(boolean verified) {
+    public void setVerified(final boolean verified) {
         this.verified = verified;
     }
 
     /**
-     * Get if this password has been verified.
+     * Get the verification state for the evidence referenced here.
      *
-     * @return {@code true} if the password has been verified, {@code false} otherwise.
+     * @return {@code true} if the evidence has been verified, {@code false} otherwise
      */
     public boolean isVerified() {
         return verified;
     }
 
+    /**
+     * This {@link Callback} is not optional as verification is required.
+     */
     @Override
     public boolean isOptional() {
         return false;
     }
 
+    /**
+     * This {@link Callback} needs to know if evidence validation was successful.
+     */
     @Override
     public boolean needsInformation() {
         return true;

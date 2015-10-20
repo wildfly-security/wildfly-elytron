@@ -114,7 +114,7 @@
                 <xsd:element name="set-user-name" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-anonymous" type="empty-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="require-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-authorization-name" type="name-type" minOccurs="1" maxOccurs="1"/>

@@ -21,6 +21,7 @@ package org.wildfly.security.auth.callback;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A callback used to acquire credentials, either for outbound or inbound authentication.  This callback
@@ -39,18 +40,18 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     /**
      * @serial The map of allowed credential types.
      */
-    private final Map<Class<?>, Set<String>> allowedTypes;
+    private final Map<Class<? extends Credential>, Set<String>> allowedTypes;
     /**
      * @serial The credential itself.
      */
-    private Object credential;
+    private Credential credential;
 
     /**
      * Construct a new instance.
      *
      * @param allowedTypes the allowed types of credential
      */
-    public CredentialCallback(final Map<Class<?>, Set<String>> allowedTypes) {
+    public CredentialCallback(final Map<Class<? extends Credential>, Set<String>> allowedTypes) {
         this.allowedTypes = allowedTypes;
     }
 
@@ -60,7 +61,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param credential the default credential value, if any
      * @param allowedTypes the allowed types of credential
      */
-    public CredentialCallback(final Object credential, final Map<Class<?>, Set<String>> allowedTypes) {
+    public CredentialCallback(final Credential credential, final Map<Class<? extends Credential>, Set<String>> allowedTypes) {
         this(allowedTypes);
         this.credential = credential;
     }
@@ -70,7 +71,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      *
      * @return the acquired credential, or {@code null} if it wasn't set yet.
      */
-    public Object getCredential() {
+    public Credential getCredential() {
         return credential;
     }
 
@@ -79,7 +80,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      *
      * @param credential the credential, or {@code null} if no credential is available
      */
-    public void setCredential(final Object credential) {
+    public void setCredential(final Credential credential) {
         this.credential = credential;
     }
 
@@ -92,20 +93,20 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param algorithm the algorithm of the credential to test, or {@code null} to test for any algorithm
      * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
      */
-    public boolean isCredentialSupported(final Class<?> credentialType, final String algorithm) {
+    public boolean isCredentialSupported(final Class<? extends Credential> credentialType, final String algorithm) {
         final Set<String> set = allowedTypes.get(credentialType);
         if (set != null) {
             return algorithm == null || set.isEmpty() || set.contains(algorithm);
         } else {
             final Class<?> superclass = credentialType.getSuperclass();
-            if (superclass != Object.class && superclass != null) {
-                if (isCredentialSupported(superclass, algorithm)) {
+            if (Credential.class.isAssignableFrom(superclass)) {
+                if (isCredentialSupported(superclass.asSubclass(Credential.class), algorithm)) {
                     return true;
                 }
             }
             final Class<?>[] interfaces = credentialType.getInterfaces();
             for (Class<?> clazz : interfaces) {
-                if (isCredentialSupported(clazz, algorithm)) {
+                if (Credential.class.isAssignableFrom(superclass) && isCredentialSupported(clazz.asSubclass(Credential.class), algorithm)) {
                     return true;
                 }
             }
@@ -118,7 +119,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      *
      * @return the (immutable) set of allowed types
      */
-    public Set<Class<?>> getAllowedTypes() {
+    public Set<Class<? extends Credential>> getAllowedTypes() {
         return allowedTypes.keySet();
     }
 
@@ -130,7 +131,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param type the credential type
      * @return the (immutable) set of allowed algorithms
      */
-    public Set<String> getAllowedAlgorithms(Class<?> type) {
+    public Set<String> getAllowedAlgorithms(Class<? extends Credential> type) {
         return allowedTypes.get(type);
     }
 

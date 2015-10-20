@@ -26,7 +26,8 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import java.io.IOException;
 import java.security.Principal;
 
-import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 /**
  * A custom {@link javax.security.auth.callback.CallbackHandler} used in the JAAS security realm tests. It implements the
@@ -39,7 +40,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 public class TestCallbackHandler implements CallbackHandler {
 
     private Principal principal;
-    private Object credential;
+    private Evidence evidence;
 
     public TestCallbackHandler() {
     }
@@ -48,11 +49,11 @@ public class TestCallbackHandler implements CallbackHandler {
      * Sets this handler's state.
      *
      * @param principal the principal being authenticated.
-     * @param credential the credential being verified.
+     * @param evidence the evidence being verified.
      */
-    public void setSecurityInfo(final Principal principal, final Object credential) {
+    public void setSecurityInfo(final Principal principal, final Object evidence) {
         this.principal = principal;
-        this.credential = credential;
+        this.evidence = (Evidence) evidence;
     }
 
     @Override
@@ -68,17 +69,8 @@ public class TestCallbackHandler implements CallbackHandler {
             }
             else if (callback instanceof PasswordCallback) {
                 PasswordCallback passwordCallback = (PasswordCallback) callback;
-                if (this.credential instanceof char[]) {
-                    passwordCallback.setPassword((char[]) credential);
-                }
-                else if (this.credential instanceof String) {
-                    passwordCallback.setPassword(((String) credential).toCharArray());
-                }
-                else if (this.credential instanceof ClearPassword) {
-                    passwordCallback.setPassword(((ClearPassword) credential).getPassword());
-                }
-                else if (this.credential != null) {
-                    passwordCallback.setPassword(credential.toString().toCharArray());
+                if (this.evidence instanceof PasswordGuessEvidence) {
+                    passwordCallback.setPassword(((PasswordGuessEvidence) this.evidence).getGuess());
                 }
             }
             else {

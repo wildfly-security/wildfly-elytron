@@ -31,7 +31,8 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.auth.callback.PasswordVerifyCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
 import org.wildfly.security.util.CodePointIterator;
@@ -106,19 +107,20 @@ final class PlainSaslServer implements SaslServer, SaslWrapper {
         // First verify username and password.
 
         NameCallback ncb = new NameCallback("PLAIN authentication identity", loginName);
-        PasswordVerifyCallback pvc = new PasswordVerifyCallback(password.toCharArray());
+        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password.toCharArray());
+        EvidenceVerifyCallback evc = new EvidenceVerifyCallback(evidence);
 
         try {
-            callbackHandler.handle(new Callback[] { ncb, pvc });
+            callbackHandler.handle(new Callback[] { ncb, evc });
         } catch (SaslException e) {
             throw e;
         } catch (IOException | UnsupportedCallbackException e) {
             throw log.mechServerSideAuthenticationFailed(getMechanismName(), e).toSaslException();
         } finally {
-            pvc.clearPassword();
+            evidence.destroy();
         }
 
-        if (pvc.isVerified() == false) {
+        if (evc.isVerified() == false) {
             throw log.mechPasswordNotVerified(getMechanismName()).toSaslException();
         }
 

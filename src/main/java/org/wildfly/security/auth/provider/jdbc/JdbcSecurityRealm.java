@@ -26,9 +26,11 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.password.Password;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.interfaces.ClearPassword;
 
 import javax.sql.DataSource;
 import java.security.InvalidKeyException;
@@ -102,7 +104,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialName().equals(credentialName)) {
@@ -115,12 +117,12 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
-            if (credential != null) {
+        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
+            if (evidence != null) {
                 for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                     for (PasswordKeyMapper passwordMapper : configuration.getColumnMappers(PasswordKeyMapper.class)) {
                         if (passwordMapper.getCredentialName().equals(credentialName)) {
-                            return verifyPassword(configuration, passwordMapper, credential);
+                            return verifyPassword(configuration, passwordMapper, evidence);
                         }
                     }
                 }
@@ -183,24 +185,22 @@ public class JdbcSecurityRealm implements SecurityRealm {
             return this.identity;
         }
 
-        private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Object givenCredential) {
-            Object credential = executePrincipalQuery(configuration, passwordMapper::map);
+        private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Evidence evidence) {
+            Credential credential = executePrincipalQuery(configuration, passwordMapper::map);
             String algorithm = passwordMapper.getAlgorithm();
 
             try {
-                if (Password.class.isInstance(credential)) {
+                if (credential instanceof PasswordCredential) {
                     PasswordFactory passwordFactory = getPasswordFactory(algorithm);
                     char[] guessCredentialChars;
 
-                    if (char[].class.equals(givenCredential.getClass())) {
-                        guessCredentialChars = (char[]) givenCredential;
-                    } else if (ClearPassword.class.isInstance(givenCredential)) {
-                        guessCredentialChars = ((ClearPassword) givenCredential).getPassword();
+                    if (evidence instanceof PasswordGuessEvidence) {
+                        guessCredentialChars = ((PasswordGuessEvidence) evidence).getGuess();
                     } else {
                         throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
                     }
 
-                    return passwordFactory.verify((Password) credential, guessCredentialChars);
+                    return passwordFactory.verify(((PasswordCredential) credential).getPassword(), guessCredentialChars);
                 }
             } catch (InvalidKeyException e) {
                 throw log.invalidPasswordKeyForAlgorithm(algorithm, e);

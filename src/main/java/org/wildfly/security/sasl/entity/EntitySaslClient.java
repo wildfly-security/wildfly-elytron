@@ -18,7 +18,6 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.wildfly.security.asn1.ASN1.*;
@@ -51,7 +50,7 @@ import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * SaslClient for the ISO/IEC 9798-3 authentication mechanism as defined by
@@ -184,17 +183,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                             throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
                         }
                     } catch (UnsupportedCallbackException e) {
-                        // Try obtaining a certificate URL
-                        credentialCallback = new CredentialCallback(singletonMap(URL.class, emptySet()));
-                        CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class,
-                                singleton(keyType(signature.getAlgorithm()))));
-                        handleCallbacks(trustedAuthoritiesCallback, credentialCallback, privateKeyCallback);
-                        clientCertUrl = (URL) credentialCallback.getCredential();
-                        if (clientCertUrl == null) {
-                            throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
-                        }
-                        encoder.encodeIA5String(clientCertUrl.toString());
-                        privateKey = (PrivateKey) privateKeyCallback.getCredential();
+                        throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
                     }
                     encoder.endExplicit();
 

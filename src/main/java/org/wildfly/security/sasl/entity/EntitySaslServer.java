@@ -18,7 +18,6 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -26,7 +25,6 @@ import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
 import static org.wildfly.security.sasl.entity.GeneralName.*;
 
-import java.io.IOException;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.PrivateKey;
@@ -52,7 +50,8 @@ import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -175,7 +174,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                     }
 
                     // Determine the authorization identity
-                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(clientCert).getName(X500Principal.CANONICAL);
+                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(new X509CertificateChainPublicCredential(clientCert)).getName(X500Principal.CANONICAL);
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);
@@ -241,22 +240,7 @@ final class EntitySaslServer extends AbstractSaslServer {
                             throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
                         }
                     } catch (UnsupportedCallbackException e) {
-                        // Try obtaining a certificate URL instead
-                        credentialCallback = new CredentialCallback(singletonMap(URL.class, emptySet()));
-                        CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class,
-                                singleton(keyType(signature.getAlgorithm()))));
-                        handleCallbacks(credentialCallback, privateKeyCallback);
-                        serverCertUrl = (URL) credentialCallback.getCredential();
-                        if (serverCertUrl != null) {
-                            try {
-                                serverCert = EntityUtil.getCertificateFromUrl(serverCertUrl);
-                            } catch (IOException e1) {
-                                throw log.mechUnableToObtainServerCertificate(getMechanismName(), serverCertUrl.toString(), e1).toSaslException();
-                            }
-                        } else {
-                            throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
-                        }
-                        privateKey = (PrivateKey) privateKeyCallback.getCredential();
+                        throw log.mechCallbackHandlerNotProvidedServerCertificate(getMechanismName()).toSaslException();
                     }
                 }
 

@@ -37,6 +37,7 @@ import org.ietf.jgss.MessageProp;
 import org.jboss.logging.Logger;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -78,9 +79,12 @@ class GssapiClient extends AbstractGssapiMechanism implements SaslClient {
         GSSCredential credential = null;
 
         Object credObj = props.get(Sasl.CREDENTIALS);
-        if (credObj != null && credObj instanceof GSSCredential) {
+        if (credObj instanceof GSSCredential) {
             log.trace("Using GSSCredential supplied in properties.");
             credential = (GSSCredential) credObj;
+        } else if (credObj instanceof GSSCredentialCredential) {
+            log.trace("Using GSSCredential supplied in properties.");
+            credential = ((GSSCredentialCredential) credObj).getGssCredential();
         }
 
         // Better way to obtain the credential if we don't have one?

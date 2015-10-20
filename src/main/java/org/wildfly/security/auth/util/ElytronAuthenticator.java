@@ -39,6 +39,7 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -81,11 +82,12 @@ public final class ElytronAuthenticator extends Authenticator {
         if (authenticationConfiguration == null) return null;
         final CallbackHandler callbackHandler = client.getCallbackHandler(authenticationConfiguration);
         final NameCallback nameCallback = new NameCallback(getRequestingPrompt());
-        final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(TwoWayPassword.class, emptySet()));
+        final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(PasswordCredential.class, emptySet()));
         char[] password = null;
         try {
             callbackHandler.handle(new Callback[] { nameCallback, credentialCallback });
-            TwoWayPassword twoWayPassword = (TwoWayPassword) credentialCallback.getCredential();
+            final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
+            final TwoWayPassword twoWayPassword = credential.getPassword(TwoWayPassword.class);
             final PasswordFactory factory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm());
             final ClearPasswordSpec keySpec = factory.getKeySpec(twoWayPassword, ClearPasswordSpec.class);
             password = keySpec.getEncodedPassword();

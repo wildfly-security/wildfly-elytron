@@ -28,7 +28,9 @@ import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -183,7 +185,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
@@ -209,7 +211,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             return null;
         }
 
-        private boolean persistCredential(String credentialName, Object credential) throws RealmUnavailableException {
+        private boolean persistCredential(String credentialName, Credential credential) throws RealmUnavailableException {
             for (CredentialPersister persister : credentialPersisters) {
                 IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
                 if (icp.getCredentialPersistSupport(credentialName)) {
@@ -221,7 +223,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public void setCredential(String credentialName, Object credential) throws RealmUnavailableException {
+        public void setCredential(String credentialName, Credential credential) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Assert.checkNotNullParam("credential", credential);
 
@@ -246,7 +248,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public void setCredentials(Map<String, Object> credentials) throws RealmUnavailableException {
+        public void setCredentials(Map<String, Credential> credentials) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentials", credentials);
 
             if (!exists()) {
@@ -258,7 +260,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 icp.clearCredentials();
             }
 
-            for (Map.Entry<String, Object> credentialEntry : credentials.entrySet()) {
+            for (Map.Entry<String, Credential> credentialEntry : credentials.entrySet()) {
                 if ( ! persistCredential(credentialEntry.getKey(), credentialEntry.getValue())) {
                     throw log.ldapRealmsPersisterNotSupportCredentialName(credentialEntry.getKey());
                 }
@@ -274,9 +276,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public boolean verifyCredential(final String credentialName, final Object credential) throws RealmUnavailableException {
+        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credential", credential);
+            Assert.checkNotNullParam("evidence", evidence);
             if ( ! VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
                 return false;
             }
@@ -285,11 +287,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             char[] password;
-            if (char[].class.isInstance(credential)) {
-                password = (char[]) credential;
-            } else if (ClearPassword.class.isInstance(credential)) {
-                ClearPassword clearPassword = (ClearPassword) credential;
-                password = clearPassword.getPassword();
+            if (evidence instanceof PasswordGuessEvidence) {
+                password = ((PasswordGuessEvidence) evidence).getGuess();
             } else {
                 throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
             }

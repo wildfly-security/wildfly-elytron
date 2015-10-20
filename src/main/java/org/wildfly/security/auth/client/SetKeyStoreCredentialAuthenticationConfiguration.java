@@ -29,20 +29,25 @@ import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Set;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.x500.X500PrivateCredential;
 
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.SecretKeyCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.x500.X500;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -56,7 +61,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
     }
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
-        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class).without(SetCertificateURLCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetPasswordAuthenticationConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.entryFactory = entryFactory;
     }
 
@@ -75,32 +80,28 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 throw log.unableToReadCredential(e);
             }
             if (entry instanceof PasswordEntry) {
-                credentialCallback.setCredential(((PasswordEntry) entry).getPassword());
+                credentialCallback.setCredential(new PasswordCredential(((PasswordEntry) entry).getPassword()));
                 return;
             } else if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                if (certificateChain == null || certificateChain.length == 0) {
-                    credentialCallback.setCredential(privateKey);
-                    return;
-                } else {
-                    final Certificate certificate = privateKeyEntry.getCertificate();
-                    if ((certificate instanceof X509Certificate)
-                            && credentialCallback.isCredentialSupported(X500PrivateCredential.class, privateKey.getAlgorithm())) {
-                        credentialCallback.setCredential(new X500PrivateCredential((X509Certificate) certificate, privateKey));
+                if (certificateChain != null && certificateChain.length != 0 && credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm())) {
+                    try {
+                        final X509Certificate[] x509Certificates = X500.asX509CertificateArray(certificateChain);
+                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, x509Certificates));
                         return;
-                    } else if ((certificateChain instanceof X509Certificate[])
-                            && (credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm()))) {
-                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, (X509Certificate[]) certificateChain));
-                        return;
+                    } catch (ArrayStoreException ignored) {
                     }
                 }
             } else if (entry instanceof KeyStore.TrustedCertificateEntry) {
-                credentialCallback.setCredential(((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate());
-                return;
+                final Certificate certificate = ((KeyStore.TrustedCertificateEntry) entry).getTrustedCertificate();
+                if (certificate instanceof X509Certificate) {
+                    credentialCallback.setCredential(new X509CertificateChainPublicCredential((X509Certificate) certificate));
+                    return;
+                }
             } else if (entry instanceof KeyStore.SecretKeyEntry) {
-                credentialCallback.setCredential(((KeyStore.SecretKeyEntry) entry).getSecretKey());
+                credentialCallback.setCredential(new SecretKeyCredential(((KeyStore.SecretKeyEntry) entry).getSecretKey()));
                 return;
             }
         } else if (callback instanceof PasswordCallback) {
@@ -135,5 +136,30 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             }
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean filterOneSaslMechanism(final String mechanismName) {
+        // filter the mechanism based on the credential we have
+        final KeyStore.Entry entry;
+        try {
+            entry = entryFactory.create();
+        } catch (GeneralSecurityException e) {
+            return super.filterOneSaslMechanism(mechanismName);
+        }
+        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        if (types == null) {
+            // we don't really know anything about this mech; leave it for a superclass to figure out
+            return super.filterOneSaslMechanism(mechanismName);
+        }
+        // only these credential types really inform mech selection
+        if (entry instanceof PasswordEntry) {
+            Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, PasswordCredential.class);
+            return types.contains(PasswordCredential.class) && (algorithms.isEmpty() || algorithms.contains(((PasswordEntry) entry).getPassword().getAlgorithm())) || super.filterOneSaslMechanism(mechanismName);
+        } else if (entry instanceof KeyStore.PrivateKeyEntry) {
+            Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, X509CertificateChainPrivateCredential.class);
+            return types.contains(X509CertificateChainPrivateCredential.class) && (algorithms.isEmpty() || algorithms.contains(((KeyStore.PrivateKeyEntry) entry).getPrivateKey().getAlgorithm())) || super.filterOneSaslMechanism(mechanismName);
+        } else {
+            return super.filterOneSaslMechanism(mechanismName);
+        }
     }
 }

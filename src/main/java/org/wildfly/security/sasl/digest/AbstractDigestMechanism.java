@@ -42,6 +42,8 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest._private.DigestUtil;
@@ -605,10 +607,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm(getMechanismName()))));
+        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(PasswordCredential.class, Collections.singleton(passwordAlgorithm(getMechanismName()))));
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
-            DigestPassword password = (DigestPassword) credentialCallback.getCredential();
+            PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
+            DigestPassword password = (DigestPassword) credential.getPassword();
             return password.getDigest();
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
@@ -622,7 +625,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(TwoWayPassword.class, Collections.emptySet()));
+        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(PasswordCredential.class, Collections.emptySet()));
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
         } catch (UnsupportedCallbackException e) {
@@ -634,7 +637,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
-        TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
+        final Credential credential = credentialCallback.getCredential();
+        TwoWayPassword password = (TwoWayPassword) ((PasswordCredential)credential).getPassword();
         char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
         try {
             password.destroy();

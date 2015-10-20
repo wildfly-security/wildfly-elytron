@@ -37,7 +37,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * A {@link SaslServerFactory} which sets the server's credential using the given key manager.
@@ -77,17 +78,13 @@ public final class KeyManagerCredentialSaslServerFactory extends AbstractDelegat
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
                     out:
                     {
-                        for (Class<?> allowedType : credentialCallback.getAllowedTypes()) {
+                        for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
                             for (String algorithmName : credentialCallback.getAllowedAlgorithms(allowedType)) {
                                 final String alias = keyManager.chooseServerAlias(algorithmName, null, null);
                                 if (alias != null) {
                                     final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
                                     final PrivateKey privateKey = keyManager.getPrivateKey(alias);
-                                    if (certificateChain == null || certificateChain.length == 0) {
-                                        credentialCallback.setCredential(privateKey);
-                                        iterator.remove();
-                                        break out;
-                                    } else {
+                                    if (certificateChain != null && certificateChain.length != 0) {
                                         credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
                                         iterator.remove();
                                         break out;
