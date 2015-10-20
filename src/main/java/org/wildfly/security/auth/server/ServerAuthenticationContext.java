@@ -148,8 +148,6 @@ public final class ServerAuthenticationContext {
             AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
             builder.setMechanismType("SASL");
             builder.setMechanismName(mechanismName);
-            builder.setProtocol("unknown");
-            // TODO protocol, authenticationName
             callbackHandler = createCallbackHandler(builder.build());
         }
         return factory.createSaslServer(mechanismName, "unknown", null, QUERY_ALL, callbackHandler);
