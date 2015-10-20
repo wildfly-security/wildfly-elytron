@@ -241,6 +241,8 @@ public final class ServerAuthenticationContext {
         if (name == null) {
             throw log.invalidName();
         }
+        // principal *must* be captured at this point
+        final NamePrincipal principal = new NamePrincipal(name);
         RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
         name = domain.getPostRealmRewriter().rewriteName(name);
         if (name == null) {
@@ -258,7 +260,6 @@ public final class ServerAuthenticationContext {
             // no further action needed
             return;
         }
-        final NamePrincipal principal = new NamePrincipal(name);
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
         try {
@@ -470,6 +471,7 @@ public final class ServerAuthenticationContext {
             }
 
             // pause here and see if we're really authorizing a new identity
+            // principal *must* be captured at this point
             final NamePrincipal principal = new NamePrincipal(name);
             if (oldState.getAuthenticationPrincipal().equals(principal)) {
                 // it's the same identity; just succeed as we are already authorized per above
