@@ -103,6 +103,9 @@ public interface ElytronMessages extends BasicLogger {
 
     /* auth package */
 
+    @Message(id = 1000, value = "Authentication name was already set on this context")
+    IllegalStateException nameAlreadySet();
+
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
 
@@ -566,7 +569,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5013, value = "[%s] Authentication mechanism password not verified")
     AuthenticationMechanismException mechPasswordNotVerified(String mechName);
 
-    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
+    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
     AuthenticationMechanismException mechAuthorizationFailed(String mechName, String userName, String authorizationId);
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
