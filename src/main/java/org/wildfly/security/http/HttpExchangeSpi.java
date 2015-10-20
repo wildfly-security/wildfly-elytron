@@ -82,5 +82,12 @@ public interface HttpExchangeSpi {
      */
     void authenticationFailed(final String message, final String mechanismName);
 
+    /**
+     * Notification that authentication has failed for a specific mechanism due to being a bad request.
+     * @param error
+     * @param mechanismName
+     */
+    void badRequest(final HttpAuthenticationException error, final String mechanismName);
+
 
 }

@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -70,29 +71,28 @@ public class HttpAuthenticator {
         return new Builder();
     }
 
-    private class AuthenticationExchange extends HttpServerExchange {
+    private class AuthenticationExchange implements HttpServerRequest, HttpServerResponse {
 
         private volatile HttpServerAuthenticationMechanism currentMechanism;
 
+        private volatile boolean authenticationAttempted = false;
         private volatile int responseCode = -1;
         private volatile boolean responseCodeAllowed = false;
-
-        /**
-         * @param httpExchangeSpi
-         */
-        AuthenticationExchange() {
-            super(httpExchangeSpi);
-        }
+        private volatile List<HttpServerMechanismsResponder> responders;
+        private volatile HttpServerMechanismsResponder successResponder;
 
         private boolean authenticate() throws HttpAuthenticationException {
             List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.get();
+            responders = new ArrayList<>(authenticationMechanisms.size());
             try {
-                boolean authenticationAttempted = false;
                 for (HttpServerAuthenticationMechanism nextMechanism : authenticationMechanisms) {
                     currentMechanism = nextMechanism;
-                    authenticationAttempted = authenticationAttempted | nextMechanism.evaluateRequest(this);
+                    nextMechanism.evaluateRequest(this);
 
                     if (isAuthenticated()) {
+                        if (successResponder != null) {
+                            successResponder.sendResponse(this);
+                        }
                         return true;
                     }
                 }
@@ -100,21 +100,17 @@ public class HttpAuthenticator {
 
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
                     responseCodeAllowed = true;
-                    boolean challengeSent = false;
-                    for (HttpServerAuthenticationMechanism nextMechanism : authenticationMechanisms) {
-                        currentMechanism = nextMechanism;
-                        challengeSent = challengeSent | nextMechanism.prepareResponse(this);
-                    }
-                    currentMechanism = null;
-
-                    if (challengeSent == false && (required || (authenticationAttempted && ignoreOptionalFailures == false))) {
+                    if (responders.size() > 0) {
+                        responders.forEach((HttpServerMechanismsResponder r) -> r.sendResponse(this) );
+                        if (responseCode > 0) {
+                            httpExchangeSpi.setResponseCode(responseCode);
+                        } else {
+                            httpExchangeSpi.setResponseCode(OK);
+                        }
+                    } else {
                         httpExchangeSpi.setResponseCode(FORBIDDEN);
-
-                        return false;
-                    } else if (challengeSent) {
-                        httpExchangeSpi.setResponseCode(responseCode);
-                        return false;
                     }
+                    return false;
                 }
 
                 // If authentication was required it should have been picked up in the previous block.
@@ -122,6 +118,62 @@ public class HttpAuthenticator {
             } finally {
                 authenticationMechanisms.forEach(m -> m.dispose());
             }
+        }
+
+        @Override
+        public List<String> getRequestHeaderValues(String headerName) {
+            return httpExchangeSpi.getRequestHeaderValues(headerName);
+        }
+
+
+        @Override
+        public String getFirstRequestHeaderValue(String headerName) {
+            return httpExchangeSpi.getFirstRequestHeaderValue(headerName);
+        }
+
+        @Override
+        public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
+            if (responder != null) {
+                responders.add(responder);
+            }
+        }
+
+        @Override
+        public void authenticationInProgress(HttpServerMechanismsResponder responder) {
+            authenticationAttempted = true;
+            if (responder != null) {
+                responders.add(responder);
+            }
+        }
+
+        @Override
+        public void authenticationComplete(SecurityIdentity securityIdentity, HttpServerMechanismsResponder responder) {
+            authenticated = true;
+            httpExchangeSpi.authenticationComplete(securityIdentity, currentMechanism.getMechanismName());
+            successResponder = responder;
+        }
+
+        @Override
+        public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
+            authenticationAttempted = true;
+            httpExchangeSpi.authenticationFailed(message, currentMechanism.getMechanismName());
+            if (responder != null) {
+                responders.add(responder);
+            }
+        }
+
+        @Override
+        public void badRequest(HttpAuthenticationException failure, HttpServerMechanismsResponder responder) {
+            authenticationAttempted = true;
+            httpExchangeSpi.badRequest(failure, currentMechanism.getMechanismName());
+            if (responder != null) {
+                responders.add(responder);
+            }
+        }
+
+        @Override
+        public void addResponseHeader(String headerName, String headerValue) {
+            httpExchangeSpi.addResponseHeader(headerName, headerValue);
         }
 
         /**
@@ -138,22 +190,6 @@ public class HttpAuthenticator {
             }
         }
 
-        /**
-         * @see org.wildfly.security.http.HttpServerExchange#authenticationComplete()
-         */
-        @Override
-        public void authenticationComplete(SecurityIdentity securityIdentity) {
-            authenticated = true;
-            httpExchangeSpi.authenticationComplete(securityIdentity, currentMechanism.getMechanismName());
-        }
-
-        /**
-         * @see org.wildfly.security.http.HttpServerExchange#authenticationFailed(java.lang.String)
-         */
-        @Override
-        public void authenticationFailed(String message) {
-            httpExchangeSpi.authenticationFailed(message, currentMechanism.getMechanismName());
-        }
 
     }
 

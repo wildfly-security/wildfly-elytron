@@ -45,7 +45,8 @@ import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
-import org.wildfly.security.http.HttpServerExchange;
+import org.wildfly.security.http.HttpServerRequest;
+import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.util.ByteIterator;
 
 /**
@@ -91,8 +92,8 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(org.wildfly.security.http.HttpRequest)
      */
     @Override
-    public boolean evaluateRequest(HttpServerExchange exchange) throws HttpAuthenticationException {
-        List<String> authorizationValues = exchange.getRequestHeaderValues(AUTHORIZATION);
+    public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
+        List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
                 if (current.startsWith(BASIC_PREFIX)) {
@@ -117,10 +118,12 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                             SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED, securityIdentityCallback });
 
-                            exchange.authenticationComplete(securityIdentityCallback.getSecurityIdentity());
+                            request.authenticationComplete(securityIdentityCallback.getSecurityIdentity());
+                            return;
                         } else {
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
-                            exchange.authenticationFailed(log.authenticationFailed(username, BASIC));
+                            request.authenticationFailed(log.authenticationFailed(username, BASIC), this::prepareResponse);
+                            return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {
                         throw new HttpAuthenticationException(e);
@@ -130,13 +133,11 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                             fill(passwordChars.array(), (char) 0x00);
                         }
                     }
-
-                    return true;
                 }
             }
         }
 
-        return false;
+        request.authenticationInProgress(this::prepareResponse);
     }
 
     private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
@@ -158,16 +159,9 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
         }
     }
 
-    /**
-     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#prepareResponse(org.wildfly.security.http.HttpResponse)
-     */
-    @Override
-    public boolean prepareResponse(HttpServerExchange exchange) {
-
-        exchange.addResponseHeader(WWW_AUTHENTICATE, challengeValue);
-        exchange.setResponseCode(UNAUTHORIZED);
-
-        return true;
+    private void prepareResponse(HttpServerResponse response) {
+        response.addResponseHeader(WWW_AUTHENTICATE, challengeValue);
+        response.setResponseCode(UNAUTHORIZED);
     }
 
 }
