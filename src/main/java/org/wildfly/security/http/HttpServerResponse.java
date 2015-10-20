@@ -15,35 +15,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.security.http;
 
 /**
- * Definition of a server side HTTP authentication mechanism.
+ * Server side representation of a HTTP response.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public interface HttpServerAuthenticationMechanism {
+public interface HttpServerResponse {
 
     /**
-     * Get the name of this mechanism, where appropriate this should be the IANA registered name.
+     * Add the specified header and value to the end of the current response headers,
      *
-     * @return the name of the mechanism.
+     * @param headerName the name of the header.
+     * @param headerValue the value of the header.
      */
-    String getMechanismName();
+    void addResponseHeader(final String headerName, final String headerValue);
 
     /**
-     * Evaluate the current request and attempt to authenticate if appropriate.
+     * Set the desired response code for the current request.
      *
-     * @param request representation of the HTTP request.
-     * @throws HttpAuthenticationException if there is an internal failure handling the authentication.
+     * Note: If multiple mechanisms call this method then a resolution process will begin to decide which one to use.
+     *
+     * @param responseCode the response code.
      */
-    void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException;
+    void setResponseCode(final int responseCode);
 
-    /**
-     * Dispose of any resources currently held by this authentication mechanism.
-     */
-    default void dispose() {
-    };
+
 
 }
