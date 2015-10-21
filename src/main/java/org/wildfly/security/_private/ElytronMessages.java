@@ -385,6 +385,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
+    @Message(id = 1090, value = "Invalid mechanism realm selection \"%s\"")
+    IllegalArgumentException invalidMechRealmSelection(String realmName);
+
+    @Message(id = 1091, value = "Mechanism realm was already selected")
+    IllegalStateException mechRealmAlreadySelected();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

@@ -23,6 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.PermissionCollection;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -105,7 +106,18 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext() {
-        return new ServerAuthenticationContext(this);
+        return new ServerAuthenticationContext(this, Collections.emptySet());
+    }
+
+    /**
+     * Create a new authentication context for this security domain which can be used to carry out a single authentication
+     * operation.  The context is configured with a collection of mechanism realms to offer.
+     *
+     * @param mechanismRealms the collection of mechanism realms to offer in this context
+     * @return the new authentication context
+     */
+    public ServerAuthenticationContext createNewAuthenticationContext(Collection<MechanismRealmConfiguration> mechanismRealms) {
+        return new ServerAuthenticationContext(this, mechanismRealms);
     }
 
     /**
