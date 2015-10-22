@@ -146,14 +146,13 @@ public class CredentialStorage {
      * replaces older one. <em>Note:</em> {@link CredentialStorageSpi} supports storing of multiple entries (credential types) per alias.
      * Each must be of different credential type.
      * @param credentialAlias to store the credential to the storage
-     * @param credentialType - credential type to be stored under the credentialAlias to the storage
      * @param credential instance of {@link Credential} to store
      * @param <C> the class of type to which should be credential casted
      * @throws StorageException when the credential cannot be stored
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
-    public <C extends Credential> void store(String credentialAlias, Class<C> credentialType, C credential) throws StorageException, UnsupportedCredentialTypeException {
-        spi.store(credentialAlias, credentialType, credential);
+    public <C extends Credential> void store(String credentialAlias, C credential) throws StorageException, UnsupportedCredentialTypeException {
+        spi.store(credentialAlias, credential);
     }
 
     /**
