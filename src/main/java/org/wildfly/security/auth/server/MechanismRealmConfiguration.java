@@ -18,6 +18,9 @@
 
 package org.wildfly.security.auth.server;
 
+import java.util.List;
+import java.util.function.Supplier;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -26,37 +29,36 @@ import org.wildfly.common.Assert;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MechanismRealmConfiguration {
-    private final String name;
+    private final String realmName;
     private final NameRewriter preRealmRewriter;
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
+    private final Supplier<List<String>> credentialNameSupplier;
 
     /**
      * Construct a new instance.
      *
-     * @param name the name of this realm (may not be {@code null})
+     * @param realmName the name of this realm (may not be {@code null})
      * @param preRealmRewriter the pre-realm rewriter to apply (may not be {@code null})
      * @param postRealmRewriter the post-realm rewriter to apply (may not be {@code null})
      * @param finalRewriter the final rewriter to apply (may not be {@code null})
+     * @param credentialNameSupplier an optional supplier of credential names to use for this mechanism realm configuration
      */
-    public MechanismRealmConfiguration(final String name, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter) {
-        Assert.checkNotNullParam("name", name);
-        Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
-        Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
-        Assert.checkNotNullParam("finalRewriter", finalRewriter);
-        this.name = name;
+    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Supplier<List<String>> credentialNameSupplier) {
+        this.realmName = realmName;
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
+        this.credentialNameSupplier = credentialNameSupplier;
     }
 
     /**
-     * Get the mechanism name.
+     * Get the mechanism realm name.
      *
-     * @return the mechanism name (not {@code null})
+     * @return the mechanism realm name (not {@code null})
      */
-    public String getName() {
-        return name;
+    public String getRealmName() {
+        return realmName;
     }
 
     /**
@@ -87,7 +89,55 @@ public final class MechanismRealmConfiguration {
     }
 
     /**
+     * Get the credential name supplier, if any.
+     *
+     * @return the credential name supplier, or {@code null} if none is configured
+     */
+    public Supplier<List<String>> getCredentialNameSupplier() {
+        return credentialNameSupplier;
+    }
+
+    /**
      * A realm configuration for no particular realm, which does no additional rewriting.
      */
-    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER);
+    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, null);
+
+    public static final class Builder {
+        private String realmName;
+        private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
+        private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
+        private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
+        private Supplier<List<String>> credentialNameSupplier;
+
+        /**
+         * Construct a new instance.
+         */
+        public Builder() {
+        }
+
+        public void setRealmName(final String realmName) {
+            this.realmName = realmName;
+        }
+
+        public void setPreRealmRewriter(final NameRewriter preRealmRewriter) {
+            this.preRealmRewriter = preRealmRewriter;
+        }
+
+        public void setPostRealmRewriter(final NameRewriter postRealmRewriter) {
+            this.postRealmRewriter = postRealmRewriter;
+        }
+
+        public void setFinalRewriter(final NameRewriter finalRewriter) {
+            this.finalRewriter = finalRewriter;
+        }
+
+        public void setCredentialNameSupplier(final Supplier<List<String>> credentialNameSupplier) {
+            this.credentialNameSupplier = credentialNameSupplier;
+        }
+
+        public MechanismRealmConfiguration build() {
+            Assert.checkNotNullParam("realmName", realmName);
+            return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter, credentialNameSupplier);
+        }
+    }
 }

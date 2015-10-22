@@ -1,0 +1,77 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.wildfly.security.auth.server;
+
+import java.util.Collection;
+
+/**
+ * A generalized mechanism factory which authenticates against a security domain.
+ *
+ * @param <M> the type of mechanism
+ * @param <E> the mechanism-type-specific exception that may be thrown upon instantiation
+ *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ */
+public interface MechanismAuthenticationFactory<M, E extends Exception> {
+    /**
+     * Create the mechanism instance.
+     *
+     * @param name the mechanism name
+     * @return the mechanism, or {@code null} if the mechanism with the given name is not supported
+     * @throws E if the mechanism instantiation failed
+     */
+    M createMechanism(String name) throws E;
+
+    /**
+     * Get the collection of mechanism names may be supported by this factory.  The actual set of available mechanisms depends
+     * on run-time factors but will generally not be greater than this collection.
+     *
+     * @return the mechanism names (not {@code null})
+     */
+    Collection<String> getMechanismNames();
+
+    /**
+     * A builder for a {@link MechanismAuthenticationFactory}.
+     */
+    interface Builder<M, E extends Exception> {
+        /**
+         * Set the security domain to be used for this factory (may not be {@code null}).
+         *
+         * @param securityDomain the security domain (may not be {@code null})
+         * @return this builder
+         */
+        Builder<M, E> setSecurityDomain(SecurityDomain securityDomain);
+
+        /**
+         * Add a mechanism to the factory being built.  The same configuration may be used for more than one mechanism.
+         *
+         * @param mechanismName the mechanism name (may not be {@code null})
+         * @param mechanismConfiguration the configuration to use (may not be {@code null})
+         * @return this builder
+         */
+        Builder<M, E> addMechanism(String mechanismName, MechanismConfiguration mechanismConfiguration);
+
+        /**
+         * Build the mechanism factory.
+         *
+         * @return the mechanism factory
+         */
+        MechanismAuthenticationFactory<M, E> build();
+    }
+}

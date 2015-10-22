@@ -165,11 +165,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
                 }
 
                 final Password password = entry.getPassword(credentialName);
-                if (evidence instanceof PasswordGuessEvidence) {
-                    return PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((PasswordGuessEvidence) evidence).getGuess());
-                } else {
-                    return false;
-                }
+                return password != null && evidence instanceof PasswordGuessEvidence && PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((PasswordGuessEvidence) evidence).getGuess());
             } catch (NoSuchAlgorithmException | InvalidKeyException e) {
                 throw new RealmUnavailableException(e);
             }

@@ -25,7 +25,7 @@ import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactor
 
 import java.security.Permissions;
 import java.security.spec.KeySpec;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.net.ssl.X509KeyManager;
@@ -36,6 +36,8 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.server.MechanismConfiguration;
+import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.password.Password;
@@ -163,6 +165,7 @@ public class SaslServerBuilder {
         this.dontAssertBuiltServer = true;
         return this;
     }
+
     public SaslServer build() throws SaslException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
@@ -205,7 +208,11 @@ public class SaslServerBuilder {
         if (credential != null) {
             factory = new CredentialSaslServerFactory(factory, credential, algorithm);
         }
-        SaslServer server = domain.createNewAuthenticationContext().createSaslServer(factory, mechanismName);
+        final SaslAuthenticationFactory.Builder builder = new SaslAuthenticationFactory.Builder();
+        builder.setSaslServerFactory(factory);
+        builder.setSecurityDomain(domain);
+        builder.addMechanism(mechanismName, new MechanismConfiguration.Builder().setCredentialNameSupplier(() -> Collections.singletonList(TESTING_CREDENTIAL)).build());
+        final SaslServer server = builder.build().createMechanism(mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);
         }
