@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
@@ -92,6 +93,7 @@ public final class ServerAuthenticationContext {
     private final SecurityDomain domain;
     private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
     private final Map<String, MechanismRealmConfiguration> mechanismRealmConfigurations;
+    private final Supplier<List<String>> credentialNameSupplier;
 
     ServerAuthenticationContext(final SecurityDomain domain, final Collection<MechanismRealmConfiguration> mechanismRealms) {
         this.domain = domain;
@@ -105,6 +107,7 @@ public final class ServerAuthenticationContext {
             }
             mechanismRealmConfigurations = Collections.unmodifiableMap(realmMap);
         }
+        credentialNameSupplier = () -> Collections.singletonList("password"); // todo
     }
 
     /**
@@ -123,11 +126,7 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("mechanismNames", mechanismNames);
         List<HttpServerAuthenticationMechanism> mechanisms = new ArrayList<HttpServerAuthenticationMechanism>(mechanismNames.length);
         for (String mechanismName : mechanismNames) {
-            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
-            builder.setMechanismType("HTTP");
-            builder.setMechanismName(mechanismName);
-            // TODO protocol, authenticationName
-            CallbackHandler callbackHandler = createCallbackHandler(builder.build());
+            CallbackHandler callbackHandler = createCallbackHandler();
             HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(mechanismName, domain.getCategoryRoleMappers(), callbackHandler);
             if (mechanism != null) {
                 mechanisms.add(mechanism);
@@ -159,10 +158,7 @@ public final class ServerAuthenticationContext {
         if (mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
             callbackHandler = createAnonymousCallbackHandler();
         } else {
-            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
-            builder.setMechanismType("SASL");
-            builder.setMechanismName(mechanismName);
-            callbackHandler = createCallbackHandler(builder.build());
+            callbackHandler = createCallbackHandler();
         }
         return factory.createSaslServer(mechanismName, "unknown", null, QUERY_ALL, callbackHandler);
     }
@@ -757,7 +753,7 @@ public final class ServerAuthenticationContext {
     }
 
 
-    CallbackHandler createCallbackHandler(AuthenticationInformation information) {
+    CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
 
             @Override
@@ -797,7 +793,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = credentialNameSupplier.get();
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
@@ -830,7 +826,7 @@ public final class ServerAuthenticationContext {
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = credentialNameSupplier.get();
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final Credential credential = getCredential(credentialName, Credential.class);
@@ -850,7 +846,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = credentialNameSupplier.get();
                     for (String credentialName : credentialNames) {
                         evidenceVerifyCallback.setVerified(verifyEvidence(credentialName, evidenceVerifyCallback.getEvidence()));
                     }

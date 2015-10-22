@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,7 +60,6 @@ public final class SecurityDomain {
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
-    private final CredentialMapper credentialMapper;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -70,7 +68,6 @@ public final class SecurityDomain {
         this.realmMapper = builder.realmMapper;
         this.roleMapper = builder.roleMapper;
         this.permissionMapper = builder.permissionMapper;
-        this.credentialMapper = builder.credentialMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
@@ -289,10 +286,6 @@ public final class SecurityDomain {
         return this.permissionMapper.mapPermissions(principal, roles);
     }
 
-    public List<String> mapCredentials(AuthenticationInformation information) {
-        return this.credentialMapper.getCredentialNameMapping(information);
-    }
-
     NameRewriter getPreRealmRewriter() {
         return preRealmRewriter;
     }
@@ -331,7 +324,6 @@ public final class SecurityDomain {
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
-        private CredentialMapper credentialMapper = CredentialMapper.ELYTRON_CREDENTIAL_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
 
@@ -405,20 +397,6 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("permissionMapper", permissionMapper);
             assertNotBuilt();
             this.permissionMapper = permissionMapper;
-            return this;
-        }
-
-        /**
-         * Set the credential mapper for this security domain, which will be used to resolve authentication information
-         * to credential name(s) of security realms of this security domain.
-         *
-         * @param credentialMapper the credential mapper (must not be {@code null})
-         * @return this builder
-         */
-        public Builder setCredentialMapper(CredentialMapper credentialMapper) {
-            Assert.checkNotNullParam("credentialMapper", credentialMapper);
-            assertNotBuilt();
-            this.credentialMapper = credentialMapper;
             return this;
         }
 

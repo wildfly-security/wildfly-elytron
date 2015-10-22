@@ -168,7 +168,6 @@ public class SaslServerBuilder {
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         domainBuilder.addRealm(realmName, mainRealm);
         domainBuilder.setDefaultRealmName(defaultRealmName);
-        domainBuilder.setCredentialMapper((information -> Arrays.asList(TESTING_CREDENTIAL)));
 
         if (username != null) {
             mainRealm.setPasswordMap(username, TESTING_CREDENTIAL, password);

@@ -17,10 +17,6 @@
  */
 package org.wildfly.security.http.util;
 
-import java.util.Collections;
-
-import org.wildfly.security.auth.server.CredentialMapper;
-
 /**
  * Information about HTTP authentication mechanisms.
  *
@@ -32,16 +28,6 @@ public final class HttpMechanismInformation {
 
         public static final String BASIC = "Basic";
 
-        private Names() {};
+        private Names() {}
     }
-
-    public static final CredentialMapper HTTP_CREDENITAL_MAPPER = information -> {
-        switch (information.getMechanismName()) {
-            case Names.BASIC:
-                return Collections.singletonList("password-clear");
-            default:
-                return Collections.emptyList();
-        }
-    };
-
 }
