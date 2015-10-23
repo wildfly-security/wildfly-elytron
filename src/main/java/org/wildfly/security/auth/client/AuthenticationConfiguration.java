@@ -23,7 +23,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Principal;
@@ -67,7 +66,7 @@ import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.util.ServiceLoaderSupplier;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -97,7 +96,9 @@ public abstract class AuthenticationConfiguration {
         void configureSaslProperties(final Map<String, Object> properties) {
         }
 
-        void filterSaslMechanisms(final Collection<String> names) {
+        boolean filterOneSaslMechanism(final String mechanismName) {
+            // nobody found a way to support this mechanism
+            return false;
         }
 
         String doRewriteUser(final String original) {
@@ -203,8 +204,8 @@ public abstract class AuthenticationConfiguration {
         parent.configureSaslProperties(properties);
     }
 
-    void filterSaslMechanisms(Collection<String> names) {
-        parent.filterSaslMechanisms(names);
+    boolean filterOneSaslMechanism(String mechanismName) {
+        return parent.filterOneSaslMechanism(mechanismName);
     }
 
     String doRewriteUser(String original) {
@@ -457,18 +458,6 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
-     * Create a new configuration which is the same as this configuration, but which uses the given private key and an X.509
-     * certificate URL to authenticate.
-     *
-     * @param privateKey the client private key
-     * @param certificateUrl the URL to the client X.509 certificate to use
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useCertificateCredential(PrivateKey privateKey, URL certificateUrl) {
-        return certificateUrl == null || privateKey == null ? without(SetCertificateURLCredentialAuthenticationConfiguration.class) : new SetCertificateURLCredentialAuthenticationConfiguration(this, privateKey, certificateUrl);
-    }
-
-    /**
      * Create a new configuration which is the same as this configuration, but which uses the given key manager
      * to acquire the credential required for authentication.
      *
@@ -658,7 +647,7 @@ public abstract class AuthenticationConfiguration {
         final HashMap<String, Object> properties = new HashMap<String, Object>();
         configureSaslProperties(properties);
         final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
-        filterSaslMechanisms(mechs);
+        mechs.removeIf(n -> ! filterOneSaslMechanism(n));
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
         return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);

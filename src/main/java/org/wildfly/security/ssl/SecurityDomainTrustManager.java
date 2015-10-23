@@ -38,6 +38,8 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.CredentialDecoder;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
+import org.wildfly.security.evidence.X509PeerCertificateEvidence;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -82,7 +84,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
         final X509Certificate subjectCertificate = chain[0];
-        Principal principal = credentialDecoder.getPrincipalFromCredential(subjectCertificate);
+        Principal principal = credentialDecoder.getPrincipalFromCredential(new X509CertificateChainPublicCredential(chain));
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
@@ -90,12 +92,11 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
 
             AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
             builder.setMechanismType("SSL");
-            // TODO mechanismName, protocol, authenticationName
-            List<String> credentialNames = securityDomain.mapCredentials(builder.build());
+            List<String> credentialNames = authenticationContext.mapCredentials(builder.build());
             for (String credentialName : credentialNames) {
 
                 final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(credentialName);
-                if (credentialSupport.mayBeVerifiable() && authenticationContext.verifyCredential(credentialName, subjectCertificate)) {
+                if (credentialSupport.mayBeVerifiable() && authenticationContext.verifyEvidence(credentialName, new X509PeerCertificateEvidence(subjectCertificate))) {
                     authenticationContext.succeed();
                     if (handshakeSession != null) {
                         handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());

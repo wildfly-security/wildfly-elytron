@@ -17,12 +17,14 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
+import java.sql.SQLException;
 import org.wildfly.security.auth.server.CredentialSupport;
 
 import java.sql.ResultSet;
+import org.wildfly.security.credential.Credential;
 
 /**
- * A key mapper is responsible to map data from a comlumn in a table to a specific credential type.
+ * A key mapper is responsible to map data from a column in a table to a specific credential type.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
@@ -45,4 +47,6 @@ public interface KeyMapper extends ColumnMapper {
      * @return the level of support for a credential based on the given result set
      */
     CredentialSupport getCredentialSupport(ResultSet resultSet);
+
+    Credential map(ResultSet resultSet) throws SQLException;
 }

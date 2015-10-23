@@ -31,15 +31,9 @@ public class AuthenticationInformation {
 
     private final String mechanismName; // "digest-md5" (SaslMechanismInformation.Names.*)
 
-    private final String protocol; // parameter of same SASL servers (imap for example)
-
-    private final String authenticationName; // authentication name of authenticating user
-
     private AuthenticationInformation(Builder builder) {
         this.mechanismType = builder.mechanismType;
         this.mechanismName = builder.mechanismName;
-        this.protocol = builder.protocol;
-        this.authenticationName = builder.authenticationName;
     }
 
     public String getMechanismType() {
@@ -50,22 +44,11 @@ public class AuthenticationInformation {
         return mechanismName;
     }
 
-    public String getProtocol() {
-        return protocol;
-    }
-
-    public String getAuthenticationName() {
-        return authenticationName;
-    }
-
-
     public static final class Builder {
         private boolean built = false;
 
         private String mechanismType;
         private String mechanismName;
-        private String protocol;
-        private String authenticationName;
 
         /**
          * Sets a mechanism type: SASL / HTTP / SSL / ...
@@ -88,30 +71,6 @@ public class AuthenticationInformation {
         public Builder setMechanismName(String mechanismName) {
             assertNotBuilt();
             this.mechanismName = mechanismName;
-            return this;
-        }
-
-        /**
-         * Sets a protocol: "imap" (parameter of same SASL servers, "digest-*" for example)
-         *
-         * @param protocol the protocol name
-         * @return this builder
-         */
-        public Builder setProtocol(String protocol) {
-            assertNotBuilt();
-            this.protocol = protocol;
-            return this;
-        }
-
-        /**
-         * Sets an authentication name (user name) of authenticating user
-         *
-         * @param authenticationName the authentication name
-         * @return this builder
-         */
-        public Builder setAuthenticationName(String authenticationName) {
-            assertNotBuilt();
-            this.authenticationName = authenticationName;
             return this;
         }
 

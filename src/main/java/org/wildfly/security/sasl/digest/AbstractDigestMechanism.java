@@ -18,13 +18,23 @@
 
 package org.wildfly.security.sasl.digest;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.HASH_algorithm;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.HMAC_algorithm;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.computeHMAC;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.create3desSecretKey;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.createDesSecretKey;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.decodeByteOrderedInteger;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.integerByteOrdered;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.messageDigestAlgorithm;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 import javax.crypto.Cipher;
@@ -42,6 +52,8 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest._private.DigestUtil;
@@ -54,9 +66,6 @@ import org.wildfly.security.util.DefaultTransformationMapper;
 import org.wildfly.security.util.TransformationMapper;
 import org.wildfly.security.util.TransformationSpec;
 import org.wildfly.security.util._private.Arrays2;
-
-import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
-import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  *
@@ -605,10 +614,13 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(DigestPassword.class, Collections.singleton(passwordAlgorithm(getMechanismName()))));
+        CredentialCallback credentialCallback = CredentialCallback.builder()
+                .addSupportedCredentialType(PasswordCredential.class, passwordAlgorithm(getMechanismName()))
+                .build();
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
-            DigestPassword password = (DigestPassword) credentialCallback.getCredential();
+            PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
+            DigestPassword password = (DigestPassword) credential.getPassword();
             return password.getDigest();
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
@@ -622,7 +634,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(TwoWayPassword.class, Collections.emptySet()));
+        CredentialCallback credentialCallback = CredentialCallback.builder()
+                .addSupportedCredentialType(PasswordCredential.class)
+                .build();
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
         } catch (UnsupportedCallbackException e) {
@@ -634,7 +648,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
-        TwoWayPassword password = (TwoWayPassword) credentialCallback.getCredential();
+        final Credential credential = credentialCallback.getCredential();
+        TwoWayPassword password = (TwoWayPassword) ((PasswordCredential)credential).getPassword();
         char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
         try {
             password.destroy();

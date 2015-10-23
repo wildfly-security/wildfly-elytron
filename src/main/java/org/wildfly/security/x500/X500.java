@@ -18,12 +18,21 @@
 
 package org.wildfly.security.x500;
 
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
 /**
  * Useful X500 constants and utilities.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class X500 {
+
+    /**
+     * A constant array containing zero certificates.
+     */
+    public static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+
     private X500() {}
 
     // RFC 4514 attribute type strings
@@ -38,4 +47,21 @@ public final class X500 {
 
     public static final String OID_UID      = "0.9.2342.19200300.100.1.1";
     public static final String OID_DC       = "0.9.2342.19200300.100.1.25";
+
+    /**
+     * Convert an array into a {@link X509Certificate X509Certificate[]}.
+     *
+     * @param certificates the certificates (may not be {@code null})
+     * @return the X.509 certificate array (not {@code null})
+     * @throws ArrayStoreException if one of the certificates in the array is not an {@code X509Certificate}
+     */
+    public static X509Certificate[] asX509CertificateArray(Object... certificates) throws ArrayStoreException {
+        if (certificates.length == 0) {
+            return NO_CERTIFICATES;
+        } else if (certificates instanceof X509Certificate[]) {
+            return (X509Certificate[]) certificates;
+        } else {
+            return Arrays.copyOf(certificates, certificates.length, X509Certificate[].class);
+        }
+    }
 }

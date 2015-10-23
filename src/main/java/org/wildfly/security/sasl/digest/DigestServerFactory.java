@@ -18,18 +18,23 @@
 
 package org.wildfly.security.sasl.digest;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
@@ -55,12 +60,25 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
             return null;
         }
 
-        String realmList = (String)props.get(WildFlySasl.REALM_LIST);
-        String[] realms;
-        if (realmList != null) {
-            realms = realmsPropertyToArray(realmList);
-        } else {
-            realms = new String[] {serverName};
+        String[] realms = null;
+        final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
+        try {
+            cbh.handle(new Callback[] { availableRealmsCallback });
+            realms = availableRealmsCallback.getRealmNames();
+        } catch (UnsupportedCallbackException ignored) {
+        } catch (SaslException e) {
+            throw e;
+        } catch (IOException e) {
+            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanism, e).toSaslException();
+        }
+        if (realms == null) {
+            String realmList = (String)props.get(WildFlySasl.REALM_LIST);
+            if (realmList != null) {
+                realms = realmsPropertyToArray(realmList);
+            }
+        }
+        if (realms == null) {
+            realms = new String[] { serverName };
         }
 
         Boolean utf8 = (Boolean)props.get(WildFlySasl.USE_UTF8);

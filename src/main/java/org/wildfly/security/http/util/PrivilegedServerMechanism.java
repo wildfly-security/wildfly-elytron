@@ -22,12 +22,17 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.AccessControlContext;
 import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.List;
 
+import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
-import org.wildfly.security.http.HttpServerExchange;
+import org.wildfly.security.http.HttpServerMechanismsResponder;
+import org.wildfly.security.http.HttpServerRequest;
+import org.wildfly.security.http.HttpServerResponse;
 
 /**
  * A {@link HttpServerAuthenticationMechanism} with a stored {@link AccessControlContext} that is used for all request
@@ -51,10 +56,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
     }
 
     @Override
-    public boolean evaluateRequest(final HttpServerExchange exchange) throws HttpAuthenticationException {
+    public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
         try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<Boolean>) () -> {
-                return mechanism.evaluateRequest(exchange);
+            AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+                mechanism.evaluateRequest(new HttpServerRequestWrapper(request));
+                return null;
             }, accessControlContext);
         } catch (PrivilegedActionException pae) {
             try {
@@ -67,21 +73,56 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
     }
 
-    @Override
-    public boolean prepareResponse(HttpServerExchange exchange) throws HttpAuthenticationException {
-        try {
-            return AccessController.doPrivileged((PrivilegedExceptionAction<Boolean>) () -> {
-                return mechanism.prepareResponse(exchange);
-            }, accessControlContext);
-        } catch (PrivilegedActionException pae) {
-            try {
-                throw pae.getCause();
-            } catch (HttpAuthenticationException | RuntimeException | Error e) {
-                throw e;
-            } catch (Throwable throwable) {
-                throw new UndeclaredThrowableException(throwable);
-            }
+    private HttpServerMechanismsResponder wrap(final HttpServerMechanismsResponder toWrap) {
+        return toWrap != null ? (HttpServerResponse r) -> AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            toWrap.sendResponse(r);
+            return null;
+        }, accessControlContext) : null;
+    }
+
+    private class HttpServerRequestWrapper implements HttpServerRequest {
+
+        private final HttpServerRequest wrapped;
+
+        private HttpServerRequestWrapper(HttpServerRequest toWrap) {
+            wrapped = toWrap;
         }
+
+        @Override
+        public List<String> getRequestHeaderValues(String headerName) {
+            return wrapped.getRequestHeaderValues(headerName);
+        }
+
+        @Override
+        public String getFirstRequestHeaderValue(String headerName) {
+            return wrapped.getFirstRequestHeaderValue(headerName);
+        }
+
+        @Override
+        public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
+            wrapped.noAuthenticationInProgress(wrap(responder));
+        }
+
+        @Override
+        public void authenticationInProgress(HttpServerMechanismsResponder responder) {
+            wrapped.authenticationInProgress(wrap(responder));
+        }
+
+        @Override
+        public void authenticationComplete(SecurityIdentity securityIdentity, HttpServerMechanismsResponder responder) {
+            wrapped.authenticationComplete(securityIdentity, wrap(responder));
+        }
+
+        @Override
+        public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
+            wrapped.authenticationFailed(message, wrap(responder));
+        }
+
+        @Override
+        public void badRequest(HttpAuthenticationException failure, HttpServerMechanismsResponder responder) {
+            wrapped.badRequest(failure, wrap(responder));
+        }
+
     }
 
 }

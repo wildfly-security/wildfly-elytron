@@ -18,13 +18,9 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonMap;
-import static org.wildfly.security.asn1.ASN1.*;
-import static org.wildfly.security.sasl.entity.Entity.*;
-import static org.wildfly.security.sasl.entity.GeneralName.*;
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
+import static org.wildfly.security.sasl.entity.Entity.keyType;
 
 import java.io.IOException;
 import java.net.URL;
@@ -49,9 +45,11 @@ import org.wildfly.security.asn1.DEREncoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.entity.GeneralName.DNSName;
+import org.wildfly.security.sasl.entity.GeneralName.DirectoryName;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
 
 /**
  * SaslClient for the ISO/IEC 9798-3 authentication mechanism as defined by
@@ -166,8 +164,10 @@ final class EntitySaslClient extends AbstractSaslClient {
                     encoder.startExplicit(1);
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     trustedAuthoritiesCallback.setTrustedAuthorities(trustedAuthorities); // Server's preferred certificates
-                    CredentialCallback credentialCallback = new CredentialCallback(singletonMap(X509CertificateChainPrivateCredential.class,
-                            singleton(keyType(signature.getAlgorithm()))));
+                    CredentialCallback credentialCallback = CredentialCallback.builder()
+                            .addSupportedCredentialType(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()))
+                            .build();
+
                     PrivateKey privateKey;
                     try {
                         tryHandleCallbacks(trustedAuthoritiesCallback, credentialCallback);
@@ -184,17 +184,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                             throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
                         }
                     } catch (UnsupportedCallbackException e) {
-                        // Try obtaining a certificate URL
-                        credentialCallback = new CredentialCallback(singletonMap(URL.class, emptySet()));
-                        CredentialCallback privateKeyCallback = new CredentialCallback(singletonMap(PrivateKey.class,
-                                singleton(keyType(signature.getAlgorithm()))));
-                        handleCallbacks(trustedAuthoritiesCallback, credentialCallback, privateKeyCallback);
-                        clientCertUrl = (URL) credentialCallback.getCredential();
-                        if (clientCertUrl == null) {
-                            throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
-                        }
-                        encoder.encodeIA5String(clientCertUrl.toString());
-                        privateKey = (PrivateKey) privateKeyCallback.getCredential();
+                        throw log.mechCallbackHandlerNotProvidedClientCertificate(getMechanismName()).toSaslException();
                     }
                     encoder.endExplicit();
 

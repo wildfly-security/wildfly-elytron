@@ -35,27 +35,10 @@ public interface HttpServerAuthenticationMechanism {
     /**
      * Evaluate the current request and attempt to authenticate if appropriate.
      *
-     * A successful or failed authentication should be indicated by calling {@link HttpServerExchange#authenticationComplete()}
-     * or {@link HttpServerExchange#authenticationFailed(String)} respectively, if the mechanism throws an exception it will be
-     * considered bad and not given an opportunity to send a challenge for the current exchange.
-     *
-     * @param exchange representation of the HTTP exchange.
-     * @return {@code true} if this mechanism did attempt authentication on the incoming request regardless of the outcome of
-     *         that attempt, {@code false} otherwise.
-     * @throws HttpAuthenticationException If an problem occurs evaluating the request.
+     * @param request representation of the HTTP request.
+     * @throws HttpAuthenticationException if there is an internal failure handling the authentication.
      */
-    boolean evaluateRequest(HttpServerExchange exchange) throws HttpAuthenticationException;
-
-    /**
-     * Add an authentication challenge to the current response.
-     *
-     * Note: Some authentication mechanisms may not result in a challenge being sent.
-     *
-     * @param exchange representation of the HTTP exchange.
-     * @return {@code true} if this mechanism adds to the response, {@code false} otherwise.
-     * @throws HttpAuthenticationException if a problem occurs preparing the response.
-     */
-    boolean prepareResponse(HttpServerExchange exchange) throws HttpAuthenticationException;
+    void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException;
 
     /**
      * Dispose of any resources currently held by this authentication mechanism.

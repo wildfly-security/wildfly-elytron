@@ -72,7 +72,7 @@ public abstract class AbstractAttributeMappingTest {
 
         assertTrue("Principal [" + principalName + "] does not exist.", serverAuthenticationContext.exists());
 
-        serverAuthenticationContext.authorize(principalName);
+        assertTrue("Authorization failed", serverAuthenticationContext.authorize(principalName));
 
         SecurityIdentity securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
         Attributes attributes = securityIdentity.getAttributes();

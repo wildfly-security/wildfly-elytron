@@ -21,6 +21,7 @@ package org.wildfly.security.auth.server;
 import java.util.Map;
 
 import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A realm identity which is modifiable.
@@ -51,7 +52,7 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
      * @param credentials the new map of credentials
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
-    void setCredentials(Map<String, Object> credentials) throws RealmUnavailableException;
+    void setCredentials(Map<String, Credential> credentials) throws RealmUnavailableException;
 
     /**
      * Add new credential of this identity.  If the identity does not exist, an exception is thrown.
@@ -61,7 +62,7 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
      * @param credential the new credential
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
-    void setCredential(String credentialName, Object credential) throws RealmUnavailableException;
+    void setCredential(String credentialName, Credential credential) throws RealmUnavailableException;
 
     /**
      * Delete credential of this identity by name.  If the identity or credential does not exist, an exception is thrown.

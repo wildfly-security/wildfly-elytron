@@ -3,6 +3,8 @@ package org.wildfly.security.auth.provider.ldap;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -100,7 +102,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public <C> C getCredential(String credentialName, Class<C> credentialType) {
+        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) {
             if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
                 return null;
             }
@@ -126,8 +128,8 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
                                 CodePointIterator.ofString((String) seedAttribute.get())
                                         .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
                                 Integer.valueOf((String) sequenceAttribute.get())));
-                if (credentialType.isInstance(password)) {
-                    return credentialType.cast(password);
+                if (credentialType.isAssignableFrom(PasswordCredential.class)) {
+                    return credentialType.cast(new PasswordCredential(password));
                 }
 
             } catch (NamingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
@@ -145,8 +147,9 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public void persistCredential(String credentialName, Object credential) throws RealmUnavailableException {
-            OneTimePassword password = (OneTimePassword) credential;
+        public void persistCredential(String credentialName, Credential credential) throws RealmUnavailableException {
+            PasswordCredential passwordCredential = (PasswordCredential) credential;
+            OneTimePassword password = (OneTimePassword) passwordCredential.getPassword();
             DirContext context = null;
             try {
                 context = contextFactory.obtainDirContext(null);
@@ -159,7 +162,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
 
                 context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
             } catch (NamingException e) {
-                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
+                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), credentialName, distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);
             }

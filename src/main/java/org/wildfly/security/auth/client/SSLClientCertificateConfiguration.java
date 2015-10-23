@@ -21,7 +21,7 @@ package org.wildfly.security.auth.client;
 import java.security.GeneralSecurityException;
 
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.x500.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

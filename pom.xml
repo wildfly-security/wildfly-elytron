@@ -66,7 +66,6 @@
         <version.org.jboss.logging.tools>2.0.1.Final</version.org.jboss.logging.tools>
         <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
-        <version.org.jboss.spec.org.jboss.spec.javax.net.ssl>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.net.ssl>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
@@ -233,12 +232,6 @@
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.spec.javax.net.ssl</groupId>
-            <artifactId>jboss-jsse-api_8.0_spec</artifactId>
-            <version>${version.org.jboss.spec.org.jboss.spec.javax.net.ssl}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -23,7 +23,14 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+import java.security.cert.X509Certificate;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.X509CertificateChainCredential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateEvidence;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 
@@ -58,36 +65,40 @@ public interface RealmIdentity {
      * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    <C> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException;
+    <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException;
 
     /**
      * Verify the given credential.
      *
-     * @param guess the guess to verify
+     * @param evidence the evidence to verify
      *
      * @return {@code true} if verification was successful, {@code false} otherwise
      *
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    default boolean verifyCredential(String credentialName, Object guess) throws RealmUnavailableException {
-        char[] passwordGuess;
-        if (guess instanceof char[]) {
-            passwordGuess = (char[]) guess;
-        } else if (guess instanceof String) {
-            passwordGuess = ((String) guess).toCharArray();
-        } else {
-            return false;
+    default boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
+        if (evidence instanceof PasswordGuessEvidence) {
+            char[] passwordGuess = ((PasswordGuessEvidence) evidence).getGuess();
+            final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
+            if (credential != null) try {
+                final Password password = credential.getPassword();
+                final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                final Password translated = passwordFactory.translate(password);
+                return passwordFactory.verify(translated, passwordGuess);
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                return false;
+            }
+        } else if (evidence instanceof X509PeerCertificateEvidence) {
+            final X509Certificate certificate = ((X509PeerCertificateEvidence) evidence).getPeerCertificate();
+            final X509CertificateChainCredential credential = getCredential(credentialName, X509CertificateChainCredential.class);
+            if (credential != null) {
+                final X509Certificate[] certificateChain = credential.getCertificateChain();
+                if (certificateChain.length > 0) {
+                    return certificateChain[0].equals(certificate);
+                }
+            }
         }
-        final Password credential = getCredential(credentialName, Password.class);
-        if (credential != null) try {
-            final PasswordFactory passwordFactory = PasswordFactory.getInstance(credential.getAlgorithm());
-            final Password translated = passwordFactory.translate(credential);
-            return passwordFactory.verify(translated, passwordGuess);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            return false;
-        } else {
-            return false;
-        }
+        return false;
     }
 
     /**
@@ -133,7 +144,7 @@ public interface RealmIdentity {
             return CredentialSupport.UNSUPPORTED;
         }
 
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             return null;
         }
 
@@ -151,7 +162,7 @@ public interface RealmIdentity {
             return CredentialSupport.UNSUPPORTED;
         }
 
-        public <C> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             return null;
         }
 

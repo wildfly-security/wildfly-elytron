@@ -32,6 +32,7 @@ class RealmInfo {
     private final RoleMapper roleMapper;
     private final NameRewriter nameRewriter;
     private final RoleDecoder roleDecoder;
+    private final CredentialMapper credentialMapper;
 
     RealmInfo(final SecurityDomain.RealmBuilder realmBuilder) {
         this.name = realmBuilder.getName();
@@ -39,14 +40,16 @@ class RealmInfo {
         this.roleMapper = realmBuilder.getRoleMapper();
         this.nameRewriter = realmBuilder.getNameRewriter();
         this.roleDecoder = realmBuilder.getRoleDecoder();
+        this.credentialMapper = realmBuilder.getCredentialMapper();
     }
 
-    RealmInfo(final SecurityRealm securityRealm, final String name, final RoleMapper roleMapper, final NameRewriter nameRewriter, final RoleDecoder roleDecoder) {
-        this.securityRealm = securityRealm;
-        this.name = name;
-        this.roleMapper = roleMapper;
-        this.nameRewriter = nameRewriter;
-        this.roleDecoder = roleDecoder;
+    RealmInfo() {
+        this.securityRealm = SecurityRealm.EMPTY_REALM;
+        this.name = "default";
+        this.roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
+        this.nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        this.roleDecoder = RoleDecoder.DEFAULT;
+        this.credentialMapper = null;
     }
 
     String getName() {
@@ -67,5 +70,9 @@ class RealmInfo {
 
     RoleDecoder getRoleDecoder() {
         return roleDecoder;
+    }
+
+    CredentialMapper getCredentialMapper() {
+        return credentialMapper;
     }
 }

@@ -103,6 +103,9 @@ public interface ElytronMessages extends BasicLogger {
 
     /* auth package */
 
+    @Message(id = 1000, value = "Authentication name was already set on this context")
+    IllegalStateException nameAlreadySet();
+
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
     ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
 
@@ -211,7 +214,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1036, value = "Unable to create trust manager")
     IOException unableToCreateTrustManager(@Cause Exception e);
 
-    //1037
+    @Message(id = 1037, value = "Certificate chain is empty")
+    IllegalArgumentException certificateChainIsEmpty();
 
     @Message(id = 1038, value = "Could get not RSA key from query")
     RuntimeException couldNotGetRsaKeyFromQuery(@Cause Throwable cause);
@@ -276,17 +280,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
 
-    // 1059
+    @Message(id = 1059, value = "Public and private key algorithm names are mismatched")
+    IllegalArgumentException mismatchedPublicPrivateKeyAlgorithms();
 
     @Message(id = 1060, value = "Could not obtain principal")
     RuntimeException couldNotObtainPrincipal();
 
-    // 1061
+    @Message(id = 1061, value = "Public key is null")
+    IllegalArgumentException publicKeyIsNull();
 
     @Message(id = 1062, value = "No provider URL has been set")
     IllegalStateException noProviderUrlSet();
 
-    // 1063
+    @Message(id = 1063, value = "Private key is null")
+    IllegalArgumentException privateKeyIsNull();
 
     @Message(id = 1064, value = "Invalid name")
     IllegalArgumentException invalidName();
@@ -366,8 +373,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1085, value = "No Ldap-backed realm's persister support credential name \"%s\"")
     RealmUnavailableException ldapRealmsPersisterNotSupportCredentialName(String credentialName);
 
-    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
-    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
+    @Message(id = 1086, value = "Persisting credential %s with name \"%s\" into Ldap-backed realm failed. Identity dn: \"%s\"")
+    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String credentialName, String dn, @Cause Throwable cause);
 
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
@@ -378,8 +385,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
+    @Message(id = 1090, value = "Unknown LDAP password scheme")
+    InvalidKeySpecException unknownLdapPasswordScheme();
+
     @LogMessage(level = WARN)
-    @Message(id = 1090, value = "Post-association peer context action failed")
+    @Message(id = 1091, value = "Post-association peer context action failed")
     void postAssociationFailed(@Cause Throwable cause);
 
     /* keystore package */
@@ -566,7 +576,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5013, value = "[%s] Authentication mechanism password not verified")
     AuthenticationMechanismException mechPasswordNotVerified(String mechName);
 
-    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" is not authorized to act on behalf of \"%s\"")
+    @Message(id = 5014, value = "[%s] Authentication mechanism authorization failed: \"%s\" running as \"%s\"")
     AuthenticationMechanismException mechAuthorizationFailed(String mechName, String userName, String authorizationId);
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")

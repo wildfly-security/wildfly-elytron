@@ -18,9 +18,6 @@
 
 package org.wildfly.security.mechanism;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.InvalidKeyException;
@@ -35,9 +32,12 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 
@@ -68,13 +68,18 @@ public final class MechanismUtil {
         try {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm);
 
-            CredentialCallback credentialCallback = new CredentialCallback(singletonMap(passwordType, singleton(passwordAlgorithm)));
+            CredentialCallback credentialCallback = CredentialCallback.builder()
+                    .addSupportedCredentialType(PasswordCredential.class, passwordAlgorithm)
+                    .build();
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
-                final Object credential = credentialCallback.getCredential();
-                if (passwordType.isInstance(credential)) {
-                    return passwordType.cast(passwordFactory.translate((Password) credential));
+                final Credential credential = credentialCallback.getCredential();
+                if (credential instanceof PasswordCredential) {
+                    S password = ((PasswordCredential) credential).getPassword(passwordType);
+                    if (password != null) {
+                        return password;
+                    }
                 }
                 // fall out
             } catch (UnsupportedCallbackException e) {
@@ -84,18 +89,23 @@ public final class MechanismUtil {
                 // fall out
             }
 
-            credentialCallback = new CredentialCallback(singletonMap(TwoWayPassword.class, emptySet()));
+            credentialCallback = CredentialCallback.builder()
+                    .addSupportedCredentialType(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR)
+                    .build();
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
-                final Object credential = credentialCallback.getCredential();
-                if (TwoWayPassword.class.isInstance(credential)) {
-                    final PasswordFactory clearFactory = PasswordFactory.getInstance(((Password) credential).getAlgorithm());
-                    final ClearPasswordSpec spec = clearFactory.getKeySpec(clearFactory.translate((Password) credential), ClearPasswordSpec.class);
-                    if (defaultParameters != null) {
-                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), defaultParameters)));
-                    } else {
-                        return passwordType.cast(passwordFactory.generatePassword(spec));
+                final Credential credential = credentialCallback.getCredential();
+                if (credential instanceof PasswordCredential) {
+                    final TwoWayPassword twoWayPassword = ((PasswordCredential) credential).getPassword(TwoWayPassword.class);
+                    if (twoWayPassword != null) {
+                        final PasswordFactory clearFactory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm());
+                        final ClearPasswordSpec spec = clearFactory.getKeySpec(clearFactory.translate(twoWayPassword), ClearPasswordSpec.class);
+                        if (defaultParameters != null) {
+                            return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), defaultParameters)));
+                        } else {
+                            return passwordType.cast(passwordFactory.generatePassword(spec));
+                        }
                     }
                 }
             } catch (UnsupportedCallbackException e) {
@@ -118,7 +128,7 @@ public final class MechanismUtil {
                     }
                 }
             } catch (UnsupportedCallbackException e) {
-                if (e.getCallback() != credentialCallback) {
+                if (e.getCallback() != passwordCallback) {
                     throw log.mechCallbackHandlerFailedForUnknownReason(passwordAlgorithm, e);
                 }
                 // fall out

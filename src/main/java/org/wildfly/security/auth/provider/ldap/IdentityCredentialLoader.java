@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A {@link CredentialLoader} for loading credentials stored in LDAP directory.
@@ -46,5 +47,5 @@ interface IdentityCredentialLoader {
      * @param credentialType the class of type to which should be credential casted
      * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      */
-    <C> C getCredential(String credentialName, Class<C> credentialType);
+    <C extends Credential> C getCredential(String credentialName, Class<C> credentialType);
 }
