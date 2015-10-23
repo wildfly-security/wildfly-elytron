@@ -626,6 +626,21 @@ public final class ServerAuthenticationContext {
         return stateRef.get().verifyEvidence(credentialName, evidence);
     }
 
+    /**
+     * Map the credential names for the given authentication information.
+     *
+     * @param information the authentication information
+     * @return the credential names to use, in descending preference order
+     */
+    public List<String> mapCredentials(AuthenticationInformation information) {
+        CredentialMapper realmMapper = stateRef.get().getRealmInfo().getCredentialMapper();
+        if (realmMapper != null) {
+            return realmMapper.getCredentialNameMapping(information);
+        } else {
+            return domain.getCredentialMapper().getCredentialNameMapping(information);
+        }
+    }
+
     CallbackHandler createAnonymousCallbackHandler() {
         return new CallbackHandler() {
             @Override
@@ -709,7 +724,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = mapCredentials(information);
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
@@ -742,7 +757,7 @@ public final class ServerAuthenticationContext {
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = mapCredentials(information);
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final Credential credential = getCredential(credentialName, Credential.class);
@@ -762,7 +777,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
-                    List<String> credentialNames = domain.mapCredentials(information);
+                    List<String> credentialNames = mapCredentials(information);
                     for (String credentialName : credentialNames) {
                         evidenceVerifyCallback.setVerified(verifyEvidence(credentialName, evidenceVerifyCallback.getEvidence()));
                     }
