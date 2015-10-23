@@ -15,54 +15,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.credential.storage;
+package org.wildfly.security.credential.store;
 
 /**
- * An exception indicating that operation with {@link CredentialStorage} has failed.
+ * An exception indicating that given credential store is not supporting particular {@link org.wildfly.security.credential.Credential} class.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class StorageException extends Exception {
+public class UnsupportedCredentialTypeException extends Exception {
 
 
-    private static final long serialVersionUID = 5868419578268270577L;
+    private static final long serialVersionUID = 8933668244130206312L;
 
     /**
-     * Constructs a new {@code StorageException} instance.  The message is left blank
+     * Constructs a new {@code UnsupportedCredentialTypeException} instance.  The message is left blank
      * ({@code null}), and no cause is specified.
      */
-    public StorageException() {
+    public UnsupportedCredentialTypeException() {
     }
 
     /**
-     * Constructs a new {@code StorageException} instance with an initial message.  No
+     * Constructs a new {@code UnsupportedCredentialTypeException} instance with an initial message.  No
      * cause is specified.
      *
      * @param msg the message
      */
-    public StorageException(String msg) {
+    public UnsupportedCredentialTypeException(String msg) {
         super(msg);
     }
 
     /**
-     * Constructs a new {@code StorageException} instance with an initial message and
+     * Constructs a new {@code UnsupportedCredentialTypeException} instance with an initial message and
      * cause.
      *
      * @param message the message
      * @param cause the cause
      */
-    public StorageException(String message, Throwable cause) {
+    public UnsupportedCredentialTypeException(String message, Throwable cause) {
         super(message, cause);
     }
 
     /**
-     * Constructs a new {@code StorageException} instance with an initial cause.  If a
+     * Constructs a new {@code UnsupportedCredentialTypeException} instance with an initial cause.  If a
      * non-{@code null} cause is specified, its message is used to initialize the message of this {@code
      * Exception}; otherwise the message is left blank ({@code null}).
      *
      * @param cause the cause
      */
-    public StorageException(Throwable cause) {
+    public UnsupportedCredentialTypeException(Throwable cause) {
         super(cause);
     }
 }

@@ -17,8 +17,8 @@
  */
 
 /**
- * Package for Credential Storage API/SPI classes and interfaces.
+ * Package for Credential Store API/SPI classes and interfaces.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-package org.wildfly.security.credential.storage;
+package org.wildfly.security.credential.store;
