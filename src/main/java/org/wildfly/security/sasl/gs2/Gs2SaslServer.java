@@ -19,9 +19,7 @@
 package org.wildfly.security.sasl.gs2;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.*;
-
-import java.util.Collections;
+import static org.wildfly.security.asn1.ASN1.APPLICATION_SPECIFIC_MASK;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -80,7 +78,10 @@ final class Gs2SaslServer extends AbstractSaslServer {
 
         // Attempt to obtain a credential
         GSSCredential credential = null;
-        CredentialCallback credentialCallback = new CredentialCallback(Collections.singletonMap(GSSCredentialCredential.class, Collections.emptySet()));
+        CredentialCallback credentialCallback = CredentialCallback.builder()
+                .addSupportedCredentialType(GSSCredentialCredential.class)
+                .build();
+
         try {
             tryHandleCallbacks(credentialCallback);
             Credential credentialHolder = credentialCallback.getCredential();

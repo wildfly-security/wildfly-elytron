@@ -811,11 +811,11 @@ public final class ServerAuthenticationContext {
             }
 
             private boolean isAllowedTypeAlgorithm(Credential credential, CredentialCallback credentialCallback) {
-                for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
+                for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
                     if (allowedType.isInstance(credential)) {
                         if (credential instanceof AlgorithmCredential) {
                             String algorithm = ((AlgorithmCredential) credential).getAlgorithm();
-                            for (String allowedAlgorithm : credentialCallback.getAllowedAlgorithms(allowedType)) {
+                            for (String allowedAlgorithm : credentialCallback.getSupportedAlgorithms(allowedType)) {
                                 if(allowedAlgorithm.equals(algorithm)) {
                                     return true; // allowed type, allowed algorithm
                                 }
