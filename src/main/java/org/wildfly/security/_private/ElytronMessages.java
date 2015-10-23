@@ -373,8 +373,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1085, value = "No Ldap-backed realm's persister support credential name \"%s\"")
     RealmUnavailableException ldapRealmsPersisterNotSupportCredentialName(String credentialName);
 
-    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
-    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
+    @Message(id = 1086, value = "Persisting credential %s with name \"%s\" into Ldap-backed realm failed. Identity dn: \"%s\"")
+    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String credentialName, String dn, @Cause Throwable cause);
 
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);
@@ -385,10 +385,13 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1089, value = "Attempting to run as \"%s\" authorization check failed (permission denied)")
     AuthorizationCheckException unauthorizedRunAs(@Param Principal principal, Principal runAsPrincipal, @Param RunAsPrincipalPermission permission);
 
-    @Message(id = 1090, value = "Invalid mechanism realm selection \"%s\"")
+    @Message(id = 1090, value = "Unknown LDAP password scheme")
+    InvalidKeySpecException unknownLdapPasswordScheme();
+
+    @Message(id = 1091, value = "Invalid mechanism realm selection \"%s\"")
     IllegalArgumentException invalidMechRealmSelection(String realmName);
 
-    @Message(id = 1091, value = "Mechanism realm was already selected")
+    @Message(id = 1092, value = "Mechanism realm was already selected")
     IllegalStateException mechRealmAlreadySelected();
 
     /* keystore package */

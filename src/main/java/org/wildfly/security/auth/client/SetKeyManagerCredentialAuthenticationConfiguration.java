@@ -79,8 +79,8 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
                     throw log.unableToCreateKeyManager(e);
                 }
                 final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
-                    final Set<String> allowedAlgorithms = credentialCallback.getAllowedAlgorithms(allowedType);
+                for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
+                    final Set<String> allowedAlgorithms = credentialCallback.getSupportedAlgorithms(allowedType);
                     if (allowedAlgorithms != null) {
                         final String[] keyType = allowedAlgorithms.toArray(new String[allowedAlgorithms.size()]);
                         final String alias = keyManager.chooseClientAlias(keyType, getAcceptableIssuers(trustedAuthorities), null);

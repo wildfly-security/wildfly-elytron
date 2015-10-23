@@ -81,7 +81,7 @@ public final class SecurityDomain {
         }
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
-        final RealmInfo realmInfo = new RealmInfo(SecurityRealm.EMPTY_REALM, "default", RoleMapper.IDENTITY_ROLE_MAPPER, NameRewriter.IDENTITY_REWRITER, RoleDecoder.DEFAULT);
+        final RealmInfo realmInfo = new RealmInfo();
         anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers);
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }

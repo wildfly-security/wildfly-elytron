@@ -18,19 +18,29 @@
 
 package org.wildfly.security.sasl.otp;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonMap;
-import static java.util.Collections.unmodifiableSet;
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.otp.OTP.*;
-import static org.wildfly.security.sasl.otp.OTPUtil.*;
+import static org.wildfly.security.sasl.otp.OTP.EXT;
+import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
+import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
+import static org.wildfly.security.sasl.otp.OTP.INIT_WORD_RESPONSE;
+import static org.wildfly.security.sasl.otp.OTP.LOCK_TIMEOUT;
+import static org.wildfly.security.sasl.otp.OTP.OTP_PREFIX;
+import static org.wildfly.security.sasl.otp.OTP.WORD_RESPONSE;
+import static org.wildfly.security.sasl.otp.OTPUtil.convertFromHex;
+import static org.wildfly.security.sasl.otp.OTPUtil.convertFromWords;
+import static org.wildfly.security.sasl.otp.OTPUtil.hashAndFold;
+import static org.wildfly.security.sasl.otp.OTPUtil.skipDelims;
+import static org.wildfly.security.sasl.otp.OTPUtil.validateAlgorithm;
+import static org.wildfly.security.sasl.otp.OTPUtil.validateAuthorizationId;
+import static org.wildfly.security.sasl.otp.OTPUtil.validateSeed;
+import static org.wildfly.security.sasl.otp.OTPUtil.validateSequenceNumber;
+import static org.wildfly.security.sasl.otp.OTPUtil.validateUserName;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.Locale;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -106,7 +116,10 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // OTP extended challenge = <standard OTP challenge> ext[,<extension set id>[, ...]]
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
                 nameCallback = new NameCallback("Remote authentication name", userName);
-                final CredentialCallback credentialCallback = new CredentialCallback(singletonMap(PasswordCredential.class, unmodifiableSet(new LinkedHashSet<>(asList(OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)))));
+                final CredentialCallback credentialCallback = CredentialCallback.builder()
+                        .addSupportedCredentialType(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)
+                        .build();
+
                 final TimeoutCallback timeoutCallback = new TimeoutCallback();
                 handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
                 final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();

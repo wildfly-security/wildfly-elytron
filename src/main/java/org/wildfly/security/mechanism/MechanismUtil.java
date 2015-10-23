@@ -18,8 +18,6 @@
 
 package org.wildfly.security.mechanism;
 
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.InvalidKeyException;
@@ -70,7 +68,9 @@ public final class MechanismUtil {
         try {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm);
 
-            CredentialCallback credentialCallback = new CredentialCallback(singletonMap(PasswordCredential.class, singleton(passwordAlgorithm)));
+            CredentialCallback credentialCallback = CredentialCallback.builder()
+                    .addSupportedCredentialType(PasswordCredential.class, passwordAlgorithm)
+                    .build();
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
@@ -89,7 +89,9 @@ public final class MechanismUtil {
                 // fall out
             }
 
-            credentialCallback = new CredentialCallback(singletonMap(PasswordCredential.class, singleton(ClearPassword.ALGORITHM_CLEAR)));
+            credentialCallback = CredentialCallback.builder()
+                    .addSupportedCredentialType(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR)
+                    .build();
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);

@@ -18,12 +18,9 @@
 
 package org.wildfly.security.sasl.entity;
 
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonMap;
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.asn1.ASN1.*;
-import static org.wildfly.security.sasl.entity.Entity.*;
-import static org.wildfly.security.sasl.entity.GeneralName.*;
+import static org.wildfly.security.asn1.ASN1.CONTEXT_SPECIFIC_MASK;
+import static org.wildfly.security.sasl.entity.Entity.keyType;
 
 import java.net.URL;
 import java.security.InvalidKeyException;
@@ -52,9 +49,10 @@ import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
-import org.wildfly.security.x500.X509CertificateCredentialDecoder;
+import org.wildfly.security.sasl.entity.GeneralName.DNSName;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**
  * SaslServer for the ISO/IEC 9798-3 authentication mechanism as defined by
@@ -223,8 +221,10 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                 // Get the server's certificate data, if necessary
                 if ((entityB != null) || mutual) {
-                    CredentialCallback credentialCallback = new CredentialCallback(singletonMap(X509CertificateChainPrivateCredential.class,
-                            singleton(keyType(signature.getAlgorithm()))));
+                    CredentialCallback credentialCallback = CredentialCallback.builder()
+                            .addSupportedCredentialType(X509CertificateChainPrivateCredential.class,keyType(signature.getAlgorithm()))
+                            .build();
+
                     try {
                         tryHandleCallbacks(credentialCallback);
                         final X509CertificateChainPrivateCredential serverCertChainPrivateCredential = (X509CertificateChainPrivateCredential) credentialCallback.getCredential();
