@@ -78,8 +78,8 @@ public final class KeyManagerCredentialSaslServerFactory extends AbstractDelegat
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
                     out:
                     {
-                        for (Class<? extends Credential> allowedType : credentialCallback.getAllowedTypes()) {
-                            for (String algorithmName : credentialCallback.getAllowedAlgorithms(allowedType)) {
+                        for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
+                            for (String algorithmName : credentialCallback.getSupportedAlgorithms(allowedType)) {
                                 final String alias = keyManager.chooseServerAlias(algorithmName, null, null);
                                 if (alias != null) {
                                     final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
