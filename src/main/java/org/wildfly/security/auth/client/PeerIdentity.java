@@ -27,6 +27,7 @@ import java.util.concurrent.Callable;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 
 /**
@@ -45,6 +46,28 @@ public final class PeerIdentity {
         this.handle = handle;
     }
 
+    void postAssociate() {
+        try {
+            handle.postAssociate();
+        } catch (Throwable t) {
+            ElytronMessages.log.postAssociationFailed(t);
+        }
+    }
+
+    void preAssociate() {
+        handle.preAssociate();
+    }
+
+    /**
+     * Determine if the peer identity context of this identity is the same as that of the given identity.
+     *
+     * @param other the other peer identity
+     * @return {@code true} if the identities share a context, {@code false} otherwise
+     */
+    public boolean isSamePeerIdentityContext(PeerIdentity other) {
+        return other != null && context == other.context;
+    }
+
     /**
      * Run an action under this identity.
      *
@@ -53,7 +76,12 @@ public final class PeerIdentity {
     public void runAs(Runnable runnable) {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
-            runnable.run();
+            preAssociate();
+            try {
+                runnable.run();
+            } finally {
+                postAssociate();
+            }
         } finally {
             context.setPeerIdentity(old);
         }
@@ -70,7 +98,12 @@ public final class PeerIdentity {
     public <T> T runAs(Callable<T> callable) throws Exception {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
-            return callable.call();
+            preAssociate();
+            try {
+                return callable.call();
+            } finally {
+                postAssociate();
+            }
         } finally {
             context.setPeerIdentity(old);
         }
@@ -86,7 +119,12 @@ public final class PeerIdentity {
     public <T> T runAs(PrivilegedAction<T> action) {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
-            return action.run();
+            preAssociate();
+            try {
+                return action.run();
+            } finally {
+                postAssociate();
+            }
         } finally {
             context.setPeerIdentity(old);
         }
@@ -103,11 +141,14 @@ public final class PeerIdentity {
     public <T> T runAs(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
+            preAssociate();
             try {
                 return action.run();
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
+            } finally {
+                postAssociate();
             }
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
         } finally {
             context.setPeerIdentity(old);
         }
@@ -125,7 +166,12 @@ public final class PeerIdentity {
     public <T, P> T runAs(P parameter, ParametricPrivilegedAction<T, P> action) {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
-            return action.run(parameter);
+            preAssociate();
+            try {
+                return action.run(parameter);
+            } finally {
+                postAssociate();
+            }
         } finally {
             context.setPeerIdentity(old);
         }
@@ -144,13 +190,217 @@ public final class PeerIdentity {
     public <T, P> T runAs(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         PeerIdentity old = context.getAndSetPeerIdentity(this);
         try {
+            preAssociate();
             try {
                 return action.run(parameter);
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
+            } finally {
+                postAssociate();
             }
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
         } finally {
             context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param runnable the action to run
+     * @param identities the identities to use
+     */
+    public static void runAsAll(Runnable runnable, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            runnable.run();
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param callable the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     */
+    public static <T> T runAsAll(Callable<T> callable, PeerIdentity... identities) throws Exception {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return callable.call();
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     */
+    public static <T> T runAsAll(PrivilegedAction<T> privilegedAction, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return privilegedAction.run();
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     * @throws PrivilegedActionException if the action throws an exception
+     */
+    public static <T> T runAsAll(PrivilegedExceptionAction<T> privilegedAction, PeerIdentity... identities) throws PrivilegedActionException {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return privilegedAction.run();
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     */
+    public static <T, P> T runAsAll(P parameter, ParametricPrivilegedAction<T, P> privilegedAction, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return privilegedAction.run(parameter);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     * @param <P> the action parameter type
+     * @throws PrivilegedActionException if the action throws an exception
+     */
+    public static <T, P> T runAsAll(P parameter, ParametricPrivilegedExceptionAction<T, P> privilegedAction, PeerIdentity... identities) throws PrivilegedActionException {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return privilegedAction.run(parameter);
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
         }
     }
 

@@ -57,4 +57,16 @@ public interface PeerIdentityHandle {
      * @return the attribute value entry, or {@code null} if there is no matching entry
      */
     Attributes.Entry getPeerAttribute(String key);
+
+    /**
+     * An optional notification called at the start of identity-to-thread association.  If this method fails,
+     * association will not occur.
+     */
+    default void preAssociate() {}
+
+    /**
+     * An optional notification called at the end of identity-to-thread association.  Any failure of this method
+     * will be ignored.
+     */
+    default void postAssociate() {}
 }

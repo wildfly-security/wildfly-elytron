@@ -388,6 +388,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1090, value = "Unknown LDAP password scheme")
     InvalidKeySpecException unknownLdapPasswordScheme();
 
+    @LogMessage(level = WARN)
+    @Message(id = 1091, value = "Post-association peer context action failed")
+    void postAssociationFailed(@Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
