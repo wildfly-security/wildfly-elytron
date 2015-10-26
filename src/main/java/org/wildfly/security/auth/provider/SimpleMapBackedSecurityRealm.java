@@ -139,13 +139,12 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) {
+        public Credential getCredential(String credentialName) {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
             final Password password = entry.getPassword(credentialName);
-            return credentialType.isAssignableFrom(PasswordCredential.class) ? credentialType.cast(new PasswordCredential(password)) : null;
+            return new PasswordCredential(password);
         }
 
         @Override

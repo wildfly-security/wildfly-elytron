@@ -104,11 +104,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public Credential getCredential(final String credentialName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialName().equals(credentialName)) {
-                        return executePrincipalQuery(configuration, resultSet -> credentialType.cast(keyMapper.map(resultSet)));
+                        return executePrincipalQuery(configuration, resultSet -> keyMapper.map(resultSet));
                     }
                 }
             }

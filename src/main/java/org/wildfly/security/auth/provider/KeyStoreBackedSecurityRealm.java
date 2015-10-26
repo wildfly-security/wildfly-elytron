@@ -141,6 +141,11 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
+        public Credential getCredential(String credentialName) throws RealmUnavailableException {
+            return getCredential(credentialName, Credential.class);
+        }
+
+        @Override
         public AuthorizationIdentity getAuthorizationIdentity() {
             return new AuthorizationIdentity() {
             };

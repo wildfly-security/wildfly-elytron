@@ -185,9 +185,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public Credential getCredential(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
                 return null;
             }
@@ -201,7 +200,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeObtainable()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-                    C credential = icl.getCredential(credentialName, credentialType);
+                    Credential credential = icl.getCredential(credentialName, Credential.class);
                     if (credential != null) {
                         return credential;
                     }
