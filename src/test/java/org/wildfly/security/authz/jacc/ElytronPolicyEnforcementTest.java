@@ -21,6 +21,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.provider.SimpleRealmEntry;
 import org.wildfly.security.auth.server.SecurityDomain;
@@ -109,7 +110,7 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
                     }
                 }
 
-                return false;
+                return new RunAsPrincipalPermission("*").implies(impliedPermission);
             }
 
             @Override

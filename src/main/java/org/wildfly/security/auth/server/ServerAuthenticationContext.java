@@ -24,17 +24,12 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSocket;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -42,14 +37,12 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
-import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialParameterCallback;
@@ -66,16 +59,9 @@ import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.http.HttpServerAuthenticationMechanism;
-import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
-import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
-import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
 /**
  * Server-side authentication context.
@@ -85,105 +71,13 @@ import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
  */
 public final class ServerAuthenticationContext {
 
-    private static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
-
     private final SecurityDomain domain;
     private final AtomicReference<State> stateRef = new AtomicReference<>(INITIAL);
+    private final MechanismConfiguration mechanismConfiguration;
 
-    ServerAuthenticationContext(final SecurityDomain domain) {
+    ServerAuthenticationContext(final SecurityDomain domain, final MechanismConfiguration mechanismConfiguration) {
         this.domain = domain;
-    }
-
-    /**
-     * Create a list of HTTP server side authentication mechanisms that will be used to authenticate against this security
-     * domain. The specified mechanism names should be in the list of names returned from
-     * {@link HttpServerAuthenticationMechanismFactory#getMechanismNames(Map)} for the given factory.
-     *
-     * Any mechanisms specified that are not available will be skipped.
-     *
-     * @param mechanismFactory the {@link HttpServerAuthenticationMechanismFactory} to use when instantiating the mechanisms.
-     * @param mechanismNames the names of the required mechanisms.
-     * @return A {@link List} containing instances of all of the requested mechanisms that were successfully created.
-     */
-    public List<HttpServerAuthenticationMechanism> createHttpServerMechanisms(HttpServerAuthenticationMechanismFactory mechanismFactory, String... mechanismNames) {
-        Assert.checkNotNullParam("mechanismFactory", mechanismFactory);
-        Assert.checkNotNullParam("mechanismNames", mechanismNames);
-        List<HttpServerAuthenticationMechanism> mechanisms = new ArrayList<HttpServerAuthenticationMechanism>(mechanismNames.length);
-        for (String mechanismName : mechanismNames) {
-            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
-            builder.setMechanismType("HTTP");
-            builder.setMechanismName(mechanismName);
-            // TODO protocol, authenticationName
-            CallbackHandler callbackHandler = createCallbackHandler(builder.build());
-            HttpServerAuthenticationMechanism mechanism = mechanismFactory.createAuthenticationMechanism(mechanismName, domain.getCategoryRoleMappers(), callbackHandler);
-            if (mechanism != null) {
-                mechanisms.add(mechanism);
-            }
-        }
-        return Collections.unmodifiableList(mechanisms);
-    }
-
-    /**
-     * Create a SASL server that will authenticate against this security domain.  The selected mechanism name should
-     * be one of the names returned by {@link #querySaslServerMechanismNames(SaslServerFactory)} for the given factory.
-     * If the SASL server failed to be constructed for some reason, a {@code SaslException} is thrown.  Calling this
-     * method initiates authentication.
-     *
-     * @param saslServerFactory the SASL server factory
-     * @param mechanismName the selected mechanism name
-     * @return the SASL server
-     * @throws SaslException if creating the SASL server failed for some reason
-     * @throws IllegalStateException if authentication was already initiated on this context
-     */
-    public SaslServer createSaslServer(SaslServerFactory saslServerFactory, String mechanismName) throws SaslException, IllegalStateException {
-        Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
-        Assert.checkNotNullParam("mechanismName", mechanismName);
-        AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
-        if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
-            factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
-        }
-        final CallbackHandler callbackHandler;
-        if (mechanismName.equals(SaslMechanismInformation.Names.ANONYMOUS)) {
-            callbackHandler = createAnonymousCallbackHandler();
-        } else {
-            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
-            builder.setMechanismType("SASL");
-            builder.setMechanismName(mechanismName);
-            callbackHandler = createCallbackHandler(builder.build());
-        }
-        return factory.createSaslServer(mechanismName, "unknown", null, QUERY_ALL, callbackHandler);
-    }
-
-    /**
-     * Query all the available SASL server authentication mechanism names.
-     *
-     * @param saslServerFactory the SASL server to query
-     * @return the collection of mechanism names
-     */
-    public Collection<String> querySaslServerMechanismNames(SaslServerFactory saslServerFactory) {
-        return new LinkedHashSet<>(Arrays.asList(saslServerFactory.getMechanismNames(QUERY_ALL)));
-    }
-
-    /**
-     * Create a server-side SSL engine that authenticates using this authentication context.  Calling this method
-     * initiates authentication.
-     *
-     * @return the SSL engine
-     * @throws IllegalStateException if authentication was already initiated on this context
-     */
-    public SSLEngine createServerSslEngine() throws IllegalStateException {
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Create a server-side SSL socket that authenticates using this authentication context.  Calling this method
-     * initiates authentication.
-     *
-     * @return the SSL socket
-     * @throws IllegalStateException if authentication was already initiated on this context
-     */
-    public SSLSocket createServerSslSocket() throws IllegalStateException {
-        throw new UnsupportedOperationException();
+        this.mechanismConfiguration = mechanismConfiguration;
     }
 
     /**
@@ -204,18 +98,15 @@ public final class ServerAuthenticationContext {
     public void anonymous() throws IllegalStateException {
         State oldState;
         oldState = stateRef.get();
-        if (oldState.isDone()) {
+        if (oldState.getId() > REALM_ID) {
             throw ElytronMessages.log.alreadyComplete();
         }
         final CompleteState completeState = new CompleteState(domain.getAnonymousSecurityIdentity());
         while (! stateRef.compareAndSet(oldState, completeState)) {
             oldState = stateRef.get();
-            if (oldState.isDone()) {
+            if (oldState.getId() > REALM_ID) {
                 throw ElytronMessages.log.alreadyComplete();
             }
-        }
-        if (oldState.getId() == ASSIGNED_ID) {
-            oldState.getRealmIdentity().dispose();
         }
     }
 
@@ -226,7 +117,7 @@ public final class ServerAuthenticationContext {
      * @param name the authentication name
      * @throws IllegalArgumentException if the name is syntactically invalid
      * @throws RealmUnavailableException if the realm is not available
-     * @throws IllegalStateException if the authentication name was already set
+     * @throws IllegalStateException if the authentication name was already set and there is a mismatch
      */
     public void setAuthenticationName(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("name", name);
@@ -236,25 +127,36 @@ public final class ServerAuthenticationContext {
         if (oldState.isDone()) {
             throw ElytronMessages.log.alreadyComplete();
         }
-        boolean ok = false;
-        name = domain.getPreRealmRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
+        final SecurityDomain domain = this.domain;
+        final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
+        final MechanismRealmConfiguration mechanismRealmConfiguration;
+        if (oldState.getId() != INITIAL_ID) {
+            mechanismRealmConfiguration = oldState.getMechanismRealmConfiguration();
+        } else {
+            final Collection<String> mechanismRealmNames = mechanismConfiguration.getMechanismRealmNames();
+            final Iterator<String> iterator = mechanismRealmNames.iterator();
+            if (iterator.hasNext()) {
+                // use the default realm
+                mechanismRealmConfiguration = mechanismConfiguration.getMechanismRealmConfiguration(iterator.next());
+            } else {
+                mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
+            }
         }
+        name = validatedRewrite(name, mechanismConfiguration.getPreRealmRewriter());
+        name = validatedRewrite(name, mechanismRealmConfiguration.getPreRealmRewriter());
+        name = validatedRewrite(name, domain.getPreRealmRewriter());
         // principal *must* be captured at this point
         final NamePrincipal principal = new NamePrincipal(name);
-        RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
-        name = domain.getPostRealmRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
-        }
-        name = realmInfo.getNameRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
-        }
+        name = validatedRewrite(name, mechanismConfiguration.getPostRealmRewriter());
+        name = validatedRewrite(name, mechanismRealmConfiguration.getPostRealmRewriter());
+        name = validatedRewrite(name, domain.getPostRealmRewriter());
+        final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
+        name = validatedRewrite(name, realmInfo.getNameRewriter());
+        name = validatedRewrite(name, mechanismConfiguration.getFinalRewriter());
+        name = validatedRewrite(name, mechanismRealmConfiguration.getFinalRewriter());
         // name should remain
         if (oldState.getId() == ASSIGNED_ID) {
-            if (! oldState.getAuthenticationPrincipal().getName().equals(name)) {
+            if (! oldState.getAuthenticationPrincipal().getName().equals(name) || oldState.getMechanismRealmConfiguration() != mechanismRealmConfiguration) {
                 throw log.nameAlreadySet();
             }
             // no further action needed
@@ -262,8 +164,9 @@ public final class ServerAuthenticationContext {
         }
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final RealmIdentity realmIdentity = securityRealm.createRealmIdentity(name);
+        boolean ok = false;
         try {
-            NameAssignedState newState = new NameAssignedState(principal, realmInfo, realmIdentity);
+            NameAssignedState newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
             while (! stateRef.compareAndSet(oldState, newState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
@@ -388,13 +291,12 @@ public final class ServerAuthenticationContext {
         if (oldState.isDone()) {
             throw ElytronMessages.log.alreadyComplete();
         }
-        if (! oldState.isStarted()) {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
         if (oldState.getId() == AUTHORIZED_ID) {
             return true;
         }
-        assert oldState.getId() == ASSIGNED_ID;
+        if (oldState.getId() < ASSIGNED_ID) {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
         if (/* TODO: test suite is broken */ false && ! realmIdentity.exists()) {
@@ -408,18 +310,18 @@ public final class ServerAuthenticationContext {
 
         final SecurityIdentity securityIdentity = new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers());
         if (/* TODO: tests need major refitting */ true || securityIdentity.getPermissions().implies(new LoginPermission())) {
-            final AuthorizedState authorizedState = new AuthorizedState(securityIdentity, authenticationPrincipal, realmInfo, realmIdentity);
+            final AuthorizedState authorizedState = new AuthorizedState(securityIdentity, authenticationPrincipal, realmInfo, realmIdentity, oldState.getMechanismRealmConfiguration());
             while (! stateRef.compareAndSet(oldState, authorizedState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
                     throw ElytronMessages.log.alreadyComplete();
                 }
-                if (! oldState.isStarted()) {
-                    throw ElytronMessages.log.noAuthenticationInProgress();
-                }
                 if (oldState.getId() == AUTHORIZED_ID) {
                     // one way or another, we were already authorized
                     return true;
+                }
+                if (oldState.getId() < ASSIGNED_ID) {
+                    throw ElytronMessages.log.noAuthenticationInProgress();
                 }
                 assert oldState.getId() == ASSIGNED_ID;
                 // it is impossible for the assigned state to change its identity
@@ -464,12 +366,14 @@ public final class ServerAuthenticationContext {
             // having passed authorization above, it is impossible to be in any other state than authorized at this point
             assert oldState.getId() == AUTHORIZED_ID;
 
-            // rewrite the proposed name
-            name = domain.getPreRealmRewriter().rewriteName(name);
-            if (name == null) {
-                throw log.invalidName();
-            }
+            final SecurityDomain domain = this.domain;
+            final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
+            final MechanismRealmConfiguration mechanismRealmConfiguration = oldState.getMechanismRealmConfiguration();
 
+            // rewrite the proposed name
+            name = validatedRewrite(name, mechanismConfiguration.getPreRealmRewriter());
+            name = validatedRewrite(name, mechanismRealmConfiguration.getPreRealmRewriter());
+            name = validatedRewrite(name, domain.getPreRealmRewriter());
             // pause here and see if we're really authorizing a new identity
             // principal *must* be captured at this point
             final NamePrincipal principal = new NamePrincipal(name);
@@ -485,16 +389,13 @@ public final class ServerAuthenticationContext {
             }
 
             // continue rewriting to locate the new authorization identity
-            name = domain.getPostRealmRewriter().rewriteName(name);
-            if (name == null) {
-                throw log.invalidName();
-            }
-            final String realmName = domain.mapRealmName(name);
-            final RealmInfo realmInfo = domain.getRealmInfo(realmName);
-            name = realmInfo.getNameRewriter().rewriteName(name);
-            if (name == null) {
-                throw log.invalidName();
-            }
+            name = validatedRewrite(name, mechanismConfiguration.getPostRealmRewriter());
+            name = validatedRewrite(name, mechanismRealmConfiguration.getPostRealmRewriter());
+            name = validatedRewrite(name, domain.getPostRealmRewriter());
+            final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
+            name = validatedRewrite(name, realmInfo.getNameRewriter());
+            name = validatedRewrite(name, mechanismConfiguration.getFinalRewriter());
+            name = validatedRewrite(name, mechanismRealmConfiguration.getFinalRewriter());
 
             // now construct the new identity
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
@@ -513,7 +414,7 @@ public final class ServerAuthenticationContext {
                 }
 
                 // create and switch to new authorized state
-                newState = new ServerAuthenticationContext.AuthorizedState(newIdentity, principal, realmInfo, realmIdentity);
+                newState = new ServerAuthenticationContext.AuthorizedState(newIdentity, principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
 
                 // if we do not succeed, try it again...
                 if (stateRef.compareAndSet(oldState, newState)) {
@@ -533,9 +434,10 @@ public final class ServerAuthenticationContext {
 
     /**
      * Mark this authentication as "successful".  The context cannot be used after this method is called, however
-     * the authorized identity may thereafter be accessed via the {@link #getAuthorizedIdentity()} method.
+     * the authorized identity may thereafter be accessed via the {@link #getAuthorizedIdentity()} method.  If no
+     * authentication actually happened, then authentication will complete anonymously.
      *
-     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     * @throws IllegalStateException if authentication is already completed
      */
     public void succeed() throws IllegalStateException, RealmUnavailableException {
         State oldState = stateRef.get();
@@ -543,7 +445,9 @@ public final class ServerAuthenticationContext {
             throw ElytronMessages.log.alreadyComplete();
         }
         if (! oldState.isStarted()) {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            // no authentication actually happened; we're anonymous
+            anonymous();
+            return;
         }
         RealmInfo realmInfo = oldState.getRealmInfo();
         final AuthorizationIdentity authorizationIdentity = oldState.getRealmIdentity().getAuthorizationIdentity();
@@ -627,22 +531,70 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Map the credential names for the given authentication information.
+     * Set the mechanism realm name to be equal to the given name.  If no mechanism realms are configured, the realm
+     * name is ignored.
      *
-     * @param information the authentication information
-     * @return the credential names to use, in descending preference order
+     * @param realmName the selected realm name
+     * @throws IllegalStateException if a realm name was already selected or it is too late to choose a realm
+     * @throws IllegalArgumentException if the selected realm name was not offered
      */
-    public List<String> mapCredentials(AuthenticationInformation information) {
-        CredentialMapper realmMapper = stateRef.get().getRealmInfo().getCredentialMapper();
-        if (realmMapper != null) {
-            return realmMapper.getCredentialNameMapping(information);
-        } else {
-            return domain.getCredentialMapper().getCredentialNameMapping(information);
+    public void setMechanismRealmName(String realmName) throws IllegalStateException, IllegalArgumentException {
+        final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
+        if (mechanismConfiguration.getMechanismRealmNames().isEmpty()) {
+            // no realms are configured
+            return;
         }
+        final MechanismRealmConfiguration configuration = mechanismConfiguration.getMechanismRealmConfiguration(realmName);
+        if (configuration == null) {
+            throw log.invalidMechRealmSelection(realmName);
+        }
+        final AtomicReference<State> stateRef = this.stateRef;
+        final RealmAssignedState newState = new RealmAssignedState(configuration);
+        State oldState;
+        do {
+            oldState = stateRef.get();
+            switch (oldState.getId()) {
+                case INITIAL_ID: {
+                    // try the CAS
+                    break;
+                }
+                case REALM_ID: {
+                    if (configuration == oldState.getMechanismRealmConfiguration()) {
+                        // already chosen the same realm
+                        return;
+                    }
+                    // fall thru to exception
+                }
+                case ASSIGNED_ID:
+                case AUTHORIZED_ID: {
+                    throw log.mechRealmAlreadySelected();
+                }
+                case FAILED_ID:
+                case COMPLETE_ID: {
+                    throw log.alreadyComplete();
+                }
+                default: {
+                    throw Assert.impossibleSwitchCase(oldState.getId());
+                }
+            }
+        } while (! stateRef.compareAndSet(oldState, newState));
     }
 
-    CallbackHandler createAnonymousCallbackHandler() {
+    List<String> getCredentialNames() {
+        State state = stateRef.get();
+        final MechanismRealmConfiguration mechanismRealmConfiguration = state.getMechanismRealmConfiguration();
+        if (mechanismRealmConfiguration != null) {
+            final Supplier<List<String>> supplier = mechanismRealmConfiguration.getCredentialNameSupplier();
+            if (supplier != null) {
+                return supplier.get();
+            }
+        }
+        return mechanismConfiguration.getCredentialNameSupplier().get();
+    }
+
+    CallbackHandler createCallbackHandler() {
         return new CallbackHandler() {
+
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 handleOne(callbacks, 0);
@@ -658,46 +610,7 @@ public final class ServerAuthenticationContext {
                     anonymous();
                     ((AnonymousAuthorizationCallback) callback).setAuthorized(true);
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof AuthenticationCompleteCallback) {
-                    if (! isDone()) {
-                        if (((AuthenticationCompleteCallback) callback).succeeded()) {
-                            succeed();
-                        } else {
-                            fail();
-                        }
-                    }
-                    handleOne(callbacks, idx + 1);
-                } else if (callback instanceof SocketAddressCallback) {
-                    final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
-                    if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
-                        // todo: filter by IP address
-                    }
-                    handleOne(callbacks, idx + 1);
-                } else if (callback instanceof SecurityIdentityCallback) {
-                    ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
-                    handleOne(callbacks, idx + 1);
-                } else {
-                    CallbackUtil.unsupported(callback);
-                }
-            }
-        };
-    }
-
-
-    CallbackHandler createCallbackHandler(AuthenticationInformation information) {
-        return new CallbackHandler() {
-
-            @Override
-            public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                handleOne(callbacks, 0);
-            }
-
-            private void handleOne(final Callback[] callbacks, final int idx) throws IOException, UnsupportedCallbackException {
-                if (idx == callbacks.length) {
-                    return;
-                }
-                Callback callback = callbacks[idx];
-                if (callback instanceof AuthorizeCallback) {
+                } else if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
                     // always re-set the authentication name to ensure it hasn't changed.
                     setAuthenticationName(authorizeCallback.getAuthenticationID());
@@ -724,7 +637,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof PasswordCallback) {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
-                    List<String> credentialNames = mapCredentials(information);
+                    List<String> credentialNames = getCredentialNames();
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
@@ -757,7 +670,7 @@ public final class ServerAuthenticationContext {
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
-                    List<String> credentialNames = mapCredentials(information);
+                    List<String> credentialNames = getCredentialNames();
                     for (String credentialName : credentialNames) {
                         if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
                             final Credential credential = getCredential(credentialName, Credential.class);
@@ -777,7 +690,7 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
-                    List<String> credentialNames = mapCredentials(information);
+                    List<String> credentialNames = getCredentialNames();
                     for (String credentialName : credentialNames) {
                         evidenceVerifyCallback.setVerified(verifyEvidence(credentialName, evidenceVerifyCallback.getEvidence()));
                     }
@@ -803,7 +716,14 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof SecurityIdentityCallback) {
                     ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof AvailableRealmsCallback) {
+                    Collection<String> names = mechanismConfiguration.getMechanismRealmNames();
+                    if (! names.isEmpty()) {
+                        ((AvailableRealmsCallback) callback).setRealmNames(names.toArray(new String[names.size()]));
+                    }
+                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof RealmCallback) {
+                    setMechanismRealmName(((RealmCallback) callback).getText());
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
@@ -832,28 +752,55 @@ public final class ServerAuthenticationContext {
         };
     }
 
+    private static String validatedRewrite(String name, NameRewriter rewriter) {
+        String newName = rewriter.rewriteName(name);
+        if (newName == null) {
+            throw log.invalidName();
+        }
+        return newName;
+    }
+
     private static final int INITIAL_ID = 0;
     private static final int FAILED_ID = 1;
-    private static final int AUTHORIZED_ID = 2;
+    private static final int REALM_ID = 2;
     private static final int ASSIGNED_ID = 3;
-    private static final int COMPLETE_ID = 4;
+    private static final int AUTHORIZED_ID = 4;
+    private static final int COMPLETE_ID = 5;
 
     abstract static class State {
         abstract int getId();
 
-        abstract SecurityIdentity getAuthorizedIdentity();
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract Principal getAuthenticationPrincipal();
+        SecurityIdentity getAuthorizedIdentity() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException;
+        Principal getAuthenticationPrincipal() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException;
+        CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract boolean verifyEvidence(String credentialName, final Evidence evidence) throws RealmUnavailableException;
+        <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract RealmInfo getRealmInfo();
+        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
-        abstract RealmIdentity getRealmIdentity();
+        RealmInfo getRealmInfo() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+
+        RealmIdentity getRealmIdentity() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
 
         abstract boolean isDone();
 
@@ -874,41 +821,6 @@ public final class ServerAuthenticationContext {
         @Override
         public int getId() {
             return id;
-        }
-
-        @Override
-        SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        Principal getAuthenticationPrincipal() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        CredentialSupport getCredentialSupport(final String credentialName) {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        RealmInfo getRealmInfo() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        RealmIdentity getRealmIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
         @Override
@@ -940,36 +852,6 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        Principal getAuthenticationPrincipal() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        CredentialSupport getCredentialSupport(final String credentialName) {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        RealmInfo getRealmInfo() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
-        RealmIdentity getRealmIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
-        }
-
-        @Override
         boolean isDone() {
             return true;
         }
@@ -985,17 +867,24 @@ public final class ServerAuthenticationContext {
         private final Principal authenticationPrincipal;
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
+        private final MechanismRealmConfiguration mechanismRealmConfiguration;
 
-        AuthorizedState(final SecurityIdentity securityIdentity, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+        AuthorizedState(final SecurityIdentity securityIdentity, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration) {
             this.securityIdentity = securityIdentity;
             this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
+            this.mechanismRealmConfiguration = mechanismRealmConfiguration;
         }
 
         @Override
         int getId() {
             return AUTHORIZED_ID;
+        }
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            return mechanismRealmConfiguration;
         }
 
         @Override
@@ -1048,11 +937,13 @@ public final class ServerAuthenticationContext {
         private final Principal authenticationPrincipal;
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
+        private final MechanismRealmConfiguration mechanismRealmConfiguration;
 
-        NameAssignedState(final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity) {
+        NameAssignedState(final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration) {
             this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
+            this.mechanismRealmConfiguration = mechanismRealmConfiguration;
         }
 
         @Override
@@ -1061,8 +952,8 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            return mechanismRealmConfiguration;
         }
 
         @Override
@@ -1093,6 +984,34 @@ public final class ServerAuthenticationContext {
         @Override
         RealmIdentity getRealmIdentity() {
             return realmIdentity;
+        }
+
+        @Override
+        boolean isDone() {
+            return false;
+        }
+
+        @Override
+        boolean isStarted() {
+            return true;
+        }
+    }
+
+    static final class RealmAssignedState extends State {
+        private final MechanismRealmConfiguration mechanismRealmConfiguration;
+
+        RealmAssignedState(final MechanismRealmConfiguration mechanismRealmConfiguration) {
+            this.mechanismRealmConfiguration = mechanismRealmConfiguration;
+        }
+
+        @Override
+        int getId() {
+            return REALM_ID;
+        }
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            return mechanismRealmConfiguration;
         }
 
         @Override

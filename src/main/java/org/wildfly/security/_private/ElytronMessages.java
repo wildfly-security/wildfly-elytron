@@ -392,6 +392,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1091, value = "Post-association peer context action failed")
     void postAssociationFailed(@Cause Throwable cause);
 
+    @Message(id = 1092, value = "Invalid mechanism realm selection \"%s\"")
+    IllegalArgumentException invalidMechRealmSelection(String realmName);
+
+    @Message(id = 1093, value = "Mechanism realm was already selected")
+    IllegalStateException mechRealmAlreadySelected();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
