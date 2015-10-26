@@ -22,7 +22,9 @@ import java.net.Socket;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -32,7 +34,6 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.server.AuthenticationInformation;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.CredentialSupport;
@@ -49,6 +50,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
     private final CredentialDecoder credentialDecoder;
+    private final Supplier<List<String>> credentialNameSupplier = Collections::emptyList; // todo
 
     SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
         this.delegate = delegate;
@@ -90,9 +92,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
 
-            AuthenticationInformation.Builder builder = new AuthenticationInformation.Builder();
-            builder.setMechanismType("SSL");
-            List<String> credentialNames = authenticationContext.mapCredentials(builder.build());
+            List<String> credentialNames = credentialNameSupplier.get();
             for (String credentialName : credentialNames) {
 
                 final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(credentialName);

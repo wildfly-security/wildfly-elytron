@@ -20,10 +20,8 @@ package org.wildfly.security.authz.jacc;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
-import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -53,16 +51,8 @@ public class SecurityIdentityRule implements TestRule {
             throw new RuntimeException("@RunAs is missing on test method or test class.");
         }
 
-        ServerAuthenticationContext authenticationContext = this.securityDomain.createNewAuthenticationContext();
-
-        try {
-            authenticationContext.setAuthenticationName(runAs.value());
-            authenticationContext.succeed();
-        } catch (RealmUnavailableException e) {
-            throw new RuntimeException("Error while authenticating.", e);
-        }
-
-        return new RunAsSecurityIdentity(base, authenticationContext.getAuthorizedIdentity());
+        final SecurityIdentity runAsIdentity = securityDomain.getCurrentSecurityIdentity().createRunAsIdentity(runAs.value());
+        return new RunAsSecurityIdentity(base, runAsIdentity);
     }
 
     public class RunAsSecurityIdentity extends Statement {

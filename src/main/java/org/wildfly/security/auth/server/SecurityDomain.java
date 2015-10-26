@@ -59,7 +59,6 @@ public final class SecurityDomain {
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
-    private final CredentialMapper credentialMapper;
 
     SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -68,7 +67,6 @@ public final class SecurityDomain {
         this.realmMapper = builder.realmMapper;
         this.roleMapper = builder.roleMapper;
         this.permissionMapper = builder.permissionMapper;
-        this.credentialMapper = builder.credentialMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
@@ -104,7 +102,18 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext() {
-        return new ServerAuthenticationContext(this);
+        return new ServerAuthenticationContext(this, MechanismConfiguration.EMPTY);
+    }
+
+    /**
+     * Create a new authentication context for this security domain which can be used to carry out a single authentication
+     * operation.  The context is configured with a collection of mechanism realms to offer.
+     *
+     * @param mechanismConfiguration the mechanism configuration to use
+     * @return the new authentication context
+     */
+    public ServerAuthenticationContext createNewAuthenticationContext(MechanismConfiguration mechanismConfiguration) {
+        return new ServerAuthenticationContext(this, mechanismConfiguration);
     }
 
     /**
@@ -301,10 +310,6 @@ public final class SecurityDomain {
         return categoryRoleMappers;
     }
 
-    CredentialMapper getCredentialMapper() {
-        return credentialMapper;
-    }
-
     /**
      * A builder for creating new security domains.
      */
@@ -318,7 +323,6 @@ public final class SecurityDomain {
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
-        private CredentialMapper credentialMapper = CredentialMapper.ELYTRON_CREDENTIAL_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
 
@@ -392,20 +396,6 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("permissionMapper", permissionMapper);
             assertNotBuilt();
             this.permissionMapper = permissionMapper;
-            return this;
-        }
-
-        /**
-         * Set the credential mapper for this security domain, which will be used to resolve authentication information
-         * to credential name(s) of security realms of this security domain.
-         *
-         * @param credentialMapper the credential mapper (must not be {@code null})
-         * @return this builder
-         */
-        public Builder setCredentialMapper(CredentialMapper credentialMapper) {
-            Assert.checkNotNullParam("credentialMapper", credentialMapper);
-            assertNotBuilt();
-            this.credentialMapper = credentialMapper;
             return this;
         }
 
@@ -524,7 +514,6 @@ public final class SecurityDomain {
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
         private RoleDecoder roleDecoder = RoleDecoder.DEFAULT;
-        private CredentialMapper credentialMapper = null;
 
         RealmBuilder(final String name, final SecurityRealm realm) {
             this.name = name;
@@ -603,24 +592,6 @@ public final class SecurityDomain {
          */
         public void setRoleDecoder(final RoleDecoder roleDecoder) {
             this.roleDecoder = roleDecoder;
-        }
-
-        /**
-         * Get the per-realm credential mapper, if any.
-         *
-         * @return the per-realm credential mapper, or {@code null} if the domain default is to be used
-         */
-        public CredentialMapper getCredentialMapper() {
-            return credentialMapper;
-        }
-
-        /**
-         * Set the per-realm credential mapper, if any.
-         *
-         * @param credentialMapper the per-realm credential mapper, or {@code null} to use the domain default
-         */
-        public void setCredentialMapper(final CredentialMapper credentialMapper) {
-            this.credentialMapper = credentialMapper;
         }
     }
 }
