@@ -496,8 +496,8 @@ public final class ServerAuthenticationContext {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
-        return stateRef.get().getCredentialSupport(credentialName);
+    public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
+        return stateRef.get().getCredentialAcquireSupport(credentialName);
     }
 
     /**
@@ -510,8 +510,8 @@ public final class ServerAuthenticationContext {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
-        return stateRef.get().getEvidenceSupport(credentialName);
+    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        return stateRef.get().getEvidenceVerifySupport(credentialName);
     }
 
     /**
@@ -671,7 +671,7 @@ public final class ServerAuthenticationContext {
 
                     List<String> credentialNames = getCredentialNames();
                     for (String credentialName : credentialNames) {
-                        if (getCredentialSupport(credentialName).mayBeSupported()) { // TODO maybe???
+                        if (getCredentialAcquireSupport(credentialName).mayBeSupported()) { // TODO maybe???
                             final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
 
                             if (credential != null) {
@@ -790,11 +790,11 @@ public final class ServerAuthenticationContext {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
-        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
-        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
+        SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -914,13 +914,13 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialSupport(credentialName);
+        SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getCredentialAcquireSupport(credentialName);
         }
 
         @Override
-        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
-            return realmIdentity.getEvidenceSupport(credentialName);
+        SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getEvidenceVerifySupport(credentialName);
         }
 
         @Override
@@ -988,13 +988,13 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return realmIdentity.getCredentialSupport(credentialName);
+        SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getCredentialAcquireSupport(credentialName);
         }
 
         @Override
-        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
-            return realmIdentity.getEvidenceSupport(credentialName);
+        SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getEvidenceVerifySupport(credentialName);
         }
 
         @Override

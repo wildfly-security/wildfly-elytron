@@ -47,7 +47,7 @@ public interface SecurityRealm {
      * @return the level of support for this named credential
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException;
 
     /**
      * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable (for some identities),
@@ -57,8 +57,8 @@ public interface SecurityRealm {
      * @return the level of support for this named credential
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    default SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
-        if (getCredentialSupport(credentialName) != SupportLevel.UNSUPPORTED) {
+    default SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        if (getCredentialAcquireSupport(credentialName) != SupportLevel.UNSUPPORTED) {
             return SupportLevel.POSSIBLY_SUPPORTED;
         }
 
@@ -73,11 +73,11 @@ public interface SecurityRealm {
             return RealmIdentity.NON_EXISTENT;
         }
 
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
 
-        public SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
     };

@@ -217,7 +217,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         }
     }
 
-    public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
@@ -239,7 +239,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             this.path = path;
         }
 
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Map<String, Credential> credentials = loadCredentials();
             return credentials.containsKey(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;

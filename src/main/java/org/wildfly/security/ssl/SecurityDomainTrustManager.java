@@ -95,7 +95,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             List<String> credentialNames = credentialNameSupplier.get();
             for (String credentialName : credentialNames) {
 
-                final SupportLevel credentialSupport = authenticationContext.getEvidenceSupport(credentialName);
+                final SupportLevel credentialSupport = authenticationContext.getEvidenceVerifySupport(credentialName);
                 if (credentialSupport.mayBeSupported() && authenticationContext.verifyEvidence(credentialName, new X509PeerCertificateEvidence(subjectCertificate))) {
                     authenticationContext.succeed();
                     if (handshakeSession != null) {

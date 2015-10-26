@@ -118,7 +118,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(final String credentialName) {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
         Assert.checkNotNullParam("credentialName", credentialName);
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
@@ -131,7 +131,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        public SupportLevel getCredentialSupport(final String credentialName) {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) {
             Assert.checkNotNullParam("credentialName", credentialName);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return SupportLevel.UNSUPPORTED;

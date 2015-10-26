@@ -58,7 +58,7 @@ public interface RealmIdentity {
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException;
 
     /**
      * Acquire a credential of the given name.
@@ -140,8 +140,8 @@ public interface RealmIdentity {
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    default SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
-        if (getCredentialSupport(credentialName) != SupportLevel.UNSUPPORTED) {
+    default SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        if (getCredentialAcquireSupport(credentialName) != SupportLevel.UNSUPPORTED) {
             return SupportLevel.POSSIBLY_SUPPORTED;
         }
 
@@ -217,7 +217,7 @@ public interface RealmIdentity {
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
 
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
 
@@ -235,7 +235,7 @@ public interface RealmIdentity {
      */
     RealmIdentity NON_EXISTENT = new RealmIdentity() {
 
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;
         }
 

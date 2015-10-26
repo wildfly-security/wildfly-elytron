@@ -122,7 +122,7 @@ public class PasswordSupportTest {
 
     @Test
     public void testOneTimePasswordUser0() throws Exception {
-        SupportLevel support = simpleToDnRealm.getCredentialSupport("otp");
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport("otp");
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
         RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
@@ -145,8 +145,8 @@ public class PasswordSupportTest {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
-        assertEquals(SupportLevel.SUPPORTED, simpleToDnRealm.getCredentialSupport("otp"));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialSupport("otp"));
+        assertEquals(SupportLevel.SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport("otp"));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport("otp"));
 
         identity.setCredential("otp", new PasswordCredential(password));
 
@@ -193,7 +193,7 @@ public class PasswordSupportTest {
 
     private void performSimpleNameTest(String simpleName, String credentialName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
-        SupportLevel support = simpleToDnRealm.getCredentialSupport(credentialName);
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(credentialName);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 
         verifyPasswordSupport(realmIdentity, credentialName, SupportLevel.SUPPORTED);
@@ -201,7 +201,7 @@ public class PasswordSupportTest {
     }
 
     private void verifyPasswordSupport(RealmIdentity identity, String credentialName, SupportLevel requiredSupport) throws RealmUnavailableException {
-        SupportLevel credentialSupport = identity.getCredentialSupport(credentialName);
+        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(credentialName);
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 

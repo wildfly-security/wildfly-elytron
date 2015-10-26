@@ -113,7 +113,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(final String credentialName) {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
         Assert.checkNotNullParam("credentialName", credentialName);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
@@ -145,7 +145,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             if (!exists()) {
                 return null;
@@ -155,7 +155,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             //    return CredentialSupport.VERIFIABLE_ONLY;
             //}
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
@@ -192,7 +192,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }

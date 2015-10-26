@@ -51,7 +51,7 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("plainUser");
 
-        SupportLevel credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
+        SupportLevel credentialSupport = realmIdentity.getCredentialAcquireSupport("ldap-verifiable");
         assertEquals("Identity level support", SupportLevel.UNSUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));
@@ -69,7 +69,7 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        SupportLevel credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
+        SupportLevel credentialSupport = realmIdentity.getCredentialAcquireSupport("ldap-verifiable");
         assertEquals("Identity level support", SupportLevel.UNSUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));

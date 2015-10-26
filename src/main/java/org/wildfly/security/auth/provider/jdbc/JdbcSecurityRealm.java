@@ -68,7 +68,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
         for (QueryConfiguration configuration : this.queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                 if (keyMapper.getCredentialName().equals(credentialName)) {
@@ -92,7 +92,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialName().equals(credentialName)) {

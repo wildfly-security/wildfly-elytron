@@ -93,8 +93,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return new RealmIdentity() {
 
             @Override
-            public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialName) : SupportLevel.UNSUPPORTED;
+            public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialName) : SupportLevel.UNSUPPORTED;
             }
 
             @Override
@@ -182,7 +182,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
 
     @Override
-    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
         if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName)) {
             return plainText ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {

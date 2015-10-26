@@ -73,7 +73,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(final String credentialName) {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
@@ -98,7 +98,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialSupport(final String credentialName) {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) {
             final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) {
                 return SupportLevel.UNSUPPORTED;

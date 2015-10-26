@@ -171,20 +171,20 @@ public final class SecurityDomain {
         return realmInfo;
     }
 
-    public SupportLevel getCredentialSupport(final String credentialName) {
-        return getSupportLevel((SecurityRealm r) -> {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
+        return getSupportLevel(r -> {
             try {
-                return r.getCredentialSupport(credentialName);
+                return r.getCredentialAcquireSupport(credentialName);
             } catch (RealmUnavailableException e) {
                 return null;
             }
         });
     }
 
-    public SupportLevel getEvidenceSupport(final String credentialName) {
-        return getSupportLevel((SecurityRealm r) -> {
+    public SupportLevel getEvidenceVerifySupport(final String credentialName) {
+        return getSupportLevel(r -> {
             try {
-                return r.getEvidenceSupport(credentialName);
+                return r.getEvidenceVerifySupport(credentialName);
             } catch (RealmUnavailableException e) {
                 return null;
             }

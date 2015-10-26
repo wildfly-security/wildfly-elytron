@@ -90,7 +90,7 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialName", credentialName);
         return SupportLevel.UNSUPPORTED;
     }
@@ -140,8 +140,8 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getCredentialSupport(credentialName);
+        public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getCredentialAcquireSupport(credentialName);
         }
 
         @Override

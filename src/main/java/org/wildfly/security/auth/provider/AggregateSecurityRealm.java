@@ -69,13 +69,13 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
-    public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-        return authenticationRealm.getCredentialSupport(credentialName);
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+        return authenticationRealm.getCredentialAcquireSupport(credentialName);
     }
 
     @Override
-    public SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
-        return authenticationRealm.getEvidenceSupport(credentialName);
+    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        return authenticationRealm.getEvidenceVerifySupport(credentialName);
     }
 
 
@@ -90,8 +90,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             this.authorizationIdentity = authorizationIdentity;
         }
 
-        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return authenticationIdentity.getCredentialSupport(credentialName);
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredentialAcquireSupport(credentialName);
         }
 
         @Override
@@ -114,8 +114,8 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
-            return authenticationIdentity.getEvidenceSupport(credentialName);
+        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+            return authenticationIdentity.getEvidenceVerifySupport(credentialName);
         }
 
         public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
