@@ -31,10 +31,10 @@ import java.security.cert.X509Certificate;
 import javax.crypto.SecretKey;
 
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.KeyPairCredential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -73,8 +73,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final String credentialName) {
-        return CredentialSupport.UNKNOWN;
+    public SupportLevel getCredentialSupport(final String credentialName) {
+        return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
     private KeyStore.Entry getEntry(String name) {
@@ -98,12 +98,12 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(final String credentialName) {
+        public SupportLevel getCredentialSupport(final String credentialName) {
             final KeyStore.Entry entry = getEntry(name + USER_CREDENTIAL_DELIMITER + credentialName);
             if (entry == null) {
-                return CredentialSupport.UNSUPPORTED;
+                return SupportLevel.UNSUPPORTED;
             }
-            return CredentialSupport.FULLY_SUPPORTED;
+            return SupportLevel.SUPPORTED;
         }
 
         @Override

@@ -27,11 +27,11 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -118,9 +118,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final String credentialName) {
+    public SupportLevel getCredentialSupport(final String credentialName) {
         Assert.checkNotNullParam("credentialName", credentialName);
-        return CredentialSupport.UNKNOWN;
+        return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
     private class SimpleMapRealmIdentity implements RealmIdentity {
@@ -131,11 +131,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        public CredentialSupport getCredentialSupport(final String credentialName) {
+        public SupportLevel getCredentialSupport(final String credentialName) {
             Assert.checkNotNullParam("credentialName", credentialName);
             final SimpleRealmEntry entry = map.get(name);
-            if (entry == null) return CredentialSupport.UNSUPPORTED;
-            return entry.getPassword(credentialName) != null ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+            if (entry == null) return SupportLevel.UNSUPPORTED;
+            return entry.getPassword(credentialName) != null ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         }
 
         @Override

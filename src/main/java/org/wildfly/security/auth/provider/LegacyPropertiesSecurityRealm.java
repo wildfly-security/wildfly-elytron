@@ -41,10 +41,10 @@ import java.util.regex.Pattern;
 
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -93,8 +93,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return new RealmIdentity() {
 
             @Override
-            public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialName) : CredentialSupport.UNSUPPORTED;
+            public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialSupport(credentialName) : SupportLevel.UNSUPPORTED;
             }
 
             @Override
@@ -182,13 +182,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
 
     @Override
-    public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
         if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName)) {
-            return plainText ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.VERIFIABLE_ONLY;
+            return plainText ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
-            return CredentialSupport.OBTAINABLE_ONLY;
+            return SupportLevel.SUPPORTED;
         }
-        return CredentialSupport.UNSUPPORTED;
+        return SupportLevel.UNSUPPORTED;
     }
 
     private Pattern getPattern() {

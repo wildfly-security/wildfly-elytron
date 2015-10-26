@@ -21,11 +21,11 @@ package org.wildfly.security.auth.provider.ldap;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.Credential;
@@ -44,6 +44,7 @@ import javax.naming.ldap.Rdn;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -112,17 +113,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final String credentialName) {
+    public SupportLevel getCredentialSupport(final String credentialName) {
         Assert.checkNotNullParam("credentialName", credentialName);
-        CredentialSupport response = CredentialSupport.UNSUPPORTED;
+        SupportLevel response = SupportLevel.UNSUPPORTED;
 
-        if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-            return CredentialSupport.VERIFIABLE_ONLY;
-        }
+        //if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
+        //    return CredentialSupport.VERIFIABLE_ONLY;
+        //}
 
         for (CredentialLoader loader : credentialLoaders) {
-            CredentialSupport support = loader.getCredentialSupport(dirContextFactory, credentialName);
-            if (support.isDefinitelyObtainable()) {
+            SupportLevel support = loader.getCredentialSupport(dirContextFactory, credentialName);
+            if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
             }
@@ -144,29 +145,29 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             if (!exists()) {
                 return null;
             }
 
-            if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-                return CredentialSupport.VERIFIABLE_ONLY;
-            }
+            //if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
+            //    return CredentialSupport.VERIFIABLE_ONLY;
+            //}
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == CredentialSupport.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
-                return CredentialSupport.UNSUPPORTED;
+                return SupportLevel.UNSUPPORTED;
             }
 
-            CredentialSupport support = null;
+            SupportLevel support = null;
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeObtainable()) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
-                    CredentialSupport temp = icl.getCredentialSupport(credentialName);
-                    if (temp != null && temp.isDefinitelyObtainable()) {
+                    SupportLevel temp = icl.getCredentialSupport(credentialName);
+                    if (temp != null && temp.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
                     }
@@ -178,7 +179,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             if (support == null) {
-                return CredentialSupport.UNSUPPORTED;
+                return SupportLevel.UNSUPPORTED;
             }
 
             return support;
@@ -191,13 +192,13 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == CredentialSupport.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialSupport(credentialName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeObtainable()) {
+                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
                     Credential credential = icl.getCredential(credentialName, Credential.class);

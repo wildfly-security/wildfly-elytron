@@ -25,11 +25,11 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
@@ -122,11 +122,11 @@ public class PasswordSupportTest {
 
     @Test
     public void testOneTimePasswordUser0() throws Exception {
-        CredentialSupport support = simpleToDnRealm.getCredentialSupport("otp");
-        assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
+        SupportLevel support = simpleToDnRealm.getCredentialSupport("otp");
+        assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
         RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
-        verifyPasswordSupport(identity, "otp", CredentialSupport.FULLY_SUPPORTED);
+        verifyPasswordSupport(identity, "otp", SupportLevel.SUPPORTED);
 
         OneTimePassword otp = (OneTimePassword) identity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
@@ -145,15 +145,15 @@ public class PasswordSupportTest {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
-        assertEquals(CredentialSupport.UNKNOWN, simpleToDnRealm.getCredentialSupport("otp"));
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, identity.getCredentialSupport("otp"));
+        assertEquals(SupportLevel.SUPPORTED, simpleToDnRealm.getCredentialSupport("otp"));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialSupport("otp"));
 
         identity.setCredential("otp", new PasswordCredential(password));
 
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
-        verifyPasswordSupport(newIdentity, "otp", CredentialSupport.FULLY_SUPPORTED);
+        verifyPasswordSupport(newIdentity, "otp", SupportLevel.SUPPORTED);
 
         OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
@@ -182,7 +182,7 @@ public class PasswordSupportTest {
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
-        verifyPasswordSupport(newIdentity, "otp", CredentialSupport.FULLY_SUPPORTED);
+        verifyPasswordSupport(newIdentity, "otp", SupportLevel.SUPPORTED);
 
         OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
         assertNotNull(otp);
@@ -193,15 +193,15 @@ public class PasswordSupportTest {
 
     private void performSimpleNameTest(String simpleName, String credentialName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
-        CredentialSupport support = simpleToDnRealm.getCredentialSupport(credentialName);
-        assertEquals("Pre identity", CredentialSupport.UNKNOWN, support);
+        SupportLevel support = simpleToDnRealm.getCredentialSupport(credentialName);
+        assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 
-        verifyPasswordSupport(realmIdentity, credentialName, CredentialSupport.FULLY_SUPPORTED);
+        verifyPasswordSupport(realmIdentity, credentialName, SupportLevel.SUPPORTED);
         verifyPassword(realmIdentity, credentialName, algorithm, password);
     }
 
-    private void verifyPasswordSupport(RealmIdentity identity, String credentialName, CredentialSupport requiredSupport) throws RealmUnavailableException {
-        CredentialSupport credentialSupport = identity.getCredentialSupport(credentialName);
+    private void verifyPasswordSupport(RealmIdentity identity, String credentialName, SupportLevel requiredSupport) throws RealmUnavailableException {
+        SupportLevel credentialSupport = identity.getCredentialSupport(credentialName);
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 

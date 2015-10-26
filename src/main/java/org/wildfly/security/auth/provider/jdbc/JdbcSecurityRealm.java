@@ -19,10 +19,10 @@ package org.wildfly.security.auth.provider.jdbc;
 
 import org.wildfly.security.auth.provider.jdbc.mapper.AttributeMapper;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -33,6 +33,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
 
 import javax.sql.DataSource;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -67,18 +68,18 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
         for (QueryConfiguration configuration : this.queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                 if (keyMapper.getCredentialName().equals(credentialName)) {
                     // by default, all credential types are supported if they have a corresponding mapper.
                     // however, we don't know if an account or realm identity has a specific credential or not.
-                    return CredentialSupport.UNKNOWN;
+                    return SupportLevel.POSSIBLY_SUPPORTED;
                 }
             }
         }
 
-        return CredentialSupport.UNSUPPORTED;
+        return SupportLevel.UNSUPPORTED;
     }
 
     private class JdbcRealmIdentity implements RealmIdentity {
@@ -91,7 +92,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialName().equals(credentialName)) {
@@ -100,7 +101,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                 }
             }
 
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override

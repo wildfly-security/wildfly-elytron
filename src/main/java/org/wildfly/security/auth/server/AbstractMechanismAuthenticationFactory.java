@@ -74,7 +74,7 @@ abstract class AbstractMechanismAuthenticationFactory<M, E extends Exception> im
             }
             boolean supported = false;
             for (String credential : credentials) {
-                if (securityDomain.getCredentialSupport(credential).mayBeVerifiable() || securityDomain.getCredentialSupport(credential).mayBeObtainable()) {
+                if (securityDomain.getEvidenceSupport(credential).mayBeSupported() || securityDomain.getCredentialSupport(credential).mayBeSupported()) {
                     supported = true;
                     break;
                 }

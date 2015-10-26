@@ -487,9 +487,8 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for
-     * the current authentication identity.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
-     * algorithm name is not given, then the query is performed for any algorithm of the given type.
+     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable for
+     * the current authentication identity.
      *
      * @param credentialName the credential name
      * @return the level of support for this credential type
@@ -497,8 +496,22 @@ public final class ServerAuthenticationContext {
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
-    public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialSupport(String credentialName) throws RealmUnavailableException {
         return stateRef.get().getCredentialSupport(credentialName);
+    }
+
+    /**
+     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable for
+     * the current authentication identity.
+     *
+     * @param credentialName the credential name
+     * @return the level of support for this credential type
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+    public SupportLevel getEvidenceSupport(String credentialName) throws RealmUnavailableException {
+        return stateRef.get().getEvidenceSupport(credentialName);
     }
 
     /**
@@ -658,7 +671,7 @@ public final class ServerAuthenticationContext {
 
                     List<String> credentialNames = getCredentialNames();
                     for (String credentialName : credentialNames) {
-                        if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
+                        if (getCredentialSupport(credentialName).mayBeSupported()) { // TODO maybe???
                             final PasswordCredential credential = getCredential(credentialName, PasswordCredential.class);
 
                             if (credential != null) {
@@ -690,6 +703,7 @@ public final class ServerAuthenticationContext {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
                     List<String> credentialNames = getCredentialNames();
+
                     final Credential credential = getCredential(credentialNames, credentialCallback.getSupportedTypesWithAlgorithms());
                     if (credential != null) {
                         credentialCallback.setCredential(credential);
@@ -776,7 +790,11 @@ public final class ServerAuthenticationContext {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
-        CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+
+        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -896,8 +914,13 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             return realmIdentity.getCredentialSupport(credentialName);
+        }
+
+        @Override
+        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getEvidenceSupport(credentialName);
         }
 
         @Override
@@ -965,8 +988,13 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        SupportLevel getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             return realmIdentity.getCredentialSupport(credentialName);
+        }
+
+        @Override
+        SupportLevel getEvidenceSupport(final String credentialName) throws RealmUnavailableException {
+            return realmIdentity.getEvidenceSupport(credentialName);
         }
 
         @Override

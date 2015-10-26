@@ -48,13 +48,10 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.NoSuchAttributeException;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.server.CredentialSupport;
-
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
-
 import org.wildfly.security.auth.server.RealmUnavailableException;
-
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.password.Password;
 
 /**
@@ -90,19 +87,19 @@ class UserPasswordCredentialLoader implements CredentialLoader, CredentialPersis
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
+    public SupportLevel getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
 
         int delimiter = credentialName.lastIndexOf('-');
         if (delimiter <= 0) {
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         }
         String credentialAttribute = credentialName.substring(0, delimiter);
         String credentialTypeName = credentialName.substring(delimiter + 1);
         if (! credentialAttribute.equals(userPasswordAttributeName)) {
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         }
 
-        return CREDENTIAL_TO_ALGORITHM.containsKey(credentialTypeName) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+        return CREDENTIAL_TO_ALGORITHM.containsKey(credentialTypeName) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
@@ -121,13 +118,13 @@ class UserPasswordCredentialLoader implements CredentialLoader, CredentialPersis
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(final String credentialName) {
+        public SupportLevel getCredentialSupport(final String credentialName) {
             Credential credential = getCredential(credentialName, Credential.class);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null) {
-                return CredentialSupport.FULLY_SUPPORTED;
+                return SupportLevel.SUPPORTED;
             }
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override

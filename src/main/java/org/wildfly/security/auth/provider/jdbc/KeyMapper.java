@@ -17,10 +17,10 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
-import java.sql.SQLException;
-import org.wildfly.security.auth.server.CredentialSupport;
-
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
 /**
@@ -38,15 +38,15 @@ public interface KeyMapper extends ColumnMapper {
     String getCredentialName();
 
     /**
-     * <p>Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
-     * supported based on the given {@link ResultSet}.
+     * <p>Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities), or definitely not
+     * obtainable based on the given {@link ResultSet}.
      *
      * <p>In this case the support is defined based on the query result, usually related with a specific account.
      *
      * @param resultSet the result set
      * @return the level of support for a credential based on the given result set
      */
-    CredentialSupport getCredentialSupport(ResultSet resultSet);
+    SupportLevel getCredentialSupport(ResultSet resultSet);
 
     Credential map(ResultSet resultSet) throws SQLException;
 }

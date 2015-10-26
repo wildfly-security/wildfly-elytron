@@ -36,9 +36,9 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.CredentialDecoder;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.evidence.X509PeerCertificateEvidence;
 
@@ -95,8 +95,8 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             List<String> credentialNames = credentialNameSupplier.get();
             for (String credentialName : credentialNames) {
 
-                final CredentialSupport credentialSupport = authenticationContext.getCredentialSupport(credentialName);
-                if (credentialSupport.mayBeVerifiable() && authenticationContext.verifyEvidence(credentialName, new X509PeerCertificateEvidence(subjectCertificate))) {
+                final SupportLevel credentialSupport = authenticationContext.getEvidenceSupport(credentialName);
+                if (credentialSupport.mayBeSupported() && authenticationContext.verifyEvidence(credentialName, new X509PeerCertificateEvidence(subjectCertificate))) {
                     authenticationContext.succeed();
                     if (handshakeSession != null) {
                         handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
