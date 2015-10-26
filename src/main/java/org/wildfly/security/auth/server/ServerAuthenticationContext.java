@@ -438,6 +438,7 @@ public final class ServerAuthenticationContext {
      * authentication actually happened, then authentication will complete anonymously.
      *
      * @throws IllegalStateException if authentication is already completed
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     public void succeed() throws IllegalStateException, RealmUnavailableException {
         State oldState = stateRef.get();
