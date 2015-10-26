@@ -154,7 +154,7 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
+        public Credential getCredential(String credentialName) throws RealmUnavailableException {
             return null;
         }
 

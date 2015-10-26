@@ -126,7 +126,16 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @return the (immutable) set of supported algorithms
      */
     public Set<String> getSupportedAlgorithms(Class<? extends Credential> type) {
-        return Collections.unmodifiableSet(supportedTypes.get(type));
+        return supportedTypes.get(type);
+    }
+
+    /**
+     * Get the map of supported types along with the supported algorithms for each of those types.
+     *
+     * @return the map of supported types along with the supported algorithms for each of those types
+     */
+    public Map<Class<? extends Credential>, Set<String>> getSupportedTypesWithAlgorithms() {
+        return Collections.unmodifiableMap(supportedTypes);
     }
 
     public boolean isOptional() {
@@ -194,7 +203,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
                 throw new IllegalStateException("Credential type already added.");
             }
 
-            supportedTypes.put(credentialType, new HashSet<String>(Arrays.asList(supportedAlgorithms)));
+            supportedTypes.put(credentialType, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(supportedAlgorithms))));
 
             return this;
         }

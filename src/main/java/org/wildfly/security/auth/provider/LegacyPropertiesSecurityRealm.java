@@ -98,11 +98,8 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
-            public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) throws RealmUnavailableException {
+            public Credential getCredential(String credentialName) throws RealmUnavailableException {
                 if (accountEntry == null) {
-                    return null;
-                }
-                if (!credentialType.isAssignableFrom(PasswordCredential.class)) {
                     return null;
                 }
 
@@ -125,7 +122,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 }
 
                 try {
-                    return credentialType.cast(new PasswordCredential(passwordFactory.generatePassword(passwordSpec)));
+                    return new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
                 } catch (InvalidKeySpecException e) {
                     throw new IllegalStateException(e);
                 }

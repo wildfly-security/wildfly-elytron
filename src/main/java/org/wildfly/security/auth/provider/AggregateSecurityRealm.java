@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -81,6 +85,21 @@ public final class AggregateSecurityRealm implements SecurityRealm {
 
         public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
             return authenticationIdentity.getCredentialSupport(credentialName);
+        }
+
+        @Override
+        public Credential getCredential(String credentialName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialName);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType, Set<String> supportedAlgorithms) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialName, credentialType, supportedAlgorithms);
+        }
+
+        @Override
+        public Credential getCredential(List<String> credentialNames, Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialNames, supportedTypesWithAlgorithms);
         }
 
         public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {

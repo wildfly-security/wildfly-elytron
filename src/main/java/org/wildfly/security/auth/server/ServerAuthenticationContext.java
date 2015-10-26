@@ -27,6 +27,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -55,7 +57,6 @@ import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -518,6 +519,23 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Acquire a credential after resolving the List of possible credential names along with the map of supported credential types with supported algorithms against
+     * the credentials actually available.
+     *
+     * @param credentialNames the list of credential names to query
+     * @param supportedTypesWithAlgorithms the Map of supported credential types along with the supported algorithms for each of those types.
+     *
+     * @return the credential, or {@code null} if a match was not possible.
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+
+    public Credential getCredential(List<String> credentialNames, Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
+        return stateRef.get().getCredential(credentialNames, supportedTypesWithAlgorithms);
+    }
+
+    /**
      * Verify the given evidence.
      *
      * @param evidence the evidence to verify
@@ -672,17 +690,11 @@ public final class ServerAuthenticationContext {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
 
                     List<String> credentialNames = getCredentialNames();
-                    for (String credentialName : credentialNames) {
-                        if (getCredentialSupport(credentialName).mayBeObtainable()) { // TODO maybe???
-                            final Credential credential = getCredential(credentialName, Credential.class);
-
-                            if (credential != null && isAllowedTypeAlgorithm(credential, credentialCallback)) {
-                                credentialCallback.setCredential(credential);
-                                handleOne(callbacks, idx + 1);
-                                return;
-                            }
-                            throw new FastUnsupportedCallbackException(callback);
-                        }
+                    final Credential credential = getCredential(credentialNames, credentialCallback.getSupportedTypesWithAlgorithms());
+                    if (credential != null) {
+                        credentialCallback.setCredential(credential);
+                        handleOne(callbacks, idx + 1);
+                        return;
                     }
 
                     // otherwise just fail out; some mechanisms will try again with different credentials
@@ -731,25 +743,6 @@ public final class ServerAuthenticationContext {
                 }
             }
 
-            private boolean isAllowedTypeAlgorithm(Credential credential, CredentialCallback credentialCallback) {
-                for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
-                    if (allowedType.isInstance(credential)) {
-                        if (credential instanceof AlgorithmCredential) {
-                            String algorithm = ((AlgorithmCredential) credential).getAlgorithm();
-                            for (String allowedAlgorithm : credentialCallback.getSupportedAlgorithms(allowedType)) {
-                                if(allowedAlgorithm.equals(algorithm)) {
-                                    return true; // allowed type, allowed algorithm
-                                }
-                            }
-                            return false; // allowed type, disallowed algorithm
-                        } else {
-                            return true; // allowed type, has no algorithm
-                        }
-                    }
-                }
-                return false; // disallowed type
-            }
-
         };
     }
 
@@ -788,6 +781,10 @@ public final class ServerAuthenticationContext {
         }
 
         <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+
+        Credential getCredential(final List<String> credentialNames, final Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
@@ -909,6 +906,11 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
+        Credential getCredential(List<String> credentialNames, Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
+            return realmIdentity.getCredential(credentialNames, supportedTypesWithAlgorithms);
+        }
+
+        @Override
         boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
             return realmIdentity.verifyEvidence(credentialName, evidence);
         }
@@ -970,6 +972,11 @@ public final class ServerAuthenticationContext {
         @Override
         <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
             return realmIdentity.getCredential(credentialName, credentialType);
+        }
+
+        @Override
+        Credential getCredential(List<String> credentialNames, Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
+            return realmIdentity.getCredential(credentialNames, supportedTypesWithAlgorithms);
         }
 
         @Override

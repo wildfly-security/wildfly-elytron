@@ -245,15 +245,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             return credentials.containsKey(credentialName) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
         }
 
-        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
+        public Credential getCredential(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credentialType", credentialType);
             Map<String, Credential> credentials = loadCredentials();
-            Object credential = credentials.get(credentialName);
-            if (credentialType.isInstance(credential)) {
-                return credentialType.cast(credential);
-            }
-            return null;
+            return credentials.get(credentialName);
         }
 
         public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
