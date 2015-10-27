@@ -39,7 +39,7 @@ abstract class AbstractMechanismAuthenticationFactory<M, E extends Exception> im
         this.mechanismConfigurations = mechanismConfigurations;
     }
 
-    SecurityDomain getSecurityDomain() {
+    public SecurityDomain getSecurityDomain() {
         return securityDomain;
     }
 
