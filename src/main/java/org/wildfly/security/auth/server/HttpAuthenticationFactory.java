@@ -61,6 +61,15 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     /**
+     * Obtain a new {@link Builder} capable of building a {@link HttpAuthenticationFactory}.
+     *
+     * @return a new {@link Builder} capable of building a {@link HttpAuthenticationFactory}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
      * A builder for SASL server factory configurations.
      */
     public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<HttpServerAuthenticationMechanism, RuntimeException> {
@@ -69,7 +78,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         /**
          * Construct a new instance.
          */
-        public Builder() {
+        private Builder() {
         }
 
         public Builder setSecurityDomain(final SecurityDomain securityDomain) {

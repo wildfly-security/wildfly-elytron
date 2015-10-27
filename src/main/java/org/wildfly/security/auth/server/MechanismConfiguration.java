@@ -131,6 +131,15 @@ public final class MechanismConfiguration {
         return mechanismRealms.get(realmName);
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link MechanismConfiguration}.
+     *
+     * @return a new {@link Builder} capable of building a {@link MechanismConfiguration}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static final class Builder {
         private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
@@ -141,7 +150,7 @@ public final class MechanismConfiguration {
         /**
          * Construct a new instance.
          */
-        public Builder() {
+        private Builder() {
         }
 
         public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {

@@ -335,7 +335,7 @@ public final class SecurityDomain {
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
 
-        Builder() {
+        private Builder() {
         }
 
         /**

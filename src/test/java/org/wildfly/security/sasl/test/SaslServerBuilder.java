@@ -208,10 +208,10 @@ public class SaslServerBuilder {
         if (credential != null) {
             factory = new CredentialSaslServerFactory(factory, credential, algorithm);
         }
-        final SaslAuthenticationFactory.Builder builder = new SaslAuthenticationFactory.Builder();
+        final SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
         builder.setSaslServerFactory(factory);
         builder.setSecurityDomain(domain);
-        builder.addMechanism(mechanismName, new MechanismConfiguration.Builder().setCredentialNameSupplier(() -> Collections.singletonList(TESTING_CREDENTIAL)).build());
+        builder.addMechanism(mechanismName, MechanismConfiguration.builder().setCredentialNameSupplier(() -> Collections.singletonList(TESTING_CREDENTIAL)).build());
         final SaslServer server = builder.build().createMechanism(mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);

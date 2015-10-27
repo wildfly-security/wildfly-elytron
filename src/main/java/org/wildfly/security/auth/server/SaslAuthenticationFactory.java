@@ -76,6 +76,15 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
     static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");
 
     /**
+     * Obtain a new {@link Builder} capable of building a {@link SaslAuthenticationFactory}.
+     *
+     * @return a new {@link Builder} capable of building a {@link SaslAuthenticationFactory}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+     /**
      * A builder for SASL server factory configurations.
      */
     public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<SaslServer, SaslException> {
@@ -84,7 +93,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         /**
          * Construct a new instance.
          */
-        public Builder() {
+        private Builder() {
         }
 
         public Builder setSecurityDomain(final SecurityDomain securityDomain) {
