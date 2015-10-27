@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.SupportLevel;
 
 /**
  * Within LDAP credentials could be stored in different ways, splitting out a CredentialLoader allows different strategies to be
@@ -45,7 +45,7 @@ interface CredentialLoader {
      * @param credentialName the credential name
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName);
+    SupportLevel getCredentialSupport(DirContextFactory contextFactory, String credentialName);
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.

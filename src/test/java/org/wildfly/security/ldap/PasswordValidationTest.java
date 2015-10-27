@@ -21,9 +21,9 @@ package org.wildfly.security.ldap;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 
@@ -51,8 +51,8 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("plainUser");
 
-        CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
-        assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
+        SupportLevel credentialSupport = realmIdentity.getCredentialAcquireSupport("ldap-verifiable");
+        assertEquals("Identity level support", SupportLevel.UNSUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));
     }
@@ -69,8 +69,8 @@ public class PasswordValidationTest {
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        CredentialSupport credentialSupport = realmIdentity.getCredentialSupport("ldap-verifiable");
-        assertEquals("Identity level support", CredentialSupport.VERIFIABLE_ONLY, credentialSupport);
+        SupportLevel credentialSupport = realmIdentity.getCredentialAcquireSupport("ldap-verifiable");
+        assertEquals("Identity level support", SupportLevel.UNSUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));
     }

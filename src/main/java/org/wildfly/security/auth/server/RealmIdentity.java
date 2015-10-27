@@ -51,15 +51,14 @@ import org.wildfly.security.password.PasswordFactory;
 public interface RealmIdentity {
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported for this
-     * identity.  The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
-     * algorithm name is not given, then the query is performed for any algorithm of the given type.
+     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable for this
+     * identity.
      *
      * @param credentialName the name of the credential
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException;
 
     /**
      * Acquire a credential of the given name.
@@ -134,6 +133,22 @@ public interface RealmIdentity {
     }
 
     /**
+     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable for this
+     * identity.
+     *
+     * @param credentialName the name of the credential that the evidence is to be verified against
+     * @return the level of support for this credential type
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        if (getCredentialAcquireSupport(credentialName) != SupportLevel.UNSUPPORTED) {
+            return SupportLevel.POSSIBLY_SUPPORTED;
+        }
+
+        return SupportLevel.UNSUPPORTED;
+    }
+
+    /**
      * Verify the given credential.
      *
      * @param evidence the evidence to verify
@@ -202,8 +217,8 @@ public interface RealmIdentity {
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
 
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return CredentialSupport.UNSUPPORTED;
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return SupportLevel.UNSUPPORTED;
         }
 
         public Credential getCredential(String credentialName) {
@@ -220,8 +235,8 @@ public interface RealmIdentity {
      */
     RealmIdentity NON_EXISTENT = new RealmIdentity() {
 
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return CredentialSupport.UNSUPPORTED;
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return SupportLevel.UNSUPPORTED;
         }
 
         public Credential getCredential(String credentialName) {

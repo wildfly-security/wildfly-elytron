@@ -19,7 +19,7 @@ package org.wildfly.security.auth.provider.jdbc.mapper;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
-import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
@@ -196,15 +196,15 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(ResultSet resultSet) {
+    public SupportLevel getCredentialSupport(ResultSet resultSet) {
         try {
             Object map = map(resultSet);
 
             if (map != null) {
-                return CredentialSupport.FULLY_SUPPORTED;
+                return SupportLevel.SUPPORTED;
             }
 
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         } catch (SQLException cause) {
             throw log.couldNotObtainCredentialWithCause(cause);
         }

@@ -26,6 +26,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
+
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -41,10 +42,10 @@ import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
@@ -89,19 +90,9 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialName", credentialName);
-        if (handler == null) {
-            // we will be using the default handler that only supports char[] and String credentials.
-            if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-                return CredentialSupport.VERIFIABLE_ONLY;
-            } else {
-                return CredentialSupport.UNSUPPORTED;
-            }
-        } else {
-            // if a custom handler is set then the credential type is possibly verifiable.
-            return CredentialSupport.POSSIBLY_VERIFIABLE;
-        }
+        return SupportLevel.UNSUPPORTED;
     }
 
     private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
@@ -149,8 +140,8 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getCredentialSupport(credentialName);
+        public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getCredentialAcquireSupport(credentialName);
         }
 
         @Override

@@ -1,8 +1,8 @@
 package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
@@ -20,6 +20,7 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.NoSuchAttributeException;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -54,8 +55,8 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
     }
 
     @Override
-    public CredentialSupport getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
-        return myCredentialName.equals(credentialName) ? CredentialSupport.UNKNOWN : CredentialSupport.UNSUPPORTED;
+    public SupportLevel getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
+        return myCredentialName.equals(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
@@ -74,9 +75,9 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public CredentialSupport getCredentialSupport(String credentialName) {
+        public SupportLevel getCredentialSupport(String credentialName) {
             if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
-                return CredentialSupport.UNSUPPORTED;
+                return SupportLevel.UNSUPPORTED;
             }
             DirContext context = null;
             try {
@@ -90,7 +91,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
                 Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
 
                 if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null) {
-                    return CredentialSupport.FULLY_SUPPORTED;
+                    return SupportLevel.SUPPORTED;
                 }
 
             } catch (NamingException e) {
@@ -98,7 +99,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
             } finally {
                 contextFactory.returnContext(context);
             }
-            return CredentialSupport.UNSUPPORTED;
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override

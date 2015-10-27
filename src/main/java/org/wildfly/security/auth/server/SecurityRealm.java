@@ -40,13 +40,30 @@ public interface SecurityRealm {
     RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
-     * supported.  The credential type is defined by its {@code credentialName}.
+     * Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities),
+     * or definitely not obtainable.
      *
      * @param credentialName the credential name
-     * @return the level of support for this credential type
+     * @return the level of support for this named credential
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    CredentialSupport getCredentialSupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException;
+
+    /**
+     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable (for some identities),
+     * or definitely not verifiable.
+     *
+     * @param credentialName the credential name the evidence would be verified against
+     * @return the level of support for this named credential
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        if (getCredentialAcquireSupport(credentialName) != SupportLevel.UNSUPPORTED) {
+            return SupportLevel.POSSIBLY_SUPPORTED;
+        }
+
+        return SupportLevel.UNSUPPORTED;
+    }
 
     /**
      * An empty security realm.
@@ -56,8 +73,12 @@ public interface SecurityRealm {
             return RealmIdentity.NON_EXISTENT;
         }
 
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-            return CredentialSupport.UNSUPPORTED;
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+            return SupportLevel.UNSUPPORTED;
+        }
+
+        public SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
+            return SupportLevel.UNSUPPORTED;
         }
     };
 }

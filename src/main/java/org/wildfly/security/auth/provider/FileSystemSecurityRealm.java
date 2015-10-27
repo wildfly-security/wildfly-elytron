@@ -55,12 +55,12 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
@@ -217,8 +217,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         }
     }
 
-    public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
-        return CredentialSupport.UNKNOWN;
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+        return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
     @FunctionalInterface
@@ -239,10 +239,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             this.path = path;
         }
 
-        public CredentialSupport getCredentialSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
             Map<String, Credential> credentials = loadCredentials();
-            return credentials.containsKey(credentialName) ? CredentialSupport.FULLY_SUPPORTED : CredentialSupport.UNSUPPORTED;
+            return credentials.containsKey(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
         }
 
         public Credential getCredential(final String credentialName) throws RealmUnavailableException {

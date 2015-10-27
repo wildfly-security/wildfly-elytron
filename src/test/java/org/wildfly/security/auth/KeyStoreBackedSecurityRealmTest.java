@@ -34,9 +34,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.provider.KeyStoreBackedSecurityRealm;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
@@ -75,8 +75,8 @@ public class KeyStoreBackedSecurityRealmTest {
         RealmIdentity realmIdentity = realm.createRealmIdentity("elytron");
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("credential1"));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport("credential2"));
+        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("credential1"));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport("credential2"));
 
         // as a result, the only type that will yield a non null credential is Password.
         Password password = realmIdentity.getCredential("credential1", PasswordCredential.class).getPassword();
@@ -95,8 +95,8 @@ public class KeyStoreBackedSecurityRealmTest {
         realmIdentity = realm.createRealmIdentity("javajoe");
 
         // only the Password type credential type is supported in the password file keystore.
-        assertEquals("Invalid credential support", CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("credential2"));
-        assertEquals("Invalid credential support", CredentialSupport.UNSUPPORTED, realmIdentity.getCredentialSupport("credential1"));
+        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("credential2"));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport("credential1"));
 
         // as a result, the only type that will yield a non null credential is Password.
         password = realmIdentity.getCredential("credential2", PasswordCredential.class).getPassword();

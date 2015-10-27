@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.server.CredentialSupport;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
 /**
@@ -37,7 +37,7 @@ interface IdentityCredentialLoader {
      * @param credentialName the credential name to check
      * @return the level of support for this credential type
      */
-    CredentialSupport getCredentialSupport(String credentialName);
+    SupportLevel getCredentialSupport(String credentialName);
 
     /**
      * Acquire a credential of the given type.

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -170,42 +171,50 @@ public final class SecurityDomain {
         return realmInfo;
     }
 
-    CredentialSupport getCredentialSupport(final String credentialName) {
-        SupportLevel obtainMin, obtainMax, verifyMin, verifyMax;
-        obtainMin = obtainMax = verifyMin = verifyMax = null;
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
+        return getSupportLevel(r -> {
+            try {
+                return r.getCredentialAcquireSupport(credentialName);
+            } catch (RealmUnavailableException e) {
+                return null;
+            }
+        });
+    }
+
+    public SupportLevel getEvidenceVerifySupport(final String credentialName) {
+        return getSupportLevel(r -> {
+            try {
+                return r.getEvidenceVerifySupport(credentialName);
+            } catch (RealmUnavailableException e) {
+                return null;
+            }
+        });
+    }
+
+    private SupportLevel getSupportLevel(final Function<SecurityRealm, SupportLevel> getSupportLevel) {
+        SupportLevel min, max;
+        min = max = null;
         Iterator<RealmInfo> iterator = realmMap.values().iterator();
-        if (iterator.hasNext()) {
 
-            while (iterator.hasNext()) {
-                RealmInfo realmInfo = iterator.next();
-                SecurityRealm realm = realmInfo.getSecurityRealm();
-                try {
-                    final CredentialSupport support = realm.getCredentialSupport(credentialName);
+        while (iterator.hasNext()) {
+            RealmInfo realmInfo = iterator.next();
+            SecurityRealm realm = realmInfo.getSecurityRealm();
+            final SupportLevel support = getSupportLevel.apply(realm);
 
-                    final SupportLevel obtainable = support.obtainableSupportLevel();
-                    final SupportLevel verification = support.verificationSupportLevel();
-
-                    if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
-                        obtainMin = obtainMax = obtainable;
-                        verifyMin = verifyMax = verification;
-                    } else {
-                        if (obtainable.compareTo(obtainMin) < 0) { obtainMin = obtainable; }
-                        if (obtainable.compareTo(obtainMax) > 0) { obtainMax = obtainable; }
-
-                        if (verification.compareTo(verifyMin) < 0) { verifyMin = verification; }
-                        if (verification.compareTo(verifyMax) > 0) { verifyMax = verification; }
-                    }
-                } catch (RealmUnavailableException e) {
+            if (support != null) {
+                if (min == null || max == null) {
+                    min = max = support;
+                } else {
+                    if (support.compareTo(min) < 0) { min = support; }
+                    if (support.compareTo(max) > 0) { max = support; }
                 }
             }
+        }
 
-            if (obtainMin == null || obtainMax == null || verifyMin == null || verifyMax == null) {
-                return CredentialSupport.UNSUPPORTED;
-            } else {
-                return CredentialSupport.getCredentialSupport(minMax(obtainMin, obtainMax), minMax(verifyMin, verifyMax));
-            }
+        if (min == null || max == null) {
+            return SupportLevel.UNSUPPORTED;
         } else {
-            return CredentialSupport.UNSUPPORTED;
+            return minMax(min, max);
         }
     }
 

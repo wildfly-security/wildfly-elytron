@@ -20,8 +20,8 @@ package org.wildfly.security.auth.provider.jdbc;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
-import org.wildfly.security.auth.server.CredentialSupport;
 import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;
@@ -71,11 +71,11 @@ public class PasswordSupportTest {
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred1"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred1"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred1"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred1"));
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
@@ -108,11 +108,11 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred2"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred2"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred2"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred2"));
         assertTrue(realmIdentity.verifyEvidence("cred2", new PasswordGuessEvidence(userPassword.toCharArray())));
         assertFalse(realmIdentity.verifyEvidence("cred2", new PasswordGuessEvidence("invalid".toCharArray())));
 
@@ -141,11 +141,11 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred3"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred3"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred3"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred3"));
         assertTrue(realmIdentity.verifyEvidence("cred3", new PasswordGuessEvidence(userPassword.toCharArray())));
         assertFalse(realmIdentity.verifyEvidence("cred3", new PasswordGuessEvidence("invalid".toCharArray())));
 
@@ -178,11 +178,11 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred4"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred4"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred4"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred4"));
         assertTrue(realmIdentity.verifyEvidence("cred4", new PasswordGuessEvidence(userPassword.toCharArray())));
 
         SaltedSimpleDigestPassword storedPassword = (SaltedSimpleDigestPassword) realmIdentity.getCredential("cred4", PasswordCredential.class).getPassword();
@@ -213,11 +213,11 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred5"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred5"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred5"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred5"));
         assertTrue(realmIdentity.verifyEvidence("cred5", new PasswordGuessEvidence(userPassword.toCharArray())));
 
         SimpleDigestPassword storedPassword = (SimpleDigestPassword) realmIdentity.getCredential("cred5", PasswordCredential.class).getPassword();
@@ -241,11 +241,11 @@ public class PasswordSupportTest {
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(CredentialSupport.UNKNOWN, securityRealm.getCredentialSupport("cred6"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred6"));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(CredentialSupport.FULLY_SUPPORTED, realmIdentity.getCredentialSupport("cred6"));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred6"));
         assertTrue(realmIdentity.verifyEvidence("cred6", new PasswordGuessEvidence(userPassword.toCharArray())));
 
         ScramDigestPassword storedPassword = (ScramDigestPassword) realmIdentity.getCredential("cred6", PasswordCredential.class).getPassword();
