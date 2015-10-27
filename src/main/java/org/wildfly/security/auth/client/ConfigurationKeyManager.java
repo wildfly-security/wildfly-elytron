@@ -145,7 +145,7 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
         private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer = new HashMap<>();
         private final Map<String, X509CertificateChainPrivateCredential> credentialsByAlias = new HashMap<>();
 
-        private Builder() {
+        Builder() {
         }
 
         void addCredential(X509CertificateChainPrivateCredential credential) {

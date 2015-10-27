@@ -121,7 +121,7 @@ public final class MechanismRealmConfiguration {
         /**
          * Construct a new instance.
          */
-        private Builder() {
+        Builder() {
         }
 
         public void setRealmName(final String realmName) {

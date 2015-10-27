@@ -150,7 +150,7 @@ public final class MechanismConfiguration {
         /**
          * Construct a new instance.
          */
-        private Builder() {
+        Builder() {
         }
 
         public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {

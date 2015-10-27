@@ -78,7 +78,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         /**
          * Construct a new instance.
          */
-        private Builder() {
+        Builder() {
         }
 
         public Builder setSecurityDomain(final SecurityDomain securityDomain) {

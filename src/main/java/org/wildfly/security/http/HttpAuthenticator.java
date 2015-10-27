@@ -200,7 +200,7 @@ public class HttpAuthenticator {
         private boolean required;
         private boolean ignoreOptionalFailures;
 
-        private Builder() {
+        Builder() {
         }
 
         /**

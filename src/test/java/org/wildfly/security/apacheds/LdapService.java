@@ -79,7 +79,7 @@ public class LdapService implements Closeable {
         private DirectoryService directoryService;
         private List<LdapServer> servers = new LinkedList<LdapServer>();
 
-        private Builder() {
+        Builder() {
         }
 
         /**

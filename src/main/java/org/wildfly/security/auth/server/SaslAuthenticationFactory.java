@@ -93,7 +93,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         /**
          * Construct a new instance.
          */
-        private Builder() {
+        Builder() {
         }
 
         public Builder setSecurityDomain(final SecurityDomain securityDomain) {
