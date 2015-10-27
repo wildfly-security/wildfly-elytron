@@ -42,6 +42,12 @@ public class HttpConstants {
     public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
     /*
+     * Mechanism Names
+     */
+
+    public static final String BASIC_NAME = "BASIC";
+
+    /*
      * Response Codes
      */
 

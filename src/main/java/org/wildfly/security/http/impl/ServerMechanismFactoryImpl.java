@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
+import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     public String[] getMechanismNames(Map<String, ?> properties) {
         // TODO We may cache this later but for now leave the option open for properties to influence selection.
         ArrayList<String> mechanismNames = new ArrayList<>();
-        mechanismNames.add(BASIC);
+        mechanismNames.add(BASIC_NAME);
 
 
         return mechanismNames.toArray(new String[mechanismNames.size()]);
@@ -56,7 +56,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
             CallbackHandler callbackHandler) {
         switch (mechanismName) {
-            case BASIC:
+            case BASIC_NAME:
                 return new BasicAuthenticationMechanism(callbackHandler, "Elytron Realm", false);
         }
         return null;
