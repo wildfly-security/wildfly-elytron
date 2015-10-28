@@ -29,6 +29,14 @@ import java.util.Collection;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface MechanismAuthenticationFactory<M, E extends Exception> {
+
+    /**
+     * Get the underlying {@link SecurityDomain} that mechanisms created by this factory will be using for authentication.
+     *
+     * @return the underlying {@link SecurityDomain} that mechanisms created by this factory will be using for authentication.
+     */
+    SecurityDomain getSecurityDomain();
+
     /**
      * Create the mechanism instance.
      *
