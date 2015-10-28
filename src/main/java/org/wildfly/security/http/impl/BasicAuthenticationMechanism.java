@@ -22,11 +22,11 @@ import static java.util.Arrays.fill;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CHARSET;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
-import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
 import static org.wildfly.security.util._private.Arrays2.indexOf;
 
 import java.io.IOException;
@@ -58,8 +58,8 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
 
     // TODO - Undertow also has a silent mode for HTTP authentication.
 
-    private static final String BASIC_PREFIX = BASIC + " ";
-    private static final int PREFIX_LENGTH = BASIC_PREFIX.length();
+    private static final String CHALLENGE_PREFIX = "Basic ";
+    private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
 
     private final CallbackHandler callbackHandler;
     private final String challengeValue;
@@ -70,7 +70,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
 
         this.callbackHandler = callbackHandler;
 
-        StringBuilder sb = new StringBuilder(BASIC_PREFIX);
+        StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(realm).append("\"");
         if (includeCharset) {
             sb.append(", ").append(CHARSET).append("=\"UTF-8\"");
@@ -84,7 +84,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
      */
     @Override
     public String getMechanismName() {
-        return BASIC;
+        return BASIC_NAME;
     }
 
     /**
@@ -96,7 +96,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
-                if (current.startsWith(BASIC_PREFIX)) {
+                if (current.startsWith(CHALLENGE_PREFIX)) {
                     byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).base64Decode().drain();
 
                     int colonPos = indexOf(decodedValue, ':');
@@ -122,7 +122,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                             return;
                         } else {
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
-                            request.authenticationFailed(log.authenticationFailed(username, BASIC), this::prepareResponse);
+                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), this::prepareResponse);
                             return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {

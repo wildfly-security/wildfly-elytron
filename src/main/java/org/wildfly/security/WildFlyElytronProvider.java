@@ -18,7 +18,7 @@
 
 package org.wildfly.security;
 
-import static org.wildfly.security.http.util.HttpMechanismInformation.Names.BASIC;
+import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
 import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
@@ -110,7 +110,7 @@ public class WildFlyElytronProvider extends Provider {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
 
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, BASIC, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, BASIC_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
     }
 
     private void putPasswordImplementations() {
