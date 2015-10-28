@@ -132,6 +132,15 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
         return credential == null ? null : credential.getPrivateKey();
     }
 
+    /**
+     * Obtain a new {@link Builder} capable of building a {@link ConfigurationKeyManager}.
+     *
+     * @return a new {@link Builder} capable of building a {@link ConfigurationKeyManager}.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     static final class Builder {
         private final Map<String, Map<X500Principal, String>> credentialAliasesByKeyTypeAndIssuer = new HashMap<>();
         private final Map<String, X509CertificateChainPrivateCredential> credentialsByAlias = new HashMap<>();

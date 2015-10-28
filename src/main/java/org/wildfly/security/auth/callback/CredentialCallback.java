@@ -163,7 +163,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
         private final Map<Class<? extends Credential>, Set<String>> supportedTypes = new HashMap<>();
         private boolean built = false;
 
-        private Builder() {};
+        Builder() {};
 
         private void assertNotBuilt() {
             if (built) {

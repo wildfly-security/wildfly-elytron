@@ -253,7 +253,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private InputStream groupsStream;
         private boolean plainText;
 
-        private Builder() {
+        Builder() {
         }
 
         public Builder setPasswordsStream(InputStream passwordsStream) {

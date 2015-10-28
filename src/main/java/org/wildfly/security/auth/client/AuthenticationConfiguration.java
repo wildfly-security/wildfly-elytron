@@ -672,7 +672,7 @@ public abstract class AuthenticationConfiguration {
             if (keyManagerFactory != null) {
                 keyManager = keyManagerFactory.create();
             } else {
-                final ConfigurationKeyManager.Builder builder = new ConfigurationKeyManager.Builder();
+                final ConfigurationKeyManager.Builder builder = ConfigurationKeyManager.builder();
                 configureKeyManager(builder);
                 keyManager = builder.build();
             }
