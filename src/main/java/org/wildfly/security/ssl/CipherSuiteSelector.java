@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * An immutable filter for SSL/TLS cipher suites.
@@ -224,76 +225,6 @@ public abstract class CipherSuiteSelector {
         return enabledSet.toArray(new String[enabledSet.size()]);
     }
 
-    static class CodePointIterator {
-        private final String s;
-        private int i;
-
-        CodePointIterator(final String s) {
-            this.s = s;
-        }
-
-        int next() {
-            if (i == s.length()) {
-                return -1;
-            }
-            int c = s.codePointAt(i);
-            i = s.offsetByCodePoints(i, 1);
-            return c;
-        }
-
-        int prev() {
-            if (i == 0) {
-                return -1;
-            }
-            int c = s.codePointAt(i);
-            i = s.offsetByCodePoints(i, -1);
-            return c;
-        }
-
-        int current() {
-            if (i == s.length()) {
-                return -1;
-            }
-            return s.codePointAt(i);
-        }
-
-        String until(int delim) {
-            final int start = i;
-            int next;
-            while ((next = next()) != delim && next != -1) {}
-            return s.substring(start, i);
-        }
-
-        String until(int delim1, int delim2) {
-            final int start = i;
-            int next;
-            while ((next = next()) != delim1 && next != delim2 && next != -1) {}
-            return s.substring(start, i);
-        }
-
-        String until(int delim1, int delim2, int delim3) {
-            final int start = i;
-            int next;
-            while ((next = next()) != delim1 && next != delim2 && next != delim3 && next != -1) {}
-            return s.substring(start, i);
-        }
-
-        String until(int delim1, int delim2, int delim3, int delim4) {
-            final int start = i;
-            int next;
-            while ((next = next()) != delim1 && next != delim2 && next != delim3 && next != delim4 && next != -1) {}
-            return s.substring(start, i);
-        }
-
-        int getOffset() {
-            return i;
-        }
-
-        String getString() {
-            return s;
-        }
-    }
-
     /**
      * Create a cipher suite selector from the given OpenSSL-style cipher list string.  The rules of the string are as
      * follows:
@@ -410,17 +341,14 @@ public abstract class CipherSuiteSelector {
      * @throws IllegalArgumentException if the given string is not valid
      */
     public static CipherSuiteSelector fromString(String string) throws IllegalArgumentException {
-        final CodePointIterator i = new CodePointIterator(string);
+        final CodePointIterator i = CodePointIterator.ofString(string);
         CipherSuiteSelector current = empty();
         CipherSuitePredicate predicate;
         String name;
         int cp;
-        for (;;) {
+        while (i.hasNext()) {
             cp = i.next();
             switch (cp) {
-                case -1: {
-                    return current;
-                }
                 case '+': {
                     current = parseMoveToEnd(current, i);
                     break;
@@ -438,7 +366,7 @@ public abstract class CipherSuiteSelector {
                     break;
                 }
                 case '=': {
-                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.getOffset(), string);
+                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.offset(), string);
                 }
                 case ',':
                 case ':': {
@@ -452,7 +380,7 @@ public abstract class CipherSuiteSelector {
                     }
                     if (Character.isLetterOrDigit(cp)) {
                         i.prev();
-                        name = i.until('+', ':', ',', ' ');
+                        name = i.delimitedBy('+', ':', ',', ' ').drainToString();
                         predicate = parsePredicate(i, name);
                         if (predicate != null) {
                             current = current.add(predicate);
@@ -468,17 +396,18 @@ public abstract class CipherSuiteSelector {
 //                                case "SUITEB128ONLY":       return null;
 //                                case "SUITEB192":           return null;
                                 default: {
-                                    throw ElytronMessages.log.mechSelectorTokenNotAllowed(name, i.getOffset(), string);
+                                    throw ElytronMessages.log.mechSelectorTokenNotAllowed(name, i.offset(), string);
                                 }
                             }
                         }
                         break;
                     }
-                    throw ElytronMessages.log.mechSelectorUnexpectedChar(cp, i.getOffset(), string);
+                    throw ElytronMessages.log.mechSelectorUnexpectedChar(cp, i.offset(), string);
                 }
             }
             // current character should be : or EOS after parse* methods
         }
+        return current;
     }
 
     private static CipherSuiteSelector parseMoveToEnd(final CipherSuiteSelector current, final CodePointIterator i) {
@@ -494,29 +423,29 @@ public abstract class CipherSuiteSelector {
     }
 
     private static CipherSuiteSelector parseSpecial(final CipherSuiteSelector current, final CodePointIterator i) {
-        String word = i.until('=', ':');
+        String word = i.delimitedBy('=', ':').drainToString();
         switch (word) {
             case "STRENGTH": {
-                if (i.current() == '=') {
-                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.getOffset(), i.getString());
+                if (i.hasNext() && i.next() == '=') {
+                    throw ElytronMessages.log.mechSelectorTokenNotAllowed("=", i.offset(), i.drainToString());
                 }
                 return current.sortByAlgorithmKeyLength();
             }
             default: {
-                throw ElytronMessages.log.mechSelectorUnknownToken(word, i.getString());
+                throw ElytronMessages.log.mechSelectorUnknownToken(word, i.drainToString());
             }
         }
     }
 
     private static CipherSuitePredicate parsePredicate(final CodePointIterator i) {
-        return parsePredicate(i, i.until('+', ':', ',', ' '));
+        return parsePredicate(i, i.delimitedBy('+', ':', ',', ' ').drainToString());
     }
 
     private static CipherSuitePredicate parsePredicate(final CodePointIterator i, final String word) {
         CipherSuitePredicate item = getSimplePredicateByName(word);
-        if (i.current() == '+') {
+        if (i.hasNext() && i.next() == '+') {
             if (item == null) {
-                throw ElytronMessages.log.mechSelectorTokenNotAllowed("+", i.getOffset(), i.getString());
+                throw ElytronMessages.log.mechSelectorTokenNotAllowed("+", i.offset(), i.drainToString());
             }
             return parseAndPredicate(item, i);
         } else {
@@ -528,8 +457,8 @@ public abstract class CipherSuiteSelector {
         final ArrayList<CipherSuitePredicate> list = new ArrayList<>();
         list.add(item);
         do {
-            list.add(getSimplePredicateByName(i.until('+', ':', ',', ' ')));
-        } while (i.current() == '+');
+            list.add(getSimplePredicateByName(i.delimitedBy('+', ':', ',', ' ').drainToString()));
+        } while (i.hasNext() && i.next() == '+');
         return CipherSuitePredicate.matchAll(list.toArray(new CipherSuitePredicate[list.size()]));
     }
 

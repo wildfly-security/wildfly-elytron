@@ -29,4 +29,76 @@ public class MechanismDatabaseTest {
         final MechanismDatabase.Entry entry = instance.getCipherSuiteOpenSSLName("NULL-MD5");
         Assert.assertNotNull(entry);
     }
+
+    @Test
+    public void cipherSuiteSelector1() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL");
+        Assert.assertArrayEquals(
+            new String[] {
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            },
+            selector.evaluate(new String[] {
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            })
+        );
+    }
+
+    @Test
+    public void cipherSuiteSelector2() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL:!RSA");
+        Assert.assertArrayEquals(
+            new String[] {
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            },
+            selector.evaluate(new String[] {
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            })
+        );
+    }
+
+    @Test
+    public void cipherSuiteSelector3() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL:!RSA:RSA");
+        Assert.assertArrayEquals(
+            new String[] {
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            },
+            selector.evaluate(new String[] {
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            })
+        );
+    }
+
+    @Test
+    public void cipherSuiteSelector4() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ALL:-RSA:RSA");
+        Assert.assertArrayEquals(
+            new String[] {
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+            },
+            selector.evaluate(new String[] {
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
+                "SSL_RSA_WITH_3DES_EDE_CBC_SHA",
+                "TLS_SRP_SHA_WITH_AES_256_CBC_SHA",
+                "TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA256",
+            })
+        );
+    }
 }
