@@ -72,15 +72,14 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final Pattern HASHED_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
     private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
-    public static final String PROPERTIES_CLEAR_CREDENTIAL_NAME  = "password-clear";
-    public static final String PROPERTIES_DIGEST_CREDENTIAL_NAME  = "password-digest-md5";
-
     private final boolean plainText;
+    private final Map<String, Boolean> credentialMap;
 
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
         this.plainText = builder.plainText;
+        credentialMap = new HashMap<String, Boolean>(builder.credentialNamePlainMap);
     }
 
     @Override
@@ -98,6 +97,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             }
 
             @Override
+            public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getEvidenceVerifySupport(credentialName) : SupportLevel.UNSUPPORTED;
+            }
+
+            @Override
             public Credential getCredential(String credentialName) throws RealmUnavailableException {
                 if (accountEntry == null) {
                     return null;
@@ -105,10 +109,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
-                if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName) && plainText) {
+
+                Boolean plainTextCredential = credentialMap.get(credentialName);
+                if (Boolean.TRUE.equals(plainTextCredential) && plainText) {
                     passwordFactory = getPasswordFactory(ALGORITHM_CLEAR);
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
-                } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
+                } else if (Boolean.FALSE.equals(plainTextCredential)) {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     if (plainText) {
                         AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
@@ -130,7 +136,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
-                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false) {
+                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false || Boolean.TRUE.equals(credentialMap.get(credentialName)) == false) {
                     return false;
                 }
                 final char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
@@ -183,12 +189,16 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     @Override
     public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
-        if (PROPERTIES_CLEAR_CREDENTIAL_NAME.equals(credentialName)) {
-            return plainText ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
-        } else if (PROPERTIES_DIGEST_CREDENTIAL_NAME.equals(credentialName)) {
+        if ((credentialMap.containsKey(credentialName) && plainText) || Boolean.FALSE.equals(credentialMap.get(credentialName))) {
             return SupportLevel.SUPPORTED;
         }
+
         return SupportLevel.UNSUPPORTED;
+    }
+
+    @Override
+    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        return Boolean.TRUE.equals(credentialMap.get(credentialName)) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     private Pattern getPattern() {
@@ -252,24 +262,69 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private InputStream passwordsStream;
         private InputStream groupsStream;
         private boolean plainText;
+        private String realmName;
+        private Map<String, Boolean> credentialNamePlainMap = new HashMap<>();
 
         Builder() {
         }
 
+        /**
+         * Set the {@link InputStream} to use to load the passwords.
+         *
+         * @param passwordsStream the {@link InputStream} to use to load the passwords.
+         * @return this {@link Builder}
+         */
         public Builder setPasswordsStream(InputStream passwordsStream) {
             this.passwordsStream = passwordsStream;
 
             return this;
         }
 
+        /**
+         * Set the {@link InputStream} to use to load the group information.
+         *
+         * @param groupsStream the {@link InputStream} to use to load the group information.
+         * @return this {@link Builder}
+         */
         public Builder setGroupsStream(InputStream groupsStream) {
             this.groupsStream = groupsStream;
 
             return this;
         }
 
+        /**
+         * Set if the file format is for plain text passwords.
+         *
+         * @param plainText is the file format plain text for the passwords.
+         * @return this {@link Builder}
+         */
         public Builder setPlainText(boolean plainText) {
             this.plainText = plainText;
+
+            return this;
+        }
+
+        /**
+         * Set the realm name used / to use for encoding the passwords where digested.
+         *
+         * @param realmName the realm name used / to use for encoding the passwords where digested.
+         * @return this {@link Builder}
+         */
+        public Builder setRealmName(final String realmName) {
+            this.realmName = realmName;
+
+            return this;
+        }
+
+        /**
+         * Add a credential name to be supported by this {@link SecurityRealm}
+         *
+         * @param credentialName the name of the credential
+         * @param plainText {@code true} if this credential name is a clear test representation of the password
+         * @return this {@link Builder}
+         */
+        public Builder addCredentialName(final String credentialName, final boolean plainText) {
+            credentialNamePlainMap.put(credentialName, plainText);
 
             return this;
         }
