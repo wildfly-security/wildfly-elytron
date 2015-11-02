@@ -34,7 +34,9 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.wildfly.common.Assert;
@@ -58,19 +60,18 @@ import org.wildfly.security.manager.WildFlySecurityManager;
  */
 public class JaasSecurityRealm implements SecurityRealm {
 
-    public final String VERIFIABLE_CREDENTIAL_NAME = "jaas";
-
     private final String loginConfiguration;
 
-    private CallbackHandler handler;
+    private final CallbackHandler handler;
+    private final Set<String> supportedCredentialNames;
 
     /**
      * Construct a new instance.
      *
      * @param loginConfiguration the login configuration name to use
      */
-    public JaasSecurityRealm(final String loginConfiguration) {
-        this(loginConfiguration, null);
+    public JaasSecurityRealm(final String loginConfiguration, final String... credentialNames) {
+        this(loginConfiguration, null, credentialNames);
     }
 
     /**
@@ -79,9 +80,10 @@ public class JaasSecurityRealm implements SecurityRealm {
      * @param loginConfiguration the login configuration name to use
      * @param handler the JAAS callback handler to use
      */
-    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
+    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler, final String... credentialNames) {
         this.loginConfiguration = loginConfiguration;
         this.handler = handler;
+        this.supportedCredentialNames = new HashSet<>(Arrays.asList(credentialNames));
     }
 
     @Override
@@ -93,6 +95,11 @@ public class JaasSecurityRealm implements SecurityRealm {
     public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialName", credentialName);
         return SupportLevel.UNSUPPORTED;
+    }
+
+    @Override
+    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        return supportedCredentialNames.contains(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
@@ -147,6 +154,11 @@ public class JaasSecurityRealm implements SecurityRealm {
         @Override
         public Credential getCredential(String credentialName) throws RealmUnavailableException {
             return null;
+        }
+
+        @Override
+        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getEvidenceVerifySupport(credentialName);
         }
 
         @Override
