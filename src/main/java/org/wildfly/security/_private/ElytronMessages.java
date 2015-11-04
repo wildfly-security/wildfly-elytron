@@ -60,6 +60,7 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
+import org.wildfly.security.credential.store.external.ExternalCredentialException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
@@ -1241,4 +1242,19 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(id = 8038, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
+
+    /* credential.store. package */
+
+    @Message(id = 9500, value = "Problem to instantiate password class")
+    ExternalCredentialException passwordClassProblem(@Cause Exception cause);
+
+    @Message(id = 9501, value = "Specified class is not an instance of %s")
+    ExternalCredentialException wrongPasswordClass(String className);
+
+    @Message(id = 9502, value = "Password class not specified")
+    IllegalArgumentException passwordClassNotSpecified();
+
+    @LogMessage
+    @Message(id = 9503, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    void warnWrongBase64EncodedString(String base64);
 }
