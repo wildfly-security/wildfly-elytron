@@ -18,6 +18,11 @@
 
 package org.wildfly.security;
 
+import static org.wildfly.security.credential.external.ExternalCredential.EXTERNAL_CREDENTIAL_PROVIDER_TYPE;
+import static org.wildfly.security.credential.external.impl.ExternalCredentialProviderName.CLASS;
+import static org.wildfly.security.credential.external.impl.ExternalCredentialProviderName.CMD;
+import static org.wildfly.security.credential.external.impl.ExternalCredentialProviderName.EXT;
+import static org.wildfly.security.credential.external.impl.ExternalCredentialProviderName.MASKED;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
 import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
@@ -90,6 +95,9 @@ public class WildFlyElytronProvider extends Provider {
 
     private static final String PASSWORD_FACTORY_TYPE = PasswordFactory.class.getSimpleName();
 
+    /**
+     * Default constructor for this security provider.
+     */
     public WildFlyElytronProvider() {
         super("WildFlyElytron", 1.0, "WildFly Elytron Provider");
 
@@ -97,6 +105,7 @@ public class WildFlyElytronProvider extends Provider {
         putKeyStoreImplementations();
         putPasswordImplementations();
         putSaslMechanismImplementations();
+        putExternalCredentialProviderImplementations();
     }
 
     private void putKeyStoreImplementations() {
@@ -193,6 +202,16 @@ public class WildFlyElytronProvider extends Provider {
                 putService(new Service(this, SASL_SERVER_FACTORY_TYPE, name, className, noAliases, noProperties));
             }
         } catch (ServiceConfigurationError | RuntimeException ignored) {}
+    }
+
+    private void putExternalCredentialProviderImplementations() {
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, EXTERNAL_CREDENTIAL_PROVIDER_TYPE, CLASS.way(), CLASS.get(), emptyList, emptyMap));
+        putService(new Service(this, EXTERNAL_CREDENTIAL_PROVIDER_TYPE, EXT.way(), EXT.get(), emptyList, emptyMap));
+        putService(new Service(this, EXTERNAL_CREDENTIAL_PROVIDER_TYPE, CMD.way(), CMD.get(), emptyList, emptyMap));
+        putService(new Service(this, EXTERNAL_CREDENTIAL_PROVIDER_TYPE, MASKED.way(), MASKED.get(), emptyList, emptyMap));
     }
 
 }
