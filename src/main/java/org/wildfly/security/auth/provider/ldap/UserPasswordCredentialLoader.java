@@ -152,7 +152,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getEvidenceVeridySupport(String credentialName) {
+        public SupportLevel getEvidenceVerifySupport(String credentialName) {
          // If it is obtainable, it is verifiable.
             return getCredentialAcquireSupport(credentialName);
         }

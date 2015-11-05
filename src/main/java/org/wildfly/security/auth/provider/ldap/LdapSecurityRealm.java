@@ -288,7 +288,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
                 if (verifier.getEvidenceVerifySupport(dirContextFactory, credentialName).mayBeSupported()) {
                     IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
-                    SupportLevel temp = iev.getEvidenceVeridySupport(credentialName);
+                    SupportLevel temp = iev.getEvidenceVerifySupport(credentialName);
                     if (temp != null && temp.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;

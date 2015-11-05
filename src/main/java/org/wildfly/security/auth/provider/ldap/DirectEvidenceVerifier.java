@@ -56,7 +56,7 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
         return new IdentityEvidenceVerifier() {
 
             @Override
-            public SupportLevel getEvidenceVeridySupport(String credentialName) throws RealmUnavailableException {
+            public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
                 return DirectEvidenceVerifier.this.getEvidenceVerifySupport(contextFactory, credentialName);
             }
 

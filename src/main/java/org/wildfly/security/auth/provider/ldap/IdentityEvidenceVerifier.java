@@ -35,7 +35,7 @@ interface IdentityEvidenceVerifier {
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    SupportLevel getEvidenceVeridySupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException;
 
     /**
      * Verify the given evidence against the named credential.
