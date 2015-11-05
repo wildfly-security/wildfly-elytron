@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
 
 /**
@@ -45,7 +46,7 @@ interface CredentialLoader {
      * @param credentialName the credential name
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialSupport(DirContextFactory contextFactory, String credentialName);
+    SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, String credentialName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.
@@ -57,6 +58,6 @@ interface CredentialLoader {
      * @param distinguishedName the distinguished name of the identity.
      * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
      */
-    IdentityCredentialLoader forIdentity(DirContextFactory contextFactory, String distinguishedName);
+    IdentityCredentialLoader forIdentity(DirContextFactory contextFactory, String distinguishedName) throws RealmUnavailableException;
 
 }

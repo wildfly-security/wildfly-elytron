@@ -18,6 +18,17 @@
 
 package org.wildfly.security.ldap;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -42,14 +53,6 @@ import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-
 /**
  * Test case to test access to passwords stored in LDAP using the 'userPassword' attribute.
  *
@@ -70,12 +73,25 @@ public class PasswordSupportTest {
     public static void createRealm() {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextFactory(dirContextFactory.create())
-                .setPrincipalMapping(LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder()
-                                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                                .setRdnIdentifier("uid")
-                                .setOtpAttributes("otpAlgorithm","otpHash","otpSeed","otpSequence")
-                                .build()
-                )
+                .identityMapping()
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setRdnIdentifier("uid")
+                .build()
+                .otpCredentialLoader()
+                .setOtpAlgorithmAttribute("otpAlgorithm")
+                .setOtpHashAttribute("otpHash")
+                .setOtpSeedAttribute("otpSeed")
+                .setOtpSequenceAttribute("otpSequence")
+                .build()
+                .userPasswordCredentialLoader()
+                .addSupportedCredential("userPassword-clear", ClearPassword.ALGORITHM_CLEAR)
+                .addSupportedCredential("userPassword-md5",  SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5)
+                .addSupportedCredential("userPassword-smd5", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5)
+                .addSupportedCredential("userPassword-sha512", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512)
+                .addSupportedCredential("userPassword-ssha512", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512)
+                .addSupportedCredential("userPassword-crypt", UnixDESCryptPassword.ALGORITHM_CRYPT_DES)
+                .addSupportedCredential("userPassword-crypt_", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES)
+                .build()
                 .build();
     }
 

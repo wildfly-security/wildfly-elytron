@@ -1,6 +1,6 @@
 /*
- * JBoss, Home of Professional Open Source
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,37 +15,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.wildfly.security.auth.provider.ldap;
 
+import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
-import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
- * A {@link CredentialLoader} for loading credentials stored in LDAP directory.
  *
- * Implementations of this interface are instantiated for a specific identity, as a result all of the methods on this interface
- * are specific to that identity.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-interface IdentityCredentialLoader {
+interface IdentityEvidenceVerifier {
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
      *
      * @param credentialName the credential name to check
      * @return the level of support for this credential type
+     * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    SupportLevel getCredentialAcquireSupport(String credentialName);
+    SupportLevel getEvidenceVeridySupport(String credentialName) throws RealmUnavailableException;
 
     /**
-     * Acquire a credential of the given type.
+     * Verify the given evidence against the named credential.
      *
-     * @param <C> the type to which should be credential casted
-     * @param credentialName the name of the credential
-     * @param credentialType the class of type to which should be credential casted
-     * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
+     * @param the {@link DirContextFactory} to use to access the LDAP server.
+     * @param credentialName the name of the credential to verify the evidence against.
+     * @param evidence the evidence to verify.
+     * @return {@code true} if the evidence is successfully verified, {@code false} otherwise.
+     * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    <C extends Credential> C getCredential(String credentialName, Class<C> credentialType);
+    boolean verifyEvidence(final DirContextFactory contextFactory, final String credentialName, final Evidence evidence) throws RealmUnavailableException;
+
 }

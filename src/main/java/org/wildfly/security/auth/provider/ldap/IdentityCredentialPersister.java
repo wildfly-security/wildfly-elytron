@@ -11,7 +11,7 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public interface IdentityCredentialPersister {
+public interface IdentityCredentialPersister extends IdentityCredentialLoader {
 
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.

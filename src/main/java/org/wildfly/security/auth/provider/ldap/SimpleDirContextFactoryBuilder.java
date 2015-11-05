@@ -38,8 +38,6 @@ import java.util.Properties;
  */
 public class SimpleDirContextFactoryBuilder {
 
-    // TODO - Plenty of additional options possible, this is the bare minimum to interact with LDAP.
-
     private boolean built = false;
     private String initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
     private String providerUrl = null;
