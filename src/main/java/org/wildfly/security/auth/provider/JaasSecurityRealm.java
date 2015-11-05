@@ -69,6 +69,7 @@ public class JaasSecurityRealm implements SecurityRealm {
      * Construct a new instance.
      *
      * @param loginConfiguration the login configuration name to use
+     * @param credentialNames the credential names this realm will claim to be able to verify
      */
     public JaasSecurityRealm(final String loginConfiguration, final String... credentialNames) {
         this(loginConfiguration, null, credentialNames);
@@ -79,6 +80,7 @@ public class JaasSecurityRealm implements SecurityRealm {
      *
      * @param loginConfiguration the login configuration name to use
      * @param handler the JAAS callback handler to use
+     * @param credentialNames the credential names this realm will claim to be able to verify
      */
     public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler, final String... credentialNames) {
         this.loginConfiguration = loginConfiguration;
