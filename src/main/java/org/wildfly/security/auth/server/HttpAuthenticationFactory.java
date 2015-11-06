@@ -25,6 +25,7 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
@@ -34,7 +35,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, RuntimeException> {
+public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpAuthenticationException> {
 
     private final HttpServerAuthenticationMechanismFactory mechanismFactory;
 
@@ -43,7 +44,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         this.mechanismFactory = mechanismFactory;
     }
 
-    HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler) {
+    HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler) throws HttpAuthenticationException {
         return mechanismFactory.createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
     }
 
@@ -72,7 +73,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     /**
      * A builder for SASL server factory configurations.
      */
-    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<HttpServerAuthenticationMechanism, RuntimeException> {
+    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<HttpServerAuthenticationMechanism, HttpAuthenticationException> {
         private HttpServerAuthenticationMechanismFactory httpServerAuthenticationMechanismFactory = null; // TODO: empty factory
 
         /**

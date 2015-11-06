@@ -32,6 +32,7 @@ public class HttpConstants {
      */
 
     public static final String CHARSET = "charset";
+    public static final String HOST = "Host";
     public static final String REALM = "realm";
 
     /*

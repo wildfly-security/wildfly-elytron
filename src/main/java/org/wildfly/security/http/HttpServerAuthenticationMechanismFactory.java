@@ -44,8 +44,9 @@ public interface HttpServerAuthenticationMechanismFactory {
      * @param mechanismName
      * @param properties
      * @param callbackHandler
-     * @return
+     * @return the configured {@link HttpServerAuthenticationMechanism}
+     * @throws HttpAuthenticationException if there is an error creating the mechanism
      */
-    HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler);
+    HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException;
 
 }
