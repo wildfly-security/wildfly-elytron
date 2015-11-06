@@ -124,24 +124,34 @@ public final class MechanismRealmConfiguration {
         Builder() {
         }
 
-        public void setRealmName(final String realmName) {
+        public Builder setRealmName(final String realmName) {
             this.realmName = realmName;
+
+            return this;
         }
 
-        public void setPreRealmRewriter(final NameRewriter preRealmRewriter) {
+        public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {
             this.preRealmRewriter = preRealmRewriter;
+
+            return this;
         }
 
-        public void setPostRealmRewriter(final NameRewriter postRealmRewriter) {
+        public Builder setPostRealmRewriter(final NameRewriter postRealmRewriter) {
             this.postRealmRewriter = postRealmRewriter;
+
+            return this;
         }
 
-        public void setFinalRewriter(final NameRewriter finalRewriter) {
+        public Builder setFinalRewriter(final NameRewriter finalRewriter) {
             this.finalRewriter = finalRewriter;
+
+            return this;
         }
 
-        public void setCredentialNameSupplier(final Supplier<List<String>> credentialNameSupplier) {
+        public Builder setCredentialNameSupplier(final Supplier<List<String>> credentialNameSupplier) {
             this.credentialNameSupplier = credentialNameSupplier;
+
+            return this;
         }
 
         public MechanismRealmConfiguration build() {
