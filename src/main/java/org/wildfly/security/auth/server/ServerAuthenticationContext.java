@@ -750,7 +750,12 @@ public final class ServerAuthenticationContext {
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof RealmCallback) {
-                    setMechanismRealmName(((RealmCallback) callback).getText());
+                    RealmCallback rcb = (RealmCallback) callback;
+                    String mechanismRealm = rcb.getText();
+                    if (mechanismRealm == null) {
+                        mechanismRealm = rcb.getDefaultText();
+                    }
+                    setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
