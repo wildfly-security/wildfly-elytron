@@ -24,6 +24,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CHARSET;
+import static org.wildfly.security.http.HttpConstants.HOST;
 import static org.wildfly.security.http.HttpConstants.REALM;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
 import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
@@ -33,11 +34,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
@@ -62,21 +65,15 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
 
     private final CallbackHandler callbackHandler;
-    private final String challengeValue;
+    private final boolean includeCharset;
+    private final String realm;
 
     BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String realm, final boolean includeCharset) {
         checkNotNullParam("callbackHandler", callbackHandler);
-        checkNotNullParam("realm", realm);
 
         this.callbackHandler = callbackHandler;
-
-        StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
-        sb.append(REALM).append("=\"").append(realm).append("\"");
-        if (includeCharset) {
-            sb.append(", ").append(CHARSET).append("=\"UTF-8\"");
-        }
-        challengeValue = sb.toString();
-
+        this.includeCharset = includeCharset;
+        this.realm = realm;
     }
 
     /**
@@ -92,7 +89,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(org.wildfly.security.http.HttpRequest)
      */
     @Override
-    public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
+    public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
@@ -122,7 +119,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                             return;
                         } else {
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
-                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), this::prepareResponse);
+                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
                             return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {
@@ -137,17 +134,25 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
             }
         }
 
-        request.authenticationInProgress(this::prepareResponse);
+        request.authenticationInProgress(response -> prepareResponse(() -> getHostName(request), response));
     }
 
     private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
+        RealmCallback realmCallback = realm != null ? new RealmCallback("User realm", realm) : null;
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
         nameCallback.setName(username);
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
         EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
 
         try {
-            callbackHandler.handle(new Callback[] { nameCallback, evidenceVerifyCallback });
+            final Callback[] callbacks;
+            if (realmCallback != null) {
+                callbacks = new Callback[] { realmCallback, nameCallback, evidenceVerifyCallback };
+            } else {
+                callbacks = new Callback[] { nameCallback, evidenceVerifyCallback };
+            }
+
+            callbackHandler.handle(callbacks);
 
             return evidenceVerifyCallback.isVerified();
         } catch (UnsupportedCallbackException e) {
@@ -159,8 +164,19 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
         }
     }
 
-    private void prepareResponse(HttpServerResponse response) {
-        response.addResponseHeader(WWW_AUTHENTICATE, challengeValue);
+    private String getHostName(HttpServerRequest request) {
+        return request.getFirstRequestHeaderValue(HOST);
+    }
+
+    private void prepareResponse(Supplier<String> hostnameSupplier, HttpServerResponse response) {
+        String realmName = realm != null ? realm : hostnameSupplier.get();
+
+        StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
+        sb.append(REALM).append("=\"").append(realmName).append("\"");
+        if (includeCharset) {
+            sb.append(", ").append(CHARSET).append("=\"UTF-8\"");
+        }
+        response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
         response.setResponseCode(UNAUTHORIZED);
     }
 

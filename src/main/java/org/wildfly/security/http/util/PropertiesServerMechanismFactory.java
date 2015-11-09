@@ -24,6 +24,7 @@ import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
@@ -67,11 +68,12 @@ public final class PropertiesServerMechanismFactory implements HttpServerAuthent
      * @param properties initial properties to be passed into the delegate factory.
      * @param callbackHandler the {@link CallbackHandler} to use for verification.
      * @return The newly created {@link HttpServerAuthenticationMechanismFactory}, or {@code null} if not availbale.
+     * @throws HttpAuthenticationException
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String,
      * java.util.Map, javax.security.auth.callback.CallbackHandler)
      */
     @Override
-    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) {
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         return delegate.createAuthenticationMechanism(mechanismName, combine(properties, this.properties), callbackHandler);
     }
 

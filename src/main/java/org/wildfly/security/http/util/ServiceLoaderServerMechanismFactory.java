@@ -30,6 +30,7 @@ import java.util.Set;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
@@ -81,7 +82,7 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
 
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
-            CallbackHandler callbackHandler) {
+            CallbackHandler callbackHandler) throws HttpAuthenticationException {
         synchronized(serviceLoader) {
             Iterator<HttpServerAuthenticationMechanismFactory> factoryIterator = serviceLoader.iterator();
             try {

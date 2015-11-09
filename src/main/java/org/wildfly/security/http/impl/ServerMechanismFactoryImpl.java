@@ -19,12 +19,18 @@ package org.wildfly.security.http.impl;
 
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
@@ -53,11 +59,22 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
      */
     @Override
-    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
-            CallbackHandler callbackHandler) {
+    public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         switch (mechanismName) {
             case BASIC_NAME:
-                return new BasicAuthenticationMechanism(callbackHandler, "Elytron Realm", false);
+                String[] realms = null;
+                final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
+                try {
+                    callbackHandler.handle(new Callback[] { availableRealmsCallback });
+                    realms = availableRealmsCallback.getRealmNames();
+                } catch (UnsupportedCallbackException ignored) {
+                } catch (HttpAuthenticationException e) {
+                    throw e;
+                } catch (IOException e) {
+                    throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanismName, e).toHttpAuthenticationException();
+                }
+
+                return new BasicAuthenticationMechanism(callbackHandler, realms == null || realms.length == 0 ? null : realms[0], false);
         }
         return null;
     }

@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
@@ -111,12 +112,13 @@ public final class FilterServerMechanismFactory implements HttpServerAuthenticat
      * @param properties the configuration properties to pass in for mechanism creation.
      * @param callbackHandler the {@link CallbackHandler} the mechanism should use for verification.
      * @return The {@link HttpServerAuthenticationMechanism} or {@code null} if not available.
+     * @throws HttpAuthenticationException
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String,
      * java.util.Map, javax.security.auth.callback.CallbackHandler)
      */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
-            CallbackHandler callbackHandler) {
+            CallbackHandler callbackHandler) throws HttpAuthenticationException {
         return predicate.test(mechanismName) ? delegate.createAuthenticationMechanism(mechanismName, properties, callbackHandler) : null;
     }
 
