@@ -21,6 +21,7 @@ package org.wildfly.security.keystore;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -78,7 +79,7 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
     }
 
     public KeyStore.Entry engineGetEntry(final String alias, final KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
-        final KeyStore.Entry entry = super.engineGetEntry(alias, protParam);
+        final KeyStore.Entry entry = delegate.getEntry(alias, protParam);
         if (entry instanceof KeyStore.SecretKeyEntry) {
             return new PasswordEntry(decoded(((KeyStore.SecretKeyEntry) entry).getSecretKey()));
         }
@@ -91,7 +92,7 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
         }
         try {
             delegate.setEntry(alias, new KeyStore.SecretKeyEntry(encoded(((PasswordEntry) entry).getPassword())), protParam);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new KeyStoreException(e);
         }
     }
@@ -121,9 +122,9 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
         }
     }
 
-    private static SecretKey encoded(final Password password) throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private static SecretKey encoded(final Password password) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
         final PasswordFactory factory = PasswordFactory.getInstance("clear");
-        final ClearPasswordSpec spec = factory.getKeySpec(password, ClearPasswordSpec.class);
+        final ClearPasswordSpec spec = factory.getKeySpec(factory.translate(password), ClearPasswordSpec.class);
         final char[] encodedPassword = spec.getEncodedPassword();
         return new SecretKeySpec(new String(encodedPassword).getBytes(StandardCharsets.UTF_8), "password");
     }
