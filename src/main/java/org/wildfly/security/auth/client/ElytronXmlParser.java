@@ -60,6 +60,7 @@ import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
@@ -425,6 +426,13 @@ public final class ElytronXmlParser {
                         configuration = () -> parentConfig.create().useKeyStoreCredential(factory.create());
                         break;
                     }
+                    case "clear-password": {
+                        gotConfig = true;
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        final char[] password = parseClearPassword(reader);
+                        configuration = () -> parentConfig.create().useKeyStoreCredential(new PasswordEntry(ClearPassword.createRaw("clear", password)));
+                        break;
+                    }
                     case "set-authorization-name": {
                         gotConfig = true;
                         final String authName = parseNameType(reader);
@@ -602,6 +610,15 @@ public final class ElytronXmlParser {
                         });
                         break;
                     }
+                    case "key-store-clear-password": {
+                        // group 2
+                        if (! gotSource || gotCredential) {
+                            throw reader.unexpectedElement();
+                        }
+                        gotCredential = true;
+                        passwordFactory = new FixedSecurityFactory<>(parseClearPassword(reader));
+                        break;
+                    }
                     case "file": {
                         // group 1
                         if (gotSource) {
@@ -705,6 +722,11 @@ public final class ElytronXmlParser {
                     case "key-store-credential": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
                         keyStoreCredential = parseKeyStoreRefType(reader, keyStoresMap);
+                        break;
+                    }
+                    case "key-store-clear-password": {
+                        if (keyStoreCredential != null) throw reader.unexpectedElement();
+                        keyStoreCredential = new FixedSecurityFactory<>(new PasswordEntry(ClearPassword.createRaw("clear", parseClearPassword(reader))));
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -1058,6 +1080,43 @@ public final class ElytronXmlParser {
                 } catch (ModuleLoadException e) {
                     throw log.noModuleFound(reader, e, identifier);
                 }
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code clear-password-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @return the clear password characters
+     * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
+     */
+    public static char[] parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        char[] password = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            if (reader.getAttributeLocalName(i).equals("password")) {
+                password = reader.getAttributeValue(i).toCharArray();
+            } else {
+                throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (password == null) {
+            throw missingAttribute(reader, "password");
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return password;
             } else {
                 throw reader.unexpectedContent();
             }
