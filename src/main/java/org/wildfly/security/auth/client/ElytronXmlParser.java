@@ -632,22 +632,21 @@ public final class ElytronXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
-                final SecurityFactory<KeyStore> keyStoreFactory;
+                SecurityFactory<KeyStore> keyStoreFactory = new KeyStoreCreateFactory(provider, type);
+                if (wrap == Boolean.TRUE) {
+                    keyStoreFactory = new PasswordKeyStoreFactory(keyStoreFactory);
+                }
                 if (fileSource != null) {
-                    keyStoreFactory = new FileKeyStoreFactory(provider, type, passwordFactory, fileSource);
+                    keyStoreFactory = new FileLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, fileSource);
                 } else if (resourceSource != null) {
-                    keyStoreFactory = new ResourceKeyStoreFactory(provider, type, passwordFactory, resourceSource);
+                    keyStoreFactory = new ResourceLoadingKeyStoreFactory(keyStoreFactory, passwordFactory, resourceSource);
                 } else if (uriSource != null) {
-                    keyStoreFactory = new URIKeyStoreFactory(provider, type, passwordFactory, uriSource);
+                    keyStoreFactory = new URILoadingKeyStoreFactory(keyStoreFactory, passwordFactory, uriSource);
                 } else {
                     // not reachable
                     throw new IllegalStateException();
                 }
-                if (wrap == Boolean.TRUE) {
-                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(() -> new WrappingPasswordKeyStore(keyStoreFactory.create())));
-                } else {
-                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(keyStoreFactory));
-                }
+                keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(keyStoreFactory));
                 return;
             } else {
                 throw reader.unexpectedContent();
@@ -1076,20 +1075,44 @@ public final class ElytronXmlParser {
         return xmlLog.xmlInvalidPortNumber(reader, reader.getAttributeValue(index), reader.getAttributeLocalName(index), reader.getName());
     }
 
-    abstract static class AbstractKeyStoreFactory implements SecurityFactory<KeyStore> {
+    static final class KeyStoreCreateFactory implements SecurityFactory<KeyStore> {
+        private final String provider;
+        private final String type;
 
-        protected final String provider;
-        protected final String type;
-        protected final SecurityFactory<char[]> passwordFactory;
-
-        AbstractKeyStoreFactory(final String provider, final String type, final SecurityFactory<char[]> passwordFactory) {
+        KeyStoreCreateFactory(final String provider, final String type) {
             this.provider = provider;
-            this.passwordFactory = passwordFactory;
             this.type = type;
         }
 
         public KeyStore create() throws GeneralSecurityException {
-            KeyStore keyStore = provider == null ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
+            return provider == null ? KeyStore.getInstance(type) : KeyStore.getInstance(type, provider);
+        }
+    }
+
+    static final class PasswordKeyStoreFactory implements SecurityFactory<KeyStore> {
+        private final SecurityFactory<KeyStore> delegateFactory;
+
+        PasswordKeyStoreFactory(final SecurityFactory<KeyStore> delegateFactory) {
+            this.delegateFactory = delegateFactory;
+        }
+
+        public KeyStore create() throws GeneralSecurityException {
+            return new WrappingPasswordKeyStore(delegateFactory.create());
+        }
+    }
+
+    abstract static class AbstractLoadingKeyStoreFactory implements SecurityFactory<KeyStore> {
+
+        protected final SecurityFactory<KeyStore> delegateFactory;
+        protected final SecurityFactory<char[]> passwordFactory;
+
+        protected AbstractLoadingKeyStoreFactory(final SecurityFactory<KeyStore> delegateFactory, final SecurityFactory<char[]> passwordFactory) {
+            this.delegateFactory = delegateFactory;
+            this.passwordFactory = passwordFactory;
+        }
+
+        public KeyStore create() throws GeneralSecurityException {
+            KeyStore keyStore = delegateFactory.create();
             try (InputStream fis = createStream()) {
                 keyStore.load(fis, passwordFactory == null ? null : passwordFactory.create());
             } catch (IOException e) {
@@ -1101,12 +1124,12 @@ public final class ElytronXmlParser {
         abstract InputStream createStream() throws IOException;
     }
 
-    static final class FileKeyStoreFactory extends AbstractKeyStoreFactory {
+    static final class FileLoadingKeyStoreFactory extends AbstractLoadingKeyStoreFactory {
 
         private final String fileName;
 
-        FileKeyStoreFactory(final String provider, final String type, final SecurityFactory<char[]> passwordFactory, final String fileName) {
-            super(provider, type, passwordFactory);
+        FileLoadingKeyStoreFactory(final SecurityFactory<KeyStore> delegateFactory, final SecurityFactory<char[]> passwordFactory, final String fileName) {
+            super(delegateFactory, passwordFactory);
             this.fileName = fileName;
         }
 
@@ -1115,12 +1138,12 @@ public final class ElytronXmlParser {
         }
     }
 
-    static final class ResourceKeyStoreFactory extends AbstractKeyStoreFactory {
+    static final class ResourceLoadingKeyStoreFactory extends AbstractLoadingKeyStoreFactory {
 
         private final String resourceName;
 
-        ResourceKeyStoreFactory(final String provider, final String type, final SecurityFactory<char[]> passwordFactory, final String resourceName) {
-            super(provider, type, passwordFactory);
+        ResourceLoadingKeyStoreFactory(final SecurityFactory<KeyStore> delegateFactory, final SecurityFactory<char[]> passwordFactory, final String resourceName) {
+            super(delegateFactory, passwordFactory);
             this.resourceName = resourceName;
         }
 
@@ -1132,11 +1155,11 @@ public final class ElytronXmlParser {
         }
     }
 
-    static final class URIKeyStoreFactory extends AbstractKeyStoreFactory {
+    static final class URILoadingKeyStoreFactory extends AbstractLoadingKeyStoreFactory {
         private final URI uri;
 
-        URIKeyStoreFactory(final String provider, final String type, final SecurityFactory<char[]> passwordFactory, final URI uri) {
-            super(provider, type, passwordFactory);
+        URILoadingKeyStoreFactory(final SecurityFactory<KeyStore> delegateFactory, final SecurityFactory<char[]> passwordFactory, final URI uri) {
+            super(delegateFactory, passwordFactory);
             this.uri = uri;
         }
 
