@@ -18,8 +18,6 @@
 
 package org.wildfly.security.keystore;
 
-import static org.wildfly.security._private.ElytronMessages.log;
-
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -48,69 +46,87 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
     public Key engineGetKey(final String alias, final char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
         try {
             final Key key = delegate.getKey(alias, password);
-            return key instanceof SecretKey ? decoded((SecretKey) key) : null;
+            return key instanceof SecretKey && "password".equals(key.getAlgorithm()) ? decoded((SecretKey) key) : key;
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
     }
 
     public Certificate[] engineGetCertificateChain(final String alias) {
-        return null;
+        try {
+            return delegate.getCertificateChain(alias);
+        } catch (KeyStoreException e) {
+            return null;
+        }
     }
 
     public Certificate engineGetCertificate(final String alias) {
-        return null;
+        try {
+            return delegate.getCertificate(alias);
+        } catch (KeyStoreException e) {
+            return null;
+        }
     }
 
     public void engineSetKeyEntry(final String alias, final Key key, final char[] password, final Certificate[] chain) throws KeyStoreException {
         if (key instanceof Password) {
             engineSetEntry(alias, new PasswordEntry((Password) key), password == null ? null : new KeyStore.PasswordProtection(password));
         } else {
-            throw log.secretKeysNotSupported();
+            delegate.setKeyEntry(alias, key, password, chain);
         }
     }
 
     public void engineSetKeyEntry(final String alias, final byte[] key, final Certificate[] chain) throws KeyStoreException {
-        throw log.directKeyStorageNotSupported();
+        delegate.setKeyEntry(alias, key, chain);
     }
 
     public void engineSetCertificateEntry(final String alias, final Certificate cert) throws KeyStoreException {
-        throw log.directKeyStorageNotSupported();
+        delegate.setCertificateEntry(alias, cert);
     }
 
     public KeyStore.Entry engineGetEntry(final String alias, final KeyStore.ProtectionParameter protParam) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException {
         final KeyStore.Entry entry = delegate.getEntry(alias, protParam);
         if (entry instanceof KeyStore.SecretKeyEntry) {
-            return new PasswordEntry(decoded(((KeyStore.SecretKeyEntry) entry).getSecretKey()));
+            final SecretKey secretKey = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+            if ("password".equals(secretKey.getAlgorithm())) {
+                return new PasswordEntry(decoded(secretKey));
+            }
         }
         return entry;
     }
 
     public void engineSetEntry(final String alias, final KeyStore.Entry entry, final KeyStore.ProtectionParameter protParam) throws KeyStoreException {
-        if (! (entry instanceof PasswordEntry)) {
-            throw log.onlyPasswordStorageIsSupported();
-        }
-        try {
+        if (entry instanceof PasswordEntry) try {
             delegate.setEntry(alias, new KeyStore.SecretKeyEntry(encoded(((PasswordEntry) entry).getPassword())), protParam);
         } catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new KeyStoreException(e);
+        }else {
+            delegate.setEntry(alias, entry, protParam);
         }
     }
 
     public boolean engineEntryInstanceOf(final String alias, final Class<? extends KeyStore.Entry> entryClass) {
         try {
-            return entryClass == PasswordEntry.class && delegate.entryInstanceOf(alias, KeyStore.SecretKeyEntry.class);
+            return entryClass == PasswordEntry.class && delegate.entryInstanceOf(alias, KeyStore.SecretKeyEntry.class) || delegate.entryInstanceOf(alias, entryClass);
         } catch (KeyStoreException e) {
             throw new IllegalStateException(e);
         }
     }
 
     public boolean engineIsCertificateEntry(final String alias) {
-        return false;
+        try {
+            return delegate.isCertificateEntry(alias);
+        } catch (KeyStoreException e) {
+            return false;
+        }
     }
 
     public String engineGetCertificateAlias(final Certificate cert) {
-        return null;
+        try {
+            return delegate.getCertificateAlias(cert);
+        } catch (KeyStoreException e) {
+            return null;
+        }
     }
 
     private static Password decoded(final SecretKey key) throws NoSuchAlgorithmException, KeyStoreException {
