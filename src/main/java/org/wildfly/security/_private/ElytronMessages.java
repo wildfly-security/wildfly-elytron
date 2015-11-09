@@ -25,6 +25,7 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.wildfly.security.util.DecodeException;
 
 /**
  * Log messages and exceptions for Elytron.
@@ -89,6 +90,37 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
+    /* util package */
+
+    @Message(id = 3001, value = "Unexpected padding")
+    DecodeException unexpectedPadding();
+
+    @Message(id = 3002, value = "Expected padding")
+    DecodeException expectedPadding();
+
+    @Message(id = 3003, value = "Incomplete decode")
+    DecodeException incompleteDecode();
+
+    @Message(id = 3004, value = "Expected %d padding characters")
+    DecodeException expectedPaddingCharacters(int numExpected);
+
+    @Message(id = 3005, value = "Invalid base 32 character")
+    DecodeException invalidBase32Character();
+
+    @Message(id = 3006, value = "Expected an even number of hex characters")
+    DecodeException expectedEvenNumberOfHexCharacters();
+
+    @Message(id = 3007, value = "Invalid hex character")
+    DecodeException invalidHexCharacter();
+
+    @Message(id = 3008, value = "Expected two padding characters")
+    DecodeException expectedTwoPaddingCharacters();
+
+    @Message(id = 3009, value = "Invalid base 64 character")
+    DecodeException invalidBase64Character();
+
+    /* ssl package */
+
     @Message(id = 4017, value = "Unknown authentication name \"%s\"")
     IllegalArgumentException unknownAuthenticationName(String name);
 
@@ -97,6 +129,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 4019, value = "Unknown key exchange name \"%s\"")
     IllegalArgumentException unknownKeyExchangeName(String name);
+
+    @Message(id = 4023, value = "Too large")
+    IllegalStateException tooLarge();
 
     @Message(id = 5015, value = "Unexpected character U+%04x at offset %d of mechanism selection string \"%s\"")
     IllegalArgumentException mechSelectorUnexpectedChar(int codePoint, int offset, String string);
