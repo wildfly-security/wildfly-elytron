@@ -151,6 +151,7 @@
         <xsd:attribute name="name" type="xsd:string" use="required"/>
         <xsd:attribute name="type" type="xsd:string" use="required"/>
         <xsd:attribute name="provider" type="xsd:string" use="optional"/>
+        <xsd:attribute name="wrap-passwords" type="xsd:boolean" use="optional" default="false"/>
     </xsd:complexType>
 
     <xsd:complexType name="key-store-ref-type">
