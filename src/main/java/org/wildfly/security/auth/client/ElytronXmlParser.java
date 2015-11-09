@@ -57,6 +57,7 @@ import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.keystore.PasswordEntry;
+import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -529,6 +530,7 @@ public final class ElytronXmlParser {
         String name = null;
         String type = null;
         String provider = null;
+        Boolean wrap = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
             if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
@@ -548,6 +550,11 @@ public final class ElytronXmlParser {
                 case "name": {
                     if (name != null) throw reader.unexpectedAttribute(i);
                     name = reader.getAttributeValue(i);
+                    break;
+                }
+                case "wrap-passwords": {
+                    if (wrap != null) throw reader.unexpectedAttribute(i);
+                    wrap = Boolean.valueOf(Boolean.parseBoolean(reader.getAttributeValue(i)));
                     break;
                 }
                 default:
@@ -625,15 +632,21 @@ public final class ElytronXmlParser {
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
+                final SecurityFactory<KeyStore> keyStoreFactory;
                 if (fileSource != null) {
-                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(new FileKeyStoreFactory(provider, type, passwordFactory, fileSource)));
+                    keyStoreFactory = new FileKeyStoreFactory(provider, type, passwordFactory, fileSource);
                 } else if (resourceSource != null) {
-                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(new ResourceKeyStoreFactory(provider, type, passwordFactory, resourceSource)));
+                    keyStoreFactory = new ResourceKeyStoreFactory(provider, type, passwordFactory, resourceSource);
                 } else if (uriSource != null) {
-                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(new URIKeyStoreFactory(provider, type, passwordFactory, uriSource)));
+                    keyStoreFactory = new URIKeyStoreFactory(provider, type, passwordFactory, uriSource);
                 } else {
                     // not reachable
                     throw new IllegalStateException();
+                }
+                if (wrap == Boolean.TRUE) {
+                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(() -> new WrappingPasswordKeyStore(keyStoreFactory.create())));
+                } else {
+                    keyStoresMap.put(name, new OneTimeSecurityFactory<KeyStore>(keyStoreFactory));
                 }
                 return;
             } else {
