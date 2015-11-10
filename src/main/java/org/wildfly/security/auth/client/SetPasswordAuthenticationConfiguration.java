@@ -29,6 +29,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.Sasl;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -76,7 +77,7 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
 
     boolean filterOneSaslMechanism(final String mechanismName) {
         String passwordAlgorithm = password.getAlgorithm();
-        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
         Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, PasswordCredential.class);
         return (types == null || types.contains(PasswordCredential.class)) && (algorithms.isEmpty() || algorithms.contains(passwordAlgorithm)) || super.filterOneSaslMechanism(mechanismName);
     }

@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.OneWayPassword;
+import org.wildfly.security.password.Password;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -203,12 +204,14 @@ public final class SaslMechanismInformation {
 
     // credential type sets
 
-    static final Set<Class<?>> JUST_ONE_WAY = singleton(OneTimePassword.class);
-    static final Set<Class<?>> JUST_TWO_WAY = singleton(TwoWayPassword.class);
-    static final Set<Class<?>> ONE_WAY_AND_TWO_WAY = nSet(OneWayPassword.class, TwoWayPassword.class);
-    static final Set<Class<?>> DIGEST_AND_TWO_WAY = nSet(DigestPassword.class, TwoWayPassword.class);
-    static final Set<Class<?>> SCRAM_AND_TWO_WAY = nSet(ScramDigestPassword.class, TwoWayPassword.class);
-    static final Set<Class<?>> JUST_X509 = singleton(X509CertificateChainPrivateCredential.class);
+    static final Set<Class<? extends Password>> JUST_ONE_WAY = singleton(OneTimePassword.class);
+    static final Set<Class<? extends Password>> JUST_TWO_WAY = singleton(TwoWayPassword.class);
+    static final Set<Class<? extends Password>> ONE_WAY_AND_TWO_WAY = nSet(OneWayPassword.class, TwoWayPassword.class);
+    static final Set<Class<? extends Password>> DIGEST_AND_TWO_WAY = nSet(DigestPassword.class, TwoWayPassword.class);
+    static final Set<Class<? extends Password>> SCRAM_AND_TWO_WAY = nSet(ScramDigestPassword.class, TwoWayPassword.class);
+
+    static final Set<Class<? extends Credential>> JUST_X509 = singleton(X509CertificateChainPrivateCredential.class);
+    static final Set<Class<? extends Credential>> JUST_PASSWORD = singleton(PasswordCredential.class);
 
     // algorithm name sets
 
@@ -233,7 +236,54 @@ public final class SaslMechanismInformation {
      * @param mechName the mechanism name
      * @return the set of allowed client credentials, or {@code null} if the mechanism isn't known
      */
-    public static Set<Class<?>> getSupportedClientCredentialTypes(String mechName) {
+    public static Set<Class<? extends Credential>> getSupportedClientCredentialTypes(String mechName) {
+        switch (mechName) {
+            case Names.EXTERNAL:
+            case Names.ANONYMOUS: {
+                return emptySet();
+            }
+            case Names.PLAIN:
+            case Names.OTP:
+            case Names.CRAM_MD5:
+            case Names.DIGEST_MD5:
+            case Names.DIGEST_SHA:
+            case Names.DIGEST_SHA_256:
+            case Names.DIGEST_SHA_384:
+            case Names.DIGEST_SHA_512:
+            case Names.SCRAM_SHA_1:
+            case Names.SCRAM_SHA_1_PLUS:
+            case Names.SCRAM_SHA_256:
+            case Names.SCRAM_SHA_256_PLUS:
+            case Names.SCRAM_SHA_384:
+            case Names.SCRAM_SHA_384_PLUS:
+            case Names.SCRAM_SHA_512:
+            case Names.SCRAM_SHA_512_PLUS: {
+                return JUST_PASSWORD;
+            }
+            case Names.IEC_ISO_9798_M_DSA_SHA1:
+            case Names.IEC_ISO_9798_U_DSA_SHA1:
+            case Names.IEC_ISO_9798_M_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_U_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
+            case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
+                return JUST_X509;
+            }
+            default: {
+                // unknown
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get the supported password types for the given SASL client mechanism.  If an empty set is returned, then no
+     * passwords are used by the mechanism.  If {@code null} is returned, then nothing is known about the given
+     * mechanism name.
+     *
+     * @param mechName the mechanism name
+     * @return the set of allowed client password types, or {@code null} if the mechanism isn't known
+     */
+    public static Set<Class<? extends Password>> getSupportedClientPasswordTypes(String mechName) {
         switch (mechName) {
             case Names.EXTERNAL:
             case Names.ANONYMOUS: {
@@ -267,7 +317,7 @@ public final class SaslMechanismInformation {
             case Names.IEC_ISO_9798_U_ECDSA_SHA1:
             case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
-                return JUST_X509;
+                return emptySet();
             }
             default: {
                 // unknown
@@ -282,9 +332,57 @@ public final class SaslMechanismInformation {
      * mechanism name.
      *
      * @param mechName the mechanism name
-     * @return the set of allowed server credentials, or {@code null} if the mechanism isn't known
+     * @return the set of allowed server credential types, or {@code null} if the mechanism isn't known
      */
-    public static Set<Class<?>> getSupportedServerCredentialTypes(String mechName) {
+    public static Set<Class<? extends Credential>> getSupportedServerCredentialTypes(String mechName) {
+        switch (mechName) {
+            case Names.EXTERNAL:
+            case Names.ANONYMOUS: {
+                return emptySet();
+            }
+            case Names.PLAIN:
+            case Names.OTP:
+            case Names.CRAM_MD5:
+            case Names.DIGEST_MD5:
+            case Names.DIGEST_SHA:
+            case Names.DIGEST_SHA_256:
+            case Names.DIGEST_SHA_384:
+            case Names.DIGEST_SHA_512:
+            case Names.SCRAM_SHA_1:
+            case Names.SCRAM_SHA_1_PLUS:
+            case Names.SCRAM_SHA_256:
+            case Names.SCRAM_SHA_256_PLUS:
+            case Names.SCRAM_SHA_384:
+            case Names.SCRAM_SHA_384_PLUS:
+            case Names.SCRAM_SHA_512:
+            case Names.SCRAM_SHA_512_PLUS: {
+                return JUST_PASSWORD;
+            }
+            case Names.IEC_ISO_9798_M_DSA_SHA1:
+            case Names.IEC_ISO_9798_U_DSA_SHA1:
+            case Names.IEC_ISO_9798_M_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_U_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
+            case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
+                // TODO: look into verification process
+                return null;
+            }
+            default: {
+                // unknown
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get the supported password types for the given SASL server mechanism.  If an empty set is returned, then no
+     * passwords are used by the mechanism.  If {@code null} is returned, then nothing is known about the given
+     * mechanism name.
+     *
+     * @param mechName the mechanism name
+     * @return the set of allowed server password types, or {@code null} if the mechanism isn't known
+     */
+    public static Set<Class<? extends Password>> getSupportedServerPasswordTypes(String mechName) {
         switch (mechName) {
             case Names.EXTERNAL:
             case Names.ANONYMOUS: {
@@ -322,8 +420,7 @@ public final class SaslMechanismInformation {
             case Names.IEC_ISO_9798_U_ECDSA_SHA1:
             case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
-                // TODO: look into verification process
-                return null;
+                return emptySet();
             }
             default: {
                 // unknown
