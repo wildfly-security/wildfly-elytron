@@ -18,8 +18,14 @@
 
 package org.wildfly.security.credential;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 import org.wildfly.common.Assert;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A credential for password authentication.
@@ -59,6 +65,21 @@ public final class PasswordCredential implements AlgorithmCredential {
 
     public String getAlgorithm() {
         return password.getAlgorithm();
+    }
+
+    public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
+        Assert.checkNotNullParam("evidenceClass", evidenceClass);
+        return evidenceClass == PasswordGuessEvidence.class && algorithmName == null;
+    }
+
+    public boolean verify(final Evidence evidence) {
+        Assert.checkNotNullParam("evidence", evidence);
+        if (evidence instanceof PasswordGuessEvidence) try {
+            final PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm());
+            return factory.verify(factory.translate(password), ((PasswordGuessEvidence) evidence).getGuess());
+        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+        }
+        return false;
     }
 }
 
