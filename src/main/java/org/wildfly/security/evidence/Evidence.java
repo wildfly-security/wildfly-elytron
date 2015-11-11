@@ -19,7 +19,9 @@
 package org.wildfly.security.evidence;
 
 /**
+ * A piece of evidence which may be used for credential verification.
  *
+ * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface Evidence {
 }
