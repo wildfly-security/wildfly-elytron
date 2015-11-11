@@ -29,22 +29,24 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
@@ -73,13 +75,19 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
 
     private final boolean plainText;
+    private final Pattern currentPattern;
+
+    private final String groupsAttribute;
+
     private final Map<String, Boolean> credentialMap;
 
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
         this.plainText = builder.plainText;
+        currentPattern = plainText ? PLAIN_PATTERN : HASHED_PATTERN;
         credentialMap = new HashMap<String, Boolean>(builder.credentialNamePlainMap);
+        groupsAttribute = builder.groupsAttribute;
     }
 
     @Override
@@ -87,7 +95,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         final LoadedState loadedState = this.loadedState.get();
         final AccountEntry accountEntry = loadedState.accounts.get(name);
-        final NamePrincipal principal = new NamePrincipal(name);
 
         return new RealmIdentity() {
 
@@ -172,7 +179,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     return null;
                 }
 
-                return new PropertiesAuthorizationIdentity(principal);
+                return AuthorizationIdentity.basicIdentity(new MapAttributes(Collections.singletonMap(groupsAttribute, accountEntry.getGroups())));
             }
 
         };
@@ -201,10 +208,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return Boolean.TRUE.equals(credentialMap.get(credentialName)) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
-    private Pattern getPattern() {
-        return plainText ? PLAIN_PATTERN : HASHED_PATTERN;
-    }
-
     public void load(InputStream passwordsStream, InputStream groupsStream) throws IOException {
         Map<String, AccountEntry> accounts = new HashMap<>();
         Properties groups = new Properties();
@@ -229,7 +232,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         realmName = trimmed.substring(start, end);
                     }
                 } else {
-                    final Matcher matcher = getPattern().matcher(trimmed);
+                    final Matcher matcher = currentPattern.matcher(trimmed);
                     if (matcher.matches()) {
                         String accountName = matcher.group(1);
                         String passwordRepresentation = matcher.group(2);
@@ -264,6 +267,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private boolean plainText;
         private String realmName;
         private Map<String, Boolean> credentialNamePlainMap = new HashMap<>();
+        private String groupsAttribute;
 
         Builder() {
         }
@@ -288,6 +292,19 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          */
         public Builder setGroupsStream(InputStream groupsStream) {
             this.groupsStream = groupsStream;
+
+            return this;
+        }
+
+        /**
+         * Where this realm returns an {@link AuthorizationIdentity} set the key on the Attributes that will be used to hold the
+         * group membership information.
+         *
+         * @param groupsAttribute the key on the Attributes that will be used to hold the group membership information.
+         * @return this {@link Builder}
+         */
+        public Builder setGroupsAttribute(final String groupsAttribute) {
+            this.groupsAttribute = groupsAttribute;
 
             return this;
         }
@@ -368,12 +385,29 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         private final String name;
         private final String passwordRepresentation;
-        private final String groups;
+        private final Set<String> groups;
 
         private AccountEntry(String name, String passwordRepresentation, String groups) {
             this.name = name;
             this.passwordRepresentation = passwordRepresentation;
-            this.groups = groups;
+            this.groups = convertGroups(groups);
+        }
+
+        private Set<String> convertGroups(String groups) {
+            if (groups == null) {
+                return Collections.emptySet();
+            }
+
+            String[] groupArray = groups.split(",");
+            Set<String> groupsSet = new HashSet<>(groupArray.length);
+            for (String current : groupArray) {
+                String value = current.trim();
+                if (value.length() > 0) {
+                    groupsSet.add(value);
+                }
+            }
+
+            return Collections.unmodifiableSet(groupsSet);
         }
 
         public String getName() {
@@ -384,19 +418,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             return passwordRepresentation;
         }
 
-        public String[] getGroups() {
-            // TODO - We need finish off AuthenticatedRealmIdentity API
-            return null;
+        public Set<String> getGroups() {
+            return groups;
         }
     }
 
-    private class PropertiesAuthorizationIdentity implements AuthorizationIdentity {
-
-        private final Principal principal;
-
-        private PropertiesAuthorizationIdentity(Principal principal) {
-            this.principal = principal;
-        }
-    }
 
 }
