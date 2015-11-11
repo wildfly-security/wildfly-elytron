@@ -18,11 +18,11 @@
 
 package org.wildfly.security.ldap;
 
-import org.junit.Test;
-import org.wildfly.security.authz.RoleDecoder;
-
 import static org.junit.Assert.assertEquals;
-import static org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute;
+
+import org.junit.Test;
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.authz.RoleDecoder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>

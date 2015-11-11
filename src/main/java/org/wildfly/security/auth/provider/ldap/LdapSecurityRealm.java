@@ -18,32 +18,7 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder;
-import org.wildfly.security.auth.server.ModifiableRealmIdentity;
-import org.wildfly.security.auth.server.ModifiableSecurityRealm;
-import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SupportLevel;
-import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
-
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-import javax.naming.ldap.LdapName;
-import javax.naming.ldap.Rdn;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
+import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,42 +35,54 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static org.wildfly.security._private.ElytronMessages.log;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
+import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * Security realm implementation backed by LDAP.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class LdapSecurityRealm implements ModifiableSecurityRealm {
-
-    public final String VERIFIABLE_CREDENTIAL_NAME = "ldap-verifiable"; // TODO setable?
+public class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     private final DirContextFactory dirContextFactory;
     private final NameRewriter nameRewriter;
-    private final PrincipalMapping principalMapping;
-    private final List<CredentialLoader> credentialLoaders = new ArrayList<>();
-    private final List<CredentialPersister> credentialPersisters = new ArrayList<>();
+    private final IdentityMapping identityMapping;
+    private final List<CredentialLoader> credentialLoaders;
+    private final List<CredentialPersister> credentialPersisters;
+    private final List<EvidenceVerifier> evidenceVerifiers;
 
     LdapSecurityRealm(final DirContextFactory dirContextFactory, final NameRewriter nameRewriter,
-                      final PrincipalMapping principalMapping) {
+                      final IdentityMapping identityMapping,
+                      final List<CredentialLoader> credentialLoaders,
+                      final List<CredentialPersister> credentialPersisters,
+                      final List<EvidenceVerifier> evidenceVerifiers) {
 
         this.dirContextFactory = dirContextFactory;
         this.nameRewriter = nameRewriter;
-        this.principalMapping = principalMapping;
-        this.credentialLoaders.add(new UserPasswordCredentialLoader(this.principalMapping.passwordAttribute));
+        this.identityMapping = identityMapping;
 
-        if (this.principalMapping.otpAlgorithmAttribute != null) {
-            OtpCredentialLoader otpCredentialLoader = new OtpCredentialLoader(
-                    OtpCredentialLoader.DEFAULT_CREDENTIAL_NAME, // TODO setable?
-                    this.principalMapping.otpAlgorithmAttribute,
-                    this.principalMapping.otpHashAttribute,
-                    this.principalMapping.otpSeedAttribute,
-                    this.principalMapping.otpSequenceAttribute
-            );
-            this.credentialLoaders.add(otpCredentialLoader);
-            this.credentialPersisters.add(otpCredentialLoader);
-        }
+        this.credentialLoaders = credentialLoaders;
+        this.credentialPersisters = credentialPersisters;
+        this.evidenceVerifiers = evidenceVerifiers;
     }
 
     @Override
@@ -108,21 +95,37 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         return new LdapRealmIdentity(name);
     }
 
-    @Override public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    @Override
+    public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
         return null;
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
+    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
         Assert.checkNotNullParam("credentialName", credentialName);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
-        //if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-        //    return CredentialSupport.VERIFIABLE_ONLY;
-        //}
-
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialSupport(dirContextFactory, credentialName);
+            SupportLevel support = loader.getCredentialAcquireSupport(dirContextFactory, credentialName);
+            if (support.isDefinitelySupported()) {
+                // One claiming it is definitely supported is enough!
+                return support;
+            }
+            if (response.compareTo(support) < 0) {
+                response = support;
+            }
+        }
+
+        return response;
+    }
+
+    @Override
+    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialName", credentialName);
+        SupportLevel response = SupportLevel.UNSUPPORTED;
+
+        for (EvidenceVerifier verifier : evidenceVerifiers) {
+            SupportLevel support = verifier.getEvidenceVerifySupport(dirContextFactory, credentialName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -151,35 +154,27 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return null;
             }
 
-            //if (VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-            //    return CredentialSupport.VERIFIABLE_ONLY;
-            //}
-
             if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
 
-            SupportLevel support = null;
+            SupportLevel support = SupportLevel.UNSUPPORTED;
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
-                    SupportLevel temp = icl.getCredentialSupport(credentialName);
+                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialName);
                     if (temp != null && temp.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
                     }
 
-                    if (support == null || temp != null && support.compareTo(temp) < 0) {
+                    if (temp != null && support.compareTo(temp) < 0) {
                         support = temp;
                     }
                 }
-            }
-
-            if (support == null) {
-                return SupportLevel.UNSUPPORTED;
             }
 
             return support;
@@ -198,7 +193,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialSupport(dirContextFactory, credentialName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
                     Credential credential = icl.getCredential(credentialName, Credential.class);
@@ -276,44 +271,60 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
+        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("evidence", evidence);
-            if ( ! VERIFIABLE_CREDENTIAL_NAME.equals(credentialName)) {
-                return false;
+            if (!exists()) {
+                return null;
             }
+
+            if (LdapSecurityRealm.this.getEvidenceVerifySupport(credentialName) == SupportLevel.UNSUPPORTED) {
+                // If not supported in general then definitely not supported for a specific principal.
+                return SupportLevel.UNSUPPORTED;
+            }
+
+            SupportLevel support = SupportLevel.UNSUPPORTED;
+
+            for (EvidenceVerifier verifier : evidenceVerifiers) {
+                if (verifier.getEvidenceVerifySupport(dirContextFactory, credentialName).mayBeSupported()) {
+                    IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, identity.getDistinguishedName());
+
+                    SupportLevel temp = iev.getEvidenceVerifySupport(credentialName);
+                    if (temp != null && temp.isDefinitelySupported()) {
+                        // As soon as one claims definite support we know it is supported.
+                        return temp;
+                    }
+
+                    if (temp != null && support.compareTo(temp) < 0) {
+                        support = temp;
+                    }
+                }
+            }
+
+            return support;
+        }
+
+        @Override
+        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
+
+
+            Assert.checkNotNullParam("credentialName", credentialName);
             if (!exists()) {
                 return false;
             }
 
-            char[] password;
-            if (evidence instanceof PasswordGuessEvidence) {
-                password = ((PasswordGuessEvidence) evidence).getGuess();
-            } else {
-                throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
+            if (LdapSecurityRealm.this.getEvidenceVerifySupport(credentialName) == SupportLevel.UNSUPPORTED) {
+                // If not supported in general then definitely not supported for a specific principal.
+                return false;
             }
 
-            DirContext dirContext = null;
+            for (EvidenceVerifier verifier : evidenceVerifiers) {
+                if (verifier.getEvidenceVerifySupport(dirContextFactory, credentialName).mayBeSupported()) {
+                    IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-            try {
-                // TODO: for not we just create a DirContext using the provided credentials. Need to also support referrals.
-                dirContext = dirContextFactory.obtainDirContext(callbacks -> {
-                    for (Callback callback : callbacks) {
-                        if (NameCallback.class.isInstance(callback)) {
-                            NameCallback nameCallback = (NameCallback) callback;
-                            nameCallback.setName(this.identity.getDistinguishedName());
-                        } else if (PasswordCallback.class.isInstance(callback)) {
-                            PasswordCallback nameCallback = (PasswordCallback) callback;
-                            nameCallback.setPassword(password);
-                        }
+                    if (iev.verifyEvidence(dirContextFactory, credentialName, evidence)) {
+                        return true;
                     }
-                }, null);
-
-                return true;
-            } catch (NamingException e) {
-                log.debugf("Credential verification failed.", e);
-            } finally {
-                dirContextFactory.returnContext(dirContext);
+                }
             }
 
             return false;
@@ -341,10 +352,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             try {
                 context = dirContextFactory.obtainDirContext(null);
 
-                String searchDn = principalMapping.searchDn;
+                String searchDn = identityMapping.searchDn;
                 String name = principalName;
 
-                if (principalName.startsWith(principalMapping.rdnIdentifier)) {
+                if (principalName.startsWith(identityMapping.rdnIdentifier)) {
                     LdapName ldapName = new LdapName(principalName);
                     int rdnIdentifierPosition = ldapName.size() - 1;
                     Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
@@ -356,11 +367,11 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
                 final DirContext finalContext = context;
 
-                LdapSearch ldapSearch = new LdapSearch(searchDn, String.format("(%s={0})", principalMapping.rdnIdentifier), name);
+                LdapSearch ldapSearch = new LdapSearch(searchDn, String.format("(%s={0})", identityMapping.rdnIdentifier), name);
 
                 ldapSearch.setReturningAttributes(
-                        principalMapping.attributes.stream()
-                                .map(PrincipalMappingBuilder.Attribute::getLdapName)
+                        identityMapping.attributes.stream()
+                                .map(Attribute::getLdapName)
                                 .toArray(String[]::new));
 
                 try (
@@ -416,7 +427,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 String searchDn = attribute.getSearchDn();
 
                 if (searchDn == null) {
-                    searchDn = principalMapping.searchDn;
+                    searchDn = identityMapping.searchDn;
                 }
 
                 LdapSearch search = new LdapSearch(searchDn, attribute.getFilter(), principalDn);
@@ -444,7 +455,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                             }
                         } else {
                             Attributes entryAttributes = entry.getAttributes();
-                            Attribute ldapAttribute = entryAttributes.get(attribute.getLdapName());
+                            javax.naming.directory.Attribute ldapAttribute = entryAttributes.get(attribute.getLdapName());
                             NamingEnumeration<?> attributeValues = null;
 
                             try {
@@ -476,12 +487,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         private Map<String, Collection<String>> extractSingleAttributes(SearchResult searchResult) {
             return extractAttributes(attribute -> attribute.getFilter() == null, attribute -> {
                 Attributes returnedAttributes = searchResult.getAttributes();
-                NamingEnumeration<? extends Attribute> attributesEnum = returnedAttributes.getAll();
+                NamingEnumeration<? extends javax.naming.directory.Attribute> attributesEnum = returnedAttributes.getAll();
                 Collection<String> values = new ArrayList<>();
 
                 try {
                     while (attributesEnum.hasMore()) {
-                        Attribute ldapAttribute = attributesEnum.next();
+                        javax.naming.directory.Attribute ldapAttribute = attributesEnum.next();
 
                         if (!ldapAttribute.getID().equalsIgnoreCase(attribute.getLdapName())) {
                             continue;
@@ -529,15 +540,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         private SearchControls createSearchControls(String... returningAttributes) {
             SearchControls searchControls = new SearchControls();
 
-            searchControls.setSearchScope(principalMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
-            searchControls.setTimeLimit(principalMapping.searchTimeLimit);
+            searchControls.setSearchScope(identityMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+            searchControls.setTimeLimit(identityMapping.searchTimeLimit);
             searchControls.setReturningAttributes(returningAttributes);
 
             return searchControls;
         }
 
-        private Map<String, Collection<String>> extractAttributes(Predicate<PrincipalMappingBuilder.Attribute> filter, Function<PrincipalMappingBuilder.Attribute, Collection<String>> valueFunction) {
-            return principalMapping.attributes.stream()
+        private Map<String, Collection<String>> extractAttributes(Predicate<Attribute> filter, Function<Attribute, Collection<String>> valueFunction) {
+            return identityMapping.attributes.stream()
                     .filter(filter)
                     .collect(Collectors.toMap(attribute -> attribute.getName(), valueFunction, (m1, m2) -> {
                         List<String> merged = new ArrayList<>(m1);
@@ -633,35 +644,125 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
     }
 
-    static class PrincipalMapping {
+    static class IdentityMapping {
+
+        // NOTE: This class is not a general purpose holder for all possible realm configuration, the purpose is to cover
+        // configuration related to locating the identity and loading it's attributes.
 
         private final String searchDn;
         private final boolean searchRecursive;
         private final String rdnIdentifier;
-        private final String passwordAttribute;
-        private final String otpAlgorithmAttribute;
-        private final String otpHashAttribute;
-        private final String otpSeedAttribute;
-        private final String otpSequenceAttribute;
-        private final List<PrincipalMappingBuilder.Attribute> attributes;
+        private final List<Attribute> attributes;
         public final int searchTimeLimit;
 
-        public PrincipalMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier,
-                                String passwordAttribute, String otpAlgorithmAttribute, String otpHashAttribute,
-                                String otpSeedAttribute, String otpSequenceAttribute,
-                                List<PrincipalMappingBuilder.Attribute> attributes) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<Attribute> attributes) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
-            Assert.checkNotNullParam("passwordAttribute", passwordAttribute);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
             this.searchTimeLimit = searchTimeLimit;
             this.rdnIdentifier = rdnIdentifier;
-            this.passwordAttribute = passwordAttribute;
-            this.otpAlgorithmAttribute = otpAlgorithmAttribute;
-            this.otpHashAttribute = otpHashAttribute;
-            this.otpSeedAttribute = otpSeedAttribute;
-            this.otpSequenceAttribute = otpSequenceAttribute;
             this.attributes = attributes;
+        }
+    }
+
+    public static class Attribute {
+
+        private final String ldapName;
+        private final String searchDn;
+        private final String filter;
+        private String name;
+        private String rdn;
+
+        /**
+         * Create an attribute mapping based on the given attribute in LDAP.
+         *
+         * @param ldapName the name of the attribute in LDAP from where values are obtained
+         * @return this builder
+         */
+        public static Attribute from(String ldapName) {
+            Assert.checkNotNullParam("ldapName", ldapName);
+            return new Attribute(ldapName);
+        }
+
+        /**
+         * <p>Create an attribute mapping based on the results of the given {@code filter}.
+         *
+         * <p>The {@code filter} <em>may</em> have one and exactly one <em>{0}</em> string that will be used to replace with the distinguished
+         * name of the identity. In this case, the filter is specially useful when the values for this attribute should be obtained from a
+         * separated entry. For instance, retrieving roles from entries with a object class of <em>groupOfNames</em> where the identity's DN is
+         * a value of a <em>member</em> attribute.
+         *
+         * @param searchDn the name of the context to be used when executing the filter
+         * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
+         * @param ldapName the name of the attribute in LDAP from where the values are obtained
+         * @return this builder
+         */
+        public static Attribute fromFilter(String searchDn, String filter, String ldapName) {
+            Assert.checkNotNullParam("searchDn", searchDn);
+            Assert.checkNotNullParam("filter", filter);
+            Assert.checkNotNullParam("ldapName", ldapName);
+            return new Attribute(searchDn, filter, ldapName);
+        }
+
+        /**
+         * <p>The behavior is exactly the same as {@link #fromFilter(String, String, String)}, except that it uses the
+         * same name of the context defined in {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.IdentityMappingBuilder#setSearchDn(String)}.
+         *
+         * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
+         * @param ldapName the name of the attribute in LDAP from where the values are obtained
+         * @return this builder
+         */
+        public static Attribute fromFilter(String filter, String ldapName) {
+            Assert.checkNotNullParam("filter", filter);
+            Assert.checkNotNullParam("ldapName", ldapName);
+            return new Attribute(null, filter, ldapName);
+        }
+
+        Attribute(String ldapName) {
+            this(null, null, ldapName);
+        }
+
+        Attribute(String searchDn, String filter, String ldapName) {
+            Assert.checkNotNullParam("ldapName", ldapName);
+            this.searchDn = searchDn;
+            this.filter = filter;
+            this.ldapName = ldapName.toUpperCase();
+        }
+
+        public Attribute asRdn(String rdn) {
+            Assert.checkNotNullParam("rdn", rdn);
+            this.rdn = rdn;
+            return this;
+        }
+
+        public Attribute to(String name) {
+            Assert.checkNotNullParam("to", name);
+            this.name = name;
+            return this;
+        }
+
+        String getLdapName() {
+            return this.ldapName;
+        }
+
+        String getName() {
+            if (this.name == null) {
+                return this.ldapName;
+            }
+
+            return this.name;
+        }
+
+        String getSearchDn() {
+            return this.searchDn;
+        }
+
+        String getFilter() {
+            return this.filter;
+        }
+
+        String getRdn() {
+            return this.rdn;
         }
     }
 }

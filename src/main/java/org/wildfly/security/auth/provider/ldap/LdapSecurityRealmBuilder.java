@@ -18,6 +18,9 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.IdentityMapping;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import org.wildfly.common.Assert;
@@ -25,7 +28,11 @@ import org.wildfly.security.auth.server.NameRewriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Builder for the security realm implementation backed by LDAP.
@@ -34,10 +41,21 @@ import java.util.List;
  */
 public class LdapSecurityRealmBuilder {
 
+    /*
+     *  The LDAP security realm constructed by this builder expects no further modifications to the
+     *  Collections it is passed.
+     *
+     *  This is the reason this builder and all child builders are implemented to prevent subsequent
+     *  modification after the build is complete.
+     */
+
     private boolean built = false;
     private DirContextFactory dirContextFactory;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
-    private LdapSecurityRealm.PrincipalMapping principalMapping;
+    private List<CredentialLoader> credentialLoaders = new ArrayList<>();
+    private List<CredentialPersister> credentialPersisters = new ArrayList<>();
+    private List<EvidenceVerifier> evidenceVerifiers = new ArrayList<>();
+    private IdentityMapping identityMapping;
 
     private LdapSecurityRealmBuilder() {
     }
@@ -80,17 +98,57 @@ public class LdapSecurityRealmBuilder {
         return this;
     }
 
+    public IdentityMappingBuilder identityMapping() {
+        assertNotBuilt();
+
+        return new IdentityMappingBuilder();
+    }
+
     /**
      * Add a principal mapping to this builder.
      *
      * @return the builder for the principal mapping
      */
-    public LdapSecurityRealmBuilder setPrincipalMapping(LdapSecurityRealm.PrincipalMapping principalMapping) {
-        assertNotBuilt();
-
-        this.principalMapping = principalMapping;
+    LdapSecurityRealmBuilder setIdentityMapping(IdentityMapping principalMapping) {
+        this.identityMapping = principalMapping;
 
         return this;
+    }
+
+    public UserPasswordCredentialLoaderBuilder userPasswordCredentialLoader() {
+        assertNotBuilt();
+
+        return new UserPasswordCredentialLoaderBuilder();
+    }
+
+    public OtpCredentialLoaderBuilder otpCredentialLoader() {
+        assertNotBuilt();
+
+        return new OtpCredentialLoaderBuilder();
+    }
+
+    LdapSecurityRealmBuilder addCredentialLoader(CredentialLoader credentialLoader) {
+        credentialLoaders.add(credentialLoader);
+
+        return this;
+    }
+
+    LdapSecurityRealmBuilder addCredentialPersister(CredentialPersister credentialPersister) {
+        credentialPersisters.add(credentialPersister);
+
+        return this;
+    }
+
+    LdapSecurityRealmBuilder addEvidenceVerifier(EvidenceVerifier evidenceVerifier) {
+        evidenceVerifiers.add(evidenceVerifier);
+
+        return this;
+    }
+
+    public LdapSecurityRealmBuilder addDirectEvidenceVerification(String... credentialNames) {
+        assertNotBuilt();
+
+        return addEvidenceVerifier(new DirectEvidenceVerifier(new HashSet<>(Arrays.asList(credentialNames))));
     }
 
     /**
@@ -103,12 +161,12 @@ public class LdapSecurityRealmBuilder {
         if (dirContextFactory == null) {
             throw log.noDirContextFactorySet();
         }
-        if (principalMapping == null) {
+        if (identityMapping == null) {
             throw log.noPrincipalMappingDefinition();
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, nameRewriter, principalMapping);
+        return new LdapSecurityRealm(dirContextFactory, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers);
     }
 
     private void assertNotBuilt() {
@@ -120,22 +178,15 @@ public class LdapSecurityRealmBuilder {
     /**
      * A builder for a principal mapping.
      */
-    public static class PrincipalMappingBuilder {
+    public class IdentityMappingBuilder {
+
+        private boolean built = false;
 
         private String searchDn = null;
         private boolean searchRecursive = false;
         private String nameAttribute;
-        private String passwordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
-        private String otpAlgorithmAttribute = null;
-        private String otpHashAttribute = null;
-        private String otpSeedAttribute = null;
-        private String otpSequenceAttribute = null;
         private int searchTimeLimit = 10000;
         private List<Attribute> attributes = new ArrayList<>();
-
-        public static PrincipalMappingBuilder builder() {
-            return new PrincipalMappingBuilder();
-        }
 
         /**
          * <p>Set the name of the context to be used when executing queries.
@@ -150,7 +201,9 @@ public class LdapSecurityRealmBuilder {
          * @param searchDn the name of the context to search
          * @return this builder
          */
-        public PrincipalMappingBuilder setSearchDn(final String searchDn) {
+        public IdentityMappingBuilder setSearchDn(final String searchDn) {
+            assertNotBuilt();
+
             this.searchDn = searchDn;
             return this;
         }
@@ -161,7 +214,9 @@ public class LdapSecurityRealmBuilder {
          *
          * @return this builder
          */
-        public PrincipalMappingBuilder searchRecursive() {
+        public IdentityMappingBuilder searchRecursive() {
+            assertNotBuilt();
+
             this.searchRecursive = true;
             return this;
         }
@@ -172,7 +227,9 @@ public class LdapSecurityRealmBuilder {
          * @param limit the limit in milliseconds. Defaults to 5000 milliseconds.
          * @return this builder
          */
-        public PrincipalMappingBuilder setSearchTimeLimit(int limit) {
+        public IdentityMappingBuilder setSearchTimeLimit(int limit) {
+            assertNotBuilt();
+
             this.searchTimeLimit = limit;
             return this;
         }
@@ -183,152 +240,188 @@ public class LdapSecurityRealmBuilder {
          * @param nameAttribute the name attribute
          * @return this builder
          */
-        public PrincipalMappingBuilder setRdnIdentifier(final String nameAttribute) {
+        public IdentityMappingBuilder setRdnIdentifier(final String nameAttribute) {
+            assertNotBuilt();
+
             this.nameAttribute = nameAttribute;
-            return this;
-        }
-
-        /**
-         * <p>Set the name of the attribute in LDAP that holds the user's password. Use this this option if you want to
-         * obtain credentials from Ldap based on the built-in supported types.
-         *
-         * @param passwordAttribute the password attribute name. Defaults to {@link UserPasswordCredentialLoader#DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME}.
-         * @return this builder
-         */
-        public PrincipalMappingBuilder setPasswordAttribute(final String passwordAttribute) {
-            this.passwordAttribute = passwordAttribute;
-            return this;
-        }
-
-        public PrincipalMappingBuilder setOtpAttributes(String otpAlgorithmAttribute, String otpHashAttribute, String otpSeedAttribute, String otpSequenceAttribute) {
-            this.otpAlgorithmAttribute = otpAlgorithmAttribute;
-            this.otpHashAttribute = otpHashAttribute;
-            this.otpSeedAttribute = otpSeedAttribute;
-            this.otpSequenceAttribute = otpSequenceAttribute;
             return this;
         }
 
         /**
          * Define an attribute mapping configuration.
          *
-         * @param attributes one or more {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute} configuration
+         * @param attributes one or more {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.IdentityMappingBuilder.Attribute} configuration
          * @return this builder
          */
-        public PrincipalMappingBuilder map(Attribute... attributes) {
+        public IdentityMappingBuilder map(Attribute... attributes) {
+            assertNotBuilt();
+
             this.attributes.addAll(Arrays.asList(attributes));
             return this;
         }
 
-        /**
-         * Build this principal mapping.
-         *
-         * @return a {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.PrincipalMapping} instance with all the configuration.
-         */
-        public LdapSecurityRealm.PrincipalMapping build() {
-            return new LdapSecurityRealm.PrincipalMapping(
-                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, passwordAttribute, otpAlgorithmAttribute,
-                    otpHashAttribute, otpSeedAttribute, otpSequenceAttribute, attributes);
+        public LdapSecurityRealmBuilder build() {
+            assertNotBuilt();
+            built = true;
+
+            return LdapSecurityRealmBuilder.this.setIdentityMapping(new IdentityMapping(
+                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, attributes));
         }
 
-        public static class Attribute {
-
-            private final String ldapName;
-            private final String searchDn;
-            private final String filter;
-            private String name;
-            private String rdn;
-
-            /**
-             * Create an attribute mapping based on the given attribute in LDAP.
-             *
-             * @param ldapName the name of the attribute in LDAP from where values are obtained
-             * @return this builder
-             */
-            public static Attribute from(String ldapName) {
-                Assert.checkNotNullParam("ldapName", ldapName);
-                return new Attribute(ldapName);
+        private void assertNotBuilt() {
+            if (built) {
+                throw log.builderAlreadyBuilt();
             }
 
-            /**
-             * <p>Create an attribute mapping based on the results of the given {@code filter}.
-             *
-             * <p>The {@code filter} <em>may</em> have one and exactly one <em>{0}</em> string that will be used to replace with the distinguished
-             * name of the identity. In this case, the filter is specially useful when the values for this attribute should be obtained from a
-             * separated entry. For instance, retrieving roles from entries with a object class of <em>groupOfNames</em> where the identity's DN is
-             * a value of a <em>member</em> attribute.
-             *
-             * @param searchDn the name of the context to be used when executing the filter
-             * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
-             * @param ldapName the name of the attribute in LDAP from where the values are obtained
-             * @return this builder
-             */
-            public static Attribute fromFilter(String searchDn, String filter, String ldapName) {
-                Assert.checkNotNullParam("searchDn", searchDn);
-                Assert.checkNotNullParam("filter", filter);
-                Assert.checkNotNullParam("ldapName", ldapName);
-                return new Attribute(searchDn, filter, ldapName);
+            LdapSecurityRealmBuilder.this.assertNotBuilt();
+        }
+
+    }
+
+    public class UserPasswordCredentialLoaderBuilder {
+
+        private boolean built = false;
+
+        private String userPasswordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
+        private Map<String, Set<String>> credentialNameToAlgorithms = new HashMap<>();
+        private boolean enablePersistence = false;
+        private boolean enableVerification = true;
+
+        /**
+         * Set the name of the attribute within the LDAP entry that should be queries to load the credential.
+         *
+         * @param userPasswordAttribute the name of the attribute within the LDAP entry that should be queries to load the credential.
+         * @return the {@link UserPasswordCredentialLoaderBuilder} to allow chaining of calls.
+         */
+        public UserPasswordCredentialLoaderBuilder setUserPasswordAttribute(final String userPasswordAttribute) {
+            assertNotBuilt();
+            this.userPasswordAttribute = userPasswordAttribute;
+
+            return this;
+        }
+
+        /**
+         * Set a credential name to be supported along with a list of algorithms to be suppoered with this credential name, if
+         * no algorithms are specified then all algorithms are considered supported.
+         *
+         * @param credentialName the supported credential name
+         * @param supportedAlgorithms the algorithms to be supported with this credential name
+         * @return the {@link UserPasswordCredentialLoaderBuilder} to allow chaining of calls.
+         */
+        public UserPasswordCredentialLoaderBuilder addSupportedCredential(final String credentialName, final String... supportedAlgorithms) {
+            assertNotBuilt();
+            credentialNameToAlgorithms.put(credentialName,  new HashSet<>(Arrays.asList(supportedAlgorithms)));
+
+            return this;
+        }
+
+        /**
+         * Enable persistence for the {@link UserPasswordCredentialLoader} being defined.
+         *
+         * @return the {@link UserPasswordCredentialLoaderBuilder} to allow chaining of calls.
+         */
+        public UserPasswordCredentialLoaderBuilder enablePersistence() {
+            assertNotBuilt();
+            enablePersistence = true;
+
+            return this;
+        }
+
+        /**
+         * By default if we can obtain a credential we support verification against it, this disables it.
+         *
+         * @return the {@link UserPasswordCredentialLoaderBuilder} to allow chaining of calls.
+         */
+        public UserPasswordCredentialLoaderBuilder disableVerification() {
+            assertNotBuilt();
+            enableVerification = false;
+
+            return this;
+        }
+
+        public LdapSecurityRealmBuilder build() {
+            assertNotBuilt();
+            built = true;
+
+            UserPasswordCredentialLoader upcl = new UserPasswordCredentialLoader(userPasswordAttribute, false, credentialNameToAlgorithms);
+            LdapSecurityRealmBuilder.this.addCredentialLoader(upcl);
+            if (enablePersistence) LdapSecurityRealmBuilder.this.addCredentialPersister(upcl);
+            if (enableVerification) LdapSecurityRealmBuilder.this.addEvidenceVerifier(upcl.toEvidenceVerifier());
+
+            return LdapSecurityRealmBuilder.this;
+        }
+
+
+        private void assertNotBuilt() {
+            if (built) {
+                throw log.builderAlreadyBuilt();
             }
 
-            /**
-             * <p>The behavior is exactly the same as {@link #fromFilter(String, String, String)}, except that it uses the
-             * same name of the context defined in {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder#setSearchDn(String)}.
-             *
-             * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
-             * @param ldapName the name of the attribute in LDAP from where the values are obtained
-             * @return this builder
-             */
-            public static Attribute fromFilter(String filter, String ldapName) {
-                Assert.checkNotNullParam("filter", filter);
-                Assert.checkNotNullParam("ldapName", ldapName);
-                return new Attribute(null, filter, ldapName);
+            LdapSecurityRealmBuilder.this.assertNotBuilt();
+        }
+    }
+
+    public class OtpCredentialLoaderBuilder {
+
+        private boolean built = false;
+
+        private String credentialName = null;
+        private String otpAlgorithmAttribute = null;
+        private String otpHashAttribute = null;
+        private String otpSeedAttribute = null;
+        private String otpSequenceAttribute = null;
+
+        public OtpCredentialLoaderBuilder setCredentialName(final String credentialName) {
+            assertNotBuilt();
+            this.credentialName = credentialName;
+
+            return this;
+        }
+
+        public OtpCredentialLoaderBuilder setOtpAlgorithmAttribute(final String otpAlgorithmAttribute) {
+            assertNotBuilt();
+            this.otpAlgorithmAttribute = otpAlgorithmAttribute;
+
+            return this;
+        }
+
+        public OtpCredentialLoaderBuilder setOtpHashAttribute(final String otpHashAttribute) {
+            assertNotBuilt();
+            this.otpHashAttribute = otpHashAttribute;
+
+            return this;
+        }
+
+        public OtpCredentialLoaderBuilder setOtpSeedAttribute(final String otpSeedAttribute) {
+            assertNotBuilt();
+            this.otpSeedAttribute = otpSeedAttribute;
+
+            return this;
+        }
+
+        public OtpCredentialLoaderBuilder setOtpSequenceAttribute(final String otpSequenceAttribute) {
+            assertNotBuilt();
+            this.otpSequenceAttribute = otpSequenceAttribute;
+
+            return this;
+        }
+
+        public LdapSecurityRealmBuilder build() {
+            assertNotBuilt();
+
+            OtpCredentialLoader ocl = new OtpCredentialLoader(credentialName, otpAlgorithmAttribute, otpHashAttribute, otpSeedAttribute, otpSequenceAttribute);
+            LdapSecurityRealmBuilder.this.addCredentialLoader(ocl);
+            LdapSecurityRealmBuilder.this.addCredentialPersister(ocl);
+
+            return LdapSecurityRealmBuilder.this;
+        }
+
+        private void assertNotBuilt() {
+            if (built) {
+                throw log.builderAlreadyBuilt();
             }
 
-            Attribute(String ldapName) {
-                this(null, null, ldapName);
-            }
-
-            Attribute(String searchDn, String filter, String ldapName) {
-                Assert.checkNotNullParam("ldapName", ldapName);
-                this.searchDn = searchDn;
-                this.filter = filter;
-                this.ldapName = ldapName.toUpperCase();
-            }
-
-            public Attribute asRdn(String rdn) {
-                Assert.checkNotNullParam("rdn", rdn);
-                this.rdn = rdn;
-                return this;
-            }
-
-            public Attribute to(String name) {
-                Assert.checkNotNullParam("to", name);
-                this.name = name;
-                return this;
-            }
-
-            String getLdapName() {
-                return this.ldapName;
-            }
-
-            String getName() {
-                if (this.name == null) {
-                    return this.ldapName;
-                }
-
-                return this.name;
-            }
-
-            String getSearchDn() {
-                return this.searchDn;
-            }
-
-            String getFilter() {
-                return this.filter;
-            }
-
-            String getRdn() {
-                return this.rdn;
-            }
+            LdapSecurityRealmBuilder.this.assertNotBuilt();
         }
     }
 }

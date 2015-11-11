@@ -31,9 +31,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class OtpCredentialLoader implements CredentialLoader, CredentialPersister {
-
-    public static final String DEFAULT_CREDENTIAL_NAME = "otp";
+class OtpCredentialLoader implements CredentialPersister {
 
     private final String myCredentialName; // name of credential defined by following LDAP attributes
     private final String algorithmAttributeName;
@@ -41,7 +39,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
     private final String seedAttributeName;
     private final String sequenceAttributeName;
 
-    public OtpCredentialLoader(String credentialName, String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
+    OtpCredentialLoader(String credentialName, String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
         Assert.checkNotNullParam("credentialName", credentialName);
         Assert.checkNotNullParam("algorithmAttributeName", algorithmAttributeName);
         Assert.checkNotNullParam("hashAttributeName", hashAttributeName);
@@ -55,7 +53,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
     }
 
     @Override
-    public SupportLevel getCredentialSupport(DirContextFactory contextFactory, String credentialName) {
+    public SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, String credentialName) {
         return myCredentialName.equals(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
@@ -75,7 +73,7 @@ public class OtpCredentialLoader implements CredentialLoader, CredentialPersiste
         }
 
         @Override
-        public SupportLevel getCredentialSupport(String credentialName) {
+        public SupportLevel getCredentialAcquireSupport(String credentialName) {
             if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
                 return SupportLevel.UNSUPPORTED;
             }

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.util.EnumSet;
 
 import javax.naming.NamingException;
@@ -61,9 +63,28 @@ public interface DirContextFactory {
      */
     void returnContext(final DirContext context);
 
-    // TODO - Obtaining a DirContext after a referral.
+    /**
+     * Pass back a {@link DirContext} to this factory to be discarded.
+     *
+     * The context may be passed back either because it is detected as being invalid or possibly because it has been created to
+     * act as a specific account and so should not be pooled.
+     *
+     * Although the context is being discarded this method allows the factory to perform any additional clean up required around
+     * this context.
+     *
+     * @param context the {@link DirContext} to discard.
+     */
+    default void discardContext(final DirContext context) {
+        if (context instanceof InitialDirContext) {
+            try {
+                context.close();
+                log.debugf("Context [%s] was closed. Connection closed or just returned to the pool.", context);
+            } catch (NamingException ignored) {
+            }
+        }
+    };
 
-    // TODO - Is this the correct place to add credential verification?
+    // TODO - Obtaining a DirContext after a referral.
 
     /**
      * The referral mode.

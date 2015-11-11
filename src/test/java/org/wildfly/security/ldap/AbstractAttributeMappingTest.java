@@ -17,18 +17,18 @@
  */
 package org.wildfly.security.ldap;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.ClassRule;
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.Attributes;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.PrincipalMappingBuilder.builder;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -46,23 +46,24 @@ public abstract class AbstractAttributeMappingTest {
         }
     }
 
-    protected void assertAttributes(AssertResultHandler handler, LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute... expectedAttributes) throws RealmUnavailableException {
+    protected void assertAttributes(AssertResultHandler handler, Attribute... expectedAttributes) throws RealmUnavailableException {
         assertAttributes("plainUser", handler, expectedAttributes);
     }
 
-    protected void assertAttributes(String principalName, AssertResultHandler handler, LdapSecurityRealmBuilder.PrincipalMappingBuilder.Attribute... expectedAttributes) throws RealmUnavailableException {
+    protected void assertAttributes(String principalName, AssertResultHandler handler, Attribute... expectedAttributes) throws RealmUnavailableException {
         SecurityDomain.Builder builder = SecurityDomain.builder();
 
         builder.setDefaultRealmName("default")
                 .addRealm("default",
                         LdapSecurityRealmBuilder.builder()
                                 .setDirContextFactory(this.dirContextFactory.create())
-                                .setPrincipalMapping(builder()
+                                .identityMapping()
                                         .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                                         .searchRecursive()
                                         .setRdnIdentifier("uid")
                                         .map(expectedAttributes)
-                                        .build()).build());
+                                        .build()
+                                        .build());
 
         SecurityDomain securityDomain = builder.build();
 

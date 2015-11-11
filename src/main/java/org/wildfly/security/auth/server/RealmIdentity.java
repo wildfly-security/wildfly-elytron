@@ -149,7 +149,7 @@ public interface RealmIdentity {
     }
 
     /**
-     * Verify the given credential.
+     * Verify the given evidence against the named credential.
      *
      * @param evidence the evidence to verify
      *
