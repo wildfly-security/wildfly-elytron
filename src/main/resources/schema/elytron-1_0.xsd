@@ -117,6 +117,7 @@
                 <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-authorization-name" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="ssl-cipher-suite" type="ssl-cipher-selector-type" minOccurs="1" maxOccurs="1"/>
@@ -146,6 +147,7 @@
             <!-- Protection parameter -->
             <xsd:choice minOccurs="0" maxOccurs="1">
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -158,6 +160,7 @@
         <!-- Protection parameter -->
         <xsd:choice minOccurs="0" maxOccurs="1">
             <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="key-store-clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
         </xsd:choice>
         <xsd:attribute name="key-store-name" type="xsd:string" use="required"/>
         <xsd:attribute name="alias" type="xsd:string" use="required"/>
@@ -206,5 +209,9 @@
 
     <xsd:complexType name="uri-type">
         <xsd:attribute name="uri" type="xsd:anyURI" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="clear-password-type">
+        <xsd:attribute name="password" type="xsd:string" use="required"/>
     </xsd:complexType>
 </xsd:schema>

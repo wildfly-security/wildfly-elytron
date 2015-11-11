@@ -29,6 +29,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -67,7 +68,7 @@ class SetCertificateCredentialAuthenticationConfiguration extends Authentication
     }
 
     boolean filterOneSaslMechanism(final String mechanismName) {
-        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
         return types == null || types.contains(X509CertificateChainPrivateCredential.class) || super.filterOneSaslMechanism(mechanismName);
     }
 }

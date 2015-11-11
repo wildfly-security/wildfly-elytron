@@ -38,6 +38,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.SecretKeyCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
@@ -146,7 +147,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
         } catch (GeneralSecurityException e) {
             return super.filterOneSaslMechanism(mechanismName);
         }
-        Set<Class<?>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
+        Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
         if (types == null) {
             // we don't really know anything about this mech; leave it for a superclass to figure out
             return super.filterOneSaslMechanism(mechanismName);

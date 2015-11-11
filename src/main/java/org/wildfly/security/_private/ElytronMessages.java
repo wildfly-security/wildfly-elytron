@@ -433,14 +433,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2011, value = "Failed to load keystore data")
     KeyStoreException failedToLoadKeyStoreData(@Cause Throwable cause);
 
-    @Message(id = 2012, value = "Secret keys not supported")
-    KeyStoreException secretKeysNotSupported();
+    // id = 2012 KeyStoreException "Secret keys not supported"
 
-    @Message(id = 2013, value = "Direct key storage not supported")
-    KeyStoreException directKeyStorageNotSupported();
+    // id = 2013 KeyStoreException "Direct key storage not supported"
 
-    @Message(id = 2014, value = "Only password storage is supported")
-    KeyStoreException onlyPasswordStorageIsSupported();
+    // id = 2014 KeyStoreException "Only password storage is supported"
 
     /* util package */
 
