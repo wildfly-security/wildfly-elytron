@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
+import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
+import org.wildfly.security.auth.server.event.RealmEvent;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -78,7 +81,17 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         return authenticationRealm.getEvidenceVerifySupport(credentialName);
     }
 
-
+    public void handleRealmEvent(final RealmEvent event) {
+        if (event instanceof RealmAuthenticationEvent) {
+            authenticationRealm.handleRealmEvent(event);
+        } else if (event instanceof RealmAuthorizationEvent) {
+            authorizationRealm.handleRealmEvent(event);
+        } else {
+            // use safe wrapper to ensure both are called
+            SecurityRealm.safeHandleRealmEvent(authenticationRealm, event);
+            SecurityRealm.safeHandleRealmEvent(authorizationRealm, event);
+        }
+    }
 
     static final class Identity implements RealmIdentity {
 
