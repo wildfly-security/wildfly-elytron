@@ -33,8 +33,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 class OtpCredentialLoader implements CredentialPersister {
 
-    public static final String DEFAULT_CREDENTIAL_NAME = "otp";
-
     private final String myCredentialName; // name of credential defined by following LDAP attributes
     private final String algorithmAttributeName;
     private final String hashAttributeName;

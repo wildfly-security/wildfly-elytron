@@ -78,6 +78,7 @@ public class PasswordSupportTest {
                 .setRdnIdentifier("uid")
                 .build()
                 .otpCredentialLoader()
+                .setCredentialName("otp")
                 .setOtpAlgorithmAttribute("otpAlgorithm")
                 .setOtpHashAttribute("otpHash")
                 .setOtpSeedAttribute("otpSeed")

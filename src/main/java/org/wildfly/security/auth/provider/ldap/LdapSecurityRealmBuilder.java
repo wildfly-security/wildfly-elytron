@@ -365,7 +365,7 @@ public class LdapSecurityRealmBuilder {
 
         private boolean built = false;
 
-        private String credentialName = OtpCredentialLoader.DEFAULT_CREDENTIAL_NAME;
+        private String credentialName = null;
         private String otpAlgorithmAttribute = null;
         private String otpHashAttribute = null;
         private String otpSeedAttribute = null;
