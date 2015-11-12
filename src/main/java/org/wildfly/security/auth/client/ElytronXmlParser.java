@@ -18,7 +18,11 @@
 
 package org.wildfly.security.auth.client;
 
-import static javax.xml.stream.XMLStreamConstants.*;
+import static javax.xml.stream.XMLStreamConstants.COMMENT;
+import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
+import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
+import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
+import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
@@ -53,9 +57,10 @@ import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.password.Password;
@@ -65,7 +70,6 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.util.ServiceLoaderSupplier;
-import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.x500.X500;
 
 /**
@@ -472,6 +476,13 @@ public final class ElytronXmlParser {
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
                         final Module module = parseModuleRefType(reader);
                         configuration = () -> parentConfig.create().useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader()));
+                        break;
+                    }
+                    case "use-mechanism-realm": {
+                        gotConfig = true;
+                        final String realm = parseNameType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useRealm(realm);
                         break;
                     }
                     default: throw reader.unexpectedElement();

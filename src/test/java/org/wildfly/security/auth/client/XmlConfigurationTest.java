@@ -18,7 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -62,6 +63,7 @@ public class XmlConfigurationTest {
             "            <match-userinfo name=\"fred\"/>\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
+            "            <use-mechanism-realm name=\"mainRealm\"/>\n" +
             "        </rule>\n" +
             "    </rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
