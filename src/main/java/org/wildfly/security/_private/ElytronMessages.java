@@ -398,6 +398,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1093, value = "Mechanism realm was already selected")
     IllegalStateException mechRealmAlreadySelected();
 
+    @LogMessage(level = ERROR)
+    @Message(id = 1094, value = "An event handler threw an exception")
+    void eventHandlerFailed(@Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
