@@ -19,12 +19,14 @@
 package org.wildfly.security.credential;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
 
 /**
  * A credential is a piece of information that can be used to verify or produce evidence.
  */
 public interface Credential {
+
     /**
      * Determine whether this credential can, generally speaking, verify the given evidence type.
      *
@@ -37,6 +39,18 @@ public interface Credential {
     default boolean canVerify(Class<? extends Evidence> evidenceClass, String algorithmName) {
         Assert.checkNotNullParam("evidenceClass", evidenceClass);
         return false;
+    }
+
+    /**
+     * Determine whether this credential can verify the given evidence.
+     *
+     * @param evidence the evidence (must not be {@code null})
+     *
+     * @return {@code true} if the evidence can be verified by this credential, {@code false} otherwise
+     */
+    default boolean canVerify(Evidence evidence) {
+        Assert.checkNotNullParam("evidence", evidence);
+        return canVerify(evidence.getClass(), evidence instanceof AlgorithmEvidence ? ((AlgorithmEvidence) evidence).getAlgorithm() : null);
     }
 
     /**
