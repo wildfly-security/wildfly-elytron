@@ -24,7 +24,8 @@ import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 
 /**
- * A callback used to acquire parameter specifications, either for outbound or inbound authentication.
+ * A callback used to acquire parameter specifications, either for outbound or inbound authentication.  The supplied parameter
+ * information may be used to select an authentication mechanism, or to set parameters for an establishing mechanism.
  * The supplied parameter specification should be of a <em>supported</em>
  * type; the {@link #isParameterSupported(AlgorithmParameterSpec)} and {@link #isParameterTypeSupported(Class)} methods can be
  * used to query the types that are supported.  If no credential is available, {@code null} is set, and
