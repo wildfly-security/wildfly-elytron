@@ -28,7 +28,6 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -48,7 +47,7 @@ class SetPasswordCallbackHandlerAuthenticationConfiguration extends Authenticati
     void handleCallbacks(final AuthenticationConfiguration config, final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
         ArrayList<Callback> list = null;
         for (Callback callback : callbacks) {
-            if (callback instanceof PasswordCallback || callback instanceof CredentialCallback || callback instanceof CredentialParameterCallback) {
+            if (callback instanceof PasswordCallback || callback instanceof CredentialCallback) {
                 if (list == null) list = new ArrayList<>(callbacks.length);
                 list.add(callback);
             }
@@ -61,7 +60,7 @@ class SetPasswordCallbackHandlerAuthenticationConfiguration extends Authenticati
 
     void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
         final Callback callback = callbacks[index];
-        if (callback instanceof PasswordCallback || callback instanceof CredentialCallback || callback instanceof CredentialParameterCallback) {
+        if (callback instanceof PasswordCallback || callback instanceof CredentialCallback) {
             return;
         }
         super.handleCallback(callbacks, index);
