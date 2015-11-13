@@ -18,9 +18,6 @@
 
 package org.wildfly.security.auth.server;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 import org.wildfly.common.Assert;
 
 /**
@@ -33,7 +30,6 @@ public final class MechanismRealmConfiguration {
     private final NameRewriter preRealmRewriter;
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
-    private final Supplier<List<String>> credentialNameSupplier;
 
     /**
      * Construct a new instance.
@@ -42,14 +38,12 @@ public final class MechanismRealmConfiguration {
      * @param preRealmRewriter the pre-realm rewriter to apply (may not be {@code null})
      * @param postRealmRewriter the post-realm rewriter to apply (may not be {@code null})
      * @param finalRewriter the final rewriter to apply (may not be {@code null})
-     * @param credentialNameSupplier an optional supplier of credential names to use for this mechanism realm configuration
      */
-    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Supplier<List<String>> credentialNameSupplier) {
+    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter) {
         this.realmName = realmName;
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
-        this.credentialNameSupplier = credentialNameSupplier;
     }
 
     /**
@@ -89,18 +83,9 @@ public final class MechanismRealmConfiguration {
     }
 
     /**
-     * Get the credential name supplier, if any.
-     *
-     * @return the credential name supplier, or {@code null} if none is configured
-     */
-    public Supplier<List<String>> getCredentialNameSupplier() {
-        return credentialNameSupplier;
-    }
-
-    /**
      * A realm configuration for no particular realm, which does no additional rewriting.
      */
-    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, null);
+    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER);
 
     /**
      * Obtain a new {@link Builder} capable of building a {@link MechanismRealmConfiguration}.
@@ -116,7 +101,6 @@ public final class MechanismRealmConfiguration {
         private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
-        private Supplier<List<String>> credentialNameSupplier;
 
         /**
          * Construct a new instance.
@@ -148,15 +132,9 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
-        public Builder setCredentialNameSupplier(final Supplier<List<String>> credentialNameSupplier) {
-            this.credentialNameSupplier = credentialNameSupplier;
-
-            return this;
-        }
-
         public MechanismRealmConfiguration build() {
             Assert.checkNotNullParam("realmName", realmName);
-            return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter, credentialNameSupplier);
+            return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter);
         }
     }
 }

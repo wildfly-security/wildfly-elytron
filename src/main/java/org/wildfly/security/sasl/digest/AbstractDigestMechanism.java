@@ -55,6 +55,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.digest._private.DigestUtil;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
@@ -614,9 +615,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getPredigestedSaltedPassword(RealmCallback realmCallback, NameCallback nameCallback) throws SaslException {
-        CredentialCallback credentialCallback = CredentialCallback.builder()
-                .addSupportedCredentialType(PasswordCredential.class, passwordAlgorithm(getMechanismName()))
-                .build();
+        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm(getMechanismName()));
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
             PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
@@ -634,9 +633,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
     protected byte[] getSaltedPasswordFromTwoWay(RealmCallback realmCallback, NameCallback nameCallback, boolean readOnlyRealmUsername) throws SaslException {
-        CredentialCallback credentialCallback = CredentialCallback.builder()
-                .addSupportedCredentialType(PasswordCredential.class)
-                .build();
+        CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
         } catch (UnsupportedCallbackException e) {
@@ -649,7 +646,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             }
         }
         final Credential credential = credentialCallback.getCredential();
-        TwoWayPassword password = (TwoWayPassword) ((PasswordCredential)credential).getPassword();
+        TwoWayPassword password = ((PasswordCredential)credential).getPassword(TwoWayPassword.class);
         char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
         try {
             password.destroy();

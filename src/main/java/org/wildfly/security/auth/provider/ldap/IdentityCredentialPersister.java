@@ -14,20 +14,20 @@ import org.wildfly.security.credential.Credential;
 public interface IdentityCredentialPersister extends IdentityCredentialLoader {
 
     /**
-     * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
+     * Determine whether a given credential type can be persisted by this credential persister.
      *
-     * @param credentialName the credential to store
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the credential algorithm name, if any
      * @return {@code true} if persisting of given credential is supported
      */
-    boolean getCredentialPersistSupport(String credentialName);
+    boolean getCredentialPersistSupport(Class<? extends Credential> credentialType, String algorithmName);
 
     /**
      * Store credential of identity.
      *
-     * @param credentialName the credential to store
      * @param credential the credential
      */
-    void persistCredential(String credentialName, Credential credential) throws RealmUnavailableException;
+    void persistCredential(Credential credential) throws RealmUnavailableException;
 
     /**
      * Clear all supported credentials of identity.

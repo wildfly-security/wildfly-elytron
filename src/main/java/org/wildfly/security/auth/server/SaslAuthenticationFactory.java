@@ -29,10 +29,15 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.credential.AlgorithmCredential;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.AlgorithmEvidence;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslFactories;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
 /**
@@ -71,6 +76,26 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         } else {
             return Arrays.asList(names);
         }
+    }
+
+    Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
+        return SaslMechanismInformation.getSupportedServerEvidenceTypes(mechName);
+    }
+
+    Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
+        return SaslMechanismInformation.getSupportedServerEvidenceAlgorithms(mechName, evidenceType);
+    }
+
+    Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
+        return SaslMechanismInformation.getSupportedServerCredentialTypes(mechName);
+    }
+
+    Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
+        return SaslMechanismInformation.getSupportedServerCredentialAlgorithms(mechName, credentialType);
+    }
+
+    boolean usesCredentials(final String mechName) {
+        return SaslMechanismInformation.needsServerCredentials(mechName);
     }
 
     static final Map<String, String> QUERY_ALL = Collections.singletonMap(WildFlySasl.MECHANISM_QUERY_ALL, "true");

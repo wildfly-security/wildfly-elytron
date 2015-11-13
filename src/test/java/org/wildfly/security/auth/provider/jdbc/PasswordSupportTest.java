@@ -65,29 +65,33 @@ public class PasswordSupportTest {
 
         createClearPasswordTable(userName, userPassword);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(ClearPassword.ALGORITHM_CLEAR)
+            .setHashColumn(1)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_clear_password WHERE name = ?")
-                    .withMapper(new PasswordKeyMapper("cred1", ClearPassword.ALGORITHM_CLEAR, 1))
+                    .withMapper(passwordKeyMapper)
                     .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred1"));
+        assertTrue(securityRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).mayBeSupported());
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred1"));
+        assertTrue(realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).isDefinitelySupported());
 
         PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         ClearPassword password = (ClearPassword) passwordFactory.generatePassword(new ClearPasswordSpec(userPassword.toCharArray()));
 
-        assertTrue(realmIdentity.verifyEvidence("cred1", new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
 
         PasswordGuessEvidence invalidPassword = new PasswordGuessEvidence("badpasswd".toCharArray());
 
-        assertFalse(realmIdentity.verifyEvidence("cred1", invalidPassword));
-        assertFalse(realmIdentity.verifyEvidence("cred2", invalidPassword));
+        assertFalse(realmIdentity.verifyEvidence(invalidPassword));
 
-        ClearPassword storedPassword = (ClearPassword) realmIdentity.getCredential("cred1", PasswordCredential.class).getPassword();
+        ClearPassword storedPassword = (ClearPassword) realmIdentity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword();
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getPassword(), storedPassword.getPassword());
@@ -100,23 +104,26 @@ public class PasswordSupportTest {
 
         String cryptString = createBcryptPasswordTable(userName, userPassword);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(BCryptPassword.ALGORITHM_BCRYPT)
+            .setHashColumn(1)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password FROM user_bcrypt_password where name = ?")
-                .withMapper(
-                        new PasswordKeyMapper("cred2", BCryptPassword.ALGORITHM_BCRYPT, 1)
-                )
+                .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred2"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred2"));
-        assertTrue(realmIdentity.verifyEvidence("cred2", new PasswordGuessEvidence(userPassword.toCharArray())));
-        assertFalse(realmIdentity.verifyEvidence("cred2", new PasswordGuessEvidence("invalid".toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("invalid".toCharArray())));
 
-        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential("cred2", PasswordCredential.class).getPassword();
+        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword();
 
         assertNotNull(storedPassword);
 
@@ -133,23 +140,28 @@ public class PasswordSupportTest {
 
         createBcryptPasswordTable(userName, userPassword, salt, iterationCount);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(BCryptPassword.ALGORITHM_BCRYPT)
+            .setHashColumn(1)
+            .setSaltColumn(2)
+            .setIterationCountColumn(3)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT password, salt, iterationCount FROM user_bcrypt_password where name = ?")
-                .withMapper(
-                        new PasswordKeyMapper("cred3", BCryptPassword.ALGORITHM_BCRYPT, 1, 2, 3)
-                )
+                .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred3"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred3"));
-        assertTrue(realmIdentity.verifyEvidence("cred3", new PasswordGuessEvidence(userPassword.toCharArray())));
-        assertFalse(realmIdentity.verifyEvidence("cred3", new PasswordGuessEvidence("invalid".toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("invalid".toCharArray())));
 
-        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential("cred3", PasswordCredential.class).getPassword();
+        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword();
 
         assertNotNull(storedPassword);
     }
@@ -170,22 +182,26 @@ public class PasswordSupportTest {
 
         SaltedSimpleDigestPassword password = createSaltedDigestPasswordTable(algorithm, userName, userPassword);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(algorithm)
+            .setHashColumn(1)
+            .setSaltColumn(2)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest, salt FROM user_salted_digest_password where name = ?")
-                .withMapper(
-                        new PasswordKeyMapper("cred4", algorithm, 1, 2)
-                )
+                .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred4"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred4"));
-        assertTrue(realmIdentity.verifyEvidence("cred4", new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
 
-        SaltedSimpleDigestPassword storedPassword = (SaltedSimpleDigestPassword) realmIdentity.getCredential("cred4", PasswordCredential.class).getPassword();
+        SaltedSimpleDigestPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, algorithm).getPassword(SaltedSimpleDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -205,22 +221,25 @@ public class PasswordSupportTest {
 
         SimpleDigestPassword password = createSimpleDigestPasswordTable(algorithm, userName, userPassword);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(algorithm)
+            .setHashColumn(1)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest FROM user_simple_digest_password where name = ?")
-                .withMapper(
-                        new PasswordKeyMapper("cred5", algorithm, 1)
-                )
+                .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred5"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred5"));
-        assertTrue(realmIdentity.verifyEvidence("cred5", new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
 
-        SimpleDigestPassword storedPassword = (SimpleDigestPassword) realmIdentity.getCredential("cred5", PasswordCredential.class).getPassword();
+        SimpleDigestPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, algorithm).getPassword(SimpleDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getDigest(), storedPassword.getDigest());
@@ -233,22 +252,27 @@ public class PasswordSupportTest {
 
         IteratedSaltedHashPasswordSpec passwordSpec = createScramDigestPasswordTable(userName, userPassword);
 
+        PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
+            .setDefaultAlgorithm(ScramDigestPassword.ALGORITHM_SCRAM_SHA_256)
+            .setHashColumn(1)
+            .setSaltColumn(2)
+            .setIterationCountColumn(3)
+            .build();
+
         JdbcSecurityRealm securityRealm = JdbcSecurityRealm.builder()
                 .principalQuery("SELECT digest, salt, iterationCount FROM user_scram_digest_password where name = ?")
-                .withMapper(
-                        new PasswordKeyMapper("cred6", ScramDigestPassword.ALGORITHM_SCRAM_SHA_256, 1, 2, 3)
-                )
+                .withMapper(passwordKeyMapper)
                 .from(dataSourceRule.getDataSource())
                 .build();
 
-        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport("cred6"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256));
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
 
-        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport("cred6"));
-        assertTrue(realmIdentity.verifyEvidence("cred6", new PasswordGuessEvidence(userPassword.toCharArray())));
+        assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
 
-        ScramDigestPassword storedPassword = (ScramDigestPassword) realmIdentity.getCredential("cred6", PasswordCredential.class).getPassword();
+        ScramDigestPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256).getPassword(ScramDigestPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(passwordSpec.getHash(), storedPassword.getDigest());

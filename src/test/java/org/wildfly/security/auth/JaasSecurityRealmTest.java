@@ -36,8 +36,10 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
-import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateEvidence;
 
 /**
  * Testsuite for the {@link org.wildfly.security.auth.provider.JaasSecurityRealm}.
@@ -70,19 +72,19 @@ public class JaasSecurityRealmTest {
         assertNotNull("Unexpected null realm identity", realmIdentity);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport("jaas"));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, "blah"));
         assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED,
-                realmIdentity.getCredentialAcquireSupport("whatever"));
+                realmIdentity.getCredentialAcquireSupport(PublicKeyCredential.class, null));
 
         // the JAAS realm identity cannot be used to obtain credentials, so getCredential should always return null.
-        assertNull("Invalid non null credential", realmIdentity.getCredential("jaas", Credential.class));
+        assertNull("Invalid non null credential", realmIdentity.getCredential(PasswordCredential.class, null));
 
         // use the realm identity to verify all supported credentials - this will trigger a JAAS login that will use the test module.
-        assertTrue(realmIdentity.verifyEvidence("jaas", new PasswordGuessEvidence("passwd12#$".toCharArray())));
-        assertFalse(realmIdentity.verifyEvidence("jaas", new PasswordGuessEvidence("wrongpass".toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("passwd12#$".toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("wrongpass".toCharArray())));
 
         // get the authenticated realm identity after successfully verifying the credential.
-        assertTrue(realmIdentity.verifyEvidence("jaas", new PasswordGuessEvidence("passwd12#$".toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("passwd12#$".toCharArray())));
         AuthorizationIdentity authRealmIdentity = realmIdentity.getAuthorizationIdentity();
         assertNotNull("Unexpected null authenticated realm identity", authRealmIdentity);
         // check if the authenticated identity returns the caller principal as set by the test login module.
@@ -108,13 +110,12 @@ public class JaasSecurityRealmTest {
         // create a new realm identity using the realm.
         RealmIdentity realmIdentity = realm.createRealmIdentity("javajoe");
 
-        // as the custom handler might be able to handle different credential types, we should get a POSSIBLY_VERIFIABLE support for any type.
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport("jaas"));
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getCredentialAcquireSupport("whatever"));
+        assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getEvidenceVerifySupport(X509PeerCertificateEvidence.class, null));
 
         // verify the credentials using the custom callback handler.
-        assertTrue(realmIdentity.verifyEvidence("jaas", new PasswordGuessEvidence("$#21pass".toCharArray())));
-        assertFalse(realmIdentity.verifyEvidence("jaas", new PasswordGuessEvidence("wrongpass".toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("$#21pass".toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("wrongpass".toCharArray())));
 
     }
 }

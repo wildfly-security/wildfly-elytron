@@ -33,19 +33,16 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 class OtpCredentialLoader implements CredentialPersister {
 
-    private final String myCredentialName; // name of credential defined by following LDAP attributes
     private final String algorithmAttributeName;
     private final String hashAttributeName;
     private final String seedAttributeName;
     private final String sequenceAttributeName;
 
-    OtpCredentialLoader(String credentialName, String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
-        Assert.checkNotNullParam("credentialName", credentialName);
+    OtpCredentialLoader(String algorithmAttributeName, String hashAttributeName, String seedAttributeName, String sequenceAttributeName) {
         Assert.checkNotNullParam("algorithmAttributeName", algorithmAttributeName);
         Assert.checkNotNullParam("hashAttributeName", hashAttributeName);
         Assert.checkNotNullParam("seedAttributeName", seedAttributeName);
         Assert.checkNotNullParam("sequenceAttributeName", sequenceAttributeName);
-        this.myCredentialName = credentialName;
         this.algorithmAttributeName = algorithmAttributeName;
         this.hashAttributeName = hashAttributeName;
         this.seedAttributeName = seedAttributeName;
@@ -53,8 +50,18 @@ class OtpCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, String credentialName) {
-        return myCredentialName.equals(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getCredentialAcquireSupport(final DirContextFactory contextFactory, final Class<? extends Credential> credentialType, final String algorithmName) {
+        if (credentialType == PasswordCredential.class) {
+            if (algorithmName == null) {
+                return SupportLevel.SUPPORTED;
+            }
+            switch (algorithmName) {
+                case OneTimePassword.ALGORITHM_OTP_MD5: return SupportLevel.POSSIBLY_SUPPORTED;
+                case OneTimePassword.ALGORITHM_OTP_SHA1: return SupportLevel.POSSIBLY_SUPPORTED;
+                default: return SupportLevel.UNSUPPORTED;
+            }
+        }
+        return SupportLevel.UNSUPPORTED;
     }
 
     @Override
@@ -62,7 +69,7 @@ class OtpCredentialLoader implements CredentialPersister {
         return new ForIdentityLoader(contextFactory, distinguishedName);
     }
 
-    private class ForIdentityLoader implements IdentityCredentialLoader, IdentityCredentialPersister {
+    private class ForIdentityLoader implements IdentityCredentialPersister {
 
         private final DirContextFactory contextFactory;
         private final String distinguishedName;
@@ -73,8 +80,8 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(String credentialName) {
-            if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+            if (credentialType != PasswordCredential.class) {
                 return SupportLevel.UNSUPPORTED;
             }
             DirContext context = null;
@@ -88,7 +95,7 @@ class OtpCredentialLoader implements CredentialPersister {
                 Attribute seedAttribute = attributes.get(seedAttributeName);
                 Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
 
-                if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null) {
+                if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null && (algorithmName == null || algorithmAttribute.contains(algorithmName))) {
                     return SupportLevel.SUPPORTED;
                 }
 
@@ -101,10 +108,11 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType) {
-            if ( ! OtpCredentialLoader.this.myCredentialName.equals(credentialName)) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
+            if (credentialType != PasswordCredential.class) {
                 return null;
             }
+
             DirContext context = null;
             try {
                 context = contextFactory.obtainDirContext(null);
@@ -116,17 +124,17 @@ class OtpCredentialLoader implements CredentialPersister {
                 Attribute seedAttribute = attributes.get(seedAttributeName);
                 Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
 
-                if (algorithmAttribute == null || hashAttribute == null || seedAttribute == null || sequenceAttribute == null) {
+                if (algorithmAttribute == null || algorithmName != null && ! algorithmAttribute.contains(algorithmName) || hashAttribute == null || seedAttribute == null || sequenceAttribute == null) {
                     return null;
                 }
 
-                PasswordFactory passwordFactory = PasswordFactory.getInstance(((String) algorithmAttribute.get()));
+                PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithmAttribute.get());
                 Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(
                                 CodePointIterator.ofString((String) hashAttribute.get())
                                         .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
                                 CodePointIterator.ofString((String) seedAttribute.get())
                                         .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
-                                Integer.valueOf((String) sequenceAttribute.get())));
+                                Integer.parseInt((String) sequenceAttribute.get())));
                 if (credentialType.isAssignableFrom(PasswordCredential.class)) {
                     return credentialType.cast(new PasswordCredential(password));
                 }
@@ -141,12 +149,12 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public boolean getCredentialPersistSupport(String credentialName) {
-            return OtpCredentialLoader.this.myCredentialName.equals(credentialName);
+        public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+            return OtpCredentialLoader.this.getCredentialAcquireSupport(contextFactory, credentialType, algorithmName).mayBeSupported();
         }
 
         @Override
-        public void persistCredential(String credentialName, Credential credential) throws RealmUnavailableException {
+        public void persistCredential(final Credential credential) throws RealmUnavailableException {
             PasswordCredential passwordCredential = (PasswordCredential) credential;
             OneTimePassword password = (OneTimePassword) passwordCredential.getPassword();
             DirContext context = null;
@@ -161,7 +169,7 @@ class OtpCredentialLoader implements CredentialPersister {
 
                 context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
             } catch (NamingException e) {
-                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), credentialName, distinguishedName, e);
+                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
             } finally {
                 contextFactory.returnContext(context);
             }

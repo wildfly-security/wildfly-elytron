@@ -21,6 +21,7 @@ package org.wildfly.security.auth.provider.ldap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -53,7 +54,9 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
+import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.AlgorithmEvidence;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -101,12 +104,12 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-        Assert.checkNotNullParam("credentialName", credentialName);
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialAcquireSupport(dirContextFactory, credentialName);
+            SupportLevel support = loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -120,12 +123,12 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-        Assert.checkNotNullParam("credentialName", credentialName);
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidenceType", evidenceType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
         for (EvidenceVerifier verifier : evidenceVerifiers) {
-            SupportLevel support = verifier.getEvidenceVerifySupport(dirContextFactory, credentialName);
+            SupportLevel support = verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -148,13 +151,13 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
@@ -162,10 +165,10 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
             SupportLevel support = SupportLevel.UNSUPPORTED;
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
 
-                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialName);
+                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName);
                     if (temp != null && temp.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
@@ -181,24 +184,29 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public Credential getCredential(final String credentialName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return getCredential(credentialType, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
                 return null;
             }
 
-            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialName) == SupportLevel.UNSUPPORTED) {
+            if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return null;
             }
 
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-                    Credential credential = icl.getCredential(credentialName, Credential.class);
-                    if (credential != null) {
-                        return credential;
+                    Credential credential = icl.getCredential(credentialType, algorithmName);
+                    if (credentialType.isInstance(credential)) {
+                        return credentialType.cast(credential);
                     }
                 }
             }
@@ -206,58 +214,47 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
             return null;
         }
 
-        private boolean persistCredential(String credentialName, Credential credential) throws RealmUnavailableException {
-            for (CredentialPersister persister : credentialPersisters) {
-                IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
-                if (icp.getCredentialPersistSupport(credentialName)) {
-                    icp.persistCredential(credentialName, credential);
-                    return true;
-                }
-            }
-            return false;
-        }
-
         @Override
-        public void setCredential(String credentialName, Credential credential) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("credential", credential);
-
-            if (!exists()) {
-                throw log.ldapRealmIdentityNotExists(name);
-            }
-
-            if ( ! persistCredential(credentialName, credential)) {
-                throw log.ldapRealmsPersisterNotSupportCredentialName(credentialName);
-            }
-        }
-
-        @Override
-        public void deleteCredential(String credentialName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
-
-            if (!exists()) {
-                throw log.ldapRealmIdentityNotExists(name);
-            }
-
-            throw Assert.unsupported(); // TODO
-        }
-
-        @Override
-        public void setCredentials(Map<String, Credential> credentials) throws RealmUnavailableException {
+        public void setCredentials(final Collection<? extends Credential> credentials) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentials", credentials);
 
             if (!exists()) {
                 throw log.ldapRealmIdentityNotExists(name);
             }
 
+            // verify support
+            for (Credential credential : credentials) {
+                final Class<? extends Credential> credentialType = credential.getClass();
+                final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                boolean supported = false;
+                for (CredentialPersister persister : credentialPersisters) {
+                    IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                    if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        supported = true;
+                    }
+                }
+                if (! supported) {
+                    throw log.ldapRealmsPersisterNotSupported();
+                }
+            }
+
+            // clear
             for (CredentialPersister persister : credentialPersisters) {
                 IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
                 icp.clearCredentials();
             }
 
-            for (Map.Entry<String, Credential> credentialEntry : credentials.entrySet()) {
-                if ( ! persistCredential(credentialEntry.getKey(), credentialEntry.getValue())) {
-                    throw log.ldapRealmsPersisterNotSupportCredentialName(credentialEntry.getKey());
+            // set
+            for (Credential credential : credentials) {
+                final Class<? extends Credential> credentialType = credential.getClass();
+                final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                for (CredentialPersister persister : credentialPersisters) {
+                    IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                    if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                        icp.persistCredential(credential);
+                        // next credential
+                        break;
+                    }
                 }
             }
         }
@@ -271,57 +268,52 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override
-        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
             if (!exists()) {
-                return null;
-            }
-
-            if (LdapSecurityRealm.this.getEvidenceVerifySupport(credentialName) == SupportLevel.UNSUPPORTED) {
-                // If not supported in general then definitely not supported for a specific principal.
                 return SupportLevel.UNSUPPORTED;
             }
 
-            SupportLevel support = SupportLevel.UNSUPPORTED;
+            SupportLevel response = SupportLevel.UNSUPPORTED;
 
             for (EvidenceVerifier verifier : evidenceVerifiers) {
-                if (verifier.getEvidenceVerifySupport(dirContextFactory, credentialName).mayBeSupported()) {
-                    IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, identity.getDistinguishedName());
+                if (verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName).mayBeSupported()) {
+                    final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-                    SupportLevel temp = iev.getEvidenceVerifySupport(credentialName);
-                    if (temp != null && temp.isDefinitelySupported()) {
+                    final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName);
+                    if (support != null && support.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
-                        return temp;
+                        return support;
                     }
 
-                    if (temp != null && support.compareTo(temp) < 0) {
-                        support = temp;
+                    if (support != null && support.compareTo(support) < 0) {
+                        response = support;
                     }
                 }
             }
-
-            return support;
+            return response;
         }
 
         @Override
-        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
-
-
-            Assert.checkNotNullParam("credentialName", credentialName);
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidence", evidence);
             if (!exists()) {
                 return false;
             }
 
-            if (LdapSecurityRealm.this.getEvidenceVerifySupport(credentialName) == SupportLevel.UNSUPPORTED) {
+            final Class<? extends Evidence> evidenceType = evidence.getClass();
+            final String algorithmName = evidence instanceof AlgorithmEvidence ? ((AlgorithmEvidence) evidence).getAlgorithm() : null;
+
+            if (LdapSecurityRealm.this.getEvidenceVerifySupport(evidenceType, algorithmName) == SupportLevel.UNSUPPORTED) {
                 // If not supported in general then definitely not supported for a specific principal.
                 return false;
             }
 
             for (EvidenceVerifier verifier : evidenceVerifiers) {
-                if (verifier.getEvidenceVerifySupport(dirContextFactory, credentialName).mayBeSupported()) {
+                if (verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName).mayBeSupported()) {
                     IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
 
-                    if (iev.verifyEvidence(dirContextFactory, credentialName, evidence)) {
+                    if (iev.verifyEvidence(evidence)) {
                         return true;
                     }
                 }
@@ -383,7 +375,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
                                 identityAttributes.addAll(extractFilteredAttributes(result, finalContext));
 
                                 return new LdapIdentity(result.getNameInNamespace(), identityAttributes.asReadOnly());
-                            });
+                            })
                 ) {
                     Optional<LdapIdentity> optional = identityStream.findFirst();
 
@@ -435,7 +427,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
                 search.setReturningAttributes(attribute.getLdapName());
 
                 try (
-                    Stream<SearchResult> searchResult = search.search(context);
+                    Stream<SearchResult> searchResult = search.search(context)
                 ) {
                     searchResult.forEach(entry -> {
                         String valueRdn = attribute.getRdn();
@@ -550,7 +542,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
         private Map<String, Collection<String>> extractAttributes(Predicate<Attribute> filter, Function<Attribute, Collection<String>> valueFunction) {
             return identityMapping.attributes.stream()
                     .filter(filter)
-                    .collect(Collectors.toMap(attribute -> attribute.getName(), valueFunction, (m1, m2) -> {
+                    .collect(Collectors.toMap(Attribute::getName, valueFunction, (m1, m2) -> {
                         List<String> merged = new ArrayList<>(m1);
 
                         merged.addAll(m2);
@@ -622,7 +614,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
 
                                 return true;
                             } catch (NamingException e) {
-                                throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, filterArgs.toString(), e);
+                                throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, Arrays.toString(filterArgs), e);
                             }
                         }
                     }, false).onClose(() -> {

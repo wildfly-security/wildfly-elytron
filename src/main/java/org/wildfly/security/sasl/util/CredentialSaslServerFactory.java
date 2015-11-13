@@ -41,20 +41,17 @@ import org.wildfly.security.credential.Credential;
 public final class CredentialSaslServerFactory extends AbstractDelegatingSaslServerFactory {
 
     private final Credential credential;
-    private final String algorithm;
 
     /**
      * Construct a new instance.
      *
      * @param delegate the delegate SASL server factory
      * @param credential the server credential to use
-     * @param algorithm the algorithm of the server credential (may be {@code null})
      */
-    public CredentialSaslServerFactory(final SaslServerFactory delegate, final Credential credential, final String algorithm) {
+    public CredentialSaslServerFactory(final SaslServerFactory delegate, final Credential credential) {
         super(delegate);
         Assert.checkNotNullParam("credential", credential);
         this.credential = credential;
-        this.algorithm = algorithm;
     }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
@@ -65,7 +62,7 @@ public final class CredentialSaslServerFactory extends AbstractDelegatingSaslSer
                 Callback callback = iterator.next();
                 if (callback instanceof CredentialCallback) {
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                    if (credentialCallback.isCredentialSupported(credential.getClass(), algorithm)) {
+                    if (credentialCallback.isCredentialSupported(credential)) {
                         credentialCallback.setCredential(credential);
                         iterator.remove();
                     }

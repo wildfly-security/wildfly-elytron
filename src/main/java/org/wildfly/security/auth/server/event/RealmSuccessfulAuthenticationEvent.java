@@ -36,12 +36,11 @@ public final class RealmSuccessfulAuthenticationEvent extends RealmDefiniteOutco
      *
      * @param realmIdentity the realm identity that successfully authenticated
      * @param authorizationIdentity the authenticated authorization identity
-     * @param credentialName the name of the credential used (may be {@code null} if a credential was not used to authenticate)
      * @param credential the actual credential value from the authentication (may be {@code null} if not known)
      * @param evidence the evidence used to authenticate (may be {@code null} if not known or not applicable)
      */
-    public RealmSuccessfulAuthenticationEvent(final RealmIdentity realmIdentity, final AuthorizationIdentity authorizationIdentity, final String credentialName, final Credential credential, final Evidence evidence) {
-        super(realmIdentity, credentialName, credential, evidence);
+    public RealmSuccessfulAuthenticationEvent(final RealmIdentity realmIdentity, final AuthorizationIdentity authorizationIdentity, final Credential credential, final Evidence evidence) {
+        super(realmIdentity, credential, evidence);
         this.authorizationIdentity = authorizationIdentity;
     }
 

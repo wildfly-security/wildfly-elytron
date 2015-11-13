@@ -28,7 +28,6 @@ import org.wildfly.security.evidence.Evidence;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 abstract class RealmDefiniteOutcomeAuthenticationEvent extends RealmAuthenticationEvent {
-    private final String credentialName;
     private final Credential credential;
     private final Evidence evidence;
 
@@ -36,24 +35,13 @@ abstract class RealmDefiniteOutcomeAuthenticationEvent extends RealmAuthenticati
      * Construct a new instance.
      *
      * @param realmIdentity the authenticated realm identity
-     * @param credentialName the name of the credential used (may be {@code null} if a credential was not used to authenticate)
      * @param credential the actual credential value from the authentication (may be {@code null} if not known)
      * @param evidence the evidence used to authenticate (may be {@code null} if not known or not applicable)
      */
-    protected RealmDefiniteOutcomeAuthenticationEvent(final RealmIdentity realmIdentity, final String credentialName, final Credential credential, final Evidence evidence) {
+    protected RealmDefiniteOutcomeAuthenticationEvent(final RealmIdentity realmIdentity, final Credential credential, final Evidence evidence) {
         super(realmIdentity);
-        this.credentialName = credentialName;
         this.credential = credential;
         this.evidence = evidence;
-    }
-
-    /**
-     * Get the credential name.
-     *
-     * @return the credential name, or {@code null} if no credential was used
-     */
-    public String getCredentialName() {
-        return credentialName;
     }
 
     /**

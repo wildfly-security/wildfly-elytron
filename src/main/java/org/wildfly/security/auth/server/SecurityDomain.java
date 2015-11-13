@@ -38,6 +38,8 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.permission.ElytronPermission;
 
 /**
@@ -171,24 +173,64 @@ public final class SecurityDomain {
         return realmInfo;
     }
 
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
+    /**
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * some identities), or definitely not obtainable.
+     *
+     * @param credentialType the exact credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
+     *  not support algorithm names
+     * @return the level of support for this credential
+     */
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) {
         return getSupportLevel(r -> {
             try {
-                return r.getCredentialAcquireSupport(credentialName);
+                return r.getCredentialAcquireSupport(credentialType, algorithmName);
             } catch (RealmUnavailableException e) {
                 return null;
             }
         });
     }
 
-    public SupportLevel getEvidenceVerifySupport(final String credentialName) {
+    /**
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * some identities), or definitely not obtainable.
+     *
+     * @param credentialType the exact credential type (must not be {@code null})
+     * @return the level of support for this credential
+     */
+    public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType) {
+        return getCredentialAcquireSupport(credentialType, null);
+    }
+
+    /**
+     * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
+     * or definitely not verifiable.
+     *
+     * @param evidenceType the type of evidence to be verified (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
+     *  not support algorithm names
+     * @return the level of support for this evidence type
+     */
+    public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) {
         return getSupportLevel(r -> {
             try {
-                return r.getEvidenceVerifySupport(credentialName);
+                return r.getEvidenceVerifySupport(evidenceType, algorithmName);
             } catch (RealmUnavailableException e) {
                 return null;
             }
         });
+    }
+
+    /**
+     * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
+     * or definitely not verifiable.
+     *
+     * @param evidenceType the type of evidence to be verified (must not be {@code null})
+     * @return the level of support for this evidence type
+     */
+    public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType) {
+        return getEvidenceVerifySupport(evidenceType, null);
     }
 
     private SupportLevel getSupportLevel(final Function<SecurityRealm, SupportLevel> getSupportLevel) {

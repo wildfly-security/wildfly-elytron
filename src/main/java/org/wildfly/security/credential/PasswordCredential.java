@@ -68,6 +68,19 @@ public final class PasswordCredential implements AlgorithmCredential {
     }
 
     public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
+        return canVerifyEvidence(evidenceClass, algorithmName);
+    }
+
+    /**
+     * Determine whether this credential type can, generally speaking, verify the given evidence type.
+     *
+     * @param evidenceClass the evidence type (must not be {@code null})
+     * @param algorithmName the evidence algorithm name (may be {@code null} if the type of evidence does not support
+     * algorithm names)
+     *
+     * @return {@code true} if the evidence can be verified by this credential, {@code false} otherwise
+     */
+    public static boolean canVerifyEvidence(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
         Assert.checkNotNullParam("evidenceClass", evidenceClass);
         return evidenceClass == PasswordGuessEvidence.class && algorithmName == null;
     }

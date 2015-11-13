@@ -120,7 +120,7 @@ public class ServerCallbackHandler implements CallbackHandler {
                 try {
                     PasswordFactory passwordFactory = PasswordFactory.getInstance(algorithm);
                     Password password = passwordFactory.generatePassword(keySpec);
-                    if (ccb.isCredentialSupported(PasswordCredential.class, password.getAlgorithm())) {
+                    if (ccb.isCredentialTypeSupported(PasswordCredential.class, password.getAlgorithm())) {
                         ccb.setCredential(new PasswordCredential(password));
                     } else {
                         throw new FastUnsupportedCallbackException(current);

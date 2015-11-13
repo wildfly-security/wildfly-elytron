@@ -59,7 +59,7 @@ class SetCertificateCredentialAuthenticationConfiguration extends Authentication
             } catch (GeneralSecurityException e) {
                 throw log.unableToReadCredential(e);
             }
-            if (credentialCallback.isCredentialSupported(certChainPrivateCredential.getClass(), certChainPrivateCredential.getPrivateKey().getAlgorithm())) {
+            if (credentialCallback.isCredentialSupported(certChainPrivateCredential)) {
                 credentialCallback.setCredential(certChainPrivateCredential);
                 return;
             }

@@ -40,7 +40,7 @@
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="password" type="credential-type"/>
             <xsd:element name="otp" type="otp-credential-type"/>
-            <xsd:element name="private-key" type="credential-type"/>
+            <xsd:element name="public-key" type="credential-type"/>
             <xsd:element name="certificate" type="credential-type"/>
         </xsd:choice>
     </xsd:complexType>
@@ -54,7 +54,6 @@
     <xsd:complexType name="credential-type">
         <xsd:simpleContent>
             <xsd:extension base="xsd:string">
-                <xsd:attribute name="name" type="xsd:string" use="required"/>
                 <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
                 <xsd:attribute name="format" type="xsd:string" use="optional"/>
             </xsd:extension>
@@ -64,7 +63,6 @@
     <xsd:complexType name="otp-credential-type">
         <xsd:simpleContent>
             <xsd:extension base="xsd:string">
-                <xsd:attribute name="name" type="xsd:string" use="required"/>
                 <xsd:attribute name="algorithm" type="xsd:string" use="optional"/>
                 <xsd:attribute name="hash" type="xsd:string" use="optional"/>
                 <xsd:attribute name="seed" type="xsd:string" use="optional"/>

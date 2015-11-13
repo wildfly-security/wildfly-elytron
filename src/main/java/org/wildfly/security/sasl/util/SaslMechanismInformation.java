@@ -29,6 +29,9 @@ import java.util.function.Predicate;
 
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.AlgorithmEvidence;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.TwoWayPassword;
@@ -36,6 +39,8 @@ import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.sasl.gs2.Gs2;
+import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 
 /**
  * A collection of predicates and other information which can be used to filter SASL mechanisms.
@@ -213,6 +218,8 @@ public final class SaslMechanismInformation {
     static final Set<Class<? extends Credential>> JUST_X509 = singleton(X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> JUST_PASSWORD = singleton(PasswordCredential.class);
 
+    static final Set<Class<? extends Evidence>> JUST_PASSWORD_EVIDENCE = singleton(PasswordGuessEvidence.class);
+
     // algorithm name sets
 
     static final Set<String> JUST_DIGEST_MD5 = singleton(DigestPassword.ALGORITHM_DIGEST_MD5);
@@ -227,6 +234,7 @@ public final class SaslMechanismInformation {
     static final Set<String> JUST_DSA = singleton("DSA");
     static final Set<String> JUST_EC = singleton("EC");
     static final Set<String> JUST_RSA = singleton("RSA");
+    static final Set<String> ALL_ALGORITHMS = singleton("*");
 
     /**
      * Get the supported credential types for the given SASL client mechanism.  If an empty set is returned, then no
@@ -431,13 +439,14 @@ public final class SaslMechanismInformation {
 
     /**
      * Get the supported algorithm names for a SASL client mechanism and credential type.  If the mechanism or
-     * credential type is not recognized, or if the given credential type does not have an algorithm restriction for the
-     * given mechanism name, an empty set is returned.
+     * credential type is not recognized, or if the given credential type does not use algorithms for the
+     * given mechanism name, an empty set is returned.  If all algorithms are supported, a set containing the special
+     * string {@code "*"} is returned.
      *
      * @param mechName the SASL mechanism name
      * @param credentialType the proposed credential type
      *
-     * @return the set of algorithms, or an empty set if all algorithms have equal or unknown support
+     * @return the set of algorithms, or an empty set if all algorithms have unknown support
      */
     public static Set<String> getSupportedClientCredentialAlgorithms(String mechName, Class<? extends Credential> credentialType) {
         switch (mechName) {
@@ -496,8 +505,9 @@ public final class SaslMechanismInformation {
 
     /**
      * Get the supported algorithm names for a SASL server mechanism and credential type.  If the mechanism or
-     * credential type is not recognized, or if the given credential type does not have an algorithm restriction for the
-     * given mechanism name, an empty set is returned.
+     * credential type is not recognized, or if the given credential type does not use algorithms for the
+     * given mechanism name, an empty set is returned.  If all algorithms are supported, a set containing the special
+     * string {@code "*"} is returned.
      *
      * @param mechName the SASL mechanism name
      * @param credentialType the proposed credential type
@@ -506,9 +516,8 @@ public final class SaslMechanismInformation {
      */
     public static Set<String> getSupportedServerCredentialAlgorithms(String mechName, Class<? extends Credential> credentialType) {
         switch (mechName) {
-            case Names.CRAM_MD5:
             case Names.PLAIN: {
-                return emptySet();
+                return ALL_ALGORITHMS;
             }
             case Names.DIGEST_MD5: {
                 return credentialType.isAssignableFrom(PasswordCredential.class) ? JUST_DIGEST_MD5 : emptySet();
@@ -552,6 +561,96 @@ public final class SaslMechanismInformation {
             }
             default:
                 return emptySet();
+        }
+    }
+
+    /**
+     * Get the supported evidence types for the given SASL server mechanism.  If an empty set is returned, then no
+     * evidence is used by the mechanism.
+     *
+     * @param mechName the mechanism name
+     * @return the set of allowed server credential types
+     */
+    public static Set<Class<? extends Evidence>> getSupportedServerEvidenceTypes(final String mechName) {
+        switch (mechName) {
+            case Names.OTP:
+            case Names.CRAM_MD5:
+            case Names.PLAIN:
+            case Names.DIGEST_MD5:
+            case Names.DIGEST_SHA:
+            case Names.DIGEST_SHA_256:
+            case Names.DIGEST_SHA_384:
+            case Names.DIGEST_SHA_512:
+            case Names.SCRAM_SHA_1:
+            case Names.SCRAM_SHA_1_PLUS:
+            case Names.SCRAM_SHA_256:
+            case Names.SCRAM_SHA_256_PLUS:
+            case Names.SCRAM_SHA_384:
+            case Names.SCRAM_SHA_384_PLUS:
+            case Names.SCRAM_SHA_512:
+            case Names.SCRAM_SHA_512_PLUS: {
+                return JUST_PASSWORD_EVIDENCE;
+            }
+            case Names.IEC_ISO_9798_M_DSA_SHA1:
+            case Names.IEC_ISO_9798_U_DSA_SHA1:
+            case Names.IEC_ISO_9798_M_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_U_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
+            case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
+                // TODO: look into verification process
+                return emptySet();
+            }
+            default:
+                return emptySet();
+        }
+    }
+
+    /**
+     * Get the supported algorithm names for a SASL server mechanism and evidence type.  If the mechanism or
+     * evidence type is not recognized, or if the given evidence type does not have an algorithm restriction for the
+     * given mechanism name, an empty set is returned.
+     *
+     * @param mechName the SASL mechanism name
+     * @param evidenceType the proposed evidence type
+     *
+     * @return the set of algorithms, or an empty set if all algorithms have equal or unknown support
+     */
+    public static Set<String> getSupportedServerEvidenceAlgorithms(final String mechName, final Class<? extends AlgorithmEvidence> evidenceType) {
+        switch (mechName) {
+            case Names.IEC_ISO_9798_M_DSA_SHA1:
+            case Names.IEC_ISO_9798_U_DSA_SHA1:
+            case Names.IEC_ISO_9798_M_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_U_ECDSA_SHA1:
+            case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
+            case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
+                // TODO: look into verification process
+                return emptySet();
+            }
+            default:
+                return emptySet();
+        }
+    }
+
+    /**
+     * Determine whether a mechanism needs server-side credentials in order to authenticate.  This may include credential
+     * verification or acquisition, or both.
+     *
+     * @param mechName the mechanism name
+     * @return {@code true} if the mechanism uses credentials, {@code false} otherwise
+     */
+    public static boolean needsServerCredentials(final String mechName) {
+        switch (mechName) {
+            case Names.ANONYMOUS:
+            case Names.EXTERNAL:
+            case LocalUserSaslFactory.JBOSS_LOCAL_USER:
+            case Names.GSSAPI:
+            case Gs2.GS2_KRB5:
+            case Gs2.GS2_KRB5_PLUS: {
+                return false;
+            }
+            default: {
+                return true;
+            }
         }
     }
 

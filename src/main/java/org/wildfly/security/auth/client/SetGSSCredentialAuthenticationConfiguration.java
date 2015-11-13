@@ -46,7 +46,7 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
         Callback callback = callbacks[index];
         if (callback instanceof CredentialCallback) {
             CredentialCallback credentialCallback = (CredentialCallback) callback;
-            if (credentialCallback.isCredentialSupported(GSSCredentialCredential.class, null)) {
+            if (credentialCallback.isCredentialTypeSupported(GSSCredentialCredential.class, null)) {
                 credentialCallback.setCredential(new GSSCredentialCredential(credential));
                 return;
             }

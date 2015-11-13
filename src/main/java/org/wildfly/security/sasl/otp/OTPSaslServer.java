@@ -116,14 +116,11 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // OTP extended challenge = <standard OTP challenge> ext[,<extension set id>[, ...]]
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
                 nameCallback = new NameCallback("Remote authentication name", userName);
-                final CredentialCallback credentialCallback = CredentialCallback.builder()
-                        .addSupportedCredentialType(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1, OneTimePassword.ALGORITHM_OTP_MD5)
-                        .build();
-
+                CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
                 final TimeoutCallback timeoutCallback = new TimeoutCallback();
                 handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
                 final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
-                final OneTimePassword previousPassword = (OneTimePassword) credential.getPassword();
+                final OneTimePassword previousPassword = credential.getPassword(OneTimePassword.class);
                 if (previousPassword == null) {
                     throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
                 }

@@ -221,9 +221,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                 // Get the server's certificate data, if necessary
                 if ((entityB != null) || mutual) {
-                    CredentialCallback credentialCallback = CredentialCallback.builder()
-                            .addSupportedCredentialType(X509CertificateChainPrivateCredential.class,keyType(signature.getAlgorithm()))
-                            .build();
+                    CredentialCallback credentialCallback = new CredentialCallback(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()));
 
                     try {
                         tryHandleCallbacks(credentialCallback);

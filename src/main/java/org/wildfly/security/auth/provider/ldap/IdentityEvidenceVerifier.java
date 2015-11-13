@@ -31,21 +31,20 @@ interface IdentityEvidenceVerifier {
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
      *
-     * @param credentialName the credential name to check
+     * @param evidenceType the evidence type (must not be {@code null})
+     * @param algorithmName the algorithm name, if any
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Verify the given evidence against the named credential.
      *
-     * @param the {@link DirContextFactory} to use to access the LDAP server.
-     * @param credentialName the name of the credential to verify the evidence against.
      * @param evidence the evidence to verify.
      * @return {@code true} if the evidence is successfully verified, {@code false} otherwise.
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    boolean verifyEvidence(final DirContextFactory contextFactory, final String credentialName, final Evidence evidence) throws RealmUnavailableException;
+    boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException;
 
 }

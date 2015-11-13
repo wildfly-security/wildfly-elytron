@@ -34,9 +34,7 @@ import java.security.Principal;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.security.acl.Group;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.wildfly.common.Assert;
@@ -63,16 +61,14 @@ public class JaasSecurityRealm implements SecurityRealm {
     private final String loginConfiguration;
 
     private final CallbackHandler handler;
-    private final Set<String> supportedCredentialNames;
 
     /**
      * Construct a new instance.
      *
      * @param loginConfiguration the login configuration name to use
-     * @param credentialNames the credential names this realm will claim to be able to verify
      */
-    public JaasSecurityRealm(final String loginConfiguration, final String... credentialNames) {
-        this(loginConfiguration, null, credentialNames);
+    public JaasSecurityRealm(final String loginConfiguration) {
+        this(loginConfiguration, null);
     }
 
     /**
@@ -80,12 +76,10 @@ public class JaasSecurityRealm implements SecurityRealm {
      *
      * @param loginConfiguration the login configuration name to use
      * @param handler the JAAS callback handler to use
-     * @param credentialNames the credential names this realm will claim to be able to verify
      */
-    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler, final String... credentialNames) {
+    public JaasSecurityRealm(final String loginConfiguration, final CallbackHandler handler) {
         this.loginConfiguration = loginConfiguration;
         this.handler = handler;
-        this.supportedCredentialNames = new HashSet<>(Arrays.asList(credentialNames));
     }
 
     @Override
@@ -94,14 +88,15 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-        Assert.checkNotNullParam("credentialName", credentialName);
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         return SupportLevel.UNSUPPORTED;
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-        return supportedCredentialNames.contains(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidenceType", evidenceType);
+        return PasswordGuessEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     private LoginContext createLoginContext(final String loginConfig, final Subject subject, final CallbackHandler handler) throws RealmUnavailableException {
@@ -121,7 +116,7 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
     }
 
-    private CallbackHandler createCallbackHandler(final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+    private CallbackHandler createCallbackHandler(final Principal principal, final PasswordGuessEvidence evidence) throws RealmUnavailableException {
         if (handler == null) {
             return new DefaultCallbackHandler(principal, evidence);
         }
@@ -149,37 +144,48 @@ public class JaasSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getCredentialAcquireSupport(credentialName);
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return JaasSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName);
         }
 
         @Override
-        public Credential getCredential(String credentialName) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return getCredential(credentialType, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
             return null;
         }
 
         @Override
-        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-            return JaasSecurityRealm.this.getEvidenceVerifySupport(credentialName);
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
+            return JaasSecurityRealm.this.getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override
-        public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
-            this.subject = null;
-            boolean successfulLogin;
-            final CallbackHandler callbackHandler = createCallbackHandler(principal, evidence);
-            final Subject subject = new Subject();
-            final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidence", evidence);
+            if (evidence instanceof PasswordGuessEvidence) {
+                this.subject = null;
+                boolean successfulLogin;
+                final CallbackHandler callbackHandler = createCallbackHandler(principal, (PasswordGuessEvidence) evidence);
+                final Subject subject = new Subject();
+                final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
 
-            try {
-                context.login();
-                successfulLogin = true;
-                this.subject = subject;
-            } catch (LoginException le) {
-                ElytronMessages.log.debugJAASAuthenticationFailure(principal, le);
-                successfulLogin = false;
+                try {
+                    context.login();
+                    successfulLogin = true;
+                    this.subject = subject;
+                } catch (LoginException le) {
+                    ElytronMessages.log.debugJAASAuthenticationFailure(principal, le);
+                    successfulLogin = false;
+                }
+                return successfulLogin;
+            } else {
+                return false;
             }
-            return successfulLogin;
         }
 
         public boolean exists() throws RealmUnavailableException {
@@ -198,9 +204,9 @@ public class JaasSecurityRealm implements SecurityRealm {
     private class DefaultCallbackHandler implements CallbackHandler {
 
         private final Principal principal;
-        private final Evidence evidence;
+        private final PasswordGuessEvidence evidence;
 
-        private DefaultCallbackHandler(final Principal principal, final Evidence evidence) {
+        private DefaultCallbackHandler(final Principal principal, final PasswordGuessEvidence evidence) {
             this.principal = principal;
             this.evidence = evidence;
         }
@@ -216,13 +222,7 @@ public class JaasSecurityRealm implements SecurityRealm {
                         nameCallback.setName(this.principal.getName());
                 }
                 else if (callback instanceof PasswordCallback) {
-                    PasswordCallback passwordCallback = (PasswordCallback) callback;
-                    if (this.evidence instanceof PasswordGuessEvidence) {
-                        passwordCallback.setPassword(((PasswordGuessEvidence) this.evidence).getGuess());
-                    }
-                    else {
-                        throw ElytronMessages.log.failedToConvertCredentialToPassword(callback);
-                    }
+                    ((PasswordCallback) callback).setPassword(evidence.getGuess());
                 }
                 else {
                     CallbackUtil.unsupported(callback);

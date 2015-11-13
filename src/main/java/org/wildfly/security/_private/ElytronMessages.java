@@ -101,6 +101,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 7, value = "Credential destroying failed")
     void credentialDestroyingFailed(@Cause Throwable cause);
 
+    @Message(id = 8, value = "The given credential is not supported here")
+    IllegalArgumentException credentialNotSupported();
+
     /* auth package */
 
     @Message(id = 1000, value = "Authentication name was already set on this context")
@@ -370,11 +373,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1084, value = "Error while consuming results from search. SearchDn [%s], Filter [%s], Filter Args [%s].")
     RuntimeException ldapRealmErrorWhileConsumingResultsFromSearch(String searchDn, String filter, String filterArgs, @Cause Throwable cause);
 
-    @Message(id = 1085, value = "No Ldap-backed realm's persister support credential name \"%s\"")
-    RealmUnavailableException ldapRealmsPersisterNotSupportCredentialName(String credentialName);
+    @Message(id = 1085, value = "LDAP realm persister does not support given credential type")
+    RealmUnavailableException ldapRealmsPersisterNotSupported();
 
-    @Message(id = 1086, value = "Persisting credential %s with name \"%s\" into Ldap-backed realm failed. Identity dn: \"%s\"")
-    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String credentialName, String dn, @Cause Throwable cause);
+    @Message(id = 1086, value = "Persisting credential %s into Ldap-backed realm failed. Identity dn: \"%s\"")
+    RealmUnavailableException ldapRealmCredentialPersistingFailed(String credential, String dn, @Cause Throwable cause);
 
     @Message(id = 1087, value = "Clearing credentials from Ldap-backed realm failed. Identity dn: \"%s\"")
     RealmUnavailableException ldapRealmCredentialClearingFailed(String dn, @Cause Throwable cause);

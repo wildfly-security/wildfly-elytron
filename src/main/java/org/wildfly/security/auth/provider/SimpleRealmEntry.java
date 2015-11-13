@@ -20,9 +20,9 @@ package org.wildfly.security.auth.provider;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.password.Password;
+import org.wildfly.security.credential.Credential;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * A simple in-memory password-based entry for basic realm implementations.
@@ -30,38 +30,38 @@ import java.util.Map;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class SimpleRealmEntry {
-    private final Map<String, Password> passwords;
+    private final List<Credential> credentials;
     private final Attributes attributes;
 
     /**
      * Construct a new instance.
      *
-     * @param passwords the entry password (can not be {@code null})
+     * @param credentials the list of credentials (not {@code null})
      */
-    public SimpleRealmEntry(final Map<String, Password> passwords) {
-        this(passwords, Attributes.EMPTY);
+    public SimpleRealmEntry(final List<Credential> credentials) {
+        this(credentials, Attributes.EMPTY);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param passwords the entry password (can not be {@code null})
+     * @param credentials the list of credentials (can not be {@code null})
      * @param attributes the entry attributes (can not be {@code null})
      */
-    public SimpleRealmEntry(final Map<String, Password> passwords, final Attributes attributes) {
-        Assert.checkNotNullParam("passwords", passwords);
+    public SimpleRealmEntry(final List<Credential> credentials, final Attributes attributes) {
+        Assert.checkNotNullParam("credentials", credentials);
         Assert.checkNotNullParam("attributes", attributes);
-        this.passwords = passwords;
+        this.credentials = credentials;
         this.attributes = attributes;
     }
 
     /**
-     * Get the entry password.
+     * Get the credentials for this entry.
      *
-     * @return the entry password (not {@code null})
+     * @return the credentials (not {@code null})
      */
-    public Password getPassword(String credentialName) {
-        return passwords.get(credentialName);
+    public List<Credential> getCredentials() {
+        return credentials;
     }
 
     /**

@@ -88,7 +88,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
 
         // Attempt to obtain a credential
         GSSCredential credential = null;
-        CredentialCallback credentialCallback = CredentialCallback.builder().addSupportedCredentialType(GSSCredentialCredential.class).build();
+        CredentialCallback credentialCallback = new CredentialCallback(GSSCredentialCredential.class);
 
         try {
             tryHandleCallbacks(credentialCallback);

@@ -28,11 +28,7 @@ import org.wildfly.security.auth.server.NameRewriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Builder for the security realm implementation backed by LDAP.
@@ -145,10 +141,10 @@ public class LdapSecurityRealmBuilder {
         return this;
     }
 
-    public LdapSecurityRealmBuilder addDirectEvidenceVerification(String... credentialNames) {
+    public LdapSecurityRealmBuilder addDirectEvidenceVerification() {
         assertNotBuilt();
 
-        return addEvidenceVerifier(new DirectEvidenceVerifier(new HashSet<>(Arrays.asList(credentialNames))));
+        return addEvidenceVerifier(DirectEvidenceVerifier.getInstance());
     }
 
     /**
@@ -250,7 +246,7 @@ public class LdapSecurityRealmBuilder {
         /**
          * Define an attribute mapping configuration.
          *
-         * @param attributes one or more {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.IdentityMappingBuilder.Attribute} configuration
+         * @param attributes one or more {@link Attribute} configuration
          * @return this builder
          */
         public IdentityMappingBuilder map(Attribute... attributes) {
@@ -283,7 +279,6 @@ public class LdapSecurityRealmBuilder {
         private boolean built = false;
 
         private String userPasswordAttribute = UserPasswordCredentialLoader.DEFAULT_USER_PASSWORD_ATTRIBUTE_NAME;
-        private Map<String, Set<String>> credentialNameToAlgorithms = new HashMap<>();
         private boolean enablePersistence = false;
         private boolean enableVerification = true;
 
@@ -296,21 +291,6 @@ public class LdapSecurityRealmBuilder {
         public UserPasswordCredentialLoaderBuilder setUserPasswordAttribute(final String userPasswordAttribute) {
             assertNotBuilt();
             this.userPasswordAttribute = userPasswordAttribute;
-
-            return this;
-        }
-
-        /**
-         * Set a credential name to be supported along with a list of algorithms to be suppoered with this credential name, if
-         * no algorithms are specified then all algorithms are considered supported.
-         *
-         * @param credentialName the supported credential name
-         * @param supportedAlgorithms the algorithms to be supported with this credential name
-         * @return the {@link UserPasswordCredentialLoaderBuilder} to allow chaining of calls.
-         */
-        public UserPasswordCredentialLoaderBuilder addSupportedCredential(final String credentialName, final String... supportedAlgorithms) {
-            assertNotBuilt();
-            credentialNameToAlgorithms.put(credentialName,  new HashSet<>(Arrays.asList(supportedAlgorithms)));
 
             return this;
         }
@@ -343,7 +323,7 @@ public class LdapSecurityRealmBuilder {
             assertNotBuilt();
             built = true;
 
-            UserPasswordCredentialLoader upcl = new UserPasswordCredentialLoader(userPasswordAttribute, false, credentialNameToAlgorithms);
+            UserPasswordCredentialLoader upcl = new UserPasswordCredentialLoader(userPasswordAttribute);
             LdapSecurityRealmBuilder.this.addCredentialLoader(upcl);
             if (enablePersistence) LdapSecurityRealmBuilder.this.addCredentialPersister(upcl);
             if (enableVerification) LdapSecurityRealmBuilder.this.addEvidenceVerifier(upcl.toEvidenceVerifier());
@@ -365,18 +345,10 @@ public class LdapSecurityRealmBuilder {
 
         private boolean built = false;
 
-        private String credentialName = null;
         private String otpAlgorithmAttribute = null;
         private String otpHashAttribute = null;
         private String otpSeedAttribute = null;
         private String otpSequenceAttribute = null;
-
-        public OtpCredentialLoaderBuilder setCredentialName(final String credentialName) {
-            assertNotBuilt();
-            this.credentialName = credentialName;
-
-            return this;
-        }
 
         public OtpCredentialLoaderBuilder setOtpAlgorithmAttribute(final String otpAlgorithmAttribute) {
             assertNotBuilt();
@@ -409,7 +381,7 @@ public class LdapSecurityRealmBuilder {
         public LdapSecurityRealmBuilder build() {
             assertNotBuilt();
 
-            OtpCredentialLoader ocl = new OtpCredentialLoader(credentialName, otpAlgorithmAttribute, otpHashAttribute, otpSeedAttribute, otpSequenceAttribute);
+            OtpCredentialLoader ocl = new OtpCredentialLoader(otpAlgorithmAttribute, otpHashAttribute, otpSeedAttribute, otpSequenceAttribute);
             LdapSecurityRealmBuilder.this.addCredentialLoader(ocl);
             LdapSecurityRealmBuilder.this.addCredentialPersister(ocl);
 

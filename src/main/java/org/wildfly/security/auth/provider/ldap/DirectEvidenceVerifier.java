@@ -19,8 +19,6 @@ package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.util.Set;
-
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.security.auth.callback.Callback;
@@ -39,30 +37,31 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
  */
 class DirectEvidenceVerifier implements EvidenceVerifier {
 
-    private final Set<String> credentialNames;
+    private static final DirectEvidenceVerifier INSTANCE = new DirectEvidenceVerifier();
 
+    private DirectEvidenceVerifier() {
+    }
 
-    DirectEvidenceVerifier(final Set<String> credentialNames) {
-        this.credentialNames = credentialNames;
+    static DirectEvidenceVerifier getInstance() {
+        return INSTANCE;
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(DirContextFactory contextFactory, String credentialName) throws RealmUnavailableException {
-        return credentialNames.contains(credentialName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getEvidenceVerifySupport(final DirContextFactory contextFactory, final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
     public IdentityEvidenceVerifier forIdentity(final DirContextFactory contextFactory, final String distinguishedName) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
-
             @Override
-            public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-                return DirectEvidenceVerifier.this.getEvidenceVerifySupport(contextFactory, credentialName);
+            public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+                return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
             }
 
             @Override
-            public boolean verifyEvidence(DirContextFactory contextFactory, String credentialName, Evidence evidence) throws RealmUnavailableException {
-                if (credentialNames.contains(credentialName) && evidence instanceof PasswordGuessEvidence) {
+            public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                if (evidence instanceof PasswordGuessEvidence) {
                     char[] password = ((PasswordGuessEvidence) evidence).getGuess();
 
                     DirContext dirContext = null;

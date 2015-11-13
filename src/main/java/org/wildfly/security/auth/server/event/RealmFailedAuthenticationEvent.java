@@ -33,12 +33,11 @@ public final class RealmFailedAuthenticationEvent extends RealmDefiniteOutcomeAu
      * Construct a new instance.
      *
      * @param realmIdentity the realm identity of the failed authentication
-     * @param credentialName the name of the credential used (may be {@code null} if a credential was not used to authenticate)
      * @param credential the actual credential value from the authentication (may be {@code null} if not known)
      * @param evidence the evidence used to authenticate (may be {@code null} if not known or not applicable)
      */
-    public RealmFailedAuthenticationEvent(final RealmIdentity realmIdentity, final String credentialName, final Credential credential, final Evidence evidence) {
-        super(realmIdentity, credentialName, credential, evidence);
+    public RealmFailedAuthenticationEvent(final RealmIdentity realmIdentity, final Credential credential, final Evidence evidence) {
+        super(realmIdentity, credential, evidence);
     }
 
     public <P, R> R accept(final RealmEventVisitor<P, R> visitor, final P param) {

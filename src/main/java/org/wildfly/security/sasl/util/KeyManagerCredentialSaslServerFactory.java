@@ -37,7 +37,6 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
@@ -76,19 +75,16 @@ public final class KeyManagerCredentialSaslServerFactory extends AbstractDelegat
                         throw new SaslException(e.getMessage(), e);
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                    out:
-                    {
-                        for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
-                            for (String algorithmName : credentialCallback.getSupportedAlgorithms(allowedType)) {
-                                final String alias = keyManager.chooseServerAlias(algorithmName, null, null);
-                                if (alias != null) {
-                                    final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
-                                    final PrivateKey privateKey = keyManager.getPrivateKey(alias);
-                                    if (certificateChain != null && certificateChain.length != 0) {
-                                        credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
-                                        iterator.remove();
-                                        break out;
-                                    }
+                    final String algorithmName = credentialCallback.getAlgorithm();
+                    if (algorithmName != null) {
+                        if (credentialCallback.isCredentialTypeSupported(X509CertificateChainPrivateCredential.class, algorithmName)) {
+                            final String alias = keyManager.chooseServerAlias(algorithmName, null, null);
+                            if (alias != null) {
+                                final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
+                                final PrivateKey privateKey = keyManager.getPrivateKey(alias);
+                                if (certificateChain != null && certificateChain.length != 0) {
+                                    credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+                                    iterator.remove();
                                 }
                             }
                         }

@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.credential.Credential;
 
 /**
  * Within LDAP credentials could be stored in different ways, splitting out a CredentialLoader allows different strategies to be
@@ -35,22 +36,23 @@ interface CredentialLoader {
     /**
      * Determine whether a given credential is definitely supported, possibly supported (for some identities), or definitely not
      * supported.
-     *
+     * <p>
      * A DirContextFactory is made available if the directory server is going to be queried but most likely this call will need
      * to be generic as querying a whole directory is not realistic.
-     *
+     * <p>
      * Note: The DirContextFactory approach will be evolved further for better referral support so it makes it easier for it to
      * be passed in for each call.
      *
-     * @param contextFactory The dir context factory to use if a DirContext is required to query the server directly.
-     * @param credentialName the credential name
+     * @param contextFactory the dir context factory to use if a DirContext is required to query the server directly
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the credential algorithm name
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.
-     *
+     * <p>
      * Note: By this point referrals relating to the identity should have been resolved so the {@link DirContextFactory} should
      * be suitable for use with the supplied {@code distinguishedName}
      *
