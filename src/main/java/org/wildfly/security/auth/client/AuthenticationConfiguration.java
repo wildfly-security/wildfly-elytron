@@ -60,8 +60,7 @@ import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
@@ -338,11 +337,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(char[] password) {
-        try {
-            return password == null ? this : usePassword(PasswordFactory.getInstance("clear").generatePassword(new ClearPasswordSpec(password)));
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException(e);
-        }
+        return password == null ? this : usePassword(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password));
     }
 
     /**

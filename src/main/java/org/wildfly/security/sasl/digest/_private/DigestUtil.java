@@ -321,8 +321,8 @@ public final class DigestUtil {
         }
         try {
             PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
-            return pf.getKeySpec(password, ClearPasswordSpec.class).getEncodedPassword();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            return pf.getKeySpec(pf.translate(password), ClearPasswordSpec.class).getEncodedPassword();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
             throw log.mechCannotGetTwoWayPasswordChars(mechName, e).toSaslException();
         }
     }

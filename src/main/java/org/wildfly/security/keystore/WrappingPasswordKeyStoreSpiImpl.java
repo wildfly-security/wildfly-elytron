@@ -27,14 +27,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
-import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
     private final KeyStore delegate;
@@ -98,7 +97,7 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
     public void engineSetEntry(final String alias, final KeyStore.Entry entry, final KeyStore.ProtectionParameter protParam) throws KeyStoreException {
         if (entry instanceof PasswordEntry) try {
             delegate.setEntry(alias, new KeyStore.SecretKeyEntry(encoded(((PasswordEntry) entry).getPassword())), protParam);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException e) {
+        } catch (InvalidKeyException e) {
             throw new KeyStoreException(e);
         }else {
             delegate.setEntry(alias, entry, protParam);
@@ -129,20 +128,16 @@ final class WrappingPasswordKeyStoreSpiImpl extends DelegatingKeyStoreSpi {
         }
     }
 
-    private static Password decoded(final SecretKey key) throws NoSuchAlgorithmException, KeyStoreException {
-        final PasswordFactory passwordFactory = PasswordFactory.getInstance("clear");
-        try {
-            return passwordFactory.generatePassword(new ClearPasswordSpec(new String(key.getEncoded(), StandardCharsets.UTF_8).toCharArray()));
-        } catch (InvalidKeySpecException e) {
-            throw new KeyStoreException(e);
-        }
+    private static Password decoded(final SecretKey key) {
+        return ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, new String(key.getEncoded(), StandardCharsets.UTF_8).toCharArray());
     }
 
-    private static SecretKey encoded(final Password password) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        final PasswordFactory factory = PasswordFactory.getInstance("clear");
-        final ClearPasswordSpec spec = factory.getKeySpec(factory.translate(password), ClearPasswordSpec.class);
-        final char[] encodedPassword = spec.getEncodedPassword();
-        return new SecretKeySpec(new String(encodedPassword).getBytes(StandardCharsets.UTF_8), "password");
+    private static SecretKey encoded(final Password password) throws InvalidKeyException {
+        if (password instanceof ClearPassword) {
+            return new SecretKeySpec(new String(((ClearPassword)password).getPassword()).getBytes(StandardCharsets.UTF_8), "password");
+        } else {
+            throw ElytronMessages.log.invalidKeyUnknownUnknownPasswordTypeOrAlgorithm();
+        }
     }
 
     @Override
