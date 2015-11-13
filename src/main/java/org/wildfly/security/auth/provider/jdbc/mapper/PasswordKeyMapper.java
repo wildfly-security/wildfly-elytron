@@ -17,69 +17,31 @@
  */
 package org.wildfly.security.auth.provider.jdbc.mapper;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.KeyMapper;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.password.Password;
+import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.util.ModularCrypt;
-import org.wildfly.security.password.interfaces.BCryptPassword;
-import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
-import org.wildfly.security.password.interfaces.ScramDigestPassword;
-import org.wildfly.security.password.interfaces.SimpleDigestPassword;
-import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
-import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
-import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
-import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.HashPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.util.CodePointIterator;
-
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
-import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
-import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
-import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_MD5;
-import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA;
-import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.DigestPassword.ALGORITHM_DIGEST_SHA_512;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_MD5;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
-import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
-import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_256;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD2;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_1;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_256;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_384;
-import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512;
-import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.ALGORITHM_SUN_CRYPT_MD5;
-import static org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword.ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
-import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
-import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5;
-import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_256;
-import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
 /**
  * <p>A {@link KeyMapper} that knows how to map columns from a SQL query to attributes of specific {@link org.wildfly.security.password.Password} type
@@ -89,116 +51,36 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGO
  */
 public class PasswordKeyMapper implements KeyMapper {
 
-    private final int hash;
-    private final String algorithm;
-    private int salt = -1;
-    private int iterationCount = -1;
-    private final String credentialName;
-    private final Class<?> passwordType;
+    private final int hashColumn;
+    private final int saltColumn;
+    private final int iterationCountColumn;
+    private final int defaultIterationCount;
+    private final int algorithmColumn;
+    private final String defaultAlgorithm;
 
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, int hash) throws InvalidKeyException {
-        Assert.checkNotNullParam("credentialName", credentialName);
-        Assert.checkMinimumParameter("hash", 1, hash);
-        this.algorithm = toAlgorithm(credentialName);
-        this.passwordType = toPasswordType(algorithm);
-        this.hash = hash;
-        this.credentialName = credentialName;
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, int hash, int salt) throws InvalidKeyException {
-        this(credentialName, hash);
-        Assert.checkMinimumParameter("salt", 1, salt);
-        this.salt = salt;
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper (will be used to determine algorithm)
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
-     * @param iterationCount the column index from where the iteration count or cost, if supported by the given algorithm, is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, int hash, int salt, int iterationCount) throws InvalidKeyException {
-        this(credentialName, hash, salt);
-        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
-        this.iterationCount = iterationCount;
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper
-     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, String algorithm, int hash) throws InvalidKeyException {
-        Assert.checkNotNullParam("credentialName", credentialName);
-        Assert.checkNotNullParam("algorithm", algorithm);
-        Assert.checkMinimumParameter("hash", 1, hash);
-        this.algorithm = algorithm;
-        this.passwordType = toPasswordType(algorithm);
-        this.hash = hash;
-        this.credentialName = credentialName;
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper
-     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, String algorithm, int hash, int salt) throws InvalidKeyException {
-        this(credentialName, algorithm, hash);
-        Assert.checkMinimumParameter("salt", 1, salt);
-        this.salt = salt;
-    }
-
-    /**
-     * Constructs a new instance.
-     *
-     * @param credentialName name of the credential which is output of this mapper
-     * @param algorithm the algorithm that will be used by this mapper to create a specific {@link org.wildfly.security.password.Password} type
-     * @param hash the column index from where the password in its clear, hash or encoded form is obtained
-     * @param salt the column index from where the salt, if supported by the given algorithm, is obtained
-     * @param iterationCount the column index from where the iteration count or cost, if supported by the given algorithm, is obtained
-     * @throws InvalidKeyException if the given algorithm is not supported by this mapper.
-     */
-    public PasswordKeyMapper(String credentialName, String algorithm, int hash, int salt, int iterationCount) throws InvalidKeyException {
-        this(credentialName, algorithm, hash, salt);
-        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
-        this.iterationCount = iterationCount;
-    }
-
-    @Override
-    public String getCredentialName() {
-        return this.credentialName;
+    PasswordKeyMapper(Builder builder) {
+        final int hashColumn = builder.hashColumn;
+        Assert.checkMinimumParameter("hashColumn", 1, hashColumn);
+        this.hashColumn = hashColumn;
+        final int saltColumn = builder.saltColumn;
+        if (saltColumn != -1) Assert.checkMinimumParameter("saltColumn", 1, saltColumn);
+        this.saltColumn = saltColumn;
+        final int iterationCountColumn = builder.iterationCountColumn;
+        if (iterationCountColumn != -1) Assert.checkMinimumParameter("iterationCountColumn", 1, iterationCountColumn);
+        this.iterationCountColumn = iterationCountColumn;
+        final int defaultIterationCount = builder.defaultIterationCount;
+        if (defaultIterationCount != -1) Assert.checkMinimumParameter("defaultIterationCount", 1, defaultIterationCount);
+        this.defaultIterationCount = defaultIterationCount;
+        final int algorithmColumn = builder.algorithmColumn;
+        if (algorithmColumn != -1) Assert.checkMinimumParameter("algorithmColumn", 1, algorithmColumn);
+        this.algorithmColumn = algorithmColumn;
+        defaultAlgorithm = builder.defaultAlgorithm;
     }
 
     @Override
     public SupportLevel getCredentialSupport(ResultSet resultSet) {
         try {
-            Object map = map(resultSet);
+            Credential map = map(resultSet);
 
             if (map != null) {
                 return SupportLevel.SUPPORTED;
@@ -210,13 +92,23 @@ public class PasswordKeyMapper implements KeyMapper {
         }
     }
 
+    @Override
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+        return PasswordCredential.class.isAssignableFrom(credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
+    }
+
+    @Override
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) {
+        return PasswordCredential.canVerifyEvidence(evidenceType, algorithmName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    }
+
     /**
      * Returns the name of the algorithm being used.
      *
      * @return the algorithm
      */
-    public String getAlgorithm() {
-        return this.algorithm;
+    public String getDefaultAlgorithm() {
+        return this.defaultAlgorithm;
     }
 
     /**
@@ -224,8 +116,8 @@ public class PasswordKeyMapper implements KeyMapper {
      *
      * @return the column index
      */
-    public int getHash() {
-        return this.hash;
+    public int getHashColumn() {
+        return this.hashColumn;
     }
 
     /**
@@ -233,8 +125,8 @@ public class PasswordKeyMapper implements KeyMapper {
      *
      * @return the column index
      */
-    public int getSalt() {
-        return this.salt;
+    public int getSaltColumn() {
+        return this.saltColumn;
     }
 
     /**
@@ -242,204 +134,259 @@ public class PasswordKeyMapper implements KeyMapper {
      *
      * @return the column index
      */
-    public int getIterationCount() {
-        return this.iterationCount;
+    public int getIterationCountColumn() {
+        return this.iterationCountColumn;
+    }
+
+    /**
+     * Get the default iteration count.  This count is used if there is no iteration count column but the password
+     * algorithm uses an iteration count.
+     *
+     * @return the default iteration count
+     */
+    public int getDefaultIterationCount() {
+        return defaultIterationCount;
+    }
+
+    /**
+     * Get the column index of the algorithm name column.
+     *
+     * @return the column index of the algorithm name column, or -1 if there is no algorithm column defined
+     */
+    public int getAlgorithmColumn() {
+        return algorithmColumn;
+    }
+
+    private static byte[] getBinaryColumn(ResultSetMetaData metaData, ResultSet resultSet, int column) throws SQLException {
+        if (column == -1) return null;
+        final int columnType = metaData.getColumnType(column);
+        switch (columnType) {
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY: {
+                return resultSet.getBytes(column);
+            }
+            case Types.CHAR:
+            case Types.LONGVARCHAR:
+            case Types.LONGNVARCHAR:
+            case Types.VARCHAR:
+            case Types.NVARCHAR: {
+                return CodePointIterator.ofString(resultSet.getString(column)).base64Decode().drain();
+            }
+            default: {
+                final Object object = resultSet.getObject(column);
+                if (object instanceof byte[]) {
+                    return (byte[]) object;
+                } else if (object instanceof String) {
+                    return CodePointIterator.ofString(resultSet.getString(column)).base64Decode().drain();
+                }
+                return null;
+            }
+        }
+    }
+
+    private static String getStringColumn(ResultSetMetaData metaData, ResultSet resultSet, int column) throws SQLException {
+        if (column == -1) return null;
+        final int columnType = metaData.getColumnType(column);
+        switch (columnType) {
+            case Types.BINARY:
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY: {
+                return new String(resultSet.getBytes(column), StandardCharsets.UTF_8);
+            }
+            case Types.CHAR:
+            case Types.LONGVARCHAR:
+            case Types.LONGNVARCHAR:
+            case Types.VARCHAR:
+            case Types.NVARCHAR: {
+                return resultSet.getString(column);
+            }
+            default: {
+                final Object object = resultSet.getObject(column);
+                if (object instanceof byte[]) {
+                    return new String((byte[]) object, StandardCharsets.UTF_8);
+                } else if (object instanceof String) {
+                    return (String) object;
+                } else {
+                    return null;
+                }
+            }
+        }
     }
 
     @Override
     public Credential map(ResultSet resultSet) throws SQLException {
         byte[] hash = null;
+        char[] clear = null;
         byte[] salt = null;
-        int iterationCount = 0;
+        int iterationCount = -1;
+        String algorithmName = getDefaultAlgorithm();
+
+        final int hashColumn = getHashColumn();
+        final int saltColumn = getSaltColumn();
+        final int iterationCountColumn = getIterationCountColumn();
+        final int algorithmColumn = getAlgorithmColumn();
+        final int defaultIterationCount = getDefaultIterationCount();
+
+        final ResultSetMetaData metaData = resultSet.getMetaData();
 
         if (resultSet.next()) {
-            hash = toByteArray(resultSet.getObject(getHash()));
-
-            if (getSalt() > 0) {
-                salt = toByteArray(resultSet.getObject(getSalt()));
+            if (algorithmColumn > 0) {
+                algorithmName = resultSet.getString(algorithmColumn);
+                if (algorithmName == null) {
+                    algorithmName = getDefaultAlgorithm();
+                }
             }
 
-            if (getIterationCount() > 0) {
-                iterationCount = resultSet.getInt(getIterationCount());
+            if (ClearPassword.ALGORITHM_CLEAR.equals(algorithmName)) {
+                final String s = getStringColumn(metaData, resultSet, hashColumn);
+                if (s != null) {
+                    clear = s.toCharArray();
+                } else {
+                    hash = getBinaryColumn(metaData, resultSet, hashColumn);
+                }
+            } else {
+                if (saltColumn == -1 && iterationCountColumn == -1) {
+                    // try modular crypt
+                    final String s = getStringColumn(metaData, resultSet, hashColumn);
+                    if (s != null) {
+                        final char[] chars = s.toCharArray();
+                        final String identified = ModularCrypt.identifyAlgorithm(chars);
+                        if (identified != null) {
+                            try {
+                                return new PasswordCredential(ModularCrypt.decode(chars));
+                            } catch (InvalidKeySpecException e) {
+                                // fall out (unlikely but possible)
+                            }
+                        }
+                    }
+                }
+                hash = getBinaryColumn(metaData, resultSet, hashColumn);
             }
+
+            if (saltColumn > 0) {
+                salt = getBinaryColumn(metaData, resultSet, saltColumn);
+            }
+
+            if (iterationCountColumn > 0) {
+                iterationCount = resultSet.getInt(iterationCountColumn);
+            } else {
+                iterationCount = defaultIterationCount;
+            }
+
         }
+
+        final PasswordFactory passwordFactory;
+        try {
+            passwordFactory = PasswordFactory.getInstance(algorithmName);
+        } catch (NoSuchAlgorithmException e) {
+            throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithmName, e);
+        }
+        PasswordSpec passwordSpec;
 
         if (hash != null) {
-            PasswordFactory passwordFactory = getPasswordFactory(getAlgorithm());
-
-            try {
-                if (ClearPassword.class.equals(passwordType)) {
-                    return new PasswordCredential(toClearPassword(hash, passwordFactory));
-                } else if (BCryptPassword.class.equals(passwordType)) {
-                    return new PasswordCredential(toBcryptPassword(hash, salt, iterationCount, passwordFactory));
-                } else if (SaltedSimpleDigestPassword.class.equals(passwordType)) {
-                    return new PasswordCredential(toSaltedSimpleDigestPassword(hash, salt, passwordFactory));
-                } else if (SimpleDigestPassword.class.equals(passwordType)) {
-                    return new PasswordCredential(toSimpleDigestPassword(hash, passwordFactory));
-                } else if (ScramDigestPassword.class.equals(passwordType)) {
-                    return new PasswordCredential(toScramDigestPassword(hash, salt, iterationCount, passwordFactory));
+            if (salt != null) {
+                if (iterationCount > 0) {
+                    passwordSpec = new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount);
+                } else {
+                    passwordSpec = new SaltedHashPasswordSpec(hash, salt);
                 }
-            } catch (InvalidKeySpecException | InvalidKeyException e) {
-                throw log.invalidPasswordKeySpecificationForAlgorithm(algorithm, e);
+            } else {
+                passwordSpec = new HashPasswordSpec(hash);
             }
+        } else if (clear != null) {
+            passwordSpec = new ClearPasswordSpec(clear);
+        } else {
+            return null;
         }
 
-        return null;
-    }
-
-    private Password toBcryptPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeyException, InvalidKeySpecException {
-        if (salt == null) {
-            return passwordFactory.translate(ModularCrypt.decode(toCharArray(hash)));
-        }
-
-        return passwordFactory.generatePassword(new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount));
-    }
-
-    private Password toScramDigestPassword(byte[] hash, byte[] salt, int iterationCount, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        if (salt == null) {
-            throw log.saltIsExpectedWhenCreatingPasswords(ScramDigestPassword.class.getSimpleName());
-        }
-
-        IteratedSaltedHashPasswordSpec saltedSimpleDigestPasswordSpec = new IteratedSaltedHashPasswordSpec(hash, salt, iterationCount);
-        return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
-    }
-
-    private Password toSimpleDigestPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        HashPasswordSpec hashPasswordSpec = new HashPasswordSpec(hash);
-        return passwordFactory.generatePassword(hashPasswordSpec);
-    }
-
-    private Password toSaltedSimpleDigestPassword(byte[] hash, byte[] salt, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        if (salt == null) {
-            throw log.saltIsExpectedWhenCreatingPasswords(SaltedSimpleDigestPassword.class.getSimpleName());
-        }
-
-        SaltedHashPasswordSpec saltedSimpleDigestPasswordSpec = new SaltedHashPasswordSpec(hash, salt);
-        return passwordFactory.generatePassword(saltedSimpleDigestPasswordSpec);
-    }
-
-    private Password toClearPassword(byte[] hash, PasswordFactory passwordFactory) throws InvalidKeySpecException {
-        return passwordFactory.generatePassword(new ClearPasswordSpec(toCharArray(hash)));
-    }
-
-    private PasswordFactory getPasswordFactory(String algorithm) {
         try {
-            return PasswordFactory.getInstance(algorithm);
-        } catch (NoSuchAlgorithmException e) {
-            throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithm, e);
+            return new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
+        } catch (InvalidKeySpecException e) {
+            throw log.invalidPasswordKeySpecificationForAlgorithm(this.defaultAlgorithm, e);
         }
-    }
-
-    private byte[] toByteArray(Object value) {
-        if (String.class.isInstance(value)) {
-            return value.toString().getBytes(StandardCharsets.UTF_8);
-        } else if (byte[].class.isInstance(value)) {
-            return (byte[]) value;
-        }
-
-        return new byte[0];
-    }
-
-    private char[] toCharArray(byte[] hash) {
-        return CodePointIterator.ofUtf8Bytes(hash).drainToString().toCharArray();
-    }
-
-    private String toAlgorithm(String credentialName) throws InvalidKeyException {
-        if (credentialName.endsWith(ALGORITHM_CLEAR)) return ALGORITHM_CLEAR;
-        if (credentialName.endsWith(ALGORITHM_BCRYPT)) return ALGORITHM_BCRYPT;
-        if (credentialName.endsWith(ALGORITHM_CRYPT_MD5)) return ALGORITHM_CRYPT_MD5;
-        if (credentialName.endsWith(ALGORITHM_SUN_CRYPT_MD5)) return ALGORITHM_SUN_CRYPT_MD5;
-        if (credentialName.endsWith(ALGORITHM_SUN_CRYPT_MD5_BARE_SALT)) return ALGORITHM_SUN_CRYPT_MD5_BARE_SALT;
-        if (credentialName.endsWith(ALGORITHM_CRYPT_SHA_256)) return ALGORITHM_CRYPT_SHA_256;
-        if (credentialName.endsWith(ALGORITHM_CRYPT_SHA_512)) return ALGORITHM_CRYPT_SHA_512;
-        if (credentialName.endsWith(ALGORITHM_DIGEST_MD5)) return ALGORITHM_DIGEST_MD5;
-        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA)) return ALGORITHM_DIGEST_SHA;
-        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA_256)) return ALGORITHM_DIGEST_SHA_256;
-        if (credentialName.endsWith(ALGORITHM_DIGEST_SHA_512)) return ALGORITHM_DIGEST_SHA_512;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_MD2)) return ALGORITHM_SIMPLE_DIGEST_MD2;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_MD5)) return ALGORITHM_SIMPLE_DIGEST_MD5;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_1)) return ALGORITHM_SIMPLE_DIGEST_SHA_1;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_256)) return ALGORITHM_SIMPLE_DIGEST_SHA_256;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_384)) return ALGORITHM_SIMPLE_DIGEST_SHA_384;
-        if (credentialName.endsWith(ALGORITHM_SIMPLE_DIGEST_SHA_512)) return ALGORITHM_SIMPLE_DIGEST_SHA_512;
-        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_MD5)) return ALGORITHM_PASSWORD_SALT_DIGEST_MD5;
-        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1;
-        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256;
-        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384;
-        if (credentialName.endsWith(ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512)) return ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512;
-        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_MD5)) return ALGORITHM_SALT_PASSWORD_DIGEST_MD5;
-        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1;
-        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256;
-        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384;
-        if (credentialName.endsWith(ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512)) return ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
-        if (credentialName.endsWith(ALGORITHM_CRYPT_DES)) return ALGORITHM_CRYPT_DES;
-        if (credentialName.endsWith(ALGORITHM_BSD_CRYPT_DES)) return ALGORITHM_BSD_CRYPT_DES;
-        if (credentialName.endsWith(ALGORITHM_SCRAM_SHA_1)) return ALGORITHM_SCRAM_SHA_1;
-        if (credentialName.endsWith(ALGORITHM_SCRAM_SHA_256)) return ALGORITHM_SCRAM_SHA_256;
-
-        throw log.couldNotResolveAlgorithmByCredentialName(credentialName);
     }
 
     /**
-     * TODO: we probably want to reuse this logic. See org.wildfly.security.password.impl.PasswordFactorySpiImpl#engineTranslatePassword(java.lang.String, org.wildfly.security.password.Password).
+     * Construct a builder for password key mappers.
+     *
+     * @return the new builder (not {@code null})
      */
-    private Class<?> toPasswordType(String algorithm) throws InvalidKeyException {
-        switch (algorithm) {
-            case ALGORITHM_CLEAR: {
-                return ClearPassword.class;
-            }
-            case ALGORITHM_BCRYPT: {
-                return BCryptPassword.class;
-            }
-            case ALGORITHM_CRYPT_MD5: {
-                return UnixMD5CryptPassword.class;
-            }
-            case ALGORITHM_SUN_CRYPT_MD5:
-            case ALGORITHM_SUN_CRYPT_MD5_BARE_SALT: {
-                return SunUnixMD5CryptPassword.class;
-            }
-            case ALGORITHM_CRYPT_SHA_256:
-            case ALGORITHM_CRYPT_SHA_512: {
-                return ClearPassword.class;
-            }
-            case ALGORITHM_DIGEST_MD5:
-            case ALGORITHM_DIGEST_SHA:
-            case ALGORITHM_DIGEST_SHA_256:
-            case ALGORITHM_DIGEST_SHA_512: {
-                return DigestPassword.class;
-            }
-            case ALGORITHM_SIMPLE_DIGEST_MD2:
-            case ALGORITHM_SIMPLE_DIGEST_MD5:
-            case ALGORITHM_SIMPLE_DIGEST_SHA_1:
-            case ALGORITHM_SIMPLE_DIGEST_SHA_256:
-            case ALGORITHM_SIMPLE_DIGEST_SHA_384:
-            case ALGORITHM_SIMPLE_DIGEST_SHA_512: {
-                return SimpleDigestPassword.class;
-            }
-            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
-            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
-            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
-            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
-            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
-            case ALGORITHM_SALT_PASSWORD_DIGEST_MD5:
-            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1:
-            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256:
-            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384:
-            case ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512: {
-                return SaltedSimpleDigestPassword.class;
-            }
-            case ALGORITHM_CRYPT_DES: {
-                return UnixDESCryptPassword.class;
-            }
-            case ALGORITHM_BSD_CRYPT_DES: {
-                return BSDUnixDESCryptPassword.class;
-            }
-            case ALGORITHM_SCRAM_SHA_1:
-            case ALGORITHM_SCRAM_SHA_256: {
-                return ScramDigestPassword.class;
-            }
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for {@code PasswordKeyMapper} instances.
+     */
+    public static final class Builder {
+
+        int hashColumn = -1;
+        int saltColumn = -1;
+        int iterationCountColumn = -1;
+        int defaultIterationCount = -1;
+        int algorithmColumn = -1;
+        String defaultAlgorithm;
+
+        Builder() {
         }
 
-        throw log.unknownPasswordTypeOrAlgorithm(algorithm);
+        public int getHashColumn() {
+            return hashColumn;
+        }
+
+        public Builder setHashColumn(final int hashColumn) {
+            this.hashColumn = hashColumn;
+            return this;
+        }
+
+        public int getSaltColumn() {
+            return saltColumn;
+        }
+
+        public Builder setSaltColumn(final int saltColumn) {
+            this.saltColumn = saltColumn;
+            return this;
+        }
+
+        public int getIterationCountColumn() {
+            return iterationCountColumn;
+        }
+
+        public Builder setIterationCountColumn(final int iterationCountColumn) {
+            this.iterationCountColumn = iterationCountColumn;
+            return this;
+        }
+
+        public int getDefaultIterationCount() {
+            return defaultIterationCount;
+        }
+
+        public Builder setDefaultIterationCount(final int defaultIterationCount) {
+            this.defaultIterationCount = defaultIterationCount;
+            return this;
+        }
+
+        public int getAlgorithmColumn() {
+            return algorithmColumn;
+        }
+
+        public Builder setAlgorithmColumn(final int algorithmColumn) {
+            this.algorithmColumn = algorithmColumn;
+            return this;
+        }
+
+        public String getDefaultAlgorithm() {
+            return defaultAlgorithm;
+        }
+
+        public Builder setDefaultAlgorithm(final String defaultAlgorithm) {
+            this.defaultAlgorithm = defaultAlgorithm;
+            return this;
+        }
+
+        public PasswordKeyMapper build() {
+            return new PasswordKeyMapper(this);
+        }
     }
 }

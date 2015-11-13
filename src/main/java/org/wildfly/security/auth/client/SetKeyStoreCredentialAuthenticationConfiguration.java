@@ -87,7 +87,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
                 final Certificate[] certificateChain = privateKeyEntry.getCertificateChain();
                 final PrivateKey privateKey = privateKeyEntry.getPrivateKey();
-                if (certificateChain != null && certificateChain.length != 0 && credentialCallback.isCredentialSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm())) {
+                if (certificateChain != null && certificateChain.length != 0 && credentialCallback.isCredentialTypeSupported(X509CertificateChainPrivateCredential.class, privateKey.getAlgorithm())) {
                     try {
                         final X509Certificate[] x509Certificates = X500.asX509CertificateArray(certificateChain);
                         credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, x509Certificates));

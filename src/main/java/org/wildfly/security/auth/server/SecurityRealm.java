@@ -21,6 +21,8 @@ package org.wildfly.security.auth.server;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.event.RealmEvent;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A single authentication realm. A realm is backed by a single homogeneous store of identities and credentials.
@@ -44,30 +46,28 @@ public interface SecurityRealm {
     RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
-     * Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities),
-     * or definitely not obtainable.
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * some identities), or definitely not obtainable.
      *
-     * @param credentialName the credential name
-     * @return the level of support for this named credential
+     * @param credentialType the exact credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
+     *  not support algorithm names
+     * @return the level of support for this credential
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
 
     /**
-     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable (for some identities),
+     * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
      * or definitely not verifiable.
      *
-     * @param credentialName the credential name the evidence would be verified against
-     * @return the level of support for this named credential
+     * @param evidenceType the type of evidence to be verified (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
+     *  not support algorithm names
+     * @return the level of support for this evidence type
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    default SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-        if (getCredentialAcquireSupport(credentialName) != SupportLevel.UNSUPPORTED) {
-            return SupportLevel.POSSIBLY_SUPPORTED;
-        }
-
-        return SupportLevel.UNSUPPORTED;
-    }
+    SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Handle a realm event.  These events allow the realm to act upon occurrences that are relevant to policy of
@@ -101,14 +101,17 @@ public interface SecurityRealm {
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
         public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+            Assert.checkNotNullParam("name", name);
             return RealmIdentity.NON_EXISTENT;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;
         }
 
-        public SupportLevel getEvidenceVerifySupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
             return SupportLevel.UNSUPPORTED;
         }
     };

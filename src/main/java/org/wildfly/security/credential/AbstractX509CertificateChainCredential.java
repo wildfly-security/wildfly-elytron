@@ -18,9 +18,14 @@
 
 package org.wildfly.security.credential;
 
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.X509PeerCertificateEvidence;
 
 abstract class AbstractX509CertificateChainCredential implements X509CertificateChainCredential {
 
@@ -37,6 +42,21 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
         } else {
             throw ElytronMessages.log.certificateChainIsEmpty();
         }
+    }
+
+    public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
+        return evidenceClass == X509PeerCertificateEvidence.class && getAlgorithm().equals(algorithmName);
+    }
+
+    public boolean verify(final Evidence evidence) {
+        if (evidence instanceof X509PeerCertificateEvidence) {
+            final X509PeerCertificateEvidence peerCertificateEvidence = (X509PeerCertificateEvidence) evidence;
+            try {
+                return getAlgorithm().equals(peerCertificateEvidence.getAlgorithm()) && Arrays.equals(getFirstCertificate().getEncoded(), peerCertificateEvidence.getPeerCertificate().getEncoded());
+            } catch (CertificateEncodingException e) {
+            }
+        }
+        return false;
     }
 
     public String getAlgorithm() {

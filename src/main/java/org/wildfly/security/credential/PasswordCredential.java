@@ -18,8 +18,14 @@
 
 package org.wildfly.security.credential;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 import org.wildfly.common.Assert;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
 
 /**
  * A credential for password authentication.
@@ -59,6 +65,34 @@ public final class PasswordCredential implements AlgorithmCredential {
 
     public String getAlgorithm() {
         return password.getAlgorithm();
+    }
+
+    public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
+        return canVerifyEvidence(evidenceClass, algorithmName);
+    }
+
+    /**
+     * Determine whether this credential type can, generally speaking, verify the given evidence type.
+     *
+     * @param evidenceClass the evidence type (must not be {@code null})
+     * @param algorithmName the evidence algorithm name (may be {@code null} if the type of evidence does not support
+     * algorithm names)
+     *
+     * @return {@code true} if the evidence can be verified by this credential, {@code false} otherwise
+     */
+    public static boolean canVerifyEvidence(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
+        Assert.checkNotNullParam("evidenceClass", evidenceClass);
+        return evidenceClass == PasswordGuessEvidence.class && algorithmName == null;
+    }
+
+    public boolean verify(final Evidence evidence) {
+        Assert.checkNotNullParam("evidence", evidence);
+        if (evidence instanceof PasswordGuessEvidence) try {
+            final PasswordFactory factory = PasswordFactory.getInstance(password.getAlgorithm());
+            return factory.verify(factory.translate(password), ((PasswordGuessEvidence) evidence).getGuess());
+        } catch (NoSuchAlgorithmException | InvalidKeyException ignored) {
+        }
+        return false;
     }
 }
 

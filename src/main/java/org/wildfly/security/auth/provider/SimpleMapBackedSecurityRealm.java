@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.provider;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -32,12 +30,11 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.Password;
-import org.wildfly.security.password.PasswordFactory;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -87,12 +84,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param password the password
      * @param attributes the identity attributes
      */
-    public void setPasswordMap(final String name, final String credentialName, final Password password, final Attributes attributes) {
+    public void setPasswordMap(final String name, final Password password, final Attributes attributes) {
         Assert.checkNotNullParam("name", name);
-        Assert.checkNotNullParam("credentialName", credentialName);
         Assert.checkNotNullParam("password", password);
         Assert.checkNotNullParam("attributes", attributes);
-        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonMap(credentialName, password), attributes));
+        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password)), attributes));
     }
 
     /**
@@ -101,11 +97,10 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param name the entry name
      * @param password the password
      */
-    public void setPasswordMap(final String name, final String credentialName, final Password password) {
+    public void setPasswordMap(final String name, final Password password) {
         Assert.checkNotNullParam("name", name);
-        Assert.checkNotNullParam("credentialName", credentialName);
         Assert.checkNotNullParam("password", password);
-        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonMap(credentialName, password)));
+        map = Collections.singletonMap(name, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password))));
     }
 
     @Override
@@ -118,8 +113,14 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) {
-        Assert.checkNotNullParam("credentialName", credentialName);
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return SupportLevel.POSSIBLY_SUPPORTED;
+    }
+
+    @Override
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidenceType", evidenceType);
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
@@ -131,20 +132,39 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final String credentialName) {
-            Assert.checkNotNullParam("credentialName", credentialName);
+        @Override
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return SupportLevel.UNSUPPORTED;
-            return entry.getPassword(credentialName) != null ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+            for (Credential credential : entry.getCredentials()) {
+                if (credentialType.isInstance(credential)) {
+                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
+                        return SupportLevel.SUPPORTED;
+                    }
+                }
+            }
+            return SupportLevel.UNSUPPORTED;
         }
 
         @Override
-        public Credential getCredential(String credentialName) {
-            Assert.checkNotNullParam("credentialName", credentialName);
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return getCredential(credentialType, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             final SimpleRealmEntry entry = map.get(name);
             if (entry == null) return null;
-            final Password password = entry.getPassword(credentialName);
-            return new PasswordCredential(password);
+            for (Credential credential : entry.getCredentials()) {
+                if (credentialType.isInstance(credential)) {
+                    if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
+                        return credentialType.cast(credential);
+                    }
+                }
+            }
+            return null;
         }
 
         @Override
@@ -154,20 +174,33 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
-            Assert.checkNotNullParam("credentialName", credentialName);
-            Assert.checkNotNullParam("evidence", evidence);
-            try {
-                SimpleRealmEntry entry = map.get(name);
-                if (entry == null) {
-                    return false;
-                }
-
-                final Password password = entry.getPassword(credentialName);
-                return password != null && evidence instanceof PasswordGuessEvidence && PasswordFactory.getInstance(password.getAlgorithm()).verify(password, ((PasswordGuessEvidence) evidence).getGuess());
-            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                throw new RealmUnavailableException(e);
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
+            SimpleRealmEntry entry = map.get(name);
+            if (entry == null) {
+                return SupportLevel.UNSUPPORTED;
             }
+            for (Credential credential : entry.getCredentials()) {
+                if (credential.canVerify(evidenceType, algorithmName)) {
+                    return SupportLevel.SUPPORTED;
+                }
+            }
+            return SupportLevel.UNSUPPORTED;
+        }
+
+        @Override
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidence", evidence);
+            SimpleRealmEntry entry = map.get(name);
+            if (entry == null) {
+                return false;
+            }
+            for (Credential credential : entry.getCredentials()) {
+                if (credential.canVerify(evidence)) {
+                    return credential.verify(evidence);
+                }
+            }
+            return false;
         }
 
         @Override

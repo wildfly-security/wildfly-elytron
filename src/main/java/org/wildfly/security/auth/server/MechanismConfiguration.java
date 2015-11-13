@@ -25,7 +25,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 
@@ -38,19 +37,16 @@ public final class MechanismConfiguration {
     private final NameRewriter preRealmRewriter;
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
-    private final Supplier<List<String>> credentialNameSupplier;
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
 
-    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Supplier<List<String>> credentialNameSupplier, final Collection<MechanismRealmConfiguration> mechanismRealms) {
+    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Collection<MechanismRealmConfiguration> mechanismRealms) {
         Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
         Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
         Assert.checkNotNullParam("finalRewriter", finalRewriter);
-        Assert.checkNotNullParam("credentialNameSupplier", credentialNameSupplier);
         Assert.checkNotNullParam("mechanismRealms", mechanismRealms);
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
-        this.credentialNameSupplier = credentialNameSupplier;
         final Iterator<MechanismRealmConfiguration> iterator = mechanismRealms.iterator();
         if (! iterator.hasNext()) {
             // zero
@@ -101,15 +97,6 @@ public final class MechanismConfiguration {
     }
 
     /**
-     * Get the credential name supplier, if any.
-     *
-     * @return the credential name supplier, or {@code null} if none is configured
-     */
-    public Supplier<List<String>> getCredentialNameSupplier() {
-        return credentialNameSupplier;
-    }
-
-    /**
      * Get the collection of mechanism realm names, in order.  If no realms are configured, the collection will be
      * empty.
      *
@@ -144,7 +131,6 @@ public final class MechanismConfiguration {
         private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
-        private Supplier<List<String>> credentialNameSupplier = () -> Collections.singletonList("clear-password");
         private List<MechanismRealmConfiguration> mechanismRealms;
 
         /**
@@ -171,12 +157,6 @@ public final class MechanismConfiguration {
             return this;
         }
 
-        public Builder setCredentialNameSupplier(final Supplier<List<String>> credentialNameSupplier) {
-            Assert.checkNotNullParam("credentialNameSupplier", credentialNameSupplier);
-            this.credentialNameSupplier = credentialNameSupplier;
-            return this;
-        }
-
         public Builder addMechanismRealm(MechanismRealmConfiguration configuration) {
             Assert.checkNotNullParam("configuration", configuration);
             List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
@@ -194,12 +174,12 @@ public final class MechanismConfiguration {
          */
         public MechanismConfiguration build() {
             final List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
-            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, credentialNameSupplier, mechanismRealms == null ? Collections.emptyList() : mechanismRealms);
+            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, mechanismRealms == null ? Collections.emptyList() : mechanismRealms);
         }
     }
 
     /**
-     * An empty mechanism configuration which always attempts to authenticate against a credential called {@code clear-password}.
+     * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, () -> Collections.singletonList("clear-password"), Collections.emptyList());
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, Collections.emptyList());
 }

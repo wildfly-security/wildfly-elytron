@@ -17,7 +17,10 @@
  */
 package org.wildfly.security.auth.server;
 
-import java.util.Arrays;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -25,9 +28,18 @@ import java.util.Map;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.credential.AlgorithmCredential;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.AlgorithmEvidence;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.interfaces.DigestPassword;
 
 /**
  * A HTTP authentication mechanism configuration, the configuration is associated with the {@link SecurityDomain} and
@@ -49,7 +61,62 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     Collection<String> getAllSupportedMechNames() {
-        return Arrays.asList(mechanismFactory.getMechanismNames(Collections.emptyMap()));
+        return asList(mechanismFactory.getMechanismNames(Collections.emptyMap()));
+    }
+
+    // TODO: at some point these should no longer be hard-coded
+
+    Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(final String mechName) {
+        switch (mechName) {
+            case HttpConstants.BASIC_NAME: {
+                return singleton(PasswordGuessEvidence.class);
+            }
+            default: {
+                return emptySet();
+            }
+        }
+    }
+
+    Collection<String> getSupportedEvidenceAlgorithmNames(final Class<? extends AlgorithmEvidence> evidenceType, final String mechName) {
+        return emptySet();
+    }
+
+    Collection<Class<? extends Credential>> getSupportedCredentialTypes(final String mechName) {
+        switch (mechName) {
+            case HttpConstants.BASIC_NAME:
+            case "DIGEST": {
+                return singleton(PasswordCredential.class);
+            }
+            default: {
+                return emptySet();
+            }
+        }
+    }
+
+    Collection<String> getSupportedCredentialAlgorithmNames(final Class<? extends AlgorithmCredential> credentialType, final String mechName) {
+        switch (mechName) {
+            case HttpConstants.BASIC_NAME: {
+                return singleton("*");
+            }
+            case "DIGEST": {
+                return asList(ClearPassword.ALGORITHM_CLEAR, DigestPassword.ALGORITHM_DIGEST_MD5);
+            }
+            default: {
+                return emptySet();
+            }
+        }
+    }
+
+    boolean usesCredentials(final String mechName) {
+        switch (mechName) {
+            case HttpConstants.BASIC_NAME:
+            case "DIGEST": {
+                return true;
+            }
+            default: {
+                return false;
+            }
+        }
     }
 
     /**

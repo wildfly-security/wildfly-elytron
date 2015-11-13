@@ -80,9 +80,7 @@ public final class ElytronAuthenticator extends Authenticator {
         if (authenticationConfiguration == null) return null;
         final CallbackHandler callbackHandler = client.getCallbackHandler(authenticationConfiguration);
         final NameCallback nameCallback = new NameCallback(getRequestingPrompt());
-        final CredentialCallback credentialCallback = CredentialCallback.builder()
-                .addSupportedCredentialType(PasswordCredential.class)
-                .build();
+        final CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
 
         char[] password = null;
         try {

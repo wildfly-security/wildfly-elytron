@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * An individual evidence verifier to associate with an LDAP {@link SecurityRealm}, multiple verifiers
@@ -32,12 +33,13 @@ interface EvidenceVerifier {
     /**
      * Get the {@link SupportLevel} for the level of evidence validation support for the named credential.
      *
-     * @param contextFactory the {@link DirContextFactory} to access the LDAP server.
-     * @param credentialName the name of the credential.
-     * @return the level of support for the named credential.
-     * @throws RealmUnavailableException if the realm is currently unable to handle requests.
+     * @param contextFactory the {@link DirContextFactory} to access the LDAP server
+     * @param evidenceType the evidence type (must not be {@code null})
+     * @param algorithmName the evidence algorithm name or {@code null} if none
+     * @return the level of support for the named credential
+     * @throws RealmUnavailableException if the realm is currently unable to handle requests
      */
-    SupportLevel getEvidenceVerifySupport(final DirContextFactory contextFactory, final String credentialName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(DirContextFactory contextFactory, Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityEvidenceVerifier} to verify the evidence for a specific identity.

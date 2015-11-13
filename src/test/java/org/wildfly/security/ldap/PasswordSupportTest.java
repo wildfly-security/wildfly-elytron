@@ -26,8 +26,6 @@ import static org.junit.Assert.assertTrue;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -41,7 +39,6 @@ import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
@@ -72,80 +69,72 @@ public class PasswordSupportTest {
     @BeforeClass
     public static void createRealm() {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
-                .identityMapping()
-                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-                .setRdnIdentifier("uid")
-                .build()
-                .otpCredentialLoader()
-                .setCredentialName("otp")
-                .setOtpAlgorithmAttribute("otpAlgorithm")
-                .setOtpHashAttribute("otpHash")
-                .setOtpSeedAttribute("otpSeed")
-                .setOtpSequenceAttribute("otpSequence")
-                .build()
-                .userPasswordCredentialLoader()
-                .addSupportedCredential("userPassword-clear", ClearPassword.ALGORITHM_CLEAR)
-                .addSupportedCredential("userPassword-md5",  SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5)
-                .addSupportedCredential("userPassword-smd5", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5)
-                .addSupportedCredential("userPassword-sha512", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512)
-                .addSupportedCredential("userPassword-ssha512", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512)
-                .addSupportedCredential("userPassword-crypt", UnixDESCryptPassword.ALGORITHM_CRYPT_DES)
-                .addSupportedCredential("userPassword-crypt_", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES)
+            .setDirContextFactory(dirContextFactory.create())
+            .identityMapping()
+            .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+            .setRdnIdentifier("uid")
+            .build()
+            .otpCredentialLoader()
+            .setOtpAlgorithmAttribute("otpAlgorithm")
+            .setOtpHashAttribute("otpHash")
+            .setOtpSeedAttribute("otpSeed")
+            .setOtpSequenceAttribute("otpSequence")
+            .build()
+            .userPasswordCredentialLoader()
                 .build()
                 .build();
     }
 
     @Test
     public void testPlainUser() throws Exception {
-        performSimpleNameTest("plainUser", "userPassword-clear", ClearPassword.ALGORITHM_CLEAR, "plainPassword".toCharArray());
+        performSimpleNameTest("plainUser", ClearPassword.ALGORITHM_CLEAR, "plainPassword".toCharArray());
     }
 
     @Test
     public void testMd5User() throws Exception {
-        performSimpleNameTest("md5User", "userPassword-md5", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5,
+        performSimpleNameTest("md5User", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5,
                 "md5Password".toCharArray());
     }
 
     @Test
     public void testSmd5User() throws Exception {
-        performSimpleNameTest("smd5User", "userPassword-smd5", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "smd5Password".toCharArray());
+        performSimpleNameTest("smd5User", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_MD5, "smd5Password".toCharArray());
     }
 
     @Test
     public void testSha512User() throws Exception {
-        performSimpleNameTest("sha512User", "userPassword-sha512", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512, "sha512Password".toCharArray());
+        performSimpleNameTest("sha512User", SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_512, "sha512Password".toCharArray());
     }
 
     @Test
     public void testSsha512User() throws Exception {
-        performSimpleNameTest("ssha512User", "userPassword-ssha512", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
+        performSimpleNameTest("ssha512User", SaltedSimpleDigestPassword.ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, "ssha512Password".toCharArray());
     }
 
     @Test
     public void testCryptUser() throws Exception {
-        performSimpleNameTest("cryptUser", "userPassword-crypt", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptIt".toCharArray());
+        performSimpleNameTest("cryptUser", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptIt".toCharArray());
     }
 
     @Test
     public void testCryptUserLongPassword() throws Exception {
-        performSimpleNameTest("cryptUserLong", "userPassword-crypt", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptPassword".toCharArray());
+        performSimpleNameTest("cryptUserLong", UnixDESCryptPassword.ALGORITHM_CRYPT_DES, "cryptPassword".toCharArray());
     }
 
     @Test
     public void testBsdCryptUser() throws Exception {
-        performSimpleNameTest("bsdCryptUser", "userPassword-crypt_", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
+        performSimpleNameTest("bsdCryptUser", BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, "cryptPassword".toCharArray());
     }
 
     @Test
     public void testOneTimePasswordUser0() throws Exception {
-        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport("otp");
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null);
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
         RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
-        verifyPasswordSupport(identity, "otp", SupportLevel.SUPPORTED);
+        verifyPasswordSupport(identity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
-        OneTimePassword otp = (OneTimePassword) identity.getCredential("otp", PasswordCredential.class).getPassword();
+        OneTimePassword otp = identity.getCredential(PasswordCredential.class).getPassword(OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(1234, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'a', 'b', 'c', 'd' }, otp.getHash());
@@ -162,17 +151,17 @@ public class PasswordSupportTest {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
-        assertEquals(SupportLevel.SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport("otp"));
-        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport("otp"));
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
 
-        identity.setCredential("otp", new PasswordCredential(password));
+        identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
-        verifyPasswordSupport(newIdentity, "otp", SupportLevel.SUPPORTED);
+        verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
-        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
+        OneTimePassword otp = newIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword(OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(4321, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'i', 'j', 'k' }, otp.getHash());
@@ -189,41 +178,39 @@ public class PasswordSupportTest {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
-        identity.setCredentials(Collections.EMPTY_MAP);
-        identity.setCredentials(Collections.EMPTY_MAP); // double clearing should not fail
+        identity.setCredentials(Collections.emptyList());
+        identity.setCredentials(Collections.emptyList()); // double clearing should not fail
 
-        Map<String, Credential> credentials = new HashMap<>();
-        credentials.put("otp", new PasswordCredential(password));
-        identity.setCredentials(credentials);
+        identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
         ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
-        verifyPasswordSupport(newIdentity, "otp", SupportLevel.SUPPORTED);
+        verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
-        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential("otp", PasswordCredential.class).getPassword();
+        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword();
         assertNotNull(otp);
         assertEquals(65, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());
         Assert.assertArrayEquals(new byte[] { 'r', 's', 't' }, otp.getSeed());
     }
 
-    private void performSimpleNameTest(String simpleName, String credentialName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
+    private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
         RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
-        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(credentialName);
+        SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 
-        verifyPasswordSupport(realmIdentity, credentialName, SupportLevel.SUPPORTED);
-        verifyPassword(realmIdentity, credentialName, algorithm, password);
+        verifyPasswordSupport(realmIdentity, algorithm, SupportLevel.SUPPORTED);
+        verifyPassword(realmIdentity, algorithm, password);
     }
 
-    private void verifyPasswordSupport(RealmIdentity identity, String credentialName, SupportLevel requiredSupport) throws RealmUnavailableException {
-        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(credentialName);
+    private void verifyPasswordSupport(RealmIdentity identity, final String algorithm, SupportLevel requiredSupport) throws RealmUnavailableException {
+        SupportLevel credentialSupport = identity.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
         assertEquals("Identity level support", requiredSupport, credentialSupport);
     }
 
-    private void verifyPassword(RealmIdentity identity, String credentialName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        Password loadedPassword = identity.getCredential(credentialName, PasswordCredential.class).getPassword();
+    private void verifyPassword(RealmIdentity identity, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
+        Password loadedPassword = identity.getCredential(PasswordCredential.class).getPassword();
 
         PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         final Password translated = factory.translate(loadedPassword);

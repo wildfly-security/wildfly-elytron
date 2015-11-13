@@ -18,10 +18,6 @@
 
 package org.wildfly.security.auth.provider;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmEvent;
@@ -72,13 +68,14 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
     }
 
-    public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-        return authenticationRealm.getCredentialAcquireSupport(credentialName);
+    @Override
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        return authenticationRealm.getCredentialAcquireSupport(credentialType, algorithmName);
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-        return authenticationRealm.getEvidenceVerifySupport(credentialName);
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        return authenticationRealm.getEvidenceVerifySupport(evidenceType, algorithmName);
     }
 
     public void handleRealmEvent(final RealmEvent event) {
@@ -103,36 +100,29 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             this.authorizationIdentity = authorizationIdentity;
         }
 
-        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-            return authenticationIdentity.getCredentialAcquireSupport(credentialName);
+        @Override
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredentialAcquireSupport(credentialType, algorithmName);
         }
 
         @Override
-        public Credential getCredential(String credentialName) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialName);
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            return authenticationIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override
-        public <C extends Credential> C getCredential(String credentialName, Class<C> credentialType, Set<String> supportedAlgorithms) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialName, credentialType, supportedAlgorithms);
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialType, algorithmName);
         }
 
         @Override
-        public Credential getCredential(List<String> credentialNames, Map<Class<? extends Credential>, Set<String>> supportedTypesWithAlgorithms) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialNames, supportedTypesWithAlgorithms);
-        }
-
-        public <C extends Credential> C getCredential(final String credentialName, final Class<C> credentialType) throws RealmUnavailableException {
-            return authenticationIdentity.getCredential(credentialName, credentialType);
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return authenticationIdentity.getCredential(credentialType);
         }
 
         @Override
-        public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-            return authenticationIdentity.getEvidenceVerifySupport(credentialName);
-        }
-
-        public boolean verifyEvidence(final String credentialName, final Evidence credential) throws RealmUnavailableException {
-            return authenticationIdentity.verifyEvidence(credentialName, credential);
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            return authenticationIdentity.verifyEvidence(evidence);
         }
 
         public boolean exists() throws RealmUnavailableException {

@@ -20,14 +20,40 @@ package org.wildfly.security.evidence;
 
 import java.security.cert.X509Certificate;
 
-public final class X509PeerCertificateEvidence implements Evidence {
+import org.wildfly.common.Assert;
+
+/**
+ * A piece of evidence that is comprised of a verified peer certificate.
+ */
+public final class X509PeerCertificateEvidence implements AlgorithmEvidence {
+
     private final X509Certificate peerCertificate;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param peerCertificate the peer certificate to use (must not be {@code null})
+     */
     public X509PeerCertificateEvidence(final X509Certificate peerCertificate) {
+        Assert.checkNotNullParam("peerCertificate", peerCertificate);
         this.peerCertificate = peerCertificate;
     }
 
+    /**
+     * Get the peer certificate.
+     *
+     * @return the peer certificate (not {@code null})
+     */
     public X509Certificate getPeerCertificate() {
         return peerCertificate;
+    }
+
+    /**
+     * Get the certificate public key algorithm.
+     *
+     * @return the certificate public key algorithm (not {@code null})
+     */
+    public String getAlgorithm() {
+        return peerCertificate.getPublicKey().getAlgorithm();
     }
 }

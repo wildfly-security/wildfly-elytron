@@ -27,7 +27,8 @@ import org.wildfly.security.auth.provider.SimpleRealmEntry;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.authz.RoleDecoder;
-import org.wildfly.security.password.Password;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -42,7 +43,6 @@ import java.security.Policy;
 import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -214,20 +214,21 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
     }
 
     private void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {
-        Map<String, Password> defaultUnsecurePasswords;
+        List<Credential> defaultInsecurePasswords;
 
         try {
-            defaultUnsecurePasswords = Collections.singletonMap("clear",
-                    PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR)
-                    .generatePassword(new ClearPasswordSpec("password".toCharArray())));
+            defaultInsecurePasswords = Collections.singletonList(
+                new PasswordCredential(
+                    PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR).generatePassword(
+                        new ClearPasswordSpec("password".toCharArray()))));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         MapAttributes attributes = new MapAttributes();
 
-        attributes.addAll(RoleDecoder.KEY_ROLES, Arrays.asList(roles));
+        attributes.addAll(RoleDecoder.KEY_ROLES, Collections.singletonList(roles));
 
-        securityRealm.put(userName, new SimpleRealmEntry(defaultUnsecurePasswords, attributes));
+        securityRealm.put(userName, new SimpleRealmEntry(defaultInsecurePasswords, attributes));
     }
 }

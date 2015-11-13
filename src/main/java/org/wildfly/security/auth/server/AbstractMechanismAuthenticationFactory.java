@@ -21,13 +21,15 @@ package org.wildfly.security.auth.server;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.credential.AlgorithmCredential;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.AlgorithmEvidence;
+import org.wildfly.security.evidence.Evidence;
 
 abstract class AbstractMechanismAuthenticationFactory<M, E extends Exception> implements MechanismAuthenticationFactory<M,E> {
 
@@ -53,34 +55,68 @@ abstract class AbstractMechanismAuthenticationFactory<M, E extends Exception> im
 
     abstract M doCreate(String name, CallbackHandler callbackHandler) throws E;
 
+    abstract Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(String mechName);
+
+    abstract Collection<String> getSupportedEvidenceAlgorithmNames(Class<? extends AlgorithmEvidence> evidenceType, String mechName);
+
+    abstract Collection<Class<? extends Credential>> getSupportedCredentialTypes(String mechName);
+
+    abstract Collection<String> getSupportedCredentialAlgorithmNames(Class<? extends AlgorithmCredential> credentialType, String mechName);
+
+    /**
+     * Determine whether the given mechanism name needs credentials from a realm in order to authenticate.
+     *
+     * @param mechName the mechanism name
+     * @return {@code true} if the mechanism requires realm credential support, {@code false} if it does not
+     */
+    abstract boolean usesCredentials(String mechName);
+
     public Collection<String> getMechanismNames() {
         final Collection<String> names = new LinkedHashSet<>();
-        for (String mechName : getAllSupportedMechNames()) {
+        top: for (String mechName : getAllSupportedMechNames()) {
             MechanismConfiguration mechConfig = mechanismConfigurations.get(mechName);
             if (mechConfig == null) {
                 continue;
             }
-            final Supplier<List<String>> supplier = mechConfig.getCredentialNameSupplier();
-            final Collection<String> credentials = new LinkedHashSet<>();
-            if (supplier != null) {
-                credentials.addAll(supplier.get());
-            }
-            for (String mechRealmName : mechConfig.getMechanismRealmNames()) {
-                MechanismRealmConfiguration mechRealm = mechConfig.getMechanismRealmConfiguration(mechRealmName);
-                final Supplier<List<String>> supplier1 = mechRealm.getCredentialNameSupplier();
-                if (supplier1 != null) {
-                    credentials.addAll(supplier1.get());
-                }
-            }
-            boolean supported = false;
-            for (String credential : credentials) {
-                if (securityDomain.getEvidenceVerifySupport(credential).mayBeSupported() || securityDomain.getCredentialAcquireSupport(credential).mayBeSupported()) {
-                    supported = true;
-                    break;
-                }
-            }
-            if (supported) {
+            // if the mech doesn't need credentials, then we support it for sure
+            if (! usesCredentials(mechName)) {
                 names.add(mechName);
+                continue;
+            }
+
+            final SecurityDomain securityDomain = this.securityDomain;
+
+            // if the mech supports verification for a type of evidence we have, we support it
+            for (Class<? extends Evidence> evidenceType : getSupportedEvidenceTypes(mechName)) {
+                if (AlgorithmEvidence.class.isAssignableFrom(evidenceType)) {
+                    for (String algorithmName : getSupportedEvidenceAlgorithmNames(evidenceType.asSubclass(AlgorithmEvidence.class), mechName)) {
+                        if ("*".equals(algorithmName) && securityDomain.getEvidenceVerifySupport(evidenceType).mayBeSupported() || securityDomain.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
+                            names.add(mechName);
+                            continue top;
+                        }
+                    }
+                } else {
+                    if (securityDomain.getEvidenceVerifySupport(evidenceType).mayBeSupported()) {
+                        names.add(mechName);
+                        continue top;
+                    }
+                }
+            }
+            // if the mech supports a type of credential we have, we support it
+            for (Class<? extends Credential> credentialType : getSupportedCredentialTypes(mechName)) {
+                if (AlgorithmCredential.class.isAssignableFrom(credentialType)) {
+                    for (String algorithmName : getSupportedCredentialAlgorithmNames(credentialType.asSubclass(AlgorithmCredential.class), mechName)) {
+                        if ("*".equals(algorithmName) && securityDomain.getCredentialAcquireSupport(credentialType).mayBeSupported() || securityDomain.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                            names.add(mechName);
+                            continue top;
+                        }
+                    }
+                } else {
+                    if (securityDomain.getCredentialAcquireSupport(credentialType).mayBeSupported()) {
+                        names.add(mechName);
+                        continue top;
+                    }
+                }
             }
         }
         return names;

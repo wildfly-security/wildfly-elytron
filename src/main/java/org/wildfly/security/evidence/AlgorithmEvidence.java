@@ -19,9 +19,15 @@
 package org.wildfly.security.evidence;
 
 /**
- * A piece of evidence which may be used for credential verification.
+ * A piece of evidence which supports multiple algorithms.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface Evidence {
+public interface AlgorithmEvidence extends Evidence {
+    /**
+     * Get the algorithm name associated with this evidence (will never be {@code null}).
+     *
+     * @return the algorithm name
+     */
+    String getAlgorithm();
 }

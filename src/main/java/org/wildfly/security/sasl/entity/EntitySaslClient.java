@@ -164,9 +164,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     encoder.startExplicit(1);
                     TrustedAuthoritiesCallback trustedAuthoritiesCallback = new TrustedAuthoritiesCallback();
                     trustedAuthoritiesCallback.setTrustedAuthorities(trustedAuthorities); // Server's preferred certificates
-                    CredentialCallback credentialCallback = CredentialCallback.builder()
-                            .addSupportedCredentialType(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()))
-                            .build();
+                    CredentialCallback credentialCallback = new CredentialCallback(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()));
 
                     PrivateKey privateKey;
                     try {

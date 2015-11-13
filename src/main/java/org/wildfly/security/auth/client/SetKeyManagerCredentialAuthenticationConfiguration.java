@@ -29,7 +29,6 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.net.ssl.X509KeyManager;
 import javax.security.auth.callback.Callback;
@@ -39,7 +38,6 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
@@ -72,23 +70,21 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
             if (callback instanceof TrustedAuthoritiesCallback) {
                 trustedAuthorities = ((TrustedAuthoritiesCallback) callback).getTrustedAuthorities();
             } else if (callback instanceof CredentialCallback) {
-                X509KeyManager keyManager = null;
+                final X509KeyManager keyManager;
                 try {
                     keyManager = keyManagerFactory.create();
                 } catch (GeneralSecurityException e) {
                     throw log.unableToCreateKeyManager(e);
                 }
                 final CredentialCallback credentialCallback = (CredentialCallback) callback;
-                for (Class<? extends Credential> allowedType : credentialCallback.getSupportedTypes()) {
-                    final Set<String> allowedAlgorithms = credentialCallback.getSupportedAlgorithms(allowedType);
-                    if (allowedAlgorithms != null) {
-                        final String[] keyType = allowedAlgorithms.toArray(new String[allowedAlgorithms.size()]);
-                        final String alias = keyManager.chooseClientAlias(keyType, getAcceptableIssuers(trustedAuthorities), null);
+                final String allowedAlgorithm = credentialCallback.getAlgorithm();
+                if (allowedAlgorithm != null) {
+                    if (credentialCallback.isCredentialTypeSupported(X509CertificateChainPrivateCredential.class, allowedAlgorithm)) {
+                        final String alias = keyManager.chooseClientAlias(new String[] { allowedAlgorithm }, getAcceptableIssuers(trustedAuthorities), null);
                         if (alias != null) {
                             final X509Certificate[] certificateChain = keyManager.getCertificateChain(alias);
                             final PrivateKey privateKey = keyManager.getPrivateKey(alias);
                             credentialCallback.setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
-                            break;
                         }
                     }
                 }

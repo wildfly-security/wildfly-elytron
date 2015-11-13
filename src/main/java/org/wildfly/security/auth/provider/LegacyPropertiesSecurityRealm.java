@@ -41,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -79,14 +80,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     private final String groupsAttribute;
 
-    private final Map<String, Boolean> credentialMap;
-
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
         this.plainText = builder.plainText;
         currentPattern = plainText ? PLAIN_PATTERN : HASHED_PATTERN;
-        credentialMap = new HashMap<String, Boolean>(builder.credentialNamePlainMap);
         groupsAttribute = builder.groupsAttribute;
     }
 
@@ -94,56 +92,71 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
 
         final LoadedState loadedState = this.loadedState.get();
-        final AccountEntry accountEntry = loadedState.accounts.get(name);
+        final AccountEntry accountEntry = loadedState.getAccounts().get(name);
 
         return new RealmIdentity() {
 
             @Override
-            public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialName) : SupportLevel.UNSUPPORTED;
+            public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) : SupportLevel.UNSUPPORTED;
             }
 
             @Override
-            public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getEvidenceVerifySupport(credentialName) : SupportLevel.UNSUPPORTED;
+            public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+                return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getEvidenceVerifySupport(evidenceType, algorithmName) : SupportLevel.UNSUPPORTED;
             }
 
             @Override
-            public Credential getCredential(String credentialName) throws RealmUnavailableException {
+            public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+                return getCredential(credentialType, null);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
                 if (accountEntry == null) {
+                    return null;
+                }
+                if (! PasswordCredential.class.isAssignableFrom(credentialType)) {
+                    return null;
+                }
+                boolean clear;
+                if (algorithmName == null) {
+                    clear = plainText;
+                } else if (ALGORITHM_CLEAR.equals(algorithmName)) {
+                    clear = true;
+                } else if (ALGORITHM_DIGEST_MD5.equals(algorithmName)) {
+                    clear = false;
+                } else {
                     return null;
                 }
 
                 final PasswordFactory passwordFactory;
                 final PasswordSpec passwordSpec;
 
-                Boolean plainTextCredential = credentialMap.get(credentialName);
-                if (Boolean.TRUE.equals(plainTextCredential) && plainText) {
+                if (clear) {
                     passwordFactory = getPasswordFactory(ALGORITHM_CLEAR);
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
-                } else if (Boolean.FALSE.equals(plainTextCredential)) {
+                } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
                     if (plainText) {
                         AlgorithmParameterSpec algorithmParameterSpec = new DigestPasswordAlgorithmSpec(accountEntry.getName(), loadedState.getRealmName());
-                        passwordSpec = new  EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
+                        passwordSpec = new EncryptablePasswordSpec(accountEntry.getPasswordRepresentation().toCharArray(), algorithmParameterSpec);
                     } else {
                         byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
                         passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
                     }
-                } else {
-                    return null;
                 }
 
                 try {
-                    return new PasswordCredential(passwordFactory.generatePassword(passwordSpec));
+                    return credentialType.cast(new PasswordCredential(passwordFactory.generatePassword(passwordSpec)));
                 } catch (InvalidKeySpecException e) {
                     throw new IllegalStateException(e);
                 }
             }
 
             @Override
-            public boolean verifyEvidence(String credentialName, Evidence evidence) throws RealmUnavailableException {
-                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false || Boolean.TRUE.equals(credentialMap.get(credentialName)) == false) {
+            public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false) {
                     return false;
                 }
                 final char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
@@ -193,19 +206,15 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
     }
 
-
     @Override
-    public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
-        if ((credentialMap.containsKey(credentialName) && plainText) || Boolean.FALSE.equals(credentialMap.get(credentialName))) {
-            return SupportLevel.SUPPORTED;
-        }
-
-        return SupportLevel.UNSUPPORTED;
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return PasswordCredential.class.isAssignableFrom(credentialType) && (algorithmName == null || algorithmName.equals(ALGORITHM_CLEAR) && plainText || algorithmName.equals(ALGORITHM_DIGEST_MD5)) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(String credentialName) throws RealmUnavailableException {
-        return Boolean.TRUE.equals(credentialMap.get(credentialName)) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        return PasswordGuessEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     public void load(InputStream passwordsStream, InputStream groupsStream) throws IOException {
@@ -265,8 +274,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private InputStream passwordsStream;
         private InputStream groupsStream;
         private boolean plainText;
-        private String realmName;
-        private Map<String, Boolean> credentialNamePlainMap = new HashMap<>();
         private String groupsAttribute;
 
         Builder() {
@@ -317,31 +324,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          */
         public Builder setPlainText(boolean plainText) {
             this.plainText = plainText;
-
-            return this;
-        }
-
-        /**
-         * Set the realm name used / to use for encoding the passwords where digested.
-         *
-         * @param realmName the realm name used / to use for encoding the passwords where digested.
-         * @return this {@link Builder}
-         */
-        public Builder setRealmName(final String realmName) {
-            this.realmName = realmName;
-
-            return this;
-        }
-
-        /**
-         * Add a credential name to be supported by this {@link SecurityRealm}
-         *
-         * @param credentialName the name of the credential
-         * @param plainText {@code true} if this credential name is a clear test representation of the password
-         * @return this {@link Builder}
-         */
-        public Builder addCredentialName(final String credentialName, final boolean plainText) {
-            credentialNamePlainMap.put(credentialName, plainText);
 
             return this;
         }

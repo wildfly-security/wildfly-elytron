@@ -22,9 +22,6 @@ import java.net.Socket;
 import java.security.Principal;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.Supplier;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
@@ -50,7 +47,6 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
     private final CredentialDecoder credentialDecoder;
-    private final Supplier<List<String>> credentialNameSupplier = Collections::emptyList; // todo
 
     SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
         this.delegate = delegate;
@@ -86,23 +82,20 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
         final X509Certificate subjectCertificate = chain[0];
-        Principal principal = credentialDecoder.getPrincipalFromCredential(new X509CertificateChainPublicCredential(chain));
+        final X509CertificateChainPublicCredential credential = new X509CertificateChainPublicCredential(chain);
+        Principal principal = credentialDecoder.getPrincipalFromCredential(credential);
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
 
-            List<String> credentialNames = credentialNameSupplier.get();
-            for (String credentialName : credentialNames) {
-
-                final SupportLevel credentialSupport = authenticationContext.getEvidenceVerifySupport(credentialName);
-                if (credentialSupport.mayBeSupported() && authenticationContext.verifyEvidence(credentialName, new X509PeerCertificateEvidence(subjectCertificate))) {
-                    authenticationContext.succeed();
-                    if (handshakeSession != null) {
-                        handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
-                    }
-                    ok = true;
+            final SupportLevel credentialSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateEvidence.class, credential.getAlgorithm());
+            if (credentialSupport.mayBeSupported() && authenticationContext.verifyEvidence(new X509PeerCertificateEvidence(subjectCertificate))) {
+                authenticationContext.succeed();
+                if (handshakeSession != null) {
+                    handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
                 }
+                ok = true;
             }
             throw ElytronMessages.log.notTrusted(principal);
         } catch (RealmUnavailableException e) {

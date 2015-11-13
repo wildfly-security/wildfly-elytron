@@ -68,9 +68,7 @@ public final class MechanismUtil {
         try {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm);
 
-            CredentialCallback credentialCallback = CredentialCallback.builder()
-                    .addSupportedCredentialType(PasswordCredential.class, passwordAlgorithm)
-                    .build();
+            CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm);
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
@@ -89,9 +87,7 @@ public final class MechanismUtil {
                 // fall out
             }
 
-            credentialCallback = CredentialCallback.builder()
-                    .addSupportedCredentialType(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR)
-                    .build();
+            credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);

@@ -34,18 +34,19 @@ interface IdentityCredentialLoader {
     /**
      * Determine whether a given credential is definitely supported, possibly supported, or definitely not supported.
      *
-     * @param credentialName the credential name to check
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the credential algorithm name, if any
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(String credentialName);
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName);
 
     /**
      * Acquire a credential of the given type.
      *
      * @param <C> the type to which should be credential casted
-     * @param credentialName the name of the credential
-     * @param credentialType the class of type to which should be credential casted
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the credential algorithm name, if any
      * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      */
-    <C extends Credential> C getCredential(String credentialName, Class<C> credentialType);
+    <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName);
 }

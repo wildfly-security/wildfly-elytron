@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
-import java.util.Map;
+import java.util.Collection;
 
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.credential.Credential;
@@ -47,30 +47,13 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
     void create() throws RealmUnavailableException;
 
     /**
-     * Replace map of credentials of this identity.  If the identity does not exist, an exception is thrown.
+     * Set the credentials of this identity.  If the identity does not exist, an exception is thrown.
+     * Any existing credential(s) are replaced/updated with the new value (in a possibly realm-specific manner).
      *
-     * @param credentials the new map of credentials
+     * @param credentials the new credentials to set
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
-    void setCredentials(Map<String, Credential> credentials) throws RealmUnavailableException;
-
-    /**
-     * Add new credential of this identity.  If the identity does not exist, an exception is thrown.
-     * If credential of the same type of the same identity already exist, it is replaced.
-     *
-     * @param credentialName the name of the credential
-     * @param credential the new credential
-     * @throws RealmUnavailableException if updating the credentials fails for some reason
-     */
-    void setCredential(String credentialName, Credential credential) throws RealmUnavailableException;
-
-    /**
-     * Delete credential of this identity by name.  If the identity or credential does not exist, an exception is thrown.
-     *
-     * @param credentialName the name of the credential
-     * @throws RealmUnavailableException if updating the credentials fails for some reason
-     */
-    void deleteCredential(String credentialName) throws RealmUnavailableException;
+    void setCredentials(Collection<? extends Credential> credentials) throws RealmUnavailableException;
 
     /**
      * Modify the attributes collection of this identity.  If the identity does not exist, an exception is thrown.

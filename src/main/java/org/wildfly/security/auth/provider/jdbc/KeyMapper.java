@@ -22,6 +22,9 @@ import java.sql.SQLException;
 
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.PasswordGuessEvidence;
 
 /**
  * A key mapper is responsible to map data from a column in a table to a specific credential type.
@@ -31,14 +34,34 @@ import org.wildfly.security.credential.Credential;
 public interface KeyMapper extends ColumnMapper {
 
     /**
-     * Returns the credential name supported by this mapper.
+     * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
+     * some identities), or definitely not obtainable.
      *
-     * @return the credential name supported by this mapper.
+     * @param credentialType the exact credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
+     *  not support algorithm names
+     * @return the level of support for this credential
      */
-    String getCredentialName();
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName);
 
     /**
-     * <p>Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities), or definitely not
+     * Determine whether a given type of evidence is definitely verifiable, possibly verifiable (for some identities),
+     * or definitely not verifiable.
+     *
+     * @param evidenceType the type of evidence to be verified (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
+     *  not support algorithm names
+     * @return the level of support for this evidence type
+     */
+    default SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) {
+        if (PasswordGuessEvidence.class.isAssignableFrom(evidenceType)) {
+            return getCredentialAcquireSupport(PasswordCredential.class, null);
+        }
+        return SupportLevel.UNSUPPORTED;
+    }
+
+    /**
+     * Determine whether a given credential is definitely obtainable, possibly obtainable (for some identities), or definitely not
      * obtainable based on the given {@link ResultSet}.
      *
      * <p>In this case the support is defined based on the query result, usually related with a specific account.

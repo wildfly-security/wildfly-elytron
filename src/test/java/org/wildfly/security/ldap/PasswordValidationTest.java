@@ -45,15 +45,15 @@ public class PasswordValidationTest {
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
                     .build()
-                .addDirectEvidenceVerification("ldap-verifiable")
+                .addDirectEvidenceVerification()
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("plainUser");
 
-        SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport("ldap-verifiable");
+        SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
 
-        assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
     }
 
     @Test
@@ -63,15 +63,15 @@ public class PasswordValidationTest {
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
-                .addDirectEvidenceVerification("ldap-verifiable")
+                .addDirectEvidenceVerification()
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
-        SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport("ldap-verifiable");
+        SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
 
-        assertTrue(realmIdentity.verifyEvidence("ldap-verifiable", new PasswordGuessEvidence("plainPassword".toCharArray())));
+        assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
     }
 
 }

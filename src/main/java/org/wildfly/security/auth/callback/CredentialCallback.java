@@ -19,21 +19,16 @@
 package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 
 /**
  * A callback used to acquire credentials, either for outbound or inbound authentication.  This callback
  * is required only if a default credential was not supplied.  The callback handler is expected to provide
- * a credential to this callback if one is not present.  The supplied credential should be of a <em>supported</em>
- * type; the {@link #isCredentialSupported(Class, String)} method can be
- * used to query the types that are supported.  If no credential is available, {@code null} is set, and
+ * a credential to this callback if one is not present.  If no credential is available, {@code null} is set, and
  * authentication may fail.  If an unsupported credential type is set, authentication may fail.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -43,9 +38,16 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     private static final long serialVersionUID = 4756568346009259703L;
 
     /**
-     * @serial The map of supported credential types.
+     * @serial The type of the supported credential.
      */
-    private final Map<Class<? extends Credential>, Set<String>> supportedTypes;
+    private final Class<? extends Credential> credentialType;
+
+    /**
+     * @serial The algorithm of the required credential, or {@code null} if any algorithm is suitable or the credential
+     *  type does not use algorithm names.
+     */
+    private final String algorithm;
+
     /**
      * @serial The credential itself.
      */
@@ -54,10 +56,23 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     /**
      * Construct a new instance.
      *
-     * @param supportedTypes the supported types of credential
+     * @param credentialType the desired credential type (must not be {@code null})
+     * @param algorithm the algorithm name, or {@code null} if any algorithm is suitable or the credential
+     *  type does not use algorithm names
      */
-    private CredentialCallback(final Map<Class<? extends Credential>, Set<String>> supportedTypes) {
-        this.supportedTypes = supportedTypes;
+    public CredentialCallback(final Class<? extends Credential> credentialType, final String algorithm) {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        this.credentialType = credentialType;
+        this.algorithm = algorithm;
+    }
+
+    /**
+     * Construct a new instance which accepts any algorithm name.
+     *
+     * @param credentialType the desired credential type (must not be {@code null})
+     */
+    public CredentialCallback(final Class<? extends Credential> credentialType) {
+        this(credentialType, null);
     }
 
     /**
@@ -70,72 +85,69 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     }
 
     /**
-     * Set the credential.
+     * Set the credential.  The credential must be of the supported type and algorithm.
      *
-     * @param credential the credential, or {@code null} if no credential is available
+     * @param credential the credential, or {@code null} to indicate that no credential is available
+     * @throws IllegalArgumentException if the given credential is not supported
      */
     public void setCredential(final Credential credential) {
+        if (credential != null && ! isCredentialSupported(credential)) {
+            throw ElytronMessages.log.credentialNotSupported();
+        }
         this.credential = credential;
     }
 
     /**
-     * Determine whether a credential type would be supported by the authentication.
-     * The credential type is defined by its {@code Class} and an optional {@code algorithmName}.  If the
-     * algorithm name is not given, then the query is performed for any algorithm of the given type.
+     * Determine whether the given credential type is supported.  Will be {@code false} if the credential type requires
+     * an algorithm name; in this case, use {@link #isCredentialTypeSupported(Class, String)} instead.
      *
-     * @param credentialType the credential type to test
-     * @param algorithm the algorithm of the credential to test, or {@code null} to test for any algorithm
-     * @return {@code true} if the credential is non-{@code null} and supported, {@code false} otherwise
+     * @param credentialType the credential type (must not be {@code null})
+     * @return {@code true} if the credential type is supported, {@code false} otherwise
      */
-    public boolean isCredentialSupported(final Class<? extends Credential> credentialType, final String algorithm) {
-        final Set<String> set = supportedTypes.get(credentialType);
-        if (set != null) {
-            return algorithm == null || set.isEmpty() || set.contains(algorithm);
-        } else {
-            final Class<?> superclass = credentialType.getSuperclass();
-            if (Credential.class.isAssignableFrom(superclass)) {
-                if (isCredentialSupported(superclass.asSubclass(Credential.class), algorithm)) {
-                    return true;
-                }
-            }
-            final Class<?>[] interfaces = credentialType.getInterfaces();
-            for (Class<?> clazz : interfaces) {
-                if (Credential.class.isAssignableFrom(superclass) && isCredentialSupported(clazz.asSubclass(Credential.class), algorithm)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType) {
+        return isCredentialTypeSupported(credentialType, null);
     }
 
     /**
-     * Get the set of supported types for this credential.
+     * Determine whether the given credential type is supported for the given algorithm name.
      *
-     * @return the (immutable) set of supported types
+     * @param credentialType the credential type (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} to indicate that no algorithm name will be available
+     * @return {@code true} if the credential type is supported, {@code false} otherwise
      */
-    public Set<Class<? extends Credential>> getSupportedTypes() {
-        return Collections.unmodifiableSet(supportedTypes.keySet());
+    public boolean isCredentialTypeSupported(final Class<? extends Credential> credentialType, final String algorithmName) {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return this.credentialType.isAssignableFrom(credentialType) && (algorithm == null || AlgorithmCredential.class.isAssignableFrom(credentialType) && algorithm.equals(algorithmName));
     }
 
     /**
-     * Get the supported algorithms for the given exact credential type.  The returned set may be empty, indicating that
-     * no algorithm is required for the given credential, or {@code null} indicating that the credential type is not
-     * supported.
+     * Determine whether the given credential can be set on this callback.
      *
-     * @param type the credential type
-     * @return the (immutable) set of supported algorithms
+     * @param credential the credential (must not be {@code null})
+     * @return {@code true} if the credential matches the type and optional algorithm of this callback, {@code false} otherwise
      */
-    public Set<String> getSupportedAlgorithms(Class<? extends Credential> type) {
-        return supportedTypes.get(type);
+    public boolean isCredentialSupported(final Credential credential) {
+        Assert.checkNotNullParam("credential", credential);
+        return credentialType.isInstance(credential) && (algorithm == null || credential instanceof AlgorithmCredential && algorithm.equals(((AlgorithmCredential) credential).getAlgorithm()));
     }
 
     /**
-     * Get the map of supported types along with the supported algorithms for each of those types.
+     * Get the supported credential type.
      *
-     * @return the map of supported types along with the supported algorithms for each of those types
+     * @return the supported credential type (not {@code null})
      */
-    public Map<Class<? extends Credential>, Set<String>> getSupportedTypesWithAlgorithms() {
-        return Collections.unmodifiableMap(supportedTypes);
+    public Class<? extends Credential> getCredentialType() {
+        return credentialType;
+    }
+
+    /**
+     * Get the algorithm name, if any.
+     *
+     * @return the algorithm name, or {@code null} if any algorithm is suitable or the credential
+     *  type does not use algorithm names
+     */
+    public String getAlgorithm() {
+        return algorithm;
     }
 
     public boolean isOptional() {
@@ -145,84 +157,4 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     public boolean needsInformation() {
         return true;
     }
-
-    /**
-     * Factory method to create a builder for a {@link CredentialCallback}.
-     *
-     * @return A builder for a {@link CredentialCallback}.
-     */
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /**
-     * The non-Thread safe builder of {@link CredentialCallback} instances.
-     */
-    public static class Builder {
-
-        private final Map<Class<? extends Credential>, Set<String>> supportedTypes = new HashMap<>();
-        private boolean built = false;
-
-        Builder() {};
-
-        private void assertNotBuilt() {
-            if (built) {
-                throw new IllegalStateException("CredentialCallback has already been built.");
-            }
-        }
-
-        /**
-         * Add a credential type to be supported by the {@link CredentialCallback}.
-         *
-         * The specified credential type is considered supported for all algorithms.
-         *
-         * @param credentialType the supported {@link Credential} type.
-         * @return This {@link Builder} to allow additional types to be added.
-         */
-        public Builder addSupportedCredentialType(final Class<? extends Credential> credentialType) {
-            assertNotBuilt();
-            if (supportedTypes.containsKey(credentialType)) {
-                throw new IllegalStateException("Credential type already added.");
-            }
-
-            supportedTypes.put(credentialType, Collections.emptySet());
-
-            return this;
-        }
-
-        /**
-         * Add a credential type to be supported by the {@link CredentialCallback} along with the list of algorithms it is supported with.
-         *
-         * @param credentialType credentialType the supported {@link Credential} type.
-         * @param supportedAlgorithms the names of the algorithms the credential type is supported with.
-         * @return This {@link Builder} to allow additional types to be added.
-         */
-        public Builder addSupportedCredentialType(final Class<? extends Credential> credentialType, final String... supportedAlgorithms) {
-            assertNotBuilt();
-            if (supportedTypes.containsKey(credentialType)) {
-                throw new IllegalStateException("Credential type already added.");
-            }
-
-            supportedTypes.put(credentialType, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(supportedAlgorithms))));
-
-            return this;
-        }
-
-        /**
-         * Build the {@link CredentialCallback} with the set of supported credential types added to this builder.
-         *
-         * Once this builder is built no further modifications are allowed.
-         *
-         * @return The {@link CredentialCallback} with the set of supported credential types added to this builder.
-         */
-        public CredentialCallback build() {
-            assertNotBuilt();
-            built = true;
-
-            return new CredentialCallback(supportedTypes);
-        }
-
-    }
-
-
 }

@@ -17,8 +17,8 @@
  */
 package org.wildfly.security.auth.provider.jdbc;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.provider.jdbc.mapper.AttributeMapper;
-import org.wildfly.security.auth.provider.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -27,15 +27,10 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
-import org.wildfly.security.password.PasswordFactory;
 
 import javax.sql.DataSource;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,18 +63,33 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(String credentialName) throws RealmUnavailableException {
-        for (QueryConfiguration configuration : this.queryConfiguration) {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        SupportLevel support = SupportLevel.UNSUPPORTED;
+        for (QueryConfiguration configuration : queryConfiguration) {
             for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                if (keyMapper.getCredentialName().equals(credentialName)) {
-                    // by default, all credential types are supported if they have a corresponding mapper.
-                    // however, we don't know if an account or realm identity has a specific credential or not.
-                    return SupportLevel.POSSIBLY_SUPPORTED;
+                final SupportLevel mapperSupport = keyMapper.getCredentialAcquireSupport(credentialType, algorithmName);
+                if (support.compareTo(mapperSupport) < 0) {
+                    support = mapperSupport;
                 }
             }
         }
+        return support;
+    }
 
-        return SupportLevel.UNSUPPORTED;
+    @Override
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidenceType", evidenceType);
+        SupportLevel support = SupportLevel.UNSUPPORTED;
+        for (QueryConfiguration configuration : queryConfiguration) {
+            for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                final SupportLevel mapperSupport = keyMapper.getEvidenceVerifySupport(evidenceType, algorithmName);
+                if (support.compareTo(mapperSupport) < 0) {
+                    support = mapperSupport;
+                }
+            }
+        }
+        return support;
     }
 
     private class JdbcRealmIdentity implements RealmIdentity {
@@ -92,24 +102,40 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final String credentialName) throws RealmUnavailableException {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            SupportLevel support = SupportLevel.UNSUPPORTED;
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialName().equals(credentialName)) {
-                        return executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
+                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
+                        if (mapperSupport == SupportLevel.SUPPORTED) {
+                            return SupportLevel.SUPPORTED;
+                        } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
+                            support = SupportLevel.POSSIBLY_SUPPORTED;
+                        }
                     }
                 }
             }
 
-            return SupportLevel.UNSUPPORTED;
+            return support;
         }
 
         @Override
-        public Credential getCredential(final String credentialName) throws RealmUnavailableException {
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            return getCredential(credentialType, null);
+        }
+
+        @Override
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    if (keyMapper.getCredentialName().equals(credentialName)) {
-                        return executePrincipalQuery(configuration, resultSet -> keyMapper.map(resultSet));
+                    if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                        final Credential credential = executePrincipalQuery(configuration, keyMapper::map);
+                        if (credentialType.isInstance(credential)) {
+                            return credentialType.cast(credential);
+                        }
                     }
                 }
             }
@@ -118,12 +144,34 @@ public class JdbcSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public boolean verifyEvidence(final String credentialName, final Evidence evidence) throws RealmUnavailableException {
-            if (evidence != null) {
-                for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                    for (PasswordKeyMapper passwordMapper : configuration.getColumnMappers(PasswordKeyMapper.class)) {
-                        if (passwordMapper.getCredentialName().equals(credentialName)) {
-                            return verifyPassword(configuration, passwordMapper, evidence);
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
+            SupportLevel support = SupportLevel.UNSUPPORTED;
+            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
+                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                    if (keyMapper.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
+                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
+                        if (mapperSupport == SupportLevel.SUPPORTED) {
+                            return SupportLevel.SUPPORTED;
+                        } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
+                            support = SupportLevel.POSSIBLY_SUPPORTED;
+                        }
+                    }
+                }
+            }
+
+            return support;
+        }
+
+        @Override
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidence", evidence);
+            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
+                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                    Credential credential = executePrincipalQuery(configuration, keyMapper::map);
+                    if (credential != null) {
+                        if (credential.canVerify(evidence)) {
+                            return credential.verify(evidence);
                         }
                     }
                 }
@@ -147,32 +195,29 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         private JdbcIdentity getIdentity() {
             if (this.identity == null) {
-                JdbcSecurityRealm.this.queryConfiguration.stream()
-                        .map(queryConfiguration -> {
-                            return executePrincipalQuery(queryConfiguration, resultSet -> {
-                                if (resultSet.next()) {
-                                    MapAttributes attributes = new MapAttributes();
+                JdbcSecurityRealm.this.queryConfiguration.stream().map(queryConfiguration -> executePrincipalQuery(queryConfiguration, resultSet -> {
+                    if (resultSet.next()) {
+                        MapAttributes attributes = new MapAttributes();
 
-                                    do {
-                                        queryConfiguration.getColumnMappers(AttributeMapper.class).forEach(attributeMapper -> {
-                                            try {
-                                                Object value = attributeMapper.map(resultSet);
+                        do {
+                            queryConfiguration.getColumnMappers(AttributeMapper.class).forEach(attributeMapper -> {
+                                try {
+                                    Object value = attributeMapper.map(resultSet);
 
-                                                if (value != null) {
-                                                    attributes.addFirst(attributeMapper.getName(), value.toString());
-                                                }
-                                            } catch (SQLException cause) {
-                                                throw log.ldapRealmFailedObtainAttributes(this.name, cause);
-                                            }
-                                        });
-                                    } while (resultSet.next());
-
-                                    return attributes;
+                                    if (value != null) {
+                                        attributes.addFirst(attributeMapper.getName(), value.toString());
+                                    }
+                                } catch (SQLException cause) {
+                                    throw log.ldapRealmFailedObtainAttributes(this.name, cause);
                                 }
-
-                                return null;
                             });
-                        }).collect(Collectors.reducing((lAttribute, rAttribute) -> {
+                        } while (resultSet.next());
+
+                        return attributes;
+                    }
+
+                    return null;
+                })).collect(Collectors.reducing((lAttribute, rAttribute) -> {
                     MapAttributes attributes = new MapAttributes(lAttribute);
 
                     for (Attributes.Entry rEntry : rAttribute.entries()) {
@@ -184,38 +229,6 @@ public class JdbcSecurityRealm implements SecurityRealm {
             }
 
             return this.identity;
-        }
-
-        private boolean verifyPassword(QueryConfiguration configuration, PasswordKeyMapper passwordMapper, Evidence evidence) {
-            Credential credential = executePrincipalQuery(configuration, passwordMapper::map);
-            String algorithm = passwordMapper.getAlgorithm();
-
-            try {
-                if (credential instanceof PasswordCredential) {
-                    PasswordFactory passwordFactory = getPasswordFactory(algorithm);
-                    char[] guessCredentialChars;
-
-                    if (evidence instanceof PasswordGuessEvidence) {
-                        guessCredentialChars = ((PasswordGuessEvidence) evidence).getGuess();
-                    } else {
-                        throw log.passwordBasedCredentialsMustBeCharsOrClearPassword();
-                    }
-
-                    return passwordFactory.verify(((PasswordCredential) credential).getPassword(), guessCredentialChars);
-                }
-            } catch (InvalidKeyException e) {
-                throw log.invalidPasswordKeyForAlgorithm(algorithm, e);
-            }
-
-            return false;
-        }
-
-        private PasswordFactory getPasswordFactory(String algorithm) {
-            try {
-                return PasswordFactory.getInstance(algorithm);
-            } catch (NoSuchAlgorithmException e) {
-                throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithm, e);
-            }
         }
 
         private Connection getConnection(QueryConfiguration configuration) {
