@@ -43,7 +43,6 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.auth.callback.CredentialParameterCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
@@ -744,9 +743,6 @@ public final class ServerAuthenticationContext {
 
                     evidenceVerifyCallback.setVerified(verifyEvidence(evidenceVerifyCallback.getEvidence()));
 
-                } else if (callback instanceof CredentialParameterCallback) {
-                    // ignore for now
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
                         if (((AuthenticationCompleteCallback) callback).succeeded()) {
