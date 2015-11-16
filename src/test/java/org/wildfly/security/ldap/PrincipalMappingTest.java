@@ -48,10 +48,10 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("plainUser");
+        RealmIdentity identity = realm.getRealmIdentity("plainUser");
         assertTrue("Exists", identity.exists());
 
-        identity = realm.createRealmIdentity("nobody");
+        identity = realm.getRealmIdentity("nobody");
         assertFalse("Exists", identity.exists());
     }
 
@@ -64,10 +64,10 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.getRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
         assertTrue("Exists", identity.exists());
 
-        identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        identity = realm.getRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
         assertFalse("Exists", identity.exists());
     }
 
@@ -81,10 +81,10 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("PlainUser");
+        RealmIdentity identity = realm.getRealmIdentity("PlainUser");
         assertTrue("Exists", identity.exists());
 
-        identity = realm.createRealmIdentity("nobody");
+        identity = realm.getRealmIdentity("nobody");
         assertFalse("Exists", identity.exists());
     }
 
@@ -98,10 +98,10 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("PlainUser");
+        RealmIdentity identity = realm.getRealmIdentity("PlainUser");
         assertTrue("Exists", identity.exists());
 
-        identity = realm.createRealmIdentity("nobody");
+        identity = realm.getRealmIdentity("nobody");
         assertFalse("Exists", identity.exists());
     }
 
@@ -114,7 +114,7 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.getRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
         assertTrue("Exists", identity.exists());
     }
 
@@ -128,10 +128,10 @@ public class PrincipalMappingTest {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.createRealmIdentity("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity identity = realm.getRealmIdentity("uid=PlainUser,dc=elytron,dc=wildfly,dc=org");
         assertTrue("Exists", identity.exists());
 
-        identity = realm.createRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
+        identity = realm.getRealmIdentity("uid=nobody,dc=elytron,dc=wildfly,dc=org");
         assertFalse("Exists", identity.exists());
     }
 

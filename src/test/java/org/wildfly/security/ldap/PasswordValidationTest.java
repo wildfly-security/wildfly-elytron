@@ -48,7 +48,7 @@ public class PasswordValidationTest {
                 .addDirectEvidenceVerification()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity("plainUser");
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
@@ -66,7 +66,7 @@ public class PasswordValidationTest {
                 .addDirectEvidenceVerification()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org");
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);

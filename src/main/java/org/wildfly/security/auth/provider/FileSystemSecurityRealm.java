@@ -55,6 +55,7 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -144,7 +145,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return path.resolve(name + ".xml");
     }
 
-    public ModifiableRealmIdentity createRealmIdentity(final String name) {
+    public RealmIdentity getRealmIdentity(final String name) {
+        // todo: read and write locking variants
+        return getRealmIdentityForUpdate(name);
+    }
+
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(final String name) {
         if (name.isEmpty()) {
             throw ElytronMessages.log.invalidEmptyName();
         }
@@ -176,7 +182,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
                     final String fileName = path.getFileName().toString();
-                    return createRealmIdentity(fileName.substring(0, fileName.length() - 4));
+                    return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4));
                 }
             };
         } else {

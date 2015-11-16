@@ -89,7 +89,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
 
         final LoadedState loadedState = this.loadedState.get();
         final AccountEntry accountEntry = loadedState.getAccounts().get(name);

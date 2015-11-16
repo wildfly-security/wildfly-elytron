@@ -33,17 +33,14 @@ import org.wildfly.security.evidence.Evidence;
 public interface SecurityRealm {
 
     /**
-     * For the given name create the {@link RealmIdentity} in the context of this security realm. Any validation / name
-     * mapping is an implementation detail for the realm.
-     * <p>
-     * A realm returning a {@link RealmIdentity} does not confirm the existence of an identity, a realm may also return
-     * {@code null} from this method if the provided {code name} can not be mapped to an identity although this is not required
-     * of the realm.
+     * Get a handle for to the identity for the given name in the context of this security realm. Any
+     * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
+     * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
      *
-     * @param name the name to use when creating the {@link RealmIdentity}
-     * @return the {@link RealmIdentity} for the provided {@code name} or {@code null}
+     * @param name the name to use when creating the {@link RealmIdentity} handle
+     * @return the {@link RealmIdentity} for the provided {@code name} (not {@code null})
      */
-    RealmIdentity createRealmIdentity(String name) throws RealmUnavailableException;
+    RealmIdentity getRealmIdentity(String name) throws RealmUnavailableException;
 
     /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
@@ -100,7 +97,7 @@ public interface SecurityRealm {
      * An empty security realm.
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
-        public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+        public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
             Assert.checkNotNullParam("name", name);
             return RealmIdentity.NON_EXISTENT;
         }

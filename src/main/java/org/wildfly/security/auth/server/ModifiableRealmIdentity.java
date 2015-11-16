@@ -20,8 +20,11 @@ package org.wildfly.security.auth.server;
 
 import java.util.Collection;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A realm identity which is modifiable.
@@ -62,4 +65,49 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
      * @throws RealmUnavailableException if updating the attributes collection fails for some reason
      */
     void setAttributes(Attributes attributes) throws RealmUnavailableException;
+
+    /**
+     * A modifiable identity for a non-existent user who cannot be created.
+     */
+    ModifiableRealmIdentity NON_EXISTENT = new ModifiableRealmIdentity() {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return SupportLevel.UNSUPPORTED;
+        }
+
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidenceType", evidenceType);
+            return SupportLevel.UNSUPPORTED;
+        }
+
+        public <C extends Credential> C getCredential(final Class<C> credentialType) throws RealmUnavailableException {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return null;
+        }
+
+        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            Assert.checkNotNullParam("evidence", evidence);
+            return false;
+        }
+
+        public boolean exists() throws RealmUnavailableException {
+            return false;
+        }
+
+        public void delete() throws RealmUnavailableException {
+            // no operation
+        }
+
+        public void create() throws RealmUnavailableException {
+            throw ElytronMessages.log.unableToCreateIdentity();
+        }
+
+        public void setCredentials(final Collection<? extends Credential> credentials) throws RealmUnavailableException {
+            throw ElytronMessages.log.noSuchIdentity();
+        }
+
+        public void setAttributes(final Attributes attributes) throws RealmUnavailableException {
+            throw ElytronMessages.log.noSuchIdentity();
+        }
+    };
 }
