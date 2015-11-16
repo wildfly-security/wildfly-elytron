@@ -131,7 +131,7 @@ public class PasswordSupportTest {
         SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null);
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
-        RealmIdentity identity = simpleToDnRealm.createRealmIdentity("userWithOtp");
+        RealmIdentity identity = simpleToDnRealm.getRealmIdentity("userWithOtp");
         verifyPasswordSupport(identity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
         OneTimePassword otp = identity.getCredential(PasswordCredential.class).getPassword(OneTimePassword.class);
@@ -148,7 +148,7 @@ public class PasswordSupportTest {
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
@@ -156,7 +156,7 @@ public class PasswordSupportTest {
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
-        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
         verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
@@ -175,7 +175,7 @@ public class PasswordSupportTest {
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp");
         assertNotNull(identity);
 
         identity.setCredentials(Collections.emptyList());
@@ -183,7 +183,7 @@ public class PasswordSupportTest {
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
-        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.createRealmIdentity("userWithOtp");
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp");
         assertNotNull(newIdentity);
 
         verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
@@ -196,7 +196,7 @@ public class PasswordSupportTest {
     }
 
     private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        RealmIdentity realmIdentity = simpleToDnRealm.createRealmIdentity(simpleName);
+        RealmIdentity realmIdentity = simpleToDnRealm.getRealmIdentity(simpleName);
         SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 

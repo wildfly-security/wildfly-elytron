@@ -104,7 +104,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(String name) {
+    public RealmIdentity getRealmIdentity(String name) {
         name = rewriter.rewriteName(name);
         if (name == null) {
             throw ElytronMessages.log.invalidName();

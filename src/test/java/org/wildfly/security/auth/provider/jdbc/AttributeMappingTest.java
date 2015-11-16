@@ -50,7 +50,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -76,7 +76,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -106,7 +106,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -138,7 +138,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -162,7 +162,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                 .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -193,7 +193,7 @@ public class AttributeMappingTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.createRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 

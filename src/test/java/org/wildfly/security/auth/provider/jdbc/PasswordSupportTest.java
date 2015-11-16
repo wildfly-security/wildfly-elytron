@@ -78,7 +78,7 @@ public class PasswordSupportTest {
 
         assertTrue(securityRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).mayBeSupported());
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertTrue(realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).isDefinitelySupported());
 
@@ -117,7 +117,7 @@ public class PasswordSupportTest {
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
@@ -155,7 +155,7 @@ public class PasswordSupportTest {
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
@@ -196,7 +196,7 @@ public class PasswordSupportTest {
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
@@ -234,7 +234,7 @@ public class PasswordSupportTest {
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, algorithm));
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
@@ -267,7 +267,7 @@ public class PasswordSupportTest {
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, securityRealm.getCredentialAcquireSupport(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256));
 
-        RealmIdentity realmIdentity = securityRealm.createRealmIdentity(userName);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(userName);
 
         assertEquals(SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, ScramDigestPassword.ALGORITHM_SCRAM_SHA_256));
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));

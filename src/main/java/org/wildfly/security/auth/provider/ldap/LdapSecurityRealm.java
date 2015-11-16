@@ -50,6 +50,7 @@ import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -89,7 +90,13 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public ModifiableRealmIdentity createRealmIdentity(String name) {
+    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+        // todo: read/write locking
+        return getRealmIdentityForUpdate(name);
+    }
+
+    @Override
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(String name) {
         name = nameRewriter.rewriteName(name);
         if (name == null) {
             throw log.invalidName();

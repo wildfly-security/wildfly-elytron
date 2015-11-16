@@ -58,7 +58,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity createRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
         return new JdbcRealmIdentity(name);
     }
 

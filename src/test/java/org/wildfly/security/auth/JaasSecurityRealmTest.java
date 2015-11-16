@@ -68,7 +68,7 @@ public class JaasSecurityRealmTest {
         SecurityRealm realm = new JaasSecurityRealm("test");
 
         // test the creation of a realm identity.
-        RealmIdentity realmIdentity = realm.createRealmIdentity("elytron");
+        RealmIdentity realmIdentity = realm.getRealmIdentity("elytron");
         assertNotNull("Unexpected null realm identity", realmIdentity);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
@@ -108,7 +108,7 @@ public class JaasSecurityRealmTest {
         SecurityRealm realm = new JaasSecurityRealm("test", new TestCallbackHandler());
 
         // create a new realm identity using the realm.
-        RealmIdentity realmIdentity = realm.createRealmIdentity("javajoe");
+        RealmIdentity realmIdentity = realm.getRealmIdentity("javajoe");
 
         assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
         assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getEvidenceVerifySupport(X509PeerCertificateEvidence.class, null));
