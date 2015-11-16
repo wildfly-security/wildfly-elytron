@@ -18,9 +18,11 @@
 
 package org.wildfly.security.credential;
 
+import java.security.Provider;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -57,6 +59,10 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
             }
         }
         return false;
+    }
+
+    public boolean verify(final Supplier<Provider[]> providerSupplier, final Evidence evidence) {
+        return verify(evidence);
     }
 
     public String getAlgorithm() {

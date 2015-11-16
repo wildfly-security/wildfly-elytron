@@ -19,7 +19,10 @@
 package org.wildfly.security.credential;
 
 import java.security.KeyStore;
+import java.security.Provider;
+import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.evidence.AlgorithmEvidence;
@@ -66,6 +69,19 @@ public interface Credential {
      * @return {@code true} if the evidence is verified, {@code false} otherwise
      */
     default boolean verify(Evidence evidence) {
+        return verify(Security::getProviders, evidence);
+    }
+
+    /**
+     * Verify the given evidence.
+     *
+     * @param providerSupplier the provider supplier to use for verification purposes
+     * @param evidence the evidence to verify (must not be {@code null})
+     *
+     * @return {@code true} if the evidence is verified, {@code false} otherwise
+     */
+    default boolean verify(Supplier<Provider[]> providerSupplier, Evidence evidence) {
+        Assert.checkNotNullParam("providerSupplier", providerSupplier);
         Assert.checkNotNullParam("evidence", evidence);
         return false;
     }

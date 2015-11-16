@@ -60,7 +60,7 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
         } else if (callback instanceof PasswordCallback) {
             if (password instanceof TwoWayPassword) try {
                 PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+                ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), ClearPasswordSpec.class);
                 ((PasswordCallback) callback).setPassword(clearPasswordSpec.getEncodedPassword());
                 return;
             } catch (GeneralSecurityException e) {

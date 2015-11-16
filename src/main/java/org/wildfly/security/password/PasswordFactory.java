@@ -29,6 +29,7 @@ import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 
@@ -71,13 +72,7 @@ public final class PasswordFactory {
      * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
      */
     public static PasswordFactory getInstance(String algorithm) throws NoSuchAlgorithmException {
-        for (Provider provider : Security.getProviders()) {
-            final Provider.Service service = provider.getService("PasswordFactory", algorithm);
-            if (service != null) {
-                return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
-            }
-        }
-        throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
+        return getInstance(algorithm, Security::getProviders);
     }
 
     /**
@@ -106,6 +101,24 @@ public final class PasswordFactory {
         final Provider.Service service = provider.getService("PasswordFactory", algorithm);
         if (service == null) throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
+    }
+
+    /**
+     * Get a password factory instance.  The returned password factory object will implement the given algorithm.
+     *
+     * @param algorithm the name of the algorithm
+     * @param providerSupplier the provider supplier to search
+     * @return a password factory instance
+     * @throws NoSuchAlgorithmException if the given algorithm has no available implementations
+     */
+    public static PasswordFactory getInstance(String algorithm, Supplier<Provider[]> providerSupplier) throws NoSuchAlgorithmException {
+        for (Provider provider : providerSupplier.get()) {
+            final Provider.Service service = provider.getService("PasswordFactory", algorithm);
+            if (service != null) {
+                return new PasswordFactory((PasswordFactorySpi) service.newInstance(null), provider, algorithm);
+            }
+        }
+        throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
     }
 
     /**
