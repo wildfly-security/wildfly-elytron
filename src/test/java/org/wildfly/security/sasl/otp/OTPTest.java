@@ -832,7 +832,7 @@ public class OTPTest extends BaseTestCase {
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {
                     CredentialUpdateCallback credentialUpdateCallback = (CredentialUpdateCallback) callback;
-                    OneTimePassword updatedPassword = (OneTimePassword) credentialUpdateCallback.getCredential();
+                    OneTimePassword updatedPassword = (OneTimePassword) credentialUpdateCallback.getCredential(PasswordCredential.class).getPassword();
                     assertEquals(expectedUpdatedPassword.getAlgorithm(), updatedPassword.getAlgorithm());
                     assertArrayEquals(expectedUpdatedPassword.getHash(), updatedPassword.getHash());
                     assertArrayEquals(expectedUpdatedPassword.getSeed(), updatedPassword.getSeed());
