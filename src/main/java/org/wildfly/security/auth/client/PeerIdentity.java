@@ -24,6 +24,11 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
@@ -198,6 +203,120 @@ public final class PeerIdentity {
             }
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
+        } finally {
+            context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action parameter type
+     * @param <R> the action return type
+     * @return the action result (may be {@code null})
+     */
+    public <T, R> R runAsFunction(T parameter, Function<T, R> action) {
+        PeerIdentity old = context.getAndSetPeerIdentity(this);
+        try {
+            preAssociate();
+            try {
+                return action.apply(parameter);
+            } finally {
+                postAssociate();
+            }
+        } finally {
+            context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @param <R> the action return type
+     * @return the action result (may be {@code null})
+     */
+    public <T, U, R> R runAsFunction(T parameter1, U parameter2, BiFunction<T, U, R> action) {
+        PeerIdentity old = context.getAndSetPeerIdentity(this);
+        try {
+            preAssociate();
+            try {
+                return action.apply(parameter1, parameter2);
+            } finally {
+                postAssociate();
+            }
+        } finally {
+            context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action parameter type
+     */
+    public <T> void runAsConsumer(T parameter, Consumer<T> action) {
+        PeerIdentity old = context.getAndSetPeerIdentity(this);
+        try {
+            preAssociate();
+            try {
+                action.accept(parameter);
+            } finally {
+                postAssociate();
+            }
+        } finally {
+            context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     */
+    public <T, U> void runAsConsumer(T parameter1, U parameter2, BiConsumer<T, U> action) {
+        PeerIdentity old = context.getAndSetPeerIdentity(this);
+        try {
+            preAssociate();
+            try {
+                action.accept(parameter1, parameter2);
+            } finally {
+                postAssociate();
+            }
+        } finally {
+            context.setPeerIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param supplier the action to run
+     * @param <T> the action return type
+     * @return the action result (may be {@code null})
+     * @throws PrivilegedActionException if the action fails
+     */
+    public <T> T runAsSupplier(Supplier<T> supplier) throws Exception {
+        PeerIdentity old = context.getAndSetPeerIdentity(this);
+        try {
+            preAssociate();
+            try {
+                return supplier.get();
+            } finally {
+                postAssociate();
+            }
         } finally {
             context.setPeerIdentity(old);
         }
@@ -397,6 +516,134 @@ public final class PeerIdentity {
             return privilegedAction.run(parameter);
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <R> the action return type
+     * @param <T> the action parameter type
+     */
+    public static <R, T> R runAsAllFunction(T parameter, Function<T, R> privilegedAction, PeerIdentity... identities) {
+        return runAsAllFunction(privilegedAction, parameter, Function::apply, identities);
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @param <R> the action return type
+     */
+    public static <T, U, R> R runAsAllFunction(T parameter1, U parameter2, BiFunction<T, U, R> privilegedAction, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return privilegedAction.apply(parameter1, parameter2);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action parameter type
+     */
+    public static <T> void runAsAllConsumer(T parameter, Consumer<T> privilegedAction, PeerIdentity... identities) {
+        runAsAllConsumer(privilegedAction, parameter, Consumer::accept, identities);
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     */
+    public static <T, U> void runAsAllConsumer(T parameter1, U parameter2, BiConsumer<T, U> privilegedAction, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            privilegedAction.accept(parameter1, parameter2);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].postAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param action the action to run
+     * @param identities the identities to use
+     * @param <T> the action return type
+     */
+    public static <T> T runAsAllSupplier(Supplier<T> action, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].postAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            return action.get();
         } finally {
             for (int i = length - 1; i >= 0; i--) {
                 identities[i].postAssociate();
