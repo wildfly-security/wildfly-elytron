@@ -277,7 +277,7 @@ final class OTPSaslServer extends AbstractSaslServer {
         try {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(newAlgorithm);
             final OneTimePassword newPassword = (OneTimePassword) passwordFactory.generatePassword(newPasswordSpec);
-            final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(newPassword);
+            final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(new PasswordCredential(newPassword));
             handleCallbacks(nameCallback, credentialUpdateCallback);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();

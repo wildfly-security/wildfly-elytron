@@ -21,6 +21,7 @@ package org.wildfly.security.auth.callback;
 import java.io.Serializable;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A callback to inform the callback handler of a credential change.
@@ -34,14 +35,14 @@ public final class CredentialUpdateCallback implements ExtendedCallback, Seriali
     /**
      * @serial The new credential.
      */
-    private final Object credential;
+    private final Credential credential;
 
     /**
      * Construct a new instance.
      *
      * @param credential the new credential
      */
-    public CredentialUpdateCallback(final Object credential) {
+    public CredentialUpdateCallback(final Credential credential) {
         Assert.checkNotNullParam("credential", credential);
         this.credential = credential;
     }
@@ -51,8 +52,20 @@ public final class CredentialUpdateCallback implements ExtendedCallback, Seriali
      *
      * @return the new credential
      */
-    public Object getCredential() {
+    public Credential getCredential() {
         return credential;
+    }
+
+    /**
+     * Get the new credential, if it is of the given credential class.
+     *
+     * @param credentialClass the credential class
+     * @param <C> the credential type
+     * @return the credential, or {@code null} if it is not of the given type
+     */
+    public <C extends Credential> C getCredential(final Class<C> credentialClass) {
+        final Credential credential = this.credential;
+        return credentialClass.isInstance(credential) ? credentialClass.cast(credential) : null;
     }
 
     public boolean isOptional() {
