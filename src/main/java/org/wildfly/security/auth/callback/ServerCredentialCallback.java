@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2015 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,20 +26,16 @@ import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 
 /**
- * A callback used to acquire credentials.  On the client side of an authentication mechanism, the callback handler is
- * required to supply a credential for use in outbound authentication.  On the server side, the callback handler is
- * required to supply a credential for use in inbound authentication, possibly for both verification as well as establishing
- * authentication parameters.
- * <p>
- * This callback must be handled if a default credential was not supplied.  The callback
- * handler is expected to provide a credential to this callback if one is not present.  If no credential is available,
- * {@code null} is set, and authentication may fail.  If an unsupported credential type is set, an exception is thrown.
+ * A callback used to acquire the server (or "host") credential.  This callback is only used on the server side of
+ * authentication mechanisms; client callback handlers do not need to recognize this callback.  The callback handler is
+ * expected to provide a credential to this callback.  If no credential is available, {@code null} is set, and
+ * authentication may fail.  If an unsupported credential type is set, an exception is thrown.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class CredentialCallback implements ExtendedCallback, Serializable {
+public final class ServerCredentialCallback implements ExtendedCallback, Serializable {
 
-    private static final long serialVersionUID = 4756568346009259703L;
+    private static final long serialVersionUID = 3831781691370154509L;
 
     /**
      * @serial The type of the supported credential.
@@ -64,7 +60,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      * @param algorithm the algorithm name, or {@code null} if any algorithm is suitable or the credential
      *  type does not use algorithm names
      */
-    public CredentialCallback(final Class<? extends Credential> credentialType, final String algorithm) {
+    public ServerCredentialCallback(final Class<? extends Credential> credentialType, final String algorithm) {
         Assert.checkNotNullParam("credentialType", credentialType);
         this.credentialType = credentialType;
         this.algorithm = algorithm;
@@ -75,7 +71,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
      *
      * @param credentialType the desired credential type (must not be {@code null})
      */
-    public CredentialCallback(final Class<? extends Credential> credentialType) {
+    public ServerCredentialCallback(final Class<? extends Credential> credentialType) {
         this(credentialType, null);
     }
 
@@ -155,7 +151,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     }
 
     public boolean isOptional() {
-        return credential != null;
+        return false;
     }
 
     public boolean needsInformation() {

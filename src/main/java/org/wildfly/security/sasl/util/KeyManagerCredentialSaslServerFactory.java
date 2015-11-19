@@ -36,7 +36,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
@@ -67,14 +67,14 @@ public final class KeyManagerCredentialSaslServerFactory extends AbstractDelegat
             final Iterator<Callback> iterator = list.iterator();
             while (iterator.hasNext()) {
                 Callback callback = iterator.next();
-                if (callback instanceof CredentialCallback) {
+                if (callback instanceof ServerCredentialCallback) {
                     X509KeyManager keyManager = null;
                     try {
                         keyManager = keyManagerFactory.create();
                     } catch (GeneralSecurityException e) {
                         throw new SaslException(e.getMessage(), e);
                     }
-                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                    final ServerCredentialCallback credentialCallback = (ServerCredentialCallback) callback;
                     final String algorithmName = credentialCallback.getAlgorithm();
                     if (algorithmName != null) {
                         if (credentialCallback.isCredentialTypeSupported(X509CertificateChainPrivateCredential.class, algorithmName)) {

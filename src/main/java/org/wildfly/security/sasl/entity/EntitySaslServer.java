@@ -44,7 +44,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
-import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
@@ -220,7 +220,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                 // Get the server's certificate data, if necessary
                 if ((entityB != null) || mutual) {
-                    CredentialCallback credentialCallback = new CredentialCallback(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()));
+                    ServerCredentialCallback credentialCallback = new ServerCredentialCallback(X509CertificateChainPrivateCredential.class, keyType(signature.getAlgorithm()));
 
                     try {
                         tryHandleCallbacks(credentialCallback);

@@ -30,7 +30,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 ;
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.Credential;
 
 /**
@@ -60,8 +60,8 @@ public final class CredentialSaslServerFactory extends AbstractDelegatingSaslSer
             final Iterator<Callback> iterator = list.iterator();
             while (iterator.hasNext()) {
                 Callback callback = iterator.next();
-                if (callback instanceof CredentialCallback) {
-                    final CredentialCallback credentialCallback = (CredentialCallback) callback;
+                if (callback instanceof ServerCredentialCallback) {
+                    final ServerCredentialCallback credentialCallback = (ServerCredentialCallback) callback;
                     if (credentialCallback.isCredentialSupported(credential)) {
                         credentialCallback.setCredential(credential);
                         iterator.remove();
