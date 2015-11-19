@@ -21,11 +21,13 @@ package org.wildfly.security.auth.server;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.security.auth.callback.Callback;
@@ -37,6 +39,7 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
@@ -47,6 +50,7 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
+import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
@@ -723,7 +727,7 @@ public final class ServerAuthenticationContext {
                     throw new FastUnsupportedCallbackException(callback);
 
                 } else if (callback instanceof CredentialCallback) {
-                    if (!stateRef.get().isStarted()) {
+                    if (! stateRef.get().isStarted()) {
                         throw new FastUnsupportedCallbackException(callback);
                     }
                     final CredentialCallback credentialCallback = (CredentialCallback) callback;
@@ -737,7 +741,24 @@ public final class ServerAuthenticationContext {
 
                     // otherwise just fail out; some mechanisms will try again with different credentials
                     throw new FastUnsupportedCallbackException(callback);
+                } else if (callback instanceof ServerCredentialCallback) {
+                    final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
 
+                    final List<SecurityFactory<Credential>> serverCredentials = mechanismConfiguration.getServerCredentialFactories();
+                    for (SecurityFactory<Credential> factory : serverCredentials) {
+                        try {
+                            final Credential credential = factory.create();
+                            if (serverCredentialCallback.isCredentialSupported(credential)) {
+                                serverCredentialCallback.setCredential(credential);
+                                handleOne(callbacks, idx + 1);
+                                return;
+                            }
+                        } catch (GeneralSecurityException e) {
+                            // skip this credential
+                        }
+                    }
+
+                    throw new FastUnsupportedCallbackException(callback);
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
 
