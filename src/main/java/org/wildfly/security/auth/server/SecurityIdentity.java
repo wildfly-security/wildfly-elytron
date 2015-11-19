@@ -31,6 +31,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
@@ -190,7 +195,7 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return action.run(parameter);
+            return PeerIdentity.runAsAll(parameter, action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -211,11 +216,97 @@ public final class SecurityIdentity {
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return action.run(parameter);
+            return PeerIdentity.runAsAll(parameter, action, peerIdentities);
         } catch (RuntimeException | PrivilegedActionException e) {
             throw e;
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <R> the action return type
+     * @param <T> the action parameter type
+     * @return the action result (may be {@code null})
+     */
+    public <T, R> R runAsFunction(Function<T, R> action, T parameter) {
+        if (action == null) return null;
+        return runAsFunction(Function::apply, action, parameter);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <R> the action return type
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     * @return the action result (may be {@code null})
+     */
+    public <T, U, R> R runAsFunction(BiFunction<T, U, R> action, T parameter1, U parameter2) {
+        if (action == null) return null;
+        final SecurityDomain securityDomain = this.securityDomain;
+        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return PeerIdentity.runAsAllFunction(parameter1, parameter2, action, peerIdentities);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter the parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action parameter type
+     */
+    public <T> void runAsConsumer(Consumer<T> action, T parameter) {
+        if (action == null) return;
+        runAsConsumer(Consumer::accept, action, parameter);
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     * @param <U> the action second parameter type
+     */
+    public <T, U> void runAsConsumer(BiConsumer<T, U> action, T parameter1, U parameter2) {
+        if (action == null) return;
+        final SecurityDomain securityDomain = this.securityDomain;
+        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            PeerIdentity.runAsAllConsumer(parameter1, parameter2, action, peerIdentities);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param action the action to run
+     * @param <T> the action return type
+     * @return the action result (may be {@code null})
+     */
+    public <T> T runAsSupplier(Supplier<T> action) {
+        if (action == null) return null;
+        final SecurityDomain securityDomain = this.securityDomain;
+        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            return PeerIdentity.runAsAllSupplier(action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
