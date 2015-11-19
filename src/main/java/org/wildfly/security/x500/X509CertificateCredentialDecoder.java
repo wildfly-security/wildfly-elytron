@@ -40,10 +40,7 @@ public final class X509CertificateCredentialDecoder implements CredentialDecoder
 
     public X500Principal getPrincipalFromCredential(final Credential credential) {
         if (credential instanceof X509CertificateChainCredential) {
-            final X509Certificate[] chain = ((X509CertificateChainCredential) credential).getCertificateChain();
-            if (chain.length > 0) {
-                return chain[0].getSubjectX500Principal();
-            }
+            return ((X509CertificateChainCredential) credential).getFirstCertificate().getSubjectX500Principal();
         }
         return null;
     }

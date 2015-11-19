@@ -33,14 +33,14 @@ public interface X509CertificateChainCredential extends AlgorithmCredential {
     X509Certificate[] getCertificateChain();
 
     /**
-     * Get the first certificate in the chain.
+     * Get the first certificate in the chain.  This corresponds to the subject certificate.
      *
      * @return the first certificate (not {@code null})
      */
     X509Certificate getFirstCertificate();
 
     /**
-     * Get the last certificate in the chain.
+     * Get the last certificate in the chain.  This corresponds to the ultimate issuer certificate.
      *
      * @return the last certificate (not {@code null})
      */

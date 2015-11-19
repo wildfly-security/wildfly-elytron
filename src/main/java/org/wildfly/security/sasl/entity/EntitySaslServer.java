@@ -142,7 +142,6 @@ final class EntitySaslServer extends AbstractSaslServer {
             case ST_PROCESS_RESPONSE: {
                 final DERDecoder decoder = new DERDecoder(response);
                 byte[] randomA;
-                X509Certificate[] clientCertChain;
                 X509Certificate clientCert;
                 X509Certificate[] serverCertChain = null;
                 X509Certificate serverCert = null;
@@ -161,18 +160,18 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                     // Get the client's certificate data and verify it
                     decoder.startExplicit(1);
-                    clientCertChain = EntityUtil.decodeCertificateData(decoder);
+                    final X509CertificateChainPublicCredential credential = new X509CertificateChainPublicCredential(EntityUtil.decodeCertificateData(decoder));
                     decoder.endExplicit();
-                    clientCert = clientCertChain[0];
+                    clientCert = credential.getFirstCertificate();
 
-                    VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(clientCertChain, clientCert.getPublicKey().getAlgorithm());
+                    VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(clientCert.getSubjectX500Principal(), credential);
                     handleCallbacks(verifyPeerTrustedCallback);
                     if (! verifyPeerTrustedCallback.isVerified()) {
                         throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
                     }
 
                     // Determine the authorization identity
-                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(new X509CertificateChainPublicCredential(clientCert)).getName(X500Principal.CANONICAL);
+                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(credential).getName(X500Principal.CANONICAL);
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);

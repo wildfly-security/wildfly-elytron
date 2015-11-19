@@ -46,6 +46,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.GeneralName.DNSName;
 import org.wildfly.security.sasl.entity.GeneralName.DirectoryName;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
@@ -260,11 +261,11 @@ final class EntitySaslClient extends AbstractSaslClient {
 
                         // Get the server's certificate data and verify it
                         decoder.startExplicit(1);
-                        X509Certificate[] serverCertChain = EntityUtil.decodeCertificateData(decoder);
+                        X509CertificateChainPublicCredential credential = new X509CertificateChainPublicCredential(EntityUtil.decodeCertificateData(decoder));
                         decoder.endExplicit();
-                        X509Certificate serverCert = serverCertChain[0];
+                        X509Certificate serverCert = credential.getFirstCertificate();
 
-                        VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(serverCertChain, serverCert.getPublicKey().getAlgorithm());
+                        VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(serverCert.getSubjectX500Principal(), credential);
                         handleCallbacks(verifyPeerTrustedCallback);
                         if (! verifyPeerTrustedCallback.isVerified()) {
                             throw log.mechServerAuthenticityCannotBeVerified(getMechanismName()).toSaslException();

@@ -40,7 +40,7 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
     public X509CertificateChainPrivateCredential(final PrivateKey privateKey, final X509Certificate... certificateChain) {
         super(certificateChain);
         Assert.checkNotNullParam("privateKey", privateKey);
-        if (! getLastCertificate().getPublicKey().getAlgorithm().equals(privateKey.getAlgorithm())) {
+        if (! getFirstCertificate().getPublicKey().getAlgorithm().equals(privateKey.getAlgorithm())) {
             throw ElytronMessages.log.mismatchedPublicPrivateKeyAlgorithms();
         }
         this.privateKey = privateKey;
