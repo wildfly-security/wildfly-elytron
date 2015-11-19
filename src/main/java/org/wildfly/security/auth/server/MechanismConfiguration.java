@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.server;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.FixedSecurityFactory;
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.credential.Credential;
 
 /**
  * A configuration that applies to an authentication mechanism.
@@ -38,12 +45,14 @@ public final class MechanismConfiguration {
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
+    private final List<SecurityFactory<Credential>> serverCredentialFactories;
 
-    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Collection<MechanismRealmConfiguration> mechanismRealms) {
+    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Collection<MechanismRealmConfiguration> mechanismRealms, final List<SecurityFactory<Credential>> serverCredentialFactories) {
         Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
         Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
         Assert.checkNotNullParam("finalRewriter", finalRewriter);
         Assert.checkNotNullParam("mechanismRealms", mechanismRealms);
+        Assert.checkNotNullParam("serverCredentials", serverCredentialFactories);
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
@@ -67,6 +76,7 @@ public final class MechanismConfiguration {
                 this.mechanismRealms = Collections.unmodifiableMap(map);
             }
         }
+        this.serverCredentialFactories = serverCredentialFactories;
     }
 
     /**
@@ -107,6 +117,15 @@ public final class MechanismConfiguration {
     }
 
     /**
+     * Get the server credentials.
+     *
+     * @return the server credentials
+     */
+    public List<SecurityFactory<Credential>> getServerCredentialFactories() {
+        return serverCredentialFactories;
+    }
+
+    /**
      * Get the mechanism realm configuration for the offered realm with the given name.  If the realm name is not known,
      * {@code null} is returned.  If the realm name is equal to one of the names returned by {@link #getMechanismRealmNames()}
      * on this same instance then it is guaranteed that {@code null} is never returned.
@@ -128,10 +147,15 @@ public final class MechanismConfiguration {
     }
 
     public static final class Builder {
+        private static final MechanismRealmConfiguration[] NO_REALM_CONFIGS = new MechanismRealmConfiguration[0];
+        @SuppressWarnings("unchecked")
+        private static final SecurityFactory<Credential>[] NO_CREDENTIALS = new SecurityFactory[0];
+
         private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
         private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
         private List<MechanismRealmConfiguration> mechanismRealms;
+        private List<SecurityFactory<Credential>> serverCredentials;
 
         /**
          * Construct a new instance.
@@ -161,9 +185,41 @@ public final class MechanismConfiguration {
             Assert.checkNotNullParam("configuration", configuration);
             List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
             if (mechanismRealms == null) {
-                mechanismRealms = this.mechanismRealms = new ArrayList<>();
+                mechanismRealms = this.mechanismRealms = new ArrayList<>(1);
             }
             mechanismRealms.add(configuration);
+            return this;
+        }
+
+        /**
+         * Add a server credential.
+         *
+         * @param credential the credential to add (must not be {@code null})
+         * @return this builder
+         */
+        public Builder addServerCredential(Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
+            if (serverCredentials == null) {
+                serverCredentials = this.serverCredentials = new ArrayList<>(1);
+            }
+            serverCredentials.add(new FixedSecurityFactory<>(credential));
+            return this;
+        }
+
+        /**
+         * Add a server credential factory.
+         *
+         * @param credentialFactory the credential factory to add (must not be {@code null})
+         * @return this builder
+         */
+        public Builder addServerCredential(SecurityFactory<Credential> credentialFactory) {
+            Assert.checkNotNullParam("credential", credentialFactory);
+            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
+            if (serverCredentials == null) {
+                serverCredentials = this.serverCredentials = new ArrayList<>(1);
+            }
+            serverCredentials.add(credentialFactory);
             return this;
         }
 
@@ -173,13 +229,24 @@ public final class MechanismConfiguration {
          * mechanism does not support realms, {@code mechanismRealms} is ignored.
          */
         public MechanismConfiguration build() {
-            final List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
-            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, mechanismRealms == null ? Collections.emptyList() : mechanismRealms);
+            List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
+            if (mechanismRealms == null) {
+                mechanismRealms = emptyList();
+            } else {
+                mechanismRealms = unmodifiableList(asList(mechanismRealms.toArray(NO_REALM_CONFIGS)));
+            }
+            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
+            if (serverCredentials == null) {
+                serverCredentials = emptyList();
+            } else {
+                serverCredentials = unmodifiableList(asList(serverCredentials.toArray(NO_CREDENTIALS)));
+            }
+            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, mechanismRealms, serverCredentials);
         }
     }
 
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, Collections.emptyList());
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, emptyList(), emptyList());
 }
