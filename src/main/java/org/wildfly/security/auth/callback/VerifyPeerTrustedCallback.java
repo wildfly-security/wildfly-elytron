@@ -19,7 +19,9 @@
 package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
-import java.security.cert.X509Certificate;
+import java.security.Principal;
+
+import org.wildfly.security.credential.Credential;
 
 /**
  * A callback to indicate the peer is trusted.
@@ -31,13 +33,13 @@ public final class VerifyPeerTrustedCallback implements ExtendedCallback, Serial
     private static final long serialVersionUID = -2830410786419507677L;
 
     /**
-     * @serial The certificate chain to verify.
+     * @serial The peer principal (possibly {@code null}).
      */
-    private final X509Certificate[] chain;
+    private final Principal principal;
     /**
-     * @serial The authentication type.
+     * @serial The peer credential (possibly {@code null}).
      */
-    private final String authType;
+    private final Credential credential;
     /**
      * @serial A flag indicating whether the peer was verified.
      */
@@ -46,30 +48,40 @@ public final class VerifyPeerTrustedCallback implements ExtendedCallback, Serial
     /**
      * Construct a new instance.
      *
-     * @param chain the peer certificate chain
-     * @param authType the authentication type based on the peer certificate
+     * @param principal the peer principal (may be {@code null} if unknown)
+     * @param credential the peer credential (may be {@code null} if unknown)
      */
-    public VerifyPeerTrustedCallback(final X509Certificate[] chain, final String authType) {
-        this.chain = chain;
-        this.authType = authType;
+    public VerifyPeerTrustedCallback(final Principal principal, final Credential credential) {
+        this.principal = principal;
+        this.credential = credential;
     }
 
     /**
-     * Get the peer certificate chain.
+     * Get the peer principal, if any is known.
      *
-     * @return the peer certificate chain
+     * @return the peer principal, or {@code null} if unknown
      */
-    public X509Certificate[] getCertificateChain() {
-        return chain;
+    public Principal getPrincipal() {
+        return principal;
     }
 
     /**
-     * Get the authentication type.
+     * Get the peer credential, if any is known.
      *
-     * @return the authentication type based on the peer certificate
+     * @return the peer credential, or {@code null} if unknown
      */
-    public String getAuthType() {
-        return authType;
+    public Credential getCredential() {
+        return credential;
+    }
+
+    /**
+     * Get the peer credential, if any is known and it is of the given type.
+     *
+     * @return the peer credential, or {@code null} if unknown or of a different type
+     */
+    public <C extends Credential> C getCredential(Class<C> credentialClass) {
+        final Credential credential = this.credential;
+        return credentialClass.isInstance(credential) ? credentialClass.cast(credential) : null;
     }
 
     /**

@@ -23,7 +23,6 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -31,6 +30,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
+import org.wildfly.security.credential.X509CertificateChainCredential;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -55,22 +55,22 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
     void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
         final Callback callback = callbacks[index];
         if (callback instanceof VerifyPeerTrustedCallback) {
-            X509TrustManager trustManager = null;
+            X509TrustManager trustManager;
             try {
                 trustManager = trustManagerFactory.create();
             } catch (GeneralSecurityException e) {
                 throw log.unableToCreateTrustManager(e);
             }
             final VerifyPeerTrustedCallback verifyPeerTrustedCallback = (VerifyPeerTrustedCallback) callback;
-            final X509Certificate[] certificateChain = verifyPeerTrustedCallback.getCertificateChain();
-            final String authType = verifyPeerTrustedCallback.getAuthType();
-            boolean verified = true;
-            try {
-                trustManager.checkServerTrusted(certificateChain, authType);
-            } catch (CertificateException e) {
-                verified = false;
+            final X509CertificateChainCredential credential = verifyPeerTrustedCallback.getCredential(X509CertificateChainCredential.class);
+            if (credential == null) {
+                return;
             }
-            verifyPeerTrustedCallback.setVerified(verified);
+            try {
+                trustManager.checkServerTrusted(credential.getCertificateChain(), credential.getAlgorithm());
+                verifyPeerTrustedCallback.setVerified(true);
+            } catch (CertificateException e) {
+            }
             return;
         }
         super.handleCallback(callbacks, index);

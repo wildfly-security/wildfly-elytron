@@ -40,6 +40,7 @@ import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
+import org.wildfly.security.credential.X509CertificateChainCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.ssl.SSLUtils;
 
@@ -80,15 +81,14 @@ public final class TrustManagerSaslServerFactory extends AbstractDelegatingSaslS
                 } else if (callback instanceof VerifyPeerTrustedCallback) {
                     final X509TrustManager trustManager = getTrustManager();
                     final VerifyPeerTrustedCallback verifyPeerTrustedCallback = (VerifyPeerTrustedCallback) callback;
-                    final X509Certificate[] certificateChain = verifyPeerTrustedCallback.getCertificateChain();
-                    final String authType = verifyPeerTrustedCallback.getAuthType();
-                    boolean verified = true;
-                    try {
-                        trustManager.checkClientTrusted(certificateChain, authType);
-                    } catch (CertificateException e) {
-                        verified = false;
+                    final X509CertificateChainCredential credential = verifyPeerTrustedCallback.getCredential(X509CertificateChainCredential.class);
+                    if (credential != null) {
+                        try {
+                            trustManager.checkClientTrusted(credential.getCertificateChain(), credential.getAlgorithm());
+                            verifyPeerTrustedCallback.setVerified(true);
+                        } catch (CertificateException e) {
+                        }
                     }
-                    verifyPeerTrustedCallback.setVerified(verified);
                     iterator.remove();
                 }
             }
