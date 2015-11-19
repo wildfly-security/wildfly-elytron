@@ -66,7 +66,7 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
     }
 
     public String getAlgorithm() {
-        return getLastCertificate().getPublicKey().getAlgorithm();
+        return getFirstCertificate().getPublicKey().getAlgorithm();
     }
 
     public X509Certificate[] getCertificateChain() {
