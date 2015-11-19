@@ -588,7 +588,7 @@ public class EntityTest extends BaseTestCase {
         return new SaslServerBuilder(EntitySaslServerFactory.class, mechanism)
                 .setProtocol("test")
                 .setServerName(serverName)
-                .setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain), privateKey.getAlgorithm())
+                .setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain))
                 .setTrustManager(trustManager)
                 .build();
     }

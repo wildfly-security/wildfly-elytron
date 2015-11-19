@@ -519,7 +519,7 @@ public class Gs2Test extends BaseTestCase {
             builder.setChannelBinding(bindingType, bindingData);
         }
         if (credential != null) {
-            builder.setCredential(new GSSCredentialCredential(credential), null);
+            builder.setCredential(new GSSCredentialCredential(credential));
         }
         try {
             return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {

@@ -74,7 +74,6 @@ public class SaslServerBuilder {
     private X509TrustManager trustManager;
     private X509KeyManager keyManager;
     private Credential credential;
-    private String algorithm;
     private boolean dontAssertBuiltServer;
 
     public SaslServerBuilder(Class<? extends SaslServerFactory> serverFactoryClass, String mechanismName) {
@@ -152,9 +151,8 @@ public class SaslServerBuilder {
         return this;
     }
 
-    public SaslServerBuilder setCredential(final Credential credential, final String algorithmName) {
+    public SaslServerBuilder setCredential(final Credential credential) {
         this.credential = credential;
-        this.algorithm = algorithmName;
         return this;
     }
 
