@@ -411,6 +411,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1096, value = "No such identity")
     RealmUnavailableException noSuchIdentity();
 
+    @Message(id = 1097, value = "Ldap-backed realm failed to delete identity from server")
+    RealmUnavailableException ldapRealmFailedDeleteIdentityFromServer(@Cause Throwable cause);
+
+    @Message(id = 1098, value = "Ldap-backed realm failed to create identity on server")
+    RealmUnavailableException ldapRealmFailedCreateIdentityOnServer(@Cause Throwable cause);
+
+    @Message(id = 1099, value = "Ldap-backed realm is not configured to allow create new identities (new identity parent and attributes has to be set)")
+    RealmUnavailableException ldapRealmNotConfiguredToSupportCreatingIdentities();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

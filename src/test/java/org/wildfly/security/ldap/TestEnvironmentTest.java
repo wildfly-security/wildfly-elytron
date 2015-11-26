@@ -32,8 +32,6 @@ import static org.junit.Assert.fail;
 /**
  * Test case to test connectivity to the server, also verifies that the user accounts in use are all correctly registered.
  *
- * As a test case it is indented this is only executed as part of the {@link LdapTestSuite} so that the required LDAP server is running.
- *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class TestEnvironmentTest {
