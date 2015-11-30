@@ -18,7 +18,6 @@
 
 package org.wildfly.security.auth.provider.ldap;
 
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.IdentityMapping;
 
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -182,7 +181,7 @@ public class LdapSecurityRealmBuilder {
         private boolean searchRecursive = false;
         private String nameAttribute;
         private int searchTimeLimit = 10000;
-        private List<Attribute> attributes = new ArrayList<>();
+        private List<AttributeMapping> attributes = new ArrayList<>();
 
         /**
          * <p>Set the name of the context to be used when executing queries.
@@ -246,10 +245,10 @@ public class LdapSecurityRealmBuilder {
         /**
          * Define an attribute mapping configuration.
          *
-         * @param attributes one or more {@link Attribute} configuration
+         * @param attributes one or more {@link AttributeMapping} configuration
          * @return this builder
          */
-        public IdentityMappingBuilder map(Attribute... attributes) {
+        public IdentityMappingBuilder map(AttributeMapping... attributes) {
             assertNotBuilt();
 
             this.attributes.addAll(Arrays.asList(attributes));

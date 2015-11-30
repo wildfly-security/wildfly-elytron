@@ -21,7 +21,7 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -33,7 +33,7 @@ public class AttributeMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("firstName"), "My First Name");
-        }, Attribute.from("cn").to("firstName"));
+        }, AttributeMapping.from("cn").to("firstName"));
     }
 
     @Test
@@ -41,7 +41,7 @@ public class AttributeMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
-        }, Attribute.from("cn"));
+        }, AttributeMapping.from("cn"));
     }
 
     @Test
@@ -50,7 +50,7 @@ public class AttributeMappingTest extends AbstractAttributeMappingTest {
             assertEquals("Expected two attributes.", 2, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
             assertAttributeValue(attributes.get("lastName"), "My Last Name");
-        }, Attribute.from("cn"), Attribute.from("sn").to("lastName"));
+        }, AttributeMapping.from("cn"), AttributeMapping.from("sn").to("lastName"));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class AttributeMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected two attributes.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name", "My Last Name");
-        }, Attribute.from("cn"), Attribute.from("sn").to("CN"));
+        }, AttributeMapping.from("cn"), AttributeMapping.from("sn").to("CN"));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class AttributeMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithRdnAttribute", attributes -> {
             assertEquals("Expected two attributes.", 1, attributes.size());
             assertAttributeValue(attributes.get("businessArea"), "Finance", "Sales");
-        }, Attribute.fromFilter("ou=Finance,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea")
-         , Attribute.fromFilter("ou=Sales,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea"));
+        }, AttributeMapping.fromFilter("ou=Finance,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea")
+         , AttributeMapping.fromFilter("ou=Sales,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea"));
     }
 }

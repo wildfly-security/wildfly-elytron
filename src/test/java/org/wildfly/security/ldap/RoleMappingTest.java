@@ -21,7 +21,7 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.authz.RoleDecoder;
 
 /**
@@ -34,7 +34,7 @@ public class RoleMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithMemberOfRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
-        }, Attribute.from("memberOf").asRdn("CN").to(RoleDecoder.KEY_ROLES)) ;
+        }, AttributeMapping.from("memberOf").asRdn("CN").to(RoleDecoder.KEY_ROLES)) ;
     }
 
     @Test
@@ -42,7 +42,7 @@ public class RoleMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromRolesOu");
-        }, Attribute.fromFilter("ou=Roles,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES)) ;
+        }, AttributeMapping.fromFilter("ou=Roles,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES)) ;
     }
 
     @Test
@@ -50,7 +50,7 @@ public class RoleMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromRolesOu", "RoleFromBaseDN");
-        }, Attribute.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES));
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES));
     }
 
     @Test
@@ -58,6 +58,6 @@ public class RoleMappingTest extends AbstractAttributeMappingTest {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
-        }, Attribute.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES));
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES));
     }
 }

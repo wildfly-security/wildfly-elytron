@@ -65,7 +65,7 @@ import org.wildfly.security.evidence.Evidence;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class LdapSecurityRealm implements ModifiableSecurityRealm {
+class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     private final DirContextFactory dirContextFactory;
     private final NameRewriter nameRewriter;
@@ -370,7 +370,7 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
 
                 ldapSearch.setReturningAttributes(
                         identityMapping.attributes.stream()
-                                .map(Attribute::getLdapName)
+                                .map(AttributeMapping::getLdapName)
                                 .toArray(String[]::new));
 
                 try (
@@ -546,10 +546,10 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
             return searchControls;
         }
 
-        private Map<String, Collection<String>> extractAttributes(Predicate<Attribute> filter, Function<Attribute, Collection<String>> valueFunction) {
+        private Map<String, Collection<String>> extractAttributes(Predicate<AttributeMapping> filter, Function<AttributeMapping, Collection<String>> valueFunction) {
             return identityMapping.attributes.stream()
                     .filter(filter)
-                    .collect(Collectors.toMap(Attribute::getName, valueFunction, (m1, m2) -> {
+                    .collect(Collectors.toMap(AttributeMapping::getName, valueFunction, (m1, m2) -> {
                         List<String> merged = new ArrayList<>(m1);
 
                         merged.addAll(m2);
@@ -651,117 +651,16 @@ public class LdapSecurityRealm implements ModifiableSecurityRealm {
         private final String searchDn;
         private final boolean searchRecursive;
         private final String rdnIdentifier;
-        private final List<Attribute> attributes;
+        private final List<AttributeMapping> attributes;
         public final int searchTimeLimit;
 
-        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<Attribute> attributes) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
             this.searchTimeLimit = searchTimeLimit;
             this.rdnIdentifier = rdnIdentifier;
             this.attributes = attributes;
-        }
-    }
-
-    public static class Attribute {
-
-        private final String ldapName;
-        private final String searchDn;
-        private final String filter;
-        private String name;
-        private String rdn;
-
-        /**
-         * Create an attribute mapping based on the given attribute in LDAP.
-         *
-         * @param ldapName the name of the attribute in LDAP from where values are obtained
-         * @return this builder
-         */
-        public static Attribute from(String ldapName) {
-            Assert.checkNotNullParam("ldapName", ldapName);
-            return new Attribute(ldapName);
-        }
-
-        /**
-         * <p>Create an attribute mapping based on the results of the given {@code filter}.
-         *
-         * <p>The {@code filter} <em>may</em> have one and exactly one <em>{0}</em> string that will be used to replace with the distinguished
-         * name of the identity. In this case, the filter is specially useful when the values for this attribute should be obtained from a
-         * separated entry. For instance, retrieving roles from entries with a object class of <em>groupOfNames</em> where the identity's DN is
-         * a value of a <em>member</em> attribute.
-         *
-         * @param searchDn the name of the context to be used when executing the filter
-         * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
-         * @param ldapName the name of the attribute in LDAP from where the values are obtained
-         * @return this builder
-         */
-        public static Attribute fromFilter(String searchDn, String filter, String ldapName) {
-            Assert.checkNotNullParam("searchDn", searchDn);
-            Assert.checkNotNullParam("filter", filter);
-            Assert.checkNotNullParam("ldapName", ldapName);
-            return new Attribute(searchDn, filter, ldapName);
-        }
-
-        /**
-         * <p>The behavior is exactly the same as {@link #fromFilter(String, String, String)}, except that it uses the
-         * same name of the context defined in {@link org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder.IdentityMappingBuilder#setSearchDn(String)}.
-         *
-         * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
-         * @param ldapName the name of the attribute in LDAP from where the values are obtained
-         * @return this builder
-         */
-        public static Attribute fromFilter(String filter, String ldapName) {
-            Assert.checkNotNullParam("filter", filter);
-            Assert.checkNotNullParam("ldapName", ldapName);
-            return new Attribute(null, filter, ldapName);
-        }
-
-        Attribute(String ldapName) {
-            this(null, null, ldapName);
-        }
-
-        Attribute(String searchDn, String filter, String ldapName) {
-            Assert.checkNotNullParam("ldapName", ldapName);
-            this.searchDn = searchDn;
-            this.filter = filter;
-            this.ldapName = ldapName.toUpperCase();
-        }
-
-        public Attribute asRdn(String rdn) {
-            Assert.checkNotNullParam("rdn", rdn);
-            this.rdn = rdn;
-            return this;
-        }
-
-        public Attribute to(String name) {
-            Assert.checkNotNullParam("to", name);
-            this.name = name;
-            return this;
-        }
-
-        String getLdapName() {
-            return this.ldapName;
-        }
-
-        String getName() {
-            if (this.name == null) {
-                return this.ldapName;
-            }
-
-            return this.name;
-        }
-
-        String getSearchDn() {
-            return this.searchDn;
-        }
-
-        String getFilter() {
-            return this.filter;
-        }
-
-        String getRdn() {
-            return this.rdn;
         }
     }
 }
