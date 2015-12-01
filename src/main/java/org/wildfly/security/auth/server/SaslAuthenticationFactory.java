@@ -22,13 +22,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
@@ -36,7 +36,6 @@ import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
-import org.wildfly.security.sasl.util.SaslFactories;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
@@ -45,25 +44,16 @@ import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslException> {
+public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslServerFactory, SaslException> {
     private final SaslServerFactory saslServerFactory;
 
     SaslAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final SaslServerFactory saslServerFactory) {
-        super(securityDomain, mechanismConfigurations);
+        super(securityDomain, mechanismConfigurations, saslServerFactory);
         this.saslServerFactory = saslServerFactory;
     }
 
-    /**
-     * Get the SASL server factory.
-     *
-     * @return the SASL server factory
-     */
-    public SaslServerFactory getSaslServerFactory() {
-        return saslServerFactory;
-    }
-
-    SaslServer doCreate(final String name, final CallbackHandler callbackHandler) throws SaslException {
-        return saslServerFactory.createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
+    SaslServer doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<SaslServerFactory> factoryTransformation) throws SaslException {
+        return factoryTransformation.apply(getFactory()).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
     }
 
     Collection<String> getAllSupportedMechNames() {
@@ -112,8 +102,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
      /**
      * A builder for SASL server factory configurations.
      */
-    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<SaslServer, SaslException> {
-        private SaslServerFactory saslServerFactory = SaslFactories.getEmptySaslServerFactory();
+    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<SaslServer, SaslServerFactory, SaslException> {
 
         /**
          * Construct a new instance.
@@ -131,14 +120,13 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             return this;
         }
 
-        public Builder setSaslServerFactory(final SaslServerFactory saslServerFactory) {
-            Assert.checkNotNullParam("saslServerFactory", saslServerFactory);
-            this.saslServerFactory = saslServerFactory;
+        public Builder setFactory(final SaslServerFactory factory) {
+            super.setFactory(factory);
             return this;
         }
 
         public SaslAuthenticationFactory build() {
-            AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(saslServerFactory);
+            AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(getFactory());
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }

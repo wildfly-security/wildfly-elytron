@@ -24,10 +24,10 @@ import static java.util.Collections.singleton;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -47,21 +47,18 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpAuthenticationException> {
+public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {
 
-    private final HttpServerAuthenticationMechanismFactory mechanismFactory;
-
-    HttpAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final HttpServerAuthenticationMechanismFactory mechanismFactory) {
-        super(securityDomain, mechanismConfigurations);
-        this.mechanismFactory = mechanismFactory;
+    HttpAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final HttpServerAuthenticationMechanismFactory factory) {
+        super(securityDomain, mechanismConfigurations, factory);
     }
 
-    HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler) throws HttpAuthenticationException {
-        return mechanismFactory.createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
+    HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
+        return factoryTransformation.apply(getFactory()).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
     }
 
     Collection<String> getAllSupportedMechNames() {
-        return asList(mechanismFactory.getMechanismNames(Collections.emptyMap()));
+        return asList(getFactory().getMechanismNames(Collections.emptyMap()));
     }
 
     // TODO: at some point these should no longer be hard-coded
@@ -120,15 +117,6 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     /**
-     * Get the {@link HttpServerAuthenticationMechanismFactory} associated with this configuration.
-     *
-     * @return the {@link HttpServerAuthenticationMechanismFactory} associated with this configuration.
-     */
-    public HttpServerAuthenticationMechanismFactory getMechanismFactory() {
-        return mechanismFactory;
-    }
-
-    /**
      * Obtain a new {@link Builder} capable of building a {@link HttpAuthenticationFactory}.
      *
      * @return a new {@link Builder} capable of building a {@link HttpAuthenticationFactory}.
@@ -140,8 +128,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     /**
      * A builder for SASL server factory configurations.
      */
-    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<HttpServerAuthenticationMechanism, HttpAuthenticationException> {
-        private HttpServerAuthenticationMechanismFactory httpServerAuthenticationMechanismFactory = null; // TODO: empty factory
+    public static final class Builder extends AbstractMechanismAuthenticationFactory.Builder<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {
 
         /**
          * Construct a new instance.
@@ -159,19 +146,13 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
             return this;
         }
 
-        /**
-         * Set the HTTP server authentication mechanism factory to use.
-         *
-         * @param httpServerAuthenticationMechanismFactory the factory (may not be {@code null})
-         */
-        public Builder setHttpServerAuthenticationMechanismFactory(final HttpServerAuthenticationMechanismFactory httpServerAuthenticationMechanismFactory) {
-            Assert.checkNotNullParam("httpServerAuthenticationMechanismFactory", httpServerAuthenticationMechanismFactory);
-            this.httpServerAuthenticationMechanismFactory = httpServerAuthenticationMechanismFactory;
+        public Builder setFactory(final HttpServerAuthenticationMechanismFactory factory) {
+            super.setFactory(factory);
             return this;
         }
 
         public HttpAuthenticationFactory build() {
-            return new HttpAuthenticationFactory(getSecurityDomain(), getMechanismConfigurations(), httpServerAuthenticationMechanismFactory);
+            return new HttpAuthenticationFactory(getSecurityDomain(), getMechanismConfigurations(), getFactory());
         }
     }
 }
