@@ -204,7 +204,7 @@ public class SaslServerBuilder {
             factory = new CredentialSaslServerFactory(factory, credential);
         }
         final SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
-        builder.setSaslServerFactory(factory);
+        builder.setFactory(factory);
         builder.setSecurityDomain(domain);
         builder.addMechanism(mechanismName, MechanismConfiguration.EMPTY);
         final SaslServer server = builder.build().createMechanism(mechanismName);

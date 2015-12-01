@@ -19,16 +19,18 @@
 package org.wildfly.security.auth.server;
 
 import java.util.Collection;
+import java.util.function.UnaryOperator;
 
 /**
  * A generalized mechanism factory which authenticates against a security domain.
  *
  * @param <M> the type of mechanism
+ * @param <F> the type of the mechanism's factory
  * @param <E> the mechanism-type-specific exception that may be thrown upon instantiation
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface MechanismAuthenticationFactory<M, E extends Exception> {
+public interface MechanismAuthenticationFactory<M, F, E extends Exception> {
 
     /**
      * Get the underlying {@link SecurityDomain} that mechanisms created by this factory will be using for authentication.
@@ -38,13 +40,32 @@ public interface MechanismAuthenticationFactory<M, E extends Exception> {
     SecurityDomain getSecurityDomain();
 
     /**
+     * Get the actual factory used for instantiation.
+     *
+     * @return the actual factory (not {@code null})
+     */
+    F getFactory();
+
+    /**
      * Create the mechanism instance.
      *
-     * @param name the mechanism name
+     * @param name the mechanism name (must not be {@code null})
+     * @param factoryTransformation the transformation to apply to the factory (must not be {@code null})
      * @return the mechanism, or {@code null} if the mechanism with the given name is not supported
      * @throws E if the mechanism instantiation failed
      */
-    M createMechanism(String name) throws E;
+    M createMechanism(String name, UnaryOperator<F> factoryTransformation) throws E;
+
+    /**
+     * Create the mechanism instance.
+     *
+     * @param name the mechanism name (must not be {@code null})
+     * @return the mechanism, or {@code null} if the mechanism with the given name is not supported
+     * @throws E if the mechanism instantiation failed
+     */
+    default M createMechanism(String name) throws E {
+        return createMechanism(name, UnaryOperator.identity());
+    }
 
     /**
      * Get the collection of mechanism names may be supported by this factory.  The actual set of available mechanisms depends
@@ -56,15 +77,19 @@ public interface MechanismAuthenticationFactory<M, E extends Exception> {
 
     /**
      * A builder for a {@link MechanismAuthenticationFactory}.
+     *
+     * @param <M> the type of mechanism
+     * @param <F> the type of the mechanism's factory
+     * @param <E> the mechanism-type-specific exception that may be thrown upon instantiation
      */
-    interface Builder<M, E extends Exception> {
+    interface Builder<M, F, E extends Exception> {
         /**
          * Set the security domain to be used for this factory (may not be {@code null}).
          *
          * @param securityDomain the security domain (may not be {@code null})
          * @return this builder
          */
-        Builder<M, E> setSecurityDomain(SecurityDomain securityDomain);
+        Builder<M, F, E> setSecurityDomain(SecurityDomain securityDomain);
 
         /**
          * Add a mechanism to the factory being built.  The same configuration may be used for more than one mechanism.
@@ -73,13 +98,21 @@ public interface MechanismAuthenticationFactory<M, E extends Exception> {
          * @param mechanismConfiguration the configuration to use (may not be {@code null})
          * @return this builder
          */
-        Builder<M, E> addMechanism(String mechanismName, MechanismConfiguration mechanismConfiguration);
+        Builder<M, F, E> addMechanism(String mechanismName, MechanismConfiguration mechanismConfiguration);
+
+        /**
+         * Set the mechanism's underlying factory.
+         *
+         * @param factory the factory (must not be {@code null})
+         * @return this builder
+         */
+        Builder<M, F, E> setFactory(F factory);
 
         /**
          * Build the mechanism factory.
          *
          * @return the mechanism factory
          */
-        MechanismAuthenticationFactory<M, E> build();
+        MechanismAuthenticationFactory<M, F, E> build();
     }
 }
