@@ -22,7 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.ClassRule;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
@@ -46,11 +46,11 @@ public abstract class AbstractAttributeMappingTest {
         }
     }
 
-    protected void assertAttributes(AssertResultHandler handler, Attribute... expectedAttributes) throws RealmUnavailableException {
+    protected void assertAttributes(AssertResultHandler handler, AttributeMapping... expectedAttributes) throws RealmUnavailableException {
         assertAttributes("plainUser", handler, expectedAttributes);
     }
 
-    protected void assertAttributes(String principalName, AssertResultHandler handler, Attribute... expectedAttributes) throws RealmUnavailableException {
+    protected void assertAttributes(String principalName, AssertResultHandler handler, AttributeMapping... expectedAttributes) throws RealmUnavailableException {
         SecurityDomain.Builder builder = SecurityDomain.builder();
 
         builder.setDefaultRealmName("default")

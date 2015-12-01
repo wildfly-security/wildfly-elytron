@@ -21,7 +21,7 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.Attribute;
+import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -33,6 +33,6 @@ public class GroupMappingTest extends AbstractAttributeMappingTest {
         assertAttributes(attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("Groups"), "GroupOne", "GroupTwo", "GroupThree");
-        }, Attribute.fromFilter("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))", "CN").to("Groups"));
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfUniqueNames)(uniqueMember={0}))", "CN").to("Groups"));
     }
 }
