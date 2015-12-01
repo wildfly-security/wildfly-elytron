@@ -37,6 +37,7 @@ import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
+import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
 /**
@@ -53,7 +54,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     SaslServer doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<SaslServerFactory> factoryTransformation) throws SaslException {
-        return factoryTransformation.apply(getFactory()).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
+        return new SecurityIdentitySaslServerFactory(factoryTransformation.apply(getFactory())).createSaslServer(name, "unknown", null, QUERY_ALL, callbackHandler);
     }
 
     Collection<String> getAllSupportedMechNames() {
