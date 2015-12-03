@@ -25,6 +25,8 @@ import static org.wildfly.security.sasl.test.BaseTestCase.obtainSaslServerFactor
 
 import java.security.Permissions;
 import java.security.spec.KeySpec;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.net.ssl.X509KeyManager;
@@ -35,10 +37,13 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.provider.SimpleRealmEntry;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -65,6 +70,8 @@ public class SaslServerBuilder {
     private String realmName = "mainRealm";
     private String defaultRealmName = realmName;
     private Map<String, Permissions> permissionsMap = null;
+    private Map<String, SimpleRealmEntry> passwordMap;
+    private Map<String, SecurityRealm> realms = new HashMap<String, SecurityRealm>();
 
     //Server factory decorators
     private Map<String, Object> properties;
@@ -98,6 +105,27 @@ public class SaslServerBuilder {
         final PasswordFactory factory = PasswordFactory.getInstance(algorithm);
         this.password = factory.generatePassword(keySpec);
         Assert.assertNotNull(this.password);
+        return this;
+    }
+
+    public SaslServerBuilder setPasswordMap(final Map<String, String> passwordMap) throws Exception {
+        Assert.assertNotNull(passwordMap);
+        this.passwordMap = new HashMap<String, SimpleRealmEntry>(passwordMap.size());
+        passwordMap.forEach((userName, passwordStr) -> {
+            final Password password;
+            if (passwordStr == null) {
+                password = NULL_PASSWORD;
+            } else {
+                try {
+                    final PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                    password = factory.generatePassword(new ClearPasswordSpec(passwordStr.toCharArray()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            Assert.assertNotNull(password);
+            this.passwordMap.put(userName, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password))));
+        });
         return this;
     }
 
@@ -156,6 +184,13 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder addRealm(final String realmName, final SecurityRealm securityRealm) {
+        Assert.assertNotNull(realmName);
+        Assert.assertNotNull(securityRealm);
+        realms.put(realmName, securityRealm);
+        return this;
+    }
+
     public SaslServerBuilder setDontAssertBuiltServer() {
         this.dontAssertBuiltServer = true;
         return this;
@@ -164,10 +199,15 @@ public class SaslServerBuilder {
     public SaslServer build() throws SaslException {
         final SecurityDomain.Builder domainBuilder = SecurityDomain.builder();
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
-        domainBuilder.addRealm(realmName, mainRealm);
+        realms.put(realmName, mainRealm);
+        realms.forEach((name, securityRealm) -> {
+            domainBuilder.addRealm(name, securityRealm);
+        });
         domainBuilder.setDefaultRealmName(defaultRealmName);
 
-        if (username != null) {
+        if (passwordMap != null) {
+            mainRealm.setPasswordMap(passwordMap);
+        } else if (username != null) {
             mainRealm.setPasswordMap(username, password);
         }
 
