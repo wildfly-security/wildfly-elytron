@@ -36,6 +36,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
+import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.provider.SimpleRealmEntry;
 import org.wildfly.security.auth.server.MechanismConfiguration;
@@ -148,7 +149,7 @@ public class SaslServerBuilder {
 
     public SaslServerBuilder setPermissionsMap(Map<String, Permissions> permissionsMap) {
         Assert.assertNotNull(permissionsMap);
-        this.permissionsMap = permissionsMap;
+        this.permissionsMap = new HashMap<String, Permissions>(permissionsMap);
         return this;
     }
 
@@ -211,14 +212,14 @@ public class SaslServerBuilder {
             mainRealm.setPasswordMap(username, password);
         }
 
-        if (permissionsMap != null) {
-            domainBuilder.setPermissionMapper((principal, roles) -> {
-                if (!permissionsMap.containsKey(principal.toString())) {
-                    throw new IllegalStateException(principal.toString()+" unknown, known: "+permissionsMap.toString());
-                }
-                return permissionsMap.get(principal.toString());
-            });
+        if (permissionsMap == null) {
+            permissionsMap = new HashMap<String, Permissions>();
         }
+        domainBuilder.setPermissionMapper((principal, roles) -> {
+            final Permissions permissions = permissionsMap.computeIfAbsent(principal.toString(), p -> new Permissions());
+            permissions.add(new LoginPermission());
+            return permissions;
+        });
 
         SecurityDomain domain = domainBuilder.build();
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
