@@ -28,6 +28,10 @@ final class BooleanCipherSuitePredicate extends CipherSuitePredicate {
         this.result = result;
     }
 
+    void toString(final StringBuilder b) {
+        b.append(result ? "always" : "never").append(" match");
+    }
+
     boolean test(final MechanismDatabase.Entry entry) {
         return result;
     }

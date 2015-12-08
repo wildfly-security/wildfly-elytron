@@ -320,6 +320,10 @@ public abstract class CipherSuitePredicate {
      */
     public static CipherSuitePredicate matchLevelLessThan(final SecurityLevel level) {
         return level == null || level == SecurityLevel.NONE ? matchFalse() : new CipherSuitePredicate() {
+            void toString(final StringBuilder b) {
+                b.append("security level is less than ").append(level);
+            }
+
             boolean test(final MechanismDatabase.Entry entry) {
                 return entry.getLevel().compareTo(level) < 0;
             }
@@ -370,6 +374,10 @@ public abstract class CipherSuitePredicate {
      */
     public static CipherSuitePredicate matchName(final String name) {
         return name == null ? matchFalse() : new CipherSuitePredicate() {
+            void toString(final StringBuilder b) {
+                b.append("cipher name is \"").append(name).append("\"");
+            }
+
             boolean test(final MechanismDatabase.Entry entry) {
                 return entry.getOpenSslName().equals(name) || entry.getAliases().contains(name) || entry.getName().equals(name);
             }
@@ -436,6 +444,19 @@ public abstract class CipherSuitePredicate {
      */
     public static CipherSuitePredicate matchOpenSslComplementOfDefault() {
         return OPENSSL_COMPLEMENT_OF_DEFAULT;
+    }
+
+    abstract void toString(StringBuilder b);
+
+    /**
+     * Get the string representation of this predicate.
+     *
+     * @return the string representation of this predicate
+     */
+    public final String toString() {
+        StringBuilder b = new StringBuilder();
+        toString(b);
+        return b.toString();
     }
 
     abstract boolean test(MechanismDatabase.Entry entry);

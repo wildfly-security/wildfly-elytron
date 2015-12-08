@@ -19,6 +19,7 @@
 package org.wildfly.security.ssl;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 
 final class KeyAgreementCipherSuitePredicate extends CipherSuitePredicate {
 
@@ -26,6 +27,21 @@ final class KeyAgreementCipherSuitePredicate extends CipherSuitePredicate {
 
     KeyAgreementCipherSuitePredicate(final EnumSet<KeyAgreement> set) {
         this.set = set;
+    }
+
+    void toString(final StringBuilder b) {
+        b.append("key agreement is one of (");
+        Iterator<KeyAgreement> iterator = set.iterator();
+        if (iterator.hasNext()) {
+            KeyAgreement keyAgreement = iterator.next();
+            b.append(keyAgreement);
+            while (iterator.hasNext()) {
+                keyAgreement = iterator.next();
+                b.append(", ");
+                b.append(keyAgreement);
+            }
+        }
+        b.append(')');
     }
 
     public boolean test(final MechanismDatabase.Entry entry) {

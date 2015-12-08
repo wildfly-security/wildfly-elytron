@@ -28,6 +28,10 @@ final class ExportCipherSuitePredicate extends CipherSuitePredicate {
         this.export = export;
     }
 
+    void toString(final StringBuilder b) {
+        b.append("export cipher suite is ").append(export);
+    }
+
     public boolean test(final MechanismDatabase.Entry entry) {
         return export == entry.isExport();
     }

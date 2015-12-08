@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +34,7 @@ import java.util.Set;
  */
 public abstract class ProtocolSelector {
 
-    private final ProtocolSelector prev;
+    final ProtocolSelector prev;
 
     ProtocolSelector(final ProtocolSelector prev) {
         this.prev = prev;
@@ -44,7 +45,19 @@ public abstract class ProtocolSelector {
     private static final ProtocolSelector EMPTY = new ProtocolSelector(null) {
         void applyFilter(final Set<Protocol> enabled, final EnumMap<Protocol, String> supported) {
         }
+
+        void toString(final StringBuilder b) {
+            b.append("(empty)");
+        }
     };
+
+    public final String toString() {
+        final StringBuilder b = new StringBuilder();
+        toString(b);
+        return b.toString();
+    }
+
+    abstract void toString(final StringBuilder b);
 
     /**
      * Get the basic empty SSL protocol selector.
@@ -243,6 +256,25 @@ public abstract class ProtocolSelector {
             this.protocols = protocols;
         }
 
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("add protocols (");
+            Iterator<Protocol> iterator = protocols.iterator();
+            Protocol protocol;
+            if (iterator.hasNext()) {
+                protocol = iterator.next();
+                b.append(protocol);
+                while (iterator.hasNext()) {
+                    b.append(", ");
+                    b.append(protocol);
+                }
+            }
+            b.append(")");
+        }
+
         void applyFilter(final Set<Protocol> enabled, final EnumMap<Protocol, String> supported) {
             final List<Protocol> clone = new ArrayList<>(supported.keySet());
             clone.retainAll(protocols);
@@ -260,6 +292,25 @@ public abstract class ProtocolSelector {
             this.protocols = protocols;
         }
 
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("remove protocols (");
+            Iterator<Protocol> iterator = protocols.iterator();
+            Protocol protocol;
+            if (iterator.hasNext()) {
+                protocol = iterator.next();
+                b.append(protocol);
+                while (iterator.hasNext()) {
+                    b.append(", ");
+                    b.append(protocol);
+                }
+            }
+            b.append(")");
+        }
+
         void applyFilter(final Set<Protocol> enabled, final EnumMap<Protocol, String> supported) {
             enabled.remove(protocols);
         }
@@ -271,6 +322,25 @@ public abstract class ProtocolSelector {
         FullyDeletingProtocolSelector(final ProtocolSelector prev, final EnumSet<Protocol> protocols) {
             super(prev);
             this.protocols = protocols;
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("fully remove protocols (");
+            Iterator<Protocol> iterator = protocols.iterator();
+            Protocol protocol;
+            if (iterator.hasNext()) {
+                protocol = iterator.next();
+                b.append(protocol);
+                while (iterator.hasNext()) {
+                    b.append(", ");
+                    b.append(protocol);
+                }
+            }
+            b.append(")");
         }
 
         void applyFilter(final Set<Protocol> enabled, final EnumMap<Protocol, String> supported) {

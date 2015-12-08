@@ -25,6 +25,18 @@ final class AndCipherSuitePredicate extends CipherSuitePredicate {
         this.predicates = predicates;
     }
 
+    void toString(final StringBuilder b) {
+        b.append("all of (");
+        final int length = predicates.length;
+        if (length > 0) {
+            b.append(predicates[0]);
+            for (int i = 1; i < length; i++) {
+                b.append(", ").append(predicates[i]);
+            }
+        }
+        b.append(")");
+    }
+
     boolean test(final MechanismDatabase.Entry entry) {
         for (CipherSuitePredicate predicate : predicates) {
             if (predicate != null && ! predicate.test(entry)) return false;

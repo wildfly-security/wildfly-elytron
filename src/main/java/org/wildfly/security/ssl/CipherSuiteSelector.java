@@ -37,7 +37,7 @@ import org.wildfly.security.util.CodePointIterator;
  */
 public abstract class CipherSuiteSelector {
 
-    private final CipherSuiteSelector prev;
+    final CipherSuiteSelector prev;
 
     CipherSuiteSelector(final CipherSuiteSelector prev) {
         this.prev = prev;
@@ -47,6 +47,10 @@ public abstract class CipherSuiteSelector {
 
     private static final CipherSuiteSelector EMPTY = new CipherSuiteSelector(null) {
         void applyFilter(final Set<String> enabled, final Map<MechanismDatabase.Entry, String> supported) {
+        }
+
+        void toString(final StringBuilder b) {
+            b.append("(empty)");
         }
     };
 
@@ -194,6 +198,14 @@ public abstract class CipherSuiteSelector {
         return new SortByAlgorithmKeyLengthCipherSuiteSelector(this);
     }
 
+    public final String toString() {
+        StringBuilder b = new StringBuilder();
+        toString(b);
+        return b.toString();
+    }
+
+    abstract void toString(StringBuilder b);
+
     /* -- selector implementation -- */
 
     abstract void applyFilter(Set<String> enabled, Map<MechanismDatabase.Entry, String> supported);
@@ -212,12 +224,23 @@ public abstract class CipherSuiteSelector {
      * @return the enabled mechanisms (not {@code null})
      */
     public final String[] evaluate(String[] supportedMechanisms) {
+        if (ElytronMessages.tls.isTraceEnabled()) {
+            StringBuilder b = new StringBuilder(supportedMechanisms.length * 16);
+            b.append("Evaluating filter \"").append(this).append("\" on supported mechanisms:");
+            for (String s : supportedMechanisms) {
+                b.append("\n    ").append(s);
+            }
+            ElytronMessages.tls.trace(b);
+        }
         final MechanismDatabase database = MechanismDatabase.getInstance();
         final LinkedHashMap<MechanismDatabase.Entry, String> supportedMap = new LinkedHashMap<>(supportedMechanisms.length);
         for (String supportedMechanism : supportedMechanisms) {
             final MechanismDatabase.Entry entry = database.getCipherSuite(supportedMechanism);
             if (entry != null) {
+                ElytronMessages.tls.tracef("Found supported mechanism %s", supportedMechanism);
                 supportedMap.put(entry, supportedMechanism);
+            } else {
+                ElytronMessages.tls.tracef("Dropping unknown mechanism %s", supportedMechanism);
             }
         }
         final LinkedHashSet<String> enabledSet = new LinkedHashSet<String>(supportedMap.size());
@@ -572,10 +595,24 @@ public abstract class CipherSuiteSelector {
 
         void applyFilter(final Set<String> enabled, final Map<MechanismDatabase.Entry, String> supported) {
             for (Map.Entry<MechanismDatabase.Entry, String> item : supported.entrySet()) {
-                if (predicate.test(item.getKey())) {
-                    enabled.add(item.getValue());
+                final MechanismDatabase.Entry entry = item.getKey();
+                if (predicate.test(entry)) {
+                    if (enabled.add(item.getValue())) {
+                        ElytronMessages.tls.tracef("Adding cipher suite %s due to add rule", entry);
+                    } else {
+                        ElytronMessages.tls.tracef("Would have added cipher suite %s due to add rule, but it was already added previously", entry);
+                    }
                 }
             }
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("add ");
+            predicate.toString(b);
         }
     }
 
@@ -589,10 +626,24 @@ public abstract class CipherSuiteSelector {
 
         void applyFilter(final Set<String> enabled, final Map<MechanismDatabase.Entry, String> supported) {
             for (Map.Entry<MechanismDatabase.Entry, String> item : supported.entrySet()) {
-                if (predicate.test(item.getKey())) {
-                    enabled.remove(item.getValue());
+                final MechanismDatabase.Entry entry = item.getKey();
+                if (predicate.test(entry)) {
+                    if (enabled.remove(item.getValue())) {
+                        ElytronMessages.tls.tracef("Removing cipher suite %s due to remove rule", entry);
+                    } else {
+                        ElytronMessages.tls.tracef("Would have removed cipher suite %s due to remove rule, but it already wasn't present", entry);
+                    }
                 }
             }
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("remove ");
+            predicate.toString(b);
         }
     }
 
@@ -608,11 +659,22 @@ public abstract class CipherSuiteSelector {
             Iterator<Map.Entry<MechanismDatabase.Entry, String>> iterator = supported.entrySet().iterator();
             while (iterator.hasNext()) {
                 final Map.Entry<MechanismDatabase.Entry, String> item = iterator.next();
-                if (predicate.test(item.getKey())) {
+                final MechanismDatabase.Entry entry = item.getKey();
+                if (predicate.test(entry)) {
                     iterator.remove();
                     enabled.remove(item.getValue());
+                    ElytronMessages.tls.tracef("Fully removing cipher suite %s due to full remove rule", entry);
                 }
             }
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("remove fully ");
+            predicate.toString(b);
         }
     }
 
@@ -635,12 +697,22 @@ public abstract class CipherSuiteSelector {
                     if (pushed == null) pushed = new ArrayList<>();
                     pushed.add(name);
                     iterator.remove();
+                    ElytronMessages.tls.tracef("Pushing cipher suite %s to end due to push rule", entry);
                 }
             }
             if (pushed != null) {
                 // add back in order
                 enabled.addAll(pushed);
             }
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("push to end ");
+            predicate.toString(b);
         }
     }
 
@@ -662,7 +734,23 @@ public abstract class CipherSuiteSelector {
                 });
                 enabled.clear();
                 enabled.addAll(list);
+                if (ElytronMessages.tls.isTraceEnabled()) {
+                    StringBuilder b = new StringBuilder(list.size() * 16);
+                    b.append("Sorted ciphers by algorithm key length, result is:");
+                    for (String s : list) {
+                        b.append("\n    ").append(s);
+                    }
+                    ElytronMessages.tls.trace(b);
+                }
             }
+        }
+
+        void toString(final StringBuilder b) {
+            if (prev != null && prev != EMPTY) {
+                prev.toString(b);
+                b.append(", then ");
+            }
+            b.append("sort by key length");
         }
     }
 }

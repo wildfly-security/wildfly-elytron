@@ -28,6 +28,12 @@ final class FipsCipherSuitePredicate extends CipherSuitePredicate {
         this.fips = fips;
     }
 
+    void toString(final StringBuilder b) {
+        b.append("is ");
+        if (! fips) b.append("not ");
+        b.append("FIPS");
+    }
+
     public boolean test(final MechanismDatabase.Entry entry) {
         return fips == entry.isFips();
     }
