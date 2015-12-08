@@ -146,18 +146,12 @@ public final class ServerAuthenticationContext {
                 mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
             }
         }
-        name = validatedRewrite(name, mechanismConfiguration.getPreRealmRewriter());
-        name = validatedRewrite(name, mechanismRealmConfiguration.getPreRealmRewriter());
-        name = validatedRewrite(name, domain.getPreRealmRewriter());
+        name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
         // principal *must* be captured at this point
         final NamePrincipal principal = new NamePrincipal(name);
-        name = validatedRewrite(name, mechanismConfiguration.getPostRealmRewriter());
-        name = validatedRewrite(name, mechanismRealmConfiguration.getPostRealmRewriter());
-        name = validatedRewrite(name, domain.getPostRealmRewriter());
+        name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
-        name = validatedRewrite(name, realmInfo.getNameRewriter());
-        name = validatedRewrite(name, mechanismConfiguration.getFinalRewriter());
-        name = validatedRewrite(name, mechanismRealmConfiguration.getFinalRewriter());
+        name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         // name should remain
         if (oldState.getId() == ASSIGNED_ID) {
             if (! oldState.getAuthenticationPrincipal().getName().equals(name) || oldState.getMechanismRealmConfiguration() != mechanismRealmConfiguration) {
@@ -217,21 +211,28 @@ public final class ServerAuthenticationContext {
      */
     public boolean isSameName(String name) throws IllegalArgumentException, RealmUnavailableException, IllegalStateException {
         Assert.checkNotNullParam("name", name);
-        name = domain.getPreRealmRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
+        final SecurityDomain domain = this.domain;
+        final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
+        final MechanismRealmConfiguration mechanismRealmConfiguration;
+        final State state = stateRef.get();
+        if (state.getId() != INITIAL_ID) {
+            mechanismRealmConfiguration = state.getMechanismRealmConfiguration();
+        } else {
+            final Collection<String> mechanismRealmNames = mechanismConfiguration.getMechanismRealmNames();
+            final Iterator<String> iterator = mechanismRealmNames.iterator();
+            if (iterator.hasNext()) {
+                // use the default realm
+                mechanismRealmConfiguration = mechanismConfiguration.getMechanismRealmConfiguration(iterator.next());
+            } else {
+                mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
+            }
         }
+        name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
         String realmName = domain.mapRealmName(name);
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
-        name = domain.getPostRealmRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
-        }
-        name = realmInfo.getNameRewriter().rewriteName(name);
-        if (name == null) {
-            throw log.invalidName();
-        }
-        return stateRef.get().getAuthenticationPrincipal().getName().equals(name);
+        name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
+        name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
+        return state.getAuthenticationPrincipal().getName().equals(name);
     }
 
     /**
@@ -381,9 +382,7 @@ public final class ServerAuthenticationContext {
             final MechanismRealmConfiguration mechanismRealmConfiguration = oldState.getMechanismRealmConfiguration();
 
             // rewrite the proposed name
-            name = validatedRewrite(name, mechanismConfiguration.getPreRealmRewriter());
-            name = validatedRewrite(name, mechanismRealmConfiguration.getPreRealmRewriter());
-            name = validatedRewrite(name, domain.getPreRealmRewriter());
+            name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
             // pause here and see if we're really authorizing a new identity
             // principal *must* be captured at this point
             final NamePrincipal principal = new NamePrincipal(name);
@@ -399,13 +398,9 @@ public final class ServerAuthenticationContext {
             }
 
             // continue rewriting to locate the new authorization identity
-            name = validatedRewrite(name, mechanismConfiguration.getPostRealmRewriter());
-            name = validatedRewrite(name, mechanismRealmConfiguration.getPostRealmRewriter());
-            name = validatedRewrite(name, domain.getPostRealmRewriter());
+            name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
             final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
-            name = validatedRewrite(name, realmInfo.getNameRewriter());
-            name = validatedRewrite(name, mechanismConfiguration.getFinalRewriter());
-            name = validatedRewrite(name, mechanismRealmConfiguration.getFinalRewriter());
+            name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
 
             // now construct the new identity
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
@@ -810,6 +805,19 @@ public final class ServerAuthenticationContext {
             throw log.invalidName();
         }
         return newName;
+    }
+
+    static String rewriteAll(String name, NameRewriter r1, NameRewriter r2, NameRewriter r3) {
+        if (r1 != null) {
+            return validatedRewrite(name, r1);
+        }
+        if (r2 != null) {
+            return validatedRewrite(name, r2);
+        }
+        if (r3 != null) {
+            return validatedRewrite(name, r3);
+        }
+        return name;
     }
 
     private static final int INITIAL_ID = 0;
