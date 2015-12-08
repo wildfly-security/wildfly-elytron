@@ -19,6 +19,7 @@
 package org.wildfly.security.ssl;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 
 final class DigestCipherSuitePredicate extends CipherSuitePredicate {
 
@@ -26,6 +27,21 @@ final class DigestCipherSuitePredicate extends CipherSuitePredicate {
 
     DigestCipherSuitePredicate(final EnumSet<Digest> set) {
         this.set = set;
+    }
+
+    void toString(final StringBuilder b) {
+        b.append("digest is one of (");
+        Iterator<Digest> iterator = set.iterator();
+        if (iterator.hasNext()) {
+            Digest digest = iterator.next();
+            b.append(digest);
+            while (iterator.hasNext()) {
+                digest = iterator.next();
+                b.append(", ");
+                b.append(digest);
+            }
+        }
+        b.append(')');
     }
 
     public boolean test(final MechanismDatabase.Entry entry) {

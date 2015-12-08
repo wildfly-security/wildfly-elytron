@@ -37,6 +37,7 @@ import org.wildfly.security.util.DecodeException;
 public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
+    ElytronMessages tls = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.tls");
 
     @LogMessage
     @Message(id = 1, value = "WildFly Elytron version %s")

@@ -25,6 +25,12 @@ final class NotCipherSuitePredicate extends CipherSuitePredicate {
         this.predicate = predicate;
     }
 
+    void toString(final StringBuilder b) {
+        b.append("not (");
+        predicate.toString(b);
+        b.append(")");
+    }
+
     boolean test(final MechanismDatabase.Entry entry) {
         return ! predicate.test(entry);
     }

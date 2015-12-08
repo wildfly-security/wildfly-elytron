@@ -19,6 +19,7 @@
 package org.wildfly.security.ssl;
 
 import java.util.EnumSet;
+import java.util.Iterator;
 
 final class LevelCipherSuitePredicate extends CipherSuitePredicate {
 
@@ -26,6 +27,21 @@ final class LevelCipherSuitePredicate extends CipherSuitePredicate {
 
     LevelCipherSuitePredicate(final EnumSet<SecurityLevel> set) {
         this.set = set;
+    }
+
+    void toString(final StringBuilder b) {
+        b.append("openssl security level is one of (");
+        Iterator<SecurityLevel> iterator = set.iterator();
+        if (iterator.hasNext()) {
+            SecurityLevel securityLevel = iterator.next();
+            b.append(securityLevel);
+            while (iterator.hasNext()) {
+                securityLevel = iterator.next();
+                b.append(", ");
+                b.append(securityLevel);
+            }
+        }
+        b.append(')');
     }
 
     public boolean test(final MechanismDatabase.Entry entry) {
