@@ -85,7 +85,7 @@ public final class MechanismRealmConfiguration {
     /**
      * A realm configuration for no particular realm, which does no additional rewriting.
      */
-    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER);
+    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", null, null, null);
 
     /**
      * Obtain a new {@link Builder} capable of building a {@link MechanismRealmConfiguration}.
@@ -98,9 +98,9 @@ public final class MechanismRealmConfiguration {
 
     public static final class Builder {
         private String realmName;
-        private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
-        private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
-        private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
+        private NameRewriter preRealmRewriter;
+        private NameRewriter postRealmRewriter;
+        private NameRewriter finalRewriter;
 
         /**
          * Construct a new instance.

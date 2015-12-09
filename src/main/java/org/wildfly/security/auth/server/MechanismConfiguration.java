@@ -48,9 +48,6 @@ public final class MechanismConfiguration {
     private final List<SecurityFactory<Credential>> serverCredentialFactories;
 
     MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final Collection<MechanismRealmConfiguration> mechanismRealms, final List<SecurityFactory<Credential>> serverCredentialFactories) {
-        Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
-        Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
-        Assert.checkNotNullParam("finalRewriter", finalRewriter);
         Assert.checkNotNullParam("mechanismRealms", mechanismRealms);
         Assert.checkNotNullParam("serverCredentials", serverCredentialFactories);
         this.preRealmRewriter = preRealmRewriter;
@@ -82,7 +79,7 @@ public final class MechanismConfiguration {
     /**
      * Get the pre-realm rewriter for this mechanism realm.
      *
-     * @return the pre-realm rewriter for this mechanism realm (not {@code null})
+     * @return the pre-realm rewriter for this mechanism realm, or {@code null} to use the default
      */
     public NameRewriter getPreRealmRewriter() {
         return preRealmRewriter;
@@ -91,7 +88,7 @@ public final class MechanismConfiguration {
     /**
      * Get the post-realm rewriter for this mechanism realm.
      *
-     * @return the post-realm rewriter for this mechanism realm (not {@code null})
+     * @return the post-realm rewriter for this mechanism realm, or {@code null} to use the default
      */
     public NameRewriter getPostRealmRewriter() {
         return postRealmRewriter;
@@ -100,7 +97,7 @@ public final class MechanismConfiguration {
     /**
      * Get the final rewriter for this mechanism realm.
      *
-     * @return the final rewriter for this mechanism realm (not {@code null})
+     * @return the final rewriter for this mechanism realm, or {@code null} to use the default
      */
     public NameRewriter getFinalRewriter() {
         return finalRewriter;
@@ -151,9 +148,9 @@ public final class MechanismConfiguration {
         @SuppressWarnings("unchecked")
         private static final SecurityFactory<Credential>[] NO_CREDENTIALS = new SecurityFactory[0];
 
-        private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
-        private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
-        private NameRewriter finalRewriter = NameRewriter.IDENTITY_REWRITER;
+        private NameRewriter preRealmRewriter;
+        private NameRewriter postRealmRewriter;
+        private NameRewriter finalRewriter;
         private List<MechanismRealmConfiguration> mechanismRealms;
         private List<SecurityFactory<Credential>> serverCredentials;
 
@@ -164,19 +161,16 @@ public final class MechanismConfiguration {
         }
 
         public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {
-            Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
             this.preRealmRewriter = preRealmRewriter;
             return this;
         }
 
         public Builder setPostRealmRewriter(final NameRewriter postRealmRewriter) {
-            Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
             this.postRealmRewriter = postRealmRewriter;
             return this;
         }
 
         public Builder setFinalRewriter(final NameRewriter finalRewriter) {
-            Assert.checkNotNullParam("finalRewriter", finalRewriter);
             this.finalRewriter = finalRewriter;
             return this;
         }
@@ -248,5 +242,5 @@ public final class MechanismConfiguration {
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, NameRewriter.IDENTITY_REWRITER, emptyList(), emptyList());
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(null, null, null, emptyList(), emptyList());
 }
