@@ -274,7 +274,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private InputStream passwordsStream;
         private InputStream groupsStream;
         private boolean plainText;
-        private String groupsAttribute;
+        private String groupsAttribute = "groups";
 
         Builder() {
         }
