@@ -296,5 +296,9 @@ class MechanismDatabase {
         public int getAlgorithmBits() {
             return algorithmBits;
         }
+
+        public String toString() {
+            return getName() + "/" + getOpenSslName();
+        }
     }
 }
