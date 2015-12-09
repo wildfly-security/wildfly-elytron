@@ -64,6 +64,8 @@ import java.util.ServiceLoader;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
@@ -90,6 +92,9 @@ public class WildFlyElytronProvider extends Provider {
 
     private static final String PASSWORD_FACTORY_TYPE = PasswordFactory.class.getSimpleName();
 
+    /**
+     * Default constructor for this security provider.
+     */
     public WildFlyElytronProvider() {
         super("WildFlyElytron", 1.0, "WildFly Elytron Provider");
 
@@ -97,6 +102,7 @@ public class WildFlyElytronProvider extends Provider {
         putKeyStoreImplementations();
         putPasswordImplementations();
         putSaslMechanismImplementations();
+        putCredentialStoreProviderImplementations();
     }
 
     private void putKeyStoreImplementations() {
@@ -193,6 +199,13 @@ public class WildFlyElytronProvider extends Provider {
                 putService(new Service(this, SASL_SERVER_FACTORY_TYPE, name, className, noAliases, noProperties));
             }
         } catch (ServiceConfigurationError | RuntimeException ignored) {}
+    }
+
+    private void putCredentialStoreProviderImplementations() {
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, KeystorePasswordStore.KEY_STORE_PASSWORD_STORE, KeystorePasswordStore.class.getName(), emptyList, emptyMap));
     }
 
 }
