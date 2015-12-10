@@ -134,7 +134,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
             }
         }
 
-        request.authenticationInProgress(response -> prepareResponse(() -> getHostName(request), response));
+        request.noAuthenticationInProgress(response -> prepareResponse(() -> getHostName(request), response));
     }
 
     private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
