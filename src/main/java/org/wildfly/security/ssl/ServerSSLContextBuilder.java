@@ -32,17 +32,17 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.auth.server.CredentialDecoder;
 import org.wildfly.security.auth.server.PrincipalDecoder;
-import org.wildfly.security.x500.X509CertificateCredentialDecoder;
+import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
 
 /**
  * A class which allows building and configuration of a single server-side SSL context.  The builder requires, at a
  * minimum, that a key manager be set; all other parameters have default values as follows:
  * <ul>
  *     <li>The security domain defaults to being empty (no client authentication possible)</li>
- *     <li>The credential decoder defaults to the {@linkplain X509CertificateCredentialDecoder X.509 decoder}</li>
+ *     <li>The evidence decoder defaults to the {@linkplain X509CertificateEvidenceDecoder X.509 decoder}</li>
  *     <li>The principal decoder defaults to the {@linkplain PrincipalDecoder#DEFAULT default principal decoder}</li>
  *     <li>The cipher suite selector defaults to {@link CipherSuiteSelector#openSslDefault()}</li>
  *     <li>The protocol suite selector defaults to {@link ProtocolSelector#DEFAULT_SELECTOR}</li>
@@ -54,7 +54,7 @@ import org.wildfly.security.x500.X509CertificateCredentialDecoder;
  */
 public final class ServerSSLContextBuilder {
     private SecurityDomain securityDomain;
-    private CredentialDecoder credentialDecoder = X509CertificateCredentialDecoder.getInstance();
+    private EvidenceDecoder evidenceDecoder = X509CertificateEvidenceDecoder.getInstance();
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean requireClientAuth;
@@ -72,13 +72,13 @@ public final class ServerSSLContextBuilder {
     }
 
     /**
-     * Set the credential decoder.  This is the decoder used to get the principal from the client certificate.
+     * Set the evidence decoder.  This is the decoder used to get the principal from the client certificate.
      *
-     * @param credentialDecoder the credential decoder
+     * @param evidenceDecoder the evidence decoder
      */
-    public void setCredentialDecoder(final CredentialDecoder credentialDecoder) {
-        Assert.checkNotNullParam("credentialDecoder", credentialDecoder);
-        this.credentialDecoder = credentialDecoder;
+    public void setEvidenceDecoder(final EvidenceDecoder evidenceDecoder) {
+        Assert.checkNotNullParam("evidenceDecoder", evidenceDecoder);
+        this.evidenceDecoder = evidenceDecoder;
     }
 
     /**
@@ -153,7 +153,7 @@ public final class ServerSSLContextBuilder {
         final ProtocolSelector protocolSelector = this.protocolSelector;
         final boolean requireClientAuth = this.requireClientAuth;
         final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory = this.keyManagerSecurityFactory;
-        final CredentialDecoder credentialDecoder = this.credentialDecoder;
+        final EvidenceDecoder evidenceDecoder = this.evidenceDecoder;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
@@ -165,7 +165,7 @@ public final class ServerSSLContextBuilder {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
                 canAuthClients ?
-                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, credentialDecoder) :
+                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, evidenceDecoder) :
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration

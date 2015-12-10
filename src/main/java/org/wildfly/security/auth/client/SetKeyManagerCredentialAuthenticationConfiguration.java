@@ -38,11 +38,9 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.x500.X509CertificateCredentialDecoder;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -114,7 +112,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         for (TrustedAuthority trustedAuthority : trustedAuthorities) {
             if (trustedAuthority instanceof TrustedAuthority.CertificateTrustedAuthority) {
                 final X509Certificate authorityCertificate = ((CertificateTrustedAuthority) trustedAuthority).getIdentifier();
-                issuers.add(X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(new X509CertificateChainPublicCredential(authorityCertificate)));
+                issuers.add(authorityCertificate.getSubjectX500Principal());
             } else if (trustedAuthority instanceof NameTrustedAuthority) {
                 final String authorityName = ((NameTrustedAuthority) trustedAuthority).getIdentifier();
                 issuers.add(new X500Principal(authorityName));

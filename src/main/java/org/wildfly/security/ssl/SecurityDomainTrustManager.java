@@ -31,13 +31,12 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.CredentialDecoder;
 import org.wildfly.security.auth.server.SupportLevel;
-import org.wildfly.security.credential.X509CertificateChainPublicCredential;
-import org.wildfly.security.evidence.X509PeerCertificateEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -46,18 +45,18 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
 
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
-    private final CredentialDecoder credentialDecoder;
+    private final EvidenceDecoder evidenceDecoder;
 
-    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
+    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder) {
         this.delegate = delegate;
         this.securityDomain = securityDomain;
-        this.credentialDecoder = credentialDecoder;
+        this.evidenceDecoder = evidenceDecoder;
     }
 
-    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final CredentialDecoder credentialDecoder) {
+    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder) {
         this(delegate instanceof X509ExtendedTrustManager ?
                 (X509ExtendedTrustManager) delegate :
-                new WrappingX509ExtendedTrustManager(delegate), securityDomain, credentialDecoder);
+                new WrappingX509ExtendedTrustManager(delegate), securityDomain, evidenceDecoder);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -81,16 +80,15 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         if (chain.length == 0) {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
-        final X509Certificate subjectCertificate = chain[0];
-        final X509CertificateChainPublicCredential credential = new X509CertificateChainPublicCredential(chain);
-        Principal principal = credentialDecoder.getPrincipalFromCredential(credential);
+        final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
+        Principal principal = evidenceDecoder.getPrincipalFromEvidence(evidence);
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
             authenticationContext.setAuthenticationPrincipal(principal);
 
-            final SupportLevel credentialSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateEvidence.class, credential.getAlgorithm());
-            if (credentialSupport.mayBeSupported() && authenticationContext.verifyEvidence(new X509PeerCertificateEvidence(subjectCertificate))) {
+            final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
+            if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence)) {
                 authenticationContext.succeed();
                 if (handshakeSession != null) {
                     handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());

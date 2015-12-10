@@ -23,29 +23,29 @@ import java.security.cert.X509Certificate;
 import org.wildfly.common.Assert;
 
 /**
- * A piece of evidence that is comprised of a verified peer certificate.
+ * A piece of evidence that is comprised of a verified peer certificate chain.
  */
-public final class X509PeerCertificateEvidence implements AlgorithmEvidence {
+public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence {
 
-    private final X509Certificate peerCertificate;
+    private final X509Certificate[] peerCertificateChain;
 
     /**
      * Construct a new instance.
      *
-     * @param peerCertificate the peer certificate to use (must not be {@code null})
+     * @param peerCertificateChain the peer certificate chain to use (must not be {@code null})
      */
-    public X509PeerCertificateEvidence(final X509Certificate peerCertificate) {
-        Assert.checkNotNullParam("peerCertificate", peerCertificate);
-        this.peerCertificate = peerCertificate;
+    public X509PeerCertificateChainEvidence(final X509Certificate... peerCertificateChain) {
+        Assert.checkNotNullParam("peerCertificateChain", peerCertificateChain);
+        this.peerCertificateChain = peerCertificateChain;
     }
 
     /**
-     * Get the peer certificate.
+     * Get the peer certificate chain.
      *
-     * @return the peer certificate (not {@code null})
+     * @return the peer certificate chain (not {@code null})
      */
-    public X509Certificate getPeerCertificate() {
-        return peerCertificate;
+    public X509Certificate[] getPeerCertificateChain() {
+        return peerCertificateChain;
     }
 
     /**
@@ -54,6 +54,14 @@ public final class X509PeerCertificateEvidence implements AlgorithmEvidence {
      * @return the certificate public key algorithm (not {@code null})
      */
     public String getAlgorithm() {
-        return peerCertificate.getPublicKey().getAlgorithm();
+        return getFirstCertificate().getPublicKey().getAlgorithm();
+    }
+
+    public X509Certificate getFirstCertificate() {
+        return peerCertificateChain[0];
+    }
+
+    public X509Certificate getLastCertificate() {
+        return peerCertificateChain[peerCertificateChain.length - 1];
     }
 }

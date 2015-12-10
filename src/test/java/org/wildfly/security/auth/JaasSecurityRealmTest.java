@@ -39,7 +39,7 @@ import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
-import org.wildfly.security.evidence.X509PeerCertificateEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
  * Testsuite for the {@link org.wildfly.security.auth.provider.JaasSecurityRealm}.
@@ -111,7 +111,7 @@ public class JaasSecurityRealmTest {
         RealmIdentity realmIdentity = realm.getRealmIdentity("javajoe");
 
         assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
-        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getEvidenceVerifySupport(X509PeerCertificateEvidence.class, null));
+        assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, null));
 
         // verify the credentials using the custom callback handler.
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("$#21pass".toCharArray())));
