@@ -60,7 +60,6 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
-import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
@@ -1056,7 +1055,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException responseCodeNotNow();
 
     @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
-    HttpAuthenticationException incorrectlyFormattedHeader(String heanderName);
+    String incorrectlyFormattedHeader(String heanderName);
 
     @Message(id = 6002, value = "An authentication attempt for user '%s' failed validation using mechanism '%s'.")
     String authenticationFailed(String username, String mechanismName);
