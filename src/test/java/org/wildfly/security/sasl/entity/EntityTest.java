@@ -58,7 +58,6 @@ import mockit.integration.junit4.JMockit;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -82,6 +81,7 @@ public class EntityTest extends BaseTestCase {
 
     private static final String SERVER_KEYSTORE_FILENAME = "/server.keystore";
     private static final String CLIENT_KEYSTORE_FILENAME = "/client.keystore";
+    private static final String WRONG_KEYSTORE_FILENAME = "/wrong.keystore";
     private static final String SERVER_TRUSTSTORE_FILENAME = "/server.truststore";
     private static final String CLIENT_TRUSTSTORE_FILENAME = "/client.truststore";
     private static final String SERVER_KEYSTORE_ALIAS = "testserver1";
@@ -91,6 +91,7 @@ public class EntityTest extends BaseTestCase {
     private static final char[] KEYSTORE_PASSWORD = "password".toCharArray();
     private File serverKeyStore = null;
     private File clientKeyStore = null;
+    private File wrongKeyStore = null;
     private File serverTrustStore = null;
     private File clientTrustStore = null;
     private File workingDir = null;
@@ -100,6 +101,7 @@ public class EntityTest extends BaseTestCase {
         workingDir = getWorkingDir();
         serverKeyStore = copyKeyStore(SERVER_KEYSTORE_FILENAME);
         clientKeyStore = copyKeyStore(CLIENT_KEYSTORE_FILENAME);
+        wrongKeyStore = copyKeyStore(WRONG_KEYSTORE_FILENAME);
         serverTrustStore = copyKeyStore(SERVER_TRUSTSTORE_FILENAME);
         clientTrustStore = copyKeyStore(CLIENT_TRUSTSTORE_FILENAME);
     }
@@ -110,6 +112,8 @@ public class EntityTest extends BaseTestCase {
         serverKeyStore = null;
         clientKeyStore.delete();
         clientKeyStore = null;
+        wrongKeyStore.delete();
+        wrongKeyStore = null;
         serverTrustStore.delete();
         serverTrustStore = null;
         clientTrustStore.delete();
@@ -453,8 +457,9 @@ public class EntityTest extends BaseTestCase {
 
         // A certificate that does not correspond to the client's private key will be used
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
-        final KeyStore keyStore = loadKeyStore(clientKeyStore);
+        KeyStore keyStore = loadKeyStore(wrongKeyStore);
         final Certificate[] certificateChain = keyStore.getCertificateChain(WRONG_KEYSTORE_ALIAS);
+        keyStore = loadKeyStore(clientKeyStore);
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, (PrivateKey) keyStore.getKey(CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
                 Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class), getX509TrustManager(clientTrustStore));
         final SaslClient saslClient = clientFactory.createSaslClient(mechanisms, null, "test", "testserver1.example.com",
@@ -469,15 +474,15 @@ public class EntityTest extends BaseTestCase {
         }
     }
 
-    @Ignore // todo: this test could be modified to use the wrong key of the write algorithm, or it could be removed
     @Test
     public void testServerPrivateKeyPublicKeyMismatch() throws Exception {
         final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
         assertNotNull(clientFactory);
 
         // A certificate that does not correspond to the server's private key will be used
-        final KeyStore keyStore = loadKeyStore(serverKeyStore);
+        KeyStore keyStore = loadKeyStore(wrongKeyStore);
         final Certificate[] certificateChain = keyStore.getCertificateChain(WRONG_KEYSTORE_ALIAS);
+        keyStore = loadKeyStore(serverKeyStore);
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
                 serverTrustStore, (PrivateKey) keyStore.getKey(SERVER_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
                 Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
