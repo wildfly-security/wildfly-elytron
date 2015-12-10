@@ -307,7 +307,7 @@ public final class ServerAuthenticationContext {
         }
 
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
-        if (/* TODO: test suite is broken */ false && ! realmIdentity.exists()) {
+        if (! realmIdentity.exists()) {
             return false;
         }
 
@@ -407,7 +407,7 @@ public final class ServerAuthenticationContext {
             final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
             boolean ok = false;
             try {
-                if (/* TODO: test suite is broken */ false && ! realmIdentity.exists()) {
+                if (! realmIdentity.exists()) {
                     return false;
                 }
                 final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();

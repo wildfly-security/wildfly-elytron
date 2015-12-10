@@ -168,13 +168,16 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
     public void testAllowedAuthorizationId() throws Exception {
         mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
 
+        final Map<String, String> passwordMap = new HashMap<String, String>();
+        passwordMap.put("admin", "pencil");
+        passwordMap.put("user", "pen");
+
         Permissions permissions = new Permissions();
         permissions.add(new RunAsPrincipalPermission("user"));
 
         SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setUserName("admin")
-                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("pencil".toCharArray()))
+                        .setPasswordMap(passwordMap)
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setPermissionsMap(Collections.singletonMap("admin", permissions))
                         .build();
@@ -313,14 +316,17 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
+        final Map<String, String> passwordMap = new HashMap<String, String>();
+        passwordMap.put("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "strange=admin=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4");
+        passwordMap.put("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4");
+
         Permissions permissions = new Permissions();
         permissions.add(new RunAsPrincipalPermission("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301"));
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setProtocol("protocol")
-                        .setUserName("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301")
-                        .setPassword("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4".toCharArray())
+                        .setPasswordMap(passwordMap)
                         .setPermissionsMap(Collections.singletonMap("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", permissions))
                         .build();
 

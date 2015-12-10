@@ -65,6 +65,7 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.provider.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -208,7 +209,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
         assertNotNull(saslServer);
         assertFalse(saslServer.isComplete());
 
@@ -243,7 +244,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
         assertNotNull(saslServer);
         assertFalse(saslServer.isComplete());
 
@@ -269,7 +270,7 @@ public class EntityTest extends BaseTestCase {
         assertNull(message);
         assertNull(saslClient.evaluateChallenge(message));
         assertTrue(saslClient.isComplete());
-        assertEquals("cn=test client 1,ou=jboss,o=red hat,st=north carolina,c=us", saslServer.getAuthorizationID());
+        assertEquals("cn=signed test client,ou=jboss,o=red hat,st=north carolina,c=us", saslServer.getAuthorizationID());
     }
 
     @Test
@@ -278,7 +279,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, null);
@@ -309,7 +310,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, getX509TrustManager(clientTrustStore));
@@ -345,7 +346,7 @@ public class EntityTest extends BaseTestCase {
         final KeyStore keyStore = loadKeyStore(serverKeyStore);
         final Certificate[] certificateChain = keyStore.getCertificateChain("dnsInCNServer");
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1, "testserver2.example.com",
-                getX509TrustManager(serverTrustStore), (PrivateKey) keyStore.getKey("dnsInCNServer", KEYSTORE_PASSWORD),
+                serverTrustStore, (PrivateKey) keyStore.getKey("dnsInCNServer", KEYSTORE_PASSWORD),
                 Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1 };
@@ -382,7 +383,7 @@ public class EntityTest extends BaseTestCase {
 
         // The server name specified by the client doesn't match the server's actual name
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, getX509TrustManager(clientTrustStore));
@@ -403,7 +404,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), null);
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), (KeyStore) null);
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, getX509TrustManager(clientTrustStore));
@@ -425,7 +426,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
         CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, null);
@@ -448,7 +449,7 @@ public class EntityTest extends BaseTestCase {
         assertNotNull(clientFactory);
 
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(serverTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
 
         // A certificate that does not correspond to the client's private key will be used
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
@@ -478,7 +479,7 @@ public class EntityTest extends BaseTestCase {
         final KeyStore keyStore = loadKeyStore(serverKeyStore);
         final Certificate[] certificateChain = keyStore.getCertificateChain(WRONG_KEYSTORE_ALIAS);
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509TrustManager(serverTrustStore), (PrivateKey) keyStore.getKey(SERVER_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
+                serverTrustStore, (PrivateKey) keyStore.getKey(SERVER_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
                 Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
 
         final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
@@ -504,7 +505,7 @@ public class EntityTest extends BaseTestCase {
         KeyStore emptyTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
         emptyTrustStore.load(null, null);
         final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_U_RSA_SHA1_ENC, "",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), getX509TrustManager(emptyTrustStore));
+                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), emptyTrustStore);
         assertNotNull(saslServer);
         assertFalse(saslServer.isComplete());
 
@@ -563,6 +564,9 @@ public class EntityTest extends BaseTestCase {
     }
 
     private KeyStore loadKeyStore(File keyStore) throws IOException, GeneralSecurityException {
+        if (keyStore == null) {
+            return null;
+        }
         KeyStore ks = KeyStore.getInstance(KEYSTORE_TYPE);
         FileInputStream fis = null;
         try {
@@ -574,22 +578,33 @@ public class EntityTest extends BaseTestCase {
         return ks;
     }
 
-    private SaslServer createSaslServer(final String mechanism, final String serverName, final X509KeyManager keyManager, final X509TrustManager trustManager) throws Exception {
+    private SaslServer createSaslServer(final String mechanism, final String serverName, final X509KeyManager keyManager, final File trustStore) throws Exception {
+        return createSaslServer(mechanism, serverName, keyManager, loadKeyStore(trustStore));
+    }
+
+    private SaslServer createSaslServer(final String mechanism, final String serverName, final X509KeyManager keyManager, final KeyStore trustStore) throws Exception {
+        final String realmName = "keyStoreRealm";
         return new SaslServerBuilder(EntitySaslServerFactory.class, mechanism)
                 .setProtocol("test")
                 .setServerName(serverName)
+                .addRealm(realmName, new KeyStoreBackedSecurityRealm(trustStore))
+                .setDefaultRealmName(realmName)
                 .setKeyManager(keyManager)
-                .setTrustManager(trustManager)
+                .setTrustManager(getX509TrustManager(trustStore))
                 .build();
     }
 
-    private SaslServer createSaslServer(final String mechanism, final String serverName, final X509TrustManager trustManager, final PrivateKey privateKey,
+    private SaslServer createSaslServer(final String mechanism, final String serverName, final File trustStore, final PrivateKey privateKey,
                                         final X509Certificate... certificateChain) throws Exception {
+        final String realmName = "keyStoreRealm";
+        final KeyStore ts = loadKeyStore(trustStore);
         return new SaslServerBuilder(EntitySaslServerFactory.class, mechanism)
                 .setProtocol("test")
                 .setServerName(serverName)
+                .addRealm(realmName, new KeyStoreBackedSecurityRealm(ts))
+                .setDefaultRealmName(realmName)
                 .setCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain))
-                .setTrustManager(trustManager)
+                .setTrustManager(getX509TrustManager(ts))
                 .build();
     }
 

@@ -43,6 +43,9 @@ import org.apache.directory.server.kerberos.kdc.KdcServer;
 import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
 import org.apache.directory.server.kerberos.shared.keytab.Keytab;
 import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
+import org.apache.directory.server.ldap.LdapServer;
+import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.directory.server.protocol.shared.transport.Transport;
 import org.apache.directory.server.protocol.shared.transport.UdpTransport;
 import org.apache.directory.shared.kerberos.KerberosTime;
 import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
@@ -57,11 +60,22 @@ import javax.security.auth.kerberos.KerberosPrincipal;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class TestKDC {
+    public static final int LDAP_PORT = 11390;
     private static Logger log = Logger.getLogger(TestKDC.class);
     private File workingDir;
     private DirectoryService directoryService;
     private KdcServer kdcServer;
     private String originalConfig;
+    private boolean exposeLdapServer;
+    private LdapServer ldapServer;
+
+    public TestKDC() {
+        this(false);
+    }
+
+    public TestKDC(boolean exposeLdapServer) {
+        this.exposeLdapServer = exposeLdapServer;
+    }
 
     public void startDirectoryService() {
         if (directoryService != null) {
@@ -85,9 +99,16 @@ public class TestKDC {
             CoreSession adminSession = ds.getAdminSession();
             processLdif(schemaManager, adminSession, "/KerberosTesting.ldif");
 
-            // Only using the DirectoryService to back the KDC so don't expose a LDAP server.
-
             directoryService = ds;
+
+            if (exposeLdapServer) {
+                ldapServer = new LdapServer();
+                ldapServer.setServiceName("DefaultLDAP");
+                Transport ldap = new TcpTransport("localhost", LDAP_PORT, 3, 5);
+                ldapServer.addTransports(ldap);
+                ldapServer.setDirectoryService(directoryService);
+                ldapServer.start();
+            }
         } catch (Exception e) {
             throw new IllegalStateException("Unable to initialise DirectoryService", e);
         }

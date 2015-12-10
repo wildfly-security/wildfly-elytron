@@ -32,6 +32,7 @@ import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO;
 import static org.wildfly.security.sasl.gs2.Gs2.SPNEGO_PLUS;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginClient;
 import static org.wildfly.security.sasl.gssapi.JaasUtil.loginServer;
+import static org.wildfly.security.sasl.gssapi.TestKDC.LDAP_PORT;
 
 import java.io.IOException;
 import java.net.URI;
@@ -40,6 +41,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
@@ -67,6 +69,11 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.provider.ldap.DirContextFactory;
+import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
+import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.TestKDC;
@@ -96,7 +103,7 @@ public class Gs2Test extends BaseTestCase {
 
     @BeforeClass
     public static void init() throws LoginException {
-        testKdc = new TestKDC();
+        testKdc = new TestKDC(true);
         testKdc.startDirectoryService();
         testKdc.startKDC();
         serverKeyTab = testKdc.generateKeyTab(SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
@@ -384,7 +391,7 @@ public class Gs2Test extends BaseTestCase {
         saslServer = getSaslServer(GS2_KRB5, "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslServer);
 
-        saslClient = getSaslClient(new String[]{GS2_KRB5}, "bsmith@WILDFLY.ORG", "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
+        saslClient = getSaslClient(new String[]{GS2_KRB5}, "sasl/test_server_1@WILDFLY.ORG", "sasl", TEST_SERVER_1, Collections.<String, Object>emptyMap(), null, null);
         assertNotNull(saslClient);
 
         byte[] message = evaluateChallenge(new byte[0]);
@@ -505,6 +512,24 @@ public class Gs2Test extends BaseTestCase {
 
         final SaslServerBuilder builder = new SaslServerBuilder(Gs2SaslServerFactory.class, mechanism)
                 .setDontAssertBuiltServer();
+
+        final DirContextFactory dirContextFactory = SimpleDirContextFactoryBuilder.builder()
+                .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
+                .setSecurityPrincipal("uid=Sasl_1,ou=Users,dc=wildfly,dc=org")
+                .setSecurityCredential("servicepwd")
+                .build();
+        final SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
+                .setDirContextFactory(dirContextFactory)
+                .setNameRewriter(new RegexNameRewriter(Pattern.compile("(.*)@WILDFLY\\.ORG"), "$1", true))
+                .identityMapping()
+                    .setSearchDn("dc=wildfly,dc=org")
+                    .searchRecursive()
+                    .setRdnIdentifier("uid")
+                    .build()
+                .build();
+        final String realmName = "ldapRealm";
+        builder.addRealm(realmName, securityRealm);
+        builder.setDefaultRealmName(realmName);
 
         if (protocol != null) {
             builder.setProtocol(protocol);

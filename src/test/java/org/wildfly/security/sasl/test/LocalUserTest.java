@@ -93,8 +93,11 @@ public class LocalUserTest extends BaseTestCase {
     public void testSuccessfulQuietExchange_CF() throws Exception {
         Map<String, Object> serverOptions = new HashMap<>();
         serverOptions.put("wildfly.sasl.local-user.default-user", "$local");
+        final Map<String, String> passwordMap = new HashMap<String, String>();
+        passwordMap.put("$local", null);
+        passwordMap.put("George", null);
         SaslServer server = new SaslServerBuilder(LocalUserServerFactory.class, LOCAL_USER)
-                .setUserName("George")
+                .setPasswordMap(passwordMap)
                 .setProperties(serverOptions)
                 .build();
 
