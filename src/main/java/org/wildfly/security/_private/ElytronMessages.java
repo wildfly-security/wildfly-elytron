@@ -40,7 +40,6 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.callback.Callback;
 import javax.security.jacc.PolicyContextException;
-import javax.security.sasl.SaslException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
 
@@ -608,8 +607,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5018, value = "[%s] Channel binding data changed")
     AuthenticationMechanismException mechChannelBindingChanged(String mechName);
 
-    @Message(id = 5019, value = "[%s] Proxied SASL authentication failed")
-    SaslException saslProxyAuthenticationFailed(String mechName);
+    // 5019
 
     // 5020
 
