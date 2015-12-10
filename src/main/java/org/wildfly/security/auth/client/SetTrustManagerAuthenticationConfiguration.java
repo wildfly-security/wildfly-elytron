@@ -29,8 +29,9 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
-import org.wildfly.security.credential.X509CertificateChainCredential;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -54,24 +55,24 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
 
     void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
         final Callback callback = callbacks[index];
-        if (callback instanceof VerifyPeerTrustedCallback) {
-            X509TrustManager trustManager;
-            try {
-                trustManager = trustManagerFactory.create();
-            } catch (GeneralSecurityException e) {
-                throw log.unableToCreateTrustManager(e);
-            }
-            final VerifyPeerTrustedCallback verifyPeerTrustedCallback = (VerifyPeerTrustedCallback) callback;
-            final X509CertificateChainCredential credential = verifyPeerTrustedCallback.getCredential(X509CertificateChainCredential.class);
-            if (credential == null) {
+        if (callback instanceof EvidenceVerifyCallback) {
+            final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
+            final Evidence evidence = evidenceVerifyCallback.getEvidence();
+            if (evidence instanceof X509PeerCertificateChainEvidence) {
+                final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
+                X509TrustManager trustManager;
+                try {
+                    trustManager = trustManagerFactory.create();
+                } catch (GeneralSecurityException e) {
+                    throw log.unableToCreateTrustManager(e);
+                }
+                try {
+                    trustManager.checkServerTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
+                    evidenceVerifyCallback.setVerified(true);
+                } catch (CertificateException e) {
+                }
                 return;
             }
-            try {
-                trustManager.checkServerTrusted(credential.getCertificateChain(), credential.getAlgorithm());
-                verifyPeerTrustedCallback.setVerified(true);
-            } catch (CertificateException e) {
-            }
-            return;
         }
         super.handleCallback(callbacks, index);
     }
