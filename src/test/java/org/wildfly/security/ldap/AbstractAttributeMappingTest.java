@@ -21,7 +21,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.security.Permissions;
+
 import org.junit.ClassRule;
+import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -64,6 +67,12 @@ public abstract class AbstractAttributeMappingTest {
                                         .map(expectedAttributes)
                                         .build()
                                         .build());
+
+        builder.setPermissionMapper((principal, roles) -> {
+            final Permissions permissions = new Permissions();
+            permissions.add(new LoginPermission());
+            return permissions;
+        });
 
         SecurityDomain securityDomain = builder.build();
 
