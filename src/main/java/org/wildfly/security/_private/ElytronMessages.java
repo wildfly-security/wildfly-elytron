@@ -59,6 +59,7 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
+import org.wildfly.security.credential.external.ExternalCredentialException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
@@ -1250,4 +1251,32 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(id = 8038, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
+
+    /* credential.store. package */
+
+    @Message(id = 9500, value = "Problem to instantiate password class")
+    ExternalCredentialException passwordClassProblem(@Cause Exception cause);
+
+    @Message(id = 9501, value = "Specified class is not an instance of %s")
+    ExternalCredentialException wrongPasswordClass(String className);
+
+    @Message(id = 9502, value = "Password class not specified")
+    ExternalCredentialException passwordClassNotSpecified();
+
+    @LogMessage
+    @Message(id = 9503, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    void warnWrongBase64EncodedString(String base64);
+
+    @Message(id = 9504, value = "Problem executing external password command \"%s\"")
+    ExternalCredentialException passwordCommandExecutionProblem(String command, @Cause Exception cause);
+
+    @Message(id = 9505, value = "External password command not specified")
+    ExternalCredentialException passwordCommandNotSpecified();
+
+    @Message(id = 9506, value = "Password cache for external commands not supported")
+    ExternalCredentialException cacheForExternalCommandsNotSupported();
+
+    @Message(id = 9507, value = "Execution type not supported \"%s\"")
+    ExternalCredentialException executionTypeNotSupported(String executionType);
+
 }

@@ -269,4 +269,41 @@ public abstract class Alphabet {
             }
         };
     }
+
+    /**
+     * The alphabet used by PicketBox project base 64 encoding.
+     * {@code 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./}
+     */
+    public static final Base64Alphabet PICKETBOX_BASE_64 = new Base64Alphabet(false) {
+        public int encode(int val) {
+            if (val <= 9) {
+                return '0' + val;
+            } else if (val <= 35) {
+                return 'A' + val - 10;
+            } else if (val <= 61) {
+                return 'a' + val - 36;
+            } else if (val == 62) {
+                return '.';
+            } else {
+                assert val == 63;
+                return '/';
+            }
+        }
+
+        public int decode(int codePoint) {
+            if ('0' <= codePoint && codePoint <= '9') {
+                return codePoint - '0';
+            } else if ('A' <= codePoint && codePoint <= 'Z') {
+                return codePoint - 'A' + 10;
+            } else if ('a' <= codePoint && codePoint <= 'z') {
+                return codePoint - 'a' + 36;
+            } else if (codePoint == '.') {
+                return 62;
+            } else if (codePoint == '/') {
+                return 63;
+            } else {
+                return -1;
+            }
+        }
+    };
 }
