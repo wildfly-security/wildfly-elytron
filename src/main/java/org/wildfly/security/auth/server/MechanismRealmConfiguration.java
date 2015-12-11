@@ -30,6 +30,7 @@ public final class MechanismRealmConfiguration {
     private final NameRewriter preRealmRewriter;
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
+    private final RealmMapper realmMapper;
 
     /**
      * Construct a new instance.
@@ -38,12 +39,14 @@ public final class MechanismRealmConfiguration {
      * @param preRealmRewriter the pre-realm rewriter to apply (may not be {@code null})
      * @param postRealmRewriter the post-realm rewriter to apply (may not be {@code null})
      * @param finalRewriter the final rewriter to apply (may not be {@code null})
+     * @param realmMapper the realm mapper to use
      */
-    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter) {
+    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final RealmMapper realmMapper) {
         this.realmName = realmName;
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
+        this.realmMapper = realmMapper;
     }
 
     /**
@@ -83,9 +86,18 @@ public final class MechanismRealmConfiguration {
     }
 
     /**
+     * Get the realm mapper for this mechanism realm.
+     *
+     * @return the realm mapper for this mechanism realm, or {@code null} to use the default
+     */
+    public RealmMapper getRealmMapper() {
+        return realmMapper;
+    }
+
+    /**
      * A realm configuration for no particular realm, which does no additional rewriting.
      */
-    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", null, null, null);
+    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", null, null, null, null);
 
     /**
      * Obtain a new {@link Builder} capable of building a {@link MechanismRealmConfiguration}.
@@ -101,6 +113,7 @@ public final class MechanismRealmConfiguration {
         private NameRewriter preRealmRewriter;
         private NameRewriter postRealmRewriter;
         private NameRewriter finalRewriter;
+        private RealmMapper realmMapper;
 
         /**
          * Construct a new instance.
@@ -132,9 +145,14 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
+        public Builder setRealmMapper(final RealmMapper realmMapper) {
+            this.realmMapper = realmMapper;
+            return this;
+        }
+
         public MechanismRealmConfiguration build() {
             Assert.checkNotNullParam("realmName", realmName);
-            return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter);
+            return new MechanismRealmConfiguration(realmName, preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper);
         }
     }
 }
