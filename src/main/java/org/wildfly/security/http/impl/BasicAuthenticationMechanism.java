@@ -96,9 +96,12 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                 if (current.startsWith(CHALLENGE_PREFIX)) {
                     byte[] decodedValue = ByteIterator.ofBytes(current.substring(PREFIX_LENGTH).getBytes(UTF_8)).base64Decode().drain();
 
+                    // Note: A ':' can not be present in the username but it can be present in the password so the first ':' is the delimiter.
                     int colonPos = indexOf(decodedValue, ':');
-                    if (colonPos <= 0 || colonPos == decodedValue.length-1) {
-                        throw log.incorrectlyFormattedHeader(AUTHORIZATION);
+                    if (colonPos <= 0) {
+                        // We flag as failed so the browser is re-challenged - sending an error the browser believes it's input was valid.
+                        request.authenticationFailed(log.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(() -> getHostName(request), response));
+                        return;
                     }
 
                     ByteBuffer usernameBytes = ByteBuffer.wrap(decodedValue, 0, colonPos);
