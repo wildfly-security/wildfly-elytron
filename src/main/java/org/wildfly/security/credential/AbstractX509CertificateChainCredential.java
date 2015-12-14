@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.X509PeerCertificateEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 abstract class AbstractX509CertificateChainCredential implements X509CertificateChainCredential {
 
@@ -47,14 +47,14 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
     }
 
     public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
-        return evidenceClass == X509PeerCertificateEvidence.class && getAlgorithm().equals(algorithmName);
+        return evidenceClass == X509PeerCertificateChainEvidence.class && getAlgorithm().equals(algorithmName);
     }
 
     public boolean verify(final Evidence evidence) {
-        if (evidence instanceof X509PeerCertificateEvidence) {
-            final X509PeerCertificateEvidence peerCertificateEvidence = (X509PeerCertificateEvidence) evidence;
+        if (evidence instanceof X509PeerCertificateChainEvidence) {
+            final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
             try {
-                return getAlgorithm().equals(peerCertificateEvidence.getAlgorithm()) && Arrays.equals(getFirstCertificate().getEncoded(), peerCertificateEvidence.getPeerCertificate().getEncoded());
+                return getAlgorithm().equals(peerCertificateChainEvidence.getAlgorithm()) && Arrays.equals(getFirstCertificate().getEncoded(), peerCertificateChainEvidence.getFirstCertificate().getEncoded());
             } catch (CertificateEncodingException e) {
             }
         }

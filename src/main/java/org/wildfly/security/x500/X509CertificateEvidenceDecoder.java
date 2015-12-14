@@ -22,25 +22,25 @@ import java.security.cert.X509Certificate;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.wildfly.security.auth.server.CredentialDecoder;
-import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.X509CertificateChainCredential;
+import org.wildfly.security.auth.server.EvidenceDecoder;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
- * A credential decoder which can decode an {@link X509Certificate} into an {@link X500Principal}.
+ * An evidence decoder which can decode an {@link X509Certificate} into an {@link X500Principal}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class X509CertificateCredentialDecoder implements CredentialDecoder {
+public final class X509CertificateEvidenceDecoder implements EvidenceDecoder {
 
-    private static final X509CertificateCredentialDecoder INSTANCE = new X509CertificateCredentialDecoder();
+    private static final X509CertificateEvidenceDecoder INSTANCE = new X509CertificateEvidenceDecoder();
 
-    private X509CertificateCredentialDecoder() {
+    private X509CertificateEvidenceDecoder() {
     }
 
-    public X500Principal getPrincipalFromCredential(final Credential credential) {
-        if (credential instanceof X509CertificateChainCredential) {
-            return ((X509CertificateChainCredential) credential).getFirstCertificate().getSubjectX500Principal();
+    public X500Principal getPrincipalFromEvidence(final Evidence evidence) {
+        if (evidence instanceof X509PeerCertificateChainEvidence) {
+            return ((X509PeerCertificateChainEvidence) evidence).getFirstCertificate().getSubjectX500Principal();
         }
         return null;
     }
@@ -48,9 +48,9 @@ public final class X509CertificateCredentialDecoder implements CredentialDecoder
     /**
      * Get the singleton instance of this class.
      *
-     * @return the credential decoder instance
+     * @return the evidence decoder instance
      */
-    public static X509CertificateCredentialDecoder getInstance() {
+    public static X509CertificateEvidenceDecoder getInstance() {
         return INSTANCE;
     }
 }

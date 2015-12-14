@@ -44,15 +44,15 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
-import org.wildfly.security.credential.X509CertificateChainPublicCredential;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.sasl.entity.GeneralName.DNSName;
 import org.wildfly.security.sasl.util.AbstractSaslServer;
 import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.x500.X509CertificateCredentialDecoder;
+import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
 
 /**
  * SaslServer for the ISO/IEC 9798-3 authentication mechanism as defined by
@@ -160,18 +160,18 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                     // Get the client's certificate data and verify it
                     decoder.startExplicit(1);
-                    final X509CertificateChainPublicCredential credential = new X509CertificateChainPublicCredential(EntityUtil.decodeCertificateData(decoder));
+                    final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(EntityUtil.decodeCertificateData(decoder));
                     decoder.endExplicit();
-                    clientCert = credential.getFirstCertificate();
+                    clientCert = evidence.getFirstCertificate();
 
-                    VerifyPeerTrustedCallback verifyPeerTrustedCallback = new VerifyPeerTrustedCallback(clientCert.getSubjectX500Principal(), credential);
-                    handleCallbacks(verifyPeerTrustedCallback);
-                    if (! verifyPeerTrustedCallback.isVerified()) {
+                    EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
+                    handleCallbacks(evidenceVerifyCallback);
+                    if (! evidenceVerifyCallback.isVerified()) {
                         throw log.mechAuthenticationFailed(getMechanismName()).toSaslException();
                     }
 
                     // Determine the authorization identity
-                    clientName = X509CertificateCredentialDecoder.getInstance().getPrincipalFromCredential(credential).getName(X500Principal.CANONICAL);
+                    clientName = X509CertificateEvidenceDecoder.getInstance().getPrincipalFromEvidence(evidence).getName(X500Principal.CANONICAL);
                     if (decoder.isNextType(CONTEXT_SPECIFIC_MASK, 2, true)) {
                         // The client provided an authID
                         decoder.decodeImplicit(2);

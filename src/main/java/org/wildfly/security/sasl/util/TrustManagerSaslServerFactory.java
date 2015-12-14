@@ -38,9 +38,10 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.auth.callback.VerifyPeerTrustedCallback;
-import org.wildfly.security.credential.X509CertificateChainCredential;
+import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.ssl.SSLUtils;
 
@@ -78,18 +79,19 @@ public final class TrustManagerSaslServerFactory extends AbstractDelegatingSaslS
                     final X509TrustManager trustManager = getTrustManager();
                     ((TrustedAuthoritiesCallback) callback).setTrustedAuthorities(getTrustedAuthorities(trustManager.getAcceptedIssuers()));
                     iterator.remove();
-                } else if (callback instanceof VerifyPeerTrustedCallback) {
-                    final X509TrustManager trustManager = getTrustManager();
-                    final VerifyPeerTrustedCallback verifyPeerTrustedCallback = (VerifyPeerTrustedCallback) callback;
-                    final X509CertificateChainCredential credential = verifyPeerTrustedCallback.getCredential(X509CertificateChainCredential.class);
-                    if (credential != null) {
+                } else if (callback instanceof EvidenceVerifyCallback) {
+                    final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
+                    final Evidence evidence = evidenceVerifyCallback.getEvidence();
+                    if (evidence instanceof X509PeerCertificateChainEvidence) {
+                        final X509TrustManager trustManager = getTrustManager();
+                        final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
                         try {
-                            trustManager.checkClientTrusted(credential.getCertificateChain(), credential.getAlgorithm());
-                            verifyPeerTrustedCallback.setVerified(true);
+                            trustManager.checkClientTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
+                            evidenceVerifyCallback.setVerified(true);
                         } catch (CertificateException e) {
                         }
+                        iterator.remove();
                     }
-                    iterator.remove();
                 }
             }
             if (! list.isEmpty()) {

@@ -21,38 +21,38 @@ package org.wildfly.security.auth.server;
 import org.wildfly.common.Assert;
 
 import java.security.Principal;
-import org.wildfly.security.credential.Credential;
+import org.wildfly.security.evidence.Evidence;
 
 /**
- * A decoder which acquires a principal from a credential.  Implementations may indicate that the credential
+ * A decoder which acquires a principal from evidence.  Implementations may indicate that the evidence
  * is not understood.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface CredentialDecoder {
+public interface EvidenceDecoder {
 
     /**
-     * Get the principal from an opaque credential.  If this decoder cannot understand the given credential
+     * Get the principal from an opaque evidence.  If this decoder cannot understand the given evidence
      * type, {@code null} is returned.
      *
-     * @param credential the credential to decode
-     * @return the principal, or {@code null} if this decoder does not understand the credential
+     * @param evidence the evidence to decode
+     * @return the principal, or {@code null} if this decoder does not understand the evidence
      */
-    Principal getPrincipalFromCredential(Credential credential);
+    Principal getPrincipalFromEvidence(Evidence evidence);
 
     /**
-     * Create an aggregated credential decoder.  The aggregated decoder will check each credential decoder until one
-     * matches the credential; this result will be returned.
+     * Create an aggregated evidence decoder.  The aggregated decoder will check each evidence decoder until one
+     * matches the evidence; this result will be returned.
      *
      * @param decoders the constituent decoders
      * @return the aggregated decoder
      */
-    static CredentialDecoder aggregate(final CredentialDecoder... decoders) {
+    static EvidenceDecoder aggregate(final EvidenceDecoder... decoders) {
         Assert.checkNotNullParam("decoders", decoders);
-        return credential -> {
+        return evidence -> {
             Principal result;
-            for (CredentialDecoder decoder : decoders) {
-                result = decoder.getPrincipalFromCredential(credential);
+            for (EvidenceDecoder decoder : decoders) {
+                result = decoder.getPrincipalFromEvidence(evidence);
                 if (result != null) {
                     return result;
                 }
