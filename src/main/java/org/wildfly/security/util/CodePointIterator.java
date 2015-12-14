@@ -111,6 +111,19 @@ public abstract class CodePointIterator extends NumericIterator {
     }
 
     /**
+     * Determine if the remaining contents of this iterator are identical to the given string.  If the
+     * contents are not equal, the iterator will be positioned at the location of the first difference (i.e. the code point
+     * returned by {@link #next()} will be the differing code point.  If the contents are equal, the iterator will be
+     * positioned at the end of its contents.
+     *
+     * @param other the other string
+     * @return {@code true} if the contents are equal, {@code false} otherwise
+     */
+    public boolean contentEquals(String other) {
+        return contentEquals(CodePointIterator.ofString(other));
+    }
+
+    /**
      * Return a copy of this iterator which is limited to the given number of code points after the current one.  Advancing
      * the returned iterator will also advance this one.
      *
