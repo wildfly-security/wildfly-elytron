@@ -489,6 +489,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3009, value = "Invalid base 64 character")
     DecodeException invalidBase64Character();
 
+    @Message(id = 3010, value = "Malformed PEM content at offset %d")
+    IllegalArgumentException malformedPemContent(int offset);
+
+    @Message(id = 3011, value = "Invalid PEM type (expected \"%s\", got \"%s\"")
+    IllegalArgumentException invalidPemType(String expected, String actual);
+
+    @Message(id = 3012, value = "Certificate parse error")
+    IllegalArgumentException certificateParseError(@Cause CertificateException cause);
+
     /* ssl package */
 
     @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")
