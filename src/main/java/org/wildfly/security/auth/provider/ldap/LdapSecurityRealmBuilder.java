@@ -25,6 +25,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.NameRewriter;
 
+import javax.naming.directory.Attributes;
+import javax.naming.ldap.LdapName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -182,6 +184,8 @@ public class LdapSecurityRealmBuilder {
         private String nameAttribute;
         private int searchTimeLimit = 10000;
         private List<AttributeMapping> attributes = new ArrayList<>();
+        private LdapName newIdentityParent = null;
+        private Attributes newIdentityAttributes = null;
 
         /**
          * <p>Set the name of the context to be used when executing queries.
@@ -242,6 +246,20 @@ public class LdapSecurityRealmBuilder {
             return this;
         }
 
+        public IdentityMappingBuilder setNewIdentityParent(LdapName newIdentityParent) {
+            assertNotBuilt();
+
+            this.newIdentityParent = newIdentityParent;
+            return this;
+        }
+
+        public IdentityMappingBuilder setNewIdentityAttributes(Attributes newIdentityAttributes) {
+            assertNotBuilt();
+
+            this.newIdentityAttributes = newIdentityAttributes;
+            return this;
+        }
+
         /**
          * Define an attribute mapping configuration.
          *
@@ -260,7 +278,7 @@ public class LdapSecurityRealmBuilder {
             built = true;
 
             return LdapSecurityRealmBuilder.this.setIdentityMapping(new IdentityMapping(
-                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, attributes));
+                    searchDn, searchRecursive, searchTimeLimit, nameAttribute, attributes, newIdentityParent, newIdentityAttributes));
         }
 
         private void assertNotBuilt() {

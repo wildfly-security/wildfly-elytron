@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
@@ -559,11 +560,48 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override public void delete() throws RealmUnavailableException {
-            throw Assert.unsupported();
+            if (identity == null) {
+                identity = getIdentity(name);
+            }
+
+            if (identity == null) {
+                throw log.noSuchIdentity();
+            }
+
+            DirContext context = null;
+            try {
+                context = dirContextFactory.obtainDirContext(null);
+
+                log.debugf("Removing identity [%s] with DN [%s] from LDAP", name, identity.getDistinguishedName());
+                context.destroySubcontext(new LdapName(identity.getDistinguishedName()));
+
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedDeleteIdentityFromServer(e);
+            } finally {
+                dirContextFactory.returnContext(context);
+            }
         }
 
         @Override public void create() throws RealmUnavailableException {
-            throw Assert.unsupported();
+            if (identityMapping.newIdentityParent == null || identityMapping.newIdentityAttributes == null) {
+                throw log.ldapRealmNotConfiguredToSupportCreatingIdentities();
+            }
+
+            DirContext context = null;
+            try {
+                context = dirContextFactory.obtainDirContext(null);
+
+                LdapName distinguishName = (LdapName) identityMapping.newIdentityParent.clone();
+                distinguishName.add(new Rdn(identityMapping.rdnIdentifier, name));
+
+                log.debugf("Creating identity [%s] with DN [%s] in LDAP", name, distinguishName.toString());
+                context.createSubcontext((Name) distinguishName, identityMapping.newIdentityAttributes);
+
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedCreateIdentityOnServer(e);
+            } finally {
+                dirContextFactory.returnContext(context);
+            }
         }
 
         @Override public void setAttributes(org.wildfly.security.authz.Attributes attributes) throws RealmUnavailableException {
@@ -653,14 +691,18 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         private final String rdnIdentifier;
         private final List<AttributeMapping> attributes;
         public final int searchTimeLimit;
+        private final LdapName newIdentityParent;
+        private final Attributes newIdentityAttributes;
 
-        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
             this.searchTimeLimit = searchTimeLimit;
             this.rdnIdentifier = rdnIdentifier;
             this.attributes = attributes;
+            this.newIdentityParent = newIdentityParent;
+            this.newIdentityAttributes = newIdentityAttributes;
         }
     }
 }
