@@ -150,7 +150,8 @@ public final class ServerAuthenticationContext {
         // principal *must* be captured at this point
         final NamePrincipal principal = new NamePrincipal(name);
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
-        final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
+        String realmName = mapAll(name, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
+        final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         // name should remain
         if (oldState.getId() == ASSIGNED_ID) {
@@ -228,7 +229,7 @@ public final class ServerAuthenticationContext {
             }
         }
         name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
-        String realmName = domain.mapRealmName(name);
+        String realmName = mapAll(name, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
@@ -399,7 +400,8 @@ public final class ServerAuthenticationContext {
 
             // continue rewriting to locate the new authorization identity
             name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
-            final RealmInfo realmInfo = domain.getRealmInfo(domain.mapRealmName(name));
+            String realmName = mapAll(name, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
+            final RealmInfo realmInfo = domain.getRealmInfo(realmName);
             name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
 
             // now construct the new identity
@@ -818,6 +820,24 @@ public final class ServerAuthenticationContext {
             return validatedRewrite(name, r3);
         }
         return name;
+    }
+
+    static String mapAll(String name, RealmMapper r1, RealmMapper r2, RealmMapper r3, String defaultRealmName) {
+        if (r1 != null) {
+            return mapRealmName(name, r1, defaultRealmName);
+        }
+        if (r2 != null) {
+            return mapRealmName(name, r2, defaultRealmName);
+        }
+        if (r3 != null) {
+            return mapRealmName(name, r3, defaultRealmName);
+        }
+        return defaultRealmName;
+    }
+
+    private static String mapRealmName(String name, RealmMapper realmMapper, String defaultRealmName) {
+        String realmName = realmMapper.getRealmMapping(name);
+        return realmName != null ? realmName : defaultRealmName;
     }
 
     private static final int INITIAL_ID = 0;

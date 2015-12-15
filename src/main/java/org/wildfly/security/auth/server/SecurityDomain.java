@@ -345,6 +345,14 @@ public final class SecurityDomain {
         return realm != null ? realm : defaultRealmName;
     }
 
+    String getDefaultRealmName() {
+        return defaultRealmName;
+    }
+
+    RealmMapper getRealmMapper() {
+        return realmMapper;
+    }
+
     NameRewriter getPostRealmRewriter() {
         return postRealmRewriter;
     }
