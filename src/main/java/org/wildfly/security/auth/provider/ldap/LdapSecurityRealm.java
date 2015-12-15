@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,7 +41,9 @@ import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
+import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.LdapName;
@@ -605,7 +608,68 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         @Override public void setAttributes(org.wildfly.security.authz.Attributes attributes) throws RealmUnavailableException {
-            throw Assert.unsupported();
+            log.debugf("Trying to set attributes for principal [%s].", this.name);
+
+            if (identity == null) {
+                identity = getIdentity(name);
+            }
+
+            if (identity == null) {
+                throw log.noSuchIdentity();
+            }
+
+            DirContext context = null;
+            try {
+                context = dirContextFactory.obtainDirContext(null);
+                List<ModificationItem> modItems = new LinkedList<>();
+                LdapName identityLdapName = new LdapName(identity.getDistinguishedName());
+                String renameTo = null;
+
+                for(AttributeMapping mapping : identityMapping.attributes) {
+                    if (mapping.getFilter() != null || mapping.getRdn() != null) { // filtered attributes
+                        if (attributes.size(mapping.getName()) != 0) { // or just ignore it and allow set what was getted?
+                            log.ldapRealmDoesNotSupportSettingFilteredAttribute(mapping.getName(), this.name);
+                        }
+                    } else if (identityMapping.rdnIdentifier.equalsIgnoreCase(mapping.getLdapName())) { // rdn
+                        if (attributes.size(mapping.getName()) == 1) {
+                            renameTo = attributes.get(mapping.getName(), 0);
+                        } else {
+                            throw log.ldapRealmRequireExactlyOneRdnAttribute(mapping.getName(), this.name);
+                        }
+                    } else { // standard ldap attributes
+                        if (attributes.size(mapping.getName()) == 0) {
+                            BasicAttribute attribute = new BasicAttribute(mapping.getLdapName());
+                            modItems.add(new ModificationItem(DirContext.REMOVE_ATTRIBUTE, attribute));
+                        } else {
+                            BasicAttribute attribute = new BasicAttribute(mapping.getLdapName());
+                            attributes.get(mapping.getName()).forEach(entryItem -> {
+                                attribute.add(entryItem);
+                            });
+                            modItems.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, attribute));
+                        }
+                    }
+                }
+
+                for(org.wildfly.security.authz.Attributes.Entry entry : attributes.entries()) {
+                    if (identityMapping.attributes.stream().filter(mp -> mp.getName().equals(entry.getKey())).count() == 0) {
+                        throw log.ldapRealmCannotSetAttributeWithoutMapping(entry.getKey(), this.name);
+                    }
+                }
+
+                ModificationItem[] modItemsArray = modItems.toArray(new ModificationItem[modItems.size()]);
+                context.modifyAttributes(identityLdapName, modItemsArray);
+
+                if (renameTo != null && ! renameTo.equals((String) identityLdapName.getRdn(identityLdapName.size()-1).getValue())) {
+                    LdapName newLdapName = new LdapName(identityLdapName.getRdns().subList(0, identityLdapName.size()-1));
+                    newLdapName.add(new Rdn(identityMapping.rdnIdentifier, renameTo));
+                    context.rename(identityLdapName, newLdapName);
+                }
+
+            } catch (Exception e) {
+                throw log.ldapRealmAttributesSettingFailed(this.name, e);
+            } finally {
+                dirContextFactory.returnContext(context);
+            }
         }
 
         private class LdapIdentity {
