@@ -59,6 +59,7 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
+import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
@@ -1267,4 +1268,28 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(id = 8038, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
+
+    /* credential.store. package */
+
+    @Message(id = 9501, value = "Credential store \"%s\" has to be initialized before the first usage")
+    CredentialStoreException credentialStoreNotInitialized(String name);
+
+    @Message(id = 9502, value = "Reloadable credential store (\"%s\") has to be read only, change settings and restart vault service")
+    CredentialStoreException reloadablecredentialStoreIsReadOnly(String name);
+
+    @Message(id = 9503, value = "credential alias \"%s\" cannot be found in the store \"%s\"")
+    CredentialStoreException credentialAliasNotFoundNotFound(String credentialAlias, String name);
+
+    @Message(id = 9504, value = "Cannot write storage file \"%s\" for the store \"%s\"")
+    CredentialStoreException cannotWriteStorageFie(String fileName, String name);
+
+    @Message(id = 9505, value = "Following configuration attributes are not supported by KeystorePasswordStore named \"%s\" \n\"%s\"")
+    CredentialStoreException unsupportedPasswordStorageConfigurationAttributes(String vaultName, String attributes);
+
+    @Message(id = 9506, value = "Cannot read credential storage file \"%s\" for the store named \"%s\"")
+    CredentialStoreException cannotReadVaultStorage(String fileName, String vaultName, @Cause Exception cause);
+
+    @Message(id = 9507, value = "Credential store \"%s\" doesn't contain admin key under alias \"%s\"")
+    CredentialStoreException storeAdminKeyNotPresent(String name, String alias);
+
 }
