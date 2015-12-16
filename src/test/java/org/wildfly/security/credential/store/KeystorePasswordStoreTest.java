@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
+import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -225,5 +226,97 @@ public class KeystorePasswordStoreTest {
         }
     }
 
+    /**
+     * Test checking {EXT} external master credential method.
+     * @throws Exception when problem occurs
+     */
+    @Test
+    public void testExternalPasswordTypeEXT() throws Exception {
+        String masterCommand = buildExternalCommand("{EXT}", " ", "secret_store_THREE");
+        String keyCommand = buildExternalCommand("{EXT}", " ", "secret_key_THREE");
+        externalCredentialTestSequence(masterCommand, keyCommand, null);
+    }
+
+    /**
+     * Test checking {EXT} external master credential method.
+     * @throws Exception when problem occurs
+     */
+    @Test
+    public void testExternalPasswordTypeCMD() throws Exception {
+        String masterCommand = buildExternalCommand("{CMD}", ",", "secret_store_THREE");
+        String keyCommand = buildExternalCommand("{CMD}", ",", "secret_key_THREE");
+        externalCredentialTestSequence(masterCommand, keyCommand, null);
+    }
+
+    /**
+     * Test sequence should not add or modify credential store as it will be used multiple times and
+     * don't want to initialize it each time.
+     * We are testing ability to open the credential store and read an entry.
+     * @param masterCredentialCommand command to get master credential
+     * @param keyCredentialCommand command to get key credential
+     * @throws Exception
+     */
+    private void externalCredentialTestSequence(final String masterCredentialCommand, final String keyCredentialCommand, final Map<String, String> additionalAttributes) throws Exception {
+        HashMap<String, String> csAttributes = new HashMap<>();
+
+        csAttributes.put(KeystorePasswordStore.NAME, "vault-external");
+        csAttributes.put(KeystorePasswordStore.STORE_FILE, stores.get("THREE"));
+        csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, masterCredentialCommand);
+        csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, keyCredentialCommand);
+
+        if (additionalAttributes != null) {
+            csAttributes.putAll(additionalAttributes);
+        }
+
+        String passwordAlias1 = "db-pass-1";
+        String passwordAlias2 = "db-pass-2";
+
+        CredentialStore cs = newCredentialStoreInstance();
+        cs.initialize(csAttributes);
+
+        // expected entries there
+        Assert.assertArrayEquals("1-secret-info".toCharArray(), getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
+        Assert.assertArrayEquals("2-secret-info".toCharArray(), getPasswordFromCredential(cs.retrieve(passwordAlias2, PasswordCredential.class)));
+
+        // retrieve non-existent entry
+        try {
+            cs.retrieve("wrong_alias", PasswordCredential.class);
+            Assert.fail("this part of code cannot be reached, retrieve() should throw CredentialStoreException");
+        } catch (CredentialStoreException e) {
+            // do nothing all is OK
+        } catch (Throwable e) {
+            Assert.fail("wrong exception thrown (" + e.getMessage() + ")");
+        }
+
+    }
+
+    @Test
+    public void testExternalPasswordTypeMasked() throws Exception {
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(KeystorePasswordStore.STORE_PASSWORD + "." + MaskedPasswordStore.ITERATION_COUNT, "23");
+        attributes.put(KeystorePasswordStore.STORE_PASSWORD + "." + MaskedPasswordStore.SALT, "HJU90jqw");
+        attributes.put(KeystorePasswordStore.KEY_PASSWORD + "." + MaskedPasswordStore.ITERATION_COUNT, "15");
+        attributes.put(KeystorePasswordStore.KEY_PASSWORD + "." + MaskedPasswordStore.SALT, "12HJ0987");
+
+        String masterCommand = "MASK-vXSK9HZ0XD8w3VPFfUY5T3xz0/./3r/3";
+        String keyCommand = "MASK-BJ4IgwNW2a5V2Yuqa1dcUVE3CDtiEuai";
+        externalCredentialTestSequence(masterCommand, keyCommand, attributes);
+    }
+
+
+    private static String buildExternalCommand(final String extOption, final String delimiter, final String argument) {
+        // First check for java.exe or java as the binary
+        File java = new File(System.getProperty("java.home"), "/bin/java");
+        File javaExe = new File(System.getProperty("java.home"), "/bin/java.exe");
+        String jre;
+        if (java.exists())
+            jre = java.getAbsolutePath();
+        else
+            jre = javaExe.getAbsolutePath();
+        // Build the command to run this jre
+        String cmd = jre + delimiter + "-cp" + delimiter + System.getProperty("java.class.path") + delimiter
+                + CredentialCommand.class.getName() + ( argument != null ? delimiter + argument : "");
+        return extOption + cmd;
+    }
 
 }

@@ -1305,4 +1305,20 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9507, value = "Credential store \"%s\" doesn't contain admin key under alias \"%s\"")
     CredentialStoreException storeAdminKeyNotPresent(String name, String alias);
 
+    @Message(id = 9508, value = "Method \"%s\" not implemented by credential store \"%s\"")
+    CredentialStoreException methodNotImplemented(String methodName, String storeName);
+
+    @Message(id = 9509, value = "Problem executing password command by credential store \"%s\"")
+    CredentialStoreException passwordCommandExecutionProblem(String storeName, @Cause Throwable cause);
+
+    @Message(id = 9510, value = "Credential type \"%s\" not supported by credential store \"%s\"")
+    CredentialStoreException credentialTypeNotSupported(String credentialType, String storeName);
+
+    @Message(id = 9511, value = "Password cache for external commands not supported")
+    CredentialStoreException cacheForExternalCommandsNotSupported();
+
+    @LogMessage
+    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    void warnWrongBase64EncodedString(String base64);
+
 }

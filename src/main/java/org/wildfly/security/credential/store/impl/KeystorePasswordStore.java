@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -254,7 +255,7 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
         checkValidConfigurationAttributes(attributes.keySet());
         storeBase = attributes.get(STORE_BASE);
         storeFile = resolveFile(attributes.get(STORE_FILE), storeName);
-        storagePassword = convertPassword(attributes.get(STORE_PASSWORD));
+        storagePassword = convertPassword(loadPassword(attributes.get(STORE_PASSWORD), STORE_PASSWORD, attributes));
         adminKeyAlias = (String) attributes.get(KEY_ALIAS);
         if (adminKeyAlias == null) {
             adminKeyAlias = DEFAULT_ADMIN_KEY_ALIAS;
@@ -276,11 +277,9 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             createStorage = Boolean.parseBoolean((String) attributes.get(CREATE_STORAGE));
         }
 
-        char[] adminKeyPassword = loadKeyPassword(attributes);
-        if (adminKeyPassword != null) {
-            adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
-            destroyPassword(adminKeyPassword);
-        }
+        char[] adminKeyPassword = convertPassword(loadPassword(attributes.get(KEY_PASSWORD), KEY_PASSWORD, attributes));
+        adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
+        destroyPassword(adminKeyPassword);
 
         readKeyStore();
 
@@ -348,7 +347,7 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             byte[] encryptedPasswordData = entry.getPayload();
             if (encryptedPasswordData != null) {
                 try {
-                    return (C)decryptEntry(encryptedPasswordData);
+                    return credentialType.cast(decryptEntry(encryptedPasswordData));
                 } catch (GeneralSecurityException e) {
                     throw new CredentialStoreException(e);
                 }
@@ -416,11 +415,10 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
 
     private void checkValidConfigurationAttributes(Set<String> attributes) throws CredentialStoreException {
         StringBuilder wrongAttributes = new StringBuilder();
-        for (String o : attributes) {
-            if (!supportedConfigurationAttributes.contains(o)) {
-                wrongAttributes.append(", ").append(o);
-            }
-        }
+        attributes.stream()
+                .filter(o -> !o.startsWith(STORE_PASSWORD + "."))   // namespace of STORE_PASSWORD
+                .filter(o -> !o.startsWith(KEY_PASSWORD + "."))   // namespace of KEY_PASSWORD
+                .filter(o -> !supportedConfigurationAttributes.contains(o)).forEach(o -> wrongAttributes.append(", ").append(o));
         if (wrongAttributes.length() > 0) {
             throw log.unsupportedPasswordStorageConfigurationAttributes(storeName, wrongAttributes.substring(2));
         }
@@ -536,36 +534,33 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
         }
     }
 
+    private Credential loadPassword(final String credentialSpec, final String nameSpace, final Map<String, String> options) throws CredentialStoreException {
+        Map<String, String> nameSpaceOnlyOptions;
+        nameSpaceOnlyOptions = options.entrySet().stream()
+                .filter(p -> !p.getKey().equals(nameSpace) && p.getKey().startsWith(nameSpace))
+                .collect(Collectors.toMap(p -> p.getKey().substring(nameSpace.length()+1), Map.Entry::getValue));
+        return resolveMasterCredential(credentialSpec, PasswordCredential.class, nameSpaceOnlyOptions);
+    }
+
     private char[] convertPassword(Object password) {
         if (password != null) {
             if (password instanceof String) {
                 return ((String) password).toCharArray();
             } else if (password instanceof ClearPassword) {
                 return ((ClearPassword) password).getPassword();
+            } else if (password instanceof PasswordCredential) {
+                Password p = ((PasswordCredential)password).getPassword();
+                if (p instanceof ClearPassword) {
+                    return ((ClearPassword) p).getPassword();
+                } else {
+                    return EMPTY_PASSWORD;
+                }
             } else {
                 return Arrays.copyOf((char[]) password, ((char[]) password).length);
             }
         } else {
             return EMPTY_PASSWORD;
         }
-    }
-
-    private char[] loadKeyPassword(final Map<String, String> options) throws CredentialStoreException {
-        // TODO: fix external password loading
-        return options.get(KEY_PASSWORD).toCharArray();
-        /*
-        ExternalPasswordLoader passwordLoader = new ExternalPasswordLoader(
-                KEY_PASSWORD_CALLBACK,
-                KEY_PASSWORD_CALLBACK_HANDLER,
-                KEY_PASSWORD_CALLBACK_PASSWORD_CLASS,
-                KEY_PASSWORD,
-                KEY_PASSWORD_MASKED, KEY_PASSWORD_SALT, KEY_PASSWORD_ITERATION, KEY_PASSWORD_PBE_ALGORITHM, KEY_PASSWORD_PBE_INITIAL_KEY);
-        try {
-            return passwordLoader.loadPassword(options);
-        } catch (VaultException | IllegalAccessException | InstantiationException | IOException | UnsupportedCallbackException | NoSuchMethodException e) {
-            throw new CredentialStorageException(e);
-        }
-        */
     }
 
     private File resolveFile(String fileName, String defaultFileName) {

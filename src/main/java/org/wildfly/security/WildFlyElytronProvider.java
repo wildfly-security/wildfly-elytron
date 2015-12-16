@@ -65,7 +65,10 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.impl.CmdPasswordStore;
+import org.wildfly.security.credential.store.impl.ExecPasswordStore;
 import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
+import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
@@ -204,8 +207,10 @@ public class WildFlyElytronProvider extends Provider {
     private void putCredentialStoreProviderImplementations() {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
-
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, KeystorePasswordStore.KEY_STORE_PASSWORD_STORE, KeystorePasswordStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, ExecPasswordStore.EXEC_PASSWORD_STORE, ExecPasswordStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, CmdPasswordStore.CMD_PASSWORD_STORE, CmdPasswordStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, MaskedPasswordStore.MASKED_PASSWORD_STORE, MaskedPasswordStore.class.getName(), emptyList, emptyMap));
     }
 
 }
