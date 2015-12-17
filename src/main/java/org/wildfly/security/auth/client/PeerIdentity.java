@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
@@ -30,6 +31,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security._private.ElytronMessages;
@@ -40,27 +42,39 @@ import org.wildfly.security.authz.Attributes;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PeerIdentity {
+public abstract class PeerIdentity {
     private final PeerIdentityContext context;
     private final Principal peerPrincipal;
-    private final PeerIdentityHandle handle;
 
-    PeerIdentity(final PeerIdentityContext context, final Principal peerPrincipal, final PeerIdentityHandle handle) {
-        this.context = context;
+    /**
+     * Construct a new instance.
+     *
+     * @param configuration the opaque configuration (must not be {@code null})
+     * @param peerPrincipal the peer principal (must not be {@code null})
+     */
+    protected PeerIdentity(final Configuration configuration, final Principal peerPrincipal) {
+        Assert.checkNotNullParam("configuration", configuration);
+        Assert.checkNotNullParam("peerPrincipal", peerPrincipal);
+        context = configuration.getContext();
         this.peerPrincipal = peerPrincipal;
-        this.handle = handle;
     }
 
-    void postAssociate() {
+    /**
+     * Perform an optional pre-association action, called before association with the current thread.
+     */
+    protected void preAssociate() {}
+
+    /**
+     * Perform an optional post-association action, called after association with the current thread has completed.
+     */
+    protected void postAssociate() {}
+
+    private void safePostAssociate() {
         try {
-            handle.postAssociate();
+            postAssociate();
         } catch (Throwable t) {
             ElytronMessages.log.postAssociationFailed(t);
         }
-    }
-
-    void preAssociate() {
-        handle.preAssociate();
     }
 
     /**
@@ -85,7 +99,7 @@ public final class PeerIdentity {
             try {
                 runnable.run();
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -107,7 +121,7 @@ public final class PeerIdentity {
             try {
                 return callable.call();
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -128,7 +142,7 @@ public final class PeerIdentity {
             try {
                 return action.run();
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -150,7 +164,7 @@ public final class PeerIdentity {
             try {
                 return action.run();
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
@@ -175,7 +189,7 @@ public final class PeerIdentity {
             try {
                 return action.run(parameter);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -199,7 +213,7 @@ public final class PeerIdentity {
             try {
                 return action.run(parameter);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
@@ -224,7 +238,7 @@ public final class PeerIdentity {
             try {
                 return action.apply(parameter);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -249,7 +263,7 @@ public final class PeerIdentity {
             try {
                 return action.apply(parameter1, parameter2);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -270,7 +284,7 @@ public final class PeerIdentity {
             try {
                 action.accept(parameter);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -293,7 +307,7 @@ public final class PeerIdentity {
             try {
                 action.accept(parameter1, parameter2);
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -315,7 +329,7 @@ public final class PeerIdentity {
             try {
                 return supplier.get();
             } finally {
-                postAssociate();
+                safePostAssociate();
             }
         } finally {
             context.setPeerIdentity(old);
@@ -339,7 +353,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -348,7 +362,7 @@ public final class PeerIdentity {
             runnable.run();
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -371,7 +385,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -380,7 +394,7 @@ public final class PeerIdentity {
             return callable.call();
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -403,7 +417,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -412,7 +426,7 @@ public final class PeerIdentity {
             return privilegedAction.run();
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -436,7 +450,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -447,7 +461,7 @@ public final class PeerIdentity {
             throw new PrivilegedActionException(e);
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -472,7 +486,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -481,7 +495,7 @@ public final class PeerIdentity {
             return privilegedAction.run(parameter);
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -507,7 +521,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -518,7 +532,7 @@ public final class PeerIdentity {
             throw new PrivilegedActionException(e);
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -558,7 +572,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -567,7 +581,7 @@ public final class PeerIdentity {
             return privilegedAction.apply(parameter1, parameter2);
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -605,7 +619,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -614,7 +628,7 @@ public final class PeerIdentity {
             privilegedAction.accept(parameter1, parameter2);
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -637,7 +651,7 @@ public final class PeerIdentity {
             } finally {
                 if (! ok) {
                     for (--i; i >= 0; --i) {
-                        identities[i].postAssociate();
+                        identities[i].safePostAssociate();
                     }
                 }
             }
@@ -646,7 +660,7 @@ public final class PeerIdentity {
             return action.get();
         } finally {
             for (int i = length - 1; i >= 0; i--) {
-                identities[i].postAssociate();
+                identities[i].safePostAssociate();
             }
         }
     }
@@ -661,44 +675,73 @@ public final class PeerIdentity {
     }
 
     /**
-     * Get the peer identity roles.
+     * Get the peer identity roles.  The default implementation returns an empty set.
      *
-     * @return the peer identity role set
+     * @return the peer identity role set (not {@code null})
      */
     public Set<String> getPeerRoles() {
-        return handle.getPeerRoles();
+        return Collections.emptySet();
     }
 
     /**
-     * Determine whether the peer identity has a given role name.
+     * Determine whether the peer identity has a given role name.  The default implementation returns {@code false}.
      *
      * @param roleName the role name
      * @return {@code true} if the peer identity has the role, {@code false} otherwise
      */
     public boolean hasPeerRole(final String roleName) {
-        return handle.hasPeerRole(roleName);
+        return false;
     }
 
     /**
-     * Get the attribute set for the peer identity.
+     * Get the attribute set for the peer identity.  The default implementation returns an empty attributes set.
      *
      * @return the peer identity attributes
      */
     public Attributes getPeerAttributes() {
-        return handle.getPeerAttributes();
+        return Attributes.EMPTY;
     }
 
     /**
-     * Get a specific attribute value for the peer identity.
+     * Get a specific attribute value for the peer identity.  The default implementation returns {@code null}.
      *
      * @param key the attribute name
      * @return the attribute value entry, or {@code null} if there is no matching entry
      */
     public Attributes.Entry getPeerAttribute(final String key) {
-        return handle.getPeerAttribute(key);
+        return null;
     }
 
-    PeerIdentityContext getContext() {
+    /**
+     * Get the peer identity context for this identity.
+     *
+     * @return the peer identity context for this identity (not {@code null})
+     */
+    protected final PeerIdentityContext getPeerIdentityContext() {
         return context;
+    }
+
+    /**
+     * The opaque configuration to apply to a peer identity.
+     */
+    public static final class Configuration {
+        private final PeerIdentityContext context;
+        private final Thread thread = Thread.currentThread();
+        private boolean terminated;
+
+        Configuration(final PeerIdentityContext context) {
+            this.context = context;
+        }
+
+        PeerIdentityContext getContext() {
+            if (thread != Thread.currentThread() || terminated) {
+                throw new SecurityException();
+            }
+            return context;
+        }
+
+        void terminate() {
+            terminated = true;
+        }
     }
 }
