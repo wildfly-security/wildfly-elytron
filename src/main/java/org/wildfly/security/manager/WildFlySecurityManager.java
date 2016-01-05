@@ -84,6 +84,9 @@ public final class WildFlySecurityManager extends SecurityManager {
     private static final Permission ENVIRONMENT_PERMISSION = new RuntimePermission("getenv.*");
     private static final Permission GET_CLASS_LOADER_PERMISSION = new RuntimePermission("getClassLoader");
     private static final Permission SET_CLASS_LOADER_PERMISSION = new RuntimePermission("setClassLoader");
+    private static final Permission ACCESS_DECLARED_MEMBERS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
+
+    private static final boolean LOG_ONLY;
 
     static class Context {
         boolean checking = true;
@@ -124,9 +127,8 @@ public final class WildFlySecurityManager extends SecurityManager {
         } catch (Throwable ignored) {}
         hasGetCallerClass = result;
         callerOffset = offset;
+        LOG_ONLY = Boolean.parseBoolean(doPrivileged(new ReadPropertyAction("org.wildfly.security.manager.log-only", "false")));
     }
-
-    private static final RuntimePermission ACCESS_DECLARED_MEMBERS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
 
     /**
      * Construct a new instance.  If the caller does not have permission to do so, this method will throw an exception.
@@ -199,12 +201,23 @@ public final class WildFlySecurityManager extends SecurityManager {
      * @return the first denying protection domain, or {@code null} if there is none
      */
     public static ProtectionDomain findAccessDenial(final Permission permission, final ProtectionDomain... domains) {
+        ProtectionDomain deniedDomain = null;
         if (domains != null) for (ProtectionDomain domain : domains) {
             if (! domain.implies(permission)) {
-                return domain;
+                final CodeSource codeSource = domain.getCodeSource();
+                final ClassLoader classLoader = domain.getClassLoader();
+                final Principal[] principals = domain.getPrincipals();
+                if (principals == null || principals.length == 0) {
+                    access.accessCheckFailed(permission, codeSource, classLoader);
+                } else {
+                    access.accessCheckFailed(permission, codeSource, classLoader, Arrays.toString(principals));
+                }
+                if (deniedDomain == null && ! LOG_ONLY) {
+                    deniedDomain = domain;
+                }
             }
         }
-        return null;
+        return deniedDomain;
     }
 
     /**
@@ -216,25 +229,23 @@ public final class WildFlySecurityManager extends SecurityManager {
      * @return {@code true} if the access check succeeded, {@code false} otherwise
      */
     public static boolean tryCheckPermission(final Permission permission, final ProtectionDomain... domains) {
-        final ProtectionDomain protectionDomain = findAccessDenial(permission, domains);
-        if (protectionDomain != null) {
-            final Context ctx = CTX.get();
-            if (! ctx.entered) {
-                ctx.entered = true;
-                try {
-                    final CodeSource codeSource = protectionDomain.getCodeSource();
-                    final ClassLoader classLoader = protectionDomain.getClassLoader();
-                    final Principal[] principals = protectionDomain.getPrincipals();
-                    if (principals == null || principals.length == 0) {
-                        access.accessCheckFailed(permission, codeSource, classLoader);
-                    } else {
-                        access.accessCheckFailed(permission, codeSource, classLoader, Arrays.toString(principals));
-                    }
-                } finally {
-                    ctx.entered = true;
-                }
-            }
+        if (permission.implies(SECURITY_MANAGER_PERMISSION)) {
             return false;
+        }
+        final Context ctx = CTX.get();
+        if (ctx.checking) {
+            if (ctx.entered) {
+                return true;
+            }
+            ctx.entered = true;
+            try {
+                final ProtectionDomain deniedDomain = findAccessDenial(permission, domains);
+                if (deniedDomain != null) {
+                    return false;
+                }
+            } finally {
+                ctx.entered = false;
+            }
         }
         return true;
     }
@@ -262,47 +273,7 @@ public final class WildFlySecurityManager extends SecurityManager {
                 if (stack != null) {
                     final ProtectionDomain deniedDomain = findAccessDenial(perm, stack);
                     if (deniedDomain != null) {
-                        final CodeSource codeSource = deniedDomain.getCodeSource();
-                        final ClassLoader classLoader = deniedDomain.getClassLoader();
-                        final Principal[] principals = deniedDomain.getPrincipals();
-                        if (principals == null || principals.length == 0) {
-                            access.accessCheckFailed(perm, codeSource, classLoader);
-                        } else {
-                            access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
-                        }
-                        throw access.accessControlException(perm, perm, codeSource, classLoader);
-                    }
-                }
-            } finally {
-                ctx.entered = false;
-            }
-        }
-    }
-
-    void checkPermission(final Permission perm, final Class<?> clazz) throws SecurityException {
-        if (perm.implies(SECURITY_MANAGER_PERMISSION)) {
-            throw access.secMgrChange();
-        }
-        final Context ctx = CTX.get();
-        if (ctx.checking) {
-            if (ctx.entered) {
-                return;
-            }
-            final ProtectionDomain protectionDomain;
-            ctx.entered = true;
-            try {
-                protectionDomain = clazz.getProtectionDomain();
-                if (protectionDomain != null) {
-                    if (! protectionDomain.implies(perm)) {
-                        final CodeSource codeSource = protectionDomain.getCodeSource();
-                        final ClassLoader classLoader = protectionDomain.getClassLoader();
-                        final Principal[] principals = protectionDomain.getPrincipals();
-                        if (principals == null || principals.length == 0) {
-                            access.accessCheckFailed(perm, codeSource, classLoader);
-                        } else {
-                            access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
-                        }
-                        throw access.accessControlException(perm, perm, codeSource, classLoader);
+                        throw access.accessControlException(perm, perm, deniedDomain.getCodeSource(), deniedDomain.getClassLoader());
                     }
                 }
             } finally {
@@ -1061,7 +1032,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if (! LOG_ONLY) {
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        }
     }
 
     private static void checkEnvPropertyReadPermission(Class<?> clazz, String propertyName) {
@@ -1082,7 +1055,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if (! LOG_ONLY) {
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        }
     }
 
     private static void checkPropertyWritePermission(Class<?> clazz, String propertyName) {
@@ -1103,7 +1078,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if (! LOG_ONLY) {
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        }
     }
 
     private static void checkPDPermission(Class<?> clazz, Permission permission) {
@@ -1120,7 +1097,9 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if (! LOG_ONLY) {
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        }
     }
 
     /**
