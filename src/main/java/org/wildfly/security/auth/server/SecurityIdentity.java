@@ -383,7 +383,7 @@ public final class SecurityIdentity {
         if (name == null) {
             throw log.invalidName();
         }
-        String realmName = domain.mapRealmName(name);
+        String realmName = domain.mapRealmName(name, null, null);
         Principal principal = new NamePrincipal(name);
         if (this.principal.equals(principal)) {
             // it's the same identity; just succeed

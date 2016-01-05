@@ -836,7 +836,7 @@ public final class ServerAuthenticationContext {
     }
 
     private static String mapRealmName(String name, RealmMapper realmMapper, String defaultRealmName) {
-        String realmName = realmMapper.getRealmMapping(name);
+        String realmName = realmMapper.getRealmMapping(name, null, null);
         return realmName != null ? realmName : defaultRealmName;
     }
 
