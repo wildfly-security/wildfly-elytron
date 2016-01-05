@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 
 import java.security.Principal;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -53,5 +54,39 @@ public interface RealmMapper {
      */
     static RealmMapper single(String realmName) {
         return (name, principal, evidence) -> realmName;
+    }
+
+    /**
+     * Create an aggregate realm mapping strategy.
+     *
+     * @param mapper1 the first mapper to try (must not be {@code null})
+     * @param mapper2 the second mapper to try (must not be {@code null})
+     * @return an aggregated mapper (not {@code null})
+     */
+    static RealmMapper aggregate(RealmMapper mapper1, RealmMapper mapper2) {
+        Assert.checkNotNullParam("mapper1", mapper1);
+        Assert.checkNotNullParam("mapper2", mapper2);
+        return (name, principal, evidence) -> {
+            String mapping = mapper1.getRealmMapping(name, principal, evidence);
+            if (mapping == null) mapping = mapper2.getRealmMapping(name, principal, evidence);
+            return mapping;
+        };
+    }
+
+    /**
+     * Create an aggregate realm mapping strategy.
+     *
+     * @param mappers the mappers to try (must not be {@code null})
+     * @return an aggregated mapper (not {@code null})
+     */
+    static RealmMapper aggregate(RealmMapper... mappers) {
+        Assert.checkNotNullParam("mappers", mappers);
+        return (name, principal, evidence) -> {
+            for (RealmMapper mapper : mappers) if (mapper != null) {
+                String mapping = mapper.getRealmMapping(name, principal, evidence);
+                if (mapping != null) return mapping;
+            }
+            return null;
+        };
     }
 }
