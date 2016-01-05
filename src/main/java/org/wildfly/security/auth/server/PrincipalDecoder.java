@@ -101,4 +101,9 @@ public interface PrincipalDecoder {
      * The default decoder, which just calls {@link Principal#getName()}.
      */
     PrincipalDecoder DEFAULT = Principal::getName;
+
+    /**
+     * A principal decoder which cannot decode any principal.
+     */
+    PrincipalDecoder UNKNOWN = p -> null;
 }
