@@ -23,7 +23,8 @@ import java.security.Principal;
 import org.wildfly.security.evidence.Evidence;
 
 /**
- * A realm mapper.  Examines authentication identity information and translates it into a realm name.
+ * A realm mapper.  Examines authentication identity information and translates it into a realm name.  If the realm
+ * mapper does not recognize the authentication information, a default realm will be chosen.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -35,12 +36,12 @@ public interface RealmMapper {
      * @param name the user name (or {@code null} if none is known for this authentication)
      * @param principal the authentication principal (or {@code null} if none is known for this authentication)
      * @param evidence the authentication evidence (or {@code null} if none is known for this authentication)
-     * @return the realm, or {@code null} to use the default realm
+     * @return the realm, or {@code null} if no particular realm matches the authentication information
      */
     String getRealmMapping(String name, Principal principal, Evidence evidence);
 
     /**
-     * A realm mapper which always maps to the default realm.
+     * A realm mapper which always falls back to a default realm.
      */
     RealmMapper DEFAULT_REALM_MAPPER = single(null);
 
