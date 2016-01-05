@@ -49,7 +49,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.getRealmIdentity("invalidUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("invalidUser", null, null);
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
 
         assertSame(AuthorizationIdentity.EMPTY, authorizationIdentity);
@@ -72,7 +72,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser");
+        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser", null, null);
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
 
         assertNotSame(AuthorizationIdentity.EMPTY, authorizationIdentity);

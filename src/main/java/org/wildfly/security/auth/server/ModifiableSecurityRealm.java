@@ -18,7 +18,10 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
 import java.util.Iterator;
+
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A realm which can be modified.
@@ -33,11 +36,16 @@ public interface ModifiableSecurityRealm extends SecurityRealm {
      * returned handle <em>must</em> be cleaned up by a call to {@link ModifiableRealmIdentity#dispose()}.  During
      * the lifespan of a {@code ModifiableRealmIdentity}, no other updates or authentications may take place for the
      * corresponding realm identity, thus care should be taken to minimize the duration of the identity's lifespan.
+     * <p>
+     * If there is not enough information to locate an identity compatible with this realm, {@link ModifiableRealmIdentity#NON_EXISTENT}
+     * may be returned.
      *
-     * @param name the name to use when creating the {@link ModifiableRealmIdentity} handle
-     * @return the {@link ModifiableRealmIdentity} for the provided {@code name} (not {@code null})
+     * @param name the name to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
+     * @param principal the principal to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
+     * @param evidence the evidence to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
+     * @return the {@link ModifiableSecurityRealm} for the provided information (not {@code null})
      */
-    ModifiableRealmIdentity getRealmIdentityForUpdate(String name) throws RealmUnavailableException;
+    ModifiableRealmIdentity getRealmIdentityForUpdate(String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException;
 
     /**
      * Get an iterator over all of this realm's identities.

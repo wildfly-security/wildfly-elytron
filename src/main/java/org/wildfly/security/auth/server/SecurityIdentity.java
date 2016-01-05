@@ -402,7 +402,7 @@ public final class SecurityIdentity {
         if (getPermissions().implies(permission)) {
             try {
                 final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-                final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
+                final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
                 final AuthorizationIdentity newAuthorizationIdentity = realmIdentity.getAuthorizationIdentity();
                 SecurityRealm.safeHandleRealmEvent(securityRealm, new RealmIdentitySuccessfulAuthorizationEvent(this.authorizationIdentity, this.principal, principal));
                 try {

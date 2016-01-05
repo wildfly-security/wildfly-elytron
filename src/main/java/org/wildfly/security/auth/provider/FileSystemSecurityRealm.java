@@ -33,6 +33,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -145,14 +146,14 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return path.resolve(name + ".xml");
     }
 
-    public RealmIdentity getRealmIdentity(final String name) {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) {
         // todo: read and write locking variants
-        return getRealmIdentityForUpdate(name);
+        return getRealmIdentityForUpdate(name, principal, evidence);
     }
 
-    public ModifiableRealmIdentity getRealmIdentityForUpdate(final String name) {
-        if (name.isEmpty()) {
-            throw ElytronMessages.log.invalidEmptyName();
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(final String name, final Principal principal, final Evidence evidence) {
+        if (name == null || name.isEmpty()) {
+            return ModifiableRealmIdentity.NON_EXISTENT;
         }
         final String finalName = nameRewriter.rewriteName(name);
         if (finalName == null) {
@@ -182,7 +183,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
                     final String fileName = path.getFileName().toString();
-                    return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4));
+                    return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4), null, null);
                 }
             };
         } else {

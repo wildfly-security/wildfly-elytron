@@ -70,15 +70,15 @@ public class ModifiabilityTest {
 
     @Test
     public void testCreateDelete() throws RealmUnavailableException, InterruptedException {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity");
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
         Assert.assertFalse(identity.exists());
         identity.create();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
         Assert.assertTrue(identity.exists());
         identity.delete();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
         Assert.assertFalse(identity.exists());
     }
 
@@ -86,15 +86,15 @@ public class ModifiabilityTest {
     public void testCreateDeleteEscaped() throws RealmUnavailableException, InterruptedException {
         String horribleIdentityName = " escape testing identity name , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! ' ";
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
         Assert.assertFalse(identity.exists());
         identity.create();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
         Assert.assertTrue(identity.exists());
         identity.delete();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
         Assert.assertFalse(identity.exists());
     }
 }

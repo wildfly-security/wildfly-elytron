@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
@@ -89,7 +90,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
 
         final LoadedState loadedState = this.loadedState.get();
         final AccountEntry accountEntry = loadedState.getAccounts().get(name);

@@ -162,7 +162,7 @@ public final class ServerAuthenticationContext {
             return;
         }
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
+        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
         boolean ok = false;
         try {
             NameAssignedState newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
@@ -406,7 +406,7 @@ public final class ServerAuthenticationContext {
 
             // now construct the new identity
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-            final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
+            final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
             boolean ok = false;
             try {
                 if (! realmIdentity.exists()) {

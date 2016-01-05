@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.event.RealmEvent;
@@ -37,10 +39,12 @@ public interface SecurityRealm {
      * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
      * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
      *
-     * @param name the name to use when creating the {@link RealmIdentity} handle
-     * @return the {@link RealmIdentity} for the provided {@code name} (not {@code null})
+     * @param name the name to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
+     * @param principal the principal to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
+     * @param evidence the evidence to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
+     * @return the {@link RealmIdentity} for the provided information (not {@code null})
      */
-    RealmIdentity getRealmIdentity(String name) throws RealmUnavailableException;
+    RealmIdentity getRealmIdentity(String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException;
 
     /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
@@ -97,8 +101,7 @@ public interface SecurityRealm {
      * An empty security realm.
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
-        public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
-            Assert.checkNotNullParam("name", name);
+        public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
             return RealmIdentity.NON_EXISTENT;
         }
 

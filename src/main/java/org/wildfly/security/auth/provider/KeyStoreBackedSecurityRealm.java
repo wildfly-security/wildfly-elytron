@@ -21,6 +21,7 @@ package org.wildfly.security.auth.provider;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.UnrecoverableEntryException;
 
 import org.wildfly.common.Assert;
@@ -52,7 +53,10 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+        if (name == null) {
+            return RealmIdentity.NON_EXISTENT;
+        }
         return new KeyStoreRealmIdentity(name);
     }
 

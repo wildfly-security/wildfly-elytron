@@ -140,7 +140,7 @@ public final class SecurityDomain {
         if (name == null) {
             throw log.invalidName();
         }
-        return securityRealm.getRealmIdentity(name);
+        return securityRealm.getRealmIdentity(name, null, null);
     }
 
     /**
