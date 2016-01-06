@@ -23,9 +23,11 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.PermissionCollection;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -63,7 +65,7 @@ public final class SecurityDomain {
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
 
-    SecurityDomain(Builder builder, final HashMap<String, RealmInfo> realmMap) {
+    SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
         this.defaultRealmName = builder.defaultRealmName;
         this.preRealmRewriter = builder.preRealmRewriter;
@@ -80,7 +82,7 @@ public final class SecurityDomain {
             final Map.Entry<String, RoleMapper> entry = originalRoleMappers.entrySet().iterator().next();
             copiedRoleMappers = Collections.singletonMap(entry.getKey(), entry.getValue());
         } else {
-            copiedRoleMappers = new HashMap<>(originalRoleMappers);
+            copiedRoleMappers = new LinkedHashMap<>(originalRoleMappers);
         }
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
@@ -171,6 +173,10 @@ public final class SecurityDomain {
             realmInfo = this.realmMap.get(this.defaultRealmName);
         }
         return realmInfo;
+    }
+
+    Collection<RealmInfo> getRealmInfos() {
+        return realmMap.values();
     }
 
     /**
@@ -542,7 +548,7 @@ public final class SecurityDomain {
 
             final String defaultRealmName = this.defaultRealmName;
             Assert.checkNotNullParam("defaultRealmName", defaultRealmName);
-            final HashMap<String, RealmInfo> realmMap = new HashMap<>(realms.size());
+            final LinkedHashMap<String, RealmInfo> realmMap = new LinkedHashMap<>(realms.size());
             for (RealmBuilder realmBuilder : realms.values()) {
                 realmMap.put(realmBuilder.getName(), new RealmInfo(realmBuilder));
             }
