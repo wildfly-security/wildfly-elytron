@@ -419,6 +419,19 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1099, value = "Ldap-backed realm is not configured to allow create new identities (new identity parent and attributes has to be set)")
     RealmUnavailableException ldapRealmNotConfiguredToSupportCreatingIdentities();
 
+    @Message(id = 1100, value = "Ldap-backed realm does not contain mapping to set Elytron attribute \"%s\" of identity \"%s\"")
+    RealmUnavailableException ldapRealmCannotSetAttributeWithoutMapping(String attribute, String identity);
+
+    @LogMessage(level = WARN)
+    @Message(id = 1101, value = "Ldap-backed realm does not support setting of filtered attribute \"%s\" (identity \"%s\")")
+    void ldapRealmDoesNotSupportSettingFilteredAttribute(String attribute, String identity);
+
+    @Message(id = 1102, value = "Ldap-backed realm require exactly one value of attribute \"%s\" mapped to RDN (identity \"%s\")")
+    RealmUnavailableException ldapRealmRequireExactlyOneRdnAttribute(String attribute, String identity);
+
+    @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
+    RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
