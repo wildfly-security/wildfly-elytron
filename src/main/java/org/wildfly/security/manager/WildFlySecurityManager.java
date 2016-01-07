@@ -103,6 +103,7 @@ public final class WildFlySecurityManager extends SecurityManager {
     private static final WildFlySecurityManager INSTANCE;
     private static final boolean hasGetCallerClass;
     private static final int callerOffset;
+    private static boolean enforcing = true;
 
     static {
         PD_STACK = doPrivileged(new GetAccessibleDeclaredFieldAction(AccessControlContext.class, "context"));
@@ -124,6 +125,8 @@ public final class WildFlySecurityManager extends SecurityManager {
         } catch (Throwable ignored) {}
         hasGetCallerClass = result;
         callerOffset = offset;
+        if(System.getProperty("org.jboss.security.permissive") != null)
+            enforcing = false;
     }
 
     private static final RuntimePermission ACCESS_DECLARED_MEMBERS_PERMISSION = new RuntimePermission("accessDeclaredMembers");
@@ -270,7 +273,8 @@ public final class WildFlySecurityManager extends SecurityManager {
                         } else {
                             access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
                         }
-                        throw access.accessControlException(perm, perm, codeSource, classLoader);
+                        if(enforcing)
+                          throw access.accessControlException(perm, perm, codeSource, classLoader);
                     }
                 }
             } finally {
@@ -302,7 +306,8 @@ public final class WildFlySecurityManager extends SecurityManager {
                         } else {
                             access.accessCheckFailed(perm, codeSource, classLoader, Arrays.toString(principals));
                         }
-                        throw access.accessControlException(perm, perm, codeSource, classLoader);
+                        if(enforcing)
+                          throw access.accessControlException(perm, perm, codeSource, classLoader);
                     }
                 }
             } finally {
@@ -1061,7 +1066,8 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if(enforcing)
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
     private static void checkEnvPropertyReadPermission(Class<?> clazz, String propertyName) {
@@ -1082,7 +1088,8 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if(enforcing)
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
     private static void checkPropertyWritePermission(Class<?> clazz, String propertyName) {
@@ -1103,7 +1110,8 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if(enforcing)
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
     private static void checkPDPermission(Class<?> clazz, Permission permission) {
@@ -1120,7 +1128,8 @@ public final class WildFlySecurityManager extends SecurityManager {
             return;
         }
         access.accessCheckFailed(permission, protectionDomain.getCodeSource(), classLoader);
-        throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
+        if(enforcing)
+            throw access.accessControlException(permission, permission, protectionDomain.getCodeSource(), classLoader);
     }
 
     /**
