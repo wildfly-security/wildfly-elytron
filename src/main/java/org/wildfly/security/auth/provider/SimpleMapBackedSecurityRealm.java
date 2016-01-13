@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.Principal;
 import java.util.Collections;
 import java.util.Map;
 
@@ -104,7 +105,10 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(String name) {
+    public RealmIdentity getRealmIdentity(String name, final Principal principal, final Evidence evidence) {
+        if (name == null) {
+            return RealmIdentity.NON_EXISTENT;
+        }
         name = rewriter.rewriteName(name);
         if (name == null) {
             throw ElytronMessages.log.invalidName();

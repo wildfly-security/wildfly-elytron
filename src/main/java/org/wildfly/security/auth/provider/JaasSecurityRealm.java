@@ -83,7 +83,10 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+        if (name == null) {
+            return RealmIdentity.NON_EXISTENT;
+        }
         return new JaasRealmIdentity(new NamePrincipal(name));
     }
 

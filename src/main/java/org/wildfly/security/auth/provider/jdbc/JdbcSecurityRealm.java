@@ -31,6 +31,7 @@ import org.wildfly.security.evidence.Evidence;
 
 import javax.sql.DataSource;
 
+import java.security.Principal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -58,7 +59,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+        if (name == null) {
+            return RealmIdentity.NON_EXISTENT;
+        }
         return new JdbcRealmIdentity(name);
     }
 

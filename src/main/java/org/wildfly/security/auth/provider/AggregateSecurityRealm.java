@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.provider;
 
+import java.security.Principal;
+
 import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmEvent;
@@ -51,11 +53,11 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         this.authorizationRealm = authorizationRealm;
     }
 
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
         boolean ok = false;
-        final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(name);
+        final RealmIdentity authenticationIdentity = authenticationRealm.getRealmIdentity(name, principal, evidence);
         try {
-            final RealmIdentity authorizationIdentity = authorizationRealm.getRealmIdentity(name);
+            final RealmIdentity authorizationIdentity = authorizationRealm.getRealmIdentity(name, principal, evidence);
             try {
                 final Identity identity = new Identity(authenticationIdentity, authorizationIdentity);
                 ok = true;

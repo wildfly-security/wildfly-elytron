@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -94,13 +95,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
         // todo: read/write locking
-        return getRealmIdentityForUpdate(name);
+        return getRealmIdentityForUpdate(name, principal, evidence);
     }
 
     @Override
-    public ModifiableRealmIdentity getRealmIdentityForUpdate(String name) {
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(String name, final Principal principal, final Evidence evidence) {
+        if (name == null) {
+            return ModifiableRealmIdentity.NON_EXISTENT;
+        }
         name = nameRewriter.rewriteName(name);
         if (name == null) {
             throw log.invalidName();

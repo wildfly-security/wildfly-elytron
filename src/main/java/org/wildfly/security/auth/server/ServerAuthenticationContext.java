@@ -162,7 +162,7 @@ public final class ServerAuthenticationContext {
             return;
         }
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
+        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
         boolean ok = false;
         try {
             NameAssignedState newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
@@ -233,7 +233,7 @@ public final class ServerAuthenticationContext {
         RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
-        return state.getAuthenticationPrincipal().getName().equals(name);
+        return state.getAuthenticationPrincipal().equals(new NamePrincipal(name));
     }
 
     /**
@@ -406,7 +406,7 @@ public final class ServerAuthenticationContext {
 
             // now construct the new identity
             final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-            final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name);
+            final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
             boolean ok = false;
             try {
                 if (! realmIdentity.exists()) {
@@ -601,7 +601,66 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
-        return stateRef.get().verifyEvidence(evidence);
+        final AtomicReference<State> stateRef = this.stateRef;
+        State oldState = stateRef.get();
+        // early detection
+        if (oldState.isDone()) {
+            throw ElytronMessages.log.alreadyComplete();
+        }
+        final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
+        final MechanismRealmConfiguration mechanismRealmConfiguration;
+        if (oldState.getId() == REALM_ID) {
+            mechanismRealmConfiguration = oldState.getMechanismRealmConfiguration();
+        } else if (oldState.getId() == INITIAL_ID) {
+            final Collection<String> mechanismRealmNames = mechanismConfiguration.getMechanismRealmNames();
+            final Iterator<String> iterator = mechanismRealmNames.iterator();
+            if (iterator.hasNext()) {
+                // use the default realm
+                mechanismRealmConfiguration = mechanismConfiguration.getMechanismRealmConfiguration(iterator.next());
+            } else {
+                mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
+            }
+        } else {
+            return stateRef.get().verifyEvidence(evidence);
+        }
+        final SecurityDomain domain = this.domain;
+        RealmInfo realmInfo = null;
+        RealmIdentity realmIdentity = null;
+        // no name assigned, no mapping possible; we must iterate the realms
+        final Collection<RealmInfo> realmInfos = domain.getRealmInfos();
+        for (RealmInfo info : realmInfos) {
+            realmIdentity = info.getSecurityRealm().getRealmIdentity(null, null, evidence);
+            if (realmIdentity.exists()) {
+                realmInfo = info;
+                break;
+            } else {
+                realmIdentity.dispose();
+            }
+        }
+        if (realmInfo == null) {
+            // no verification possible, no identity found
+            return false;
+        }
+        assert realmIdentity != null && realmIdentity.exists();
+        final Principal principal = realmIdentity.getRealmIdentityPrincipal();
+        if (principal == null) {
+            // we have to have a principal
+            realmIdentity.dispose();
+            return false;
+        }
+        boolean ok = false;
+        NameAssignedState newState;
+        try {
+            newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+            if (! stateRef.compareAndSet(oldState, newState)) {
+                // gotta start over, but should happen no more than a theoretical max of 2 times
+                return verifyEvidence(evidence);
+            }
+            ok = true;
+        } finally {
+            if (! ok) realmIdentity.dispose();
+        }
+        return newState.verifyEvidence(evidence);
     }
 
     /**
@@ -836,7 +895,7 @@ public final class ServerAuthenticationContext {
     }
 
     private static String mapRealmName(String name, RealmMapper realmMapper, String defaultRealmName) {
-        String realmName = realmMapper.getRealmMapping(name);
+        String realmName = realmMapper.getRealmMapping(name, null, null);
         return realmName != null ? realmName : defaultRealmName;
     }
 

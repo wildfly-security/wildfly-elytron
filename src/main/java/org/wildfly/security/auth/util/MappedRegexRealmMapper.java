@@ -18,10 +18,12 @@
 
 package org.wildfly.security.auth.util;
 
+import java.security.Principal;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.wildfly.security.auth.server.RealmMapper;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A simple mapping regular expression-based realm mapper.  The pattern is used to find the realm portion
@@ -55,8 +57,8 @@ public class MappedRegexRealmMapper extends SimpleRegexRealmMapper {
         this.realmNameMap = realmNameMap;
     }
 
-    public String getRealmMapping(final String userName) {
-        final String mappedRealmPart = super.getRealmMapping(userName);
+    public String getRealmMapping(final String name, final Principal principal, final Evidence evidence) {
+        final String mappedRealmPart = super.getRealmMapping(name, principal, evidence);
         if (mappedRealmPart == null) return null;
         return realmNameMap.get(mappedRealmPart);
     }

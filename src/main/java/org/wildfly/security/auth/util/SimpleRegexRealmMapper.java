@@ -20,11 +20,13 @@ package org.wildfly.security.auth.util;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Principal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmMapper;
+import org.wildfly.security.evidence.Evidence;
 
 /**
  * A simple regular expression-based realm mapper.  The realm name pattern must contain a single capture group which
@@ -65,9 +67,12 @@ public class SimpleRegexRealmMapper implements RealmMapper {
         this.delegate = delegate;
     }
 
-    public String getRealmMapping(final String userName) {
-        final Matcher matcher = realmNamePattern.matcher(userName);
+    public String getRealmMapping(final String name, final Principal principal, final Evidence evidence) {
+        if (name == null) {
+            return null;
+        }
+        final Matcher matcher = realmNamePattern.matcher(name);
         assert matcher.groupCount() >= 1;
-        return matcher.matches() ? matcher.group(1) : delegate.getRealmMapping(userName);
+        return matcher.matches() ? matcher.group(1) : delegate.getRealmMapping(name, principal, evidence);
     }
 }
