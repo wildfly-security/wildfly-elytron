@@ -111,7 +111,7 @@ public class ModifiabilityTest {
 
     @Test
     public void testAttributeSetting() throws Exception {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity");
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity", null, null);
         Assert.assertFalse(identity.exists());
         identity.create();
 
@@ -122,10 +122,10 @@ public class ModifiabilityTest {
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity", null, null);
         Assert.assertFalse(identity.exists());
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("JohnSmithsNewIdentity");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("JohnSmithsNewIdentity", null, null);
         Assert.assertTrue(identity.exists());
 
         org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();
@@ -138,7 +138,7 @@ public class ModifiabilityTest {
 
     @Test
     public void testAttributeSettingEscaped() throws Exception {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '");
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
         Assert.assertFalse(identity.exists());
         identity.create();
 
@@ -149,10 +149,10 @@ public class ModifiabilityTest {
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
         Assert.assertFalse(identity.exists());
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '");
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
         Assert.assertTrue(identity.exists());
 
         org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();
