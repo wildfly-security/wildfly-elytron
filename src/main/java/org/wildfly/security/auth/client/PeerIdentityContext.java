@@ -18,43 +18,33 @@
 
 package org.wildfly.security.auth.client;
 
+import java.util.function.Function;
+
 import org.wildfly.security.auth.AuthenticationException;
 import org.wildfly.security.auth.ReauthenticationException;
-import org.wildfly.security.auth.principal.AnonymousPrincipal;
 
 /**
  * A peer identity context.  The peer identity is relevant only to this context.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class PeerIdentityContext {
-    private final PeerIdentity anonymous;
+public abstract class PeerIdentityContext {
     private final ThreadLocal<PeerIdentity> currentIdentity;
-    private final PeerIdentityProvider peerIdentityProvider;
-
-    PeerIdentityContext(final PeerIdentityHandle anonymousHandle, final PeerIdentityProvider peerIdentityProvider) {
-        this.peerIdentityProvider = peerIdentityProvider;
-        anonymous = new PeerIdentity(this, AnonymousPrincipal.getInstance(), anonymousHandle);
-        currentIdentity = new ThreadLocal<>();
-    }
 
     /**
-     * Get the anonymous peer identity for this context.
-     *
-     * @return the anonymous peer identity for this context
+     * Construct a new instance.
      */
-    public PeerIdentity getAnonymousPeerIdentity() {
-        return anonymous;
+    protected PeerIdentityContext() {
+        currentIdentity = new ThreadLocal<>();
     }
 
     /**
      * Get the currently set peer identity for this context.
      *
-     * @return the currently set peer identity for this context
+     * @return the currently set peer identity for this context, or {@code null} if no identity is set
      */
-    public PeerIdentity getCurrentIdentity() {
-        final PeerIdentity identity = currentIdentity.get();
-        return identity == null ? anonymous : identity;
+    public final PeerIdentity getCurrentIdentity() {
+        return currentIdentity.get();
     }
 
     /**
@@ -66,17 +56,42 @@ public final class PeerIdentityContext {
      * @return the peer identity
      * @throws AuthenticationException if an immediate authentication error occurs
      */
-    public PeerIdentity authenticate(AuthenticationConfiguration authenticationConfiguration) throws AuthenticationException {
-        final PeerIdentityHandle handle = peerIdentityProvider.authenticate(authenticationConfiguration);
-        return new PeerIdentity(this, authenticationConfiguration.getPrincipal(), handle);
+    public abstract PeerIdentity authenticate(AuthenticationConfiguration authenticationConfiguration) throws AuthenticationException;
+
+    /**
+     * Construct a new peer identity.  The given function uses the opaque one-time configuration object to construct the
+     * identity, which must be passed as-is to the constructor of the {@link PeerIdentity} class.  This object must not be
+     * retained or made available after the identity is constructed; such misuse may result in an exception or undefined
+     * behavior.
+     *
+     * @param constructFunction a function that, when applied, constructs a new peer identity
+     * @return the constructed peer identity
+     */
+    protected final <I> I constructIdentity(Function<PeerIdentity.Configuration, I> constructFunction) {
+        final PeerIdentity.Configuration conf = new PeerIdentity.Configuration(this);
+        try {
+            return constructFunction.apply(conf);
+        } finally {
+            conf.terminate();
+        }
     }
 
-    PeerIdentity getAndSetPeerIdentity(PeerIdentity newIdentity) {
-        assert newIdentity.getContext() == this;
+    /**
+     * Determine whether this context owns the given identity.
+     *
+     * @param identity the identity
+     * @return {@code true} if this context owns the identity, {@code false} otherwise
+     */
+    public final boolean owns(PeerIdentity identity) {
+        return identity != null && identity.getPeerIdentityContext() == this;
+    }
+
+    final PeerIdentity getAndSetPeerIdentity(PeerIdentity newIdentity) {
+        assert newIdentity == null || newIdentity.getPeerIdentityContext() == this;
         try {
             return currentIdentity.get();
         } finally {
-            if (newIdentity == anonymous) {
+            if (newIdentity == null) {
                 currentIdentity.remove();
             } else {
                 currentIdentity.set(newIdentity);
@@ -85,8 +100,8 @@ public final class PeerIdentityContext {
     }
 
     void setPeerIdentity(PeerIdentity newIdentity) {
-        assert newIdentity.getContext() == this;
-        if (newIdentity == anonymous) {
+        assert newIdentity == null || newIdentity.getPeerIdentityContext() == this;
+        if (newIdentity == null) {
             currentIdentity.remove();
         } else {
             currentIdentity.set(newIdentity);
