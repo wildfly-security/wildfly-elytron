@@ -24,6 +24,8 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -82,6 +84,49 @@ public final class Pem {
             throw log.malformedPemContent(pemContent.offset());
         }
         return result;
+    }
+
+    /**
+     * Iterate over the contents of a PEM file, returning each entry in sequence.
+     *
+     * @param pemContent the code point iterator over the content (must not be {@code null})
+     * @return the iterator (not {@code null})
+     */
+    public static Iterator<PemEntry<?>> parsePemContent(CodePointIterator pemContent) {
+        return new Iterator<PemEntry<?>>() {
+            private PemEntry<?> next;
+
+            public boolean hasNext() {
+                if (next == null) {
+                    if (! pemContent.hasNext()) {
+                        return false;
+                    }
+                    next = parsePemContent(pemContent, (label, byteIterator) -> {
+                        switch (label) {
+                            case "CERTIFICATE": {
+                                final X509Certificate x509Certificate = parsePemX509CertificateContent(label, byteIterator);
+                                return new PemEntry<>(x509Certificate);
+                            }
+                            default: {
+                                throw log.malformedPemContent(pemContent.offset());
+                            }
+                        }
+                    });
+                }
+                return true;
+            }
+
+            public PemEntry<?> next() {
+                if (! hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                try {
+                    return next;
+                } finally {
+                    next = null;
+                }
+            }
+        };
     }
 
     /**
