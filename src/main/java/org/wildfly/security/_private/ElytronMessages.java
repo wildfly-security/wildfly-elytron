@@ -1284,41 +1284,41 @@ public interface ElytronMessages extends BasicLogger {
 
     /* credential.store. package */
 
-    @Message(id = 9501, value = "Credential store \"%s\" has to be initialized before the first usage")
+    @Message(id = 9501, value = "Credential store '%s' has to be initialized before the first usage")
     CredentialStoreException credentialStoreNotInitialized(String name);
 
-    @Message(id = 9502, value = "Reloadable credential store (\"%s\") has to be read only, change settings and restart vault service")
+    @Message(id = 9502, value = "Reloadable credential store '%s' has to be read only, change settings and restart vault service")
     CredentialStoreException reloadablecredentialStoreIsReadOnly(String name);
 
-    @Message(id = 9503, value = "credential alias \"%s\" cannot be found in the store \"%s\"")
+    @Message(id = 9503, value = "credential alias '%s' cannot be found in the store '%s'")
     CredentialStoreException credentialAliasNotFoundNotFound(String credentialAlias, String name);
 
-    @Message(id = 9504, value = "Cannot write storage file \"%s\" for the store \"%s\"")
+    @Message(id = 9504, value = "Cannot write storage file '%s' for the store '%s'")
     CredentialStoreException cannotWriteStorageFie(String fileName, String name);
 
-    @Message(id = 9505, value = "Following configuration attributes are not supported by KeystorePasswordStore named \"%s\" \n\"%s\"")
+    @Message(id = 9505, value = "Following configuration attributes are not supported by KeystorePasswordStore named '%s' : '%s'")
     CredentialStoreException unsupportedPasswordStorageConfigurationAttributes(String vaultName, String attributes);
 
-    @Message(id = 9506, value = "Cannot read credential storage file \"%s\" for the store named \"%s\"")
+    @Message(id = 9506, value = "Cannot read credential storage file '%s' for the store named '%s'")
     CredentialStoreException cannotReadVaultStorage(String fileName, String vaultName, @Cause Exception cause);
 
-    @Message(id = 9507, value = "Credential store \"%s\" doesn't contain admin key under alias \"%s\"")
+    @Message(id = 9507, value = "Credential store '%s' doesn't contain admin key under alias '%s'")
     CredentialStoreException storeAdminKeyNotPresent(String name, String alias);
 
-    @Message(id = 9508, value = "Method \"%s\" not implemented by credential store \"%s\"")
+    @Message(id = 9508, value = "Method '%s' not implemented by credential store '%s'")
     CredentialStoreException methodNotImplemented(String methodName, String storeName);
 
-    @Message(id = 9509, value = "Problem executing password command by credential store \"%s\"")
+    @Message(id = 9509, value = "Problem executing password command by credential store '%s'")
     CredentialStoreException passwordCommandExecutionProblem(String storeName, @Cause Throwable cause);
 
-    @Message(id = 9510, value = "Credential type \"%s\" not supported by credential store \"%s\"")
+    @Message(id = 9510, value = "Credential type '%s' not supported by credential store '%s'")
     CredentialStoreException credentialTypeNotSupported(String credentialType, String storeName);
 
     @Message(id = 9511, value = "Password cache for external commands not supported")
     CredentialStoreException cacheForExternalCommandsNotSupported();
 
     @LogMessage
-    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to \"%s\"")
+    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
 
 }
