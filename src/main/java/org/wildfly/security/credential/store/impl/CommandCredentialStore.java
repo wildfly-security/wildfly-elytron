@@ -108,8 +108,8 @@ public abstract class CommandCredentialStore extends CredentialStoreSpi {
      */
     @Override
     public <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType) throws CredentialStoreException, UnsupportedCredentialTypeException {
-        Assert.assertNotNull(credentialAlias);
-        Assert.assertNotNull(credentialType);
+        Assert.checkNotNullParam("credentialAlias", credentialAlias);
+        Assert.checkNotNullParam("credentialType", credentialType);
         if (credentialType.isAssignableFrom(PasswordCredential.class)) {
             try {
                 return credentialType.cast(createPasswordCredential(executePasswordCommand(credentialAlias)));

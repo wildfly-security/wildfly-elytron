@@ -162,21 +162,22 @@ public abstract class CredentialStoreSpi {
         if (sm != null) {
             sm.checkPermission(CredentialStorePermission.LOAD_EXTERNAL_STORE_PASSWORD);
         }
-        if (commandSpec.trim().startsWith("{" + ExecPasswordStore.SUPPORTED_CMD_TYPE)) {
+        String trimmedCommandSpec = commandSpec.trim();
+        if (trimmedCommandSpec.startsWith("{" + ExecPasswordStore.SUPPORTED_CMD_TYPE)) {
             try {
                 CredentialStore cs = CredentialStore.getInstance(ExecPasswordStore.EXEC_PASSWORD_STORE);
                 return cs.retrieve(commandSpec, credentialType);
             } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
                 throw new CredentialStoreException(e);
             }
-        } else if (commandSpec.trim().startsWith("{" + CmdPasswordStore.SUPPORTED_CMD_TYPE)) {
+        } else if (trimmedCommandSpec.startsWith("{" + CmdPasswordStore.SUPPORTED_CMD_TYPE)) {
             try {
                 CredentialStore cs = CredentialStore.getInstance(CmdPasswordStore.CMD_PASSWORD_STORE);
                 return cs.retrieve(commandSpec, credentialType);
             } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
                 throw new CredentialStoreException(e);
             }
-        } else if (commandSpec.trim().startsWith(MaskedPasswordStore.PASS_MASK_PREFIX)) {
+        } else if (trimmedCommandSpec.startsWith(MaskedPasswordStore.PASS_MASK_PREFIX)) {
             try {
                 CredentialStore cs = CredentialStore.getInstance(MaskedPasswordStore.MASKED_PASSWORD_STORE);
                 cs.initialize(attributes);
@@ -184,7 +185,7 @@ public abstract class CredentialStoreSpi {
             } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
                 throw new CredentialStoreException(e);
             }
-        } else if (commandSpec.trim().startsWith("{" + CUSTOM_PROVIDER)) {
+        } else if (trimmedCommandSpec.startsWith("{" + CUSTOM_PROVIDER)) {
             try {
                 StringTokenizer tokenizer = new StringTokenizer(commandSpec, "{}");
                 String providerSpec = tokenizer.nextToken();
