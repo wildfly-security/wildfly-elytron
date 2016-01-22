@@ -255,7 +255,10 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
         checkValidConfigurationAttributes(attributes.keySet());
         storeBase = attributes.get(STORE_BASE);
         storeFile = resolveFile(attributes.get(STORE_FILE), storeName);
-        storagePassword = convertPassword(loadPassword(attributes.get(STORE_PASSWORD), STORE_PASSWORD, attributes));
+        String pwdSpec = attributes.get(STORE_PASSWORD);
+        if (pwdSpec != null) {
+            storagePassword = convertPassword(loadPassword(pwdSpec, STORE_PASSWORD, attributes));
+        }
         adminKeyAlias = (String) attributes.get(KEY_ALIAS);
         if (adminKeyAlias == null) {
             adminKeyAlias = DEFAULT_ADMIN_KEY_ALIAS;
@@ -277,12 +280,14 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             createStorage = Boolean.parseBoolean((String) attributes.get(CREATE_STORAGE));
         }
 
-        char[] adminKeyPassword = convertPassword(loadPassword(attributes.get(KEY_PASSWORD), KEY_PASSWORD, attributes));
-        adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
-        destroyPassword(adminKeyPassword);
+        pwdSpec = attributes.get(KEY_PASSWORD);
+        if (pwdSpec != null) {
+            char[] adminKeyPassword = convertPassword(loadPassword(pwdSpec, KEY_PASSWORD, attributes));
+            adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
+            destroyPassword(adminKeyPassword);
+        }
 
         readKeyStore();
-
         initialized = true;
     }
 
