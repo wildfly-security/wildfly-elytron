@@ -115,7 +115,36 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     @Override
     public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
-        return null;
+        if (identityMapping.iteratorFilter == null) {
+            throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
+        }
+
+        log.debugf("Trying to iterate over identities.");
+        DirContext context = null;
+        List<ModifiableRealmIdentity> identifiers = new LinkedList<>();
+
+        try {
+            context = dirContextFactory.obtainDirContext(null);
+
+            NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
+                    identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+
+            try {
+                while (result.hasMore()) {
+                    SearchResult entry = result.next();
+                    String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
+                    identifiers.add(getRealmIdentityForUpdate(name, null, null));
+                }
+            } finally {
+                result.close();
+            }
+
+        } catch (NamingException e) {
+            throw log.ldapRealmIdentitySearchFailed(e);
+        } finally {
+            dirContextFactory.returnContext(context);
+        }
+        return identifiers.iterator();
     }
 
     @Override
@@ -154,6 +183,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         return response;
+    }
+
+    private SearchControls createSearchControls(String... returningAttributes) {
+        SearchControls searchControls = new SearchControls();
+
+        searchControls.setSearchScope(identityMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
+        searchControls.setTimeLimit(identityMapping.searchTimeLimit);
+        searchControls.setReturningAttributes(returningAttributes);
+
+        return searchControls;
     }
 
     private class LdapRealmIdentity implements ModifiableRealmIdentity {
@@ -340,7 +379,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         @Override
         public boolean exists() throws RealmUnavailableException {
             if (this.identity == null) {
-                this.identity = getIdentity(this.name);
+                this.identity = getIdentity();
             }
 
             boolean exists = this.identity != null;
@@ -352,7 +391,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             return exists;
         }
 
-        private LdapIdentity getIdentity(String principalName) throws RealmUnavailableException {
+        private LdapIdentity getIdentity() throws RealmUnavailableException {
             log.debugf("Trying to create identity for principal [%s].", this.name);
             DirContext context = null;
 
@@ -360,10 +399,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 context = dirContextFactory.obtainDirContext(null);
 
                 String searchDn = identityMapping.searchDn;
-                String name = principalName;
+                String name = this.name;
 
-                if (principalName.startsWith(identityMapping.rdnIdentifier)) {
-                    LdapName ldapName = new LdapName(principalName);
+                if (this.name.startsWith(identityMapping.rdnIdentifier)) { // getting identity by DN
+                    LdapName ldapName = new LdapName(this.name);
                     int rdnIdentifierPosition = ldapName.size() - 1;
                     Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
 
@@ -398,12 +437,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                         LdapIdentity identity = optional.get();
 
                         if (log.isDebugEnabled()) {
-                            log.debugf("Successfully created identity for principal [%s].", principalName);
+                            log.debugf("Successfully created identity for principal [%s].", this.name);
 
                             if (identity.attributes.isEmpty()) {
-                                log.debugf("Identity [%s] does not have any attributes.", principalName);
+                                log.debugf("Identity [%s] does not have any attributes.", this.name);
                             } else {
-                                log.debugf("Identity [%s] attributes are:", principalName);
+                                log.debugf("Identity [%s] attributes are:", this.name);
                                 identity.attributes.keySet().forEach(key -> {
                                     org.wildfly.security.authz.Attributes.Entry values = identity.attributes.get(key);
                                     values.forEach(value -> log.debugf("    Attribute [%s] value [%s].", key, value));
@@ -419,7 +458,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 }
 
             } catch (NamingException e) {
-                throw log.ldapRealmFailedObtainIdentityFromServer(e);
+                throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
             } finally {
                 dirContextFactory.returnContext(context);
             }
@@ -544,16 +583,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             });
         }
 
-        private SearchControls createSearchControls(String... returningAttributes) {
-            SearchControls searchControls = new SearchControls();
-
-            searchControls.setSearchScope(identityMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
-            searchControls.setTimeLimit(identityMapping.searchTimeLimit);
-            searchControls.setReturningAttributes(returningAttributes);
-
-            return searchControls;
-        }
-
         private Map<String, Collection<String>> extractAttributes(Predicate<AttributeMapping> filter, Function<AttributeMapping, Collection<String>> valueFunction) {
             return identityMapping.attributes.stream()
                     .filter(filter)
@@ -568,7 +597,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
         @Override public void delete() throws RealmUnavailableException {
             if (identity == null) {
-                identity = getIdentity(name);
+                identity = getIdentity();
             }
 
             if (identity == null) {
@@ -615,7 +644,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             log.debugf("Trying to set attributes for principal [%s].", this.name);
 
             if (identity == null) {
-                identity = getIdentity(name);
+                identity = getIdentity();
             }
 
             if (identity == null) {
@@ -738,8 +767,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                             }
                         }
                     });
-                } catch (Exception cause) {
-                    throw log.ldapRealmFailedObtainIdentityFromServer(cause);
+                } catch (Exception e) {
+                    throw log.ldapRealmIdentitySearchFailed(e);
                 }
             }
 
@@ -761,8 +790,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         public final int searchTimeLimit;
         private final LdapName newIdentityParent;
         private final Attributes newIdentityAttributes;
+        private final String iteratorFilter;
+        private final Object[] iteratorFilterArgs;
 
-        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes, String iteratorFilter, Object[] iteratorFilterArgs) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
@@ -771,6 +802,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             this.attributes = attributes;
             this.newIdentityParent = newIdentityParent;
             this.newIdentityAttributes = newIdentityAttributes;
+            this.iteratorFilter = iteratorFilter;
+            this.iteratorFilterArgs = iteratorFilterArgs;
         }
     }
 }
