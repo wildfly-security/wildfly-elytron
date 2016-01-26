@@ -190,7 +190,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             @Override
             public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
                 if (accountEntry == null) {
-                    return null;
+                    return AuthorizationIdentity.EMPTY;
                 }
 
                 return AuthorizationIdentity.basicIdentity(new MapAttributes(Collections.singletonMap(groupsAttribute, accountEntry.getGroups())));
