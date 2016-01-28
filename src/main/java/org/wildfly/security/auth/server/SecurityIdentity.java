@@ -329,8 +329,20 @@ public final class SecurityIdentity {
      * @return the category roles
      */
     public Set<String> getRoles(String category) {
+        return getRoles(category, false);
+    }
+
+    /**
+     * Get the mapped roles associated with this identity.
+     *
+     * @param category the role mapping category
+     * @param fallbackToDefault {@code true} if the default roles associated with this identity should be returned if no
+     *                          role mapping exists for the given category, {@code false} otherwise
+     * @return the category roles
+     */
+    public Set<String> getRoles(String category, boolean fallbackToDefault) {
         final RoleMapper roleMapper = roleMappers.get(category);
-        return roleMapper == null ? Collections.emptySet() : roleMapper.mapRoles(securityDomain.mapRoles(this));
+        return roleMapper == null ? (fallbackToDefault ? getRoles() : Collections.emptySet()) : roleMapper.mapRoles(securityDomain.mapRoles(this));
     }
 
     /**
