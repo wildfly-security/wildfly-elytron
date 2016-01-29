@@ -59,6 +59,7 @@ public final class ServerSSLContextBuilder {
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean requireClientAuth;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
+    private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = () -> SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
 
     /**
@@ -121,6 +122,15 @@ public final class ServerSSLContextBuilder {
     }
 
     /**
+     * Set the factory for the trust manager which should be used for the initial trust decisions during connection.
+     *
+     * @param trustManagerSecurityFactory the factory for the trust manager which should be used for the initial trust decisions during connection (not {@code null}).
+     */
+    public void setTrustManagerSecurityFactory(final SecurityFactory<X509TrustManager> trustManagerSecurityFactory) {
+        this.trustManagerSecurityFactory = Assert.checkNotNullParam("trustManagerSecurityFactory", trustManagerSecurityFactory);
+    }
+
+    /**
      * Set the key manager which should be used to hold identities for this context.
      *
      * @param keyManager the security factory which produces the key manager (not {@code null})
@@ -128,6 +138,16 @@ public final class ServerSSLContextBuilder {
     public void setKeyManager(final X509ExtendedKeyManager keyManager) {
         Assert.checkNotNullParam("keyManager", keyManager);
         this.keyManagerSecurityFactory = new FixedSecurityFactory<>(keyManager);
+    }
+
+    /**
+     * Set the trust manager which should be used to hold identities for this context.
+     *
+     * @param trustManager the trust manager which should be used to hold identities for this context (not {@code null}).
+     */
+    public void setTrustManager(final X509TrustManager trustManager) {
+        Assert.checkNotNullParam("trustManager", trustManager);
+        this.trustManagerSecurityFactory = new FixedSecurityFactory<>(trustManager);
     }
 
     // todo: add a setter which simply accepts a single org.wildfly.security.ssl.X500CertificateChainPrivateCredential instance
@@ -159,7 +179,7 @@ public final class ServerSSLContextBuilder {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
-            final X509TrustManager x509TrustManager = SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
+            final X509TrustManager x509TrustManager = this.trustManagerSecurityFactory.create();
             final boolean canAuthClients = securityDomain != null;
             sslContext.init(new KeyManager[] {
                 keyManagerSecurityFactory.create()
