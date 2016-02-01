@@ -176,7 +176,7 @@ public class LinkPolicyConfigurationTest {
 
         builder.setDefaultRealmName("default");
 
-        builder.addRealm("default",realm).setRoleMapper(RoleMapper.IDENTITY_ROLE_MAPPER);
+        builder.addRealm("default",realm).setRoleMapper(RoleMapper.IDENTITY_ROLE_MAPPER).build();
 
         return builder.build();
     }

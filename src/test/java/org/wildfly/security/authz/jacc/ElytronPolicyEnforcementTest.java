@@ -90,7 +90,7 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
 
         securityRealm.setPasswordMap(users);
 
-        builder.addRealm("default", securityRealm);
+        builder.addRealm("default", securityRealm).build();
         builder.setDefaultRealmName("default");
 
         builder.setPermissionMapper((principal, roles) -> new PermissionCollection() {

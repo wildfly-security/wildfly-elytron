@@ -202,7 +202,7 @@ public class SaslServerBuilder {
         final SimpleMapBackedSecurityRealm mainRealm = new SimpleMapBackedSecurityRealm();
         realms.put(realmName, mainRealm);
         realms.forEach((name, securityRealm) -> {
-            domainBuilder.addRealm(name, securityRealm);
+            domainBuilder.addRealm(name, securityRealm).build();
         });
         domainBuilder.setDefaultRealmName(defaultRealmName);
 
