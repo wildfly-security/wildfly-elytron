@@ -41,7 +41,7 @@ final class ConfiguredSSLContextSpi extends AbstractDelegatingSSLContextSpi {
     }
 
     protected SSLServerSocketFactory engineGetServerSocketFactory() {
-        return super.engineGetServerSocketFactory();
+        return new ConfiguredSSLServerSocketFactory(super.engineGetServerSocketFactory(), getDelegate(), sslConfigurator);
     }
 
     protected SSLEngine engineCreateSSLEngine() {
