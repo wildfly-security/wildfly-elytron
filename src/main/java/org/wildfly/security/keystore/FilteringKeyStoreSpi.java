@@ -17,11 +17,14 @@
  */
 package org.wildfly.security.keystore;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -39,6 +42,7 @@ class FilteringKeyStoreSpi extends DelegatingKeyStoreSpi {
 
     private final KeyStore keyStore;
     private final Predicate<String> aliasPredicate;
+    private boolean loaded = false;
 
     FilteringKeyStoreSpi(final KeyStore keyStore, final Predicate<String> aliasPredicate) {
         this.keyStore = keyStore;
@@ -98,6 +102,15 @@ class FilteringKeyStoreSpi extends DelegatingKeyStoreSpi {
     @Override
     public int engineSize() {
         return aliasStream().mapToInt((String s) -> 1).sum();
+    }
+
+    @Override
+    public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException,
+            CertificateException {
+        if (loaded) {
+            throw new UnsupportedOperationException();
+        }
+        loaded = true;
     }
 
     @Override

@@ -93,14 +93,17 @@ public abstract class AliasFilter implements Predicate<String> {
     /**
      * Create an AliasFilter based on a filterString in one of the following formats: -
      *
-     *   alias1,alais2,alias3         - Only the aliases listed are accepted
-     *   ALL:-alias1:-alias2:-alias3  - All aliases allowed except those listed.
-     *   NONE:+alias1:+alias2:+alais3 - Only the aliases listed are accepted
+     * <ul>
+     *   <li> alias1,alais2,alias3         - Only the aliases listed are accepted></li>
+     *   <li> ALL:-alias1:-alias2:-alias3  - All aliases allowed except those listed.</li>
+     *   <li> NONE:+alias1:+alias2:+alais3 - Only the aliases listed are accepted</li>
+     * </ul>
      *
      * Note: For ambiguous definitions aliases are evaluated against the filter string from right to left with the first match winning, e.g.
      *
-     *   ALL:-alias1:+alias1          - alias1 is an accepted alias.
-     *
+     * <ul>
+     *   <li> ALL:-alias1:+alias1          - alias1 is an accepted alias.</li>
+     * </ul>
      * @param filterString
      * @return
      */
@@ -117,6 +120,7 @@ public abstract class AliasFilter implements Predicate<String> {
                             current = current.add(i.delimitedBy(',').drainToString());
                             if (i.hasNext()) i.next(); // Remove the delimiter.
                         }
+                        break;
                     case ':':
                         switch (firstWord) {
                             case "ALL":
