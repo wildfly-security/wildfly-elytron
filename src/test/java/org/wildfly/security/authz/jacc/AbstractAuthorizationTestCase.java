@@ -81,7 +81,7 @@ public abstract class AbstractAuthorizationTestCase {
             roles.add("Manager");
 
             return roles;
-        });
+        }).build();
 
         return builder.build();
     }

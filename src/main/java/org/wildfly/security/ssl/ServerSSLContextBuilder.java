@@ -59,6 +59,7 @@ public final class ServerSSLContextBuilder {
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean requireClientAuth;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
+    private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = () -> SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
 
     /**
@@ -67,8 +68,10 @@ public final class ServerSSLContextBuilder {
      * @param securityDomain the security domain to use to authenticate clients, or {@code null} to disable client
      *    certificate authentication
      */
-    public void setSecurityDomain(final SecurityDomain securityDomain) {
+    public ServerSSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
         this.securityDomain = securityDomain;
+
+        return this;
     }
 
     /**
@@ -76,9 +79,11 @@ public final class ServerSSLContextBuilder {
      *
      * @param evidenceDecoder the evidence decoder
      */
-    public void setEvidenceDecoder(final EvidenceDecoder evidenceDecoder) {
+    public ServerSSLContextBuilder setEvidenceDecoder(final EvidenceDecoder evidenceDecoder) {
         Assert.checkNotNullParam("evidenceDecoder", evidenceDecoder);
         this.evidenceDecoder = evidenceDecoder;
+
+        return this;
     }
 
     /**
@@ -86,9 +91,11 @@ public final class ServerSSLContextBuilder {
      *
      * @param cipherSuiteSelector the cipher suite selector (not {@code null})
      */
-    public void setCipherSuiteSelector(final CipherSuiteSelector cipherSuiteSelector) {
+    public ServerSSLContextBuilder setCipherSuiteSelector(final CipherSuiteSelector cipherSuiteSelector) {
         Assert.checkNotNullParam("cipherSuiteSelector", cipherSuiteSelector);
         this.cipherSuiteSelector = cipherSuiteSelector;
+
+        return this;
     }
 
     /**
@@ -96,9 +103,11 @@ public final class ServerSSLContextBuilder {
      *
      * @param protocolSelector the protocol selector to use for this context (not {@code null})
      */
-    public void setProtocolSelector(final ProtocolSelector protocolSelector) {
+    public ServerSSLContextBuilder setProtocolSelector(final ProtocolSelector protocolSelector) {
         Assert.checkNotNullParam("protocolSelector", protocolSelector);
         this.protocolSelector = protocolSelector;
+
+        return this;
     }
 
     /**
@@ -106,8 +115,10 @@ public final class ServerSSLContextBuilder {
      *
      * @param requireClientAuth {@code true} to require client authentication, {@code false} otherwise
      */
-    public void setRequireClientAuth(final boolean requireClientAuth) {
+    public ServerSSLContextBuilder setRequireClientAuth(final boolean requireClientAuth) {
         this.requireClientAuth = requireClientAuth;
+
+        return this;
     }
 
     /**
@@ -115,9 +126,11 @@ public final class ServerSSLContextBuilder {
      *
      * @param keyManagerSecurityFactory the security factory which produces the key manager (not {@code null})
      */
-    public void setKeyManagerSecurityFactory(final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory) {
+    public ServerSSLContextBuilder setKeyManagerSecurityFactory(final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory) {
         Assert.checkNotNullParam("keyManagerSecurityFactory", keyManagerSecurityFactory);
         this.keyManagerSecurityFactory = keyManagerSecurityFactory;
+
+        return this;
     }
 
     /**
@@ -125,9 +138,34 @@ public final class ServerSSLContextBuilder {
      *
      * @param keyManager the security factory which produces the key manager (not {@code null})
      */
-    public void setKeyManager(final X509ExtendedKeyManager keyManager) {
+    public ServerSSLContextBuilder setKeyManager(final X509ExtendedKeyManager keyManager) {
         Assert.checkNotNullParam("keyManager", keyManager);
         this.keyManagerSecurityFactory = new FixedSecurityFactory<>(keyManager);
+
+        return this;
+    }
+
+    /**
+     * Set the factory for the trust manager which should be used for the initial trust decisions during connection.
+     *
+     * @param trustManagerSecurityFactory the factory for the trust manager which should be used for the initial trust decisions during connection (not {@code null}).
+     */
+    public ServerSSLContextBuilder setTrustManagerSecurityFactory(final SecurityFactory<X509TrustManager> trustManagerSecurityFactory) {
+        this.trustManagerSecurityFactory = Assert.checkNotNullParam("trustManagerSecurityFactory", trustManagerSecurityFactory);
+
+        return this;
+    }
+
+    /**
+     * Set the trust manager which should be used to hold identities for this context.
+     *
+     * @param trustManager the trust manager which should be used to hold identities for this context (not {@code null}).
+     */
+    public ServerSSLContextBuilder setTrustManager(final X509TrustManager trustManager) {
+        Assert.checkNotNullParam("trustManager", trustManager);
+        this.trustManagerSecurityFactory = new FixedSecurityFactory<>(trustManager);
+
+        return this;
     }
 
     // todo: add a setter which simply accepts a single org.wildfly.security.ssl.X500CertificateChainPrivateCredential instance
@@ -137,9 +175,11 @@ public final class ServerSSLContextBuilder {
      *
      * @param providerSupplier the provider supplier (not {@code null})
      */
-    public void setProviderSupplier(final Supplier<Provider[]> providerSupplier) {
+    public ServerSSLContextBuilder setProviderSupplier(final Supplier<Provider[]> providerSupplier) {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
         this.providerSupplier = providerSupplier;
+
+        return this;
     }
 
     /**
@@ -159,8 +199,8 @@ public final class ServerSSLContextBuilder {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
-            final X509TrustManager x509TrustManager = SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
-            final boolean canAuthClients = securityDomain != null;
+            final X509TrustManager x509TrustManager = this.trustManagerSecurityFactory.create();
+            final boolean canAuthClients = securityDomain != null; // TODO Check security domain does at least potentially support the credential.
             sslContext.init(new KeyManager[] {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {

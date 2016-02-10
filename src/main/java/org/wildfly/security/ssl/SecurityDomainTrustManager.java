@@ -94,6 +94,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
                     handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
                 }
                 ok = true;
+                return;
             }
             throw ElytronMessages.log.notTrusted(principal);
         } catch (RealmUnavailableException e) {

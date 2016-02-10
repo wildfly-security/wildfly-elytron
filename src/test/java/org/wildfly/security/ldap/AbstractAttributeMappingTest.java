@@ -66,7 +66,7 @@ public abstract class AbstractAttributeMappingTest {
                                         .setRdnIdentifier("uid")
                                         .map(expectedAttributes)
                                         .build()
-                                        .build());
+                                        .build()).build();
 
         builder.setPermissionMapper((principal, roles) -> {
             final Permissions permissions = new Permissions();

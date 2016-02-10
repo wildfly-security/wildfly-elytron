@@ -1,0 +1,48 @@
+dir                     = $ENV::CA_HOME
+
+[ ca ]
+default_ca              = elytron
+
+[ elytron ]
+certificate             = $dir/cacert.pem
+database                = $dir/index.txt
+new_certs_dir           = $dir/certs
+private_key             = $dir/private/cakey.pem
+serial                  = $dir/serial
+
+default_crl_days        = 365
+default_days            = 3650
+default_md              = sha1
+
+policy                  = elytron_policy
+x509_extensions         = certificate_extensions
+
+[ elytron_policy ]
+commonName              = supplied
+stateOrProvinceName     = supplied
+countryName             = supplied
+emailAddress            = optional
+organizationName        = supplied
+organizationalUnitName    = optional
+
+[ certificate_extensions ]
+basicConstraints        = CA:false
+
+[ req ]
+default_bits            = 2048
+default_keyfile         = $dir/private/cakey.pem
+default_md              = SHA1
+prompt                  = no
+distinguished_name      = root_ca_distinguished_name
+x509_extensions         = root_ca_extensions
+
+[ root_ca_distinguished_name ]
+commonName              = Elytron CA
+stateOrProvinceName     = Elytron
+countryName             = UK
+emailAddress            = elytron@wildfly.org
+organizationName        = Root Certificate Authority
+
+[ root_ca_extensions ]
+basicConstraints        = CA:true
+

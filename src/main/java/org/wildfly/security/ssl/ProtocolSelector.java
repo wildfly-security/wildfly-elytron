@@ -189,7 +189,7 @@ public abstract class ProtocolSelector {
      * @return a new selector which includes the new rule
      */
     public ProtocolSelector add(final Protocol protocol) {
-        return protocol == null ? this : new RemovingProtocolSelector(this, EnumSet.of(protocol));
+        return protocol == null ? this : new AddingProtocolSelector(this, EnumSet.of(protocol));
     }
 
     /**
@@ -199,7 +199,7 @@ public abstract class ProtocolSelector {
      * @return a new selector which includes the new rule
      */
     public ProtocolSelector add(final Protocol... protocols) {
-        return protocols == null || protocols.length == 0 ? this : new RemovingProtocolSelector(this, EnumSet.of(protocols[0], protocols));
+        return protocols == null || protocols.length == 0 ? this : new AddingProtocolSelector(this, EnumSet.of(protocols[0], protocols));
     }
 
     /**
@@ -209,7 +209,7 @@ public abstract class ProtocolSelector {
      * @return a new selector which includes the new rule
      */
     public ProtocolSelector add(final EnumSet<Protocol> protocols) {
-        return protocols == null || protocols.isEmpty() ? this : new RemovingProtocolSelector(this, protocols);
+        return protocols == null || protocols.isEmpty() ? this : new AddingProtocolSelector(this, protocols);
     }
 
     /* -- selector implementation -- */

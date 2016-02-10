@@ -489,9 +489,14 @@ public final class SecurityDomain {
             Assert.checkNotNullParam("name", name);
             Assert.checkNotNullParam("realm", realm);
             assertNotBuilt();
-            final RealmBuilder realmBuilder = new RealmBuilder(name, realm);
-            realms.put(name, realmBuilder);
+            final RealmBuilder realmBuilder = new RealmBuilder(this, name, realm);
             return realmBuilder;
+        }
+
+        Builder addRealm(RealmBuilder realmBuilder) {
+            realms.put(realmBuilder.getName(), realmBuilder);
+
+            return this;
         }
 
         /**
@@ -562,7 +567,7 @@ public final class SecurityDomain {
             return new SecurityDomain(this, realmMap);
         }
 
-        private void assertNotBuilt() {
+        void assertNotBuilt() {
             if (built) {
                 throw log.builderAlreadyBuilt();
             }
@@ -574,13 +579,16 @@ public final class SecurityDomain {
      */
     public static class RealmBuilder {
 
+        private final Builder parent;
         private final String name;
         private final SecurityRealm realm;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
         private RoleDecoder roleDecoder = RoleDecoder.DEFAULT;
+        private boolean built = false;
 
-        RealmBuilder(final String name, final SecurityRealm realm) {
+        RealmBuilder(final Builder parent, final String name, final SecurityRealm realm) {
+            this.parent = parent;
             this.name = name;
             this.realm = realm;
         }
@@ -617,9 +625,12 @@ public final class SecurityDomain {
          *
          * @param roleMapper the role mapper (may not be {@code null})
          */
-        public void setRoleMapper(final RoleMapper roleMapper) {
+        public RealmBuilder setRoleMapper(final RoleMapper roleMapper) {
+            assertNotBuilt();
             Assert.checkNotNullParam("roleMapper", roleMapper);
             this.roleMapper = roleMapper;
+
+            return this;
         }
 
         /**
@@ -636,9 +647,12 @@ public final class SecurityDomain {
          *
          * @param nameRewriter the name rewriter (may not be {@code null})
          */
-        public void setNameRewriter(final NameRewriter nameRewriter) {
+        public RealmBuilder setNameRewriter(final NameRewriter nameRewriter) {
             Assert.checkNotNullParam("nameRewriter", nameRewriter);
+            assertNotBuilt();
             this.nameRewriter = nameRewriter;
+
+            return this;
         }
 
         /**
@@ -655,8 +669,24 @@ public final class SecurityDomain {
          *
          * @param roleDecoder the role decoder (may not be {@code null})
          */
-        public void setRoleDecoder(final RoleDecoder roleDecoder) {
+        public RealmBuilder setRoleDecoder(final RoleDecoder roleDecoder) {
+            Assert.checkNotNullParam("roleDecoder", roleDecoder);
+            assertNotBuilt();
             this.roleDecoder = roleDecoder;
+
+            return this;
+        }
+
+        public Builder build() {
+            assertNotBuilt();
+            return parent.addRealm(this);
+        }
+
+        private void assertNotBuilt() {
+            parent.assertNotBuilt();
+            if (built) {
+                throw log.builderAlreadyBuilt();
+            }
         }
     }
 }
