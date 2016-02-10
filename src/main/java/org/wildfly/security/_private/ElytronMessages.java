@@ -473,6 +473,15 @@ public interface ElytronMessages extends BasicLogger {
 
     // id = 2014 KeyStoreException "Only password storage is supported"
 
+    @Message(id = 2012, value = "An empty alias filter was supplied")
+    IllegalArgumentException emptyFilter();
+
+    @Message(id = 2013, value = "Filter is missing '+' or '-' at offest %d")
+    IllegalArgumentException missingPlusMinusAt(int position);
+
+    @Message(id = 2014, value = "Invalid first word '%s', must be one of ALL/NONE")
+    IllegalArgumentException invalidFirstWord(String firstWord);
+
     /* util package */
 
     @Message(id = 3001, value = "Unexpected padding")
