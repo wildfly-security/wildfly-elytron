@@ -451,7 +451,7 @@ public final class WildFlySecurityManager extends SecurityManager {
             /*
              * Here is our expected stack:
              *   0: this method
-             *   1: java.lang.System.getProperty()
+             *   1: java.lang.System.getProperty() (may repeat)
              *   2: user code   | java.lang.(Boolean|Integer|Long).getXxx()
              *  3+: ???         | java.lang.(Boolean|Integer|Long).getXxx() (more)
              *   n:             | user code
@@ -467,7 +467,7 @@ public final class WildFlySecurityManager extends SecurityManager {
             }
             Class<?> testClass = context[2];
             if (context.length >= 4) for (int i = 2; i < context.length; i ++) {
-                if (context[i] == Boolean.class || context[i] == Integer.class || context[i] == Long.class) {
+                if (context[i] == Boolean.class || context[i] == Integer.class || context[i] == Long.class || context[i] == System.class) {
                     testClass = context[i + 1];
                 } else {
                     break;
