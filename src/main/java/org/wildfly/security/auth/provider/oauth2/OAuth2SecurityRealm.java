@@ -97,11 +97,15 @@ public class OAuth2SecurityRealm implements SecurityRealm {
 
     @Override
     public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-        if (BearerTokenEvidence.class.isAssignableFrom(evidenceType)) {
+        if (isBearerTokenEvidence(evidenceType)) {
             return SupportLevel.POSSIBLY_SUPPORTED;
         }
 
         return SupportLevel.UNSUPPORTED;
+    }
+
+    private boolean isBearerTokenEvidence(Class<?> evidenceType) {
+        return evidenceType != null && evidenceType.equals(BearerTokenEvidence.class);
     }
 
     final class OAuth2RealmIdentity implements RealmIdentity {
@@ -110,7 +114,7 @@ public class OAuth2SecurityRealm implements SecurityRealm {
         private JsonObject claims;
 
         OAuth2RealmIdentity(Evidence evidence) {
-            if (isBearerTokenEvidence(evidence)) {
+            if (evidence != null && isBearerTokenEvidence(evidence.getClass())) {
                 this.evidence = (BearerTokenEvidence) evidence;
             } else {
                 this.evidence = null;
@@ -170,7 +174,7 @@ public class OAuth2SecurityRealm implements SecurityRealm {
 
         @Override
         public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            if (BearerTokenEvidence.class.equals(evidenceType)) {
+            if (isBearerTokenEvidence(evidenceType)) {
                 return SupportLevel.SUPPORTED;
             }
 
@@ -204,10 +208,6 @@ public class OAuth2SecurityRealm implements SecurityRealm {
             }
 
             return null;
-        }
-
-        private boolean isBearerTokenEvidence(Evidence evidence) {
-            return evidence instanceof BearerTokenEvidence;
         }
     }
 

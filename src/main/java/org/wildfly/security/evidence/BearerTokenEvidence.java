@@ -7,7 +7,7 @@ import org.wildfly.common.Assert;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class BearerTokenEvidence implements Evidence {
+public final class BearerTokenEvidence implements Evidence {
 
     private final String token;
 
