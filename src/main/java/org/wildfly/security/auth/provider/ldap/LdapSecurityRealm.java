@@ -638,7 +638,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                         if (attributes.size(mapping.getName()) == 1) {
                             renameTo = attributes.get(mapping.getName(), 0);
                         } else {
-                            throw log.ldapRealmRequireExactlyOneRdnAttribute(mapping.getName(), this.name);
+                            throw log.ldapRealmRequiresExactlyOneRdnAttribute(mapping.getName(), this.name);
                         }
                     } else { // standard ldap attributes
                         if (attributes.size(mapping.getName()) == 0) {

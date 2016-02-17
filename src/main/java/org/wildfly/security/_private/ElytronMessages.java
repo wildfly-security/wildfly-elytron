@@ -20,6 +20,7 @@ package org.wildfly.security._private;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
@@ -426,11 +427,23 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1101, value = "Ldap-backed realm does not support setting of filtered attribute \"%s\" (identity \"%s\")")
     void ldapRealmDoesNotSupportSettingFilteredAttribute(String attribute, String identity);
 
-    @Message(id = 1102, value = "Ldap-backed realm require exactly one value of attribute \"%s\" mapped to RDN (identity \"%s\")")
-    RealmUnavailableException ldapRealmRequireExactlyOneRdnAttribute(String attribute, String identity);
+    @Message(id = 1102, value = "Ldap-backed realm requires exactly one value of attribute \"%s\" mapped to RDN (identity \"%s\")")
+    RealmUnavailableException ldapRealmRequiresExactlyOneRdnAttribute(String attribute, String identity);
 
     @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
     RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
+
+    @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
+    RuntimeException oauth2RealmFailedToObtainPrincipal(@Cause Throwable cause);
+
+    @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
+    RealmUnavailableException oauth2RealmTokenIntrospectionFailed(@Cause Throwable cause);
+
+    @Message(id = 1106, value = "OAuth2-based realm requires a SSLContext when the token introspection endpoint [%s] is using SSL/TLS.")
+    IllegalStateException oauth2RealmSSLContextNotSpecified(URL tokenIntrospectionUrl);
+
+    @Message(id = 1107, value = "OAuth2-based realm requires a HostnameVerifier when the token introspection endpoint [%s] is using SSL/TLS.")
+    IllegalStateException oauth2RealmHostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
 
     /* keystore package */
 

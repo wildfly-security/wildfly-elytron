@@ -67,6 +67,8 @@
         <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
         <version.org.jboss.slf4j>1.0.3.GA</version.org.jboss.slf4j>
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
+        <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
+        <org.glassfish.javax.json>1.0.4</org.glassfish.javax.json>
         <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
         <version.jmockit>1.10</version.jmockit>
@@ -254,6 +256,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.jboss.spec.javax.json</groupId>
+            <artifactId>jboss-json-api_1.0_spec</artifactId>
+            <version>${version.org.jboss.spec.jboss-json-api_1.0_spec}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!--
               Test Scope Only
          -->
@@ -402,6 +411,13 @@
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
             <version>${version.hsqldb}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>${org.glassfish.javax.json}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
