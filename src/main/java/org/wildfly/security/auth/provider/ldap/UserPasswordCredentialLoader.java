@@ -123,11 +123,16 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 return null;
             }
 
-            DirContext context = null;
-
+            DirContext context;
             try {
                 context = contextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Getting user-password credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
+                }
+                return null;
+            }
+            try {
                 Attributes attributes = context.getAttributes(distinguishedName, new String[] { userPasswordAttributeName });
                 Attribute attribute = attributes.get(userPasswordAttributeName);
                 final int size = attribute.size();
@@ -178,10 +183,13 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         public void persistCredential(final Credential credential) throws RealmUnavailableException {
             // TODO - We probably need some better resolution here of the existing attributes - i.e. different types we would want to add, same type we would want to replace.
 
-            DirContext context = null;
+            DirContext context;
             try {
                 context = contextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
+            }
+            try {
                 byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword((Password) credential);
                 Assert.assertNotNull(composedPassword);
 
@@ -199,10 +207,13 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
         @Override
         public void clearCredentials() throws RealmUnavailableException {
-            DirContext context = null;
+            DirContext context;
             try {
                 context = contextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
+            }
+            try {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(new BasicAttribute(userPasswordAttributeName));
 

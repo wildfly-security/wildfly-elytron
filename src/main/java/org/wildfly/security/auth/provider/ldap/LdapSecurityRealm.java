@@ -125,7 +125,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
         try {
             context = dirContextFactory.obtainDirContext(null);
-
+        } catch (NamingException e) {
+            throw log.ldapRealmIdentitySearchFailed(e);
+        }
+        try {
             NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
                     identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
 
@@ -138,7 +141,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             } finally {
                 result.close();
             }
-
         } catch (NamingException e) {
             throw log.ldapRealmIdentitySearchFailed(e);
         } finally {
@@ -397,7 +399,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             try {
                 context = dirContextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
+            }
+            try {
                 String searchDn = identityMapping.searchDn;
                 String name = this.name;
 
@@ -607,10 +612,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             DirContext context = null;
             try {
                 context = dirContextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedDeleteIdentityFromServer(e);
+            }
+            try {
                 log.debugf("Removing identity [%s] with DN [%s] from LDAP", name, identity.getDistinguishedName());
                 context.destroySubcontext(new LdapName(identity.getDistinguishedName()));
-
             } catch (NamingException e) {
                 throw log.ldapRealmFailedDeleteIdentityFromServer(e);
             } finally {
@@ -626,7 +633,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             DirContext context = null;
             try {
                 context = dirContextFactory.obtainDirContext(null);
-
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedCreateIdentityOnServer(e);
+            }
+            try {
                 LdapName distinguishName = (LdapName) identityMapping.newIdentityParent.clone();
                 distinguishName.add(new Rdn(identityMapping.rdnIdentifier, name));
 
@@ -654,6 +664,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             DirContext context = null;
             try {
                 context = dirContextFactory.obtainDirContext(null);
+            } catch (Exception e) {
+                throw log.ldapRealmAttributesSettingFailed(this.name, e);
+            }
+            try {
                 List<ModificationItem> modItems = new LinkedList<>();
                 LdapName identityLdapName = new LdapName(identity.getDistinguishedName());
                 String renameTo = null;
