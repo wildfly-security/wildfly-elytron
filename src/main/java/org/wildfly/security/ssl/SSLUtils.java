@@ -21,8 +21,10 @@ package org.wildfly.security.ssl;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.Provider.Service;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
@@ -69,11 +71,14 @@ public final class SSLUtils {
         // compile all the providers that support SSLContext.
 
         for (Provider provider : providers) {
-            for (Provider.Service service : provider.getServices()) {
-                if (serviceType.equals(service.getType())) {
-                    String protocolName = service.getAlgorithm();
-                    if (! preferredProviderByAlgorithm.containsKey(protocolName)) {
-                        preferredProviderByAlgorithm.put(protocolName, provider);
+            Set<Service> services = provider.getServices();
+            if (services != null) {
+                for (Provider.Service service : services) {
+                    if (serviceType.equals(service.getType())) {
+                        String protocolName = service.getAlgorithm();
+                        if (!preferredProviderByAlgorithm.containsKey(protocolName)) {
+                            preferredProviderByAlgorithm.put(protocolName, provider);
+                        }
                     }
                 }
             }
