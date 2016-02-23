@@ -31,6 +31,7 @@ org.wildfly.security.password.impl
 org.wildfly.security.password.interfaces
 org.wildfly.security.password.spec
 org.wildfly.security.password.util
+org.wildfly.security.pem
 org.wildfly.security.permission
 org.wildfly.security.sasl
 org.wildfly.security.sasl.anonymous
@@ -42,7 +43,6 @@ org.wildfly.security.sasl.gssapi
 org.wildfly.security.sasl.localuser
 org.wildfly.security.sasl.otp
 org.wildfly.security.sasl.plain
-org.wildfly.security.sasl.proxy
 org.wildfly.security.sasl.scram
 org.wildfly.security.sasl.util
 org.wildfly.security.ssl
