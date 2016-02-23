@@ -273,7 +273,6 @@ public abstract class Alphabet {
      * The alphabet used by PicketBox project base 64 encoding.
      * {@code 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./}
      */
-    @Deprecated
     public static final Base64Alphabet PICKETBOX_COMPATIBILITY = new Base64Alphabet(false) {
         public int encode(int val) {
             if (val <= 9) {
