@@ -18,8 +18,6 @@
 package org.wildfly.security.credential.store;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -30,7 +28,6 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.impl.CmdPasswordStore;
 import org.wildfly.security.credential.store.impl.ExecPasswordStore;
 import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
-import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
@@ -198,24 +195,8 @@ public abstract class CredentialStoreSpi {
                 throw new CredentialStoreException(e);
             }
         } else {
-            try {
-                return credentialType.cast(createPasswordCredential(commandSpec.toCharArray()));
-            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-                throw new CredentialStoreException(e);
-            }
+            return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, commandSpec.toCharArray())));
         }
-    }
-
-    /**
-     * Utility method which creates {@link PasswordCredential} based on {@link ClearPasswordSpec} using {@code password} parameter.
-     * @param password to create {@link PasswordCredential} from
-     * @return {@link PasswordCredential} created using {@link ClearPasswordSpec}
-     * @throws NoSuchAlgorithmException when {@link PasswordFactory} doesn't know password algorithm (should not happen as we are using our own stuff)
-     * @throws InvalidKeySpecException when {@link PasswordFactory#generatePassword(KeySpec)} is using wrong key spec. (should not happen as we are using our own stuff)
-     */
-    protected PasswordCredential createPasswordCredential(char[] password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-        return new PasswordCredential(passwordFactory.generatePassword(new ClearPasswordSpec(password)));
     }
 
 }

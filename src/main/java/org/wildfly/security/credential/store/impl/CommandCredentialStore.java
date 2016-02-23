@@ -28,6 +28,7 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
+import org.wildfly.security.password.interfaces.ClearPassword;
 
 /**
  * Base class for all command line based {@link CredentialStoreSpi}.
@@ -112,7 +113,7 @@ public abstract class CommandCredentialStore extends CredentialStoreSpi {
         Assert.checkNotNullParam("credentialType", credentialType);
         if (credentialType.isAssignableFrom(PasswordCredential.class)) {
             try {
-                return credentialType.cast(createPasswordCredential(executePasswordCommand(credentialAlias)));
+                return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, executePasswordCommand(credentialAlias))));
             } catch (Throwable e) {
                 throw log.passwordCommandExecutionProblem(getName(), e);
             }
