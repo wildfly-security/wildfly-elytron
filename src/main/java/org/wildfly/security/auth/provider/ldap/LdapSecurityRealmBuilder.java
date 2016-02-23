@@ -49,10 +49,12 @@ public class LdapSecurityRealmBuilder {
     private boolean built = false;
     private DirContextFactory dirContextFactory;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
+    private IdentityMapping identityMapping;
+    private int pageSize = 50;
+
     private List<CredentialLoader> credentialLoaders = new ArrayList<>();
     private List<CredentialPersister> credentialPersisters = new ArrayList<>();
     private List<EvidenceVerifier> evidenceVerifiers = new ArrayList<>();
-    private IdentityMapping identityMapping;
 
     private LdapSecurityRealmBuilder() {
     }
@@ -91,6 +93,18 @@ public class LdapSecurityRealmBuilder {
         assertNotBuilt();
 
         this.nameRewriter = nameRewriter;
+
+        return this;
+    }
+
+    /**
+     * Set size of page for realm iterating
+     *
+     * @param pageSize size of page
+     * @return this builder
+     */
+    public LdapSecurityRealmBuilder setPageSize(final int pageSize) {
+        this.pageSize = pageSize;
 
         return this;
     }
@@ -163,7 +177,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers);
+        return new LdapSecurityRealm(dirContextFactory, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
     }
 
     private void assertNotBuilt() {

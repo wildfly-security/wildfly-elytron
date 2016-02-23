@@ -65,6 +65,7 @@ public class ModifiabilityTest {
 
         realm = LdapSecurityRealmBuilder.builder()
             .setDirContextFactory(dirContextFactory.create())
+            .setPageSize(3)
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                 .setRdnIdentifier("uid")
@@ -175,8 +176,7 @@ public class ModifiabilityTest {
             Assert.assertTrue(identity.exists());
             count++;
         }
-        Assert.assertNotEquals(0, count);
-
+        Assert.assertTrue(count > 10);
     }
 
 }

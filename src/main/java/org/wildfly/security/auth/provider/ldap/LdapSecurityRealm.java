@@ -20,6 +20,7 @@ package org.wildfly.security.auth.provider.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +48,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
+import javax.naming.ldap.PagedResultsControl;
+import javax.naming.ldap.PagedResultsResponseControl;
 import javax.naming.ldap.Rdn;
 
 import org.wildfly.common.Assert;
@@ -75,6 +80,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     private final DirContextFactory dirContextFactory;
     private final NameRewriter nameRewriter;
     private final IdentityMapping identityMapping;
+    private final int pageSize;
+
     private final List<CredentialLoader> credentialLoaders;
     private final List<CredentialPersister> credentialPersisters;
     private final List<EvidenceVerifier> evidenceVerifiers;
@@ -83,11 +90,13 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                       final IdentityMapping identityMapping,
                       final List<CredentialLoader> credentialLoaders,
                       final List<CredentialPersister> credentialPersisters,
-                      final List<EvidenceVerifier> evidenceVerifiers) {
+                      final List<EvidenceVerifier> evidenceVerifiers,
+                      final int pageSize) {
 
         this.dirContextFactory = dirContextFactory;
         this.nameRewriter = nameRewriter;
         this.identityMapping = identityMapping;
+        this.pageSize = pageSize;
 
         this.credentialLoaders = credentialLoaders;
         this.credentialPersisters = credentialPersisters;
@@ -119,34 +128,106 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
         }
 
-        log.debugf("Trying to iterate over identities.");
-        DirContext context = null;
-        List<ModifiableRealmIdentity> identifiers = new LinkedList<>();
+        return new Iterator<ModifiableRealmIdentity>() {
 
-        try {
-            context = dirContextFactory.obtainDirContext(null);
-        } catch (NamingException e) {
-            throw log.ldapRealmIdentitySearchFailed(e);
-        }
-        try {
-            NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
-                    identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+            List<ModifiableRealmIdentity> list = new LinkedList<>();
+            byte[] cookie = null;
+            int total = -1;
+            boolean end = false;
 
-            try {
-                while (result.hasMore()) {
-                    SearchResult entry = result.next();
-                    String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                    identifiers.add(getRealmIdentityForUpdate(name, null, null));
+            private void loadNextPage(LdapContext context) throws NamingException, IOException {
+                context.setRequestControls(new Control[]{
+                        new PagedResultsControl(pageSize, cookie, Control.CRITICAL)
+                });
+
+                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
+                        identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+                try {
+                    while (result.hasMore()) {
+                        SearchResult entry = result.next();
+                        String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
+                        list.add(getRealmIdentityForUpdate(name, null, null));
+                    }
+                } finally {
+                    result.close();
                 }
-            } finally {
-                result.close();
+
+                cookie = null;
+                Control[] controls = ((LdapContext) context).getResponseControls();
+                if (controls != null) {
+                    for (int k = 0; k < controls.length; k++) {
+                        if (controls[k] instanceof PagedResultsResponseControl) {
+                            PagedResultsResponseControl control = (PagedResultsResponseControl) controls[k];
+                            total = control.getResultSize();
+                            cookie = control.getCookie();
+                        }
+                    }
+                }
+                if (cookie == null) end = true;
             }
-        } catch (NamingException e) {
-            throw log.ldapRealmIdentitySearchFailed(e);
-        } finally {
-            dirContextFactory.returnContext(context);
-        }
-        return identifiers.iterator();
+
+            private void loadCompleteResult(DirContext context) throws NamingException {
+                end = true;
+                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
+                        identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+                try {
+                    while (result.hasMore()) {
+                        SearchResult entry = result.next();
+                        String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
+                        list.add(getRealmIdentityForUpdate(name, null, null));
+                    }
+                } finally {
+                    result.close();
+                }
+            }
+
+            void loadList() {
+                log.debug("Iterating over identities");
+                DirContext context = null;
+                list.clear();
+
+                try {
+                    context = dirContextFactory.obtainDirContext(null);
+                } catch (NamingException e) {
+                    throw log.ldapRealmIdentitySearchFailed(e);
+                }
+                try {
+
+                    if (context instanceof LdapContext) {
+                        try {
+                            loadNextPage((LdapContext) context);
+                            return; // page loaded successfully
+                        } catch (NamingException | IOException e) {
+                            log.debug("Iterating with pagination failed", e);
+                        } finally {
+                            ((LdapContext) context).setRequestControls(null);
+                        }
+                    }
+
+                    log.debug("Iterating without pagination");
+                    loadCompleteResult(context);
+                } catch (NamingException e) {
+                    throw log.ldapRealmIdentitySearchFailed(e);
+                } finally {
+                    dirContextFactory.returnContext(context);
+                }
+            }
+
+            @Override
+            public boolean hasNext() {
+                return ! list.isEmpty() || ! end;
+            }
+
+            @Override
+            public ModifiableRealmIdentity next() {
+                if (list.isEmpty() && ! end) {
+                    loadList();
+                }
+                ModifiableRealmIdentity identity = list.get(0);
+                list.remove(0);
+                return identity;
+            }
+        };
     }
 
     @Override
