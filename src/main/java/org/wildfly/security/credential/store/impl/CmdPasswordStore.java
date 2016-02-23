@@ -21,12 +21,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.StringTokenizer;
 
-import org.wildfly.security.credential.store.CredentialStorePermission;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 
 /**
@@ -55,24 +51,17 @@ public class CmdPasswordStore extends CommandCredentialStore {
     }
 
     /**
-     * Executes command in operating system using {@link Runtime#exec(String)} method. Grabs the output and return it for further processing.
-     * In case of Java Security Manager active uses doPrivileged to start the command.
+     * Executes command in operating system using {@link ProcessBuilder#start()} method. Grabs the output and return it for further processing.
+     * In case of Java Security Manager active the calling code has to posses
+     * FilePermission(cmd,"execute") or FilePermission("<<ALL FILES>>","execute").
+     *
      * @param passwordCommand command as operating system accepts
      * @return output from the {@link Process} resulting of command execution
      * @throws Throwable when something goes wrong
+     * @see {@link SecurityManager#checkExec(String)}
      */
     @Override
     char[] executePasswordCommand(String passwordCommand) throws Throwable {
-
-        final SecurityManager sm = System.getSecurityManager();
-        CmdRuntimeActions action;
-        if (sm != null) {
-            sm.checkPermission(CredentialStorePermission.LOAD_EXTERNAL_STORE_PASSWORD);
-            action = CmdRuntimeActions.PRIVILEGED;
-        } else {
-            action = CmdRuntimeActions.NON_PRIVILEGED;
-        }
-
         String passwordCmdType;
         String passwordCmdLine;
 
@@ -91,58 +80,40 @@ public class CmdPasswordStore extends CommandCredentialStore {
         }
 
         try {
-            return action.execCmd(passwordCmdLine);
+            return execCmd(passwordCmdLine);
         } catch (Exception e) {
             throw log.passwordCommandExecutionProblem(
                     getName(), e);
         }
     }
 
+    private char[] execCmd(final String command) throws Exception {
+        final ProcessBuilder builder = new ProcessBuilder(parseCommand(command));
+        final Process process = builder.start();
+        final String line;
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            line = reader.readLine();
+        } finally {
+            if (reader != null)
+                reader.close();
+        }
 
-    private interface CmdRuntimeActions {
+        int exitCode = process.waitFor();
+        if (log.isTraceEnabled())
+            log.tracef("Exit code from password command = %d", Integer.valueOf(exitCode));
+        return line != null ? line.toCharArray() : null;
+    }
 
-        CmdRuntimeActions NON_PRIVILEGED = new CmdRuntimeActions() {
-            public char[] execCmd(final String command) throws Exception {
-                final ProcessBuilder builder = new ProcessBuilder(parseCommand(command));
-                final Process process = builder.start();
-                final String line;
-                BufferedReader reader = null;
-                try {
-                    reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                    line = reader.readLine();
-                } finally {
-                    if (reader != null)
-                        reader.close();
-                }
-
-                int exitCode = process.waitFor();
-                if (log.isTraceEnabled())
-                    log.tracef("Exit code from password command = %d", Integer.valueOf(exitCode));
-                return line != null ? line.toCharArray() : null;
-            }
-
-            protected String[] parseCommand(String command) {
-                // comma can be back slashed
-                final String[] parsedCommand = command.split("(?<!\\\\),");
-                for (int k = 0; k < parsedCommand.length; k++) {
-                    if (parsedCommand[k].indexOf('\\') != -1)
-                        parsedCommand[k] = parsedCommand[k].replaceAll("\\\\,", ",");
-                }
-                return parsedCommand;
-            }
-
-        };
-
-        CmdRuntimeActions PRIVILEGED = command -> {
-            try {
-                char[] password = AccessController.doPrivileged((PrivilegedExceptionAction<char[]>) () -> NON_PRIVILEGED.execCmd(command));
-                return password;
-            } catch (PrivilegedActionException e) {
-                throw e.getException();
-            }
-        };
-
-        char[] execCmd(String cmd) throws Exception;
+    private String[] parseCommand(String command) {
+        // comma can be back slashed
+        final String[] parsedCommand = command.split("(?<!\\\\),");
+        for (int k = 0; k < parsedCommand.length; k++) {
+            if (parsedCommand[k].indexOf('\\') != -1)
+                parsedCommand[k] = parsedCommand[k].replaceAll("\\\\,", ",");
+        }
+        return parsedCommand;
     }
 
 }

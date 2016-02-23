@@ -22,12 +22,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.StringTokenizer;
 
-import org.wildfly.security.credential.store.CredentialStorePermission;
 import org.wildfly.security.credential.store.CredentialStoreSpi;
 
 /**
@@ -63,16 +59,6 @@ public class ExecPasswordStore extends CommandCredentialStore {
      */
     @Override
     char[] executePasswordCommand(String passwordCommand) throws Throwable {
-
-        final SecurityManager sm = System.getSecurityManager();
-        ExecRuntimeActions action;
-        if (sm != null) {
-            sm.checkPermission(CredentialStorePermission.LOAD_EXTERNAL_STORE_PASSWORD);
-            action = ExecRuntimeActions.PRIVILEGED;
-        } else {
-            action = ExecRuntimeActions.NON_PRIVILEGED;
-        }
-
         String passwordCmdType;
         String passwordCmdLine;
 
@@ -91,7 +77,7 @@ public class ExecPasswordStore extends CommandCredentialStore {
         }
 
         try {
-            return action.execCmd(passwordCmdLine);
+            return execCmd(passwordCmdLine);
         } catch (Exception e) {
             throw log.passwordCommandExecutionProblem(
                     getName(), e);
@@ -99,40 +85,27 @@ public class ExecPasswordStore extends CommandCredentialStore {
     }
 
 
-    private interface ExecRuntimeActions {
+    private char[] execCmd(String cmd) throws Exception {
+        Runtime rt = Runtime.getRuntime();
+        Process p = rt.exec(cmd);
+        InputStream stdin = null;
+        String line;
+        BufferedReader reader = null;
+        try {
+            stdin = p.getInputStream();
+            reader = new BufferedReader(new InputStreamReader(stdin));
+            line = reader.readLine();
+        } finally {
+            if (reader != null)
+                reader.close();
+            if (stdin != null)
+                stdin.close();
+        }
 
-        ExecRuntimeActions NON_PRIVILEGED = cmd -> {
-            Runtime rt = Runtime.getRuntime();
-            Process p = rt.exec(cmd);
-            InputStream stdin = null;
-            String line;
-            BufferedReader reader = null;
-            try {
-                stdin = p.getInputStream();
-                reader = new BufferedReader(new InputStreamReader(stdin));
-                line = reader.readLine();
-            } finally {
-                if (reader != null)
-                    reader.close();
-                if (stdin != null)
-                    stdin.close();
-            }
-
-            int exitCode = p.waitFor();
-            if (log.isTraceEnabled())
-                log.tracef("Exit code from password command = %d", Integer.valueOf(exitCode));
-            return line != null ? line.toCharArray() : null;
-        };
-
-        ExecRuntimeActions PRIVILEGED = cmd -> {
-            try {
-                return AccessController.doPrivileged((PrivilegedExceptionAction<char[]>) () -> NON_PRIVILEGED.execCmd(cmd));
-            } catch (PrivilegedActionException e) {
-                throw e.getException();
-            }
-        };
-
-        char[] execCmd(String cmd) throws Exception;
+        int exitCode = p.waitFor();
+        if (log.isTraceEnabled())
+            log.tracef("Exit code from password command = %d", Integer.valueOf(exitCode));
+        return line != null ? line.toCharArray() : null;
     }
 
 }
