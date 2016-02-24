@@ -24,6 +24,7 @@ import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
@@ -58,6 +59,8 @@ public final class ServerSSLContextBuilder {
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean requireClientAuth;
+    private int sessionCacheSize;
+    private int sessionTimeout;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
     private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = () -> SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
@@ -117,6 +120,30 @@ public final class ServerSSLContextBuilder {
      */
     public ServerSSLContextBuilder setRequireClientAuth(final boolean requireClientAuth) {
         this.requireClientAuth = requireClientAuth;
+
+        return this;
+    }
+
+    /**
+     * Sets the size of the cache used for storing SSLSession objects.
+     *
+     * @param sessionCacheSize the size of the cache used for storing SSLSession objects.
+     * @return The {@link ServerSSLContextBuilder} to allow chaining of method calls.
+     */
+    public ServerSSLContextBuilder setSessionCacheSize(final int sessionCacheSize) {
+        this.sessionCacheSize = sessionCacheSize;
+
+        return this;
+    }
+
+    /**
+     * Sets the timeout limit for SSLSession objects.
+     *
+     * @param sessionTimeout the timeout limit for SSLSession objects.
+     * @return The {@link ServerSSLContextBuilder} to allow chaining of method calls.
+     */
+    public ServerSSLContextBuilder setSessionTimeout(final int sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
 
         return this;
     }
@@ -199,6 +226,9 @@ public final class ServerSSLContextBuilder {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
+            SSLSessionContext sessionContext = sslContext.getServerSessionContext();
+            sessionContext.setSessionCacheSize(sessionCacheSize);
+            sessionContext.setSessionTimeout(sessionTimeout);
             final X509TrustManager x509TrustManager = this.trustManagerSecurityFactory.create();
             final boolean canAuthClients = securityDomain != null; // TODO Check security domain does at least potentially support the credential.
             sslContext.init(new KeyManager[] {
