@@ -20,7 +20,6 @@ package org.wildfly.security.ldap;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -43,10 +42,8 @@ import java.util.Iterator;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class ModifiabilityTest {
+public class ModifiabilitySuiteChild {
 
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
     private static ModifiableSecurityRealm realm;
 
     @BeforeClass
@@ -64,7 +61,7 @@ public class ModifiabilityTest {
         attributes.put(new BasicAttribute("description", "new user"));
 
         realm = LdapSecurityRealmBuilder.builder()
-            .setDirContextFactory(dirContextFactory.create())
+            .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
             .setPageSize(3)
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")

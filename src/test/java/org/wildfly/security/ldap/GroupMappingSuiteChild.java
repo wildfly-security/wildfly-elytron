@@ -26,7 +26,7 @@ import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class GroupMappingTest extends AbstractAttributeMappingTest {
+public class GroupMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
 
     @Test
     public void testMultipleGroupsWithUniqueMember() throws Exception {

@@ -29,7 +29,6 @@ import java.util.Collections;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -55,21 +54,19 @@ import org.wildfly.security.password.spec.OneTimePasswordSpec;
  *
  * This test case use {@link DirContextFactoryRule} to ensure running embedded LDAP server.
  *
- * Note: Verify {@link TestEnvironmentTest} is working first before focusing on errors in this test case.
+ * Note: Verify {@link TestEnvironmentSuiteChild} is working first before focusing on errors in this test case.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class PasswordSupportTest {
+public class PasswordSupportSuiteChild {
 
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
     private static SecurityRealm simpleToDnRealm;
 
     @BeforeClass
     public static void createRealm() {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
-            .setDirContextFactory(dirContextFactory.create())
+            .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
             .identityMapping()
             .setSearchDn("dc=elytron,dc=wildfly,dc=org")
             .setRdnIdentifier("uid")

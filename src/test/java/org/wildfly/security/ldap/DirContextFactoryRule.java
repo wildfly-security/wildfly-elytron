@@ -82,12 +82,12 @@ public class DirContextFactoryRule implements TestRule {
                     .setWorkingDir(new File("./target/apache-ds/working"))
                     .createDirectoryService("Test Service")
                     .addPartition("Elytron", "dc=elytron,dc=wildfly,dc=org", 5, "uid")
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-credential-tests.ldif"))
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/memberOf-schema.ldif"))
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-attribute-tests.ldif"))
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-role-mapping-tests.ldif"))
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-group-mapping-tests.ldif"))
-                    .importLdif(PasswordSupportTest.class.getResourceAsStream("/ldap/elytron-otp-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-credential-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/memberOf-schema.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-attribute-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-role-mapping-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-group-mapping-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-otp-tests.ldif"))
                     .addTcpServer("Default TCP", "localhost", LDAP_PORT)
                     .start();
         } catch (Exception e) {

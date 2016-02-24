@@ -21,7 +21,6 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -32,15 +31,12 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class PasswordValidationTest {
-
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactoryRule = new DirContextFactoryRule();
+public class PasswordValidationSuiteChild {
 
     @Test
     public void testPlainUserWithSimpleName() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactoryRule.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -59,7 +55,7 @@ public class PasswordValidationTest {
     @Test
     public void testPlainUserWithX500Name() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactoryRule.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()

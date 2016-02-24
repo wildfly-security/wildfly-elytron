@@ -21,7 +21,6 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -33,15 +32,12 @@ import org.wildfly.security.auth.server.SecurityRealm;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class PrincipalMappingTest {
-
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
+public class PrincipalMappingSuiteChild {
 
     @Test
     public void testSimpleToDn() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -58,7 +54,7 @@ public class PrincipalMappingTest {
     @Test
     public void testDnToSimple() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
@@ -74,7 +70,7 @@ public class PrincipalMappingTest {
     @Test
     public void testSimpleToSimpleValidate() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -91,7 +87,7 @@ public class PrincipalMappingTest {
     @Test
     public void testSimpleToSimpleReload() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -108,7 +104,7 @@ public class PrincipalMappingTest {
     @Test
     public void testDnToDnNoLookup() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
@@ -121,7 +117,7 @@ public class PrincipalMappingTest {
     @Test
     public void testDnToDnVerify() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory.create())
+                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
