@@ -351,8 +351,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1077, value = "Invalid alias \"%s\" for missing mechanism database entry \"%s\"")
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
-    @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity from server")
-    RuntimeException ldapRealmFailedObtainIdentityFromServer(@Cause Throwable cause);
+    @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity \"%s\" from server")
+    RuntimeException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
 
     @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
     RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
@@ -431,6 +431,12 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1103, value = "Ldap-backed realm failed to set attributes of identity \"%s\"")
     RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
+
+    @Message(id = 1104, value = "Ldap-backed realm identity search failed")
+    RuntimeException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
+
+    @Message(id = 1105, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
+    RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
 
     /* keystore package */
 

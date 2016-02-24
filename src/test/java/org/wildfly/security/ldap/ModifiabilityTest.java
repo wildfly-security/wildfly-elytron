@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.MapAttributes;
 
 import javax.naming.InvalidNameException;
@@ -36,6 +36,7 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
 
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Test case to test creating and removing identities in LDAP
@@ -46,7 +47,7 @@ public class ModifiabilityTest {
 
     @ClassRule
     public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
-    private static SecurityRealm realm;
+    private static ModifiableSecurityRealm realm;
 
     @BeforeClass
     public static void createRealm() throws InvalidNameException {
@@ -75,6 +76,7 @@ public class ModifiabilityTest {
                      AttributeMapping.fromFilter("ou=Finance,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea"))
                 .setNewIdentityParent(new LdapName("dc=elytron,dc=wildfly,dc=org"))
                 .setNewIdentityAttributes(attributes)
+                .setIteratorFilter("(uid=*)")
                 .build()
             .build();
     }
@@ -161,6 +163,20 @@ public class ModifiabilityTest {
         Assert.assertEquals("Smith", attributes.get("lastName").get(0));
         Assert.assertEquals(0, attributes.get("description").size());
         Assert.assertEquals(2, attributes.get("phones").size());
+    }
+
+    @Test
+    public void testIterating() throws Exception {
+        Iterator<ModifiableRealmIdentity> iterator = realm.getRealmIdentityIterator();
+
+        int count = 0;
+        while(iterator.hasNext()){
+            ModifiableRealmIdentity identity = iterator.next();
+            Assert.assertTrue(identity.exists());
+            count++;
+        }
+        Assert.assertNotEquals(0, count);
+
     }
 
 }
