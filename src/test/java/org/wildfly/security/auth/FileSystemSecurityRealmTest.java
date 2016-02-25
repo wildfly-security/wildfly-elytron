@@ -18,6 +18,7 @@
 package org.wildfly.security.auth;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
@@ -47,6 +48,7 @@ import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.util.CodePointIterator;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +63,7 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -321,6 +324,42 @@ public class FileSystemSecurityRealmTest {
 
         assertTrue(identity3.exists());
         assertTrue(identity3.verifyEvidence(new PasswordGuessEvidence("secretPassword".toCharArray())));
+    }
+
+    @Test
+    public void testIterating() throws Exception {
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        ModifiableRealmIdentity identity1 = securityRealm.getRealmIdentityForUpdate("firstUser", null, null);
+        identity1.create();
+        ModifiableRealmIdentity identity2 = securityRealm.getRealmIdentityForUpdate("secondUser", null, null);
+        identity2.create();
+        Iterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator();
+
+        int count = 0;
+        while(iterator.hasNext()){
+            ModifiableRealmIdentity identity = iterator.next();
+            Assert.assertTrue(identity.exists());
+            count++;
+        }
+
+        Assert.assertEquals(2, count);
+        getRootPath(); // will fail on windows if iterator not closed correctly
+    }
+
+    @Test
+    public void testPartialIterating() throws Exception {
+        FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
+        ModifiableRealmIdentity identity1 = securityRealm.getRealmIdentityForUpdate("firstUser", null, null);
+        identity1.create();
+        ModifiableRealmIdentity identity2 = securityRealm.getRealmIdentityForUpdate("secondUser", null, null);
+        identity2.create();
+        Iterator<ModifiableRealmIdentity> iterator = securityRealm.getRealmIdentityIterator();
+
+        Assert.assertTrue(iterator.hasNext());
+        Assert.assertTrue(iterator.next().exists());
+        Assert.assertTrue(iterator instanceof Closeable);
+        ((Closeable) iterator).close();
+        getRootPath(); // will fail on windows if iterator not closed correctly
     }
 
     private void assertCreateIdentityWithPassword(char[] actualPassword, Password credential) throws Exception {
