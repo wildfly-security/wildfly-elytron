@@ -22,7 +22,6 @@ import static java.nio.file.StandardOpenOption.*;
 import static javax.xml.stream.XMLStreamConstants.*;
 
 import java.io.BufferedOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -58,15 +57,16 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.auth.server.ModifiableRealmIdentity;
-import org.wildfly.security.auth.server.ModifiableSecurityRealm;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -164,13 +164,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return new Identity(finalName, pathFor(finalName));
     }
 
-    public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
         return subIterator(root, levels);
     }
 
-    private abstract class CloseableIdentityIterator implements Iterator<ModifiableRealmIdentity>, Closeable {}
-
-    private Iterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
+    private CloseableIterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
         final DirectoryStream<Path> stream;
         final Iterator<Path> iterator;
         if (levels == 0) {
@@ -179,9 +177,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 iterator = stream.iterator();
             } catch (IOException e) {
                 ElytronMessages.log.debug(e);
-                return Collections.emptyIterator();
+                return CloseableIterator.emptyIterator();
             }
-            return new CloseableIdentityIterator() {
+            return new CloseableIterator<ModifiableRealmIdentity>() {
 
                 public boolean hasNext() {
                     if ( ! iterator.hasNext()) {
@@ -213,10 +211,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 iterator = stream.iterator();
             } catch (IOException e) {
                 ElytronMessages.log.debug(e);
-                return Collections.emptyIterator();
+                return CloseableIterator.emptyIterator();
             }
-            return new CloseableIdentityIterator() {
-                private CloseableIdentityIterator subIterator;
+            return new CloseableIterator<ModifiableRealmIdentity>() {
+                private CloseableIterator<ModifiableRealmIdentity> subIterator;
 
                 public boolean hasNext() {
                     for (;;) {
@@ -230,7 +228,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                                 return false;
                             }
                             final Path path = iterator.next();
-                            subIterator = (CloseableIdentityIterator) subIterator(path, levels - 1);
+                            subIterator = subIterator(path, levels - 1);
                         } else if (subIterator.hasNext()) {
                             return true;
                         } else {
