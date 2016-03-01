@@ -24,6 +24,11 @@ import javax.net.ssl.SSLSession;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
 
+import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Server side representation of a HTTP request.
  *
@@ -87,4 +92,73 @@ public interface HttpServerRequest {
         badRequest(failure, null);
     }
 
+    /**
+     * Returns the name of the HTTP method with which this request was made, for example, GET, POST, or PUT.
+     *
+     * @return a <code>String</code> specifying the name of the method with which this request was made
+     */
+    String getRequestMethod();
+
+    /**
+     * Reconstructs the URL the client used to make the request. The returned URL contains a protocol, server name, port
+     * number, and server path, but it does not include query string parameters.
+     *
+     * @return a <code>String</code> containing the part of the URL from the protocol name up to the query string
+     */
+    String getRequestURI();
+
+    /**
+     * Returns the query parameters.
+     *
+     * @return the query parameters
+     */
+    Map<String, String[]> getParameters();
+
+    /**
+     * Returns an array containing all of the {@link HttpServerCookie} objects the client sent with this request. This method returns <code>null</code> if no cookies were sent.
+     *
+     * @return an array of all the cookies included with this request, or <code>null</code> if the request has no cookies
+     */
+    HttpServerCookie[] getCookies();
+
+    /**
+     * Returns the request input stream.
+     *
+     * @return the input stream
+     */
+    InputStream getInputStream();
+
+    /**
+     * Get the source address of the HTTP request.
+     *
+     * @return the source address of the HTTP request
+     */
+    InetSocketAddress getSourceAddress();
+
+    /**
+     * Returns the current {@link HttpServerSession} associated with this request or, if there is no
+     * current session and <code>create</code> is true, returns a new session.
+     *
+     * <p>If <code>create</code> is <code>false</code> and the request has no valid {@link HttpServerSession},
+     * this method returns <code>null</code>.
+     *
+     * @param create <code>true</code> to create a new session for this request if necessary; <code>false</code> to return <code>null</code> if there's no current session
+     * @return the {@link HttpServerSession} associated with this request or <code>null</code> if code>create</code> is <code>false</code> and the request has no valid session
+     */
+    HttpServerSession getSession(boolean create);
+
+    /**
+     * Retrieves a session with the given session id.
+     *
+     * @param id the session ID
+     * @return the session, or null if it does not exist
+     */
+    HttpServerSession getSession(String id);
+
+    /**
+     * Returns the identifiers of all sessions, including both active and passive.
+     *
+     * @return the identifiers of all sessions, including both active and passive
+     */
+    Set<String> getSessions();
 }

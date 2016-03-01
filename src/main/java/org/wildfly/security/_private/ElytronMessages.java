@@ -1153,6 +1153,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6003, value = "An authentication attempt failed validation using mechanism '%s'.")
     String authenticationFailed(String mechanismName);
 
+    @Message(id = 6004, value = "Session management not supported. This is probably because no HttpSessionSpi was implemented for the underlying container.")
+    IllegalStateException httpSessionNotSupported();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
