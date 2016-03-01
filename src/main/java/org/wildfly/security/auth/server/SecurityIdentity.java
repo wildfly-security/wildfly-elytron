@@ -35,6 +35,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
@@ -289,6 +290,25 @@ public final class SecurityIdentity {
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
             PeerIdentity.runAsAllConsumer(parameter1, parameter2, action, peerIdentities);
+        } finally {
+            securityDomain.setCurrentSecurityIdentity(old);
+        }
+    }
+
+    /**
+     * Run an action under this identity.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param action the action to run
+     * @param <T> the action first parameter type
+     */
+    public <T> void runAsObjIntConsumer(ObjIntConsumer<T> action, T parameter1, int parameter2) {
+        if (action == null) return;
+        final SecurityDomain securityDomain = this.securityDomain;
+        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        try {
+            PeerIdentity.runAsAllObjIntConsumer(parameter1, parameter2, action, peerIdentities);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }

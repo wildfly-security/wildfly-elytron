@@ -29,6 +29,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
@@ -609,6 +610,40 @@ public abstract class PeerIdentity {
      * @param <U> the action second parameter type
      */
     public static <T, U> void runAsAllConsumer(T parameter1, U parameter2, BiConsumer<T, U> privilegedAction, PeerIdentity... identities) {
+        int length = identities.length;
+        for (int i = 0; i < length; i ++) {
+            PeerIdentity identity = identities[i];
+            boolean ok = false;
+            try {
+                identity.preAssociate();
+                ok = true;
+            } finally {
+                if (! ok) {
+                    for (--i; i >= 0; --i) {
+                        identities[i].safePostAssociate();
+                    }
+                }
+            }
+        }
+        try {
+            privilegedAction.accept(parameter1, parameter2);
+        } finally {
+            for (int i = length - 1; i >= 0; i--) {
+                identities[i].safePostAssociate();
+            }
+        }
+    }
+
+    /**
+     * Run an action under a series of identities.
+     *
+     * @param parameter1 the first parameter to pass to the action
+     * @param parameter2 the second parameter to pass to the action
+     * @param privilegedAction the action to run
+     * @param identities the identities to use
+     * @param <T> the action first parameter type
+     */
+    public static <T> void runAsAllObjIntConsumer(T parameter1, int parameter2, ObjIntConsumer<T> privilegedAction, PeerIdentity... identities) {
         int length = identities.length;
         for (int i = 0; i < length; i ++) {
             PeerIdentity identity = identities[i];
