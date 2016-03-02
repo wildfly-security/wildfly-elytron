@@ -23,6 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+import javax.naming.ldap.InitialLdapContext;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -219,12 +220,12 @@ public class SimpleDirContextFactoryBuilder {
                 });
             }
 
-            InitialDirContext context;
+            InitialLdapContext context;
 
             try {
-                context = new InitialDirContext(env);
+                context = new InitialLdapContext(env, null);
             } catch (NamingException ne) {
-                log.debugf(ne, "Could not create [%s]. Failed to connect to LDAP server.", InitialDirContext.class);
+                log.debugf(ne, "Could not create [%s]. Failed to connect to LDAP server.", InitialLdapContext.class);
                 throw ne;
             }
 

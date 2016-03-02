@@ -58,6 +58,7 @@ public interface DirContextFactory {
     /**
      * Return the {@link DirContext} once it is no longer required. The returned DirContext is not necessarily an
      * {@link InitialDirContext} and as a result we can not assume it is closeable.
+     * Should only be called if a context was successfully obtained.
      *
      * @param context the {@link DirContext} to return
      */
