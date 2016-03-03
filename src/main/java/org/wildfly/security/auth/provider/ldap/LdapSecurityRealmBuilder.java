@@ -23,6 +23,7 @@ import org.wildfly.security.auth.provider.ldap.LdapSecurityRealm.IdentityMapping
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 
 import javax.naming.directory.Attributes;
@@ -167,7 +168,7 @@ public class LdapSecurityRealmBuilder {
      *
      * @return the built realm
      */
-    public LdapSecurityRealm build() {
+    public ModifiableSecurityRealm build() {
         assertNotBuilt();
         if (dirContextFactory == null) {
             throw log.noDirContextFactorySet();
