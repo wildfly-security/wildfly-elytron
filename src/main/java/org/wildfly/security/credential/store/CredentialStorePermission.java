@@ -17,7 +17,10 @@
  */
 package org.wildfly.security.credential.store;
 
-import java.security.BasicPermission;
+import org.wildfly.common.Assert;
+import org.wildfly.security.permission.AbstractNameSetOnlyPermission;
+import org.wildfly.security.util.StringEnumeration;
+import org.wildfly.security.util.StringMapping;
 
 /**
  * Credential Store API specific permission. It can have following target names:
@@ -29,70 +32,44 @@ import java.security.BasicPermission;
  * </ul>
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class CredentialStorePermission extends BasicPermission {
+public class CredentialStorePermission extends AbstractNameSetOnlyPermission<CredentialStorePermission> {
 
     private static final long serialVersionUID = 6248622485149435793L;
 
-    enum Name {
-        loadCredentialStore,
-        loadExternalStorePassword,
-        retrieveCredential,
-        modifyCredentialStore
-        ;
+    private static final StringEnumeration names = StringEnumeration.of(
+        "loadCredentialStore",
+        "loadExternalStorePassword",
+        "retrieveCredential",
+        "modifyCredentialStore"
+    );
 
-        private final CredentialStorePermission permission;
-
-        Name() {
-            permission = new CredentialStorePermission(this);
-        }
-
-        CredentialStorePermission getPermission() {
-            return permission;
-        }
-
-        public static Name of(final String name) {
-            try {
-                return valueOf(name);
-            } catch (IllegalArgumentException ignored) {
-                throw new IllegalArgumentException(name.toString());
-            }
-        }
-
-    }
+    private static final StringMapping<CredentialStorePermission> mapping = new StringMapping<>(names, CredentialStorePermission::new);
 
     /**
      * Load credential store permission.
      */
-    public static final CredentialStorePermission LOAD_CREDENTIAL_STORE = Name.loadCredentialStore.getPermission();
+    public static final CredentialStorePermission LOAD_CREDENTIAL_STORE = mapping.getItemById(0);
     /**
      * Load external store password permission.
      */
-    public static final CredentialStorePermission LOAD_EXTERNAL_STORE_PASSWORD = Name.loadExternalStorePassword.getPermission();
+    public static final CredentialStorePermission LOAD_EXTERNAL_STORE_PASSWORD = mapping.getItemById(1);
     /**
      * Retrieve credential (password) permission (from credential store).
      */
-    public static final CredentialStorePermission RETRIEVE_CREDENTIAL = Name.retrieveCredential.getPermission();
+    public static final CredentialStorePermission RETRIEVE_CREDENTIAL = mapping.getItemById(2);
     /**
      * Store or delete credential (password) permission (from credential store).
      */
-    public static final CredentialStorePermission MODIFY_CREDENTIAL_STORE = Name.modifyCredentialStore.getPermission();
+    public static final CredentialStorePermission MODIFY_CREDENTIAL_STORE = mapping.getItemById(3);
 
-
-    /**
-     * Creates new {@code CredentialStorePermission} using {@link CredentialStorePermission.Name}
-     * @param name of new {@code CredentialStorePermission}
-     */
-    public CredentialStorePermission(final Name name) {
-        super(name.toString());
-    }
-
+    private static final CredentialStorePermission allPermission = new CredentialStorePermission("*");
 
     /**
      * Creates new {@code CredentialStorePermission}
      * @param name of new {@code CredentialStorePermission}
      */
     public CredentialStorePermission(final String name) {
-        this(Name.of(name));
+        super(name, names);
     }
 
     /**
@@ -102,9 +79,11 @@ public class CredentialStorePermission extends BasicPermission {
      */
     public CredentialStorePermission(final String name, final String actions) {
         this(name);
-        if (actions != null || !actions.isEmpty()) {
-            throw new IllegalArgumentException("Actions cannot be specified (use null)");
-        }
+        requireEmptyActions(actions);
     }
 
+    public CredentialStorePermission withName(final String name) {
+        Assert.checkNotNullParam("name", name);
+        return name.equals("*") ? allPermission : mapping.getItemByString(name);
+    }
 }

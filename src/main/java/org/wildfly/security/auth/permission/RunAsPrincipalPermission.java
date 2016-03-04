@@ -18,14 +18,14 @@
 
 package org.wildfly.security.auth.permission;
 
-import java.security.Permission;
+import org.wildfly.security.permission.AbstractNameOnlyPermission;
 
 /**
  * The permission to run as another principal within some security domain.  Note that this permission is checked relative
  * to the security domain that the user is authenticated to.  The principal name is the effective name after all rewrite
  * operations have taken place.
  */
-public final class RunAsPrincipalPermission extends Permission {
+public final class RunAsPrincipalPermission extends AbstractNameOnlyPermission<RunAsPrincipalPermission> {
 
     private static final long serialVersionUID = -3361334389433669815L;
 
@@ -48,61 +48,7 @@ public final class RunAsPrincipalPermission extends Permission {
         this(name);
     }
 
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final Permission permission) {
-        return permission instanceof RunAsPrincipalPermission && implies((RunAsPrincipalPermission) permission);
-    }
-
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final RunAsPrincipalPermission permission) {
-        return permission != null && (permission.getName().equals(getName()) || "*".equals(getName()));
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param obj the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final Object obj) {
-        return obj instanceof RunAsPrincipalPermission && equals((RunAsPrincipalPermission) obj);
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param perm the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final RunAsPrincipalPermission perm) {
-        return perm != null && perm.getName().equals(getName());
-    }
-
-    /**
-     * Get the hash code for this permission.
-     *
-     * @return the hash code for this permission
-     */
-    public int hashCode() {
-        return getName().hashCode();
-    }
-
-    /**
-     * Get the actions for this permission (always an empty string).
-     *
-     * @return an empty string
-     */
-    public String getActions() {
-        return "";
+    public RunAsPrincipalPermission withName(final String name) {
+        return new RunAsPrincipalPermission(name);
     }
 }

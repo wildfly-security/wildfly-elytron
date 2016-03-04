@@ -18,14 +18,14 @@
 
 package org.wildfly.security.auth.permission;
 
-import java.security.Permission;
+import org.wildfly.security.permission.AbstractBooleanPermission;
 
 /**
  * Establish whether the current identity has permission to complete an authentication ("log in").
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class LoginPermission extends Permission {
+public final class LoginPermission extends AbstractBooleanPermission<LoginPermission> {
 
     private static final long serialVersionUID = - 5776174571770792690L;
 
@@ -33,7 +33,6 @@ public final class LoginPermission extends Permission {
      * Construct a new instance.
      */
     public LoginPermission() {
-        super("");
     }
 
     /**
@@ -42,7 +41,6 @@ public final class LoginPermission extends Permission {
      * @param name ignored
      */
     public LoginPermission(@SuppressWarnings("unused") final String name) {
-        super("");
     }
 
     /**
@@ -52,74 +50,5 @@ public final class LoginPermission extends Permission {
      * @param actions ignored
      */
     public LoginPermission(@SuppressWarnings("unused") final String name, @SuppressWarnings("unused") final String actions) {
-        super("");
-    }
-
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final Permission permission) {
-        return permission instanceof LoginPermission;
-    }
-
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final LoginPermission permission) {
-        return permission != null;
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param obj the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final Object obj) {
-        return obj instanceof LoginPermission;
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param obj the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final Permission obj) {
-        return obj instanceof LoginPermission;
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param obj the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final LoginPermission obj) {
-        return obj != null;
-    }
-
-    /**
-     * Get the hash code for this permission.
-     *
-     * @return the hash code for this permission
-     */
-    public int hashCode() {
-        return 239;
-    }
-
-    /**
-     * Get the actions for this permission (always an empty string).
-     *
-     * @return an empty string
-     */
-    public String getActions() {
-        return "";
     }
 }

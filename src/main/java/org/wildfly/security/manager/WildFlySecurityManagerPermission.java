@@ -22,13 +22,9 @@
 
 package org.wildfly.security.manager;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.security.BasicPermission;
-import java.security.Permission;
-import java.security.PermissionCollection;
-
-import org.wildfly.security.manager._private.SecurityMessages;
+import org.wildfly.security.permission.AbstractNameSetOnlyPermission;
+import org.wildfly.security.util.StringEnumeration;
+import org.wildfly.security.util.StringMapping;
 
 /**
  * A permission specific to the WildFly security manager.  The permission name may be one of the following:
@@ -38,80 +34,44 @@ import org.wildfly.security.manager._private.SecurityMessages;
  * </ul>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class WildFlySecurityManagerPermission extends BasicPermission {
+public final class WildFlySecurityManagerPermission extends AbstractNameSetOnlyPermission<WildFlySecurityManagerPermission> {
 
     private static final long serialVersionUID = 1L;
 
-    enum Name {
-        doUnchecked,
-        getStackInspector,
-        ;
+    private static final StringEnumeration strings = StringEnumeration.of(
+        "doUnchecked",
+        "getStackInspector"
+    );
 
-        private final WildFlySecurityManagerPermission permission;
+    static final StringMapping<WildFlySecurityManagerPermission> mapping = new StringMapping<>(strings, WildFlySecurityManagerPermission::new);
 
-        Name() {
-            this.permission = new WildFlySecurityManagerPermission(this);
-        }
+    private static final WildFlySecurityManagerPermission allPermission = new WildFlySecurityManagerPermission("*");
 
-        WildFlySecurityManagerPermission getPermission() {
-            return permission;
-        }
+    // these are used in various other classes in this package
+    static final WildFlySecurityManagerPermission doUncheckedPermission = mapping.getItemById(0);
+    static final WildFlySecurityManagerPermission getStackInspectorPermission = mapping.getItemById(1);
 
-        public static Name of(final String name) {
-            try {
-                return valueOf(name);
-            } catch (IllegalArgumentException ignored) {
-                throw SecurityMessages.permission.invalidName(name);
-            }
-        }
-
-    }
-
-    static final WildFlySecurityManagerPermission DO_UNCHECKED_PERMISSION = Name.doUnchecked.getPermission();
-    static final WildFlySecurityManagerPermission GET_STACK_INSPECTOR_PERMISSION = Name.getStackInspector.getPermission();
-
-    static final Name[] values = Name.values();
-
-    private transient Name name;
-
-    WildFlySecurityManagerPermission(final Name name) {
-        super(name.toString());
-        this.name = name;
-    }
-
+    /**
+     * Construct a new instance.
+     *
+     * @param name the permission name (must not be {@code null})
+     */
     public WildFlySecurityManagerPermission(final String name) {
-        this(Name.of(name));
+        this(name, null);
     }
 
+    /**
+     * Construct a new instance.
+     *
+     * @param name the permission name (must not be {@code null})
+     * @param actions the actions string (must be empty or {@code null})
+     */
     public WildFlySecurityManagerPermission(final String name, final String actions) {
-        this(name);
-        if (actions != null && ! actions.isEmpty()) {
-            throw SecurityMessages.permission.invalidAction(actions, 0, actions);
-        }
+        super(name, strings);
+        requireEmptyActions(actions);
     }
 
-    public PermissionCollection newPermissionCollection() {
-        return new WildFlySecurityManagerPermissionCollection();
-    }
-
-    public boolean implies(final Permission p) {
-        return p instanceof WildFlySecurityManagerPermission && name == ((WildFlySecurityManagerPermission) p).name;
-    }
-
-    public boolean equals(final Object obj) {
-        return obj instanceof WildFlySecurityManagerPermission && name == ((WildFlySecurityManagerPermission) obj).name;
-    }
-
-    public int hashCode() {
-        return (name.ordinal() + 5) * 51;
-    }
-
-    Name getKind() {
-        return name;
-    }
-
-    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        ois.defaultReadObject();
-        name = Name.of(getName());
+    public WildFlySecurityManagerPermission withName(final String name) {
+        return name.equals("*") ? allPermission : mapping.getItemByString(name);
     }
 }

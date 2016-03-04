@@ -18,56 +18,33 @@
 
 package org.wildfly.security.permission;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.security.Permission;
-import java.security.PermissionCollection;
-
-import org.wildfly.security.manager._private.SecurityMessages;
+import org.wildfly.security.util.StringEnumeration;
+import org.wildfly.security.util.StringMapping;
 
 /**
- * A general Elytron permission.
+ * A general Elytron permission.  The permission {@code name} must be one of the following:
+ * <ul>
+ *     <li>{@code createAuthenticator}</li>
+ *     <li>{@code createAuthenticationContextConfigurationClient}</li>
+ *     <li>{@code createSecurityDomain}</li>
+ * </ul>
+ * The {@code actions} are not used and should be empty or {@code null}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ElytronPermission extends Permission {
+public final class ElytronPermission extends AbstractNameSetOnlyPermission<ElytronPermission> {
 
     private static final long serialVersionUID = 6124294238228442419L;
 
-    enum Name {
-        createAuthenticator,
-        createAuthenticationContextConfigurationClient,
-        createSecurityDomain,
-        ;
+    private static final StringEnumeration strings = StringEnumeration.of(
+        "createAuthenticator",
+        "createAuthenticationContextConfigurationClient",
+        "createSecurityDomain"
+    );
 
-        private final ElytronPermission permission;
+    static final StringMapping<ElytronPermission> mapping = new StringMapping<>(strings, ElytronPermission::new);
 
-        Name() {
-            this.permission = new ElytronPermission(this);
-        }
-
-        ElytronPermission getPermission() {
-            return permission;
-        }
-
-        public static Name of(final String name) {
-            try {
-                return valueOf(name);
-            } catch (IllegalArgumentException ignored) {
-                throw SecurityMessages.permission.invalidName(name);
-            }
-        }
-
-    }
-
-    static final Name[] values = Name.values();
-
-    private transient Name name;
-
-    ElytronPermission(final Name name) {
-        super(name.toString());
-        this.name = name;
-    }
+    private static final ElytronPermission allPermission = new ElytronPermission("*");
 
     /**
      * Construct a new instance.
@@ -75,7 +52,7 @@ public final class ElytronPermission extends Permission {
      * @param name the name of the permission
      */
     public ElytronPermission(final String name) {
-        this(Name.of(name));
+        this(name, null);
     }
 
     /**
@@ -85,68 +62,11 @@ public final class ElytronPermission extends Permission {
      * @param actions the actions (should be empty)
      */
     public ElytronPermission(final String name, final String actions) {
-        this(name);
-        if (actions != null && ! actions.isEmpty()) {
-            throw SecurityMessages.permission.invalidAction(actions, 0, actions);
-        }
+        super(name, strings);
+        requireEmptyActions(actions);
     }
 
-    /**
-     * Get the specialized permission collection type for this permission class.
-     *
-     * @return a new permission collection
-     */
-    public PermissionCollection newPermissionCollection() {
-        return new ElytronPermissionCollection();
+    public ElytronPermission withName(final String name) {
+        return name.equals("*") ? allPermission : mapping.getItemByString(name);
     }
-
-    /**
-     * Get the actions.
-     *
-     * @return the actions (always empty)
-     */
-    public String getActions() {
-        return "";
-    }
-
-    /**
-     * Determine if this permission implies the other permission.  True if the permission is an {@code ElytronPermission}
-     * and the name of the permission is equal to the name of this permission.
-     *
-     * @param p the permission to test
-     * @return {@code true} if the given permission is implied by this one, {@code false} otherwise
-     */
-    public boolean implies(final Permission p) {
-        return p instanceof ElytronPermission && name == ((ElytronPermission) p).name;
-    }
-
-    /**
-     * Determine if this permission equals the other object.  True if the object is an {@code ElytronPermission}
-     * and the name of the permission is equal to the name of this permission.
-     *
-     * @param obj the object to test
-     * @return {@code true} if the given object is equal to this one, {@code false} otherwise
-     */
-    public boolean equals(final Object obj) {
-        return obj instanceof ElytronPermission && name == ((ElytronPermission) obj).name;
-    }
-
-    /**
-     * Get the hash code of this permission.
-     *
-     * @return the hash code of this permission
-     */
-    public int hashCode() {
-        return (name.ordinal() + 5) * 51;
-    }
-
-    Name getKind() {
-        return name;
-    }
-
-    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        ois.defaultReadObject();
-        name = Name.of(getName());
-    }
-
 }

@@ -18,52 +18,37 @@
 
 package org.wildfly.security.permission;
 
-import java.io.Serializable;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.Enumeration;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.util.StringMapping;
+import org.wildfly.security._private.ElytronMessages;
 
-/**
- * Stub class for the unlikely event that a serialized instance is lying around somewhere.
- *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-@Deprecated
-final class ElytronPermissionCollection extends PermissionCollection implements Serializable {
+final class IntersectionPermissionCollection extends PermissionCollection {
+    private static final long serialVersionUID = 8045087406778847303L;
 
-    private static final long serialVersionUID = 1L;
+    private final PermissionCollection pc1;
+    private final PermissionCollection pc2;
 
-    private final int p1;
-
-    ElytronPermissionCollection(final int p1) {
-        this.p1 = p1;
+    IntersectionPermissionCollection(final PermissionCollection pc1, final PermissionCollection pc2) {
+        this.pc1 = pc1;
+        this.pc2 = pc2;
+        setReadOnly();
     }
 
     public void add(final Permission permission) {
-        throw Assert.unsupported();
+        throw ElytronMessages.log.readOnlyPermissionCollection();
     }
 
     public boolean implies(final Permission permission) {
-        throw Assert.unsupported();
+        return pc1.implies(permission) && pc2.implies(permission);
     }
 
     public Enumeration<Permission> elements() {
+        // TODO: this is theoretically possible to implement using an IntersectionCollectionPermission;
+        // however the primary use case is going to be in protection domains and verification scenarios so we may
+        // not ever actually need this
         throw Assert.unsupported();
-    }
-
-    Object readResolve() {
-        final AbstractPermissionCollection collection = new ElytronPermission("*").newPermissionCollection();
-        final StringMapping<ElytronPermission> mapping = ElytronPermission.mapping;
-        int bits = p1;
-        while (bits != 0) {
-            collection.add(mapping.getItemById(Integer.numberOfTrailingZeros(Integer.lowestOneBit(bits))));
-        }
-        if (isReadOnly()) {
-            collection.setReadOnly();
-        }
-        return collection;
     }
 }
