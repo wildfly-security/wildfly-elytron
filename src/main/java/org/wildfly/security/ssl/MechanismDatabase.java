@@ -155,8 +155,14 @@ class MechanismDatabase {
         }
 
         for (Map.Entry<String, String> entry : aliases.entrySet()) {
-            String name = entry.getKey();
+            final String name = entry.getKey();
             String value = entry.getValue();
+
+            while (aliases.containsKey(value)) {
+                // Just skip to the end, intermediate aliases will get their own turn in the for loop.
+                value = aliases.get(value);
+            }
+
             if (entriesByStdName.containsKey(name)) {
                 log.warnInvalidDuplicateMechanismDatabaseEntry(name);
             } else if (! entriesByStdName.containsKey(value)) {
