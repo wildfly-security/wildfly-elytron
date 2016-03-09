@@ -20,6 +20,8 @@ package org.wildfly.security.http;
 
 import java.util.List;
 
+import javax.net.ssl.SSLSession;
+
 import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
@@ -46,6 +48,14 @@ public interface HttpServerRequest {
      *         be returned instead.
      */
     String getFirstRequestHeaderValue(final String headerName);
+
+    /**
+     * Get the {@link SSLSession} (if any) that has been established for the connection in use.
+     *
+     * @return the {@link SSLSession} (if any) that has been established for the connection in use, or {@code null} if none
+     *         exists.
+     */
+    SSLSession getSSLSession();
 
     void noAuthenticationInProgress(final HttpServerMechanismsResponder responder);
 
