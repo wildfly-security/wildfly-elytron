@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>16</version>
+        <version>20</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -59,7 +59,6 @@
         <version.org.apache.directory.jdbm>2.0.0-M2</version.org.apache.directory.jdbm>
         <version.org.apache.directory.mavibot>1.0.0-M5</version.org.apache.directory.mavibot>
 
-        <version.org.jboss.byteman>2.2.1</version.org.jboss.byteman>
         <version.org.jboss.logging>3.2.1.Final</version.org.jboss.logging>
         <version.org.jboss.logmanager>2.0.0.Final</version.org.jboss.logmanager>
         <version.org.jboss.logmanager.log4j-jboss>1.1.2.Final</version.org.jboss.logmanager.log4j-jboss>
@@ -69,21 +68,21 @@
         <version.org.jboss.spec.org.jboss.spec.javax.security.jacc>1.0.0.Final</version.org.jboss.spec.org.jboss.spec.javax.security.jacc>
         <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <org.glassfish.javax.json>1.0.4</org.glassfish.javax.json>
-        <version.org.kohsuke.metainf-services.metainf-services>1.5-jboss-1</version.org.kohsuke.metainf-services.metainf-services>
+        <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
+        <!-- to make testsuite work on JDK9 newer version of jmockit is required but that one doesn't work properly with mocking AbstractDigestMechanism -->
         <version.jmockit>1.10</version.jmockit>
         <version.hsqldb>2.3.1</version.hsqldb>
-        <version.org.wildfly.checkstyle-config>1.0.3.Final</version.org.wildfly.checkstyle-config>
+        <version.org.wildfly.checkstyle-config>1.0.4.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.0.Alpha2</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.0.0.Final</version.org.wildfly.common>
-        <version.com.puppycrawl.tools.checkstyle>6.3</version.com.puppycrawl.tools.checkstyle>
 
         <test.level>INFO</test.level>
         <!-- Checkstyle configuration -->
         <linkXRef>false</linkXRef>
 
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- version from jboss-parent is 6.15 but then some checks fail -->
+        <version.checkstyle>6.8</version.checkstyle>
     </properties>
 
     <build>
@@ -172,17 +171,13 @@
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         <useFile/>
+                        <excludes>**/*$logger.java,**/*$bundle.java</excludes>
                     </configuration>
                     <dependencies>
                         <dependency>
                             <groupId>org.wildfly.checkstyle</groupId>
                             <artifactId>wildfly-checkstyle-config</artifactId>
                             <version>${version.org.wildfly.checkstyle-config}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>com.puppycrawl.tools</groupId>
-                            <artifactId>checkstyle</artifactId>
-                            <version>${version.com.puppycrawl.tools.checkstyle}</version>
                         </dependency>
                     </dependencies>
                     <executions>
@@ -234,8 +229,10 @@
             <groupId>org.kohsuke.metainf-services</groupId>
             <artifactId>metainf-services</artifactId>
             <version>${version.org.kohsuke.metainf-services.metainf-services}</version>
+            <optional>true</optional>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.wildfly.client</groupId>
             <artifactId>wildfly-client-config</artifactId>
