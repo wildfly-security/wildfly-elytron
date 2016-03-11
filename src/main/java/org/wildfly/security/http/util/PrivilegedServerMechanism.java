@@ -27,6 +27,8 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 
+import javax.net.ssl.SSLSession;
+
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -96,6 +98,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         @Override
         public String getFirstRequestHeaderValue(String headerName) {
             return wrapped.getFirstRequestHeaderValue(headerName);
+        }
+
+        @Override
+        public SSLSession getSSLSession() {
+            return wrapped.getSSLSession();
         }
 
         @Override

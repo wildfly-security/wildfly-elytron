@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
+import javax.net.ssl.SSLSession;
+
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
@@ -129,6 +131,11 @@ public class HttpAuthenticator {
         @Override
         public String getFirstRequestHeaderValue(String headerName) {
             return httpExchangeSpi.getFirstRequestHeaderValue(headerName);
+        }
+
+        @Override
+        public SSLSession getSSLSession() {
+            return httpExchangeSpi.getSSLSession();
         }
 
         @Override

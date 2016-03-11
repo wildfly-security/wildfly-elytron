@@ -47,6 +47,7 @@ public class HttpConstants {
      */
 
     public static final String BASIC_NAME = "BASIC";
+    public static final String CLIENT_CERT_NAME = "CLIENT_CERT";
 
     /*
      * Response Codes

@@ -19,6 +19,8 @@ package org.wildfly.security.http;
 
 import java.util.List;
 
+import javax.net.ssl.SSLSession;
+
 import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
@@ -57,6 +59,14 @@ public interface HttpExchangeSpi {
         List<String> headerValues = getRequestHeaderValues(headerName);
         return headerValues != null && headerValues.size() > 0 ? headerValues.get(0) : null;
     }
+
+    /**
+     * Get the {@link SSLSession} (if any) that has been established for the connection in use.
+     *
+     * @return the {@link SSLSession} (if any) that has been established for the connection in use, or {@code null} if none
+     *         exists.
+     */
+    SSLSession getSSLSession();
 
     /**
      * Set the required response code.

@@ -1117,6 +1117,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6002, value = "An authentication attempt for user '%s' failed validation using mechanism '%s'.")
     String authenticationFailed(String username, String mechanismName);
 
+    @Message(id = 6003, value = "An authentication attempt failed validation using mechanism '%s'.")
+    String authenticationFailed(String mechanismName);
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm")
