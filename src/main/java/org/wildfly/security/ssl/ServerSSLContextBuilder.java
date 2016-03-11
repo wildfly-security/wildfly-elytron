@@ -58,7 +58,9 @@ public final class ServerSSLContextBuilder {
     private EvidenceDecoder evidenceDecoder = X509CertificateEvidenceDecoder.getInstance();
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
-    private boolean requireClientAuth;
+    private boolean wantClientAuth;
+    private boolean needClientAuth;
+    private boolean authenticationOptional;
     private int sessionCacheSize;
     private int sessionTimeout;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
@@ -114,15 +116,51 @@ public final class ServerSSLContextBuilder {
     }
 
     /**
-     * Set the client require-authentication flag.
+     * Force the SSLContext created by this builder to want client authentication.
      *
-     * @param requireClientAuth {@code true} to require client authentication, {@code false} otherwise
+     * The SSLContext returned by this builder will be configured to want client authentication if this value is set to true OR
+     * of a SecurityDomain is associated.
+     *
+     * @param wantClientAuth should the SSLContext be forced to want client authentication.
      */
-    public ServerSSLContextBuilder setRequireClientAuth(final boolean requireClientAuth) {
-        this.requireClientAuth = requireClientAuth;
+    public ServerSSLContextBuilder setWantClientAuth(final boolean wantClientAuth) {
+        this.wantClientAuth = wantClientAuth;
 
         return this;
     }
+
+    /**
+     * Force the SSLContext created by this builder to need client authentication.
+     *
+     * The SSLContext returned by this builder will be configured to need client authentication if this value is set to true.
+     *
+     * @param needClientAuth should the SSLContext be forced to need client authentication.
+     */
+    public ServerSSLContextBuilder setNeedClientAuth(final boolean needClientAuth) {
+        this.needClientAuth = needClientAuth;
+
+        return this;
+    }
+
+    /**
+     * Where a SecurityDomain is associated with this Builder if the client presents a certificate an attempt will be made to
+     * obtain a SecurityIdentity by using the certificate for authentication, setting this flag to {@code true} allows for a
+     * failed authentication to be silently ignored.
+     *
+     * This setting does not bypass any certificate checking performed by the underlying TrustManager so failure there will still cause the connection attempt to be aborted.
+     *
+     * The reason this setting would be used would be to enable a fallback to another authentication mechanism after the connection is established.
+     *
+     * Note: Where this is no security domain associated there is no authentication step so this value will be ignored.
+     *
+     * @param authenticationOptional should the authentication step be allowed to silently fail.
+     */
+    public ServerSSLContextBuilder setAuthenticationOptional(final boolean authenticationOptional) {
+        this.authenticationOptional = authenticationOptional;
+
+        return this;
+    }
+
 
     /**
      * Sets the size of the cache used for storing SSLSession objects.
@@ -218,7 +256,7 @@ public final class ServerSSLContextBuilder {
         final SecurityDomain securityDomain = this.securityDomain;
         final CipherSuiteSelector cipherSuiteSelector = this.cipherSuiteSelector;
         final ProtocolSelector protocolSelector = this.protocolSelector;
-        final boolean requireClientAuth = this.requireClientAuth;
+
         final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory = this.keyManagerSecurityFactory;
         final EvidenceDecoder evidenceDecoder = this.evidenceDecoder;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
@@ -235,11 +273,11 @@ public final class ServerSSLContextBuilder {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
                 canAuthClients ?
-                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, evidenceDecoder) :
+                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, evidenceDecoder, authenticationOptional) :
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration
-            final SSLConfigurator sslConfigurator = new ServerSSLConfigurator(protocolSelector, cipherSuiteSelector, canAuthClients, canAuthClients && requireClientAuth);
+            final SSLConfigurator sslConfigurator = new ServerSSLConfigurator(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthClients, needClientAuth);
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator);
             return new DelegatingSSLContext(contextSpi);
         });

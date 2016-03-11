@@ -46,17 +46,19 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
     private final EvidenceDecoder evidenceDecoder;
+    private final boolean authenticationOptional;
 
-    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder) {
+    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder, final boolean authenticationOptional) {
         this.delegate = delegate;
         this.securityDomain = securityDomain;
         this.evidenceDecoder = evidenceDecoder;
+        this.authenticationOptional = authenticationOptional;
     }
 
-    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder) {
+    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder, final boolean authenticationOptional) {
         this(delegate instanceof X509ExtendedTrustManager ?
                 (X509ExtendedTrustManager) delegate :
-                new WrappingX509ExtendedTrustManager(delegate), securityDomain, evidenceDecoder);
+                new WrappingX509ExtendedTrustManager(delegate), securityDomain, evidenceDecoder, authenticationOptional);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -96,9 +98,17 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
                 ok = true;
                 return;
             }
-            throw ElytronMessages.log.notTrusted(principal);
+            if (authenticationOptional) {
+                ElytronMessages.log.tracef("Authentication failed for '%s', ignoring as authentication optional.", principal);
+            } else {
+                throw ElytronMessages.log.notTrusted(principal);
+            }
         } catch (RealmUnavailableException e) {
-            throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
+            if (authenticationOptional) {
+                ElytronMessages.log.tracef("Authentication failed for '%s' as the realm is unavailable,", principal);
+            } else {
+                throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
+            }
         } finally {
             if (! ok) {
                 authenticationContext.fail();

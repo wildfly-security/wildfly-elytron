@@ -78,7 +78,7 @@ public class SSLAuthenticationTest {
                 .setSecurityDomain(securityDomain)
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())
-                .setRequireClientAuth(true)
+                .setNeedClientAuth(true)
                 .build().create();
     }
 
