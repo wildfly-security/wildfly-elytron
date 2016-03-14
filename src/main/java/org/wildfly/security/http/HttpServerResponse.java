@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.http;
 
+import java.io.OutputStream;
+
 /**
  * Server side representation of a HTTP response.
  *
@@ -41,6 +43,17 @@ public interface HttpServerResponse {
      */
     void setResponseCode(final int responseCode);
 
+    /**
+     * Sets a response cookie
+     *
+     * @param cookie the cookie
+     */
+    void setResponseCookie(final HttpServerCookie cookie);
 
-
+    /**
+     * Returns the output stream.
+     *
+     * @return the output stream
+     */
+    OutputStream getOutputStream();
 }

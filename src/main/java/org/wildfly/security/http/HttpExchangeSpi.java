@@ -17,7 +17,11 @@
  */
 package org.wildfly.security.http;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLSession;
 
@@ -99,5 +103,60 @@ public interface HttpExchangeSpi {
      */
     void badRequest(final HttpAuthenticationException error, final String mechanismName);
 
+    /**
+     * Returns the name of the HTTP method with which this request was made, for example, GET, POST, or PUT.
+     *
+     * @return a <code>String</code> specifying the name of the method with which this request was made
+     */
+    String getRequestMethod();
 
+    /**
+     * Reconstructs the URL the client used to make the request. The returned URL contains a protocol, server name, port
+     * number, and server path, but it does not include query string parameters.
+     *
+     * @return a <code>String</code> containing the part of the URL from the protocol name up to the query string
+     */
+    String getRequestURI();
+
+    /**
+     * Returns the  query parameters.
+     *
+     * @return the query parameters
+     */
+    Map<String,String[]> getRequestParameters();
+
+    /**
+     * Returns an array containing all of the {@link HttpServerCookie} objects the client sent with this request. This method returns <code>null</code> if no cookies were sent.
+     *
+     * @return an array of all the cookies included with this request, or <code>null</code> if the request has no cookies
+     */
+    HttpServerCookie[] getCookies();
+
+    /**
+     * Returns the request input stream.
+     *
+     * @return the input stream
+     */
+    InputStream getRequestInputStream();
+
+    /**
+     * Get the source address of the HTTP request.
+     *
+     * @return the source address of the HTTP request
+     */
+    InetSocketAddress getSourceAddress();
+
+    /**
+     * Sets a response cookie.
+     *
+     * @param cookie the cookie
+     */
+    void setResponseCookie(HttpServerCookie cookie);
+
+    /**
+     * Returns the response output stream.
+     *
+     * @return the output stream
+     */
+    OutputStream getResponseOutputStream();
 }
