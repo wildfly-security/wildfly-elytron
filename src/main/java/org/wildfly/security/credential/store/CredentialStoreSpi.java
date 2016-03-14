@@ -17,10 +17,19 @@
  */
 package org.wildfly.security.credential.store;
 
-import org.wildfly.security.credential.Credential;
-
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.store.impl.CmdPasswordStore;
+import org.wildfly.security.credential.store.impl.ExecPasswordStore;
+import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
+import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
  * SPI for credential store provider to implement.
@@ -33,6 +42,12 @@ public abstract class CredentialStoreSpi {
      * Field indicating successful initialization ({@link #initialize(Map)}. Each subclass should set this field.
      */
     protected boolean initialized = false;
+
+    /**
+     * Custom CS providers will use this to denote type of provider to be loaded.
+     * Syntax: {@code {PROVIDER@myCSProviderType}}
+     */
+    public static final String CUSTOM_PROVIDER = "PROVIDER";
 
     /**
      * Construct a new instance of this SPI.
@@ -123,6 +138,65 @@ public abstract class CredentialStoreSpi {
      */
     public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
         throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Resolves master password based on {@code commandSpec} using {@code attributes}
+     * If this method is not able to detect provider based on {@code commandSpec} it simply wraps {@code commandSpec} as
+     * password and generates {@link PasswordCredential} based on {@link ClearPasswordSpec}.
+     * @param commandSpec password command specification
+     * @param credentialType type of credential returned
+     * @param attributes to use while resolving credential (can be {@code null})
+     * @param <C> the type of credential which will be returned
+     * @return resolved credential of {@code credentialType}
+     * @throws CredentialStoreException if anything goes wrong
+     */
+    protected <C extends Credential> C resolveMasterCredential(String commandSpec, Class<C> credentialType, Map<String, String> attributes)
+            throws CredentialStoreException {
+        Assert.assertNotNull(commandSpec);
+        Assert.assertNotNull(credentialType);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CredentialStorePermission.LOAD_EXTERNAL_STORE_PASSWORD);
+        }
+        String trimmedCommandSpec = commandSpec.trim();
+        if (trimmedCommandSpec.startsWith("{" + ExecPasswordStore.SUPPORTED_CMD_TYPE)) {
+            try {
+                CredentialStore cs = CredentialStore.getInstance(ExecPasswordStore.EXEC_PASSWORD_STORE);
+                return cs.retrieve(commandSpec, credentialType);
+            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
+                throw new CredentialStoreException(e);
+            }
+        } else if (trimmedCommandSpec.startsWith("{" + CmdPasswordStore.SUPPORTED_CMD_TYPE)) {
+            try {
+                CredentialStore cs = CredentialStore.getInstance(CmdPasswordStore.CMD_PASSWORD_STORE);
+                return cs.retrieve(commandSpec, credentialType);
+            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
+                throw new CredentialStoreException(e);
+            }
+        } else if (trimmedCommandSpec.startsWith(MaskedPasswordStore.PASS_MASK_PREFIX)) {
+            try {
+                CredentialStore cs = CredentialStore.getInstance(MaskedPasswordStore.MASKED_PASSWORD_STORE);
+                cs.initialize(attributes);
+                return cs.retrieve(commandSpec, credentialType);
+            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
+                throw new CredentialStoreException(e);
+            }
+        } else if (trimmedCommandSpec.startsWith("{" + CUSTOM_PROVIDER)) {
+            try {
+                StringTokenizer tokenizer = new StringTokenizer(commandSpec, "{}");
+                String providerSpec = tokenizer.nextToken();
+                StringTokenizer providerTokenizer = new StringTokenizer(providerSpec, "@");
+                String providerType = providerTokenizer.nextToken();
+                CredentialStore execCS = CredentialStore.getInstance(providerType);
+                execCS.initialize(attributes);
+                return execCS.retrieve(commandSpec, credentialType);
+            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
+                throw new CredentialStoreException(e);
+            }
+        } else {
+            return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, commandSpec.toCharArray())));
+        }
     }
 
 }
