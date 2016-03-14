@@ -27,6 +27,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -56,15 +57,16 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.ModifiableRealmIdentity;
+import org.wildfly.security.auth.server.ModifiableSecurityRealm;
+import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
-import org.wildfly.security.auth.server.ModifiableRealmIdentity;
-import org.wildfly.security.auth.server.ModifiableSecurityRealm;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -162,21 +164,31 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return new Identity(finalName, pathFor(finalName));
     }
 
-    public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
         return subIterator(root, levels);
     }
 
-    private Iterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
+    private CloseableIterator<ModifiableRealmIdentity> subIterator(final Path root, final int levels) {
+        final DirectoryStream<Path> stream;
+        final Iterator<Path> iterator;
         if (levels == 0) {
-            final Iterator<Path> iterator;
             try {
-                iterator = Files.newDirectoryStream(root, "*.xml").iterator();
+                stream = Files.newDirectoryStream(root, "*.xml");
+                iterator = stream.iterator();
             } catch (IOException e) {
-                return Collections.emptyIterator();
+                ElytronMessages.log.debug(e);
+                return CloseableIterator.emptyIterator();
             }
-            return new Iterator<ModifiableRealmIdentity>() {
+            return new CloseableIterator<ModifiableRealmIdentity>() {
 
                 public boolean hasNext() {
+                    if ( ! iterator.hasNext()) {
+                        try {
+                            close();
+                        } catch (IOException e) {
+                            ElytronMessages.log.debug(e);
+                        }
+                    }
                     return iterator.hasNext();
                 }
 
@@ -185,24 +197,34 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                     final String fileName = path.getFileName().toString();
                     return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4), null, null);
                 }
+
+                public void close() throws IOException {
+                    stream.close();
+                }
             };
         } else {
-            final Iterator<Path> iterator;
             try {
-                iterator = Files.newDirectoryStream(root, entry -> {
+                stream = Files.newDirectoryStream(root, entry -> {
                     final String fileName = entry.getFileName().toString();
                     return fileName.length() == 1 && !fileName.equals(".") && Files.isDirectory(entry);
-                }).iterator();
+                });
+                iterator = stream.iterator();
             } catch (IOException e) {
-                return Collections.emptyIterator();
+                ElytronMessages.log.debug(e);
+                return CloseableIterator.emptyIterator();
             }
-            return new Iterator<ModifiableRealmIdentity>() {
-                private Iterator<ModifiableRealmIdentity> subIterator;
+            return new CloseableIterator<ModifiableRealmIdentity>() {
+                private CloseableIterator<ModifiableRealmIdentity> subIterator;
 
                 public boolean hasNext() {
                     for (;;) {
                         if (subIterator == null) {
                             if (! iterator.hasNext()) {
+                                try {
+                                    close();
+                                } catch (IOException e) {
+                                    ElytronMessages.log.debug(e);
+                                }
                                 return false;
                             }
                             final Path path = iterator.next();
@@ -220,6 +242,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         throw new NoSuchElementException();
                     }
                     return subIterator.next();
+                }
+
+                public void close() throws IOException {
+                    if (subIterator != null) subIterator.close();
+                    stream.close();
                 }
             };
         }
