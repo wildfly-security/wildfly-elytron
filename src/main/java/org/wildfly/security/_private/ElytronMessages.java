@@ -20,6 +20,7 @@ package org.wildfly.security._private;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
@@ -64,6 +65,7 @@ import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
+import org.wildfly.security.permission.InvalidPermissionClassException;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -104,6 +106,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 8, value = "The given credential is not supported here")
     IllegalArgumentException credentialNotSupported();
+
+    @Message(id = 9, value = "Invalid name \"%s\"")
+    IllegalArgumentException generalInvalidName(String str);
 
     /* auth package */
 
@@ -539,6 +544,33 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3012, value = "Certificate parse error")
     IllegalArgumentException certificateParseError(@Cause CertificateException cause);
+
+    @Message(id = 3013, value = "Permission collection must be read-only")
+    SecurityException permissionCollectionMustBeReadOnly();
+
+    @Message(id = 3014, value = "Invalid character found in name \"%s\" at offset %d")
+    IllegalArgumentException invalidPermissionName(String name, int offset);
+
+    @Message(id = 3015, value = "Could not load permission class \"%s\"")
+    InvalidPermissionClassException permissionClassMissing(String className, @Cause ClassNotFoundException cause);
+
+    @Message(id = 3016, value = "Could not instantiate permission class \"%s\"")
+    InvalidPermissionClassException permissionInstantiation(String className, @Cause Throwable cause);
+
+    @Message(id = 3017, value = "No valid permission constructor found on class \"%s\"")
+    InvalidPermissionClassException noPermissionConstructor(String className);
+
+    @Message(id = 3018, value = "Cannot add permissions to a read-only permission collection")
+    SecurityException readOnlyPermissionCollection();
+
+    @Message(id = 3019, value = "Failure to deserialize object: field \"%s\" is null")
+    InvalidObjectException invalidObjectNull(String fieldName);
+
+    @Message(id = 3020, value = "Expected empty actions string, got \"%s\"")
+    IllegalArgumentException expectedEmptyActions(String actions);
+
+    @Message(id = 3021, value = "Invalid permission type; expected %s, got %s")
+    IllegalArgumentException invalidPermissionType(Class<? extends Permission> expected, Permission actual);
 
     /* ssl package */
 

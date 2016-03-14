@@ -67,7 +67,7 @@ import static java.lang.System.getenv;
 import static java.lang.System.setProperty;
 import static java.lang.Thread.currentThread;
 import static java.security.AccessController.doPrivileged;
-import static org.wildfly.security.manager.WildFlySecurityManagerPermission.DO_UNCHECKED_PERMISSION;
+import static org.wildfly.security.manager.WildFlySecurityManagerPermission.doUncheckedPermission;
 import static org.wildfly.security.manager._private.SecurityMessages.access;
 
 /**
@@ -803,7 +803,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return action.run();
         } finally {
@@ -833,7 +833,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return action.run();
         } catch (Exception e) {
@@ -861,7 +861,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return AccessController.doPrivileged(action, context);
         } finally {
@@ -888,7 +888,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return AccessController.doPrivileged(action, context);
         } finally {
@@ -915,7 +915,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return action.run(parameter);
         } finally {
@@ -947,7 +947,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return action.run(parameter);
         } catch (Exception e) {
@@ -977,7 +977,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return doPrivilegedWithParameter(parameter, action, context);
         } finally {
@@ -1006,7 +1006,7 @@ public final class WildFlySecurityManager extends SecurityManager {
         try {
             final SecurityManager sm = getSecurityManager();
             if (sm != null) {
-                checkPDPermission(getCallerClass(2), DO_UNCHECKED_PERMISSION);
+                checkPDPermission(getCallerClass(2), doUncheckedPermission);
             }
             return doPrivilegedWithParameter(parameter, action, context);
         } finally {

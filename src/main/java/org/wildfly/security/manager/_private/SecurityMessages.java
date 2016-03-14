@@ -72,5 +72,4 @@ public interface SecurityMessages {
 
     @Message(id = 8, value = "Invalid permission (expected an instance of %s, but got %s)")
     IllegalArgumentException wrongPermType(Class<? extends Permission> expectedType, Permission permission);
-
 }

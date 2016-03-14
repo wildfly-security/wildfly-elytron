@@ -41,7 +41,10 @@ import java.util.Iterator;
  * of the actions.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ *
+ * @deprecated Use one of the abstract permission classes like {@link AbstractActionSetPermission} instead.
  */
+@Deprecated
 public final class PermissionActions {
 
     private PermissionActions() {

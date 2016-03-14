@@ -18,12 +18,12 @@
 
 package org.wildfly.security.auth.permission;
 
-import java.security.Permission;
+import org.wildfly.security.permission.AbstractNameOnlyPermission;
 
 /**
  * The permission to change a role mapper category on a security identity.
  */
-public final class ChangeRoleMapperPermission extends Permission {
+public final class ChangeRoleMapperPermission extends AbstractNameOnlyPermission<ChangeRoleMapperPermission> {
 
     private static final long serialVersionUID = - 6742662884954321082L;
 
@@ -46,61 +46,7 @@ public final class ChangeRoleMapperPermission extends Permission {
         this(name);
     }
 
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final Permission permission) {
-        return permission instanceof ChangeRoleMapperPermission && implies((ChangeRoleMapperPermission) permission);
-    }
-
-    /**
-     * Determine whether this permission implies another permission.
-     *
-     * @param permission the other permission
-     * @return {@code true} if this permission implies the other permission, {@code false} otherwise
-     */
-    public boolean implies(final ChangeRoleMapperPermission permission) {
-        return permission != null && (permission.getName().equals(getName()) || "*".equals(getName()));
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param obj the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final Object obj) {
-        return obj instanceof ChangeRoleMapperPermission && equals((ChangeRoleMapperPermission) obj);
-    }
-
-    /**
-     * Determine whether this permission equals another permission.
-     *
-     * @param perm the other permission
-     * @return {@code true} if this permission equals the other permission, {@code false} otherwise
-     */
-    public boolean equals(final ChangeRoleMapperPermission perm) {
-        return perm != null && perm.getName().equals(getName());
-    }
-
-    /**
-     * Get the hash code for this permission.
-     *
-     * @return the hash code for this permission
-     */
-    public int hashCode() {
-        return getName().hashCode();
-    }
-
-    /**
-     * Get the actions for this permission (always an empty string).
-     *
-     * @return an empty string
-     */
-    public String getActions() {
-        return "";
+    public ChangeRoleMapperPermission withName(final String name) {
+        return new ChangeRoleMapperPermission(name);
     }
 }
