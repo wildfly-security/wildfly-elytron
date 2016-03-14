@@ -25,6 +25,7 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ public final class SecurityIdentity {
     private final RealmInfo realmInfo;
     private final Map<String, RoleMapper> roleMappers;
     private final PeerIdentity[] peerIdentities;
+    private final Instant creationTime;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
         this.securityDomain = securityDomain;
@@ -74,6 +76,7 @@ public final class SecurityIdentity {
         this.authorizationIdentity = authorizationIdentity;
         this.roleMappers = roleMappers;
         this.peerIdentities = NO_PEER_IDENTITIES;
+        this.creationTime = Instant.now();
     }
 
     SecurityIdentity(final SecurityIdentity old, final PeerIdentity[] newPeerIdentities) {
@@ -83,6 +86,7 @@ public final class SecurityIdentity {
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = old.roleMappers;
         this.peerIdentities = newPeerIdentities;
+        this.creationTime = old.creationTime;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -92,6 +96,7 @@ public final class SecurityIdentity {
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = roleMappers;
         this.peerIdentities = old.peerIdentities;
+        this.creationTime = old.creationTime;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -520,5 +525,14 @@ public final class SecurityIdentity {
      */
     public Principal getPrincipal() {
         return principal;
+    }
+
+    /**
+     * Get the creation time of this identity, which is the time that the initial authentication occurred.
+     *
+     * @return the creation time of this identity (not {@code null})
+     */
+    public Instant getCreationTime() {
+        return creationTime;
     }
 }
