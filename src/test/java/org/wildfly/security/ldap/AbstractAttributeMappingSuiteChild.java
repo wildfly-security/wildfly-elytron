@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.security.Permissions;
 
-import org.junit.ClassRule;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
@@ -36,10 +35,7 @@ import org.wildfly.security.authz.Attributes;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public abstract class AbstractAttributeMappingTest {
-
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
+public abstract class AbstractAttributeMappingSuiteChild {
 
     protected void assertAttributeValue(Attributes.Entry lastName, String... expectedValues) {
         assertNotNull("Attribute [" + lastName.getKey() + "] not found.", lastName);
@@ -59,7 +55,7 @@ public abstract class AbstractAttributeMappingTest {
         builder.setDefaultRealmName("default")
                 .addRealm("default",
                         LdapSecurityRealmBuilder.builder()
-                                .setDirContextFactory(this.dirContextFactory.create())
+                                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
                                 .identityMapping()
                                         .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                                         .searchRecursive()

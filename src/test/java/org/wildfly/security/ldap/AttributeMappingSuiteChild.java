@@ -26,7 +26,7 @@ import org.wildfly.security.auth.provider.ldap.AttributeMapping;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class AttributeMappingTest extends AbstractAttributeMappingTest {
+public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
 
     @Test
     public void testSingleAttributeToSpecifiedName() throws Exception {

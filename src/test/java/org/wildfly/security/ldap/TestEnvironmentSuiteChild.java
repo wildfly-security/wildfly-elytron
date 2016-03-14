@@ -18,7 +18,6 @@
 
 package org.wildfly.security.ldap;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.wildfly.security.auth.provider.ldap.DirContextFactory;
 
@@ -34,10 +33,7 @@ import static org.junit.Assert.fail;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class TestEnvironmentTest {
-
-    @ClassRule
-    public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
+public class TestEnvironmentSuiteChild {
 
     @Test
     public void testPlain() throws NamingException {
@@ -80,7 +76,7 @@ public class TestEnvironmentTest {
         System.setProperty("com.sun.jndi.ldap.connect.pool.timeout", "300000");
         System.setProperty("com.sun.jndi.ldap.connect.pool.debug", "all");
 
-        DirContextFactory factory = dirContextFactory.create(principal, credential);
+        DirContextFactory factory = LdapTestSuite.dirContextFactory.create(principal, credential);
 
         DirContext context = factory.obtainDirContext(null);
         assertNotNull(context);

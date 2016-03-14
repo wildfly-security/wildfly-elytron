@@ -27,7 +27,7 @@ import org.wildfly.security.authz.RoleDecoder;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class RoleMappingTest extends AbstractAttributeMappingTest {
+public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
 
     @Test
     public void testRoleMappingWithMemberOf() throws Exception {

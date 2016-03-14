@@ -39,6 +39,12 @@ import java.util.Properties;
  */
 public class SimpleDirContextFactoryBuilder {
 
+    private static final String CONNECT_TIMEOUT = "com.sun.jndi.ldap.connect.timeout";
+    private static final String READ_TIMEOUT = "com.sun.jndi.ldap.read.timeout";
+
+    private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
+    private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
+
     private boolean built = false;
     private String initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
     private String providerUrl = null;
@@ -46,6 +52,8 @@ public class SimpleDirContextFactoryBuilder {
     private String securityPrincipal = null;
     private String securityCredential = null;
     private Properties connectionProperties;
+    private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
+    private int readTimeout = DEFAULT_READ_TIMEOUT;
 
     private SimpleDirContextFactoryBuilder() {
     }
@@ -125,6 +133,37 @@ public class SimpleDirContextFactoryBuilder {
     }
 
     /**
+     * Set the timeout for connecting to the server.
+     * Set to 0 to ensure waiting for the response infinitely.
+     * If not set, {@value #DEFAULT_CONNECT_TIMEOUT} ms will be used.
+     *
+     * @param connectTimeout the timeout for connecting to the server in microseconds
+     * @return this builder
+     */
+    public SimpleDirContextFactoryBuilder setConnectTimeout(int connectTimeout) {
+        assertNotBuilt();
+        this.connectTimeout = connectTimeout;
+
+        return this;
+    }
+
+    /**
+     * Set the read timeout for an LDAP operation.
+     * Set to 0 to ensure waiting for the response infinitely.
+     * If not set, {@value #DEFAULT_READ_TIMEOUT} ms will be used.
+     *
+     * @param readTimeout the read timeout for an LDAP operation in microseconds
+     * @return this builder
+     */
+    public SimpleDirContextFactoryBuilder setReadTimeout(int readTimeout) {
+        assertNotBuilt();
+        this.readTimeout = readTimeout;
+
+        return this;
+    }
+
+
+    /**
      * <p>Set additional connection properties.
      *
      * @param connectionProperties the additional connection properties.
@@ -201,6 +240,8 @@ public class SimpleDirContextFactoryBuilder {
             env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
             env.put(InitialDirContext.SECURITY_CREDENTIALS, String.valueOf(securityCredential));
             env.put(InitialDirContext.REFERRAL, mode == null ? ReferralMode.IGNORE.getValue() : mode.getValue());
+            env.put(CONNECT_TIMEOUT, Integer.toString(connectTimeout));
+            env.put(READ_TIMEOUT, Integer.toString(readTimeout));
 
             // set any additional connection property
             if (connectionProperties != null) {
