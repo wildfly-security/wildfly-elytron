@@ -41,6 +41,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 
 /**
+ * General permission utility methods and constants.
+ *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class PermissionUtil {
@@ -48,9 +50,20 @@ public final class PermissionUtil {
     private PermissionUtil() {
     }
 
+    /**
+     * A shared {@link AllPermission} instance.
+     */
     public static final Permission ALL_PERMISSION = new AllPermission();
 
+    /**
+     * A read-only permission collection which implies {@link AllPermission}.
+     */
     public static final PermissionCollection ALL_PERMISSIONS;
+
+    /**
+     * A permission collection which is empty.
+     */
+    public static final PermissionCollection EMPTY_PERMISSION_COLLECTION;
 
     /**
      * An array with no permissions in it.
@@ -58,10 +71,13 @@ public final class PermissionUtil {
     public static final Permission[] NO_PERMISSIONS = new Permission[0];
 
     static {
-        final Permissions permissions = new Permissions();
+        Permissions permissions = new Permissions();
         permissions.add(ALL_PERMISSION);
         permissions.setReadOnly();
         ALL_PERMISSIONS = permissions;
+        permissions = new Permissions();
+        permissions.setReadOnly();
+        EMPTY_PERMISSION_COLLECTION = permissions;
     }
 
     /**
