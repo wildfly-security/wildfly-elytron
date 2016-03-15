@@ -20,7 +20,7 @@ package org.wildfly.security.authz.jacc;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
-import org.wildfly.security.auth.provider.LegacyPropertiesSecurityRealm;
+import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 import javax.security.jacc.PolicyConfiguration;

@@ -22,8 +22,8 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.apacheds.LdapService;
-import org.wildfly.security.auth.provider.ldap.DirContextFactory;
-import org.wildfly.security.auth.provider.ldap.SimpleDirContextFactoryBuilder;
+import org.wildfly.security.auth.realm.ldap.DirContextFactory;
+import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 
 import java.io.File;
 import java.security.Provider;
