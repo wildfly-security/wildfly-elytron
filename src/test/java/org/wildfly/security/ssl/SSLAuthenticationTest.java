@@ -46,7 +46,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.wildfly.security.auth.provider.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;

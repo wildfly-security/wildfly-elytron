@@ -21,7 +21,7 @@ package org.wildfly.security.ldap;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.AttributeMapping;
+import org.wildfly.security.auth.realm.ldap.AttributeMapping;
 import org.wildfly.security.authz.RoleDecoder;
 
 /**

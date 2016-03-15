@@ -24,8 +24,8 @@ import static org.junit.Assert.assertTrue;
 import java.security.Permissions;
 
 import org.wildfly.security.auth.permission.LoginPermission;
-import org.wildfly.security.auth.provider.ldap.AttributeMapping;
-import org.wildfly.security.auth.provider.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.realm.ldap.AttributeMapping;
+import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;

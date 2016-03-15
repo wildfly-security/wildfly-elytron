@@ -19,7 +19,7 @@
 package org.wildfly.security.ldap;
 
 import org.junit.Test;
-import org.wildfly.security.auth.provider.ldap.DirContextFactory;
+import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;

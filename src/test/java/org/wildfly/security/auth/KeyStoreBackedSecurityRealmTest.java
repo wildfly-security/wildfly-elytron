@@ -32,7 +32,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.provider.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
@@ -43,7 +43,7 @@ import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 
 /**
- * Testsuite for the {@link org.wildfly.security.auth.provider.KeyStoreBackedSecurityRealm}.
+ * Testsuite for the {@link org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm}.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */

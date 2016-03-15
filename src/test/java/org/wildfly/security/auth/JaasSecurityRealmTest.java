@@ -31,8 +31,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.provider.JaasSecurityRealm;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.auth.realm.JaasSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
@@ -42,7 +42,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
- * Testsuite for the {@link org.wildfly.security.auth.provider.JaasSecurityRealm}.
+ * Testsuite for the {@link org.wildfly.security.auth.realm.JaasSecurityRealm}.
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
  */

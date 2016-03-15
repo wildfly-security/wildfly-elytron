@@ -33,8 +33,8 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
 import org.wildfly.security.auth.permission.LoginPermission;
-import org.wildfly.security.auth.provider.SimpleMapBackedSecurityRealm;
-import org.wildfly.security.auth.provider.SimpleRealmEntry;
+import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
+import org.wildfly.security.auth.realm.SimpleRealmEntry;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
