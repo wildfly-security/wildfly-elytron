@@ -19,11 +19,11 @@ package org.wildfly.security.authz;
 
 import java.security.Permission;
 import java.security.PermissionCollection;
-import java.security.Policy;
 import java.security.Principal;
 import java.util.Set;
 
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.permission.PermissionUtil;
 
 /**
  * A permission mapper is responsible to enable permission mapping to a {@link SecurityDomain}
@@ -50,5 +50,5 @@ public interface PermissionMapper {
     /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionCollection}.
      */
-    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> Policy.UNSUPPORTED_EMPTY_COLLECTION;
+    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> PermissionUtil.EMPTY_PERMISSION_COLLECTION;
 }
