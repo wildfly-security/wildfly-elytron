@@ -20,7 +20,6 @@ package org.wildfly.security.authz;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Principal;
-import java.util.Set;
 
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.permission.PermissionUtil;
@@ -45,7 +44,7 @@ public interface PermissionMapper {
      * @param roles a set of roles associated with the given principal after all role mapping was applied by security domain (may be {@code null}
      * @return a read-only permission collection. If no permission is associated with the given identity, an empty and read-only {@link PermissionCollection} is returned (not {@code null})
      */
-    PermissionCollection mapPermissions(Principal principal, Set<String> roles);
+    PermissionCollection mapPermissions(Principal principal, Roles roles);
 
     /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionCollection}.

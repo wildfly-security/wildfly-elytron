@@ -19,6 +19,7 @@ package org.wildfly.security.authz.jacc;
 
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.authz.Roles;
 import org.wildfly.security.manager.WildFlySecurityManager;
 
 import javax.security.jacc.EJBMethodPermission;
@@ -170,7 +171,7 @@ public class JaccDelegatingPolicy extends Policy {
         SecurityIdentity identity = getCurrentSecurityIdentity();
 
         if (identity != null) {
-            Set<String> identityRoles = identity.getRoles();
+            Roles identityRoles = identity.getRoles();
 
             if (identityRoles != null) {
                 for (String roleName : identityRoles) {

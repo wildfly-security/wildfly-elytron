@@ -18,34 +18,27 @@
 
 package org.wildfly.security.authz;
 
-import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 
-class UnionSet extends AbstractSet<String> implements Set<String> {
+class IntersectionRoles implements Roles {
 
-    private final Set<String> left;
-    private final Set<String> right;
+    private final Roles left;
+    private final Roles right;
 
-    UnionSet(final Set<String> left, final Set<String> right) {
+    IntersectionRoles(final Roles left, final Roles right) {
         this.left = left;
         this.right = right;
     }
 
-    public boolean contains(final Object o) {
-        return o instanceof String && (left.contains(o) || right.contains(o));
-    }
-
-    public boolean isEmpty() {
-        return ! iterator().hasNext();
+    public boolean contains(final String roleName) {
+        return left.contains(roleName) && right.contains(roleName);
     }
 
     public Iterator<String> iterator() {
-        final Iterator<String> leftIterator = left.iterator();
-        final Iterator<String> rightIterator = right.iterator();
+        final Iterator<String> iterator = left.iterator();
         return new Iterator<String>() {
             String next;
 
@@ -54,19 +47,14 @@ class UnionSet extends AbstractSet<String> implements Set<String> {
                     return true;
                 }
                 for (;;) {
-                    if (leftIterator.hasNext()) {
-                        next = leftIterator.next();
-                        return true;
-                    } else if (rightIterator.hasNext()) {
-                        next = rightIterator.next();
-                        if (! left.contains(next)) {
-                            return true;
-                        }
-                        next = null;
-                        // fall out and re-loop
-                    } else {
+                    if (! iterator.hasNext()) {
                         return false;
                     }
+                    next = iterator.next();
+                    if (right.contains(next)) {
+                        return true;
+                    }
+                    next = null;
                 }
             }
 
@@ -82,13 +70,6 @@ class UnionSet extends AbstractSet<String> implements Set<String> {
     }
 
     public Spliterator<String> spliterator() {
-        return Spliterators.spliterator(this, Spliterator.NONNULL | Spliterator.DISTINCT);
-    }
-
-    public int size() {
-        final Iterator<String> iterator = iterator();
-        int count = 0;
-        while (iterator.hasNext()) count ++;
-        return count;
+        return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.NONNULL | Spliterator.DISTINCT);
     }
 }

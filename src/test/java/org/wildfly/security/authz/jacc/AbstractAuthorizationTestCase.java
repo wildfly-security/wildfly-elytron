@@ -23,6 +23,8 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.authz.Roles;
+
 import javax.security.jacc.PolicyConfiguration;
 import javax.security.jacc.PolicyConfigurationFactory;
 import javax.security.jacc.PolicyContextException;
@@ -80,7 +82,7 @@ public abstract class AbstractAuthorizationTestCase {
             roles.add("Administrator");
             roles.add("Manager");
 
-            return roles;
+            return Roles.fromSet(roles);
         }).build();
 
         return builder.build();

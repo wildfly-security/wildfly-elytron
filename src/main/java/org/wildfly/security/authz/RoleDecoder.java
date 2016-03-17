@@ -18,9 +18,7 @@
 
 package org.wildfly.security.authz;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A decoder to extract role information from an identity's attributes.
@@ -38,14 +36,14 @@ public interface RoleDecoder {
      * Decode the role set from the given attributes.
      *
      * @param attributes the attributes
-     * @return the role set
+     * @return the role set (must not be {@code null})
      */
-    Set<String> decodeRoles(Attributes attributes);
+    Roles decodeRoles(Attributes attributes);
 
     /**
      * A role decoder which decodes no roles.
      */
-    RoleDecoder EMPTY = attributes -> Collections.emptySet();
+    RoleDecoder EMPTY = attributes -> Roles.NONE;
 
     /**
      * A role decoder which always decodes roles from the attribute called "Roles".
@@ -61,7 +59,7 @@ public interface RoleDecoder {
     static RoleDecoder simple(String attribute) {
         return attributes -> {
             final Attributes.Entry entry = attributes.get(attribute);
-            return entry.isEmpty() ? Collections.emptySet() : entry instanceof Attributes.SetEntry ? (Attributes.SetEntry) entry : new HashSet<>(entry);
+            return entry.isEmpty() ? Roles.NONE : entry instanceof Attributes.SetEntry ? Roles.fromSet((Attributes.SetEntry) entry) : Roles.fromSet(new HashSet<>(entry));
         };
     }
 }

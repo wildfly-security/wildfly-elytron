@@ -17,9 +17,6 @@
  */
 package org.wildfly.security.authz;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.wildfly.common.Assert;
 
 /**
@@ -39,7 +36,7 @@ public interface RoleMapper {
      * @param rolesToMap the roles in their raw form to apply mapping
      * @return the mapped role set
      */
-    Set<String> mapRoles(Set<String> rolesToMap);
+    Roles mapRoles(Roles rolesToMap);
 
     /**
      * A default implementation that does nothing but return the given roles.
@@ -54,8 +51,7 @@ public interface RoleMapper {
      */
     default RoleMapper and(RoleMapper other) {
         Assert.checkNotNullParam("other", other);
-        RoleMapper left = this;
-        return rolesToMap -> new IntersectionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+        return rolesToMap -> mapRoles(rolesToMap).and(other.mapRoles(rolesToMap));
     }
 
     /**
@@ -66,8 +62,7 @@ public interface RoleMapper {
      */
     default RoleMapper or(RoleMapper other) {
         Assert.checkNotNullParam("other", other);
-        RoleMapper left = this;
-        return rolesToMap -> new UnionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+        return rolesToMap -> mapRoles(rolesToMap).or(other.mapRoles(rolesToMap));
     }
 
     /**
@@ -79,8 +74,7 @@ public interface RoleMapper {
      */
     default RoleMapper xor(RoleMapper other) {
         Assert.checkNotNullParam("other", other);
-        RoleMapper left = this;
-        return rolesToMap -> new DisjunctionSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
+        return rolesToMap -> mapRoles(rolesToMap).xor(other.mapRoles(rolesToMap));
     }
 
     /**
@@ -92,30 +86,7 @@ public interface RoleMapper {
      */
     default RoleMapper minus(RoleMapper other) {
         Assert.checkNotNullParam("other", other);
-        RoleMapper left = this;
-        return rolesToMap -> new DifferenceSet(left.mapRoles(rolesToMap), other.mapRoles(rolesToMap));
-    }
-
-    /**
-     * Create a role mapper which caches all the mapped roles into a single set.  This can improve performance if a
-     * large number of set operations are performed on large role sets.
-     *
-     * @return the caching role mapper
-     */
-    default RoleMapper caching() {
-        return new RoleMapper() {
-            public Set<String> mapRoles(final Set<String> rolesToMap) {
-                if (rolesToMap instanceof HashSet) {
-                    return rolesToMap;
-                } else {
-                    return new HashSet<String>(RoleMapper.this.mapRoles(rolesToMap));
-                }
-            }
-
-            public RoleMapper caching() {
-                return this;
-            }
-        };
+        return rolesToMap -> mapRoles(rolesToMap).minus(other.mapRoles(rolesToMap));
     }
 
     /**
@@ -155,9 +126,8 @@ public interface RoleMapper {
      * @param roles the set of roles to always be returned (must not be {@code null})
      * @return the constant role mapper (not {@code null})
      */
-    static RoleMapper constant(Set<String> roles) {
+    static RoleMapper constant(Roles roles) {
         Assert.checkNotNullParam("roles", roles);
-        return r -> roles;
+        return rolesToMap -> roles;
     }
-
 }

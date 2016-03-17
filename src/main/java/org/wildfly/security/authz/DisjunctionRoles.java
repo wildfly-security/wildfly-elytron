@@ -18,25 +18,23 @@
 
 package org.wildfly.security.authz;
 
-import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 
-class DisjunctionSet extends AbstractSet<String> implements Set<String> {
+class DisjunctionRoles implements Roles {
 
-    private final Set<String> left;
-    private final Set<String> right;
+    private final Roles left;
+    private final Roles right;
 
-    DisjunctionSet(final Set<String> left, final Set<String> right) {
+    DisjunctionRoles(final Roles left, final Roles right) {
         this.left = left;
         this.right = right;
     }
 
-    public boolean contains(final Object o) {
-        return o instanceof String && left.contains(o) != right.contains(o);
+    public boolean contains(final String roleName) {
+        return left.contains(roleName) != right.contains(roleName);
     }
 
     public boolean isEmpty() {
@@ -86,13 +84,6 @@ class DisjunctionSet extends AbstractSet<String> implements Set<String> {
     }
 
     public Spliterator<String> spliterator() {
-        return Spliterators.spliterator(this, Spliterator.NONNULL | Spliterator.DISTINCT);
-    }
-
-    public int size() {
-        final Iterator<String> iterator = iterator();
-        int count = 0;
-        while (iterator.hasNext()) count ++;
-        return count;
+        return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.NONNULL | Spliterator.DISTINCT);
     }
 }

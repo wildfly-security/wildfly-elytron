@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -51,6 +50,7 @@ import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizati
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.RoleMapper;
+import org.wildfly.security.authz.Roles;
 
 /**
  * A loaded and authenticated security identity.
@@ -342,7 +342,7 @@ public final class SecurityIdentity {
      *
      * @return the roles associated with this identity
      */
-    public Set<String> getRoles() {
+    public Roles getRoles() {
         return this.securityDomain.mapRoles(this);
     }
 
@@ -353,7 +353,7 @@ public final class SecurityIdentity {
      * @param category the role mapping category
      * @return the category roles
      */
-    public Set<String> getRoles(String category) {
+    public Roles getRoles(String category) {
         return getRoles(category, false);
     }
 
@@ -365,9 +365,9 @@ public final class SecurityIdentity {
      *                          role mapping exists for the given category, {@code false} otherwise
      * @return the category roles
      */
-    public Set<String> getRoles(String category, boolean fallbackToDefault) {
+    public Roles getRoles(String category, boolean fallbackToDefault) {
         final RoleMapper roleMapper = roleMappers.get(category);
-        return roleMapper == null ? (fallbackToDefault ? getRoles() : Collections.emptySet()) : roleMapper.mapRoles(securityDomain.mapRoles(this));
+        return roleMapper == null ? (fallbackToDefault ? getRoles() : Roles.NONE) : roleMapper.mapRoles(securityDomain.mapRoles(this));
     }
 
     /**

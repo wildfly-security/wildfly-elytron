@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
@@ -40,6 +39,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
+import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.permission.ElytronPermission;
@@ -317,14 +317,14 @@ public final class SecurityDomain {
         }
     }
 
-    Set<String> mapRoles(SecurityIdentity securityIdentity) {
+    Roles mapRoles(SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
 
         AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
         Attributes attributes = identity.getAttributes();
         RealmInfo realmInfo = securityIdentity.getRealmInfo();
         RoleDecoder roleDecoder = realmInfo.getRoleDecoder(); // zeroth role mapping, just grab roles from the identity
-        Set<String> mappedRoles = roleDecoder.decodeRoles(attributes);
+        Roles mappedRoles = roleDecoder.decodeRoles(attributes);
         RoleMapper realmRoleMapper = realmInfo.getRoleMapper();
 
         // apply the first level mapping, which is based on the role mapper associated with a realm.
@@ -337,7 +337,7 @@ public final class SecurityDomain {
     PermissionCollection mapPermissions(SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
         Principal principal = securityIdentity.getPrincipal();
-        Set<String> roles = securityIdentity.getRoles();
+        Roles roles = securityIdentity.getRoles();
 
         return this.permissionMapper.mapPermissions(principal, roles);
     }
