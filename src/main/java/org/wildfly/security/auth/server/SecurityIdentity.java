@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Principal;
 import java.security.PrivilegedAction;
@@ -51,13 +52,14 @@ import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.permission.PermissionVerifier;
 
 /**
  * A loaded and authenticated security identity.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentity {
+public final class SecurityIdentity implements PermissionVerifier {
     static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
     private static final RuntimePermission SET_RUN_AS_PERMISSION = new RuntimePermission("setRunAsPermission");
 
@@ -507,6 +509,10 @@ public final class SecurityIdentity {
      */
     public PermissionCollection getPermissions() {
         return this.securityDomain.mapPermissions(this);
+    }
+
+    public boolean implies(final Permission permission) {
+        return getPermissions().implies(permission);
     }
 
     /**

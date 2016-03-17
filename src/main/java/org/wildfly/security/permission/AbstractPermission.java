@@ -27,7 +27,7 @@ import org.wildfly.security._private.ElytronMessages;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractPermission<This extends AbstractPermission<This>> extends Permission {
+public abstract class AbstractPermission<This extends AbstractPermission<This>> extends Permission implements PermissionVerifier {
     /**
      * Construct a new instance.
      *

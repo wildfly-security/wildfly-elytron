@@ -66,6 +66,7 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.permission.InvalidPermissionClassException;
+import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -571,6 +572,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3021, value = "Invalid permission type; expected %s, got %s")
     IllegalArgumentException invalidPermissionType(Class<? extends Permission> expected, Permission actual);
+
+    @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
+    SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
 
     /* ssl package */
 
@@ -1386,5 +1390,4 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage
     @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
-
 }

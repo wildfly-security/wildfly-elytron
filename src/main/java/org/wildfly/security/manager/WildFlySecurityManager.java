@@ -53,6 +53,7 @@ import org.wildfly.security.manager.action.ReadEnvironmentPropertyAction;
 import org.wildfly.security.manager.action.ReadPropertyAction;
 import org.wildfly.security.manager.action.SetContextClassLoaderAction;
 import org.wildfly.security.manager.action.WritePropertyAction;
+import org.wildfly.security.permission.PermissionVerifier;
 import sun.reflect.Reflection;
 
 import static java.lang.System.clearProperty;
@@ -63,6 +64,7 @@ import static java.lang.System.getenv;
 import static java.lang.System.setProperty;
 import static java.lang.Thread.currentThread;
 import static java.security.AccessController.doPrivileged;
+import static java.security.AccessController.getContext;
 import static org.wildfly.security.manager.WildFlySecurityManagerPermission.doUncheckedPermission;
 import static org.wildfly.security.manager._private.SecurityMessages.access;
 
@@ -72,8 +74,8 @@ import static org.wildfly.security.manager._private.SecurityMessages.access;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MetaInfServices
-public final class WildFlySecurityManager extends SecurityManager {
+@MetaInfServices(SecurityManager.class)
+public final class WildFlySecurityManager extends SecurityManager implements PermissionVerifier {
 
     private static final Permission SECURITY_MANAGER_PERMISSION = new RuntimePermission("setSecurityManager");
     private static final Permission PROPERTIES_PERMISSION = new PropertyPermission("*", "read,write");
@@ -244,6 +246,10 @@ public final class WildFlySecurityManager extends SecurityManager {
             }
         }
         return true;
+    }
+
+    public boolean implies(final Permission permission) {
+        return tryCheckPermission(permission, getProtectionDomainStack(getContext()));
     }
 
     /**

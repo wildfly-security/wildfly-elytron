@@ -25,6 +25,7 @@ import java.util.Enumeration;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.permission.AbstractPermissionCollection;
+import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.util.StringMapping;
 
 /**
@@ -33,7 +34,7 @@ import org.wildfly.security.util.StringMapping;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @Deprecated
-final class WildFlySecurityManagerPermissionCollection extends PermissionCollection implements Serializable {
+final class WildFlySecurityManagerPermissionCollection extends PermissionCollection implements Serializable, PermissionVerifier {
 
     private static final long serialVersionUID = 1L;
 

@@ -26,7 +26,7 @@ import java.util.Enumeration;
 
 import org.wildfly.security._private.ElytronMessages;
 
-final class UnionPermissionCollection extends PermissionCollection {
+final class UnionPermissionCollection extends PermissionCollection implements PermissionVerifier {
     private static final long serialVersionUID = 6731525842957764833L;
 
     private final PermissionCollection pc1;

@@ -25,6 +25,7 @@ import java.security.AllPermission;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.security.Permissions;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -455,6 +456,24 @@ public final class PermissionUtil {
             } catch (Throwable cause) {
                 throw new UndeclaredThrowableException(cause);
             }
+        }
+    }
+
+    /**
+     * Get a read-only collection of the given permissions.
+     *
+     * @param permissions the permissions to assign
+     * @return the read-only collection
+     */
+    public static PermissionCollection readOnlyCollectionOf(Permission... permissions) {
+        final int length = permissions.length;
+        if (length == 0) {
+            return EMPTY_PERMISSION_COLLECTION;
+        } else {
+            Permissions collection = new Permissions();
+            addAll(collection, Arrays.asList(permissions));
+            collection.setReadOnly();
+            return collection;
         }
     }
 }
