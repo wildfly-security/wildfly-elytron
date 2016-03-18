@@ -18,10 +18,23 @@
 
 package org.wildfly.security.evidence;
 
+import java.security.Principal;
+
 /**
  * A piece of evidence which may be used for credential verification.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public interface Evidence {
+
+    /**
+     * Get the {@link Principal} which can be derived from this evidence, this can be {@code null} if there is no derived Principal.
+     *
+     * @return the {@link Principal} which can be derived from this evidence, this can be {@code null} if there is no derived Principal.
+     */
+    default Principal getPrincipal() {
+        return null;
+    }
+
 }

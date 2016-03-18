@@ -41,7 +41,6 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
-import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
 
 /**
  * The CLIENT_CERT authentication mechanism.
@@ -96,7 +95,7 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
 
         final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerX509Certificates);
 
-        PeerPrincipalCallback ppc = new PeerPrincipalCallback(X509CertificateEvidenceDecoder.getInstance().getPrincipalFromEvidence(evidence));
+        PeerPrincipalCallback ppc = new PeerPrincipalCallback(evidence.getPrincipal());
         EvidenceVerifyCallback evc = new EvidenceVerifyCallback(evidence);
         boolean authenticated = false;
 
