@@ -18,7 +18,10 @@
 
 package org.wildfly.security.evidence;
 
+import java.security.Principal;
 import java.security.cert.X509Certificate;
+
+import javax.security.auth.x500.X500Principal;
 
 import org.wildfly.common.Assert;
 
@@ -37,6 +40,16 @@ public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence
     public X509PeerCertificateChainEvidence(final X509Certificate... peerCertificateChain) {
         Assert.checkNotNullParam("peerCertificateChain", peerCertificateChain);
         this.peerCertificateChain = peerCertificateChain;
+    }
+
+    /**
+     * Get the {@link Principal} represented by the first certificate in the chain.
+     *
+     * @return the {@link Principal} represented by the first certificate in the chain.
+     */
+    @Override
+    public X500Principal getPrincipal() {
+        return getFirstCertificate().getSubjectX500Principal();
     }
 
     /**
@@ -64,4 +77,6 @@ public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence
     public X509Certificate getLastCertificate() {
         return peerCertificateChain[peerCertificateChain.length - 1];
     }
+
+
 }

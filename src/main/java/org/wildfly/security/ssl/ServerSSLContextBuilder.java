@@ -33,17 +33,14 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.PrincipalDecoder;
-import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
 
 /**
  * A class which allows building and configuration of a single server-side SSL context.  The builder requires, at a
  * minimum, that a key manager be set; all other parameters have default values as follows:
  * <ul>
  *     <li>The security domain defaults to being empty (no client authentication possible)</li>
- *     <li>The evidence decoder defaults to the {@linkplain X509CertificateEvidenceDecoder X.509 decoder}</li>
  *     <li>The principal decoder defaults to the {@linkplain PrincipalDecoder#DEFAULT default principal decoder}</li>
  *     <li>The cipher suite selector defaults to {@link CipherSuiteSelector#openSslDefault()}</li>
  *     <li>The protocol suite selector defaults to {@link ProtocolSelector#DEFAULT_SELECTOR}</li>
@@ -55,7 +52,6 @@ import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
  */
 public final class ServerSSLContextBuilder {
     private SecurityDomain securityDomain;
-    private EvidenceDecoder evidenceDecoder = X509CertificateEvidenceDecoder.getInstance();
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean wantClientAuth;
@@ -75,18 +71,6 @@ public final class ServerSSLContextBuilder {
      */
     public ServerSSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
         this.securityDomain = securityDomain;
-
-        return this;
-    }
-
-    /**
-     * Set the evidence decoder.  This is the decoder used to get the principal from the client certificate.
-     *
-     * @param evidenceDecoder the evidence decoder
-     */
-    public ServerSSLContextBuilder setEvidenceDecoder(final EvidenceDecoder evidenceDecoder) {
-        Assert.checkNotNullParam("evidenceDecoder", evidenceDecoder);
-        this.evidenceDecoder = evidenceDecoder;
 
         return this;
     }
@@ -258,7 +242,6 @@ public final class ServerSSLContextBuilder {
         final ProtocolSelector protocolSelector = this.protocolSelector;
 
         final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory = this.keyManagerSecurityFactory;
-        final EvidenceDecoder evidenceDecoder = this.evidenceDecoder;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
@@ -273,7 +256,7 @@ public final class ServerSSLContextBuilder {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
                 canAuthClients ?
-                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, evidenceDecoder, authenticationOptional) :
+                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional) :
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration

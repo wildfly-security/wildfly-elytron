@@ -495,8 +495,10 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable for
-     * the current authentication identity.
+     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable.
+     *
+     * If an authentication identity is established this will be for that identity, otherwise this will be the general
+     * level of support advertised by the security domain.
      *
      * @param credentialType the credential type class (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
@@ -507,12 +509,16 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-        return stateRef.get().getCredentialAcquireSupport(credentialType, algorithmName);
+        SupportLevel supportLevel = stateRef.get().getCredentialAcquireSupport(credentialType, algorithmName);
+
+        return supportLevel != null ? supportLevel : domain.getCredentialAcquireSupport(credentialType, algorithmName);
     }
 
     /**
-     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable for
-     * the current authentication identity.
+     * Determine whether a given credential is definitely obtainable, possibly obtainable, or definitely not obtainable.
+     *
+     * If an authentication identity is established this will be for that identity, otherwise this will be the general
+     * level of support advertised by the security domain.
      *
      * @param credentialType the credential type class (must not be {@code null})
      * @return the level of support for this credential type
@@ -521,12 +527,14 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType) throws RealmUnavailableException {
-        return stateRef.get().getCredentialAcquireSupport(credentialType, null);
+        return getCredentialAcquireSupport(credentialType, null);
     }
 
     /**
-     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable for
-     * the current authentication identity.
+     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable.
+     *
+     * If an authentication identity is established this will be for that identity, otherwise this will be the general
+     * level of support advertised by the security domain.
      *
      * @param evidenceType the evidence type class (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the evidence type does
@@ -538,12 +546,16 @@ public final class ServerAuthenticationContext {
      */
     public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
         Assert.checkNotNullParam("evidenceType", evidenceType);
-        return stateRef.get().getEvidenceVerifySupport(evidenceType, algorithmName);
+        SupportLevel supportLevel = stateRef.get().getEvidenceVerifySupport(evidenceType, algorithmName);
+
+        return supportLevel != null ? supportLevel : domain.getEvidenceVerifySupport(evidenceType, algorithmName);
     }
 
     /**
-     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable for
-     * the current authentication identity.
+     * Determine whether a given piece of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable.
+     *
+     * If an authentication identity is established this will be for that identity, otherwise this will be the general
+     * level of support advertised by the security domain.
      *
      * @param evidenceType the evidence type class (must not be {@code null})
      * @return the level of support for this credential type
@@ -552,8 +564,7 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
      */
     public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType) throws RealmUnavailableException {
-        Assert.checkNotNullParam("evidenceType", evidenceType);
-        return stateRef.get().getEvidenceVerifySupport(evidenceType, null);
+        return getEvidenceVerifySupport(evidenceType, null);
     }
 
     /**
@@ -623,6 +634,14 @@ public final class ServerAuthenticationContext {
         } else {
             return stateRef.get().verifyEvidence(evidence);
         }
+
+        final Principal evidencePrincipal = evidence.getPrincipal();
+        if (evidencePrincipal != null) {
+            // We have access to a Principal so set it to cause the state transitions and start again.
+            setAuthenticationPrincipal(evidencePrincipal);
+            return verifyEvidence(evidence);
+        }
+
         final SecurityDomain domain = this.domain;
         RealmInfo realmInfo = null;
         RealmIdentity realmIdentity = null;
@@ -642,8 +661,8 @@ public final class ServerAuthenticationContext {
             return false;
         }
         assert realmIdentity != null && realmIdentity.exists();
-        final Principal principal = realmIdentity.getRealmIdentityPrincipal();
-        if (principal == null) {
+        final Principal resolvedPrincipal = realmIdentity.getRealmIdentityPrincipal();
+        if (resolvedPrincipal == null) {
             // we have to have a principal
             realmIdentity.dispose();
             return false;
@@ -651,7 +670,7 @@ public final class ServerAuthenticationContext {
         boolean ok = false;
         NameAssignedState newState;
         try {
-            newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+            newState = new NameAssignedState(resolvedPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration);
             if (! stateRef.compareAndSet(oldState, newState)) {
                 // gotta start over, but should happen no more than a theoretical max of 2 times
                 return verifyEvidence(evidence);
@@ -922,11 +941,11 @@ public final class ServerAuthenticationContext {
         }
 
         SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            return null;
         }
 
         SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            return null;
         }
 
         <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
@@ -975,6 +994,7 @@ public final class ServerAuthenticationContext {
         boolean isStarted() {
             return started;
         }
+
     }
 
     static final class CompleteState extends State {

@@ -31,7 +31,6 @@ import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.server.EvidenceDecoder;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -45,20 +44,18 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
 
     private final X509ExtendedTrustManager delegate;
     private final SecurityDomain securityDomain;
-    private final EvidenceDecoder evidenceDecoder;
     private final boolean authenticationOptional;
 
-    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder, final boolean authenticationOptional) {
+    SecurityDomainTrustManager(final X509ExtendedTrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional) {
         this.delegate = delegate;
         this.securityDomain = securityDomain;
-        this.evidenceDecoder = evidenceDecoder;
         this.authenticationOptional = authenticationOptional;
     }
 
-    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final EvidenceDecoder evidenceDecoder, final boolean authenticationOptional) {
+    SecurityDomainTrustManager(final X509TrustManager delegate, final SecurityDomain securityDomain, final boolean authenticationOptional) {
         this(delegate instanceof X509ExtendedTrustManager ?
                 (X509ExtendedTrustManager) delegate :
-                new WrappingX509ExtendedTrustManager(delegate), securityDomain, evidenceDecoder, authenticationOptional);
+                new WrappingX509ExtendedTrustManager(delegate), securityDomain, authenticationOptional);
     }
 
     public void checkClientTrusted(final X509Certificate[] chain, final String authType, final Socket socket) throws CertificateException {
@@ -83,12 +80,10 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
             throw ElytronMessages.log.emptyChainNotTrusted();
         }
         final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(chain);
-        Principal principal = evidenceDecoder.getPrincipalFromEvidence(evidence);
+        Principal principal = evidence.getPrincipal();
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
-            authenticationContext.setAuthenticationPrincipal(principal);
-
             final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
             if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence)) {
                 authenticationContext.succeed();

@@ -34,14 +34,12 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
-import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
-import org.wildfly.security.x500.X509CertificateEvidenceDecoder;
 
 /**
  * The CLIENT_CERT authentication mechanism.
@@ -96,12 +94,11 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
 
         final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerX509Certificates);
 
-        PeerPrincipalCallback ppc = new PeerPrincipalCallback(X509CertificateEvidenceDecoder.getInstance().getPrincipalFromEvidence(evidence));
         EvidenceVerifyCallback evc = new EvidenceVerifyCallback(evidence);
         boolean authenticated = false;
 
         try {
-            callbackHandler.handle(new Callback[] { ppc, evc });
+            callbackHandler.handle(new Callback[] { evc });
             authenticated = evc.isVerified();
         } catch (IOException e) {
             throw new HttpAuthenticationException(e);
