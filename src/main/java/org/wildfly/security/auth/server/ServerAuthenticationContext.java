@@ -623,6 +623,14 @@ public final class ServerAuthenticationContext {
         } else {
             return stateRef.get().verifyEvidence(evidence);
         }
+
+        final Principal evidencePrincipal = evidence.getPrincipal();
+        if (evidencePrincipal != null) {
+            // We have access to a Principal so set it to cause the state transitions and start again.
+            setAuthenticationPrincipal(evidencePrincipal);
+            return verifyEvidence(evidence);
+        }
+
         final SecurityDomain domain = this.domain;
         RealmInfo realmInfo = null;
         RealmIdentity realmIdentity = null;
@@ -642,8 +650,8 @@ public final class ServerAuthenticationContext {
             return false;
         }
         assert realmIdentity != null && realmIdentity.exists();
-        final Principal principal = realmIdentity.getRealmIdentityPrincipal();
-        if (principal == null) {
+        final Principal resolvedPrincipal = realmIdentity.getRealmIdentityPrincipal();
+        if (resolvedPrincipal == null) {
             // we have to have a principal
             realmIdentity.dispose();
             return false;
@@ -651,7 +659,7 @@ public final class ServerAuthenticationContext {
         boolean ok = false;
         NameAssignedState newState;
         try {
-            newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+            newState = new NameAssignedState(resolvedPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration);
             if (! stateRef.compareAndSet(oldState, newState)) {
                 // gotta start over, but should happen no more than a theoretical max of 2 times
                 return verifyEvidence(evidence);

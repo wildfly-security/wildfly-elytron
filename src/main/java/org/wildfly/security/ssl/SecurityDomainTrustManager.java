@@ -84,8 +84,6 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
         boolean ok = false;
         try {
-            authenticationContext.setAuthenticationPrincipal(principal);
-
             final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
             if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence)) {
                 authenticationContext.succeed();
