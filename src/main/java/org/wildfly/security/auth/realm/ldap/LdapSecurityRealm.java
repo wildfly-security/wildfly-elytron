@@ -25,10 +25,10 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -57,6 +57,7 @@ import javax.naming.ldap.Rdn;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.CloseableIterator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -124,17 +125,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
+    public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
         if (identityMapping.iteratorFilter == null) {
             throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
         }
 
-        return new Iterator<ModifiableRealmIdentity>() {
+        return new CloseableIterator<ModifiableRealmIdentity>() {
 
-            List<ModifiableRealmIdentity> list = new LinkedList<>();
-            byte[] cookie = null;
-            int total = -1;
-            boolean end = false;
+            private List<ModifiableRealmIdentity> list = new LinkedList<>();
+            private byte[] cookie = null;
+            private boolean end = false;
 
             private void loadNextPage(LdapContext context) throws NamingException, IOException {
                 context.setRequestControls(new Control[]{
@@ -153,18 +153,18 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     result.close();
                 }
 
-                cookie = null;
-                Control[] controls = ((LdapContext) context).getResponseControls();
+                Control[] controls = context.getResponseControls();
                 if (controls != null) {
                     for (int k = 0; k < controls.length; k++) {
                         if (controls[k] instanceof PagedResultsResponseControl) {
                             PagedResultsResponseControl control = (PagedResultsResponseControl) controls[k];
-                            total = control.getResultSize();
                             cookie = control.getCookie();
+                            if (cookie == null) end = true;
+                            return;
                         }
                     }
                 }
-                if (cookie == null) end = true;
+                throw log.ldapRealmPagedControlNotProvidedByLdapContext();
             }
 
             private void loadCompleteResult(DirContext context) throws NamingException {
@@ -182,7 +182,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 }
             }
 
-            void loadList() {
+            private void loadNextPageOrCompleteResult() {
                 log.debug("Iterating over identities");
                 DirContext context = null;
                 list.clear();
@@ -221,8 +221,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             @Override
             public ModifiableRealmIdentity next() {
-                if (list.isEmpty() && ! end) {
-                    loadList();
+                if (list.isEmpty()) {
+                    if (end) {
+                        throw new NoSuchElementException();
+                    } else {
+                        loadNextPageOrCompleteResult();
+                    }
                 }
                 ModifiableRealmIdentity identity = list.get(0);
                 list.remove(0);
