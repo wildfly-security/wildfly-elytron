@@ -157,5 +157,9 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         public boolean exists() throws RealmUnavailableException {
             return getEntry(name) != null;
         }
+
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return KeyStoreBackedSecurityRealm.this == securityRealm;
+        }
     }
 }

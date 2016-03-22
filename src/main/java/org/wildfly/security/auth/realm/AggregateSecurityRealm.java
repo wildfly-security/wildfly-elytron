@@ -139,5 +139,9 @@ public final class AggregateSecurityRealm implements SecurityRealm {
             authenticationIdentity.dispose();
             authorizationIdentity.dispose();
         }
+
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return authenticationIdentity.createdBySecurityRealm(securityRealm);
+        }
     }
 }
