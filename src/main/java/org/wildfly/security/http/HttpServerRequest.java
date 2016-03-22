@@ -18,16 +18,14 @@
 
 package org.wildfly.security.http;
 
+import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.Map;
 
 import javax.net.ssl.SSLSession;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
-
-import java.io.InputStream;
-import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Server side representation of a HTTP request.
@@ -136,29 +134,11 @@ public interface HttpServerRequest {
     InetSocketAddress getSourceAddress();
 
     /**
-     * Returns the current {@link HttpServerSession} associated with this request or, if there is no
-     * current session and <code>create</code> is true, returns a new session.
+     * Get the specified {@link HttpScope} if available.
      *
-     * <p>If <code>create</code> is <code>false</code> and the request has no valid {@link HttpServerSession},
-     * this method returns <code>null</code>.
-     *
-     * @param create <code>true</code> to create a new session for this request if necessary; <code>false</code> to return <code>null</code> if there's no current session
-     * @return the {@link HttpServerSession} associated with this request or <code>null</code> if code>create</code> is <code>false</code> and the request has no valid session
+     * @param scope the type of the scope required.
+     * @return the scope specified or {@code null} if not supported.
      */
-    HttpServerSession getSession(boolean create);
+    HttpScope getScope(Scope scope);
 
-    /**
-     * Retrieves a session with the given session id.
-     *
-     * @param id the session ID
-     * @return the session, or null if it does not exist
-     */
-    HttpServerSession getSession(String id);
-
-    /**
-     * Returns the identifiers of all sessions, including both active and passive.
-     *
-     * @return the identifiers of all sessions, including both active and passive
-     */
-    Set<String> getSessions();
 }

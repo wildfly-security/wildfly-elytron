@@ -29,18 +29,18 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
-import org.wildfly.security.http.HttpServerCookie;
 import org.wildfly.security.http.HttpAuthenticationException;
+import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
+import org.wildfly.security.http.HttpServerCookie;
 import org.wildfly.security.http.HttpServerMechanismsResponder;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
-import org.wildfly.security.http.HttpServerSession;
+import org.wildfly.security.http.Scope;
 
 /**
  * A {@link HttpServerAuthenticationMechanism} with a stored {@link AccessControlContext} that is used for all request
@@ -112,6 +112,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
+        public HttpScope getScope(Scope scope) {
+            return wrapped.getScope(scope);
+        }
+
+        @Override
         public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
             wrapped.noAuthenticationInProgress(wrap(responder));
         }
@@ -166,20 +171,6 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
             return wrapped.getSourceAddress();
         }
 
-        @Override
-        public HttpServerSession getSession(boolean create) {
-            return wrapped.getSession(create);
-        }
-
-        @Override
-        public HttpServerSession getSession(String id) {
-            return wrapped.getSession(id);
-        }
-
-        @Override
-        public Set<String> getSessions() {
-            return wrapped.getSessions();
-        }
     }
 
 }
