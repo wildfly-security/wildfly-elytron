@@ -285,6 +285,8 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             char[] adminKeyPassword = convertPassword(loadPassword(pwdSpec, KEY_PASSWORD, attributes));
             adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
             destroyPassword(adminKeyPassword);
+        } else {
+            adminKeyProtectionParam = new KeyStore.PasswordProtection(storagePassword);
         }
 
         readKeyStore();
