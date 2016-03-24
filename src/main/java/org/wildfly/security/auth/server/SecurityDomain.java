@@ -34,7 +34,6 @@ import java.util.function.Function;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
-import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
@@ -321,10 +320,9 @@ public final class SecurityDomain {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
 
         AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
-        Attributes attributes = identity.getAttributes();
         RealmInfo realmInfo = securityIdentity.getRealmInfo();
         RoleDecoder roleDecoder = realmInfo.getRoleDecoder(); // zeroth role mapping, just grab roles from the identity
-        Roles mappedRoles = roleDecoder.decodeRoles(attributes);
+        Roles mappedRoles = roleDecoder.decodeRoles(identity);
         RoleMapper realmRoleMapper = realmInfo.getRoleMapper();
 
         // apply the first level mapping, which is based on the role mapper associated with a realm.

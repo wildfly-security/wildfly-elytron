@@ -33,12 +33,12 @@ public interface RoleDecoder {
     String KEY_ROLES = "Roles";
 
     /**
-     * Decode the role set from the given attributes.
+     * Decode the role set from the given authorization identity.
      *
-     * @param attributes the attributes
+     * @param authorizationIdentity the authorization identity (not {@code null})
      * @return the role set (must not be {@code null})
      */
-    Roles decodeRoles(Attributes attributes);
+    Roles decodeRoles(AuthorizationIdentity authorizationIdentity);
 
     /**
      * A role decoder which decodes no roles.
@@ -57,8 +57,8 @@ public interface RoleDecoder {
      * @return the roles
      */
     static RoleDecoder simple(String attribute) {
-        return attributes -> {
-            final Attributes.Entry entry = attributes.get(attribute);
+        return identity -> {
+            final Attributes.Entry entry = identity.getAttributes().get(attribute);
             return entry.isEmpty() ? Roles.NONE : entry instanceof Attributes.SetEntry ? Roles.fromSet((Attributes.SetEntry) entry) : Roles.fromSet(new HashSet<>(entry));
         };
     }
