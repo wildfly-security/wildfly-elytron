@@ -469,7 +469,7 @@ public final class SecurityIdentity implements PermissionVerifier {
             final AuthorizationIdentity newAuthorizationIdentity = realmIdentity.getAuthorizationIdentity();
             SecurityRealm.safeHandleRealmEvent(securityRealm, new RealmIdentitySuccessfulAuthorizationEvent(this.authorizationIdentity, this.principal, principal));
             try {
-                return new SecurityIdentity(domain, principal, realmInfo, newAuthorizationIdentity, roleMappers);
+                return securityDomain.transform(new SecurityIdentity(domain, principal, realmInfo, newAuthorizationIdentity, roleMappers));
             } finally {
                 realmIdentity.dispose();
             }
