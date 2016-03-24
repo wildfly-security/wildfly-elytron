@@ -386,9 +386,11 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
 
     private synchronized void storeToFile() throws CredentialStoreException, UnsupportedCredentialTypeException {
 
+        boolean storeFileActuallyCreated = false;
         if (createStorage && !storeFile.exists()) {
             try {
                 storeFile.createNewFile();
+                storeFileActuallyCreated = true;
             } catch (IOException e) {
                 throw log.cannotWriteStorageFie(storeFile.getAbsolutePath(), storeName);
             }
@@ -403,6 +405,10 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             }
             credentialStore.store(new FileOutputStream(storeFile), storagePassword);
         } catch (GeneralSecurityException | IOException e) {
+            if (storeFileActuallyCreated) {
+                // remove store file as something went wrong and next use will end up with empty file causing exception
+                storeFile.delete();
+            }
             throw new CredentialStoreException(e);
         }
     }
