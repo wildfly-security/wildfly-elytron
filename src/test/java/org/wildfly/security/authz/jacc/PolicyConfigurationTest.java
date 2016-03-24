@@ -29,13 +29,13 @@ import javax.security.jacc.PolicyContext;
 import javax.security.jacc.WebResourcePermission;
 import java.security.PermissionCollection;
 import java.security.Policy;
+import java.security.PrivilegedAction;
 
 import static java.security.AccessController.doPrivileged;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.wildfly.security.authz.jacc.JaccDelegatingPolicy.GET_POLICY_ACTION;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -58,11 +58,11 @@ public class PolicyConfigurationTest extends AbstractAuthorizationTestCase {
     public void testCreateAndInstallDelegatingPolicy() throws Exception {
         Policy policy = Policy.getPolicy();
 
-        assertThat(policy, new IsSame<>(doPrivileged(GET_POLICY_ACTION)));
+        assertThat(policy, new IsSame<>(doPrivileged((PrivilegedAction<Policy>) Policy::getPolicy)));
 
         Policy mustBeTheSame = Policy.getPolicy();
 
-        assertThat(mustBeTheSame, new IsSame<>(doPrivileged(GET_POLICY_ACTION)));
+        assertThat(mustBeTheSame, new IsSame<>(doPrivileged((PrivilegedAction<Policy>) Policy::getPolicy)));
     }
 
     @Test
@@ -87,7 +87,7 @@ public class PolicyConfigurationTest extends AbstractAuthorizationTestCase {
         // we now set the context id
         PolicyContext.setContextID(contextID);
 
-        Policy policy = doPrivileged(GET_POLICY_ACTION);
+        Policy policy = doPrivileged((PrivilegedAction<Policy>) Policy::getPolicy);
 
         PermissionCollection permissions = policy.getPermissions(createProtectionDomain(new NamePrincipal("Administrator")));
 
@@ -131,7 +131,7 @@ public class PolicyConfigurationTest extends AbstractAuthorizationTestCase {
         assertFalse(policyConfiguration.inService());
         assertThat(policyConfiguration, new IsSame<>(removedPolicyConfiguration));
 
-        Policy policy = doPrivileged(GET_POLICY_ACTION);
+        Policy policy = doPrivileged((PrivilegedAction<Policy>) Policy::getPolicy);
 
         PolicyContext.setContextID(contextID);
 

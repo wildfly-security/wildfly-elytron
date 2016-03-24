@@ -21,7 +21,6 @@ package org.wildfly.security.auth.server;
 import static java.util.Collections.emptyMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.security.PermissionCollection;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +42,7 @@ import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.permission.ElytronPermission;
+import org.wildfly.security.permission.PermissionVerifier;
 
 /**
  * A security domain.  Security domains encapsulate a set of security policies.
@@ -77,7 +77,7 @@ public final class SecurityDomain {
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
         final Map<String, RoleMapper> copiedRoleMappers;
         if (originalRoleMappers.isEmpty()) {
-            copiedRoleMappers = Collections.emptyMap();
+            copiedRoleMappers = emptyMap();
         } else if (originalRoleMappers.size() == 1) {
             final Map.Entry<String, RoleMapper> entry = originalRoleMappers.entrySet().iterator().next();
             copiedRoleMappers = Collections.singletonMap(entry.getKey(), entry.getValue());
@@ -334,7 +334,7 @@ public final class SecurityDomain {
         return this.roleMapper.mapRoles(mappedRoles);
     }
 
-    PermissionCollection mapPermissions(SecurityIdentity securityIdentity) {
+    PermissionVerifier mapPermissions(SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
         Principal principal = securityIdentity.getPrincipal();
         Roles roles = securityIdentity.getRoles();

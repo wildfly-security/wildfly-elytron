@@ -21,6 +21,7 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.manager.WildFlySecurityManager;
+import org.wildfly.security.permission.PermissionVerifier;
 
 import javax.security.jacc.EJBMethodPermission;
 import javax.security.jacc.EJBRoleRefPermission;
@@ -37,7 +38,6 @@ import java.security.Policy;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +57,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 public class JaccDelegatingPolicy extends Policy {
 
-    public static final PrivilegedAction<Policy> GET_POLICY_ACTION = () -> Policy.getPolicy();
+    public static final PrivilegedAction<Policy> GET_POLICY_ACTION = Policy::getPolicy;
     private static final String ANY_AUTHENTICATED_USER_ROLE = "**";
 
     private final Policy delegate;
@@ -117,24 +117,14 @@ public class JaccDelegatingPolicy extends Policy {
 
     @Override
     public PermissionCollection getPermissions(ProtectionDomain domain) {
-        PermissionCollection permissions = getPermissions(super.getPermissions(domain));
-
-        addPermissions(permissions, this.delegate.getPermissions(domain));
-
-        return permissions;
+        log.getPermissionsNotSupported();
+        return PermissionVerifier.from(this, domain).toPermissionCollection();
     }
 
     @Override
     public PermissionCollection getPermissions(CodeSource codeSource) {
-        if (codeSource == null) {
-            return Policy.UNSUPPORTED_EMPTY_COLLECTION;
-        }
-
-        PermissionCollection permissions = getPermissions(super.getPermissions(codeSource));
-
-        addPermissions(permissions, this.delegate.getPermissions(codeSource));
-
-        return permissions;
+        log.getPermissionsNotSupported();
+        return codeSource == null ? Policy.UNSUPPORTED_EMPTY_COLLECTION : PermissionVerifier.from(this, new ProtectionDomain(codeSource, null)).toPermissionCollection();
     }
 
     @Override
@@ -145,16 +135,7 @@ public class JaccDelegatingPolicy extends Policy {
 
     private boolean impliesIdentityPermission(Permission permission) {
         SecurityIdentity actualIdentity = getCurrentSecurityIdentity();
-
-        if (actualIdentity != null) {
-            PermissionCollection permissions = actualIdentity.getPermissions();
-
-            if (permissions.implies(permission)) {
-                return true;
-            }
-        }
-
-        return false;
+        return actualIdentity != null && actualIdentity.implies(permission);
     }
 
     private SecurityIdentity getCurrentSecurityIdentity() {
@@ -189,35 +170,6 @@ public class JaccDelegatingPolicy extends Policy {
                 roles.add(principal.getName());
             }
         }
-    }
-
-    private PermissionCollection getPermissions(PermissionCollection staticPermissions) {
-        Permissions permissions = new Permissions();
-
-        addPermissions(permissions, staticPermissions);
-
-        try {
-            ElytronPolicyConfiguration elytronPolicyConfiguration = ElytronPolicyConfigurationFactory.getCurrentPolicyConfiguration();
-            Permissions uncheckedPermissions = elytronPolicyConfiguration.getUncheckedPermissions();
-
-            addPermissions(permissions, uncheckedPermissions);
-
-            Map<String, Permissions> rolePermissions = elytronPolicyConfiguration.getRolePermissions();
-
-            synchronized (rolePermissions) {
-                rolePermissions.values().forEach(actualPermission -> addPermissions(permissions, actualPermission));
-            }
-
-            SecurityIdentity securityIdentity = getCurrentSecurityIdentity();
-
-            if (securityIdentity != null) {
-                addPermissions(permissions, securityIdentity.getPermissions());
-            }
-        } catch (Exception e) {
-            log.authzFailedGetDynamicPermissions(e);
-        }
-
-        return permissions;
     }
 
     private boolean impliesRolePermission(ProtectionDomain domain, Permission permission, ElytronPolicyConfiguration policyConfiguration) throws PolicyContextException, ClassNotFoundException {
@@ -267,20 +219,6 @@ public class JaccDelegatingPolicy extends Policy {
 
     private boolean isJaccPermission(Permission permission) {
         return this.supportedPermissionTypes.contains(permission.getClass());
-    }
-
-    private void addPermissions(PermissionCollection newPermissions, PermissionCollection toAdd) {
-        if (toAdd == null) {
-            return;
-        }
-
-        synchronized (toAdd) {
-            Enumeration<Permission> enumeration = toAdd.elements();
-
-            while (enumeration.hasMoreElements()) {
-                newPermissions.add(enumeration.nextElement());
-            }
-        }
     }
 }
 

@@ -21,8 +21,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.security.Permissions;
-
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.ldap.AttributeMapping;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
@@ -31,6 +29,7 @@ import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.permission.PermissionVerifier;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -64,11 +63,7 @@ public abstract class AbstractAttributeMappingSuiteChild {
                                         .build()
                                         .build()).build();
 
-        builder.setPermissionMapper((principal, roles) -> {
-            final Permissions permissions = new Permissions();
-            permissions.add(new LoginPermission());
-            return permissions;
-        });
+        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
 
         SecurityDomain securityDomain = builder.build();
 

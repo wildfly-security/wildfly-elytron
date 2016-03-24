@@ -24,12 +24,12 @@ import org.wildfly.security.auth.realm.LegacyPropertiesSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.permission.PermissionVerifier;
 
 import javax.security.jacc.PolicyConfiguration;
 import javax.security.jacc.PolicyConfigurationFactory;
 import javax.security.jacc.PolicyContextException;
 import java.io.IOException;
-import java.security.Permissions;
 import java.security.Policy;
 import java.security.Principal;
 import java.security.ProtectionDomain;
@@ -70,11 +70,7 @@ public abstract class AbstractAuthorizationTestCase {
 
         builder.setDefaultRealmName("default");
 
-        builder.setPermissionMapper((principal, roles) -> {
-            final Permissions permissions = new Permissions();
-            permissions.add(new RunAsPrincipalPermission("*"));
-            return permissions;
-        });
+        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new RunAsPrincipalPermission("*")));
 
         builder.addRealm("default",realm).setRoleMapper(rolesToMap -> {
             HashSet<String> roles = new HashSet<>();
