@@ -40,7 +40,8 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
     private static final StringEnumeration strings = StringEnumeration.of(
         "createAuthenticator",
         "createAuthenticationContextConfigurationClient",
-        "createSecurityDomain"
+        "createSecurityDomain",
+        "setRunAsPrincipal"
     );
 
     static final StringMapping<ElytronPermission> mapping = new StringMapping<>(strings, ElytronPermission::new);
