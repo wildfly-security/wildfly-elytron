@@ -83,6 +83,17 @@ public class CredentialStorePermission extends AbstractNameSetOnlyPermission<Cre
     }
 
     public CredentialStorePermission withName(final String name) {
+        return forName(name);
+    }
+
+    /**
+     * Get the permission with the given name.
+     *
+     * @param name the name (must not be {@code null})
+     * @return the permission (not {@code null})
+     * @throws IllegalArgumentException if the name is not valid
+     */
+    public static CredentialStorePermission forName(final String name) {
         Assert.checkNotNullParam("name", name);
         return name.equals("*") ? allPermission : mapping.getItemByString(name);
     }

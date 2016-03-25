@@ -18,6 +18,7 @@
 
 package org.wildfly.security.permission;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.util.StringEnumeration;
 import org.wildfly.security.util.StringMapping;
 
@@ -67,6 +68,18 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
     }
 
     public ElytronPermission withName(final String name) {
+        return forName(name);
+    }
+
+    /**
+     * Get the permission with the given name.
+     *
+     * @param name the name (must not be {@code null})
+     * @return the permission (not {@code null})
+     * @throws IllegalArgumentException if the name is not valid
+     */
+    public static ElytronPermission forName(final String name) {
+        Assert.checkNotNullParam("name", name);
         return name.equals("*") ? allPermission : mapping.getItemByString(name);
     }
 }
