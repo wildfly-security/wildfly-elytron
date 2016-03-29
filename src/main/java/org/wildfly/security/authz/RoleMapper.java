@@ -28,6 +28,7 @@ import org.wildfly.common.Assert;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+@FunctionalInterface
 public interface RoleMapper {
 
     /**

@@ -25,6 +25,7 @@ import java.util.HashSet;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@FunctionalInterface
 public interface RoleDecoder {
 
     /**
