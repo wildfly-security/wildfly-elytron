@@ -57,9 +57,7 @@ import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.security.asn1.ASN1Exception;
-import org.wildfly.security.auth.AuthenticationException;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
@@ -460,15 +458,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
     RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
-
-    @Message(id = 1110, value = "Unable to inflow established security identity for principal %s; authorization check failed (permission denied)")
-    AuthorizationCheckException inflowedIdentityNotAuthorized(Principal establishedPrincipal, @Param Principal inflowedPrincipal, @Param LoginPermission permission);
-
-    @Message(id = 1111, value = "Established security identity is not trusted for principal %s")
-    AuthenticationException establishedIdentityNotTrusted(Principal principal);
-
-    @Message(id = 1112, value = "Established security identity is not trusted due to realm failure for principal %s")
-    AuthenticationException establishedIdentityNotTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal);
 
     /* keystore package */
 
