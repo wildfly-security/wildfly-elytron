@@ -29,6 +29,7 @@ import org.wildfly.security.evidence.Evidence;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@FunctionalInterface
 public interface RealmMapper {
 
     /**

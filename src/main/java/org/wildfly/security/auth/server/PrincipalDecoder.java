@@ -27,6 +27,7 @@ import org.wildfly.common.Assert;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@FunctionalInterface
 public interface PrincipalDecoder {
 
     /**
