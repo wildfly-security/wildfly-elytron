@@ -196,6 +196,9 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 return AuthorizationIdentity.basicIdentity(new MapAttributes(Collections.singletonMap(groupsAttribute, accountEntry.getGroups())));
             }
 
+            public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+                return LegacyPropertiesSecurityRealm.this == securityRealm;
+            }
         };
     }
 

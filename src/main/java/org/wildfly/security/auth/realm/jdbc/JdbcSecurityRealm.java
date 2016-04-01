@@ -197,6 +197,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
             return AuthorizationIdentity.basicIdentity(this.identity.attributes);
         }
 
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return JdbcSecurityRealm.this == securityRealm;
+        }
+
         private JdbcIdentity getIdentity() {
             if (this.identity == null) {
                 JdbcSecurityRealm.this.queryConfiguration.stream().map(queryConfiguration -> executePrincipalQuery(queryConfiguration, resultSet -> {

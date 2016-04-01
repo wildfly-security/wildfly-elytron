@@ -33,7 +33,10 @@ import java.util.function.UnaryOperator;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.AuthenticationException;
+import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.authz.AuthorizationException;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
@@ -41,6 +44,7 @@ import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.permission.ElytronPermission;
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -296,6 +300,66 @@ public final class SecurityDomain {
      */
     public SecurityIdentity getAnonymousSecurityIdentity() {
         return anonymousIdentity;
+    }
+
+    /**
+     * Attempt to inflow an established security identity to this domain.
+     *
+     * @param securityIdentity the established security identity to inflow
+     * @return the new security identity after inflowing the given security identity to this domain
+     * @throws AuthenticationException if the established security identity is not trusted by this domain
+     * @throws AuthorizationException if the inflowed identity is not authorized to complete an authentication
+     */
+    public SecurityIdentity inflowFromSecurityIdentity(final SecurityIdentity securityIdentity)
+            throws AuthenticationException, AuthorizationException {
+        return inflowFromSecurityIdentity(securityIdentity, MechanismConfiguration.EMPTY);
+    }
+
+    /**
+     * Attempt to inflow an established security identity to this domain.
+     *
+     * @param securityIdentity the established security identity to inflow
+     * @param mechanismConfiguration the mechanism configuration to use
+     * @return the new security identity after inflowing the given security identity to this domain
+     * @throws AuthenticationException if the established security identity is not trusted by this domain
+     * @throws AuthorizationException if the inflowed identity is not authorized to complete an authentication
+     */
+    public SecurityIdentity inflowFromSecurityIdentity(final SecurityIdentity securityIdentity,
+                                                       final MechanismConfiguration mechanismConfiguration)
+            throws AuthenticationException, AuthorizationException {
+        Assert.checkNotNullParam("securityIdentity", securityIdentity);
+        if (this == securityIdentity.getSecurityDomain()) {
+            // Same domain, just return the identity as is
+            return securityIdentity;
+        }
+        final SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(securityIdentity);
+        final Principal evidencePrincipal = securityIdentityEvidence.getPrincipal();
+        if (evidencePrincipal instanceof AnonymousPrincipal) {
+            // Return the anonymous identity for this domain
+            return getAnonymousSecurityIdentity();
+        }
+        final ServerAuthenticationContext serverAuthenticationContext = createNewAuthenticationContext(mechanismConfiguration);
+        boolean ok = false;
+        try {
+            // If the identity can be trusted, propagate it to this domain and return the propagated identity
+            final SupportLevel evidenceSupport = serverAuthenticationContext.getEvidenceVerifySupport(SecurityIdentityEvidence.class, null);
+            if (evidenceSupport.mayBeSupported() && (serverAuthenticationContext.verifyEvidence(securityIdentityEvidence))) {
+                if (! serverAuthenticationContext.authorize()) {
+                    throw ElytronMessages.log.inflowedIdentityNotAuthorized(evidencePrincipal,
+                            serverAuthenticationContext.getAuthenticationPrincipal(), new LoginPermission());
+                }
+                serverAuthenticationContext.succeed();
+                ok = true;
+                return serverAuthenticationContext.getAuthorizedIdentity();
+            }
+            throw ElytronMessages.log.establishedIdentityNotTrusted(evidencePrincipal);
+        } catch (RealmUnavailableException e) {
+            throw ElytronMessages.log.establishedIdentityNotTrustedRealmProblem(e, evidencePrincipal);
+        } finally {
+            if (! ok) {
+                serverAuthenticationContext.fail();
+            }
+        }
     }
 
     SecurityIdentity getAndSetCurrentSecurityIdentity(SecurityIdentity newIdentity) {

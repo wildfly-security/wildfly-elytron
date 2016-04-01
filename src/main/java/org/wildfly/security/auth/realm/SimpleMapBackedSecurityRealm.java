@@ -211,5 +211,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         public boolean exists() throws RealmUnavailableException {
             return map.containsKey(name);
         }
+
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return SimpleMapBackedSecurityRealm.this == securityRealm;
+        }
     }
 }

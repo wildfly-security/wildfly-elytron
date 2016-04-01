@@ -163,6 +163,10 @@ public class OAuth2SecurityRealm implements SecurityRealm {
             return null;
         }
 
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return OAuth2SecurityRealm.this == securityRealm;
+        }
+
         @Override
         public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
             return SupportLevel.UNSUPPORTED;

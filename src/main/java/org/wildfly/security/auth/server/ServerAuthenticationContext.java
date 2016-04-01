@@ -63,6 +63,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
+import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -632,7 +633,7 @@ public final class ServerAuthenticationContext {
                 mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
             }
         } else {
-            return stateRef.get().verifyEvidence(evidence);
+            return checkEvidenceTrusted(evidence) ? true : stateRef.get().verifyEvidence(evidence);
         }
 
         final Principal evidencePrincipal = evidence.getPrincipal();
@@ -680,6 +681,31 @@ public final class ServerAuthenticationContext {
             if (! ok) realmIdentity.dispose();
         }
         return newState.verifyEvidence(evidence);
+    }
+
+    /**
+     * Determine if the given evidence can be trusted in lieu of verifying or acquiring a credential. This method is
+     * intended to be used for identity propagation purposes.
+     *
+     * @param evidence the evidence to check (must not be {@code null})
+     * @return {@code true} if the given evidence can be trusted, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    private boolean checkEvidenceTrusted(Evidence evidence) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidence", evidence);
+        if (! exists()) {
+            return false;
+        }
+        if (evidence instanceof SecurityIdentityEvidence) {
+            // Trust the given security identity evidence if it corresponds to the same realm that created the
+            // current authentication identity
+            final RealmIdentity realmIdentity = stateRef.get().getRealmIdentity();
+            final SecurityIdentity evidenceIdentity = ((SecurityIdentityEvidence) evidence).getSecurityIdentity();
+            final RealmInfo evidenceRealmInfo = evidenceIdentity.getRealmInfo();
+            final SecurityRealm evidenceSecurityRealm = evidenceRealmInfo.getSecurityRealm();
+            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm);
+        }
+        return false;
     }
 
     /**
@@ -1067,7 +1093,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+            return SecurityIdentityEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override
@@ -1136,7 +1162,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-            return realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+            return SecurityIdentityEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override

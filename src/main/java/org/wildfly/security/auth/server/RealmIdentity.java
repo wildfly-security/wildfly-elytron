@@ -148,6 +148,14 @@ public interface RealmIdentity {
     }
 
     /**
+     * Determine if this realm identity was created by the given security realm.
+     *
+     * @param securityRealm the security realm to check
+     * @return {@code true} if this realm identity was created by the given security realm, {@code false} otherwise
+     */
+    boolean createdBySecurityRealm(SecurityRealm securityRealm);
+
+    /**
      * The anonymous realm identity.
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
@@ -178,6 +186,10 @@ public interface RealmIdentity {
         public boolean exists() throws RealmUnavailableException {
             return true;
         }
+
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
+            return SecurityRealm.EMPTY_REALM == securityRealm;
+        }
     };
 
     /**
@@ -205,6 +217,10 @@ public interface RealmIdentity {
         }
 
         public boolean exists() throws RealmUnavailableException {
+            return false;
+        }
+
+        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
             return false;
         }
     };
