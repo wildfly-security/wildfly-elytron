@@ -52,6 +52,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.permission.PermissionVerifier;
+import org.wildfly.security.permission.ElytronPermission;
 
 /**
  * A loaded and authenticated security identity.
@@ -60,7 +61,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  */
 public final class SecurityIdentity implements PermissionVerifier {
     static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
-    private static final RuntimePermission SET_RUN_AS_PERMISSION = new RuntimePermission("setRunAsPermission");
+    private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
 
     private final SecurityDomain securityDomain;
     private final Principal principal;
