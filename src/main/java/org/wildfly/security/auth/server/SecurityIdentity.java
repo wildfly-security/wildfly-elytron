@@ -70,6 +70,7 @@ public final class SecurityIdentity implements PermissionVerifier {
     private final Map<String, RoleMapper> roleMappers;
     private final PeerIdentity[] peerIdentities;
     private final Instant creationTime;
+    private final PermissionVerifier verifier;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
         this.securityDomain = securityDomain;
@@ -79,6 +80,7 @@ public final class SecurityIdentity implements PermissionVerifier {
         this.roleMappers = roleMappers;
         this.peerIdentities = NO_PEER_IDENTITIES;
         this.creationTime = Instant.now();
+        this.verifier = securityDomain.mapPermissions(this);
     }
 
     SecurityIdentity(final SecurityIdentity old, final PeerIdentity[] newPeerIdentities) {
@@ -89,6 +91,7 @@ public final class SecurityIdentity implements PermissionVerifier {
         this.roleMappers = old.roleMappers;
         this.peerIdentities = newPeerIdentities;
         this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -99,6 +102,18 @@ public final class SecurityIdentity implements PermissionVerifier {
         this.roleMappers = roleMappers;
         this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final PermissionVerifier verifier) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.peerIdentities = old.peerIdentities;
+        this.creationTime = old.creationTime;
+        this.verifier = verifier;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -502,9 +517,21 @@ public final class SecurityIdentity implements PermissionVerifier {
         return new SecurityIdentity(this, newPeerIdentities);
     }
 
+    /**
+     * Create a new security identity which is the same as this one, but which limits authorization privileges to the
+     * intersection of the current privileges and the given verifier.
+     *
+     * @param verifier the restricted verifier (must not be {@code null})
+     * @return the restricted identity
+     */
+    public SecurityIdentity intersectWith(PermissionVerifier verifier) {
+        Assert.checkNotNullParam("verifier", verifier);
+        return new SecurityIdentity(this, this.verifier.and(verifier));
+    }
+
     public boolean implies(final Permission permission) {
         // TODO: authorization audit goes here
-        return securityDomain.mapPermissions(this).implies(permission);
+        return verifier.implies(permission);
     }
 
     /**
