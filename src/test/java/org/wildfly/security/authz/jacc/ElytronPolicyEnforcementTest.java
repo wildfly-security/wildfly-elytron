@@ -32,19 +32,19 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.permission.PermissionUtil;
+import org.wildfly.security.permission.PermissionVerifier;
 
 import javax.security.jacc.PolicyConfiguration;
 import javax.security.jacc.PolicyContext;
 import javax.security.jacc.PolicyContextException;
 import javax.security.jacc.WebResourcePermission;
-import java.security.Permission;
+
 import java.security.PermissionCollection;
 import java.security.Policy;
 import java.security.Provider;
 import java.security.Security;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,43 +93,30 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
         builder.addRealm("default", securityRealm).build();
         builder.setDefaultRealmName("default");
 
-        builder.setPermissionMapper((principal, roles) -> new PermissionCollection() {
-            @Override
-            public void add(Permission permission) {
-
+        builder.setPermissionMapper((principal, roles) -> {
+            PermissionCollection collection;
+            if (roles.contains("Administrator")) {
+                collection = PermissionUtil.readOnlyCollectionOf(
+                    new WebResourcePermission("/webResource", "GET"),
+                    new WebResourcePermission("/webResource", "PUT"),
+                    new WebResourcePermission("/webResource", "POST"),
+                    new RunAsPrincipalPermission("*")
+                );
+            } else if (roles.contains("Manager")) {
+                collection = PermissionUtil.readOnlyCollectionOf(
+                    new WebResourcePermission("/webResource", "GET"),
+                    new WebResourcePermission("/webResource", "POST"),
+                    new RunAsPrincipalPermission("*")
+                );
+            } else if (roles.contains("User")) {
+                collection = PermissionUtil.readOnlyCollectionOf(
+                    new WebResourcePermission("/webResource", "GET"),
+                    new RunAsPrincipalPermission("*")
+                );
+            } else {
+                collection = PermissionUtil.readOnlyCollectionOf(new RunAsPrincipalPermission("*"));
             }
-
-            @Override
-            public boolean implies(Permission impliedPermission) {
-                Enumeration<Permission> elements = elements();
-
-                while (elements.hasMoreElements()) {
-                    Permission permission = elements.nextElement();
-                    if (impliedPermission.implies(permission)) {
-                        return true;
-                    }
-                }
-
-                return new RunAsPrincipalPermission("*").implies(impliedPermission);
-            }
-
-            @Override
-            public Enumeration<Permission> elements() {
-                List<Permission> permissions = new ArrayList<>();
-
-                if (roles.contains("Administrator")) {
-                    permissions.add(new WebResourcePermission("/webResource", "GET"));
-                    permissions.add(new WebResourcePermission("/webResource", "PUT"));
-                    permissions.add(new WebResourcePermission("/webResource", "POST"));
-                } else if (roles.contains("Manager")) {
-                    permissions.add(new WebResourcePermission("/webResource", "GET"));
-                    permissions.add(new WebResourcePermission("/webResource", "POST"));
-                } else if (roles.contains("User")) {
-                    permissions.add(new WebResourcePermission("/webResource", "GET"));
-                }
-
-                return Collections.enumeration(permissions);
-            }
+            return PermissionVerifier.from(collection);
         });
 
         SecurityDomain securityDomain = builder.build();

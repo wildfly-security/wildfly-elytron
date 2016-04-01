@@ -31,7 +31,7 @@ import org.wildfly.security._private.ElytronMessages;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class AbstractPermissionCollection extends PermissionCollection implements Iterable<Permission> {
+public abstract class AbstractPermissionCollection extends PermissionCollection implements Iterable<Permission>, PermissionVerifier {
     private static final long serialVersionUID = - 7532778883140764647L;
 
     private final AbstractPermission<?> sourcePermission;

@@ -25,15 +25,13 @@ import java.util.Enumeration;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 
-final class IntersectionPermissionCollection extends PermissionCollection implements PermissionVerifier {
-    private static final long serialVersionUID = 8045087406778847303L;
+final class PermissionVerifierPermissionCollection extends PermissionCollection {
+    private static final long serialVersionUID = 5119756048547471645L;
 
-    private final PermissionCollection pc1;
-    private final PermissionCollection pc2;
+    private final PermissionVerifier verifier;
 
-    IntersectionPermissionCollection(final PermissionCollection pc1, final PermissionCollection pc2) {
-        this.pc1 = pc1;
-        this.pc2 = pc2;
+    PermissionVerifierPermissionCollection(final PermissionVerifier verifier) {
+        this.verifier = verifier;
         setReadOnly();
     }
 
@@ -42,13 +40,10 @@ final class IntersectionPermissionCollection extends PermissionCollection implem
     }
 
     public boolean implies(final Permission permission) {
-        return pc1.implies(permission) && pc2.implies(permission);
+        return verifier.implies(permission);
     }
 
     public Enumeration<Permission> elements() {
-        // TODO: this is theoretically possible to implement using an IntersectionCollectionPermission;
-        // however the primary use case is going to be in protection domains and verification scenarios so we may
-        // not ever actually need this
         throw Assert.unsupported();
     }
 }

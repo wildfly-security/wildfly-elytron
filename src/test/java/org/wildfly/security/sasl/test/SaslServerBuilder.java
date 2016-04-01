@@ -45,6 +45,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.sasl.util.ChannelBindingSaslServerFactory;
 import org.wildfly.security.sasl.util.CredentialSaslServerFactory;
 import org.wildfly.security.sasl.util.KeyManagerCredentialSaslServerFactory;
@@ -212,9 +213,9 @@ public class SaslServerBuilder {
             permissionsMap = new HashMap<String, Permissions>();
         }
         domainBuilder.setPermissionMapper((principal, roles) -> {
-            final Permissions permissions = permissionsMap.computeIfAbsent(principal.toString(), p -> new Permissions());
-            permissions.add(new LoginPermission());
-            return permissions;
+            final PermissionVerifier v = PermissionVerifier.from(new LoginPermission());
+            final Permissions permissions = permissionsMap.get(principal.toString());
+            return permissions == null ? v : v.or(PermissionVerifier.from(permissions));
         });
 
         SecurityDomain domain = domainBuilder.build();

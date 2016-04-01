@@ -53,7 +53,8 @@ public interface Roles extends Iterable<String> {
 
     /**
      * Create a {@link Spliterator} over this roles collection.
-     * @return
+     *
+     * @return the spliterator (not {@code null})
      */
     default Spliterator<String> spliterator() {
         return Spliterators.spliteratorUnknownSize(iterator(), Spliterator.NONNULL | Spliterator.DISTINCT);

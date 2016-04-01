@@ -18,11 +18,10 @@
 package org.wildfly.security.authz;
 
 import java.security.Permission;
-import java.security.PermissionCollection;
 import java.security.Principal;
 
 import org.wildfly.security.auth.server.SecurityDomain;
-import org.wildfly.security.permission.PermissionUtil;
+import org.wildfly.security.permission.PermissionVerifier;
 
 /**
  * A permission mapper is responsible to enable permission mapping to a {@link SecurityDomain}
@@ -31,23 +30,23 @@ import org.wildfly.security.permission.PermissionUtil;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
+@FunctionalInterface
 public interface PermissionMapper {
 
     /**
-     * <p>Returns a <em>read-only</em> {@link PermissionCollection} with all the permissions associated with the given {@link Principal}
-     * and roles associated with it (if any).
+     * <p>Returns a {@link PermissionVerifier} with all the permissions associated with the given identity.
      *
-     * <p>Once returned, client code can use the {@link PermissionCollection#implies(Permission)} to check if a given permission is granted or not
+     * <p>Once returned, client code can use the {@link PermissionVerifier#implies(Permission)} to check if a given permission is granted or not
      * to the given principal. Implementors must make sure that the returned collection is immutable.
      *
-     * @param principal a principal previously obtained and authenticated from a security domain (not {@code null}
-     * @param roles a set of roles associated with the given principal after all role mapping was applied by security domain (may be {@code null}
-     * @return a read-only permission collection. If no permission is associated with the given identity, an empty and read-only {@link PermissionCollection} is returned (not {@code null})
+     * @param principal a principal previously obtained and authenticated from a security domain (must not be {@code null})
+     * @param roles a set of roles associated with the given principal after all role mapping was applied by security domain (may be {@code null})
+     * @return a permission verifier (not {@code null})
      */
-    PermissionCollection mapPermissions(Principal principal, Roles roles);
+    PermissionVerifier mapPermissions(Principal principal, Roles roles);
 
     /**
-     * A default implementation that does nothing but returns an empty and read-only {@link PermissionCollection}.
+     * A default implementation that does nothing but returns an empty and read-only {@link PermissionVerifier}.
      */
-    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> PermissionUtil.EMPTY_PERMISSION_COLLECTION;
+    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> PermissionVerifier.NONE;
 }

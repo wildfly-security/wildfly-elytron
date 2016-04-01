@@ -51,6 +51,7 @@ import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
+import org.jboss.logging.annotations.Once;
 import org.jboss.logging.annotations.Param;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
@@ -66,6 +67,7 @@ import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
 import org.wildfly.security.permission.InvalidPermissionClassException;
+import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.util.DecodeException;
 
 /**
@@ -571,6 +573,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3021, value = "Invalid permission type; expected %s, got %s")
     IllegalArgumentException invalidPermissionType(Class<? extends Permission> expected, Permission actual);
+
+    @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
+    SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
 
     /* ssl package */
 
@@ -1348,6 +1353,14 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8038, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
 
+    @Once
+    @LogMessage(level = WARN)
+    @Message(id = 8039, value = "Calling any of the Policy.getPermissions() methods is not supported; please see the "
+        + "Java Authorization Contract for Containers (JACC) specification (section \"1.4 Requirements\", item 1) and "
+        + "the Java SE API specification for the Policy.getPermissions() methods for more information.  Instead, use "
+        + "the Policy.implies() method for authorization checking.")
+    void getPermissionsNotSupported();
+
     /* credential.store. package */
 
     @Message(id = 9501, value = "Credential store '%s' has to be initialized before the first usage")
@@ -1386,5 +1399,4 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage
     @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
-
 }

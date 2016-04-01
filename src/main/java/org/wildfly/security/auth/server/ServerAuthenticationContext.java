@@ -318,7 +318,7 @@ public final class ServerAuthenticationContext {
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
 
         final SecurityIdentity securityIdentity = new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers());
-        if (securityIdentity.getPermissions().implies(new LoginPermission())) {
+        if (securityIdentity.implies(new LoginPermission())) {
             final AuthorizedState authorizedState = new AuthorizedState(securityIdentity, authenticationPrincipal, realmInfo, realmIdentity, oldState.getMechanismRealmConfiguration());
             while (! stateRef.compareAndSet(oldState, authorizedState)) {
                 oldState = stateRef.get();
@@ -394,7 +394,7 @@ public final class ServerAuthenticationContext {
             }
 
             // check the run-as permission on the old identity
-            if (! oldState.getAuthorizedIdentity().getPermissions().implies(new RunAsPrincipalPermission(principal.getName()))) {
+            if (! oldState.getAuthorizedIdentity().implies(new RunAsPrincipalPermission(principal.getName()))) {
                 return false;
             }
 
@@ -416,7 +416,7 @@ public final class ServerAuthenticationContext {
                 final SecurityIdentity newIdentity = new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers());
 
                 // make sure the new identity is authorized
-                if (! newIdentity.getPermissions().implies(new LoginPermission())) {
+                if (! newIdentity.implies(new LoginPermission())) {
                     return false;
                 }
 
