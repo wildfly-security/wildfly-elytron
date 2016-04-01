@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -63,6 +64,7 @@ public final class SecurityDomain {
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
+    private final UnaryOperator<SecurityIdentity> securityIdentityTransformer;
 
     SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -73,6 +75,7 @@ public final class SecurityDomain {
         this.permissionMapper = builder.permissionMapper;
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
+        this.securityIdentityTransformer = builder.securityIdentityTransformer;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
         final Map<String, RoleMapper> copiedRoleMappers;
         if (originalRoleMappers.isEmpty()) {
@@ -86,7 +89,7 @@ public final class SecurityDomain {
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
         final RealmInfo realmInfo = new RealmInfo();
-        anonymousIdentity = new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers);
+        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers)));
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
@@ -373,6 +376,11 @@ public final class SecurityDomain {
         return categoryRoleMappers;
     }
 
+    SecurityIdentity transform(final SecurityIdentity securityIdentity) {
+        Assert.checkNotNullParam("securityIdentity", securityIdentity);
+        return Assert.assertNotNull(securityIdentityTransformer.apply(securityIdentity));
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -388,6 +396,7 @@ public final class SecurityDomain {
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
+        private UnaryOperator<SecurityIdentity> securityIdentityTransformer = UnaryOperator.identity();
 
         Builder() {
         }
@@ -536,6 +545,19 @@ public final class SecurityDomain {
         public void setCategoryRoleMappers(final Map<String, RoleMapper> categoryRoleMappers) {
             Assert.checkNotNullParam("categoryRoleMappers", categoryRoleMappers);
             this.categoryRoleMappers = categoryRoleMappers;
+        }
+
+        /**
+         * Set the security identity transformer to use.  The transformer must not return {@code null}, or authentication
+         * will fail.
+         *
+         * @param securityIdentityTransformer the security identity transformer to use (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setSecurityIdentityTransformer(UnaryOperator<SecurityIdentity> securityIdentityTransformer) {
+            Assert.checkNotNullParam("securityIdentityTransformer", securityIdentityTransformer);
+            this.securityIdentityTransformer = securityIdentityTransformer;
+            return this;
         }
 
         /**
