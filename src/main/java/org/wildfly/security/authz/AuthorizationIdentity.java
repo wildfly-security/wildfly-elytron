@@ -30,7 +30,7 @@ public interface AuthorizationIdentity {
     /**
      * Get the attributes which pertain to this identity.  By default, an empty attribute collection is returned.
      *
-     * @return the attributes
+     * @return the attributes (must not be {@code null})
      */
     default Attributes getAttributes() {
         return Attributes.EMPTY;
