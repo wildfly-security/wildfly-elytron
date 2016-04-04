@@ -5,10 +5,11 @@ org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
 org.wildfly.security.auth.permission
 org.wildfly.security.auth.principal
-org.wildfly.security.auth.provider
-org.wildfly.security.auth.provider.jdbc
-org.wildfly.security.auth.provider.jdbc.mapper
-org.wildfly.security.auth.provider.ldap
+org.wildfly.security.auth.realm
+org.wildfly.security.auth.realm.jdbc
+org.wildfly.security.auth.realm.jdbc.mapper
+org.wildfly.security.auth.realm.ldap
+org.wildfly.security.auth.realm.oauth2
 org.wildfly.security.auth.server
 org.wildfly.security.auth.server.event
 org.wildfly.security.auth.util
@@ -16,6 +17,7 @@ org.wildfly.security.authz
 org.wildfly.security.authz.jacc
 org.wildfly.security.credential
 org.wildfly.security.credential.store
+org.wildfly.security.credential.store.impl
 org.wildfly.security.digest
 org.wildfly.security.evidence
 org.wildfly.security.http
