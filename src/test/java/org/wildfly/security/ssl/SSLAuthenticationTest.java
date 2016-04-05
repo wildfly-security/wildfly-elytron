@@ -62,6 +62,8 @@ public class SSLAuthenticationTest {
     private static SSLContext clientContext;
     private static SSLContext serverContext;
 
+    private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
+
     @BeforeClass
     public static void setupServer() throws Exception {
         SecurityRealm securityRealm = new KeyStoreBackedSecurityRealm(loadKeyStore("/ca/jks/beetles.keystore"));
@@ -98,7 +100,7 @@ public class SSLAuthenticationTest {
      * @return the initialised key manager.
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
         keyManagerFactory.init(loadKeyStore(keystorePath), "Elytron".toCharArray());
 
         for (KeyManager current : keyManagerFactory.getKeyManagers()) {
@@ -117,7 +119,7 @@ public class SSLAuthenticationTest {
      * @throws KeyStoreException
      */
     private static X509TrustManager getCATrustManager() throws Exception {
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(IS_IBM ? "IbmX509" : "SunX509");
         trustManagerFactory.init(loadKeyStore("/ca/jks/ca.truststore"));
 
         for (TrustManager current : trustManagerFactory.getTrustManagers()) {
