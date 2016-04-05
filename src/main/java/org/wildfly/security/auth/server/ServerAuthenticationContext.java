@@ -702,13 +702,15 @@ public final class ServerAuthenticationContext {
             return false;
         }
         if (evidence instanceof SecurityIdentityEvidence) {
-            // Check that the given security identity evidence corresponds to the same realm that created the
-            // current authentication identity and that the current authentication identity is authorized
+            // Check that the given security identity evidence either corresponds to the same realm that created the
+            // current authentication identity or it corresponds to a domain that is trusted by the current domain
             final RealmIdentity realmIdentity = stateRef.get().getRealmIdentity();
             final SecurityIdentity evidenceIdentity = ((SecurityIdentityEvidence) evidence).getSecurityIdentity();
             final RealmInfo evidenceRealmInfo = evidenceIdentity.getRealmInfo();
             final SecurityRealm evidenceSecurityRealm = evidenceRealmInfo.getSecurityRealm();
-            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm) ? authorize() : false;
+            final SecurityDomain evidenceSecurityDomain = evidenceIdentity.getSecurityDomain();
+            boolean trusted = realmIdentity.createdBySecurityRealm(evidenceSecurityRealm) || domain.trustsDomain(evidenceSecurityDomain);
+            return trusted ? authorize() : false;
         }
         return false;
     }

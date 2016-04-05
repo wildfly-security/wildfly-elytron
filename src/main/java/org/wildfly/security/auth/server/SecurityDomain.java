@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 import org.wildfly.common.Assert;
@@ -65,6 +66,7 @@ public final class SecurityDomain {
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
     private final UnaryOperator<SecurityIdentity> securityIdentityTransformer;
+    private final Predicate<SecurityDomain> trustedSecurityDomain;
 
     SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -76,6 +78,7 @@ public final class SecurityDomain {
         this.postRealmRewriter = builder.postRealmRewriter;
         this.principalDecoder = builder.principalDecoder;
         this.securityIdentityTransformer = builder.securityIdentityTransformer;
+        this.trustedSecurityDomain = builder.trustedSecurityDomain;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
         final Map<String, RoleMapper> copiedRoleMappers;
         if (originalRoleMappers.isEmpty()) {
@@ -383,6 +386,11 @@ public final class SecurityDomain {
         return Assert.assertNotNull(securityIdentityTransformer.apply(securityIdentity));
     }
 
+    boolean trustsDomain(final SecurityDomain domain) {
+        Assert.checkNotNullParam("domain", domain);
+        return this == domain || trustedSecurityDomain.test(domain);
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -399,6 +407,7 @@ public final class SecurityDomain {
         private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
         private UnaryOperator<SecurityIdentity> securityIdentityTransformer = UnaryOperator.identity();
+        private Predicate<SecurityDomain> trustedSecurityDomain = domain -> false;
 
         Builder() {
         }
@@ -559,6 +568,18 @@ public final class SecurityDomain {
         public Builder setSecurityIdentityTransformer(UnaryOperator<SecurityIdentity> securityIdentityTransformer) {
             Assert.checkNotNullParam("securityIdentityTransformer", securityIdentityTransformer);
             this.securityIdentityTransformer = securityIdentityTransformer;
+            return this;
+        }
+
+        /**
+         * Set the predicate that should be used to determine if a given domain is trusted by this domain.
+         *
+         * @param trustedSecurityDomain the predicate that should be used to determine if a given domain is
+         *                              trusted by this domain (must not be {@code null})
+         */
+        public Builder setTrustedSecurityDomainPredicate(final Predicate<SecurityDomain> trustedSecurityDomain) {
+            Assert.checkNotNullParam("trustedSecurityDomain", trustedSecurityDomain);
+            this.trustedSecurityDomain = trustedSecurityDomain;
             return this;
         }
 

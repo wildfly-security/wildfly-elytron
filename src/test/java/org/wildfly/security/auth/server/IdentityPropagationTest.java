@@ -26,6 +26,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +62,7 @@ public class IdentityPropagationTest {
     private static final Provider provider = new WildFlyElytronProvider();
     private static SecurityDomain domain1;
     private static SecurityDomain domain2;
+    private static SecurityDomain domain3;
 
     @BeforeClass
     public static void setupSecurityDomains() throws Exception {
@@ -76,6 +78,7 @@ public class IdentityPropagationTest {
         SimpleMapBackedSecurityRealm realm2 = new SimpleMapBackedSecurityRealm();
         users = new HashMap<>();
         addUser(users, "sam", "Manager");
+        addUser(users, "bob", "Manager");
         realm2.setPasswordMap(users);
 
         // domain1 contains both realms
@@ -97,10 +100,20 @@ public class IdentityPropagationTest {
             return PermissionVerifier.NONE;
         });
         domain2 = builder.build();
+
+        // domain3 contains one of the realms and it trusts domain2
+        builder = SecurityDomain.builder();
+        builder.addRealm("managersRealm", realm2).setRoleMapper(rolesToMap -> Roles.of("ManagerRole")).build();
+        builder.setDefaultRealmName("managersRealm");
+        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
+        HashSet<SecurityDomain> trustedSecurityDomains = new HashSet<>();
+        trustedSecurityDomains.add(domain2);
+        builder.setTrustedSecurityDomainPredicate(trustedSecurityDomains::contains);
+        domain3 = builder.build();
     }
 
     @Test
-    public void testInflowFromTrustedIdentity() throws Exception {
+    public void testInflowFromTrustedIdentityWithCommonRealm() throws Exception {
         CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "joe");
         SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
@@ -117,9 +130,26 @@ public class IdentityPropagationTest {
     }
 
     @Test
+    public void testInflowFromTrustedIdentityWithoutCommonRealm() throws Exception {
+        CallbackHandler callbackHandler = createCallbackHandler(domain3);
+        SecurityIdentity establishedIdentity = getIdentityFromDomain(domain2, "bob");
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+        assertTrue(evidenceVerifyCallback.isVerified());
+
+        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+        callbackHandler.handle(new Callback[] { securityIdentityCallback });
+        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        assertEquals("bob", inflowedIdentity.getPrincipal().getName());
+        assertEquals(domain3, inflowedIdentity.getSecurityDomain());
+        assertTrue(inflowedIdentity.getRoles().contains("ManagerRole"));
+    }
+
+    @Test
     public void testInflowFromUntrustedIdentity() throws Exception {
         CallbackHandler callbackHandler = createCallbackHandler(domain2);
-        SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "sam");
+        SecurityIdentity establishedIdentity = getIdentityFromDomain(domain3, "bob");
         SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
         EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
         callbackHandler.handle(new Callback[]{evidenceVerifyCallback});
