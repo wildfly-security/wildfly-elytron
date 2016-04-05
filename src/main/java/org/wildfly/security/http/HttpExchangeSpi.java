@@ -70,7 +70,19 @@ public interface HttpExchangeSpi {
      * @return the {@link SSLSession} (if any) that has been established for the connection in use, or {@code null} if none
      *         exists.
      */
-    SSLSession getSSLSession();
+    default SSLSession getSSLSession() {
+        return null;
+    }
+
+    /**
+     * Get the {@link HttpScope} for the {@link Scope} specified.
+     *
+     * @param scope the scope required.
+     * @return the scope or {@code null} if it is not available.
+     */
+    default HttpScope getScope(Scope scope) {
+        return null;
+    }
 
     /**
      * Set the required response code.
