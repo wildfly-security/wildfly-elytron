@@ -42,7 +42,6 @@ import javax.net.ssl.StandardConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,7 @@ final class SSLExplorer {
             // return (((firstByte & 0x7F) << 8) | (secondByte & 0xFF)) + 2;
             return RECORD_HEADER_SIZE;   // Only need the header fields
         } else {
-            return (((input.get() & 0xFF) << 8) | (input.get() & 0xFF)) + 5;
+            return ((input.get() & 0xFF) << 8 | input.get() & 0xFF) + 5;
         }
     }
 
@@ -140,7 +139,7 @@ final class SSLExplorer {
      * Launch and explore the security capabilities from byte buffer.
      * <P>
      * This method tries to parse as few records as possible from
-     * {@code source} byte buffer to get the {@link SSLCapabilities}
+     * {@code source} byte buffer to get the capabilities
      * of an SSL/TLS connection.
      * <P>
      * Please NOTE that this method must be called before any handshaking
@@ -159,10 +158,10 @@ final class SSLExplorer {
      * @throws BufferUnderflowException if not enough source bytes available
      *         to make a complete exploration.
      *
-     * @return the explored {@link SSLCapabilities} of the SSL/TLS
+     * @return the explored capabilities of the SSL/TLS
      *         connection
      */
-    public static SSLCapabilities explore(ByteBuffer source)
+    public static SSLConnectionInformationImpl explore(ByteBuffer source)
             throws SSLException {
 
         ByteBuffer input = source.duplicate();
@@ -209,12 +208,12 @@ final class SSLExplorer {
      * @throws IOException on network data error
      * @throws BufferUnderflowException if not enough source bytes available
      *         to make a complete exploration.
-     * @return the explored {@link SSLCapabilities} of the SSL/TLS
+     * @return the explored capabilities of the SSL/TLS
      *         connection
      *
      * @see #explore(ByteBuffer)
      */
-    public static SSLCapabilities explore(byte[] source,
+    public static SSLConnectionInformationImpl explore(byte[] source,
             int offset, int length) throws IOException {
         ByteBuffer byteBuffer =
             ByteBuffer.wrap(source, offset, length).asReadOnlyBuffer();
@@ -238,7 +237,7 @@ final class SSLExplorer {
      *     opaque challenge[V2ClientHello.challenge_length;
      * } V2ClientHello;
      */
-    private static SSLCapabilities exploreV2HelloRecord(
+    private static SSLConnectionInformationImpl exploreV2HelloRecord(
             ByteBuffer input, byte firstByte, byte secondByte,
             byte thirdByte) throws SSLException {
 
@@ -258,9 +257,9 @@ final class SSLExplorer {
             // 0x02: minor version of SSLv20
             //
             // SNIServerName is an extension, SSLv20 doesn't support extension.
-            return new SSLCapabilitiesImpl((byte)0x00, (byte)0x02,
+            return new SSLConnectionInformationImpl((byte)0x00, (byte)0x02,
                         helloVersionMajor, helloVersionMinor,
-                        Collections.<SNIServerName>emptyList());
+                        Collections.emptyList());
         } catch (BufferUnderflowException ignored) {
             throw ElytronMessages.log.invalidHandshakeRecord();
         }
@@ -284,7 +283,7 @@ final class SSLExplorer {
      *     opaque fragment[TLSPlaintext.length];
      * } TLSPlaintext;
      */
-    private static SSLCapabilities exploreTLSRecord(
+    private static SSLConnectionInformationImpl exploreTLSRecord(
             ByteBuffer input, byte firstByte, byte secondByte,
             byte thirdByte) throws SSLException {
 
@@ -292,10 +291,6 @@ final class SSLExplorer {
         if (firstByte != 22) {        // 22: handshake record
             throw ElytronMessages.log.notHandshakeRecord();
         }
-
-        // We need the record version to construct SSLCapabilities.
-        byte recordMajorVersion = secondByte;
-        byte recordMinorVersion = thirdByte;
 
         // Is there enough data for a full record?
         int recordLength = getInt16(input);
@@ -306,7 +301,7 @@ final class SSLExplorer {
         // We have already had enough source bytes.
         try {
             return exploreHandshake(input,
-                recordMajorVersion, recordMinorVersion, recordLength);
+                secondByte, thirdByte, recordLength);
         } catch (BufferUnderflowException ignored) {
             throw ElytronMessages.log.invalidHandshakeRecord();
         }
@@ -339,7 +334,7 @@ final class SSLExplorer {
      *     } body;
      * } Handshake;
      */
-    private static SSLCapabilities exploreHandshake(
+    private static SSLConnectionInformationImpl exploreHandshake(
             ByteBuffer input, byte recordMajorVersion,
             byte recordMinorVersion, int recordLength) throws SSLException {
 
@@ -354,7 +349,7 @@ final class SSLExplorer {
 
         // Theoretically, a single handshake message might span multiple
         // records, but in practice this does not occur.
-        if (handshakeLength > (recordLength - 4)) { // 4: handshake header size
+        if (handshakeLength > recordLength - 4) { // 4: handshake header size
             throw ElytronMessages.log.multiRecordSSLHandshake();
         }
 
@@ -390,12 +385,12 @@ final class SSLExplorer {
      *     };
      * } ClientHello;
      */
-    private static SSLCapabilities exploreClientHello(
+    private static SSLConnectionInformationImpl exploreClientHello(
             ByteBuffer input,
             byte recordMajorVersion,
             byte recordMinorVersion) throws SSLException {
 
-        List<SNIServerName> snList = Collections.<SNIServerName>emptyList();
+        List<SNIServerName> snList = Collections.emptyList();
 
         // client version
         byte helloMajorVersion = input.get();
@@ -418,7 +413,7 @@ final class SSLExplorer {
             snList = exploreExtensions(input);
         }
 
-        return new SSLCapabilitiesImpl(
+        return new SSLConnectionInformationImpl(
                 recordMajorVersion, recordMinorVersion,
                 helloMajorVersion, helloMinorVersion, snList);
     }
@@ -452,7 +447,7 @@ final class SSLExplorer {
             length -= extLen + 4;
         }
 
-        return Collections.<SNIServerName>emptyList();
+        return Collections.emptyList();
     }
 
     /*
@@ -530,12 +525,12 @@ final class SSLExplorer {
     }
 
     private static int getInt16(ByteBuffer input) {
-        return ((input.get() & 0xFF) << 8) | (input.get() & 0xFF);
+        return (input.get() & 0xFF) << 8 | input.get() & 0xFF;
     }
 
     private static int getInt24(ByteBuffer input) {
-        return ((input.get() & 0xFF) << 16) | ((input.get() & 0xFF) << 8) |
-                (input.get() & 0xFF);
+        return (input.get() & 0xFF) << 16 | (input.get() & 0xFF) << 8 |
+            input.get() & 0xFF;
     }
 
     private static void ignoreByteVector8(ByteBuffer input) {
@@ -563,36 +558,41 @@ final class SSLExplorer {
         }
     }
 
-    private static final class SSLCapabilitiesImpl extends SSLCapabilities {
-        private static final Map<Integer, String> versionMap = new HashMap<>(5);
+    private static final class SSLConnectionInformationImpl implements SSLConnectionInformation {
 
         private final String recordVersion;
         private final String helloVersion;
-        List<SNIServerName> sniNames;
+        private final List<SNIServerName> sniNames;
 
-        static {
-            versionMap.put(0x0002, "SSLv2Hello");
-            versionMap.put(0x0300, "SSLv3");
-            versionMap.put(0x0301, "TLSv1");
-            versionMap.put(0x0302, "TLSv1.1");
-            versionMap.put(0x0303, "TLSv1.2");
-        }
-
-        SSLCapabilitiesImpl(byte recordMajorVersion, byte recordMinorVersion,
+        SSLConnectionInformationImpl(byte recordMajorVersion, byte recordMinorVersion,
                 byte helloMajorVersion, byte helloMinorVersion,
                 List<SNIServerName> sniNames) {
 
-            int version = (recordMajorVersion << 8) | recordMinorVersion;
-            this.recordVersion = versionMap.get(version) != null ?
-                        versionMap.get(version) :
-                        unknownVersion(recordMajorVersion, recordMinorVersion);
-
-            version = (helloMajorVersion << 8) | helloMinorVersion;
-            this.helloVersion = versionMap.get(version) != null ?
-                        versionMap.get(version) :
-                        unknownVersion(helloMajorVersion, helloMinorVersion);
-
+            this.recordVersion = getVersionString(recordMajorVersion, recordMinorVersion);
+            this.helloVersion = getVersionString(helloMajorVersion, helloMinorVersion);
             this.sniNames = sniNames;
+        }
+
+        private static String getVersionString(final byte helloMajorVersion, final byte helloMinorVersion) {
+            switch (helloMajorVersion) {
+                case 0x00: {
+                    switch (helloMinorVersion) {
+                        case 0x02: return "SSLv2Hello";
+                        default: return unknownVersion(helloMajorVersion, helloMinorVersion);
+                    }
+                }
+                case 0x03: {
+                    switch (helloMinorVersion) {
+                        case 0x00: return "SSLv3";
+                        case 0x01: return "TLSv1";
+                        case 0x02: return "TLSv1.1";
+                        case 0x03: return "TLSv1.2";
+                        case 0x04: return "TLSv1.3";
+                        default: return unknownVersion(helloMajorVersion, helloMinorVersion);
+                    }
+                }
+                default: return unknownVersion(helloMajorVersion, helloMinorVersion);
+            }
         }
 
         @Override
@@ -606,16 +606,12 @@ final class SSLExplorer {
         }
 
         @Override
-        public List<SNIServerName> getServerNames() {
-            if (!sniNames.isEmpty()) {
-                return Collections.unmodifiableList(sniNames);
-            }
-
-            return sniNames;
+        public List<SNIServerName> getSNIServerNames() {
+            return Collections.unmodifiableList(sniNames);
         }
 
         private static String unknownVersion(byte major, byte minor) {
-            return "Unknown-" + ((int)major) + "." + ((int)minor);
+            return "Unknown-" + (major & 0xff) + "." + (minor & 0xff);
         }
     }
 }

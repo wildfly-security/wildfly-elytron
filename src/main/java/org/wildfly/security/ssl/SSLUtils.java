@@ -18,6 +18,7 @@
 
 package org.wildfly.security.ssl;
 
+import java.net.IDN;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -25,11 +26,16 @@ import java.security.Provider.Service;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIMatcher;
+import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
+import javax.net.ssl.StandardConstants;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -46,6 +52,8 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SSLUtils {
+
+    private static final String[] NO_STRINGS = new String[0];
 
     private SSLUtils() {}
 
@@ -86,7 +94,7 @@ public final class SSLUtils {
 
         // now figure out the supported protocol set.
 
-        String[] supportedProtocols = protocolSelector.evaluate(preferredProviderByAlgorithm.keySet().toArray(new String[preferredProviderByAlgorithm.size()]));
+        String[] supportedProtocols = protocolSelector.evaluate(preferredProviderByAlgorithm.keySet().toArray(NO_STRINGS));
         for (String supportedProtocol : supportedProtocols) {
             Provider provider = preferredProviderByAlgorithm.get(supportedProtocol);
             if (provider != null) {
@@ -155,26 +163,96 @@ public final class SSLUtils {
     }
 
     /**
-     * Get a server SSL engine which dispatches to the appropriate SSL context based on the SNI information in the
+     * Get a server SSL engine which dispatches to the appropriate SSL context based on the information in the
      * SSL greeting.
      *
      * @param selector the context selector to use (cannot be {@code null})
      * @return the SSL engine (not {@code null})
      */
-    public static SSLEngine createSNIDispatchingSSLEngine(SNIServerSSLContextSelector selector) {
+    public static SSLEngine createSelectingSSLEngine(SSLContextSelector selector) {
         Assert.checkNotNullParam("selector", selector);
-        return new SNIServerSSLEngine(selector);
+        return new SelectingServerSSLEngine(selector);
     }
 
     /**
-     * Get a factory which produces SSL engines which dispatch to the appropriate SSL context based on the SNI information
+     * Get a server SSL engine which dispatches to the appropriate SSL context based on the information in the
+     * SSL greeting.
+     *
+     * @param selector the context selector to use (cannot be {@code null})
+     * @param host the advisory host name
+     * @param port the advisory port number
+     * @return the SSL engine (not {@code null})
+     */
+    public static SSLEngine createSelectingSSLEngine(SSLContextSelector selector, String host, int port) {
+        Assert.checkNotNullParam("selector", selector);
+        return new SelectingServerSSLEngine(selector, host, port);
+    }
+
+    /**
+     * Create an {@code SNIMatcher} which matches SNI host names that satisfy the given predicate.
+     *
+     * @param predicate the predicate (must not be {@code null})
+     * @return the SNI matcher (not {@code null})
+     */
+    public static SNIMatcher createHostNamePredicateSNIMatcher(Predicate<SNIHostName> predicate) {
+        Assert.checkNotNullParam("predicate", predicate);
+        return new SNIMatcher(StandardConstants.SNI_HOST_NAME) {
+            public boolean matches(final SNIServerName sniServerName) {
+                return sniServerName instanceof SNIHostName && predicate.test((SNIHostName) sniServerName);
+            }
+        };
+    }
+
+    /**
+     * Create an {@code SNIMatcher} which matches SNI host name strings that satisfy the given predicate.
+     *
+     * @param predicate the predicate (must not be {@code null})
+     * @return the SNI matcher (not {@code null})
+     * @see IDN
+     */
+    public static SNIMatcher createHostNameStringPredicateSNIMatcher(Predicate<String> predicate) {
+        Assert.checkNotNullParam("predicate", predicate);
+        return new SNIMatcher(StandardConstants.SNI_HOST_NAME) {
+            public boolean matches(final SNIServerName sniServerName) {
+                return sniServerName instanceof SNIHostName && predicate.test(((SNIHostName) sniServerName).getAsciiName());
+            }
+        };
+    }
+
+    /**
+     * Create an {@code SNIMatcher} which matches SNI host names that are equal to the given (ASCII) string.
+     *
+     * @param string the host name string (must not be {@code null})
+     * @return the SNI matcher (not {@code null})
+     * @see IDN
+     */
+    public static SNIMatcher createHostNameStringSNIMatcher(String string) {
+        Assert.checkNotNullParam("string", string);
+        return createHostNameStringPredicateSNIMatcher(string::equals);
+    }
+
+    /**
+     * Create an {@code SNIMatcher} which matches SNI host name strings which end with the given suffix.
+     *
+     * @param suffix the suffix to match (must not be {@code null} or empty)
+     * @return the SNI matcher (not {@code null})
+     */
+    public static SNIMatcher createHostNameSuffixSNIMatcher(String suffix) {
+        Assert.checkNotNullParam("suffix", suffix);
+        Assert.checkNotEmptyParam("suffix", suffix);
+        final String finalSuffix = suffix.startsWith(".") ? suffix : "." + suffix;
+        return createHostNameStringPredicateSNIMatcher(n -> n.endsWith(finalSuffix));
+    }
+
+    /**
+     * Get a factory which produces SSL engines which dispatch to the appropriate SSL context based on the information
      * in the SSL greeting.
      *
      * @param selector the context selector to use (cannot be {@code null})
      * @return the SSL engine factory (not {@code null})
      */
-    public static SecurityFactory<SSLEngine> createSNIDispatchingSSLEngineFactory(SNIServerSSLContextSelector selector) {
+    public static SecurityFactory<SSLEngine> createDispatchingSSLEngineFactory(SSLContextSelector selector) {
         Assert.checkNotNullParam("selector", selector);
-        return () -> new SNIServerSSLEngine(selector);
+        return () -> new SelectingServerSSLEngine(selector);
     }
 }
