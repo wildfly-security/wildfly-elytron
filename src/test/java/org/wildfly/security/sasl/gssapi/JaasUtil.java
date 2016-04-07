@@ -116,16 +116,17 @@ public class JaasUtil {
                 Map<String, Object> options = new HashMap<String, Object>();
                 options.put("debug", "true");
                 options.put("refreshKrb5Config", "true");
-                options.put("useKeyTab", "true");
-                options.put("keyTab", keyTabFile);
-                options.put("doNotPrompt", "true");
                 options.put("principal", principal);
 
                 if (IS_IBM) {
+                    options.put("useKeytab", keyTabFile);
                     options.put("noAddress", "true");
                     options.put("credsType", "acceptor");
                     entries[0] = new AppConfigurationEntry("com.ibm.security.auth.module.Krb5LoginModule", REQUIRED, options);
                 } else {
+                    options.put("useKeyTab", "true");
+                    options.put("keyTab", keyTabFile);
+                    options.put("doNotPrompt", "true");
                     options.put("storeKey", "true");
                     options.put("isInitiator", "false");
                     entries[0] = new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule", REQUIRED, options);
