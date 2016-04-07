@@ -69,4 +69,22 @@ public interface HttpScope {
         throw log.noAttachmentSupport();
     }
 
+    /**
+     * Is invalidation supported for this scope?
+     *
+     * @return {@code true} if this scope supports invalidation, {@code false} otherwise.
+     */
+    default boolean supportsInvalidation() {
+        return false;
+    }
+
+    /**
+     * Invalidate this scope.
+     *
+     * @return {@code true} if invalidation was successful, {@code false} otherwise.
+     */
+    default boolean invalidate() {
+        return false;
+    }
+
 }
