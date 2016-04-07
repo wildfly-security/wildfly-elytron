@@ -36,6 +36,7 @@ import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -67,42 +68,48 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             return;
         }
 
+        EvidenceVerifyCallback evidenceVerifyCallback;
+        boolean authenticated = false;
         SecurityIdentity securityIdentity = (SecurityIdentity) sslSession.getValue(SSL_SESSION_IDENTITY_KEY);
         if (securityIdentity != null) {
-            // TODO We need to check this is applicable for our domain and use a 'converted' value.
-            request.authenticationComplete(securityIdentity);
-            return;
+            final SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(securityIdentity);
+            evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+            try {
+                callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+                authenticated = evidenceVerifyCallback.isVerified();
+            } catch (IOException e) {
+                throw new HttpAuthenticationException(e);
+            } catch (UnsupportedCallbackException e) {}
         }
-
-        final X509Certificate[] peerX509Certificates;
-        try {
-            Certificate[] peerCertificates = sslSession.getPeerCertificates();
-            peerX509Certificates = new X509Certificate[peerCertificates.length];
-            for (int i=0;i<peerCertificates.length; i++) {
-                if (peerCertificates[i] instanceof X509Certificate) {
-                    peerX509Certificates[i] = (X509Certificate) peerCertificates[i];
-                } else {
-                    request.noAuthenticationInProgress();
-                    return;
+        if (! authenticated) {
+            final X509Certificate[] peerX509Certificates;
+            try {
+                Certificate[] peerCertificates = sslSession.getPeerCertificates();
+                peerX509Certificates = new X509Certificate[peerCertificates.length];
+                for (int i = 0; i < peerCertificates.length; i++) {
+                    if (peerCertificates[i] instanceof X509Certificate) {
+                        peerX509Certificates[i] = (X509Certificate) peerCertificates[i];
+                    } else {
+                        request.noAuthenticationInProgress();
+                        return;
+                    }
                 }
+            } catch (SSLPeerUnverifiedException e) {
+                ElytronMessages.log.trace("Peer not verified.");
+                request.noAuthenticationInProgress();
+                return;
             }
-        } catch (SSLPeerUnverifiedException e) {
-            ElytronMessages.log.trace("Peer not verified.");
-            request.noAuthenticationInProgress();
-            return;
+
+            final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerX509Certificates);
+            evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
+
+            try {
+                callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+                authenticated = evidenceVerifyCallback.isVerified();
+            } catch (IOException e) {
+                throw new HttpAuthenticationException(e);
+            } catch (UnsupportedCallbackException e) {}
         }
-
-        final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(peerX509Certificates);
-
-        EvidenceVerifyCallback evc = new EvidenceVerifyCallback(evidence);
-        boolean authenticated = false;
-
-        try {
-            callbackHandler.handle(new Callback[] { evc });
-            authenticated = evc.isVerified();
-        } catch (IOException e) {
-            throw new HttpAuthenticationException(e);
-        } catch (UnsupportedCallbackException e) {}
 
         try {
             if (authenticated) {
