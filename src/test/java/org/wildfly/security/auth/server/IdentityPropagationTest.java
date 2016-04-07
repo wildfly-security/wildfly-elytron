@@ -18,6 +18,7 @@
 package org.wildfly.security.auth.server;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.wildfly.common.Assert.assertTrue;
 
@@ -28,19 +29,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.AuthenticationException;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
-import org.wildfly.security.authz.AuthorizationException;
 import org.wildfly.security.authz.MapAttributes;
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -96,8 +101,16 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromTrustedIdentity() throws Exception {
+        CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "joe");
-        SecurityIdentity inflowedIdentity = domain2.inflowFromSecurityIdentity(establishedIdentity);
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+        assertTrue(evidenceVerifyCallback.isVerified());
+
+        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+        callbackHandler.handle(new Callback[] { securityIdentityCallback });
+        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
         assertEquals("joe", inflowedIdentity.getPrincipal().getName());
         assertEquals(domain2, inflowedIdentity.getSecurityDomain());
         assertTrue(inflowedIdentity.getRoles().contains("UserRole"));
@@ -105,35 +118,69 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromUntrustedIdentity() throws Exception {
+        CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "sam");
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[]{evidenceVerifyCallback});
+        assertFalse(evidenceVerifyCallback.isVerified());
+
         try {
-            SecurityIdentity inflowedIdentity = domain2.inflowFromSecurityIdentity(establishedIdentity);
-            fail("Expected AuthenticationException not thrown");
-        } catch (AuthenticationException expected) {
+            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+            callbackHandler.handle(new Callback[] { securityIdentityCallback });
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
         }
     }
 
     @Test
     public void testUnauthorizedInflowedIdentity() throws Exception {
+        CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "bob");
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+        assertFalse(evidenceVerifyCallback.isVerified());
+
         try {
-            SecurityIdentity inflowedIdentity = domain2.inflowFromSecurityIdentity(establishedIdentity);
-            fail("Expected AuthorizationException not thrown");
-        } catch (AuthorizationException expected) {
+            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+            callbackHandler.handle(new Callback[]{ securityIdentityCallback });
+            fail("Expected IllegalStateException not thrown");
+        } catch (IllegalStateException expected) {
         }
     }
 
     @Test
     public void testInflowFromAnonymousIdentity() throws Exception {
-        SecurityIdentity inflowedIdentity = domain2.inflowFromSecurityIdentity(domain1.getCurrentSecurityIdentity());
+        CallbackHandler callbackHandler = createCallbackHandler(domain2);
+        SecurityIdentity establishedIdentity = domain1.getCurrentSecurityIdentity();
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+        assertTrue(evidenceVerifyCallback.isVerified());
+
+        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+        callbackHandler.handle(new Callback[] { securityIdentityCallback });
+        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
         assertEquals(domain2.getAnonymousSecurityIdentity(), inflowedIdentity);
     }
 
     @Test
     public void testInflowFromSameDomain() throws Exception {
+        CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain2, "joe");
-        SecurityIdentity inflowedIdentity = domain2.inflowFromSecurityIdentity(establishedIdentity);
-        assertEquals(establishedIdentity, inflowedIdentity);
+        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
+        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
+        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
+        assertTrue(evidenceVerifyCallback.isVerified());
+
+        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
+        callbackHandler.handle(new Callback[]{securityIdentityCallback});
+        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        assertEquals(establishedIdentity.getSecurityDomain(), inflowedIdentity.getSecurityDomain());
+        assertEquals(establishedIdentity.getPrincipal().getName(), inflowedIdentity.getPrincipal().getName());
+        assertEquals(establishedIdentity.getRealmInfo(), inflowedIdentity.getRealmInfo());
+        assertTrue(inflowedIdentity.getAttributes().get("roles").containsAll(establishedIdentity.getAttributes().get("roles")));
     }
 
     private static void addUser(Map<String, SimpleRealmEntry> securityRealm, String userName, String roles) {
@@ -156,6 +203,10 @@ public class IdentityPropagationTest {
         authenticationContext.setAuthenticationName(userName);
         authenticationContext.succeed();
         return authenticationContext.getAuthorizedIdentity();
+    }
+
+    private CallbackHandler createCallbackHandler(final SecurityDomain securityDomain) throws Exception {
+        return securityDomain.createNewAuthenticationContext().createCallbackHandler();
     }
 }
 

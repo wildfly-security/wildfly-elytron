@@ -54,6 +54,7 @@ import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.event.RealmFailedAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmIdentityFailedAuthorizationEvent;
@@ -638,6 +639,10 @@ public final class ServerAuthenticationContext {
 
         final Principal evidencePrincipal = evidence.getPrincipal();
         if (evidencePrincipal != null) {
+            if (evidencePrincipal instanceof AnonymousPrincipal) {
+                anonymous();
+                return true;
+            }
             // We have access to a Principal so set it to cause the state transitions and start again.
             setAuthenticationPrincipal(evidencePrincipal);
             return verifyEvidence(evidence);
@@ -697,13 +702,13 @@ public final class ServerAuthenticationContext {
             return false;
         }
         if (evidence instanceof SecurityIdentityEvidence) {
-            // Trust the given security identity evidence if it corresponds to the same realm that created the
-            // current authentication identity
+            // Check that the given security identity evidence corresponds to the same realm that created the
+            // current authentication identity and that the current authentication identity is authorized
             final RealmIdentity realmIdentity = stateRef.get().getRealmIdentity();
             final SecurityIdentity evidenceIdentity = ((SecurityIdentityEvidence) evidence).getSecurityIdentity();
             final RealmInfo evidenceRealmInfo = evidenceIdentity.getRealmInfo();
             final SecurityRealm evidenceSecurityRealm = evidenceRealmInfo.getSecurityRealm();
-            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm);
+            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm) ? authorize() : false;
         }
         return false;
     }
