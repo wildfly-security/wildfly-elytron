@@ -27,6 +27,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -114,6 +115,16 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         @Override
         public HttpScope getScope(Scope scope) {
             return wrapped.getScope(scope);
+        }
+
+        @Override
+        public Collection<String> getScopeIds(Scope scope) {
+            return wrapped.getScopeIds(scope);
+        }
+
+        @Override
+        public HttpScope getScope(Scope scope, String id) {
+            return wrapped.getScope(scope, id);
         }
 
         @Override

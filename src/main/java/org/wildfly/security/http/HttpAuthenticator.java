@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -144,6 +145,16 @@ public class HttpAuthenticator {
         @Override
         public HttpScope getScope(Scope scope) {
             return httpExchangeSpi.getScope(scope);
+        }
+
+        @Override
+        public Collection<String> getScopeIds(Scope scope) {
+            return httpExchangeSpi.getScopeIds(scope);
+        }
+
+        @Override
+        public HttpScope getScope(Scope scope, String id) {
+            return httpExchangeSpi.getScope(scope, id);
         }
 
         @Override

@@ -27,7 +27,17 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 public interface HttpScope {
 
-    // TODO - We may want to add 'exists' and 'create' methods but probably most specifically related to sessions.
+    // TODO - Lazy HTTP session creation.
+
+    /**
+     * Get the ID of this scope or (@code null} if IDs are not supported for this scope.
+     *
+     * @return the ID of this scope or (@code null} if IDs are not supported for this scope.
+     */
+    default String getID() {
+        return null;
+    }
+
     /**
      * Does this scope support attachments?
      *

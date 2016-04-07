@@ -20,6 +20,7 @@ package org.wildfly.security.http;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +85,27 @@ public interface HttpExchangeSpi {
      * @return the scope or {@code null} if it is not available.
      */
     default HttpScope getScope(Scope scope) {
+        return null;
+    }
+
+    /**
+     * Get the IDs of the scope specified.
+     *
+     * @param scope the scope the IDs are required for.
+     * @return the IDs of the scope specified or {@code null} if referencing this scope by ID is not supported.
+     */
+    default Collection<String> getScopeIds(Scope scope) {
+        return null;
+    }
+
+    /**
+     * Get the {@link HttpScope} with the specific ID for the {@link Scope} specified.
+     *
+     * @param scope the scope required.
+     * @param id the id of the required scope.
+     * @return the {@link HttpScope} with the specific ID for the {@link Scope} specified, or {@code null} if it does not exist or is not supported.
+     */
+    default HttpScope getScope(Scope scope, String id) {
         return null;
     }
 
