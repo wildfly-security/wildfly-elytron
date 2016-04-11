@@ -18,13 +18,10 @@
 
 package org.wildfly.security.sasl.util;
 
-import java.lang.reflect.UndeclaredThrowableException;
-import java.security.PrivilegedActionException;
-
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.auth.client.AuthenticationContext;
 
 /**
@@ -36,7 +33,7 @@ import org.wildfly.security.auth.client.AuthenticationContext;
 public final class AuthenticationContextSaslClient extends AbstractDelegatingSaslClient {
 
     private AuthenticationContext context;
-    private ParametricPrivilegedExceptionAction<byte[], byte[]> challengeAction = delegate::evaluateChallenge;
+    private ExceptionUnaryOperator<byte[], SaslException> challengeAction = delegate::evaluateChallenge;
 
     /**
      * Construct a new instance.
@@ -60,17 +57,7 @@ public final class AuthenticationContextSaslClient extends AbstractDelegatingSas
     }
 
     public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
-        try {
-            return context.run(challenge, challengeAction);
-        } catch (PrivilegedActionException e) {
-            try {
-                throw e.getCause();
-            } catch (SaslException | RuntimeException | Error rethrow) {
-                throw rethrow;
-            } catch (Throwable throwable) {
-                throw new UndeclaredThrowableException(throwable);
-            }
-        }
+        return context.runExFunction(challengeAction, challenge);
     }
 
     public void dispose() throws SaslException {
