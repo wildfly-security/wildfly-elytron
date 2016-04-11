@@ -138,9 +138,11 @@ public final class SecurityDomain {
             throw log.invalidName();
         }
         String realmName = mapRealmName(name, null, null);
-        SecurityRealm securityRealm = getRealm(realmName);
+        RealmInfo realmInfo = getRealmInfo(realmName);
+        SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         assert securityRealm != null;
         name = this.postRealmRewriter.rewriteName(name);
+        name = realmInfo.getNameRewriter().rewriteName(name);
         if (name == null) {
             throw log.invalidName();
         }
