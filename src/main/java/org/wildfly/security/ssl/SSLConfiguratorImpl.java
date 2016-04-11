@@ -24,24 +24,47 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-final class ServerSSLConfigurator implements SSLConfigurator {
+import org.wildfly.security._private.ElytronMessages;
+
+final class SSLConfiguratorImpl implements SSLConfigurator {
 
     private final ProtocolSelector protocolSelector;
     private final CipherSuiteSelector cipherSuiteSelector;
     private final boolean wantClientAuth;
     private final boolean needClientAuth;
+    private final boolean clientMode;
 
-    ServerSSLConfigurator(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean wantClientAuth, final boolean needClientAuth) {
+    /**
+     * Construct a new instance in server mode.
+     *
+     * @param protocolSelector the protocol selector (must not be {@code null})
+     * @param cipherSuiteSelector the cipher suite selector (must not be {@code null})
+     * @param wantClientAuth {@code true} to request client authentication
+     * @param needClientAuth {@code true} to require client authentication
+     */
+    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean wantClientAuth, final boolean needClientAuth) {
         this.protocolSelector = protocolSelector;
         this.cipherSuiteSelector = cipherSuiteSelector;
         this.wantClientAuth = wantClientAuth;
         this.needClientAuth = needClientAuth;
+        clientMode = false;
     }
 
-    private void configure(SSLParameters params, String[] supportedProtocols, String[] supportedCipherSuites) {
+    /**
+     * Construct a new instance in client mode.
+     *
+     * @param protocolSelector the protocol selector (must not be {@code null})
+     * @param cipherSuiteSelector the cipher suite selector (must not be {@code null})
+     */
+    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector) {
+        this.protocolSelector = protocolSelector;
+        this.cipherSuiteSelector = cipherSuiteSelector;
+        this.wantClientAuth = false;
+        this.needClientAuth = false;
+        clientMode = true;
+    }
+
+    void configure(SSLParameters params, String[] supportedProtocols, String[] supportedCipherSuites) {
         params.setProtocols(protocolSelector.evaluate(supportedProtocols));
         params.setCipherSuites(cipherSuiteSelector.evaluate(supportedCipherSuites));
         params.setUseCipherSuitesOrder(true);
@@ -50,21 +73,21 @@ final class ServerSSLConfigurator implements SSLConfigurator {
     }
 
     public void configure(final SSLContext context, final SSLServerSocket sslServerSocket) {
-        sslServerSocket.setUseClientMode(false);
+        sslServerSocket.setUseClientMode(clientMode);
         final SSLParameters sslParameters = sslServerSocket.getSSLParameters();
         configure(sslParameters, sslServerSocket.getSupportedProtocols(), sslServerSocket.getSupportedCipherSuites());
         sslServerSocket.setSSLParameters(sslParameters);
     }
 
     public void configure(final SSLContext context, final SSLSocket sslSocket) {
-        sslSocket.setUseClientMode(false);
+        sslSocket.setUseClientMode(clientMode);
         final SSLParameters sslParameters = sslSocket.getSSLParameters();
         configure(sslParameters, sslSocket.getSupportedProtocols(), sslSocket.getSupportedCipherSuites());
         sslSocket.setSSLParameters(sslParameters);
     }
 
     public void configure(final SSLContext context, final SSLEngine sslEngine) {
-        sslEngine.setUseClientMode(false);
+        sslEngine.setUseClientMode(clientMode);
         final SSLParameters sslParameters = sslEngine.getSSLParameters();
         configure(sslParameters, sslEngine.getSupportedProtocols(), sslEngine.getSupportedCipherSuites());
         sslEngine.setSSLParameters(sslParameters);
@@ -152,14 +175,23 @@ final class ServerSSLConfigurator implements SSLConfigurator {
     }
 
     public void setUseClientMode(final SSLContext sslContext, final SSLSocket sslSocket, final boolean mode) {
+        if (mode != clientMode) {
+            throw ElytronMessages.log.invalidClientMode(clientMode, mode);
+        }
         // ignored
     }
 
     public void setUseClientMode(final SSLContext sslContext, final SSLEngine sslEngine, final boolean mode) {
+        if (mode != clientMode) {
+            throw ElytronMessages.log.invalidClientMode(clientMode, mode);
+        }
         // ignored
     }
 
     public void setUseClientMode(final SSLContext sslContext, final SSLServerSocket sslServerSocket, final boolean mode) {
+        if (mode != clientMode) {
+            throw ElytronMessages.log.invalidClientMode(clientMode, mode);
+        }
         // ignored
     }
 }
