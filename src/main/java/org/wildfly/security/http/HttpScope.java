@@ -19,6 +19,8 @@ package org.wildfly.security.http;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.io.InputStream;
+
 /**
  * An attachment scope for use by an authentication mechanism, different scopes may be available to share Objects e.g.
  * Application, Session, Connection.
@@ -85,6 +87,25 @@ public interface HttpScope {
      */
     default boolean invalidate() {
         return false;
+    }
+
+    /**
+     * Does this scope support access to scope specific resources?
+     *
+     * @return {@code true} if this scope supports access to scope specific resources, {@code false} otherwise.
+     */
+    default boolean supportsResources() {
+        return false;
+    }
+
+    /**
+     * Get the resource associated with the path specified.
+     *
+     * @param path the path to the resource.
+     * @return the {@link InputStream} of the resource or {@code null} if resources not supported or the specified resource is not found.
+     */
+    default InputStream getResource(final String path) {
+        return null;
     }
 
 }
