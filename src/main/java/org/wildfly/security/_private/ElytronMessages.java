@@ -594,8 +594,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4005, value = "No default trust manager available")
     NoSuchAlgorithmException noDefaultTrustManager();
 
-    @Message(id = 4006, value = "No host for SSL connection")
-    SSLHandshakeException noHostForSslConnection();
+    @Message(id = 4006, value = "No context for SSL connection")
+    SSLHandshakeException noContextForSslConnection();
 
     @Message(id = 4007, value = "SSL channel is closed")
     SSLException sslClosed();

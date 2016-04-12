@@ -60,7 +60,7 @@ public final class ServerSSLContextBuilder {
     private int sessionCacheSize;
     private int sessionTimeout;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
-    private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = () -> SSLUtils.getDefaultX509TrustManagerSecurityFactory().create();
+    private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = SSLUtils.getDefaultX509TrustManagerSecurityFactory();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
 
     /**

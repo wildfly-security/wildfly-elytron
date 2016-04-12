@@ -27,22 +27,23 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.util._private.Arrays2;
 
 /**
- * A selector which chooses an SSL context based on the SNI information.
+ * A selector which chooses an SSL context based on connection information.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface SNIServerSSLContextSelector {
+@FunctionalInterface
+public interface SSLContextSelector {
 
     /**
-     * Select the SSL context which corresponds to the given SNI server name.  The selector returns the SSL context
+     * Select the SSL context which corresponds to the given connection information.  The selector returns the SSL context
      * that should be used for this connection, or {@code null} if no SSL contexts match, in which case a fallback
      * selector may be used, or a default SSL context selected.  If no selectors match an SSL context, the connection
      * is refused.
      *
-     * @param sniServerName the SNI server name, or {@code null} if SNI was not used
-     * @return the SSL context to use, or {@code null} if the name is not acceptable to this selector
+     * @param connectionInformation information about the in-progress connection
+     * @return the SSL context to use, or {@code null} if the connection is not acceptable to this selector
      */
-    SSLContext selectContext(SNIServerName sniServerName);
+    SSLContext selectContext(SSLConnectionInformation connectionInformation);
 
     /**
      * Create an aggregate selector which executes each given selector in order until a match is found.
@@ -51,11 +52,11 @@ public interface SNIServerSSLContextSelector {
      * @param selector2 the second selector to test
      * @return the matched selector
      */
-    static SNIServerSSLContextSelector aggregate(SNIServerSSLContextSelector selector1, SNIServerSSLContextSelector selector2) {
-        return name -> {
+    static SSLContextSelector aggregate(SSLContextSelector selector1, SSLContextSelector selector2) {
+        return information -> {
             SSLContext sslContext = null;
-            if (selector1 != null) sslContext = selector1.selectContext(name);
-            if (sslContext == null && selector2 != null) sslContext = selector2.selectContext(name);
+            if (selector1 != null) sslContext = selector1.selectContext(information);
+            if (sslContext == null && selector2 != null) sslContext = selector2.selectContext(information);
             return sslContext;
         };
     }
@@ -66,9 +67,9 @@ public interface SNIServerSSLContextSelector {
      * @param selectors the selectors to test
      * @return the matched selector
      */
-    static SNIServerSSLContextSelector aggregate(SNIServerSSLContextSelector... selectors) {
+    static SSLContextSelector aggregate(SSLContextSelector... selectors) {
         Assert.checkNotNullParam("selectors", selectors);
-        final SNIServerSSLContextSelector[] clone = Arrays2.compactNulls(selectors.clone());
+        final SSLContextSelector[] clone = Arrays2.compactNulls(selectors.clone());
         if (clone.length == 0) {
             return NULL_SELECTOR;
         } else if (clone.length == 1) {
@@ -78,7 +79,7 @@ public interface SNIServerSSLContextSelector {
         } else {
             return name -> {
                 SSLContext sslContext;
-                for (SNIServerSSLContextSelector selector : clone) {
+                for (SSLContextSelector selector : clone) {
                     sslContext = selector.selectContext(name);
                     if (sslContext != null) {
                         return sslContext;
@@ -92,13 +93,26 @@ public interface SNIServerSSLContextSelector {
     /**
      * Create a selector which returns the given SSL context if the given SNI matcher matches.
      *
-     * @param matcher the SNI matcher
-     * @param context the SSL context to select
+     * @param matcher the SNI matcher (must not be {@code null})
+     * @param context the SSL context to select (must not be {@code null})
      * @return the context if the name matches, otherwise {@code null}
      * @see SNIHostName#createSNIMatcher(String)
+     * @see SSLUtils#createHostNameStringPredicateSNIMatcher(java.util.function.Predicate)
+     * @see SSLUtils#createHostNamePredicateSNIMatcher(java.util.function.Predicate)
+     * @see SSLUtils#createHostNameStringSNIMatcher(String)
+     * @see SSLUtils#createHostNameSuffixSNIMatcher(String)
      */
-    static SNIServerSSLContextSelector matcherSelector(SNIMatcher matcher, SSLContext context) {
-        return name -> name.getType() == matcher.getType() && matcher.matches(name) ? context : null;
+    static SSLContextSelector sniMatcherSelector(SNIMatcher matcher, SSLContext context) {
+        Assert.checkNotNullParam("matcher", matcher);
+        Assert.checkNotNullParam("context", context);
+        return information -> {
+            for (SNIServerName serverName : information.getSNIServerNames()) {
+                if (serverName != null && serverName.getType() == matcher.getType() && matcher.matches(serverName)) {
+                    return context;
+                }
+            }
+            return null;
+        };
     }
 
     /**
@@ -107,12 +121,12 @@ public interface SNIServerSSLContextSelector {
      * @param context the context to return
      * @return the selector which always returns {@code context}
      */
-    static SNIServerSSLContextSelector constantSelector(SSLContext context) {
+    static SSLContextSelector constantSelector(SSLContext context) {
         return name -> context;
     }
 
     /**
      * A selector which always returns {@code null} (no match).
      */
-    SNIServerSSLContextSelector NULL_SELECTOR = constantSelector(null);
+    SSLContextSelector NULL_SELECTOR = constantSelector(null);
 }
