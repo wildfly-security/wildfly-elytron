@@ -50,9 +50,11 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
             if (issuers != null) {
                 for (Principal issuer : issuers) {
                     X500Principal x500Principal = X500PrincipalUtil.asX500Principal(issuer);
-                    final String alias = aliasesByIssuer.get(x500Principal);
-                    if (alias != null) {
-                        return alias;
+                    if (x500Principal != null) {
+                        final String alias = aliasesByIssuer.get(x500Principal);
+                        if (alias != null) {
+                            return alias;
+                        }
                     }
                 }
             } else {
@@ -72,10 +74,12 @@ final class ConfigurationKeyManager extends X509ExtendedKeyManager {
             if (issuers != null) {
                 for (Principal issuer : issuers) {
                     X500Principal x500Principal = X500PrincipalUtil.asX500Principal(issuer);
-                    final String alias = aliasesByIssuer.get(x500Principal);
-                    if (alias != null) {
-                        if (aliases == null) aliases = new LinkedHashSet<>(3);
-                        aliases.add(alias);
+                    if (x500Principal != null) {
+                        final String alias = aliasesByIssuer.get(x500Principal);
+                        if (alias != null) {
+                            if (aliases == null) aliases = new LinkedHashSet<>(3);
+                            aliases.add(alias);
+                        }
                     }
                 }
             } else {

@@ -115,7 +115,7 @@ public final class X500PrincipalUtil {
      * Attempt to convert the given principal to an X.500 principal.
      *
      * @param principal the original principal
-     * @return the X.500 principal
+     * @return the X.500 principal or {@code null} if the principal can not be converted.
      */
     public static X500Principal asX500Principal(Principal principal) {
         if (principal instanceof X500Principal) {
@@ -124,7 +124,7 @@ public final class X500PrincipalUtil {
         if (HAS_X500_NAME && principal instanceof X500Name) {
             return ((X500Name) principal).asX500Principal();
         }
-        // if all else fails...
-        return new X500Principal(principal.getName());
+
+        return null;
     }
 }
