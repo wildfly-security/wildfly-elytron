@@ -20,6 +20,7 @@ package org.wildfly.security.http;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.InputStream;
+import java.util.function.Consumer;
 
 /**
  * An attachment scope for use by an authentication mechanism, different scopes may be available to share Objects e.g.
@@ -106,6 +107,24 @@ public interface HttpScope {
      */
     default InputStream getResource(final String path) {
         return null;
+    }
+
+    /**
+     * Does this scope support registration to receive destruction notifications?
+     *
+     * @return {@code true} if this scope supports registration for destruction notifications, {@code false} otherwise.
+     */
+    default boolean supportsNotifications() {
+        return false;
+    }
+
+    /**
+     * Register a {@link Consumer<HttpServerScopes>} to receive a notification when this scope is destroyed.
+     *
+     * @param notificationConsumer the {@link Consumer<HttpServerScopes>} to receive a notification when this scope is
+     *        destroyed.
+     */
+    default void registerForNotification(Consumer<HttpServerScopes> notificationConsumer) {
     }
 
 }
