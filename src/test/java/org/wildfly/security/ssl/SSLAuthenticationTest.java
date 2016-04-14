@@ -76,7 +76,7 @@ public class SSLAuthenticationTest {
                 .setPreRealmRewriter(s -> s.toLowerCase())
                 .build();
 
-        serverContext = new ServerSSLContextBuilder()
+        serverContext = new SSLContextBuilder()
                 .setSecurityDomain(securityDomain)
                 .setKeyManager(getKeyManager("/ca/jks/scarab.keystore"))
                 .setTrustManager(getCATrustManager())

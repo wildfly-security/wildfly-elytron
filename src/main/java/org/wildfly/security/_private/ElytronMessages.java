@@ -648,6 +648,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4023, value = "Too large")
     IllegalStateException tooLarge();
 
+    @Message(id = 4024, value = "Invalid client mode, expected %s, got %s")
+    IllegalArgumentException invalidClientMode(boolean expectedMode, boolean givenMode);
+
     /* mechanism package */
 
     @Message(id = 5001, value = "[%s] Authentication mechanism exchange received a message after authentication was already complete")

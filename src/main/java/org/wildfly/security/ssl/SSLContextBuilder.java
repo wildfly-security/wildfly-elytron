@@ -35,9 +35,10 @@ import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.PrincipalDecoder;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
- * A class which allows building and configuration of a single server-side SSL context.  The builder requires, at a
+ * A class which allows building and configuration of a single client- or server-side SSL context.  The builder requires, at a
  * minimum, that a key manager be set; all other parameters have default values as follows:
  * <ul>
  *     <li>The security domain defaults to being empty (no client authentication possible)</li>
@@ -50,13 +51,14 @@ import org.wildfly.security.auth.server.PrincipalDecoder;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class ServerSSLContextBuilder {
+public final class SSLContextBuilder {
     private SecurityDomain securityDomain;
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
     private boolean wantClientAuth;
     private boolean needClientAuth;
     private boolean authenticationOptional;
+    private boolean clientMode;
     private int sessionCacheSize;
     private int sessionTimeout;
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
@@ -69,7 +71,7 @@ public final class ServerSSLContextBuilder {
      * @param securityDomain the security domain to use to authenticate clients, or {@code null} to disable client
      *    certificate authentication
      */
-    public ServerSSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
+    public SSLContextBuilder setSecurityDomain(final SecurityDomain securityDomain) {
         this.securityDomain = securityDomain;
 
         return this;
@@ -80,7 +82,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param cipherSuiteSelector the cipher suite selector (not {@code null})
      */
-    public ServerSSLContextBuilder setCipherSuiteSelector(final CipherSuiteSelector cipherSuiteSelector) {
+    public SSLContextBuilder setCipherSuiteSelector(final CipherSuiteSelector cipherSuiteSelector) {
         Assert.checkNotNullParam("cipherSuiteSelector", cipherSuiteSelector);
         this.cipherSuiteSelector = cipherSuiteSelector;
 
@@ -92,7 +94,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param protocolSelector the protocol selector to use for this context (not {@code null})
      */
-    public ServerSSLContextBuilder setProtocolSelector(final ProtocolSelector protocolSelector) {
+    public SSLContextBuilder setProtocolSelector(final ProtocolSelector protocolSelector) {
         Assert.checkNotNullParam("protocolSelector", protocolSelector);
         this.protocolSelector = protocolSelector;
 
@@ -107,7 +109,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param wantClientAuth should the SSLContext be forced to want client authentication.
      */
-    public ServerSSLContextBuilder setWantClientAuth(final boolean wantClientAuth) {
+    public SSLContextBuilder setWantClientAuth(final boolean wantClientAuth) {
         this.wantClientAuth = wantClientAuth;
 
         return this;
@@ -120,7 +122,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param needClientAuth should the SSLContext be forced to need client authentication.
      */
-    public ServerSSLContextBuilder setNeedClientAuth(final boolean needClientAuth) {
+    public SSLContextBuilder setNeedClientAuth(final boolean needClientAuth) {
         this.needClientAuth = needClientAuth;
 
         return this;
@@ -139,7 +141,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param authenticationOptional should the authentication step be allowed to silently fail.
      */
-    public ServerSSLContextBuilder setAuthenticationOptional(final boolean authenticationOptional) {
+    public SSLContextBuilder setAuthenticationOptional(final boolean authenticationOptional) {
         this.authenticationOptional = authenticationOptional;
 
         return this;
@@ -150,9 +152,9 @@ public final class ServerSSLContextBuilder {
      * Sets the size of the cache used for storing SSLSession objects.
      *
      * @param sessionCacheSize the size of the cache used for storing SSLSession objects.
-     * @return The {@link ServerSSLContextBuilder} to allow chaining of method calls.
+     * @return The {@link SSLContextBuilder} to allow chaining of method calls.
      */
-    public ServerSSLContextBuilder setSessionCacheSize(final int sessionCacheSize) {
+    public SSLContextBuilder setSessionCacheSize(final int sessionCacheSize) {
         this.sessionCacheSize = sessionCacheSize;
 
         return this;
@@ -162,9 +164,9 @@ public final class ServerSSLContextBuilder {
      * Sets the timeout limit for SSLSession objects.
      *
      * @param sessionTimeout the timeout limit for SSLSession objects.
-     * @return The {@link ServerSSLContextBuilder} to allow chaining of method calls.
+     * @return The {@link SSLContextBuilder} to allow chaining of method calls.
      */
-    public ServerSSLContextBuilder setSessionTimeout(final int sessionTimeout) {
+    public SSLContextBuilder setSessionTimeout(final int sessionTimeout) {
         this.sessionTimeout = sessionTimeout;
 
         return this;
@@ -175,7 +177,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param keyManagerSecurityFactory the security factory which produces the key manager (not {@code null})
      */
-    public ServerSSLContextBuilder setKeyManagerSecurityFactory(final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory) {
+    public SSLContextBuilder setKeyManagerSecurityFactory(final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory) {
         Assert.checkNotNullParam("keyManagerSecurityFactory", keyManagerSecurityFactory);
         this.keyManagerSecurityFactory = keyManagerSecurityFactory;
 
@@ -187,7 +189,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param keyManager the security factory which produces the key manager (not {@code null})
      */
-    public ServerSSLContextBuilder setKeyManager(final X509ExtendedKeyManager keyManager) {
+    public SSLContextBuilder setKeyManager(final X509ExtendedKeyManager keyManager) {
         Assert.checkNotNullParam("keyManager", keyManager);
         this.keyManagerSecurityFactory = new FixedSecurityFactory<>(keyManager);
 
@@ -199,7 +201,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param trustManagerSecurityFactory the factory for the trust manager which should be used for the initial trust decisions during connection (not {@code null}).
      */
-    public ServerSSLContextBuilder setTrustManagerSecurityFactory(final SecurityFactory<X509TrustManager> trustManagerSecurityFactory) {
+    public SSLContextBuilder setTrustManagerSecurityFactory(final SecurityFactory<X509TrustManager> trustManagerSecurityFactory) {
         this.trustManagerSecurityFactory = Assert.checkNotNullParam("trustManagerSecurityFactory", trustManagerSecurityFactory);
 
         return this;
@@ -210,7 +212,7 @@ public final class ServerSSLContextBuilder {
      *
      * @param trustManager the trust manager which should be used to hold identities for this context (not {@code null}).
      */
-    public ServerSSLContextBuilder setTrustManager(final X509TrustManager trustManager) {
+    public SSLContextBuilder setTrustManager(final X509TrustManager trustManager) {
         Assert.checkNotNullParam("trustManager", trustManager);
         this.trustManagerSecurityFactory = new FixedSecurityFactory<>(trustManager);
 
@@ -224,10 +226,21 @@ public final class ServerSSLContextBuilder {
      *
      * @param providerSupplier the provider supplier (not {@code null})
      */
-    public ServerSSLContextBuilder setProviderSupplier(final Supplier<Provider[]> providerSupplier) {
+    public SSLContextBuilder setProviderSupplier(final Supplier<Provider[]> providerSupplier) {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
         this.providerSupplier = providerSupplier;
 
+        return this;
+    }
+
+    /**
+     * Set the client mode of the target SSL context.
+     *
+     * @param clientMode {@code true} to use client mode, {@code false} otherwise
+     * @return this builder
+     */
+    public SSLContextBuilder setClientMode(final boolean clientMode) {
+        this.clientMode = clientMode;
         return this;
     }
 
@@ -240,27 +253,33 @@ public final class ServerSSLContextBuilder {
         final SecurityDomain securityDomain = this.securityDomain;
         final CipherSuiteSelector cipherSuiteSelector = this.cipherSuiteSelector;
         final ProtocolSelector protocolSelector = this.protocolSelector;
-
+        final SecurityFactory<X509TrustManager> trustManagerSecurityFactory = this.trustManagerSecurityFactory;
         final SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory = this.keyManagerSecurityFactory;
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
+        final boolean clientMode = this.clientMode;
+        final boolean authenticationOptional = this.authenticationOptional;
+        final int sessionCacheSize = this.sessionCacheSize;
+        final int sessionTimeout = this.sessionTimeout;
+        final boolean wantClientAuth = this.wantClientAuth;
+        final boolean needClientAuth = this.needClientAuth;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
-            SSLSessionContext sessionContext = sslContext.getServerSessionContext();
+            SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
             sessionContext.setSessionCacheSize(sessionCacheSize);
             sessionContext.setSessionTimeout(sessionTimeout);
-            final X509TrustManager x509TrustManager = this.trustManagerSecurityFactory.create();
-            final boolean canAuthClients = securityDomain != null; // TODO Check security domain does at least potentially support the credential.
+            final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
+            final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
             sslContext.init(new KeyManager[] {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
-                canAuthClients ?
+                canAuthPeers ?
                     new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional) :
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration
-            final SSLConfigurator sslConfigurator = new ServerSSLConfigurator(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthClients, needClientAuth);
+            final SSLConfigurator sslConfigurator = clientMode ? new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector) : new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth);
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator);
             return new DelegatingSSLContext(contextSpi);
         });
