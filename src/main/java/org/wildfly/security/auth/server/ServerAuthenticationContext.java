@@ -167,7 +167,7 @@ public final class ServerAuthenticationContext {
         final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
         boolean ok = false;
         try {
-            NameAssignedState newState = new NameAssignedState(principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+            NameAssignedState newState = new NameAssignedState(domain, principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
             while (! stateRef.compareAndSet(oldState, newState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
@@ -634,7 +634,8 @@ public final class ServerAuthenticationContext {
                 mechanismRealmConfiguration = MechanismRealmConfiguration.NO_REALM;
             }
         } else {
-            return checkEvidenceTrusted(evidence) ? true : stateRef.get().verifyEvidence(evidence);
+            final boolean verified = stateRef.get().verifyEvidence(evidence);
+            return verified && (! (evidence instanceof SecurityIdentityEvidence) || authorize());
         }
 
         final Principal evidencePrincipal = evidence.getPrincipal();
@@ -676,7 +677,7 @@ public final class ServerAuthenticationContext {
         boolean ok = false;
         NameAssignedState newState;
         try {
-            newState = new NameAssignedState(resolvedPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+            newState = new NameAssignedState(domain, resolvedPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration);
             if (! stateRef.compareAndSet(oldState, newState)) {
                 // gotta start over, but should happen no more than a theoretical max of 2 times
                 return verifyEvidence(evidence);
@@ -686,31 +687,6 @@ public final class ServerAuthenticationContext {
             if (! ok) realmIdentity.dispose();
         }
         return newState.verifyEvidence(evidence);
-    }
-
-    /**
-     * Determine if the given evidence can be trusted in lieu of verifying or acquiring a credential. This method is
-     * intended to be used for identity propagation purposes.
-     *
-     * @param evidence the evidence to check (must not be {@code null})
-     * @return {@code true} if the given evidence can be trusted, {@code false} otherwise
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
-     */
-    private boolean checkEvidenceTrusted(Evidence evidence) throws RealmUnavailableException {
-        Assert.checkNotNullParam("evidence", evidence);
-        if (! exists()) {
-            return false;
-        }
-        if (evidence instanceof SecurityIdentityEvidence) {
-            // Check that the given security identity evidence corresponds to the same realm that created the
-            // current authentication identity and that the current authentication identity is authorized
-            final RealmIdentity realmIdentity = stateRef.get().getRealmIdentity();
-            final SecurityIdentity evidenceIdentity = ((SecurityIdentityEvidence) evidence).getSecurityIdentity();
-            final RealmInfo evidenceRealmInfo = evidenceIdentity.getRealmInfo();
-            final SecurityRealm evidenceSecurityRealm = evidenceRealmInfo.getSecurityRealm();
-            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm) ? authorize() : false;
-        }
-        return false;
     }
 
     /**
@@ -995,6 +971,10 @@ public final class ServerAuthenticationContext {
             throw ElytronMessages.log.noAuthenticationInProgress();
         }
 
+        SecurityDomain getSecurityDomain() {
+            throw ElytronMessages.log.noAuthenticationInProgress();
+        }
+
         abstract boolean isDone();
 
         abstract boolean isStarted();
@@ -1108,7 +1088,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            return realmIdentity.verifyEvidence(evidence);
+            return checkEvidenceTrusted(realmIdentity, getSecurityDomain(), evidence) || realmIdentity.verifyEvidence(evidence);
         }
 
         @Override
@@ -1119,6 +1099,11 @@ public final class ServerAuthenticationContext {
         @Override
         RealmIdentity getRealmIdentity() {
             return realmIdentity;
+        }
+
+        @Override
+        SecurityDomain getSecurityDomain() {
+            return securityIdentity.getSecurityDomain();
         }
 
         @Override
@@ -1133,12 +1118,14 @@ public final class ServerAuthenticationContext {
     }
 
     static final class NameAssignedState extends State {
+        private final SecurityDomain domain;
         private final Principal authenticationPrincipal;
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
         private final MechanismRealmConfiguration mechanismRealmConfiguration;
 
-        NameAssignedState(final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration) {
+        NameAssignedState(final SecurityDomain domain, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration) {
+            this.domain = domain;
             this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
@@ -1177,7 +1164,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            return realmIdentity.verifyEvidence(evidence);
+            return checkEvidenceTrusted(realmIdentity, domain, evidence) || realmIdentity.verifyEvidence(evidence);
         }
 
         @Override
@@ -1188,6 +1175,11 @@ public final class ServerAuthenticationContext {
         @Override
         RealmIdentity getRealmIdentity() {
             return realmIdentity;
+        }
+
+        @Override
+        SecurityDomain getSecurityDomain() {
+            return domain;
         }
 
         @Override
@@ -1231,4 +1223,30 @@ public final class ServerAuthenticationContext {
 
     private static final SimpleState INITIAL = new SimpleState(INITIAL_ID, false, false);
     private static final SimpleState FAILED = new SimpleState(FAILED_ID, true, true);
+
+    /**
+     * Determine if the given evidence can be trusted in lieu of verifying or acquiring a credential.
+     *
+     * @param realmIdentity the current realm identity
+     * @param domain the current domain
+     * @param evidence the evidence to check (must not be {@code null})
+     * @return {@code true} if the given evidence can be trusted, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    static boolean checkEvidenceTrusted(final RealmIdentity realmIdentity, final SecurityDomain domain, final Evidence evidence) throws RealmUnavailableException {
+        Assert.checkNotNullParam("evidence", evidence);
+        if (! realmIdentity.exists()) {
+            return false;
+        }
+        if (evidence instanceof SecurityIdentityEvidence) {
+            // Check that the given security identity evidence either corresponds to the same realm that created the
+            // current authentication identity or it corresponds to a domain that is trusted by the current domain
+            final SecurityIdentity evidenceIdentity = ((SecurityIdentityEvidence) evidence).getSecurityIdentity();
+            final RealmInfo evidenceRealmInfo = evidenceIdentity.getRealmInfo();
+            final SecurityRealm evidenceSecurityRealm = evidenceRealmInfo.getSecurityRealm();
+            final SecurityDomain evidenceSecurityDomain = evidenceIdentity.getSecurityDomain();
+            return realmIdentity.createdBySecurityRealm(evidenceSecurityRealm) || domain.trustsDomain(evidenceSecurityDomain);
+        }
+        return false;
+    }
 }
