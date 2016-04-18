@@ -120,7 +120,7 @@ public abstract class AbstractNamedPermission<This extends AbstractNamedPermissi
      * @param permission the permission whose name is to be checked
      * @return {@code true} if this permission's name implies the given name, {@code false} otherwise
      */
-    public final boolean impliesName(final This permission) {
+    public boolean impliesName(final This permission) {
         return permission != null && impliesName(permission.getName());
     }
 
