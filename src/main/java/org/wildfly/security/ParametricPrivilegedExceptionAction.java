@@ -18,6 +18,8 @@
 
 package org.wildfly.security;
 
+import org.wildfly.common.function.ExceptionFunction;
+
 /**
  * A privileged action which accepts a parameter and can throw an exception.
  *
@@ -27,7 +29,10 @@ package org.wildfly.security;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @FunctionalInterface
-public interface ParametricPrivilegedExceptionAction<T, P> {
+public interface ParametricPrivilegedExceptionAction<T, P> extends ExceptionFunction<P, T, Exception> {
+    default T apply(P p) throws Exception {
+        return run(p);
+    }
 
     /**
      * Perform the action.
