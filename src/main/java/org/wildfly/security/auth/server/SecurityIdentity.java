@@ -73,12 +73,16 @@ public final class SecurityIdentity implements PermissionVerifier {
     private final PermissionVerifier verifier;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
+        this(securityDomain, principal, realmInfo, authorizationIdentity, roleMappers, NO_PEER_IDENTITIES);
+    }
+
+    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final PeerIdentity[] peerIdentities) {
         this.securityDomain = securityDomain;
         this.principal = principal;
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
         this.roleMappers = roleMappers;
-        this.peerIdentities = NO_PEER_IDENTITIES;
+        this.peerIdentities = peerIdentities;
         this.creationTime = Instant.now();
         this.verifier = securityDomain.mapPermissions(this);
     }
@@ -126,6 +130,10 @@ public final class SecurityIdentity implements PermissionVerifier {
 
     AuthorizationIdentity getAuthorizationIdentity() {
         return authorizationIdentity;
+    }
+
+    PeerIdentity[] getPeerIdentities() {
+        return peerIdentities;
     }
 
     /**
