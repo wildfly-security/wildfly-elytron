@@ -68,6 +68,13 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
     private final boolean includeCharset;
     private final String realm;
 
+    /**
+     * Construct a new instance of {@code BasicAuthenticationMechanism}.
+     *
+     * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
+     * @param realm the realm name to include in the challenge to the client.
+     * @param includeCharset should the charset be incuded in the challenge.
+     */
     BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String realm, final boolean includeCharset) {
         checkNotNullParam("callbackHandler", callbackHandler);
 

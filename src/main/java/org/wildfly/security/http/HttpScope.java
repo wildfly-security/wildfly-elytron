@@ -30,8 +30,6 @@ import java.util.function.Consumer;
  */
 public interface HttpScope {
 
-    // TODO - Lazy HTTP session creation.
-
     /**
      * Get the ID of this scope or (@code null} if IDs are not supported for this scope.
      *

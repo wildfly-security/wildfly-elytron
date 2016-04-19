@@ -51,15 +51,26 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
 
     private final CallbackHandler callbackHandler;
 
+    /**
+     * Construct a new instance of the {@code ClientCertAuthenticationMechanism} mechanism.
+     *
+     * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
+     */
     ClientCertAuthenticationMechanism(CallbackHandler callbackHandler) {
         this.callbackHandler = callbackHandler;
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#getMechanismName()
+     */
     @Override
     public String getMechanismName() {
         return CLIENT_CERT_NAME;
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(org.wildfly.security.http.HttpServerRequest)
+     */
     @Override
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
         SSLSession sslSession = request.getSSLSession();
@@ -127,7 +138,7 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             throw new HttpAuthenticationException(e);
         }
 
-        // Note: We deliberately do not cache this latest SecurityIdentity in the session - many web apps could be deployed,
+        // Note: We deliberately do not cache this latest SecurityIdentity in the session - many web applications could be deployed,
         // each with a different security domain.
 
     }

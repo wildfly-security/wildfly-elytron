@@ -37,7 +37,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 
 /**
- *
+ * A {@link HttpServerAuthenticationMechanismFactory} that loads factories from a supplied array of {@link Provider} instances.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
@@ -47,14 +47,25 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
 
     private final Supplier<Provider[]> providers;
 
+    /**
+     * Construct a new instance of {@code SecurityProviderServerMechanismFactory}.
+     *
+     * @param providers a {@link Supplier<Provider>} to supply the providers to use for locating the factories.
+     */
     public SecurityProviderServerMechanismFactory(Supplier<Provider[]> providers) {
         this.providers = checkNotNullParam("providers", providers);
     }
 
+    /**
+     * Construct a new instance which uses the globally registered {@link Provider} instances.
+     */
     public SecurityProviderServerMechanismFactory() {
         this(Security::getProviders);
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
         Set<String> mechanismNames = new LinkedHashSet<>();
@@ -76,6 +87,9 @@ public final class SecurityProviderServerMechanismFactory implements HttpServerA
         return mechanismNames.toArray(new String[mechanismNames.size()]);
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         for (Provider current : providers.get()) {

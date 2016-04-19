@@ -35,6 +35,9 @@ public interface HttpServerAuthenticationMechanism {
     /**
      * Evaluate the current request and attempt to authenticate if appropriate.
      *
+     * The mechanism should call the appropriate callback methods on the {link HttpServerResponse} to both indicate the outcome
+     * of the evaluation and to register any {@link HttpServerMechanismsResponder} as required.
+     *
      * @param request representation of the HTTP request.
      * @throws HttpAuthenticationException if there is an internal failure handling the authentication.
      */
