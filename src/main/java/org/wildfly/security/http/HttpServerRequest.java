@@ -68,10 +68,6 @@ public interface HttpServerRequest extends HttpServerScopes {
 
     void authenticationInProgress(final HttpServerMechanismsResponder responder);
 
-    default void authenticationInProgress() {
-        authenticationInProgress(null);
-    }
-
     void authenticationComplete(SecurityIdentity securityIdentity, final HttpServerMechanismsResponder responder);
 
     default void authenticationComplete(SecurityIdentity securityIdentity) {
