@@ -169,7 +169,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
@@ -230,7 +230,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
@@ -311,7 +311,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
@@ -434,7 +434,7 @@ public final class ElytronXmlParser {
                         gotConfig = true;
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
                         final char[] password = parseClearPassword(reader);
-                        configuration = () -> parentConfig.create().useKeyStoreCredential(new PasswordEntry(ClearPassword.createRaw("clear", password)));
+                        configuration = () -> parentConfig.create().usePassword(ClearPassword.createRaw("clear", password));
                         break;
                     }
                     case "set-authorization-name": {
@@ -518,7 +518,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
@@ -598,7 +598,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
@@ -726,7 +726,7 @@ public final class ElytronXmlParser {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 switch (reader.getNamespaceURI()) {
-                    case "urn:elytron:1.0": break;
+                    case NS_ELYTRON_1_0: break;
                     default: throw reader.unexpectedElement();
                 }
                 switch (reader.getLocalName()) {
