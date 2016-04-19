@@ -373,7 +373,12 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             throw new UnsupportedCredentialTypeException(resolveCredentialClassName(credentialType));
         }
         if (storage.get(credentialAlias) != null) {
-            storage.remove(credentialAlias);
+            if (!reloadable) {
+                storage.remove(credentialAlias);
+                storeToFile();
+            } else {
+                throw log.reloadablecredentialStoreIsReadOnly(storeName);
+            }
         }
     }
 
