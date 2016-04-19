@@ -40,7 +40,6 @@ import javax.security.sasl.RealmCallback;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
@@ -105,13 +104,13 @@ public final class ServerAuthenticationContext {
         State oldState;
         oldState = stateRef.get();
         if (oldState.getId() > REALM_ID) {
-            throw ElytronMessages.log.alreadyComplete();
+            throw log.alreadyComplete();
         }
         final CompleteState completeState = new CompleteState(domain.getAnonymousSecurityIdentity());
         while (! stateRef.compareAndSet(oldState, completeState)) {
             oldState = stateRef.get();
             if (oldState.getId() > REALM_ID) {
-                throw ElytronMessages.log.alreadyComplete();
+                throw log.alreadyComplete();
             }
         }
     }
@@ -131,7 +130,7 @@ public final class ServerAuthenticationContext {
         State oldState = stateRef.get();
         // early detection
         if (oldState.isDone()) {
-            throw ElytronMessages.log.alreadyComplete();
+            throw log.alreadyComplete();
         }
         final SecurityDomain domain = this.domain;
         final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
@@ -171,7 +170,7 @@ public final class ServerAuthenticationContext {
             while (! stateRef.compareAndSet(oldState, newState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
-                    throw ElytronMessages.log.alreadyComplete();
+                    throw log.alreadyComplete();
                 } else if (oldState.getId() == ASSIGNED_ID) {
                     if (! oldState.getAuthenticationPrincipal().equals(principal)) {
                         throw log.nameAlreadySet();
@@ -198,7 +197,7 @@ public final class ServerAuthenticationContext {
         Assert.checkNotNullParam("principal", principal);
         String name = domain.getPrincipalDecoder().getName(principal);
         if (name == null) {
-            throw ElytronMessages.log.unrecognizedPrincipalType(principal);
+            throw log.unrecognizedPrincipalType(principal);
         }
         setAuthenticationName(name);
     }
@@ -274,10 +273,10 @@ public final class ServerAuthenticationContext {
         do {
             oldState = stateRef.get();
             if (oldState.isDone()) {
-                throw ElytronMessages.log.alreadyComplete();
+                throw log.alreadyComplete();
             }
             if (! oldState.isStarted()) {
-                throw ElytronMessages.log.noAuthenticationInProgress();
+                throw log.noAuthenticationInProgress();
             }
         } while (!stateRef.compareAndSet(oldState, FAILED));
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
@@ -300,13 +299,13 @@ public final class ServerAuthenticationContext {
     public boolean authorize() throws RealmUnavailableException, IllegalStateException {
         State oldState = stateRef.get();
         if (oldState.isDone()) {
-            throw ElytronMessages.log.alreadyComplete();
+            throw log.alreadyComplete();
         }
         if (oldState.getId() == AUTHORIZED_ID) {
             return true;
         }
         if (oldState.getId() < ASSIGNED_ID) {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
@@ -325,14 +324,14 @@ public final class ServerAuthenticationContext {
             while (! stateRef.compareAndSet(oldState, authorizedState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
-                    throw ElytronMessages.log.alreadyComplete();
+                    throw log.alreadyComplete();
                 }
                 if (oldState.getId() == AUTHORIZED_ID) {
                     // one way or another, we were already authorized
                     return true;
                 }
                 if (oldState.getId() < ASSIGNED_ID) {
-                    throw ElytronMessages.log.noAuthenticationInProgress();
+                    throw log.noAuthenticationInProgress();
                 }
                 assert oldState.getId() == ASSIGNED_ID;
                 // it is impossible for the assigned state to change its identity
@@ -372,10 +371,10 @@ public final class ServerAuthenticationContext {
         for (;;) {
             oldState = stateRef.get();
             if (oldState.isDone()) {
-                throw ElytronMessages.log.alreadyComplete();
+                throw log.alreadyComplete();
             }
             if (! oldState.isStarted()) {
-                throw ElytronMessages.log.noAuthenticationInProgress();
+                throw log.noAuthenticationInProgress();
             }
             // having passed authorization above, it is impossible to be in any other state than authorized at this point
             assert oldState.getId() == AUTHORIZED_ID;
@@ -452,7 +451,7 @@ public final class ServerAuthenticationContext {
     public void succeed() throws IllegalStateException, RealmUnavailableException {
         State oldState = stateRef.get();
         if (oldState.isDone()) {
-            throw ElytronMessages.log.alreadyComplete();
+            throw log.alreadyComplete();
         }
         if (! oldState.isStarted()) {
             // no authentication actually happened; we're anonymous
@@ -466,10 +465,10 @@ public final class ServerAuthenticationContext {
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
             if (oldState.isDone()) {
-                throw ElytronMessages.log.alreadyComplete();
+                throw log.alreadyComplete();
             }
             if (! oldState.isStarted()) {
-                throw ElytronMessages.log.noAuthenticationInProgress();
+                throw log.noAuthenticationInProgress();
             }
         }
         SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizationIdentity, null, null));
@@ -618,7 +617,7 @@ public final class ServerAuthenticationContext {
         State oldState = stateRef.get();
         // early detection
         if (oldState.isDone()) {
-            throw ElytronMessages.log.alreadyComplete();
+            throw log.alreadyComplete();
         }
         final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
         final MechanismRealmConfiguration mechanismRealmConfiguration;
@@ -936,15 +935,15 @@ public final class ServerAuthenticationContext {
         abstract int getId();
 
         MechanismRealmConfiguration getMechanismRealmConfiguration() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         SecurityIdentity getAuthorizedIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         Principal getAuthenticationPrincipal() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
@@ -956,23 +955,23 @@ public final class ServerAuthenticationContext {
         }
 
         <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         RealmInfo getRealmInfo() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         RealmIdentity getRealmIdentity() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         SecurityDomain getSecurityDomain() {
-            throw ElytronMessages.log.noAuthenticationInProgress();
+            throw log.noAuthenticationInProgress();
         }
 
         abstract boolean isDone();
