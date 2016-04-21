@@ -65,7 +65,7 @@ public class CompatibilityClientTest extends BaseTestCase {
     private SaslClient client;
 
     private void mockNonce(final String nonce){
-        new MockUp<AbstractDigestMechanism>(){
+        new MockUp<DigestSaslClient>(){
             @Mock
             byte[] generateNonce(){
                 return nonce.getBytes(StandardCharsets.UTF_8);
