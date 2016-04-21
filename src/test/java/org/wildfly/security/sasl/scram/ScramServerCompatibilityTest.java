@@ -101,12 +101,12 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //        c="n,,"
         message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=rmF9pqV8S7suAoZWja4dJRkFsKQ=", new String(message));
+        assertEquals("v=rmF9pqV8S7suAoZWja4dJRkFsKQ=", new String(message, StandardCharsets.UTF_8));
 
         assertTrue(saslServer.isComplete());
         assertEquals("user", saslServer.getAuthorizationID());
@@ -149,7 +149,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
                 .getBytes(StandardCharsets.UTF_8);
@@ -184,12 +184,12 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,a=user,n=admin,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //         c="n,a=user,"
         message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=sSem09WkghLJOV/Ma5LjIqUtoo8=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=xzTfS758LckdRoQKN/ZFY/Bauxo=", new String(message));
+        assertEquals("v=xzTfS758LckdRoQKN/ZFY/Bauxo=", new String(message, StandardCharsets.UTF_8));
 
         assertTrue(saslServer.isComplete());
         assertEquals(saslServer.getAuthorizationID(), "user");
@@ -211,7 +211,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,a=user,n=admin,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //         c="n,a=user,"
         message = "c=bixhPXVzZXIs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=sSem09WkghLJOV/Ma5LjIqUtoo8=".getBytes(StandardCharsets.UTF_8);
@@ -238,7 +238,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //         c="n,a=admin,"
         message = "c=bixhPWFkbWluLA==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=NdEpo1qMJaCn9xyrYplfuEKubqQ="
@@ -266,7 +266,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //        c="n,,"
         message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
@@ -294,7 +294,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawLdifferentNonceVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawLdifferentNonceVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         message = "c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts="
                 .getBytes(StandardCharsets.UTF_8);
@@ -332,11 +332,11 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "n,a=strange=3Dadmin=2C \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301,n=strange=3Duser=2C \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         message = "c=bixhPXN0cmFuZ2U9M0RhZG1pbj0yQyBc0LjkvaDwn4KhMeKBhDIgzIEs,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=ZWpaDThPD7OErOz+6Q+n9msNhMQ=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=k1gWxds6QP4FdDqmsLtaxIl38NM=", new String(message));
+        assertEquals("v=k1gWxds6QP4FdDqmsLtaxIl38NM=", new String(message, StandardCharsets.UTF_8));
         assertTrue(saslServer.isComplete());
     }
 
@@ -354,12 +354,12 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
                         .build();
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //        c="y,,"
         message = "c=eSws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=BjZF5dV+EkD3YCb3pH3IP8riMGw=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=dsprQ5R2AGYt1kn4bQRwTAE0PTU=", new String(message));
+        assertEquals("v=dsprQ5R2AGYt1kn4bQRwTAE0PTU=", new String(message, StandardCharsets.UTF_8));
         assertTrue(saslServer.isComplete());
     }
 
@@ -414,12 +414,12 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //         c="p=same-type,\00\2C\FF"
         message = "c=cD1zYW1lLXR5cGUsLAAs/w==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=H8mpU86Osa2lDJvFElvu7qys7LE=".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("v=/ubKPpiyDhhCsgGfHqY5Xm7msjM=", new String(message));
+        assertEquals("v=/ubKPpiyDhhCsgGfHqY5Xm7msjM=", new String(message, StandardCharsets.UTF_8));
         assertTrue(saslServer.isComplete());
     }
 
@@ -446,7 +446,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
 
         byte[] message = "p=same-type,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
-        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message));
+        assertEquals("r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096", new String(message, StandardCharsets.UTF_8));
 
         //         c="p=same-type,\00\2C\FF"
         message = "c=cD1zYW1lLXR5cGUsLAAs/w==,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=H8mpU86Osa2lDJvFElvu7qys7LE=".getBytes(StandardCharsets.UTF_8);
