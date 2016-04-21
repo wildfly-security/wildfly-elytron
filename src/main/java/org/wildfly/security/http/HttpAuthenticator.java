@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLSession;
@@ -215,6 +216,21 @@ public class HttpAuthenticator {
         @Override
         public Map<String, List<String>> getParameters() {
             return httpExchangeSpi.getRequestParameters();
+        }
+
+        @Override
+        public Set<String> getParameterNames() {
+            return httpExchangeSpi.getRequestParameterNames();
+        }
+
+        @Override
+        public List<String> getParameterValues(String name) {
+            return httpExchangeSpi.getRequestParameterValues(name);
+        }
+
+        @Override
+        public String getFirstParameterValue(String name) {
+            return httpExchangeSpi.getFirstRequestParameterValue(name);
         }
 
         @Override

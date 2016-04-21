@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
@@ -157,11 +158,39 @@ public interface HttpServerRequest extends HttpServerScopes {
     String getRequestURI();
 
     /**
-     * Returns the query parameters.
+     * Returns the parameters received in the current request.
      *
-     * @return the query parameters
+     * These parameters will be from both the query string and the form data when available.
+     *
+     * Where a parameter is named both in the query string and in the form data the {@link List} will contain the values from the query
+     * string followed by the values from the form data.
+     *
+     * @return the parameters received in the current request.
      */
     Map<String, List<String>> getParameters();
+
+    /**
+     * Returns the names of all parameters either from the query string or from the form data where available.
+     *
+     * @return the names of all parameters either from the query string or from the form data where available.
+     */
+    Set<String> getParameterNames();
+
+    /**
+     * Return the values for the parameter specified, where a parameter is specified both in the query string and in the form data the query string values will be first in the {@link List}.
+     *
+     * @param name the name of the desires parameter values.
+     * @return the values for the parameter specified or {@code null} if the parameter was not in the request.
+     */
+    List<String> getParameterValues(String name);
+
+    /**
+     * Get the first value for the parameter specified.
+     *
+     * @param name the name of the parameter the first value is required for.
+     * @return the first value of the named parameter or {@code null} if the paramter is not available.
+     */
+    String getFirstParameterValue(String name);
 
     /**
      * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request, or an empty {@link List} if no cookies were included in the request.
