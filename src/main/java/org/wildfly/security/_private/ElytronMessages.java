@@ -459,6 +459,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1109, value = "Ldap-backed realm is not configured to allow iterate over identities (iterator filter has to be set)")
     RealmUnavailableException ldapRealmNotConfiguredToSupportIteratingOverIdentities();
 
+    @Message(id = 1110, value = "Peer identities were already set on this context")
+    IllegalStateException peerIdentitiesAlreadySet();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

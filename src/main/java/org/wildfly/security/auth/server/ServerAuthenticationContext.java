@@ -25,6 +25,7 @@ import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -51,6 +52,7 @@ import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
+import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -155,7 +157,7 @@ public final class ServerAuthenticationContext {
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         // name should remain
-        if (oldState.getId() == ASSIGNED_ID) {
+        if ((oldState.getId() == ASSIGNED_ID) || (oldState.getId() == PEER_IDENTITIES_ID)) {
             if (! oldState.getAuthenticationPrincipal().getName().equals(name) || oldState.getMechanismRealmConfiguration() != mechanismRealmConfiguration) {
                 throw log.nameAlreadySet();
             }
@@ -171,7 +173,7 @@ public final class ServerAuthenticationContext {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
                     throw log.alreadyComplete();
-                } else if (oldState.getId() == ASSIGNED_ID) {
+                } else if ((oldState.getId() == ASSIGNED_ID) || (oldState.getId() == PEER_IDENTITIES_ID)) {
                     if (! oldState.getAuthenticationPrincipal().equals(principal)) {
                         throw log.nameAlreadySet();
                     }
@@ -282,7 +284,7 @@ public final class ServerAuthenticationContext {
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
         final SecurityRealm securityRealm = oldState.getRealmInfo().getSecurityRealm();
         SecurityRealm.safeHandleRealmEvent(securityRealm, new RealmFailedAuthenticationEvent(realmIdentity, null, null));
-        if (oldState.getId() == ASSIGNED_ID) {
+        if ((oldState.getId() == ASSIGNED_ID) || (oldState.getId() == PEER_IDENTITIES_ID)) {
             realmIdentity.dispose();
         }
     }
@@ -307,6 +309,11 @@ public final class ServerAuthenticationContext {
         if (oldState.getId() < ASSIGNED_ID) {
             throw log.noAuthenticationInProgress();
         }
+        if (oldState.getId() == ASSIGNED_ID) {
+            // Transition to the peer identities state and then start again
+            setPeerIdentities(SecurityIdentity.NO_PEER_IDENTITIES);
+            return authorize();
+        }
 
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
         if (! realmIdentity.exists()) {
@@ -315,12 +322,13 @@ public final class ServerAuthenticationContext {
 
         final RealmInfo realmInfo = oldState.getRealmInfo();
         final Principal authenticationPrincipal = oldState.getAuthenticationPrincipal();
+        final PeerIdentity[] peerIdentities = oldState.getPeerIdentities();
 
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
 
-        final SecurityIdentity securityIdentity = domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers()));
+        final SecurityIdentity securityIdentity = domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), peerIdentities));
         if (securityIdentity.implies(new LoginPermission())) {
-            final AuthorizedState authorizedState = new AuthorizedState(securityIdentity, authenticationPrincipal, realmInfo, realmIdentity, oldState.getMechanismRealmConfiguration());
+            final AuthorizedState authorizedState = new AuthorizedState(securityIdentity, authenticationPrincipal, realmInfo, realmIdentity, oldState.getMechanismRealmConfiguration(), peerIdentities);
             while (! stateRef.compareAndSet(oldState, authorizedState)) {
                 oldState = stateRef.get();
                 if (oldState.isDone()) {
@@ -333,8 +341,8 @@ public final class ServerAuthenticationContext {
                 if (oldState.getId() < ASSIGNED_ID) {
                     throw log.noAuthenticationInProgress();
                 }
-                assert oldState.getId() == ASSIGNED_ID;
-                // it is impossible for the assigned state to change its identity
+                assert oldState.getId() == PEER_IDENTITIES_ID;
+                // it is impossible for the peer identities state to change its realm identity
                 assert oldState.getRealmIdentity() == realmIdentity;
             }
             SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentitySuccessfulAuthorizationEvent(securityIdentity.getAuthorizationIdentity(), securityIdentity.getPrincipal(), authenticationPrincipal));
@@ -382,6 +390,7 @@ public final class ServerAuthenticationContext {
             final SecurityDomain domain = this.domain;
             final MechanismConfiguration mechanismConfiguration = this.mechanismConfiguration;
             final MechanismRealmConfiguration mechanismRealmConfiguration = oldState.getMechanismRealmConfiguration();
+            final PeerIdentity[] peerIdentities = oldState.getPeerIdentities();
 
             // rewrite the proposed name
             name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
@@ -414,7 +423,7 @@ public final class ServerAuthenticationContext {
                     return false;
                 }
                 final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-                final SecurityIdentity newIdentity = domain.transform(new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers()));
+                final SecurityIdentity newIdentity = domain.transform(new SecurityIdentity(domain, principal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), peerIdentities));
 
                 // make sure the new identity is authorized
                 if (! newIdentity.implies(new LoginPermission())) {
@@ -422,7 +431,7 @@ public final class ServerAuthenticationContext {
                 }
 
                 // create and switch to new authorized state
-                newState = new ServerAuthenticationContext.AuthorizedState(newIdentity, principal, realmInfo, realmIdentity, mechanismRealmConfiguration);
+                newState = new ServerAuthenticationContext.AuthorizedState(newIdentity, principal, realmInfo, realmIdentity, mechanismRealmConfiguration, peerIdentities);
 
                 // if we do not succeed, try it again...
                 if (stateRef.compareAndSet(oldState, newState)) {
@@ -458,10 +467,17 @@ public final class ServerAuthenticationContext {
             anonymous();
             return;
         }
+        if (oldState.getId() == ASSIGNED_ID) {
+            // Transition to the peer identities state and then start again
+            setPeerIdentities(SecurityIdentity.NO_PEER_IDENTITIES);
+            succeed();
+            return;
+        }
+
         RealmInfo realmInfo = oldState.getRealmInfo();
         final RealmIdentity realmIdentity = oldState.getRealmIdentity();
         final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
-        CompleteState newState = new CompleteState(domain.transform(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity, domain.getCategoryRoleMappers())));
+        CompleteState newState = new CompleteState(domain.transform(new SecurityIdentity(domain, oldState.getAuthenticationPrincipal(), realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), oldState.getPeerIdentities())));
         while (! stateRef.compareAndSet(oldState, newState)) {
             oldState = stateRef.get();
             if (oldState.isDone()) {
@@ -643,8 +659,14 @@ public final class ServerAuthenticationContext {
                 anonymous();
                 return true;
             }
-            // We have access to a Principal so set it to cause the state transitions and start again.
+            // We have access to a Principal so set it to cause the state transitions
             setAuthenticationPrincipal(evidencePrincipal);
+
+            // Set any peer identities associated with the evidence and then start again
+            if (evidence instanceof SecurityIdentityEvidence) {
+                final PeerIdentity[] evidencePeerIdentities = ((SecurityIdentityEvidence) evidence).getSecurityIdentity().getPeerIdentities();
+                setPeerIdentities(evidencePeerIdentities);
+            }
             return verifyEvidence(evidence);
         }
 
@@ -724,6 +746,7 @@ public final class ServerAuthenticationContext {
                     // fall thru to exception
                 }
                 case ASSIGNED_ID:
+                case PEER_IDENTITIES_ID:
                 case AUTHORIZED_ID: {
                     throw log.mechRealmAlreadySelected();
                 }
@@ -736,6 +759,67 @@ public final class ServerAuthenticationContext {
                 }
             }
         } while (! stateRef.compareAndSet(oldState, newState));
+    }
+
+    /**
+     * Set the peer identities for this authentication. If it is too late to set peer identities,
+     * then an exception is thrown.
+     *
+     * @param peerIdentities the peer identities
+     * @throws IllegalStateException if it is too late to set the peer identities
+     */
+    public void setPeerIdentities(PeerIdentity[] peerIdentities) throws IllegalStateException {
+        State oldState = stateRef.get();
+        if (oldState.isDone()) {
+            throw log.alreadyComplete();
+        }
+        if (oldState.getId() < ASSIGNED_ID) {
+            throw log.noAuthenticationInProgress();
+        }
+        if (oldState.getId() == PEER_IDENTITIES_ID) {
+            if (! Arrays.equals(oldState.getPeerIdentities(), peerIdentities)) {
+                throw log.peerIdentitiesAlreadySet();
+            }
+            // No further action needed
+            return;
+        }
+        if (oldState.getId() == AUTHORIZED_ID) {
+            throw log.peerIdentitiesAlreadySet();
+        }
+
+        final RealmIdentity realmIdentity = oldState.getRealmIdentity();
+        final PeerIdentitiesAssignedState newState = new PeerIdentitiesAssignedState(oldState.getSecurityDomain(), oldState.getAuthenticationPrincipal(),
+                oldState.getRealmInfo(), realmIdentity, oldState.getMechanismRealmConfiguration(), peerIdentities);
+        boolean ok = false;
+        try {
+            while (! stateRef.compareAndSet(oldState, newState)) {
+                oldState = stateRef.get();
+                if (oldState.isDone()) {
+                    throw log.alreadyComplete();
+                }
+                if (oldState.getId() < ASSIGNED_ID) {
+                    throw log.noAuthenticationInProgress();
+                }
+                if (oldState.getId() == AUTHORIZED_ID) {
+                    throw log.peerIdentitiesAlreadySet();
+                }
+                assert oldState.getId() == ASSIGNED_ID || oldState.getId() == PEER_IDENTITIES_ID;
+                if (oldState.getId() == PEER_IDENTITIES_ID) {
+                    if (! Arrays.equals(oldState.getPeerIdentities(), peerIdentities)) {
+                        throw log.peerIdentitiesAlreadySet();
+                    }
+                    // No further action needed
+                    return;
+                }
+                // It is impossible for the assigned state or peer identities state to change its realm identity
+                assert oldState.getRealmIdentity() == realmIdentity;
+            }
+            ok = true;
+        } finally {
+            if (! ok) {
+                realmIdentity.dispose();
+            }
+        }
     }
 
     CallbackHandler createCallbackHandler() {
@@ -928,8 +1012,9 @@ public final class ServerAuthenticationContext {
     private static final int FAILED_ID = 1;
     private static final int REALM_ID = 2;
     private static final int ASSIGNED_ID = 3;
-    private static final int AUTHORIZED_ID = 4;
-    private static final int COMPLETE_ID = 5;
+    private static final int PEER_IDENTITIES_ID = 4;
+    private static final int AUTHORIZED_ID = 5;
+    private static final int COMPLETE_ID = 6;
 
     abstract static class State {
         abstract int getId();
@@ -971,6 +1056,10 @@ public final class ServerAuthenticationContext {
         }
 
         SecurityDomain getSecurityDomain() {
+            throw log.noAuthenticationInProgress();
+        }
+
+        PeerIdentity[] getPeerIdentities() {
             throw log.noAuthenticationInProgress();
         }
 
@@ -1041,13 +1130,15 @@ public final class ServerAuthenticationContext {
         private final RealmInfo realmInfo;
         private final RealmIdentity realmIdentity;
         private final MechanismRealmConfiguration mechanismRealmConfiguration;
+        private final PeerIdentity[] peerIdentities;
 
-        AuthorizedState(final SecurityIdentity securityIdentity, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration) {
+        AuthorizedState(final SecurityIdentity securityIdentity, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration, final PeerIdentity[] peerIdentities) {
             this.securityIdentity = securityIdentity;
             this.authenticationPrincipal = authenticationPrincipal;
             this.realmInfo = realmInfo;
             this.realmIdentity = realmIdentity;
             this.mechanismRealmConfiguration = mechanismRealmConfiguration;
+            this.peerIdentities = peerIdentities;
         }
 
         @Override
@@ -1103,6 +1194,11 @@ public final class ServerAuthenticationContext {
         @Override
         SecurityDomain getSecurityDomain() {
             return securityIdentity.getSecurityDomain();
+        }
+
+        @Override
+        PeerIdentity[] getPeerIdentities() {
+            return peerIdentities;
         }
 
         @Override
@@ -1207,6 +1303,89 @@ public final class ServerAuthenticationContext {
         @Override
         MechanismRealmConfiguration getMechanismRealmConfiguration() {
             return mechanismRealmConfiguration;
+        }
+
+        @Override
+        boolean isDone() {
+            return false;
+        }
+
+        @Override
+        boolean isStarted() {
+            return true;
+        }
+    }
+
+    static final class PeerIdentitiesAssignedState extends State {
+        private final SecurityDomain domain;
+        private final Principal authenticationPrincipal;
+        private final RealmInfo realmInfo;
+        private final RealmIdentity realmIdentity;
+        private final MechanismRealmConfiguration mechanismRealmConfiguration;
+        private final PeerIdentity[] peerIdentities;
+
+        PeerIdentitiesAssignedState(final SecurityDomain domain, final Principal authenticationPrincipal, final RealmInfo realmInfo, final RealmIdentity realmIdentity, final MechanismRealmConfiguration mechanismRealmConfiguration, final PeerIdentity[] peerIdentities) {
+            this.domain = domain;
+            this.authenticationPrincipal = authenticationPrincipal;
+            this.realmInfo = realmInfo;
+            this.realmIdentity = realmIdentity;
+            this.mechanismRealmConfiguration = mechanismRealmConfiguration;
+            this.peerIdentities = peerIdentities;
+        }
+
+        @Override
+        int getId() {
+            return PEER_IDENTITIES_ID;
+        }
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            return mechanismRealmConfiguration;
+        }
+
+        @Override
+        Principal getAuthenticationPrincipal() {
+            return authenticationPrincipal;
+        }
+
+        @Override
+        SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return realmIdentity.getCredentialAcquireSupport(credentialType, algorithmName);
+        }
+
+        @Override
+        SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            return SecurityIdentityEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+        }
+
+        @Override
+        <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
+            return realmIdentity.getCredential(credentialType, algorithmName);
+        }
+
+        @Override
+        boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
+            return checkEvidenceTrusted(realmIdentity, domain, evidence) || realmIdentity.verifyEvidence(evidence);
+        }
+
+        @Override
+        RealmInfo getRealmInfo() {
+            return realmInfo;
+        }
+
+        @Override
+        RealmIdentity getRealmIdentity() {
+            return realmIdentity;
+        }
+
+        @Override
+        SecurityDomain getSecurityDomain() {
+            return domain;
+        }
+
+        @Override
+        PeerIdentity[] getPeerIdentities() {
+            return peerIdentities;
         }
 
         @Override
