@@ -55,5 +55,6 @@ public class X500PrincipalUtilTest {
         System.out.println(principal.getName());
         assertArrayEquals(new String[] { "peanut", "butter", "com", "faux" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC));
         assertArrayEquals(new String[] { "banana", "apple" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_CN));
+        assertArrayEquals(new String[] { "faux", "com", "butter", "peanut" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC, true));
     }
 }

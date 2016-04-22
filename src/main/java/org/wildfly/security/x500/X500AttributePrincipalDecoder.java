@@ -35,6 +35,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
     private final String oid;
     private final String joiner;
     private final int maximumSegments;
+    private final boolean reverse;
 
     /**
      * Construct a new instance.  A joining string of "." is assumed.
@@ -42,7 +43,17 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param oid the OID of the attribute to map
      */
     public X500AttributePrincipalDecoder(final String oid) {
-        this(oid, ".", Integer.MAX_VALUE);
+        this(oid, false);
+    }
+
+    /**
+     * Construct a new instance.  A joining string of "." is assumed.
+     *
+     * @param oid the OID of the attribute to map
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     */
+    public X500AttributePrincipalDecoder(final String oid, final boolean reverse) {
+        this(oid, ".", Integer.MAX_VALUE, reverse);
     }
 
     /**
@@ -52,7 +63,18 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param maximumSegments the maximum number of occurrences of the attribute to map
      */
     public X500AttributePrincipalDecoder(final String oid, final int maximumSegments) {
-        this(oid, ".", maximumSegments);
+        this(oid, maximumSegments, false);
+    }
+
+    /**
+     * Construct a new instance.  A joining string of "." is assumed.
+     *
+     * @param oid the OID of the attribute to map
+     * @param maximumSegments the maximum number of occurrences of the attribute to map
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     */
+    public X500AttributePrincipalDecoder(final String oid, final int maximumSegments, final boolean reverse) {
+        this(oid, ".", maximumSegments, reverse);
     }
 
     /**
@@ -62,7 +84,18 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param joiner the joining string
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner) {
-        this(oid, joiner, Integer.MAX_VALUE);
+        this(oid, joiner, false);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param oid the OID of the attribute to map
+     * @param joiner the joining string
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     */
+    public X500AttributePrincipalDecoder(final String oid, final String joiner, final boolean reverse) {
+        this(oid, joiner, Integer.MAX_VALUE, reverse);
     }
 
     /**
@@ -73,9 +106,22 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param maximumSegments the maximum number of occurrences of the attribute to map
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final int maximumSegments) {
+        this(oid, joiner, maximumSegments, false);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param oid the OID of the attribute to map
+     * @param joiner the joining string
+     * @param maximumSegments the maximum number of occurrences of the attribute to map
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     */
+    public X500AttributePrincipalDecoder(final String oid, final String joiner, final int maximumSegments, final boolean reverse) {
         this.oid = oid;
         this.joiner = joiner;
         this.maximumSegments = maximumSegments;
+        this.reverse = reverse;
     }
 
     public String getName(final Principal principal) {
@@ -83,7 +129,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
         if (x500Principal == null) {
             return null;
         }
-        final String[] values = X500PrincipalUtil.getAttributeValues(x500Principal, oid);
+        final String[] values = X500PrincipalUtil.getAttributeValues(x500Principal, oid, reverse);
         if (values.length == 0) {
             return null;
         } else {

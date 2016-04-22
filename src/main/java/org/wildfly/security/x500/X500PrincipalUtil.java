@@ -61,6 +61,19 @@ public final class X500PrincipalUtil {
      * @return the list of values associated with the OID
      */
     public static String[] getAttributeValues(X500Principal principal, String oid) {
+        return getAttributeValues(principal, oid, false);
+    }
+
+    /**
+     * Get all the values of the attribute with the given OID in the given principal.  This includes occurrences within
+     * multi-valued RDNs.
+     *
+     * @param principal the principal to examine
+     * @param oid the OID whose values are to be returned
+     * @param reverse {@code true} if the values in the returned list should be in reverse order
+     * @return the list of values associated with the OID
+     */
+    public static String[] getAttributeValues(X500Principal principal, String oid, boolean reverse) {
         final ASN1Decoder decoder = new DERDecoder(principal.getEncoded());
         String[] strings = NO_STRINGS;
         int len = 0;
@@ -105,8 +118,16 @@ public final class X500PrincipalUtil {
             throw log.unexpectedTrailingGarbageInX500principal();
         }
         String[] result = len == 0 ? NO_STRINGS : new String[len];
-        for (int i = 0; i < len; i ++) {
-            result[len - i - 1] = strings[i];
+        if (! reverse) {
+            // The attribute values will be in the same order they appear in the string representation of the X.500 principal
+            for (int i = 0; i < len; i++) {
+                result[len - i - 1] = strings[i];
+            }
+        } else {
+            // The attribute values will be in reverse order
+            for (int i = 0; i < len; i++) {
+                result[i] = strings[i];
+            }
         }
         return result;
     }
