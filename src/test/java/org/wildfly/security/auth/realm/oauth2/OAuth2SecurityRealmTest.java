@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -183,7 +184,7 @@ public class OAuth2SecurityRealmTest {
     }
 
     private void configureReplayTokenIntrospection() {
-        configureTokenIntrospectionEndpoint(s -> Json.createReader(new ByteArrayInputStream(s.getBytes())).readObject());
+        configureTokenIntrospectionEndpoint(s -> Json.createReader(new ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8))).readObject());
     }
 
     private void configureTokenIntrospectionEndpoint(Function<String, JsonObject> introspector){
