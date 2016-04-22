@@ -187,7 +187,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
             sb.append(", ").append(CHARSET).append("=\"UTF-8\"");
         }
         response.addResponseHeader(WWW_AUTHENTICATE, sb.toString());
-        response.setResponseCode(UNAUTHORIZED);
+        response.setStatusCode(UNAUTHORIZED);
     }
 
 }

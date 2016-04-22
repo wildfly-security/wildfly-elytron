@@ -1152,8 +1152,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* http package */
 
-    @Message(id = 6000, value = "Response code can not be set at this time.")
-    IllegalStateException responseCodeNotNow();
+    @Message(id = 6000, value = "Status code can not be set at this time.")
+    IllegalStateException statusCodeNotNow();
 
     @Message(id = 6001, value = "An incorrectly formatted '%s'header was encountered.")
     String incorrectlyFormattedHeader(String heanderName);

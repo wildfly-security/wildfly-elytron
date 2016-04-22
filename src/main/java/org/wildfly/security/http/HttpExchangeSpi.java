@@ -110,13 +110,13 @@ public interface HttpExchangeSpi {
     }
 
     /**
-     * Set the required response code.
+     * Set the required status code.
      *
      * This method is only expected to be called once after a response code has been selected.
      *
-     * @param responseCode the desired response code.
+     * @param statusCode the desired status code.
      */
-    void setResponseCode(final int responseCode);
+    void setStatusCode(final int statusCode);
 
     /**
      * Notification that authentication has been completed for a specific identity using a specific authentication mechanism.
