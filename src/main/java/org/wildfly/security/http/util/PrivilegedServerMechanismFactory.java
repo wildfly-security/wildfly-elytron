@@ -42,21 +42,40 @@ public final class PrivilegedServerMechanismFactory implements HttpServerAuthent
     private final HttpServerAuthenticationMechanismFactory delegate;
     private final AccessControlContext accessControlContext;
 
+    /**
+     * Construct a new instance of {@code PrivilegedServerMechanismFactory}.
+     *
+     * @param delegate the {@link HttpServerAuthenticationMechanismFactory} to delegate to.
+     * @param accessControlContext the {@link AccessControlContext} to use for calls to the wrapped factory and subsequently any
+     *        mechanism created by that factory.
+     */
     public PrivilegedServerMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate,
             final AccessControlContext accessControlContext) {
         this.delegate = checkNotNullParam("delegate", delegate);
         this.accessControlContext = checkNotNullParam("accessControlContext", accessControlContext);
     }
 
+    /**
+     * Construct a new instance of {@code PrivilegedServerMechanismFactory} using the current {@link AccessControlContext} for
+     * calls to the wrapped factory
+     *
+     * @param delegate the {@link HttpServerAuthenticationMechanismFactory} to delegate to.
+     */
     public PrivilegedServerMechanismFactory(final HttpServerAuthenticationMechanismFactory delegate) {
         this(delegate, AccessController.getContext());
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
         return delegate.getMechanismNames(properties);
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
             CallbackHandler callbackHandler) throws HttpAuthenticationException {

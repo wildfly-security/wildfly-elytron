@@ -63,6 +63,9 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
         this(ServiceLoader.load(HttpServerAuthenticationMechanismFactory.class, checkNotNullParam("classLoader", classLoader)));
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
+     */
     @Override
     public String[] getMechanismNames(Map<String, ?> properties) {
         Set<String> mechanismNames = new LinkedHashSet<>();
@@ -80,6 +83,9 @@ public final class ServiceLoaderServerMechanismFactory implements HttpServerAuth
         return mechanismNames.toArray(new String[mechanismNames.size()]);
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String, java.util.Map, javax.security.auth.callback.CallbackHandler)
+     */
     @Override
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties,
             CallbackHandler callbackHandler) throws HttpAuthenticationException {

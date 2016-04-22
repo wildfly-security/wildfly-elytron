@@ -27,28 +27,36 @@ import java.io.IOException;
 public class HttpAuthenticationException extends IOException {
 
     /**
-     *
+     * Constructs a new {@code HttpAuthenticationException}. The message is left blank ({@code null}),
+     * and no cause is specified.
      */
     public HttpAuthenticationException() {
     }
 
     /**
-     * @param message
+     * Constructs a new {@code HttpAuthenticationException}. with the message provided,
+     * and no cause is specified.
+     *
+     * @param message the message for this {@code HttpAuthenticationException}.
      */
     public HttpAuthenticationException(String message) {
         super(message);
     }
 
     /**
-     * @param cause
+     * Constructs a new {@code HttpAuthenticationException} with an initial cause.
+     *
+     * @param cause the cause for this {@code HttpAuthenticationException}.
      */
     public HttpAuthenticationException(Throwable cause) {
         super(cause);
     }
 
     /**
-     * @param message
-     * @param cause
+     * Constructs a new {@code HttpAuthenticationException} with an initial message and cause.
+     *
+     * @param message the message for this {@code HttpAuthenticationException}.
+     * @param cause the cause for this {@code HttpAuthenticationException}.
      */
     public HttpAuthenticationException(String message, Throwable cause) {
         super(message, cause);

@@ -54,16 +54,29 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
     private final HttpServerAuthenticationMechanism mechanism;
     private final AccessControlContext accessControlContext;
 
+    /**
+     * Construct a new instance of {@code PrivilegedServerMechanism}.
+     *
+     * @param mechanism the mechanism to be wrapped.
+     * @param accessControlContext the {@link AccessControlContext} to use for calls to the wrapped mechanism.
+     */
     PrivilegedServerMechanism(final HttpServerAuthenticationMechanism mechanism, final AccessControlContext accessControlContext) {
         this.mechanism = checkNotNullParam("mechanism", mechanism);
         this.accessControlContext = checkNotNullParam("accessControlContext", accessControlContext);
     }
 
+
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#getMechanismName()
+     */
     @Override
     public String getMechanismName() {
         return mechanism.getMechanismName();
     }
 
+    /**
+     * @see org.wildfly.security.http.HttpServerAuthenticationMechanism#evaluateRequest(org.wildfly.security.http.HttpServerRequest)
+     */
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
         try {

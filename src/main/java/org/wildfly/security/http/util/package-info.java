@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,22 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.wildfly.security.http;
 
 /**
- * A responder for sending either authentication challenges or responses as a result of successful authentication back to the
- * calling client.
+ * Package containing utility classes for HTTP authentication, predominantly special factory wrappers.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-@FunctionalInterface
-public interface HttpServerMechanismsResponder {
-
-    /**
-     * Send any required response to the client.
-     *
-     * @param response the {@link HttpServerResponse} to use to set the response / challenge.
-     */
-    void sendResponse(HttpServerResponse response);
-
-}
+package org.wildfly.security.http.util;

@@ -60,32 +60,83 @@ public interface HttpServerRequest extends HttpServerScopes {
      */
     SSLSession getSSLSession();
 
+    /**
+     * Notification from the mechanism to state no authentication is in progress whilst evaluating the current request.
+     *
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
+     */
     void noAuthenticationInProgress(final HttpServerMechanismsResponder responder);
 
+    /**
+     * Notification from the mechanism to state no authentication is in progress whilst evaluating the current request.
+     *
+     * If this form is called no challenge is expected from this mechanism.
+     */
     default void noAuthenticationInProgress() {
         noAuthenticationInProgress(null);
     }
 
+    /**
+     * Notification that this mechanism has commenced but not completed authentication, typically because another challenge /
+     * response round trip is required.
+     *
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
+     */
     void authenticationInProgress(final HttpServerMechanismsResponder responder);
 
-    default void authenticationInProgress() {
-        authenticationInProgress(null);
-    }
-
+    /**
+     * Notification that authentication is now complete.
+     *
+     * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a response.
+     */
     void authenticationComplete(SecurityIdentity securityIdentity, final HttpServerMechanismsResponder responder);
 
+    /**
+     * Notification that authentication is now complete.
+     *
+     * If this form is called no response is expected from this mechanism.
+     *
+     * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
+     */
     default void authenticationComplete(SecurityIdentity securityIdentity) {
         authenticationComplete(securityIdentity, null);
     }
 
+    /**
+     * Notification that authentication failes.
+     *
+     * @param message an error message describing the failure.
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
+     */
     void authenticationFailed(final String message, final HttpServerMechanismsResponder responder);
 
+    /**
+     * Notification that authentication failes.
+     *
+     * If this form is called no challenge is expected from this mechanism.
+     *
+     * @param message an error message describing the failure.
+     */
     default void authenticationFailed(final String message) {
         authenticationFailed(message, null);
     }
 
+    /**
+     * Notification to indicate that this was a bad request.
+     *
+     * @param failure an {@link HttpAuthenticationException} to describe the error.
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a challenge should it be required.
+     */
     void badRequest(HttpAuthenticationException failure, final HttpServerMechanismsResponder responder);
 
+    /**
+     * Notification to indicate that this was a bad request.
+     *
+     * If this form is called no challenge is expected from this mechanism.
+     *
+     * @param failure an {@link HttpAuthenticationException} to describe the error.
+     */
     default void badRequest(HttpAuthenticationException failure) {
         badRequest(failure, null);
     }
@@ -113,9 +164,9 @@ public interface HttpServerRequest extends HttpServerScopes {
     Map<String, List<String>> getParameters();
 
     /**
-     * Returns an array containing all of the {@link HttpServerCookie} objects the client sent with this request. This method returns <code>null</code> if no cookies were sent.
+     * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request, or an empty {@link List} if no cookies were included in the request.
      *
-     * @return an array of all the cookies included with this request, or <code>null</code> if the request has no cookies
+     * @return a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request, or an empty {@link List} if no cookies were included in the request.
      */
     List<HttpServerCookie> getCookies();
 

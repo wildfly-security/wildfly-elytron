@@ -38,6 +38,11 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
 
     private final HttpServerAuthenticationMechanismFactory[] factories;
 
+    /**
+     * Construct an instance of {@code AggregateServerMechanismFactory} with an array of factories to aggregate.
+     *
+     * @param factories the array of factories to aggregate.
+     */
     public AggregateServerMechanismFactory(HttpServerAuthenticationMechanismFactory... factories) {
         this.factories = checkNotNullParam("factories", factories);
     }
@@ -58,7 +63,7 @@ public final class AggregateServerMechanismFactory implements HttpServerAuthenti
     }
 
     /**
-     * @throws HttpAuthenticationException
+     * @throws HttpAuthenticationException if there is a problem creating the mechanism instance.
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#createAuthenticationMechanism(java.lang.String,
      *      java.util.Map, javax.security.auth.callback.CallbackHandler)
      */

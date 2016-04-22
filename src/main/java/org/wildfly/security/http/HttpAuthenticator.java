@@ -74,6 +74,11 @@ public class HttpAuthenticator {
         return authenticated;
     }
 
+    /**
+     * Construct and return a new {@code Builder} to configure and create an instance of {@code HttpAuthenticator}.
+     *
+     * @return a new {@code Builder} to configure and create an instance of {@code HttpAuthenticator}.
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -232,9 +237,6 @@ public class HttpAuthenticator {
             httpExchangeSpi.addResponseHeader(headerName, headerValue);
         }
 
-        /**
-         * @see org.wildfly.security.http.HttpServerExchange#setResponseCode(int)
-         */
         @Override
         public void setResponseCode(int responseCode) {
             if (responseCodeAllowed == false) {
@@ -258,6 +260,9 @@ public class HttpAuthenticator {
 
     }
 
+    /**
+     * A {@code Builder} to configure and create an instance of {@code HttpAuthenticator}.
+     */
     public static class Builder {
 
         private Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
@@ -298,8 +303,8 @@ public class HttpAuthenticator {
          * Sets if authentication is required for the current request, if not required mechanisms will be called to be given the
          * opportunity to authenticate
          *
-         * @param required
-         * @return
+         * @param required is authentication required for the current request?
+         * @return the {@link Builder} to allow method call chaining.
          */
         public Builder setRequired(final boolean required) {
             this.required = required;
@@ -314,8 +319,8 @@ public class HttpAuthenticator {
          *
          * This setting has no effect when required is set to {@code true}, in that case all failures will result in a client
          *
-         * @param ignoreOptionalFailures
-         * @return
+         * @param ignoreOptionalFailures should mechanism failures be ignored if authentication is optional.
+         * @return the {@link Builder} to allow method call chaining.
          */
         public Builder setIgnoreOptionalFailures(final boolean ignoreOptionalFailures) {
             this.ignoreOptionalFailures = ignoreOptionalFailures;
@@ -323,6 +328,11 @@ public class HttpAuthenticator {
             return this;
         }
 
+        /**
+         * Build the new {@code HttpAuthenticator} instance.
+         *
+         * @return the new {@code HttpAuthenticator} instance.
+         */
         public HttpAuthenticator build() {
             return new HttpAuthenticator(mechanismSupplier, httpExchangeSpi, required, ignoreOptionalFailures);
         }
