@@ -176,12 +176,12 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
-        public Map<String, String[]> getParameters() {
+        public Map<String, List<String>> getParameters() {
             return wrapped.getParameters();
         }
 
         @Override
-        public HttpServerCookie[] getCookies() {
+        public List<HttpServerCookie> getCookies() {
             return wrapped.getCookies();
         }
 

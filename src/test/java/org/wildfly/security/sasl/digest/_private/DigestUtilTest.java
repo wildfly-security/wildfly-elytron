@@ -50,11 +50,11 @@ public class DigestUtilTest {
     public void testH_A1() throws Exception {
         assertEquals("a2549853149b0536f01f0b850c643c57", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
-                "OA6MG9tEQGm2hh".getBytes(), "OA6MHXh6VqTrRk".getBytes(), null, StandardCharsets.UTF_8)).hexEncode().drainToString());
+                "OA6MG9tEQGm2hh".getBytes(StandardCharsets.UTF_8), "OA6MHXh6VqTrRk".getBytes(StandardCharsets.UTF_8), null, StandardCharsets.UTF_8)).hexEncode().drainToString());
 
         assertEquals("7f94ea5b1eb1b0573cca321e2b517b63", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "chris", "elwood.innosoft.com", "secret".toCharArray()),
-                "OA9BSXrbuRhWay".getBytes(), "OA9BSuZWMSpW8m".getBytes(), "chris", StandardCharsets.UTF_8)).hexEncode().drainToString());
+                "OA9BSXrbuRhWay".getBytes(StandardCharsets.UTF_8), "OA9BSuZWMSpW8m".getBytes(StandardCharsets.UTF_8), "chris", StandardCharsets.UTF_8)).hexEncode().drainToString());
 
         assertEquals("4e863a809aa7f7cc191be93705967394", ByteIterator.ofBytes(
                 H_A1(md, userRealmPasswordDigest(md, "\u0438\u4F60\uD83C\uDCA1", "realm.\u0438\u4F60\uD83C\uDCA1.com", "\u0438\u4F60\uD83C\uDCA1".toCharArray()),
@@ -68,29 +68,29 @@ public class DigestUtilTest {
 
         assertEquals("d388dad90d4bbd760a152321f2143af7", new String(
                 digestResponse(md, CodePointIterator.ofString("a2549853149b0536f01f0b850c643c57").hexDecode().drain(),
-                "OA6MG9tEQGm2hh".getBytes(), 1, "OA6MHXh6VqTrRk".getBytes(), null, "auth", "imap/elwood.innosoft.com", true)));
+                "OA6MG9tEQGm2hh".getBytes(StandardCharsets.UTF_8), 1, "OA6MHXh6VqTrRk".getBytes(StandardCharsets.UTF_8), null, "auth", "imap/elwood.innosoft.com", true), StandardCharsets.UTF_8));
 
         assertEquals("ea40f60335c427b5527b84dbabcdfffd", new String(
                 digestResponse(md, CodePointIterator.ofString("a2549853149b0536f01f0b850c643c57").hexDecode().drain(),
-                "OA6MG9tEQGm2hh".getBytes(), 1, "OA6MHXh6VqTrRk".getBytes(), null, "auth", "imap/elwood.innosoft.com", false)));
+                "OA6MG9tEQGm2hh".getBytes(StandardCharsets.UTF_8), 1, "OA6MHXh6VqTrRk".getBytes(StandardCharsets.UTF_8), null, "auth", "imap/elwood.innosoft.com", false), StandardCharsets.UTF_8));
 
         assertEquals("aa4e81f1c6656350f7bce05d436665de", new String(
                 digestResponse(md, CodePointIterator.ofString("7f94ea5b1eb1b0573cca321e2b517b63").hexDecode().drain(),
-                "OA9BSXrbuRhWay".getBytes(), 1, "OA9BSuZWMSpW8m".getBytes(), "chris", "auth", "acap/elwood.innosoft.com", true)));
+                "OA9BSXrbuRhWay".getBytes(StandardCharsets.UTF_8), 1, "OA9BSuZWMSpW8m".getBytes(StandardCharsets.UTF_8), "chris", "auth", "acap/elwood.innosoft.com", true), StandardCharsets.UTF_8));
 
         assertEquals("af3ca83a805d4cfa00675a17315475c4", new String(
                 digestResponse(md, CodePointIterator.ofString("7f94ea5b1eb1b0573cca321e2b517b63").hexDecode().drain(),
-                "OA9BSXrbuRhWay".getBytes(), 1, "OA9BSuZWMSpW8m".getBytes(), "chris", "auth", "acap/elwood.innosoft.com", false)));
+                "OA9BSXrbuRhWay".getBytes(StandardCharsets.UTF_8), 1, "OA9BSuZWMSpW8m".getBytes(StandardCharsets.UTF_8), "chris", "auth", "acap/elwood.innosoft.com", false), StandardCharsets.UTF_8));
 
     }
 
     @Test
     /* LHEX = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "a" | "b" | "c" | "d" | "e" | "f" */
     public void testConvertToHexBytesWithLeftPadding() throws Exception {
-        assertEquals("00000001", new String(convertToHexBytesWithLeftPadding(1, 8)));
-        assertEquals("0000002", new String(convertToHexBytesWithLeftPadding(2, 7)));
-        assertEquals("000a", new String(convertToHexBytesWithLeftPadding(10, 4)));
-        assertEquals("abc", new String(convertToHexBytesWithLeftPadding(0xABC, 3)));
+        assertEquals("00000001", new String(convertToHexBytesWithLeftPadding(1, 8), StandardCharsets.UTF_8));
+        assertEquals("0000002", new String(convertToHexBytesWithLeftPadding(2, 7), StandardCharsets.UTF_8));
+        assertEquals("000a", new String(convertToHexBytesWithLeftPadding(10, 4), StandardCharsets.UTF_8));
+        assertEquals("abc", new String(convertToHexBytesWithLeftPadding(0xABC, 3), StandardCharsets.UTF_8));
     }
 
     @Test

@@ -71,6 +71,26 @@ public interface HttpScope {
     }
 
     /**
+     * Get the attachment previously associated with the key specified on this scope and cast it to the type specified.
+     *
+     * This method will only return a value if the attachment exists AND can be cast to the desired type, otherwise it returns
+     * {@code null}.
+     *
+     * @param key the key used to store the attachment on this scope.
+     * @param type the desired type of the attachment.
+     * @return the value associated with the scope or {@code null} if no association exists or if it could not be converted to
+     *         the requested type.
+     * @throws UnsupportedOperationException if attachments are not supported.
+     */
+    default <T> T getAttachment(final String key, final Class<T> type) {
+        Object attachment = getAttachment(key);
+        if (attachment != null && type.isInstance(attachment)) {
+            return type.cast(attachment);
+        }
+        return null;
+    }
+
+    /**
      * Is invalidation supported for this scope?
      *
      * @return {@code true} if this scope supports invalidation, {@code false} otherwise.

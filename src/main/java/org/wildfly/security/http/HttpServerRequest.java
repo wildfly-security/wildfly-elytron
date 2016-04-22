@@ -161,14 +161,14 @@ public interface HttpServerRequest extends HttpServerScopes {
      *
      * @return the query parameters
      */
-    Map<String, String[]> getParameters();
+    Map<String, List<String>> getParameters();
 
     /**
-     * Returns an array containing all of the {@link HttpServerCookie} objects the client sent with this request. This method returns <code>null</code> if no cookies were sent.
+     * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request, or an empty {@link List} if no cookies were included in the request.
      *
-     * @return an array of all the cookies included with this request, or <code>null</code> if the request has no cookies
+     * @return a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request, or an empty {@link List} if no cookies were included in the request.
      */
-    HttpServerCookie[] getCookies();
+    List<HttpServerCookie> getCookies();
 
     /**
      * Returns the request input stream.

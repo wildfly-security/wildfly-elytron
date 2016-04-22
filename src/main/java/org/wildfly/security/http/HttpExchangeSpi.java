@@ -156,18 +156,18 @@ public interface HttpExchangeSpi {
     String getRequestURI();
 
     /**
-     * Returns the  query parameters.
+     * Returns the query parameters.
      *
      * @return the query parameters
      */
-    Map<String,String[]> getRequestParameters();
+    Map<String, List<String>> getRequestParameters();
 
     /**
-     * Returns an array containing all of the {@link HttpServerCookie} objects the client sent with this request. This method returns <code>null</code> if no cookies were sent.
+     * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request. This method should returnan empty {@code List} if no cookies were sent.
      *
-     * @return an array of all the cookies included with this request, or <code>null</code> if the request has no cookies
+     * @return a {@link List} of all the cookies included with this request.
      */
-    HttpServerCookie[] getCookies();
+    List<HttpServerCookie> getCookies();
 
     /**
      * Returns the request input stream.

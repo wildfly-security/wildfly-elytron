@@ -18,13 +18,17 @@
 
 package org.wildfly.security.auth.client;
 
+import static java.security.AccessController.doPrivileged;
+
 import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
-import org.wildfly.common.Assert;
+import org.wildfly.common.context.ContextManager;
+import org.wildfly.common.context.Contextual;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.Version;
@@ -32,21 +36,16 @@ import org.wildfly.security.Version;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class AuthenticationContext {
+public final class AuthenticationContext implements Contextual<AuthenticationContext> {
+
+    private static final ContextManager<AuthenticationContext> CONTEXT_MANAGER = new ContextManager<AuthenticationContext>(AuthenticationContext.class);
+
+    private static final Supplier<AuthenticationContext> SUPPLIER = doPrivileged((PrivilegedAction<Supplier<AuthenticationContext>>) CONTEXT_MANAGER::getPrivilegedSupplier);
 
     static {
         Version.getVersion();
+        CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultAuthenticationContextProvider.DEFAULT);
     }
-
-    private static final ThreadLocal<AuthenticationContext> currentIdentityContext = new ThreadLocal<AuthenticationContext>() {
-        protected AuthenticationContext initialValue() {
-            try {
-                return DefaultAuthenticationContextProvider.DEFAULT;
-            } catch (ExceptionInInitializerError error) {
-                throw new InvalidAuthenticationConfigurationException(error.getCause());
-            }
-        }
-    };
 
     private final RuleConfigurationPair[] rules;
 
@@ -81,7 +80,7 @@ public final class AuthenticationContext {
      * @return the current thread's captured authentication context
      */
     public static AuthenticationContext captureCurrent() {
-        return currentIdentityContext.get();
+        return SUPPLIER.get();
     }
 
     /**
@@ -271,17 +270,7 @@ public final class AuthenticationContext {
      * @return the action return value
      */
     public <T> T run(PrivilegedAction<T> action) {
-        Assert.checkNotNullParam("action", action);
-        final AuthenticationContext oldSubj = currentIdentityContext.get();
-        if (oldSubj == this) {
-            return action.run();
-        }
-        currentIdentityContext.set(this);
-        try {
-            return action.run();
-        } finally {
-            currentIdentityContext.set(oldSubj);
-        }
+        return runAction(action);
     }
 
     /**
@@ -293,29 +282,7 @@ public final class AuthenticationContext {
      * @throws PrivilegedActionException if the action throws an exception
      */
     public <T> T run(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
-        Assert.checkNotNullParam("action", action);
-        final AuthenticationContext oldSubj = currentIdentityContext.get();
-        if (oldSubj == this) {
-            try {
-                return action.run();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
-            }
-        }
-        currentIdentityContext.set(this);
-        try {
-            try {
-                return action.run();
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
-            }
-        } finally {
-            currentIdentityContext.set(oldSubj);
-        }
+        return runExceptionAction(action);
     }
 
     /**
@@ -328,17 +295,7 @@ public final class AuthenticationContext {
      * @return the action return value
      */
     public <T, P> T run(P parameter, ParametricPrivilegedAction<T, P> action) {
-        Assert.checkNotNullParam("action", action);
-        final AuthenticationContext oldSubj = currentIdentityContext.get();
-        if (oldSubj == this) {
-            return action.run(parameter);
-        }
-        currentIdentityContext.set(this);
-        try {
-            return action.run(parameter);
-        } finally {
-            currentIdentityContext.set(oldSubj);
-        }
+        return runFunction(action, parameter);
     }
 
     /**
@@ -352,28 +309,23 @@ public final class AuthenticationContext {
      * @throws PrivilegedActionException if the action throws an exception
      */
     public <T, P> T run(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
-        Assert.checkNotNullParam("action", action);
-        final AuthenticationContext oldSubj = currentIdentityContext.get();
-        if (oldSubj == this) {
-            try {
-                return action.run(parameter);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
-            }
-        }
-        currentIdentityContext.set(this);
         try {
-            try {
-                return action.run(parameter);
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new PrivilegedActionException(e);
-            }
-        } finally {
-            currentIdentityContext.set(oldSubj);
+            return runExFunction(action, parameter);
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
         }
+    }
+
+    public ContextManager<AuthenticationContext> getInstanceContextManager() {
+        return getContextManager();
+    }
+
+    /**
+     * Get the context manager for authentication contexts.
+     *
+     * @return the context manager for authentication contexts (not {@code null})
+     */
+    public static ContextManager<AuthenticationContext> getContextManager() {
+        return CONTEXT_MANAGER;
     }
 }

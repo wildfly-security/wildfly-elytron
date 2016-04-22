@@ -18,6 +18,8 @@
 
 package org.wildfly.security;
 
+import java.util.function.Function;
+
 /**
  * A privileged action which accepts a parameter.
  *
@@ -27,7 +29,10 @@ package org.wildfly.security;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @FunctionalInterface
-public interface ParametricPrivilegedAction<T, P> {
+public interface ParametricPrivilegedAction<T, P> extends Function<P, T> {
+    default T apply(P p) {
+        return run(p);
+    }
 
     /**
      * Perform the action.

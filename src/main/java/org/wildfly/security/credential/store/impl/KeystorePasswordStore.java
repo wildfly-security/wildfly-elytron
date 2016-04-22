@@ -285,6 +285,8 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             char[] adminKeyPassword = convertPassword(loadPassword(pwdSpec, KEY_PASSWORD, attributes));
             adminKeyProtectionParam = new KeyStore.PasswordProtection(adminKeyPassword);
             destroyPassword(adminKeyPassword);
+        } else {
+            adminKeyProtectionParam = new KeyStore.PasswordProtection(storagePassword);
         }
 
         readKeyStore();
@@ -371,7 +373,12 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             throw new UnsupportedCredentialTypeException(resolveCredentialClassName(credentialType));
         }
         if (storage.get(credentialAlias) != null) {
-            storage.remove(credentialAlias);
+            if (!reloadable) {
+                storage.remove(credentialAlias);
+                storeToFile();
+            } else {
+                throw log.reloadablecredentialStoreIsReadOnly(storeName);
+            }
         }
     }
 
@@ -386,9 +393,11 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
 
     private synchronized void storeToFile() throws CredentialStoreException, UnsupportedCredentialTypeException {
 
+        boolean storeFileActuallyCreated = false;
         if (createStorage && !storeFile.exists()) {
             try {
                 storeFile.createNewFile();
+                storeFileActuallyCreated = true;
             } catch (IOException e) {
                 throw log.cannotWriteStorageFie(storeFile.getAbsolutePath(), storeName);
             }
@@ -403,6 +412,10 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             }
             credentialStore.store(new FileOutputStream(storeFile), storagePassword);
         } catch (GeneralSecurityException | IOException e) {
+            if (storeFileActuallyCreated) {
+                // remove store file as something went wrong and next use will end up with empty file causing exception
+                storeFile.delete();
+            }
             throw new CredentialStoreException(e);
         }
     }

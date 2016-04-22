@@ -213,12 +213,12 @@ public class HttpAuthenticator {
         }
 
         @Override
-        public Map<String, String[]> getParameters() {
+        public Map<String, List<String>> getParameters() {
             return httpExchangeSpi.getRequestParameters();
         }
 
         @Override
-        public HttpServerCookie[] getCookies() {
+        public List<HttpServerCookie> getCookies() {
             return httpExchangeSpi.getCookies();
         }
 
