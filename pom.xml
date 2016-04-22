@@ -69,8 +69,7 @@
         <version.org.jboss.spec.jboss-json-api_1.0_spec>1.0.0.Final</version.org.jboss.spec.jboss-json-api_1.0_spec>
         <version.org.kohsuke.metainf-services.metainf-services>1.7</version.org.kohsuke.metainf-services.metainf-services>
         <version.junit.junit>4.11</version.junit.junit>
-        <!-- to make testsuite work on JDK9 newer version of jmockit is required but that one doesn't work properly with mocking AbstractDigestMechanism -->
-        <version.jmockit>1.10</version.jmockit>
+        <version.jmockit>1.22</version.jmockit>
         <version.hsqldb>2.3.1</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>

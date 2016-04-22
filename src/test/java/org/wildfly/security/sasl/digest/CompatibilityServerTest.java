@@ -57,7 +57,7 @@ public class CompatibilityServerTest extends BaseTestCase {
     protected static final String QOP_PROPERTY = "javax.security.sasl.qop";
 
     private void mockNonce(final String nonce){
-        new MockUp<AbstractDigestMechanism>(){
+        new MockUp<DigestSaslServer>(){
             @Mock
             byte[] generateNonce(){
                 return nonce.getBytes(StandardCharsets.UTF_8);
