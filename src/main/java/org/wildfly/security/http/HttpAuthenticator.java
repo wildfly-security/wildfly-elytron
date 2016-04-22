@@ -88,8 +88,8 @@ public class HttpAuthenticator {
         private volatile HttpServerAuthenticationMechanism currentMechanism;
 
         private volatile boolean authenticationAttempted = false;
-        private volatile int responseCode = -1;
-        private volatile boolean responseCodeAllowed = false;
+        private volatile int statusCode = -1;
+        private volatile boolean statusCodeAllowed = false;
         private volatile List<HttpServerMechanismsResponder> responders;
         private volatile HttpServerMechanismsResponder successResponder;
 
@@ -111,16 +111,16 @@ public class HttpAuthenticator {
                 currentMechanism = null;
 
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
-                    responseCodeAllowed = true;
+                    statusCodeAllowed = true;
                     if (responders.size() > 0) {
                         responders.forEach((HttpServerMechanismsResponder r) -> r.sendResponse(this) );
-                        if (responseCode > 0) {
-                            httpExchangeSpi.setResponseCode(responseCode);
+                        if (statusCode > 0) {
+                            httpExchangeSpi.setStatusCode(statusCode);
                         } else {
-                            httpExchangeSpi.setResponseCode(OK);
+                            httpExchangeSpi.setStatusCode(OK);
                         }
                     } else {
-                        httpExchangeSpi.setResponseCode(FORBIDDEN);
+                        httpExchangeSpi.setStatusCode(FORBIDDEN);
                     }
                     return false;
                 }
@@ -238,13 +238,13 @@ public class HttpAuthenticator {
         }
 
         @Override
-        public void setResponseCode(int responseCode) {
-            if (responseCodeAllowed == false) {
-                throw log.responseCodeNotNow();
+        public void setStatusCode(int statusCode) {
+            if (statusCodeAllowed == false) {
+                throw log.statusCodeNotNow();
             }
 
-            if (this.responseCode < 0 || responseCode != OK) {
-                this.responseCode = responseCode;
+            if (this.statusCode < 0 || statusCode != OK) {
+                this.statusCode = statusCode;
             }
         }
 

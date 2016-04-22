@@ -35,13 +35,13 @@ public interface HttpServerResponse {
     void addResponseHeader(final String headerName, final String headerValue);
 
     /**
-     * Set the desired response code for the current request.
+     * Set the desired status code for the current request.
      *
      * Note: If multiple mechanisms call this method then a resolution process will begin to decide which one to use.
      *
-     * @param responseCode the response code.
+     * @param statusCode the response code.
      */
-    void setResponseCode(final int responseCode);
+    void setStatusCode(final int statusCode);
 
     /**
      * Sets a response cookie
