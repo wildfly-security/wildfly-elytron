@@ -99,6 +99,16 @@ public interface PrincipalDecoder {
     }
 
     /**
+     * Create a principal decoder which always returns the same name.
+     *
+     * @param name the name to return
+     * @return the constant decoder
+     */
+    static PrincipalDecoder constant(String name) {
+        return principal -> name;
+    }
+
+    /**
      * The default decoder, which just calls {@link Principal#getName()}.
      */
     PrincipalDecoder DEFAULT = Principal::getName;
