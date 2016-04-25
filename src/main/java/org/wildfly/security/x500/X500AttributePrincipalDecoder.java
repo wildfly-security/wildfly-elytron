@@ -34,6 +34,7 @@ import org.wildfly.security.auth.server.PrincipalDecoder;
 public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
     private final String oid;
     private final String joiner;
+    private final int startSegment;
     private final int maximumSegments;
     private final boolean reverse;
 
@@ -53,7 +54,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
     public X500AttributePrincipalDecoder(final String oid, final boolean reverse) {
-        this(oid, ".", Integer.MAX_VALUE, reverse);
+        this(oid, ".", 0, Integer.MAX_VALUE, reverse);
     }
 
     /**
@@ -74,7 +75,30 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
     public X500AttributePrincipalDecoder(final String oid, final int maximumSegments, final boolean reverse) {
-        this(oid, ".", maximumSegments, reverse);
+        this(oid, ".", 0, maximumSegments, reverse);
+    }
+
+    /**
+     * Construct a new instance.  A joining string of "." is assumed.
+     *
+     * @param oid the OID of the attribute to map
+     * @param startSegment the 0-based starting occurrence of the attribute to map
+     * @param maximumSegments the maximum number of occurrences of the attribute to map
+     */
+    public X500AttributePrincipalDecoder(final String oid, final int startSegment, final int maximumSegments) {
+        this(oid, startSegment, maximumSegments, false);
+    }
+
+    /**
+     * Construct a new instance.  A joining string of "." is assumed.
+     *
+     * @param oid the OID of the attribute to map
+     * @param startSegment the 0-based starting occurrence of the attribute to map
+     * @param maximumSegments the maximum number of occurrences of the attribute to map
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     */
+    public X500AttributePrincipalDecoder(final String oid, final int startSegment, final int maximumSegments, final boolean reverse) {
+        this(oid, ".", startSegment, maximumSegments, reverse);
     }
 
     /**
@@ -95,7 +119,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final boolean reverse) {
-        this(oid, joiner, Integer.MAX_VALUE, reverse);
+        this(oid, joiner, 0, Integer.MAX_VALUE, reverse);
     }
 
     /**
@@ -106,7 +130,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param maximumSegments the maximum number of occurrences of the attribute to map
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final int maximumSegments) {
-        this(oid, joiner, maximumSegments, false);
+        this(oid, joiner, 0, maximumSegments, false);
     }
 
     /**
@@ -114,12 +138,14 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      *
      * @param oid the OID of the attribute to map
      * @param joiner the joining string
+     * @param startSegment the 0-based starting occurrence of the attribute to map
      * @param maximumSegments the maximum number of occurrences of the attribute to map
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
-    public X500AttributePrincipalDecoder(final String oid, final String joiner, final int maximumSegments, final boolean reverse) {
+    public X500AttributePrincipalDecoder(final String oid, final String joiner, final int startSegment, final int maximumSegments, final boolean reverse) {
         this.oid = oid;
         this.joiner = joiner;
+        this.startSegment = startSegment;
         this.maximumSegments = maximumSegments;
         this.reverse = reverse;
     }
@@ -133,7 +159,7 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
         if (values.length == 0) {
             return null;
         } else {
-            return Arrays.stream(values).limit(maximumSegments).collect(Collectors.joining(joiner));
+            return Arrays.stream(values).skip(startSegment).limit(maximumSegments).collect(Collectors.joining(joiner));
         }
     }
 }

@@ -41,4 +41,20 @@ public class X500AttributePrincipalDecoderTest {
         decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, true);
         assertEquals("example", decoder.getName(principal)); // single attribute value
     }
+
+    @Test
+    public void testDecodeAttributeWithSubrange() {
+        X500Principal principal;
+        X500AttributePrincipalDecoder decoder;
+        principal = new X500Principal("cn=bob.smith,dc=example,dc=redhat,dc=com");
+        decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 1); // single attribute value
+        assertEquals("redhat", decoder.getName(principal));
+
+        decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 2);
+        assertEquals("redhat.com", decoder.getName(principal));
+
+        principal = new X500Principal("dc=com,dc=redhat,dc=jboss,dc=example,ou=people,cn=bob.smith");
+        decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 3, true); // reverse order
+        assertEquals("jboss.redhat.com", decoder.getName(principal));
+    }
 }
