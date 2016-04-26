@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
@@ -156,14 +157,58 @@ public interface HttpExchangeSpi {
     String getRequestURI();
 
     /**
-     * Returns the query parameters.
+     * Returns the parameters received in the current request.
      *
-     * @return the query parameters
+     * These parameters will be from both the query string and the form data when available.
+     *
+     * Where a parameter is named both in the query string and in the form data the list will contain the values from the query
+     * string followed by the values from the form data.
+     *
+     * @return the parameters received in the current request.
      */
     Map<String, List<String>> getRequestParameters();
 
     /**
-     * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request. This method should returnan empty {@code List} if no cookies were sent.
+     * Returns the names of all parameters either from the query string or from the form data where available.
+     *
+     * @return the names of all parameters either from the query string or from the form data where available.
+     */
+    default Set<String> getRequestParameterNames() {
+        return getRequestParameters().keySet();
+    }
+
+    /**
+     * Return the values for the parameter specified, where a parameter is specified both in the query string and in the form data the query string values will be first in the array.
+     *
+     * @param name the name of the desires parameter values.
+     * @return the values for the parameter specified or {@code null} if the parameter was not in the request.
+     */
+    default List<String> getRequestParameterValues(String name) {
+        Map<String, List<String>> parameters = getRequestParameters();
+        if (parameters != null) {
+            return parameters.get(name);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the first value for the parameter specified.
+     *
+     * @param name the name of the parameter the first value is required for.
+     * @return the first value of the named parameter or {@code null} if the paramter is not available.
+     */
+    default String getFirstRequestParameterValue(String name) {
+        List<String> values = getRequestParameterValues(name);
+        if (values != null && values.size() > 0) {
+            return values.get(0);
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns a {@link List} containing all of the {@link HttpServerCookie} objects the client sent with this request. This method should return an empty {@code List} if no cookies were sent.
      *
      * @return a {@link List} of all the cookies included with this request.
      */

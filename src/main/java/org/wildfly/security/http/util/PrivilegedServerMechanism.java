@@ -30,6 +30,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
@@ -178,6 +179,21 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         @Override
         public Map<String, List<String>> getParameters() {
             return wrapped.getParameters();
+        }
+
+        @Override
+        public Set<String> getParameterNames() {
+            return wrapped.getParameterNames();
+        }
+
+        @Override
+        public List<String> getParameterValues(String name) {
+            return wrapped.getParameterValues(name);
+        }
+
+        @Override
+        public String getFirstParameterValue(String name) {
+            return wrapped.getFirstParameterValue(name);
         }
 
         @Override
