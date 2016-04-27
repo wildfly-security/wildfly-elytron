@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import javax.security.auth.x500.X500Principal;
 
 import org.junit.Test;
+import org.wildfly.security.auth.server.PrincipalDecoder;
 
 /**
  * Tests for the X500AttributePrincipalDecoder.
@@ -56,5 +57,25 @@ public class X500AttributePrincipalDecoderTest {
         principal = new X500Principal("dc=com,dc=redhat,dc=jboss,dc=example,ou=people,cn=bob.smith");
         decoder = new X500AttributePrincipalDecoder(X500.OID_DC, 1, 3, true); // reverse order
         assertEquals("jboss.redhat.com", decoder.getName(principal));
+    }
+
+    @Test
+    public void testDecodeWithConcatenation() {
+        X500Principal principal; new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
+        PrincipalDecoder dcDecoder, dcDecoder1,  cnDecoder, ouDecoder, concatenatingDecoder;
+        principal = new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
+        dcDecoder = new X500AttributePrincipalDecoder(X500.OID_DC);
+        cnDecoder = new X500AttributePrincipalDecoder(X500.OID_CN, 1);
+        concatenatingDecoder = PrincipalDecoder.concatenating(cnDecoder, "@", dcDecoder);
+        assertEquals("bob.smith@example.redhat.com", concatenatingDecoder.getName(principal));
+
+
+        principal = new X500Principal("cn=bob.smith,ou=people,dc=example,dc=redhat");
+        cnDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("cn"), "=", new X500AttributePrincipalDecoder(X500.OID_CN));
+        ouDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("ou"), "=", new X500AttributePrincipalDecoder(X500.OID_OU, 1));
+        dcDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("dc"), "=", new X500AttributePrincipalDecoder(X500.OID_DC, 1));
+        dcDecoder1 = PrincipalDecoder.concatenating(PrincipalDecoder.constant("dc"), "=", new X500AttributePrincipalDecoder(X500.OID_DC, 1, 1));
+        concatenatingDecoder = PrincipalDecoder.concatenating(",", dcDecoder1, dcDecoder, ouDecoder, cnDecoder);
+        assertEquals("dc=redhat,dc=example,ou=people,cn=bob.smith", concatenatingDecoder.getName(principal));
     }
 }

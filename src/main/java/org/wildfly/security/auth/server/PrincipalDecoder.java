@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import java.security.Principal;
+import java.util.StringJoiner;
 
 import org.wildfly.common.Assert;
 
@@ -95,6 +96,31 @@ public interface PrincipalDecoder {
             } else {
                 return formerName + joinString + latterName;
             }
+        };
+    }
+
+    /**
+     * Create a principal decoder that concatenates the results of the given principal decoders in the order in which
+     * they're given. If any decoder is not able to decode the principal, then {@code null} is returned.
+     *
+     * @param joinString the string to use to join the results
+     * @param decoders the principal decoders (must not be {@code null}, cannot have {@code null} elements)
+     * @return the concatenating decoder
+     */
+    static PrincipalDecoder concatenating(final String joinString, final PrincipalDecoder... decoders) {
+        Assert.checkNotNullParam("joinString", joinString);
+        Assert.checkNotNullParam("decoders", decoders);
+        return principal -> {
+            final StringJoiner concatenatedResult = new StringJoiner(joinString);
+            String result;
+            for (PrincipalDecoder decoder : decoders) {
+                result = decoder.getName(principal);
+                if (result == null) {
+                    return null;
+                }
+                concatenatedResult.add(result);
+            }
+            return concatenatedResult.toString();
         };
     }
 
