@@ -129,7 +129,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException noAuthenticationInProgress();
 
     @Message(id = 1004, value = "Authentication already complete on this context")
-    IllegalStateException alreadyComplete();
+    IllegalStateException authenticationAlreadyComplete();
 
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
@@ -466,6 +466,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
     NamingException ldapRealmPagedControlNotProvidedByLdapContext();
+
+    @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
+    IllegalStateException cannotSucceedNotAuthorized();
 
     /* keystore package */
 

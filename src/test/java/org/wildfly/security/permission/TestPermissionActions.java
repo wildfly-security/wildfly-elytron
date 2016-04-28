@@ -28,7 +28,7 @@ import org.junit.Test;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@SuppressWarnings("SpellCheckingInspection")
+@SuppressWarnings({"SpellCheckingInspection", "deprecation", "unused"})
 public class TestPermissionActions {
     enum ActionSetOne {
         foo,

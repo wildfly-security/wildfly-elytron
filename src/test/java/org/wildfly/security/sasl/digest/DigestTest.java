@@ -127,15 +127,12 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange() throws Exception {
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "TestRealm");
-
         SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                 .setUserName("George")
                 .setPassword("gpwd".toCharArray())
-                .setProperties(serverProps)
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestRealm")
                 .build();
 
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestRealm");
@@ -160,6 +157,7 @@ public class DigestTest extends BaseTestCase {
                 .setPassword("gpwd".toCharArray())
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestServer")
                 .build();
 
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
@@ -299,14 +297,14 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testRealmSelection() throws Exception {
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, DigestServerFactory.realmsArrayToProperty(new String[] { "realm1", "second realm", "last\\ " }));
         SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                 .setUserName("George")
                 .setPassword("gpwd".toCharArray())
-                .setProperties(serverProps)
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("realm1")
+                .addMechanismRealm("second realm")
+                .addMechanismRealm("last\\ ")
                 .build();
 
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "last\\ ");
@@ -332,13 +330,13 @@ public class DigestTest extends BaseTestCase {
     @Test
     public void testSuccessfulExchange_PreHashedServer() throws Exception {
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "TestRealm");
         serverProps.put(PRE_DIGESTED_PROPERTY, "true");
         SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                 .setUserName("George")
                 .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
                 .setProperties(serverProps)
                 .setProtocol("TestProtocol")
+                .addMechanismRealm("TestRealm")
                 .setServerName("TestServer")
                 .build();
 
@@ -370,10 +368,11 @@ public class DigestTest extends BaseTestCase {
                 .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestServer"))
                 .setProperties(serverProps)
                 .setProtocol("TestProtocol")
+                .addMechanismRealm("TestServer")
                 .setServerName("TestServer")
                 .build();
 
-        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
+        CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", "TestServer");
 
         SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, "George", "TestProtocol", "TestServer", Collections.<String, Object>emptyMap(), clientCallback);
 
@@ -493,15 +492,12 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchange_PreHashedClient() throws Exception {
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "TestRealm");
-
         SaslServer server = new SaslServerBuilder(DigestServerFactory.class, DIGEST)
                 .setUserName("George")
                 .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestRealm"))
-                .setProperties(serverProps)
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestRealm")
                 .build();
 
         CallbackHandler clientCallback = createDigestPwdClientCallbackHandler("George", "gpwd", "TestRealm", null);
@@ -530,6 +526,7 @@ public class DigestTest extends BaseTestCase {
                 .setPassword(DigestPassword.ALGORITHM_DIGEST_MD5, getDigestKeySpec("George", "gpwd", "TestServer"))
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestRealm")
                 .build();
 
 
@@ -657,6 +654,7 @@ public class DigestTest extends BaseTestCase {
                 .setProperties(serverProps)
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestServer")
                 .build();
 
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);
@@ -688,14 +686,14 @@ public class DigestTest extends BaseTestCase {
      */
     @Test
     public void testSuccessfulExchangeWithPrivacyProtection() throws Exception {
-        testSuccessulExchangeWithPrivacyProtection("3des");
-        testSuccessulExchangeWithPrivacyProtection("des");
-        testSuccessulExchangeWithPrivacyProtection("rc4");
-        testSuccessulExchangeWithPrivacyProtection("rc4-40");
-        testSuccessulExchangeWithPrivacyProtection("rc4-56");
+        testSuccessfulExchangeWithPrivacyProtection("3des");
+        testSuccessfulExchangeWithPrivacyProtection("des");
+        testSuccessfulExchangeWithPrivacyProtection("rc4");
+        testSuccessfulExchangeWithPrivacyProtection("rc4-40");
+        testSuccessfulExchangeWithPrivacyProtection("rc4-56");
     }
 
-    private void testSuccessulExchangeWithPrivacyProtection(String clientCipher)throws Exception {
+    private void testSuccessfulExchangeWithPrivacyProtection(String clientCipher) throws Exception {
         Map<String, Object> serverProps = new HashMap<String, Object>();
         serverProps.put(QOP_PROPERTY, "auth-conf");
         serverProps.put(WildFlySasl.SUPPORTED_CIPHER_NAMES, "des,3des,rc4,rc4-40,rc4-56");
@@ -705,6 +703,7 @@ public class DigestTest extends BaseTestCase {
                 .setProperties(serverProps)
                 .setProtocol("TestProtocol")
                 .setServerName("TestServer")
+                .addMechanismRealm("TestServer")
                 .build();
 
         CallbackHandler clientCallback = createClearPwdClientCallbackHandler("George", "gpwd", null);

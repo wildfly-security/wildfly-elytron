@@ -218,7 +218,7 @@ public class PlainTest extends BaseTestCase {
 
         try {
             server.evaluateResponse(message);
-            fail("Expection exception not thrown.");
+            fail("Exception not thrown.");
         } catch (IOException e) {
         }
 

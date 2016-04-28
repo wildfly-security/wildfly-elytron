@@ -20,7 +20,7 @@ package org.wildfly.security.auth.server;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
-import static org.wildfly.common.Assert.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 import java.security.Provider;
 import java.security.Security;
@@ -60,9 +60,9 @@ import org.wildfly.security.permission.PermissionVerifier;
 public class IdentityPropagationTest {
 
     private static final Provider provider = new WildFlyElytronProvider();
-    private static SecurityDomain domain1;
-    private static SecurityDomain domain2;
-    private static SecurityDomain domain3;
+    private static volatile SecurityDomain domain1;
+    private static volatile SecurityDomain domain2;
+    private static volatile SecurityDomain domain3;
 
     @BeforeClass
     public static void setupSecurityDomains() throws Exception {
@@ -164,23 +164,6 @@ public class IdentityPropagationTest {
     }
 
     @Test
-    public void testUnauthorizedInflowedIdentity() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain2);
-        SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "bob");
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
-        assertFalse(evidenceVerifyCallback.isVerified());
-
-        try {
-            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-            callbackHandler.handle(new Callback[]{ securityIdentityCallback });
-            fail("Expected IllegalStateException not thrown");
-        } catch (IllegalStateException expected) {
-        }
-    }
-
-    @Test
     public void testInflowFromAnonymousIdentity() throws Exception {
         CallbackHandler callbackHandler = createCallbackHandler(domain2);
         SecurityIdentity establishedIdentity = domain1.getCurrentSecurityIdentity();
@@ -229,10 +212,7 @@ public class IdentityPropagationTest {
     }
 
     private SecurityIdentity getIdentityFromDomain(final SecurityDomain securityDomain, final String userName) throws Exception {
-        final ServerAuthenticationContext authenticationContext = securityDomain.createNewAuthenticationContext();
-        authenticationContext.setAuthenticationName(userName);
-        authenticationContext.succeed();
-        return authenticationContext.getAuthorizedIdentity();
+        return securityDomain.getAnonymousSecurityIdentity().createRunAsIdentity(userName, false);
     }
 
     private CallbackHandler createCallbackHandler(final SecurityDomain securityDomain) throws Exception {

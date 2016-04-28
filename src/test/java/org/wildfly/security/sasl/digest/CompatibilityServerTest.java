@@ -72,14 +72,12 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testRfc2831example1() throws Exception {
         mockNonce("OA6MG9tEQGm2hh");
 
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("imap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -102,14 +100,12 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testRfc2831example2() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -164,14 +160,12 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testAuthorizedAuthorizationId() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -196,7 +190,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-int");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
@@ -204,6 +197,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -255,7 +249,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
@@ -263,6 +256,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -314,13 +308,13 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .addMechanismRealm("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
         assertFalse(server.isComplete());
@@ -373,13 +367,13 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .addMechanismRealm("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
         assertFalse(server.isComplete());
@@ -432,7 +426,6 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
@@ -440,6 +433,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setProperties(serverProps)
+                        .addMechanismRealm("elwood.innosoft.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -491,13 +485,13 @@ public class CompatibilityServerTest extends BaseTestCase {
         mockNonce("OA9BSXrbuRhWay");
 
         Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "elwood.innosoft.com");
         serverProps.put(QOP_PROPERTY, "auth-conf");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
+                        .addMechanismRealm("elwood.innosoft.com")
                         .setProperties(serverProps)
                         .build();
 
@@ -644,14 +638,14 @@ public class CompatibilityServerTest extends BaseTestCase {
     public void testBlankClientNonce() throws Exception {
         mockNonce("OA9BSXrbuRhWay");
 
-        Map<String, Object> serverProps = new HashMap<String, Object>();
-        serverProps.put(REALM_PROPERTY, "other-realm elwood.innosoft.com next-realm");
         SaslServer server =
                 new SaslServerBuilder(DigestServerFactory.class, SaslMechanismInformation.Names.DIGEST_MD5)
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
-                        .setProperties(serverProps)
+                        .addMechanismRealm("other-realm")
+                        .addMechanismRealm("elwood.innosoft.com")
+                        .addMechanismRealm("next-realm")
                         .build();
         assertFalse(server.isComplete());
 
@@ -682,6 +676,7 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("\u0438\u4F60\uD83C\uDCA1".toCharArray()))
                         .setProtocol("\u0438\u4F60\uD83C\uDCA1").setServerName("realm.\u0438\u4F60\uD83C\uDCA1.com")
                         .setProperties(serverProps)
+                        .addMechanismRealm("realm.\u0438\u4F60\uD83C\uDCA1.com")
                         .build();
         assertFalse(server.isComplete());
 
@@ -711,6 +706,10 @@ public class CompatibilityServerTest extends BaseTestCase {
                         .setUserName("chris")
                         .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("secret".toCharArray()))
                         .setProtocol("protocol name").setServerName("server name")
+                        .addMechanismRealm("first realm")
+                        .addMechanismRealm("second\\ realm")
+                        .addMechanismRealm(" with spaces ")
+                        .addMechanismRealm(" ")
                         .setProperties(serverProps)
                         .build();
         assertFalse(server.isComplete());
