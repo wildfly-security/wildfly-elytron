@@ -66,21 +66,24 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
 
     private final CallbackHandler callbackHandler;
     private final boolean includeCharset;
-    private final String realm;
+    private final String mechanismRealm;
+    private final String displayRealm;
 
     /**
      * Construct a new instance of {@code BasicAuthenticationMechanism}.
      *
      * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
-     * @param realm the realm name to include in the challenge to the client.
-     * @param includeCharset should the charset be incuded in the challenge.
+     * @param mechanismRealm the name of the realm to be passed back in the callbacks for authentication.
+     * @param displayRealm the realm name that should be sent in the challenge to the client, if {@code null} the name of the host will be sent instead.
+     * @param includeCharset should the charset be included in the challenge.
      */
-    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String realm, final boolean includeCharset) {
+    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String mechanismRealm, final String displayRealm, final boolean includeCharset) {
         checkNotNullParam("callbackHandler", callbackHandler);
 
         this.callbackHandler = callbackHandler;
         this.includeCharset = includeCharset;
-        this.realm = realm;
+        this.mechanismRealm = mechanismRealm;
+        this.displayRealm = displayRealm;
     }
 
     /**
@@ -154,7 +157,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
     }
 
     private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
-        RealmCallback realmCallback = realm != null ? new RealmCallback("User realm", realm) : null;
+        RealmCallback realmCallback = mechanismRealm != null ? new RealmCallback("User realm", mechanismRealm) : null;
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
         nameCallback.setName(username);
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
@@ -199,7 +202,7 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
     }
 
     private void prepareResponse(Supplier<String> hostnameSupplier, HttpServerResponse response) {
-        String realmName = realm != null ? realm : hostnameSupplier.get();
+        String realmName = displayRealm != null ? displayRealm : hostnameSupplier.get();
 
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(realmName).append("\"");
