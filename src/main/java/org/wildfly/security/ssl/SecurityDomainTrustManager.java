@@ -85,7 +85,7 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         boolean ok = false;
         try {
             final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
-            if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence)) {
+            if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence) && authenticationContext.authorize()) {
                 authenticationContext.succeed();
                 if (handshakeSession != null) {
                     handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
