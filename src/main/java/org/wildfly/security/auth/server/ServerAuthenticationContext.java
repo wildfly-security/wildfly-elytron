@@ -103,7 +103,7 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if the authentication is already complete
      */
     public boolean authorizeAnonymous() throws IllegalStateException {
-        return stateRef.get().authorizeAnonymous();
+        return stateRef.get().authorizeAnonymous(true);
     }
 
     /**
@@ -645,7 +645,7 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        boolean authorizeAnonymous() {
+        boolean authorizeAnonymous(final boolean requireLoginPermission) {
             throw log.noAuthenticationInProgress();
         }
 
@@ -770,16 +770,19 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean authorizeAnonymous() {
+        boolean authorizeAnonymous(final boolean requireLoginPermission) {
             final AtomicReference<State> stateRef = getStateRef();
             final SecurityIdentity anonymousIdentity = getSecurityDomain().getAnonymousSecurityIdentity();
-            return anonymousIdentity.implies(LoginPermission.getInstance()) && (stateRef.compareAndSet(this, new AnonymousAuthorizedState(anonymousIdentity)) || stateRef.get().authorizeAnonymous());
+            return (! requireLoginPermission || anonymousIdentity.implies(LoginPermission.getInstance())) && (stateRef.compareAndSet(this, new AnonymousAuthorizedState(anonymousIdentity)) || stateRef.get().authorizeAnonymous(requireLoginPermission));
         }
 
         @Override
         boolean authorize(final boolean requireLoginPermission) throws RealmUnavailableException {
-            final AtomicReference<State> stateRef = getStateRef();
             final SecurityIdentity capturedIdentity = this.capturedIdentity;
+            if (capturedIdentity.getPrincipal() instanceof AnonymousPrincipal) {
+                return authorizeAnonymous(requireLoginPermission);
+            }
+            final AtomicReference<State> stateRef = getStateRef();
             return (! requireLoginPermission || capturedIdentity.implies(LoginPermission.getInstance())) && (stateRef.compareAndSet(this, new AuthorizedState(capturedIdentity, capturedIdentity.getPrincipal(), capturedIdentity.getRealmInfo(), mechanismConfiguration, getMechanismRealmConfiguration())) || stateRef.get().authorize(requireLoginPermission));
         }
 
@@ -1032,7 +1035,7 @@ public final class ServerAuthenticationContext {
             }
             final AtomicReference<State> stateRef = getStateRef();
             // retry if necessary
-            return stateRef.compareAndSet(this, newState) || stateRef.get().authorize(true);
+            return stateRef.compareAndSet(this, newState) || stateRef.get().authorize(requireLoginPermission);
         }
 
         AuthorizedAuthenticationState doAuthorization(final boolean requireLoginPermission) throws RealmUnavailableException {
@@ -1212,7 +1215,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        boolean authorizeAnonymous() {
+        boolean authorizeAnonymous(final boolean requireLoginPermission) {
             return true;
         }
 
@@ -1231,7 +1234,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean authorize(final boolean requireLoginPermission) throws RealmUnavailableException {
-            return anonymousIdentity.implies(LoginPermission.getInstance());
+            return ! requireLoginPermission || anonymousIdentity.implies(LoginPermission.getInstance());
         }
 
         @Override
