@@ -37,6 +37,17 @@ public class HttpConstants {
     public static final String SECURITY_IDENTITY = "wildfly.http.security-identity";
 
     /*
+     * Mechanism Configuration Properties
+     */
+
+    private static final String CONFIG_BASE = HttpConstants.class.getPackage().getName();
+    public static final String CONFIG_CONTEXT_PATH = CONFIG_BASE + ".context-path";
+    public static final String CONFIG_REALM = CONFIG_BASE + ".realm";
+    public static final String CONFIG_LOGIN_PAGE = CONFIG_BASE + ".login-page";
+    public static final String CONFIG_ERROR_PAGE = CONFIG_BASE + ".error-page";
+
+
+    /*
      * Header Fields
      */
 
