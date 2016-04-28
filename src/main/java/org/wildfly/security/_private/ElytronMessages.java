@@ -37,6 +37,8 @@ import java.security.spec.InvalidParameterSpecException;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
+
+import javax.naming.NamingException;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
@@ -461,6 +463,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1110, value = "Peer identities were already set on this context")
     IllegalStateException peerIdentitiesAlreadySet();
+
+    @Message(id = 1111, value = "Ldap-backed realm paged iteration unsupported: PagedResultsResponseControl not provided by LdapContext in response control")
+    NamingException ldapRealmPagedControlNotProvidedByLdapContext();
 
     /* keystore package */
 

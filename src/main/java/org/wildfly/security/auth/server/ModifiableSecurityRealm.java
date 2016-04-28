@@ -19,7 +19,6 @@
 package org.wildfly.security.auth.server;
 
 import java.security.Principal;
-import java.util.Iterator;
 
 import org.wildfly.security.evidence.Evidence;
 
@@ -53,5 +52,5 @@ public interface ModifiableSecurityRealm extends SecurityRealm {
      * @return the identity iterator
      * @throws RealmUnavailableException if the realm fails for some reason
      */
-    Iterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException;
+    CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException;
 }
