@@ -63,7 +63,6 @@ import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -477,10 +476,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             return exists;
-        }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-            return LdapSecurityRealm.this == securityRealm;
         }
 
         private LdapIdentity getIdentity() throws RealmUnavailableException {

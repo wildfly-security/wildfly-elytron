@@ -202,10 +202,6 @@ public class JaasSecurityRealm implements SecurityRealm {
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             return new JaasAuthorizationIdentity(this.principal, this.subject);
         }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-            return JaasSecurityRealm.this == securityRealm;
-        }
     }
 
     private class DefaultCallbackHandler implements CallbackHandler {
