@@ -30,14 +30,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
-import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
@@ -46,7 +43,6 @@ import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -114,16 +110,11 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromTrustedIdentityWithCommonRealm() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain2);
+        ServerAuthenticationContext context = domain2.createNewAuthenticationContext();
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain1, "joe");
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
-        assertTrue(evidenceVerifyCallback.isVerified());
+        assertTrue(context.importIdentity(establishedIdentity));
 
-        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-        callbackHandler.handle(new Callback[] { securityIdentityCallback });
-        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        SecurityIdentity inflowedIdentity = context.getAuthorizedIdentity();
         assertEquals("joe", inflowedIdentity.getPrincipal().getName());
         assertEquals(domain2, inflowedIdentity.getSecurityDomain());
         assertTrue(inflowedIdentity.getRoles().contains("UserRole"));
@@ -131,16 +122,11 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromTrustedIdentityWithoutCommonRealm() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain3);
+        ServerAuthenticationContext context = domain3.createNewAuthenticationContext();
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain2, "bob");
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
-        assertTrue(evidenceVerifyCallback.isVerified());
+        assertTrue(context.importIdentity(establishedIdentity));
 
-        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-        callbackHandler.handle(new Callback[] { securityIdentityCallback });
-        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        SecurityIdentity inflowedIdentity = context.getAuthorizedIdentity();
         assertEquals("bob", inflowedIdentity.getPrincipal().getName());
         assertEquals(domain3, inflowedIdentity.getSecurityDomain());
         assertTrue(inflowedIdentity.getRoles().contains("ManagerRole"));
@@ -148,16 +134,12 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromUntrustedIdentity() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain2);
+        final ServerAuthenticationContext context = domain2.createNewAuthenticationContext();
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain3, "bob");
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[]{evidenceVerifyCallback});
-        assertFalse(evidenceVerifyCallback.isVerified());
+        assertFalse(context.importIdentity(establishedIdentity));
 
         try {
-            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-            callbackHandler.handle(new Callback[] { securityIdentityCallback });
+            context.getAuthorizedIdentity();
             fail("Expected IllegalStateException not thrown");
         } catch (IllegalStateException expected) {
         }
@@ -165,31 +147,19 @@ public class IdentityPropagationTest {
 
     @Test
     public void testInflowFromAnonymousIdentity() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain2);
-        SecurityIdentity establishedIdentity = domain1.getCurrentSecurityIdentity();
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
-        assertTrue(evidenceVerifyCallback.isVerified());
-
-        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-        callbackHandler.handle(new Callback[] { securityIdentityCallback });
-        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        final ServerAuthenticationContext context = domain2.createNewAuthenticationContext();
+        final SecurityIdentity establishedIdentity = domain1.getCurrentSecurityIdentity();
+        assertTrue(context.importIdentity(establishedIdentity));
+        SecurityIdentity inflowedIdentity = context.getAuthorizedIdentity();
         assertEquals(domain2.getAnonymousSecurityIdentity(), inflowedIdentity);
     }
 
     @Test
     public void testInflowFromSameDomain() throws Exception {
-        CallbackHandler callbackHandler = createCallbackHandler(domain2);
+        final ServerAuthenticationContext context = domain2.createNewAuthenticationContext();
         SecurityIdentity establishedIdentity = getIdentityFromDomain(domain2, "joe");
-        SecurityIdentityEvidence securityIdentityEvidence = new SecurityIdentityEvidence(establishedIdentity);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(securityIdentityEvidence);
-        callbackHandler.handle(new Callback[] { evidenceVerifyCallback });
-        assertTrue(evidenceVerifyCallback.isVerified());
-
-        SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-        callbackHandler.handle(new Callback[]{securityIdentityCallback});
-        SecurityIdentity inflowedIdentity = securityIdentityCallback.getSecurityIdentity();
+        assertTrue(context.importIdentity(establishedIdentity));
+        SecurityIdentity inflowedIdentity = context.getAuthorizedIdentity();
         assertEquals(establishedIdentity.getSecurityDomain(), inflowedIdentity.getSecurityDomain());
         assertEquals(establishedIdentity.getPrincipal().getName(), inflowedIdentity.getPrincipal().getName());
         assertEquals(establishedIdentity.getRealmInfo(), inflowedIdentity.getRealmInfo());
