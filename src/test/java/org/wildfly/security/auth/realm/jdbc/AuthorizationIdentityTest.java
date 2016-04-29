@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.wildfly.security.auth.realm.jdbc.mapper.PasswordKeyMapper;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -49,7 +50,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.getRealmIdentity("invalidUser", null, null);
+        RealmIdentity plainUser = securityRealm.getRealmIdentity(IdentityLocator.fromName("invalidUser"));
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
 
         assertSame(AuthorizationIdentity.EMPTY, authorizationIdentity);
@@ -72,7 +73,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
                     .from(getDataSource())
                 .build();
 
-        RealmIdentity plainUser = securityRealm.getRealmIdentity("plainUser", null, null);
+        RealmIdentity plainUser = securityRealm.getRealmIdentity(IdentityLocator.fromName("plainUser"));
         AuthorizationIdentity authorizationIdentity = plainUser.getAuthorizationIdentity();
 
         assertNotSame(AuthorizationIdentity.EMPTY, authorizationIdentity);

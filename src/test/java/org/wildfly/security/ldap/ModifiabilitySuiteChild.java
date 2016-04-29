@@ -23,6 +23,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.realm.ldap.AttributeMapping;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -81,15 +82,15 @@ public class ModifiabilitySuiteChild {
 
     @Test
     public void testCreateDelete() throws RealmUnavailableException, InterruptedException {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertFalse(identity.exists());
         identity.create();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertTrue(identity.exists());
         identity.delete();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewIdentity", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertFalse(identity.exists());
     }
 
@@ -97,21 +98,21 @@ public class ModifiabilitySuiteChild {
     public void testCreateDeleteEscaped() throws RealmUnavailableException, InterruptedException {
         String horribleIdentityName = " escape testing identity name , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! ' ";
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertFalse(identity.exists());
         identity.create();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertTrue(identity.exists());
         identity.delete();
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(horribleIdentityName, null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertFalse(identity.exists());
     }
 
     @Test
     public void testAttributeSetting() throws Exception {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity", null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewAttributesIdentity"));
         Assert.assertFalse(identity.exists());
         identity.create();
 
@@ -122,10 +123,10 @@ public class ModifiabilitySuiteChild {
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("myNewAttributesIdentity", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewAttributesIdentity"));
         Assert.assertFalse(identity.exists());
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity("JohnSmithsNewIdentity", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("JohnSmithsNewIdentity"));
         Assert.assertTrue(identity.exists());
 
         org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();
@@ -138,7 +139,7 @@ public class ModifiabilitySuiteChild {
 
     @Test
     public void testAttributeSettingEscaped() throws Exception {
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new IdentityLocator.Builder().setName(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '").build());
         Assert.assertFalse(identity.exists());
         identity.create();
 
@@ -149,10 +150,10 @@ public class ModifiabilitySuiteChild {
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new IdentityLocator.Builder().setName(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '").build());
         Assert.assertFalse(identity.exists());
 
-        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '", null, null);
+        identity = (ModifiableRealmIdentity) realm.getRealmIdentity(new IdentityLocator.Builder().setName(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '").build());
         Assert.assertTrue(identity.exists());
 
         org.wildfly.security.authz.Attributes attributes = identity.getAuthorizationIdentity().getAttributes();

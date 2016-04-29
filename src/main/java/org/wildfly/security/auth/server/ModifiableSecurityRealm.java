@@ -18,10 +18,6 @@
 
 package org.wildfly.security.auth.server;
 
-import java.security.Principal;
-
-import org.wildfly.security.evidence.Evidence;
-
 /**
  * A realm which can be modified.
  *
@@ -30,7 +26,7 @@ import org.wildfly.security.evidence.Evidence;
 public interface ModifiableSecurityRealm extends SecurityRealm {
 
     /**
-     * Get an update handle for to the identity for the given name in the context of this security realm. Any
+     * Get an update handle for to the identity for the given information in the context of this security realm. Any
      * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
      * returned handle <em>must</em> be cleaned up by a call to {@link ModifiableRealmIdentity#dispose()}.  During
      * the lifespan of a {@code ModifiableRealmIdentity}, no other updates or authentications may take place for the
@@ -39,12 +35,10 @@ public interface ModifiableSecurityRealm extends SecurityRealm {
      * If there is not enough information to locate an identity compatible with this realm, {@link ModifiableRealmIdentity#NON_EXISTENT}
      * may be returned.
      *
-     * @param name the name to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
-     * @param principal the principal to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
-     * @param evidence the evidence to use to locate the {@link ModifiableSecurityRealm} handle, or {@code null} if none was available in the current authentication
-     * @return the {@link ModifiableSecurityRealm} for the provided information (not {@code null})
+     * @param locator the information to sue to locate the {@link ModifiableRealmIdentity} handle (must not be {@code null})
+     * @return the {@link ModifiableRealmIdentity} for the provided information (not {@code null})
      */
-    ModifiableRealmIdentity getRealmIdentityForUpdate(String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException;
+    ModifiableRealmIdentity getRealmIdentityForUpdate(IdentityLocator locator) throws RealmUnavailableException;
 
     /**
      * Get an iterator over all of this realm's identities.

@@ -33,6 +33,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -128,7 +129,7 @@ public class PasswordSupportSuiteChild {
         SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, null);
         assertEquals("Pre identity", SupportLevel.SUPPORTED, support);
 
-        RealmIdentity identity = simpleToDnRealm.getRealmIdentity("userWithOtp", null, null);
+        RealmIdentity identity = simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         verifyPasswordSupport(identity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
         OneTimePassword otp = identity.getCredential(PasswordCredential.class).getPassword(OneTimePassword.class);
@@ -145,7 +146,7 @@ public class PasswordSupportSuiteChild {
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp", null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         assertNotNull(identity);
 
         assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1));
@@ -153,7 +154,7 @@ public class PasswordSupportSuiteChild {
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
-        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp", null, null);
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         assertNotNull(newIdentity);
 
         verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
@@ -172,7 +173,7 @@ public class PasswordSupportSuiteChild {
         final OneTimePassword password = (OneTimePassword) passwordFactory.generatePassword(spec);
         assertNotNull(password);
 
-        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp", null, null);
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         assertNotNull(identity);
 
         identity.setCredentials(Collections.emptyList());
@@ -180,7 +181,7 @@ public class PasswordSupportSuiteChild {
 
         identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
 
-        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity("userWithOtp", null, null);
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         assertNotNull(newIdentity);
 
         verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
@@ -193,7 +194,7 @@ public class PasswordSupportSuiteChild {
     }
 
     private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
-        RealmIdentity realmIdentity = simpleToDnRealm.getRealmIdentity(simpleName, null, null);
+        RealmIdentity realmIdentity = simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName(simpleName));
         SupportLevel support = simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, algorithm);
         assertEquals("Pre identity", SupportLevel.POSSIBLY_SUPPORTED, support);
 

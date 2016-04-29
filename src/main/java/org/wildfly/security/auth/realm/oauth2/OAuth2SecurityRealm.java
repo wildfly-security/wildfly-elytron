@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.oauth2;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -87,8 +88,8 @@ public class OAuth2SecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(String name, Principal principal, Evidence evidence) throws RealmUnavailableException {
-        return new OAuth2RealmIdentity(evidence);
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
+        return locator.hasEvidence() ? new OAuth2RealmIdentity(locator.getEvidence()) : RealmIdentity.NON_EXISTENT;
     }
 
     @Override

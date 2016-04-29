@@ -18,12 +18,12 @@
 
 package org.wildfly.security.auth.realm;
 
-import java.security.Principal;
 import java.util.Collections;
 import java.util.Map;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -105,11 +105,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(String name, final Principal principal, final Evidence evidence) {
-        if (name == null) {
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
+        if (! locator.hasName()) {
             return RealmIdentity.NON_EXISTENT;
         }
-        name = rewriter.rewriteName(name);
+        String name = rewriter.rewriteName(locator.getName());
         if (name == null) {
             throw ElytronMessages.log.invalidName();
         }

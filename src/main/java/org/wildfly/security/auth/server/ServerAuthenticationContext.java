@@ -585,7 +585,7 @@ public final class ServerAuthenticationContext {
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(name, null, null);
+        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromName(name));
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, principal, mechanismConfiguration, mechanismRealmConfiguration);
     }
 
@@ -880,7 +880,7 @@ public final class ServerAuthenticationContext {
             RealmIdentity realmIdentity = null;
             RealmInfo realmInfo = null;
             for (RealmInfo info : realmInfos) {
-                realmIdentity = info.getSecurityRealm().getRealmIdentity(null, null, evidence);
+                realmIdentity = info.getSecurityRealm().getRealmIdentity(new IdentityLocator.Builder().setEvidence(evidence).build());
                 if (realmIdentity.exists()) {
                     realmInfo = info;
                     break;

@@ -34,7 +34,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -58,6 +57,7 @@ import javax.xml.stream.XMLStreamWriter;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
@@ -148,16 +148,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return path.resolve(name + ".xml");
     }
 
-    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) {
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
         // todo: read and write locking variants
-        return getRealmIdentityForUpdate(name, principal, evidence);
+        return getRealmIdentityForUpdate(locator);
     }
 
-    public ModifiableRealmIdentity getRealmIdentityForUpdate(final String name, final Principal principal, final Evidence evidence) {
-        if (name == null || name.isEmpty()) {
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(final IdentityLocator locator) {
+        if (! locator.hasName()) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
-        final String finalName = nameRewriter.rewriteName(name);
+        final String finalName = nameRewriter.rewriteName(locator.getName());
         if (finalName == null) {
             throw ElytronMessages.log.invalidName();
         }
@@ -195,7 +195,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
                     final String fileName = path.getFileName().toString();
-                    return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4), null, null);
+                    return getRealmIdentityForUpdate(new IdentityLocator.Builder().setName(fileName.substring(0, fileName.length() - 4)).build());
                 }
 
                 public void close() throws IOException {

@@ -114,6 +114,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9, value = "Invalid name \"%s\"")
     IllegalArgumentException generalInvalidName(String str);
 
+    @Message(id = 10, value = "Identity locator field \"%s\" is not set")
+    IllegalStateException locatorFieldNotSet(String fieldName);
+
     /* auth package */
 
     @Message(id = 1000, value = "Authentication name was already set on this context")

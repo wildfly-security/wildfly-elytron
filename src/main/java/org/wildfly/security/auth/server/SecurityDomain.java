@@ -154,7 +154,7 @@ public final class SecurityDomain {
         if (name == null) {
             throw log.invalidName();
         }
-        return securityRealm.getRealmIdentity(name, null, null);
+        return securityRealm.getRealmIdentity(IdentityLocator.fromName(name));
     }
 
     /**
