@@ -575,7 +575,7 @@ public final class ServerAuthenticationContext {
         return realmName != null ? realmName : defaultRealmName;
     }
 
-    NameAssignedState assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, String name) throws RealmUnavailableException {
+    NameAssignedState assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, String name, Principal originalPrincipal, final Evidence evidence) throws RealmUnavailableException {
         final SecurityDomain domain = capturedIdentity.getSecurityDomain();
         name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
         // principal *must* be captured at this point
@@ -585,7 +585,11 @@ public final class ServerAuthenticationContext {
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromName(name));
+        final IdentityLocator.Builder locatorBuilder = new IdentityLocator.Builder();
+        locatorBuilder.setName(name);
+        locatorBuilder.setPrincipal(principal);
+        locatorBuilder.setEvidence(evidence);
+        final RealmIdentity realmIdentity = securityRealm.getRealmIdentity(locatorBuilder.build());
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, principal, mechanismConfiguration, mechanismRealmConfiguration);
     }
 
@@ -693,7 +697,7 @@ public final class ServerAuthenticationContext {
             // get the identity we are authorizing from
             final SecurityIdentity sourceIdentity = getSourceIdentity();
 
-            final NameAssignedState nameAssignedState = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId);
+            final NameAssignedState nameAssignedState = assignName(sourceIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, null);
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
@@ -819,7 +823,7 @@ public final class ServerAuthenticationContext {
             if (name == null) {
                 throw log.unrecognizedPrincipalType(importedPrincipal);
             }
-            final NameAssignedState nameState = assignName(sourceIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), name);
+            final NameAssignedState nameState = assignName(sourceIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), name, null, null);
             final RealmIdentity realmIdentity = nameState.getRealmIdentity();
             boolean ok = false;
             try {
@@ -850,7 +854,7 @@ public final class ServerAuthenticationContext {
         @Override
         void setName(final String name) throws RealmUnavailableException {
             final AtomicReference<State> stateRef = getStateRef();
-            final NameAssignedState newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), name);
+            final NameAssignedState newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), name, null, null);
             if (! stateRef.compareAndSet(this, newState)) {
                 newState.realmIdentity.dispose();
                 stateRef.get().setName(name);
@@ -869,18 +873,34 @@ public final class ServerAuthenticationContext {
                 // directly authorize the imported identity
                 return importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
             }
+            final AtomicReference<State> stateRef = getStateRef();
             final Principal evidencePrincipal = evidence.getPrincipal();
+            final MechanismRealmConfiguration mechanismRealmConfiguration = getMechanismRealmConfiguration();
             if (evidencePrincipal != null) {
-                setPrincipal(evidencePrincipal);
-                return stateRef.get().verifyEvidence(evidence);
+                String name = getSecurityDomain().getPrincipalDecoder().getName(evidencePrincipal);
+                if (name != null) {
+                    final NameAssignedState newState = assignName(getSourceIdentity(), mechanismConfiguration, mechanismRealmConfiguration, name, evidencePrincipal, evidence);
+                    if (! newState.verifyEvidence(evidence)) {
+                        newState.realmIdentity.dispose();
+                        return false;
+                    }
+                    if (! stateRef.compareAndSet(this, newState)) {
+                        newState.realmIdentity.dispose();
+                        stateRef.get().setName(name);
+                        return stateRef.get().verifyEvidence(evidence);
+                    }
+                    return true;
+                }
             }
             // verify evidence with no name set: use the realms to find a match (SSO scenario, etc.)
             final SecurityDomain domain = getSecurityDomain();
             final Collection<RealmInfo> realmInfos = domain.getRealmInfos();
             RealmIdentity realmIdentity = null;
             RealmInfo realmInfo = null;
+            final IdentityLocator.Builder locatorBuilder = new IdentityLocator.Builder();
+            final IdentityLocator locator = locatorBuilder.setEvidence(evidence).setPrincipal(evidencePrincipal).build();
             for (RealmInfo info : realmInfos) {
-                realmIdentity = info.getSecurityRealm().getRealmIdentity(new IdentityLocator.Builder().setEvidence(evidence).build());
+                realmIdentity = info.getSecurityRealm().getRealmIdentity(locator);
                 if (realmIdentity.exists()) {
                     realmInfo = info;
                     break;
@@ -899,9 +919,16 @@ public final class ServerAuthenticationContext {
                 realmIdentity.dispose();
                 return false;
             }
-            // TODO: if evidence verification fails, we'll end up in name-assigned state for no good reason.
-            setPrincipal(resolvedPrincipal);
-            return stateRef.get().verifyEvidence(evidence);
+            if (! realmIdentity.verifyEvidence(evidence)) {
+                realmIdentity.dispose();
+                return false;
+            }
+            final NameAssignedState newState = new NameAssignedState(getSourceIdentity(), realmInfo, realmIdentity, resolvedPrincipal, mechanismConfiguration, mechanismRealmConfiguration);
+            if (! stateRef.compareAndSet(this, newState)) {
+                realmIdentity.dispose();
+                return stateRef.get().verifyEvidence(evidence);
+            }
+            return true;
         }
 
         @Override
@@ -911,7 +938,12 @@ public final class ServerAuthenticationContext {
             if (name == null) {
                 throw log.unrecognizedPrincipalType(principal);
             }
-            setName(name);
+            final AtomicReference<State> stateRef = getStateRef();
+            final NameAssignedState newState = assignName(capturedIdentity, mechanismConfiguration, getMechanismRealmConfiguration(), name, principal, null);
+            if (! stateRef.compareAndSet(this, newState)) {
+                newState.realmIdentity.dispose();
+                stateRef.get().setName(name);
+            }
         }
 
         @Override
@@ -1309,7 +1341,7 @@ public final class ServerAuthenticationContext {
         }
 
         AuthorizedState authorizeRunAs(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
-            final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId);
+            final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, null);
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
