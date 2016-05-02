@@ -70,7 +70,6 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.SecurityIdentityEvidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -381,7 +380,15 @@ public final class ServerAuthenticationContext {
         return stateRef.get().verifyEvidence(evidence);
     }
 
-    boolean importIdentity(SecurityIdentity identity) throws RealmUnavailableException {
+    /**
+     * Attempt to import the given security identity as a trusted identity.  If this method returns {@code true},
+     * the context will be in an authorized state, and the new identity can be retrieved.
+     *
+     * @param identity the identity to import (must not be {@code null})
+     * @return {@code true} if the identity is authorized, {@code false} otherwise
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    public boolean importIdentity(SecurityIdentity identity) throws RealmUnavailableException {
         Assert.checkNotNullParam("identity", identity);
         return stateRef.get().importIdentity(identity);
     }
@@ -672,9 +679,6 @@ public final class ServerAuthenticationContext {
         }
 
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            if (evidence instanceof SecurityIdentityEvidence) {
-                return importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
-            }
             throw log.noAuthenticationInProgress();
         }
 
@@ -904,16 +908,12 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-            return evidenceType == SecurityIdentityEvidence.class ? SupportLevel.SUPPORTED : getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
+            return getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             // TODO: this method probably should never cause a state change... consider setEvidence or something instead?
-            if (evidence instanceof SecurityIdentityEvidence) {
-                // directly authorize the imported identity
-                return importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
-            }
             final AtomicReference<State> stateRef = getStateRef();
             final Principal evidencePrincipal = evidence.getPrincipal();
             final MechanismRealmConfiguration mechanismRealmConfiguration = getMechanismRealmConfiguration();
@@ -1163,9 +1163,6 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            if (evidence instanceof SecurityIdentityEvidence) {
-                return importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
-            }
             // At this stage, we just verify that the evidence principal matches, and verify it with the realm.
             final Principal evidencePrincipal = evidence.getPrincipal();
             return (evidencePrincipal == null || isSamePrincipal(evidencePrincipal)) && getRealmIdentity().verifyEvidence(evidence);
@@ -1274,7 +1271,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            return evidence instanceof SecurityIdentityEvidence && importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
+            return false;
         }
 
         @Override
@@ -1422,7 +1419,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-            return SecurityIdentityEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
+            return realmIdentity.getEvidenceVerifySupport(evidenceType, algorithmName);
         }
 
         @Override
@@ -1432,9 +1429,6 @@ public final class ServerAuthenticationContext {
 
         @Override
         boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            if (evidence instanceof SecurityIdentityEvidence) {
-                return importIdentity(((SecurityIdentityEvidence) evidence).getSecurityIdentity());
-            }
             return realmIdentity.verifyEvidence(evidence);
         }
 
