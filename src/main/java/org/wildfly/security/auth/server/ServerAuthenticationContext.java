@@ -24,17 +24,22 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
@@ -48,6 +53,7 @@ import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
+import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
@@ -65,9 +71,12 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.SecurityIdentityEvidence;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.ssl.SSLUtils;
+import org.wildfly.security.x500.X500;
 
 /**
  * Server-side authentication context.
@@ -502,6 +511,38 @@ public final class ServerAuthenticationContext {
                             succeed();
                         } else {
                             fail();
+                        }
+                    }
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof SSLSessionAuthorizationCallback) {
+                    final SSLSessionAuthorizationCallback authorizationCallback = (SSLSessionAuthorizationCallback) callback;
+                    final SSLSession sslSession = authorizationCallback.getSslSession();
+                    final IdentityCache cache = (IdentityCache) SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new IdentityCache());
+                    final SecurityDomain securityDomain = stateRef.get().getSecurityDomain();
+                    final SecurityIdentity identity = cache.identities.get(securityDomain);
+                    if (identity != null) {
+                        authorizationCallback.setAuthorized(importIdentity(identity));
+                    } else {
+                        final X509Certificate[] x509Certificates;
+                        try {
+                            try {
+                                x509Certificates = X500.asX509CertificateArray((Object[]) sslSession.getPeerCertificates());
+                                final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
+                                final X500Principal principal = evidence.getPrincipal();
+                                if (principal != null) {
+                                    setAuthenticationPrincipal(principal);
+                                    final boolean authorized = verifyEvidence(evidence);
+                                    authorizationCallback.setAuthorized(authorized);
+                                    if (authorized) {
+                                        // cache identity
+                                        cache.identities.putIfAbsent(securityDomain, getAuthorizedIdentity());
+                                    }
+                                }
+                            } catch (ArrayStoreException ignored) {
+                                // unauthorized; fall out
+                            }
+                        } catch (SSLPeerUnverifiedException e) {
+                            // unauthorized; fall out
                         }
                     }
                     handleOne(callbacks, idx + 1);
@@ -1458,4 +1499,8 @@ public final class ServerAuthenticationContext {
             return true;
         }
     };
+
+    static class IdentityCache {
+        final ConcurrentHashMap<SecurityDomain, SecurityIdentity> identities = new ConcurrentHashMap<>();
+    }
 }
