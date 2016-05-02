@@ -53,7 +53,9 @@ import org.wildfly.security.permission.PermissionVerifier;
  */
 public final class SecurityDomain {
 
-    static final ElytronPermission CREATE_SECURITY_DOMAIN = new ElytronPermission("createSecurityDomain");
+    static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
+    static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
+
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
     private final NameRewriter preRealmRewriter;
@@ -112,6 +114,10 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
         return new ServerAuthenticationContext(this, MechanismConfiguration.EMPTY);
     }
 
@@ -123,6 +129,10 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext(MechanismConfiguration mechanismConfiguration) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
         return new ServerAuthenticationContext(this, mechanismConfiguration);
     }
 
