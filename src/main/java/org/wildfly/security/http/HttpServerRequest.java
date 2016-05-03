@@ -193,7 +193,7 @@ public interface HttpServerRequest extends HttpServerScopes {
      * Get the first value for the parameter specified.
      *
      * @param name the name of the parameter the first value is required for.
-     * @return the first value of the named parameter or {@code null} if the paramter is not available.
+     * @return the first value of the named parameter or {@code null} if the parameter is not available.
      */
     String getFirstParameterValue(String name);
 

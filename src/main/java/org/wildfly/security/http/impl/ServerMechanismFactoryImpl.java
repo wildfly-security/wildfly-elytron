@@ -20,6 +20,7 @@ package org.wildfly.security.http.impl;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
+import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         ArrayList<String> mechanismNames = new ArrayList<>();
         mechanismNames.add(BASIC_NAME);
         mechanismNames.add(CLIENT_CERT_NAME);
+        mechanismNames.add(FORM_NAME);
 
         return mechanismNames.toArray(new String[mechanismNames.size()]);
     }
@@ -96,6 +98,8 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
                 return new BasicAuthenticationMechanism(callbackHandler, mechanismRealm, displayRealm, false);
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
+            case FORM_NAME:
+                return new FormAuthenticationMechanism(callbackHandler, properties);
         }
         return null;
     }
