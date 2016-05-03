@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
@@ -78,7 +79,205 @@ import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
 /**
- * Server-side authentication context.
+ * Server-side authentication context.  Instances of this class are used to preform all authentication and re-authorization
+ * operations that involve the usage of an identity in a {@linkplain SecurityDomain security domain}.
+ * <p>
+ * There are various effective states, described as follows:
+ * <ul>
+ *     <li>
+ *         The <em>unassigned</em> states:
+ *         <ul>
+ *             <li><em>Initial</em></li>
+ *             <li><em>Realm-assigned</em></li>
+ *         </ul>
+ *     </li>
+ *     <li>The <em>assigned</em> state</li>
+ *     <li>
+ *         The <em>authorized</em> states:
+ *         <ul>
+ *             <li><em>Anonymous-authorized</em></li>
+ *             <li><em>Authorized</em></li>
+ *             <li><em>Authorized-authenticated</em></li>
+ *         </ul>
+ *     </li>
+ *     <li>
+ *         The <em>terminal</em> states:
+ *         <ul>
+ *             <li><em>Complete</em></li>
+ *             <li><em>Failed</em></li>
+ *         </ul>
+ *     </li>
+ * </ul>
+ *
+ * <p>
+ * When an instance of this class is first constructed, it is in the <em>initial</em> state.  In this state, the context
+ * retains an <em>captured {@linkplain SecurityIdentity identity}</em> and an optional <em>{@linkplain MechanismConfiguration mechanism configuration}</em>.
+ * The <em>captured identity</em> may be used for various context-sensitive authorization decisions.  The <em>mechanism
+ * configuration</em> is used to associate an authentication mechanism-specific configuration, including rewriters,
+ * {@linkplain MechanismRealmConfiguration mechanism realms}, server credential factories, and more.
+ * <p>
+ * When an authentication mechanism is "realm-aware" (that is, it has a notion of realms that is specific to that particular
+ * authentication mechanism, e.g. <a href="https://tools.ietf.org/html/rfc2831">the DIGEST-MD5 SASL mechanism</a>), it
+ * is necessary for the mechanism to relay the realm selection.  This is done by way of the {@link #setMechanismRealmName(String) setMechanismRealmName()}
+ * method.  Calling this method in the <em>initial</em> state causes a transition to the <em>realm-assigned</em> state,
+ * in which the method may be reinvoked idempotently as long as it is called with the same name (calling the method with
+ * a different name will result in an exception).
+ * <p>
+ * The <em>realm-assigned</em> state is nearly identical to the <em>initial</em> state, except that from this state, the
+ * mechanism realm-specific configuration is applied to all subsequent operation.
+ * <p>
+ * From these <em>unassigned</em> states, several possible actions may be taken, depending on the necessary progression
+ * of the authentication:
+ * <ul>
+ *     <li>
+ *         A <em>name</em> may be assigned by way of the {@link #setAuthenticationName(String)} method.  The name is
+ *         {@linkplain NameRewriter rewritten} and {@linkplain RealmMapper mapped to a realm} according to the
+ *         domain settings, the <em>mechanism configuration</em>, and/or the <em>mechanism realm configuration</em>.  The
+ *         <em>{@linkplain SecurityRealm realm}</em> that is the resultant target of the mapping is queried for a
+ *         <em>{@linkplain RealmIdentity realm identity}</em>.  The <em>realm identity</em> may or may not be
+ *         existent; this status will affect the outcome of certain operations in subsequent states (as described below).
+ *         After the <em>realm identity</em> is selected, any final rewrite operations which are configured are applied,
+ *         and the resultant name is transformed into a {@link NamePrincipal}, and associated as the
+ *         <em>{@linkplain #getAuthenticationPrincipal() authentication principal}</em> which may subsequently be queried.
+ *     </li>
+ *     <li>
+ *         A <em>principal</em> may be assigned using the {@link #setAuthenticationPrincipal(Principal)} method.  The
+ *         principal is {@linkplain PrincipalDecoder decoded} according to the configuration of the security domain (see
+ *         the method documentation for input requirements and failure conditions).  Once a name is decoded from the
+ *         principal, it is assigned as described above.
+ *     </li>
+ *     <li>
+ *         A unit of <em>{@linkplain Evidence evidence}</em> may be verified.  This is mostly described below in the
+ *         context of the <em>assigned</em> state, but with the important distinction the evidence is first examined
+ *         to locate the corresponding evidence, in the following steps:
+ *         <ul>
+ *             <li>
+ *                 Firstly, the evidence is examined to determine whether it {@linkplain Evidence#getPrincipal() contains a principal}.
+ *                 If so, the principal name is first established using the procedure described above, and then the normal
+ *                 evidence verification procedure described below commences.
+ *             </li>
+ *             <li>
+ *                 Secondly, the evidence is socialized to each <em>realm</em> in turn, to see if a realm can recognize
+ *                 and {@linkplain SecurityRealm#getRealmIdentity(IdentityLocator) locate} an identity based on
+ *                 the evidence.  If so, the <em>realm identity</em> is {@linkplain RealmIdentity#getRealmIdentityPrincipal() queried}
+ *                 for an authentication principal, which is then decoded and established as described above.  Once this
+ *                 is done successfully, the evidence verification procedure described below commences.
+ *             </li>
+ *             <li>Finally, if none of these steps succeeds, the verification fails and no state transition occurs.</li>
+ *         </ul>
+ *     </li>
+ *     <li>
+ *         An <em>identity</em> may be {@linkplain #importIdentity(SecurityIdentity) imported}.  In this process,
+ *         a {@link SecurityIdentity} instance is examined to determine whether it can be used to complete an implicit
+ *         authentication operation which would yield an <em>authorized identity</em>.  The {@code SecurityIdentity} may
+ *         be from the same <em>domain</em> or from a different one.
+ *         <p>
+ *         If the <em>identity</em> being imported is from the same security domain as this context, then the <em>identity</em>
+ *         is implicitly <em>authorized</em> for usage, entering the <em>authorized</em> state described below.
+ *         <p>
+ *         If the <em>identity</em> being imported is not from the same security domain, then the principal is extracted
+ *         from the identity and used to assign a <em>realm identity</em> in the same manner as {@link #setAuthenticationPrincipal(Principal)}.
+ *         The <em>domain</em> is then {@linkplain SecurityDomain.Builder#setTrustedSecurityDomainPredicate(Predicate) queried}
+ *         to determine whether the target identity's source <em>domain</em> is <em>trusted</em>.  If so, a normal
+ *         <em>authorization</em> is carried out as described below for the <em>assigned</em> state, resulting in an
+ *         <em>authorized-authenticated</em> state.  If not, then the <em>realm</em> of the <em>realm identity</em> is
+ *         compared against the <em>realm</em> of the <em>identity</em> being imported.  If they are the same, the
+ *         identity is imported and a normal <em>authorization</em> is carried out as described below.
+ *     </li>
+ *     <li>
+ *         An <em>anonymous authorization</em> may be carried out by way of the {@link #authorizeAnonymous()} method.
+ *         If the <em>{@linkplain SecurityDomain#getAnonymousSecurityIdentity() anonymous identity}</em> has the
+ *         {@link LoginPermission} granted to it, the context will transition into the <em>anonymous-authorized</em>
+ *         state; otherwise no state transition occurs.
+ *     </li>
+ *     <li>
+ *         An <em>external authorization</em> may be carried out using the {@link #authorize()} method.  The
+ *         <em>captured identity</em> (which may be <em>anonymous</em>) is queried for the presence of the
+ *         {@link LoginPermission}; if present, the context will transition into the <em>authorized</em> or
+ *         <em>anonymous-authorized</em> state (depending on whether the <em>captured identity</em> is <em>anonymous</em>);
+ *         otherwise no state transition occurs.
+ *     </li>
+ *     <li>
+ *         An <em>external run-as authorization</em> may be carried out using the {@link #authorize(String)} method.
+ *         First, the given name is <em>rewritten</em> in the same manner as the {@link #setAuthenticationName(String)}
+ *         method.  Then, the <em>captured identity</em> (which may be <em>anonymous</em>) is queried for the presence of a
+ *         {@link RunAsPrincipalPermission} for the target name.  If present, the <em>authentication name</em> is assigned
+ *         as described above, and the resultant <em>realm identity</em> is queried for {@link LoginPermission}.  If present,
+ *         the context will transition to the <em>authorized-authenticated</em> state.  If any step fails, no state transition
+ *         occurs.
+ *     </li>
+ *     <li>
+ *         The authentication may be <em>failed</em> by way of the {@link #fail()} method.  This method will dispose
+ *         of all authentication resources and transition to the <em>failed</em> state.
+ *     </li>
+ * </ul>
+ * <p>
+ * In the <em>name-assigned</em> (or, for brevity, <em>assigned</em>) state, the following actions may be performed:
+ * <ul>
+ *     <li>
+ *         A name or principal may be assigned as above, however the resultant <em>decoded</em> and <em>rewritten</em> name
+ *         and <em>realm identity</em> must be identical to the previously selected name and identity.
+ *     </li>
+ *     <li>
+ *         <em>Evidence</em> may be verified.  The <em>realm identity</em> is queried directly and no state transitions
+ *         will occur.  Evidence verification will fail if the evidence has an <em>evidence principal</em> which does
+ *         not result in the same <em>realm identity</em> as the current one after <em>decoding</em> and <em>rewriting</em>.
+ *     </li>
+ *     <li>
+ *         An <em>authorization</em> may be performed via the {@link #authorize()} method.  If the selected <em>realm identity</em>
+ *         possesses the {@link LoginPermission}, then the context transitions to the <em>authorized-authenticated</em> state,
+ *         otherwise no state transition occurs.
+ *     </li>
+ *     <li>
+ *         A <em>run-as authorization</em> may be performed via the {@link #authorize(String)} method.
+ *         First, the given name is <em>rewritten</em> in the same manner as the {@link #setAuthenticationName(String)} method.
+ *         The current identity is then <em>authorized</em> as described above, and then the <em>authorized identity</em>
+ *         is tested for a {@link RunAsPrincipalPermission} for the <em>rewritten</em> target name.  If authorized,
+ *         the context transitions to the <em>authorized</em> state for the <em>realm identity</em> corresponding to the
+ *         <em>rewritten</em> name; otherwise no state transition occurs.
+ *     </li>
+ *     <li>
+ *         The authentication may be <em>failed</em> by way of the {@link #fail()} method.  This method will dispose
+ *         of all authentication resources and transition to the <em>failed</em> state.
+ *     </li>
+ * </ul>
+ * <p>
+ * There are three states related to authorization: the <em>anonymous-authorized</em> state, the <em>authorized</em> state,
+ * and the <em>authorized-authenticated</em> state.  In all three states, the following actions may be taken:
+ * <ul>
+ *     <li>
+ *         As above, a name or principal may be assigned so long as it matches the existing identity.  In particular,
+ *         for the <em>anonymous-authorized</em> state, all names are rejected, and only the {@linkplain AnonymousPrincipal anonymous principal}
+ *         is accepted.
+ *     </li>
+ *     <li>
+ *         An <em>authorization</em> may be performed via the {@link #authorize()} method.  Since the identity is
+ *         always authorized, this is generally a no-op.
+ *     </li>
+ *     <li>
+ *         A <em>run-as authorization</em> may be performed via the {@link #authorize(String)} method.  The given
+ *         name is <em>rewritten</em> as previously described, and then the <em>authorized identity</em>
+ *         is tested for a {@link RunAsPrincipalPermission} for the <em>rewritten</em> target name.  If authorized,
+ *         the context transitions to the <em>authorized</em> state for the <em>realm identity</em> corresponding to the
+ *         <em>rewritten</em> name; otherwise no state transition occurs.
+ *     </li>
+ *     <li>
+ *         The authentication may be <em>completed</em> by way of the {@link #succeed()} method.  This method will
+ *         dispose of all authentication resources and transition to the <em>complete</em> state.
+ *     </li>
+ *     <li>
+ *         The authentication may be <em>failed</em> by way of the {@link #fail()} method.  This method will dispose
+ *         of all authentication resources and transition to the <em>failed</em> state.
+ *     </li>
+ * </ul>
+ * The <em>authorized-authenticated</em> state has the additional capability of verifying credentials as described above for
+ * the <em>assigned</em> state.
+ * <p>
+ * The <em>complete</em> state has only one capability: the retrieval of the final <em>authorized identity</em> by way
+ * of the {@link #getAuthorizedIdentity()} method.
+ * <p>
+ * The <em>failed</em> state has no capabilities and retains no reference to any identities or objects used during
+ * authentication.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
@@ -1377,6 +1576,10 @@ public final class ServerAuthenticationContext {
             return realmInfo;
         }
 
+        boolean authorize(final boolean requireLoginPermission) throws RealmUnavailableException {
+            return ! requireLoginPermission || authorizedIdentity.implies(LoginPermission.getInstance());
+        }
+
         AuthorizedState authorizeRunAs(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, null);
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
@@ -1438,7 +1641,7 @@ public final class ServerAuthenticationContext {
 
         @Override
         void succeed() {
-            final SecurityIdentity authorizedIdentity = getAuthorizedIdentity();
+            final SecurityIdentity authorizedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
             if (stateRef.compareAndSet(this, new CompleteState(authorizedIdentity))) {
                 SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizedIdentity.getAuthorizationIdentity(), null, null));
