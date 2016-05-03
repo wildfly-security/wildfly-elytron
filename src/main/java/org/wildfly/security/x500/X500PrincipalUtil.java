@@ -23,9 +23,12 @@ import static org.wildfly.security.asn1.ASN1.*;
 
 import java.security.Principal;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Decoder;
 import org.wildfly.security.asn1.DERDecoder;
 import sun.security.x509.X500Name;
@@ -130,6 +133,42 @@ public final class X500PrincipalUtil {
             }
         }
         return result;
+    }
+
+    /**
+     * Determine if the given principal contains all of the attributes specified by the given OIDs.
+     * This includes occurrences within multi-valued RDNs.
+     *
+     * @param principal the principal to examine
+     * @param oids the OIDs of the attributes that must be present in the given principal (must not be {@code null},
+     *  cannot have {@code null} elements)
+     * @return {@code true} if the given principal contains all of the attributes specified by the given OIDs,
+     *  {@code false} otherwise
+     */
+    public static boolean containsAllAttributes(X500Principal principal, String... oids) {
+        Assert.checkNotNullParam("principal", principal);
+        Assert.checkNotNullParam("oids", oids);
+        final Set<String> requiredAttributes = new HashSet<>(Arrays.asList(oids));
+        final ASN1Decoder decoder = new DERDecoder(principal.getEncoded());
+        decoder.startSequence();
+        while (decoder.hasNextElement() && ! requiredAttributes.isEmpty()) {
+            decoder.startSet();
+            while (decoder.hasNextElement() && ! requiredAttributes.isEmpty()) {
+                decoder.startSequence();
+                // first item is the attribute
+                String testOid = decoder.decodeObjectIdentifier();
+                requiredAttributes.remove(testOid);
+                // skip over the attribute value
+                decoder.skipElement();
+                decoder.endSequence();
+            }
+            decoder.endSet();
+        }
+        decoder.endSequence();
+        if (decoder.hasNextElement()) {
+            throw log.unexpectedTrailingGarbageInX500principal();
+        }
+        return requiredAttributes.isEmpty();
     }
 
     /**

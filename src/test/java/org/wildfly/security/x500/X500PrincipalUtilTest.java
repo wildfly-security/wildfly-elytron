@@ -56,5 +56,8 @@ public class X500PrincipalUtilTest {
         assertArrayEquals(new String[] { "peanut", "butter", "com", "faux" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC));
         assertArrayEquals(new String[] { "banana", "apple" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_CN));
         assertArrayEquals(new String[] { "faux", "com", "butter", "peanut" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC, true));
+        principal = new X500Principal("cn=Bob Smith+uid=bsmith,ou=people,dc=redhat,dc=com");
+        assertTrue(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_CN, X500.OID_UID, X500.OID_DC));
+        assertFalse(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_UID, X500.OID_L, X500.OID_DC));
     }
 }

@@ -32,11 +32,14 @@ import org.wildfly.security.auth.server.PrincipalDecoder;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
+    private static final String[] NO_REQUIRED_OIDS = new String[0];
+
     private final String oid;
     private final String joiner;
     private final int startSegment;
     private final int maximumSegments;
     private final boolean reverse;
+    private final String[] requiredOids;
 
     /**
      * Construct a new instance.  A joining string of "." is assumed.
@@ -143,16 +146,35 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
      * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
      */
     public X500AttributePrincipalDecoder(final String oid, final String joiner, final int startSegment, final int maximumSegments, final boolean reverse) {
+        this(oid, joiner, startSegment, maximumSegments, reverse, NO_REQUIRED_OIDS);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param oid the OID of the attribute to map
+     * @param joiner the joining string
+     * @param startSegment the 0-based starting occurrence of the attribute to map
+     * @param maximumSegments the maximum number of occurrences of the attribute to map
+     * @param reverse {@code true} if the attribute values should be processed and returned in reverse order
+     * @param requiredOids the OIDs of the attributes that must be present
+     */
+    public X500AttributePrincipalDecoder(final String oid, final String joiner, final int startSegment, final int maximumSegments,
+                                         final boolean reverse, final String... requiredOids) {
         this.oid = oid;
         this.joiner = joiner;
         this.startSegment = startSegment;
         this.maximumSegments = maximumSegments;
         this.reverse = reverse;
+        this.requiredOids = requiredOids;
     }
 
     public String getName(final Principal principal) {
         final X500Principal x500Principal = X500PrincipalUtil.asX500Principal(principal);
         if (x500Principal == null) {
+            return null;
+        }
+        if (requiredOids != null && requiredOids.length != 0 && ! X500PrincipalUtil.containsAllAttributes(x500Principal, requiredOids)) {
             return null;
         }
         final String[] values = X500PrincipalUtil.getAttributeValues(x500Principal, oid, reverse);
