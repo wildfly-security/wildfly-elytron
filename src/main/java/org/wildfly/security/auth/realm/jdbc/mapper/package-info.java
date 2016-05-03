@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
  */
 
 /**
- * Classes related to a {@link org.wildfly.security.auth.server.SecurityRealm} implementation capable of integrating with
- * LDAP servers.
+ * Classes related to mapping columns from a database table to internal representations of identity data (eg.: attributes, password and keys, etc).
+ * See the {@link org.wildfly.security.auth.realm.jdbc.ColumnMapper} for the contract of column mappers.
  */
-package org.wildfly.security.auth.realm.ldap;
+package org.wildfly.security.auth.realm.jdbc.mapper;
