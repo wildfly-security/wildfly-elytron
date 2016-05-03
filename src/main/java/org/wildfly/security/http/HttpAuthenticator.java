@@ -25,6 +25,7 @@ import static org.wildfly.security.http.HttpConstants.OK;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -209,7 +210,7 @@ public class HttpAuthenticator {
         }
 
         @Override
-        public String getRequestURI() {
+        public URI getRequestURI() {
             return httpExchangeSpi.getRequestURI();
         }
 
