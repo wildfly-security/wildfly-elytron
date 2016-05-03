@@ -20,10 +20,13 @@ package org.wildfly.security.pem;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.KeyFactory;
+import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
@@ -60,7 +63,7 @@ public final class Pem {
     public static <R> R parsePemContent(CodePointIterator pemContent, BiFunction<String, ByteIterator, R> contentFunction) throws IllegalArgumentException {
         Assert.checkNotNullParam("pemContent", pemContent);
         Assert.checkNotNullParam("contentFunction", contentFunction);
-        if (! pemContent.contentEquals("-----BEGIN ")) {
+        if (! pemContent.limitedTo(11).contentEquals("-----BEGIN ")) {
             throw log.malformedPemContent(pemContent.offset());
         }
         String type = pemContent.delimitedBy('-').drainToString().trim();
@@ -69,18 +72,25 @@ public final class Pem {
             // BEGIN string is 11 chars long
             throw log.malformedPemContent(matcher.start() + 11);
         }
-        if (! pemContent.contentEquals("-----")) {
+        if (! pemContent.limitedTo(5).contentEquals("-----")) {
             throw log.malformedPemContent(pemContent.offset());
         }
-        final ByteIterator byteIterator = pemContent.delimitedBy('-').base64Decode();
+
+        String encodedKey = pemContent.delimitedBy('-').drainToString();
+
+        encodedKey = encodedKey.replaceAll("\r\n", "");
+        encodedKey = encodedKey.replaceAll("\n", "");
+        encodedKey = encodedKey.trim();
+
+        final ByteIterator byteIterator = ByteIterator.ofBytes(encodedKey.getBytes()).base64Decode();
         final R result = contentFunction.apply(type, byteIterator);
-        if (! pemContent.contentEquals("-----END ")) {
+        if (! pemContent.limitedTo(9).contentEquals("-----END ")) {
             throw log.malformedPemContent(pemContent.offset());
         }
-        if (! pemContent.contentEquals(type)) {
+        if (! pemContent.limitedTo(type.length()).contentEquals(type)) {
             throw log.malformedPemContent(pemContent.offset());
         }
-        if (! pemContent.contentEquals("-----")) {
+        if (! pemContent.limitedTo(5).contentEquals("-----")) {
             throw log.malformedPemContent(pemContent.offset());
         }
         return result;
@@ -106,6 +116,10 @@ public final class Pem {
                             case "CERTIFICATE": {
                                 final X509Certificate x509Certificate = parsePemX509CertificateContent(label, byteIterator);
                                 return new PemEntry<>(x509Certificate);
+                            }
+                            case "PUBLIC KEY": {
+                                final PublicKey publicKey = parsePemPublicKey(label, byteIterator);
+                                return new PemEntry<>(publicKey);
                             }
                             default: {
                                 throw log.malformedPemContent(pemContent.offset());
@@ -163,6 +177,19 @@ public final class Pem {
         }
     }
 
+    private static PublicKey parsePemPublicKey(String type, ByteIterator content) throws IllegalArgumentException {
+        if (! type.equals("PUBLIC KEY")) {
+            throw log.invalidPemType("PUBLIC KEY", type);
+        }
+        try {
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(content.drain());
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePublic(spec);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Parse an X.509 certificate in PEM format.
      *
@@ -173,6 +200,18 @@ public final class Pem {
     public static X509Certificate parsePemX509Certificate(CodePointIterator pemContent) throws IllegalArgumentException {
         Assert.checkNotNullParam("pemContent", pemContent);
         return parsePemContent(pemContent, Pem::parsePemX509CertificateContent);
+    }
+
+    /**
+     * Parse a {@link PublicKey} in PEM format.
+     *
+     * @param pemContent the PEM content (must not be {@code null})
+     * @return the public key (not {@code null})
+     * @throws IllegalArgumentException if the public key could not be parsed for some reason
+     */
+    public static PublicKey parsePemPublicKey(CodePointIterator pemContent) throws IllegalArgumentException {
+        Assert.checkNotNullParam("pemContent", pemContent);
+        return parsePemContent(pemContent, Pem::parsePemPublicKey);
     }
 
     /**
@@ -189,5 +228,18 @@ public final class Pem {
         } catch (CertificateEncodingException e) {
             throw log.certificateParseError(e);
         }
+    }
+
+    /**
+     * Generate PEM content containing a {@link PublicKey}.
+     *
+     * @param target the target byte string builder (must not be {@code null})
+     * @param publicKey the {@link PublicKey} (must not be {@code null})
+     */
+    public static void generatePemPublicKey(ByteStringBuilder target, PublicKey publicKey) {
+        Assert.checkNotNullParam("target", target);
+        Assert.checkNotNullParam("publicKey", publicKey);
+
+        generatePemContent(target, "PUBLIC KEY", ByteIterator.ofBytes(publicKey.getEncoded()));
     }
 }

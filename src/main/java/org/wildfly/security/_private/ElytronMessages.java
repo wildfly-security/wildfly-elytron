@@ -447,16 +447,16 @@ public interface ElytronMessages extends BasicLogger {
     RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
 
     @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
-    RuntimeException oauth2RealmFailedToObtainPrincipal(@Cause Throwable cause);
+    RuntimeException tokenRealmFailedToObtainPrincipal(@Cause Throwable cause);
 
     @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
-    RealmUnavailableException oauth2RealmTokenIntrospectionFailed(@Cause Throwable cause);
+    RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
 
     @Message(id = 1106, value = "OAuth2-based realm requires a SSLContext when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException oauth2RealmSSLContextNotSpecified(URL tokenIntrospectionUrl);
+    IllegalStateException tokenRealmOAuth2SSLContextNotSpecified(URL tokenIntrospectionUrl);
 
     @Message(id = 1107, value = "OAuth2-based realm requires a HostnameVerifier when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException oauth2RealmHostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
+    IllegalStateException tokenRealmOAuth2HostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
 
     @Message(id = 1108, value = "Ldap-backed realm identity search failed")
     RuntimeException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
@@ -472,6 +472,21 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
     IllegalStateException cannotSucceedNotAuthorized();
+
+    @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
+    RealmUnavailableException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
+
+    @Message(id = 1114, value = "Invalid token format. Tokens must have a signature part accordingly with JWS specification")
+    RealmUnavailableException tokenRealmJwtInvalidFormat();
+
+    @Message(id = 1115, value = "Failed to parse token")
+    RealmUnavailableException tokenRealmJwtParseFailed(@Cause Throwable cause);
+
+    @Message(id = 1116, value = "Signature verification failed")
+    RealmUnavailableException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
+
+    @Message(id = 1117, value = "Invalid signature algorithm [%s]")
+    RealmUnavailableException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
 
     /* keystore package */
 

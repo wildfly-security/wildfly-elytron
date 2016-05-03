@@ -16,13 +16,26 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.realm.oauth2;
+package org.wildfly.security.auth.realm.token;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import mockit.Mock;
+import mockit.MockUp;
+import mockit.integration.junit4.JMockit;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
+import org.wildfly.security.auth.server.RealmIdentity;
+import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -31,40 +44,24 @@ import java.security.Principal;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.wildfly.security.auth.server.IdentityLocator;
-import org.wildfly.security.auth.server.RealmIdentity;
-import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.authz.Attributes;
-import org.wildfly.security.authz.AuthorizationIdentity;
-import org.wildfly.security.evidence.BearerTokenEvidence;
-
-import mockit.Mock;
-import mockit.MockUp;
-import mockit.integration.junit4.JMockit;
+import static org.junit.Assert.*;
+import static org.wildfly.security.auth.server.IdentityLocator.fromEvidence;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 @RunWith(JMockit.class)
-public class OAuth2SecurityRealmTest {
+public class OAuth2TokenSecurityRealmTest {
 
     @Test
     public void testBasicActiveToken() throws Exception {
         configureReplayTokenIntrospection();
 
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect"))
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                        .clientId("wildfly-elytron")
+                        .clientSecret("dont_tell_me")
+                        .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build())
                 .build();
 
         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
@@ -72,7 +69,33 @@ public class OAuth2SecurityRealmTest {
         tokenBuilder.add("active", true);
         tokenBuilder.add("username", "elytron@jboss.org");
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+
+        assertTrue(realmIdentity.exists());
+
+        Principal realmIdentityPrincipal = realmIdentity.getRealmIdentityPrincipal();
+
+        assertEquals("elytron@jboss.org", realmIdentityPrincipal.getName());
+    }
+
+    @Test
+    public void testUserDefinedPrincipalClaimName() throws Exception {
+        configureReplayTokenIntrospection();
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("user-defined-claim")
+                .validator(OAuth2IntrospectValidator.builder()
+                        .clientId("wildfly-elytron")
+                        .clientSecret("dont_tell_me")
+                        .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build())
+                .build();
+
+        JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
+
+        tokenBuilder.add("active", true);
+        tokenBuilder.add("user-defined-claim", "elytron@jboss.org");
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
 
         assertTrue(realmIdentity.exists());
 
@@ -85,17 +108,18 @@ public class OAuth2SecurityRealmTest {
     public void testNotActiveToken() throws Exception {
         configureReplayTokenIntrospection();
 
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect"))
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                        .clientId("wildfly-elytron")
+                        .clientSecret("dont_tell_me")
+                        .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build())
                 .build();
 
         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
         tokenBuilder.add("active", false);
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
 
         assertFalse(realmIdentity.exists());
         assertNull(realmIdentity.getRealmIdentityPrincipal());
@@ -105,10 +129,11 @@ public class OAuth2SecurityRealmTest {
     public void testAttributesFromTokenMetadata() throws Exception {
         configureReplayTokenIntrospection();
 
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect"))
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                        .clientId("wildfly-elytron")
+                        .clientSecret("dont_tell_me")
+                        .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build())
                 .build();
 
         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
@@ -128,7 +153,7 @@ public class OAuth2SecurityRealmTest {
         tokenBuilder.add("attribute6", jsonArray.build());
         tokenBuilder.add("attribute7", Json.createObjectBuilder().add("objField1", "value1").add("objectField2", "value2"));
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
         AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -150,37 +175,40 @@ public class OAuth2SecurityRealmTest {
     public void testInErrorTokenIntrospectionEndpoint() throws Exception {
         configureTokenIntrospectionEndpoint(s ->  {throw new RuntimeException("Forcing exception.");});
 
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect"))
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                    .clientId("wildfly-elytron")
+                    .clientSecret("dont_tell_me")
+                    .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build())
                 .build();
 
         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
         tokenBuilder.add("active", true);
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
 
         assertFalse(realmIdentity.exists());
     }
 
     @Test(expected = IllegalStateException.class)
     public void failMissingSSLContext() throws Exception {
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect"))
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                    .clientId("wildfly-elytron")
+                    .clientSecret("dont_tell_me")
+                    .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect")).build())
                 .build();
     }
 
     @Test(expected = IllegalStateException.class)
     public void failMissingHostnameverifier() throws Exception {
-        OAuth2SecurityRealm securityRealm = OAuth2SecurityRealm.builder()
-                .clientId("wildfly-elytron")
-                .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect"))
-                .useSslContext(SSLContext.getDefault())
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .validator(OAuth2IntrospectValidator.builder()
+                    .clientId("wildfly-elytron")
+                    .clientSecret("dont_tell_me")
+                    .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect"))
+                    .useSslContext(SSLContext.getDefault()).build())
                 .build();
     }
 
@@ -191,7 +219,7 @@ public class OAuth2SecurityRealmTest {
     private void configureTokenIntrospectionEndpoint(Function<String, JsonObject> introspector){
         final Class<?> classToMock;
         try {
-            classToMock = Class.forName("org.wildfly.security.auth.realm.oauth2.OAuth2Util", true, OAuth2SecurityRealm.class.getClassLoader());
+            classToMock = Class.forName("org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator", true, TokenSecurityRealm.class.getClassLoader());
         } catch (ClassNotFoundException e) {
             throw new NoClassDefFoundError(e.getMessage());
         }

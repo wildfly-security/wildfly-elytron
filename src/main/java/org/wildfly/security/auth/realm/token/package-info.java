@@ -17,7 +17,6 @@
  */
 
 /**
- * Classes related to a {@link org.wildfly.security.auth.server.SecurityRealm} implementation capable of integrating with
- * OAuth2-based Identity Providers in order to validate and build identities from security tokens.
+ * Classes related to a {@link org.wildfly.security.auth.server.SecurityRealm} implementation that handles different types of security tokens.
  */
-package org.wildfly.security.auth.realm.oauth2;
+package org.wildfly.security.auth.realm.token;
