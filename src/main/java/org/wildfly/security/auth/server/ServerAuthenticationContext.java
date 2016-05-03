@@ -633,7 +633,7 @@ public final class ServerAuthenticationContext {
         name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
         name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final IdentityLocator.Builder locatorBuilder = new IdentityLocator.Builder();
+        final IdentityLocator.Builder locatorBuilder = IdentityLocator.builder();
         locatorBuilder.setName(name);
         locatorBuilder.setPrincipal(principal);
         locatorBuilder.setEvidence(evidence);
@@ -938,8 +938,7 @@ public final class ServerAuthenticationContext {
             final Collection<RealmInfo> realmInfos = domain.getRealmInfos();
             RealmIdentity realmIdentity = null;
             RealmInfo realmInfo = null;
-            final IdentityLocator.Builder locatorBuilder = new IdentityLocator.Builder();
-            final IdentityLocator locator = locatorBuilder.setEvidence(evidence).setPrincipal(evidencePrincipal).build();
+            final IdentityLocator locator = IdentityLocator.fromEvidence(evidence);
             for (RealmInfo info : realmInfos) {
                 realmIdentity = info.getSecurityRealm().getRealmIdentity(locator);
                 if (realmIdentity.exists()) {

@@ -23,6 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.security.Principal;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -39,6 +40,15 @@ public final class IdentityLocator {
         this.name = name;
         this.principal = principal;
         this.evidence = evidence;
+    }
+
+    /**
+     * Construct a new builder to assemble a locator.
+     *
+     * @return the new builder (not null)
+     */
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -116,6 +126,32 @@ public final class IdentityLocator {
     }
 
     /**
+     * Shortcut method to construct an identity locator from just an evidence instance.  The principal will be
+     * populated from the evidence, if it has one.  The name will be populated from the principal if it is an
+     * instance of {@code NamePrincipal}.
+     *
+     * @param evidence the evidence (must not be {@code null})
+     * @return the identity locator (not {@code null})
+     */
+    public static IdentityLocator fromEvidence(Evidence evidence) {
+        Assert.checkNotNullParam("evidence", evidence);
+        final Principal principal = evidence.getPrincipal();
+        return new IdentityLocator(principal instanceof NamePrincipal ? principal.getName() : null, principal, evidence);
+    }
+
+    /**
+     * Shortcut method to construct an identity locator from just a principal instance.  The name will be populated from
+     * the principal if it is an instance of {@code NamePrincipal}.
+     *
+     * @param principal the principal (must not be {@code null})
+     * @return the identity locator (not {@code null})
+     */
+    public static IdentityLocator fromPrincipal(Principal principal) {
+        Assert.checkNotNullParam("principal", principal);
+        return new IdentityLocator(principal instanceof NamePrincipal ? principal.getName() : null, principal, null);
+    }
+
+    /**
      * A class for building {@link IdentityLocator} instances.
      */
     public static class Builder {
@@ -126,7 +162,7 @@ public final class IdentityLocator {
         /**
          * Construct a new, empty instance.
          */
-        public Builder() {
+        Builder() {
         }
 
         /**

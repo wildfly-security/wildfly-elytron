@@ -195,7 +195,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
                     final String fileName = path.getFileName().toString();
-                    return getRealmIdentityForUpdate(new IdentityLocator.Builder().setName(fileName.substring(0, fileName.length() - 4)).build());
+                    return getRealmIdentityForUpdate(IdentityLocator.fromName(fileName.substring(0, fileName.length() - 4)));
                 }
 
                 public void close() throws IOException {
