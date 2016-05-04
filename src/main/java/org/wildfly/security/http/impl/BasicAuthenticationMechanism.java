@@ -122,10 +122,9 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                     try {
                         String username = usernameChars.toString();
                         if (authenticate(username, passwordChars.array())) {
-                            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-                            callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED, securityIdentityCallback });
+                            callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
 
-                            request.authenticationComplete(securityIdentityCallback.getSecurityIdentity());
+                            request.authenticationComplete();
                             return;
                         } else {
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });

@@ -35,7 +35,6 @@ import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
-import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -164,8 +163,8 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
-        public void authenticationComplete(SecurityIdentity securityIdentity, HttpServerMechanismsResponder responder) {
-            wrapped.authenticationComplete(securityIdentity, wrap(responder));
+        public void authenticationComplete(HttpServerMechanismsResponder responder) {
+            wrapped.authenticationComplete(wrap(responder));
         }
 
         @Override

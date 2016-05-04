@@ -180,9 +180,9 @@ public class HttpAuthenticator {
         }
 
         @Override
-        public void authenticationComplete(SecurityIdentity securityIdentity, HttpServerMechanismsResponder responder) {
+        public void authenticationComplete(HttpServerMechanismsResponder responder) {
             authenticated = true;
-            httpExchangeSpi.authenticationComplete(securityIdentity, currentMechanism.getMechanismName());
+            httpExchangeSpi.authenticationComplete(currentMechanism.getMechanismName());
             successResponder = responder;
         }
 

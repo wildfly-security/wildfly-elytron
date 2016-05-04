@@ -80,7 +80,7 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
 
         if (callback.isAuthorized()) try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, AuthenticationCompleteCallback.SUCCEEDED);
-            request.authenticationComplete(null);
+            request.authenticationComplete();
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
