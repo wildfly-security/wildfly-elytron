@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
@@ -43,6 +42,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -90,10 +90,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
-
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
         final LoadedState loadedState = this.loadedState.get();
-        final AccountEntry accountEntry = loadedState.getAccounts().get(name);
+
+        if (! locator.hasName()) return RealmIdentity.NON_EXISTENT;
+
+        final AccountEntry accountEntry = loadedState.getAccounts().get(locator.getName());
 
         return new RealmIdentity() {
 
@@ -194,10 +196,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                 }
 
                 return AuthorizationIdentity.basicIdentity(new MapAttributes(Collections.singletonMap(groupsAttribute, accountEntry.getGroups())));
-            }
-
-            public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-                return LegacyPropertiesSecurityRealm.this == securityRealm;
             }
         };
     }

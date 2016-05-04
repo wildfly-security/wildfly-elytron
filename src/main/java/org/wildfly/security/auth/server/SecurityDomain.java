@@ -53,7 +53,9 @@ import org.wildfly.security.permission.PermissionVerifier;
  */
 public final class SecurityDomain {
 
-    static final ElytronPermission CREATE_SECURITY_DOMAIN = new ElytronPermission("createSecurityDomain");
+    static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
+    static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
+
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
     private final NameRewriter preRealmRewriter;
@@ -92,7 +94,7 @@ public final class SecurityDomain {
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
         final RealmInfo realmInfo = new RealmInfo();
-        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers)));
+        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers, SecurityIdentity.NO_PEER_IDENTITIES)));
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 
@@ -112,6 +114,10 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
         return new ServerAuthenticationContext(this, MechanismConfiguration.EMPTY);
     }
 
@@ -123,7 +129,16 @@ public final class SecurityDomain {
      * @return the new authentication context
      */
     public ServerAuthenticationContext createNewAuthenticationContext(MechanismConfiguration mechanismConfiguration) {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(CREATE_AUTH_CONTEXT);
+        }
         return new ServerAuthenticationContext(this, mechanismConfiguration);
+    }
+
+    ServerAuthenticationContext createNewAuthenticationContext(SecurityIdentity capturedIdentity, MechanismConfiguration mechanismConfiguration) {
+        assert capturedIdentity.getSecurityDomain() == this;
+        return new ServerAuthenticationContext(capturedIdentity, mechanismConfiguration);
     }
 
     /**
@@ -149,7 +164,7 @@ public final class SecurityDomain {
         if (name == null) {
             throw log.invalidName();
         }
-        return securityRealm.getRealmIdentity(name, null, null);
+        return securityRealm.getRealmIdentity(IdentityLocator.fromName(name));
     }
 
     /**

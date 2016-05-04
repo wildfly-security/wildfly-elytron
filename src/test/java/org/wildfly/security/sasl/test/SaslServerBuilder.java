@@ -23,6 +23,7 @@ import java.security.Permissions;
 import java.security.spec.KeySpec;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.net.ssl.X509KeyManager;
@@ -36,6 +37,7 @@ import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
 import org.wildfly.security.auth.server.MechanismConfiguration;
+import org.wildfly.security.auth.server.MechanismRealmConfiguration;
 import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -70,6 +72,7 @@ public class SaslServerBuilder {
     private Map<String, Permissions> permissionsMap = null;
     private Map<String, SimpleRealmEntry> passwordMap;
     private Map<String, SecurityRealm> realms = new HashMap<String, SecurityRealm>();
+    private Map<String, MechanismRealmConfiguration> mechanismRealms = new LinkedHashMap<>();
 
     //Server factory decorators
     private Map<String, Object> properties;
@@ -189,6 +192,14 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder addMechanismRealm(final String realmName) {
+        Assert.assertNotNull("realmName", realmName);
+        final MechanismRealmConfiguration.Builder builder = MechanismRealmConfiguration.builder();
+        builder.setRealmName(realmName);
+        mechanismRealms.put(realmName, builder.build());
+        return this;
+    }
+
     public SaslServerBuilder setDontAssertBuiltServer() {
         this.dontAssertBuiltServer = true;
         return this;
@@ -244,7 +255,11 @@ public class SaslServerBuilder {
         final SaslAuthenticationFactory.Builder builder = SaslAuthenticationFactory.builder();
         builder.setFactory(factory);
         builder.setSecurityDomain(domain);
-        builder.addMechanism(mechanismName, MechanismConfiguration.EMPTY);
+        final MechanismConfiguration.Builder mechBuilder = MechanismConfiguration.builder();
+        for (MechanismRealmConfiguration realmConfiguration : mechanismRealms.values()) {
+            mechBuilder.addMechanismRealm(realmConfiguration);
+        }
+        builder.addMechanism(mechanismName, mechBuilder.build());
         final SaslServer server = builder.build().createMechanism(mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);

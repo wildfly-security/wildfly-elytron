@@ -34,7 +34,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
-import java.security.Principal;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -58,12 +57,12 @@ import javax.xml.stream.XMLStreamWriter;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -149,16 +148,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return path.resolve(name + ".xml");
     }
 
-    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) {
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
         // todo: read and write locking variants
-        return getRealmIdentityForUpdate(name, principal, evidence);
+        return getRealmIdentityForUpdate(locator);
     }
 
-    public ModifiableRealmIdentity getRealmIdentityForUpdate(final String name, final Principal principal, final Evidence evidence) {
-        if (name == null || name.isEmpty()) {
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(final IdentityLocator locator) {
+        if (! locator.hasName()) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
-        final String finalName = nameRewriter.rewriteName(name);
+        final String finalName = nameRewriter.rewriteName(locator.getName());
         if (finalName == null) {
             throw ElytronMessages.log.invalidName();
         }
@@ -196,7 +195,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 public ModifiableRealmIdentity next() {
                     final Path path = iterator.next();
                     final String fileName = path.getFileName().toString();
-                    return getRealmIdentityForUpdate(fileName.substring(0, fileName.length() - 4), null, null);
+                    return getRealmIdentityForUpdate(IdentityLocator.fromName(fileName.substring(0, fileName.length() - 4)));
                 }
 
                 public void close() throws IOException {
@@ -565,10 +564,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
             final LoadedIdentity loadedIdentity = loadIdentity(true, false);
             return loadedIdentity == null ? AuthorizationIdentity.EMPTY : AuthorizationIdentity.basicIdentity(loadedIdentity.getAttributes());
-        }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-            return FileSystemSecurityRealm.this == securityRealm;
         }
 
         private LoadedIdentity loadIdentity(final boolean skipCredentials, final boolean skipAttributes) throws RealmUnavailableException {

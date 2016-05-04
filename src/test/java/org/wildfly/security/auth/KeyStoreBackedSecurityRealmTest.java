@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
@@ -71,7 +72,7 @@ public class KeyStoreBackedSecurityRealmTest {
 
         // create a realm identity that represents the user "elytron" (password is of type MD5Crypt)
         SecurityRealm realm = new KeyStoreBackedSecurityRealm(keyStore);
-        RealmIdentity realmIdentity = realm.getRealmIdentity("elytron", null, null);
+        RealmIdentity realmIdentity = realm.getRealmIdentity(IdentityLocator.fromName("elytron"));
 
         // only the Password type credential type is supported in the password file keystore.
         assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5));
@@ -87,7 +88,7 @@ public class KeyStoreBackedSecurityRealmTest {
         assertFalse("Error validating credential", realmIdentity.verifyEvidence(new PasswordGuessEvidence("wrongpass".toCharArray())));
 
         // now create a realm identity that represents the user "javajoe" (password is of type BCrypt).
-        realmIdentity = realm.getRealmIdentity("javajoe", null, null);
+        realmIdentity = realm.getRealmIdentity(IdentityLocator.fromName("javajoe"));
 
         // only the Password type credential type is supported in the password file keystore.
         assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getCredentialAcquireSupport(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT));

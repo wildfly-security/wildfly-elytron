@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
@@ -44,7 +45,7 @@ public class PasswordValidationSuiteChild {
                 .addDirectEvidenceVerification()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity("plainUser", null, null);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromName("plainUser"));
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
@@ -62,7 +63,7 @@ public class PasswordValidationSuiteChild {
                 .addDirectEvidenceVerification()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity("uid=plainUser,dc=elytron,dc=wildfly,dc=org", null, null);
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromName("uid=plainUser,dc=elytron,dc=wildfly,dc=org"));
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);

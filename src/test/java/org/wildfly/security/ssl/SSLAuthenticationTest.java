@@ -50,6 +50,7 @@ import org.wildfly.security.auth.realm.KeyStoreBackedSecurityRealm;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.permission.PermissionVerifier;
 import org.wildfly.security.x500.X500AttributePrincipalDecoder;
 
 /**
@@ -74,6 +75,7 @@ public class SSLAuthenticationTest {
                 .setDefaultRealmName("KeystoreRealm")
                 .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
                 .setPreRealmRewriter(s -> s.toLowerCase())
+                .setPermissionMapper((principal, roles) -> PermissionVerifier.ALL)
                 .build();
 
         serverContext = new SSLContextBuilder()

@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.server;
 
-import java.security.Principal;
-
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.event.RealmEvent;
@@ -35,16 +33,14 @@ import org.wildfly.security.evidence.Evidence;
 public interface SecurityRealm {
 
     /**
-     * Get a handle for to the identity for the given name in the context of this security realm. Any
+     * Get a handle for to the identity for the given locator in the context of this security realm. Any
      * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
      * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
      *
-     * @param name the name to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
-     * @param principal the principal to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
-     * @param evidence the evidence to use to locate the {@link RealmIdentity} handle, or {@code null} if none was available in the current authentication
+     * @param locator the information to use to locate the {@link RealmIdentity} handle (must not be {@code null})
      * @return the {@link RealmIdentity} for the provided information (not {@code null})
      */
-    RealmIdentity getRealmIdentity(String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException;
+    RealmIdentity getRealmIdentity(IdentityLocator locator) throws RealmUnavailableException;
 
     /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
@@ -101,7 +97,7 @@ public interface SecurityRealm {
      * An empty security realm.
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
-        public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+        public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
             return RealmIdentity.NON_EXISTENT;
         }
 

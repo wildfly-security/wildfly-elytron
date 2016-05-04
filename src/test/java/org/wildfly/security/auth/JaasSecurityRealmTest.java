@@ -31,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.realm.JaasSecurityRealm;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -68,7 +69,7 @@ public class JaasSecurityRealmTest {
         SecurityRealm realm = new JaasSecurityRealm("test");
 
         // test the creation of a realm identity.
-        RealmIdentity realmIdentity = realm.getRealmIdentity("elytron", null, null);
+        RealmIdentity realmIdentity = realm.getRealmIdentity(IdentityLocator.fromName("elytron"));
         assertNotNull("Unexpected null realm identity", realmIdentity);
 
         // check the supported credential types (the default handler can only handle char[], String and ClearPassword credentials)..
@@ -108,7 +109,7 @@ public class JaasSecurityRealmTest {
         SecurityRealm realm = new JaasSecurityRealm("test", new TestCallbackHandler());
 
         // create a new realm identity using the realm.
-        RealmIdentity realmIdentity = realm.getRealmIdentity("javajoe", null, null);
+        RealmIdentity realmIdentity = realm.getRealmIdentity(IdentityLocator.fromName("javajoe"));
 
         assertEquals("Invalid credential support", SupportLevel.SUPPORTED, realmIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
         assertEquals("Invalid credential support", SupportLevel.UNSUPPORTED, realmIdentity.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, null));

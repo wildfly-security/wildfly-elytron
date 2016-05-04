@@ -25,7 +25,9 @@ import java.security.Provider;
 import java.security.Provider.Service;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -254,5 +256,156 @@ public final class SSLUtils {
     public static SecurityFactory<SSLEngine> createDispatchingSSLEngineFactory(SSLContextSelector selector) {
         Assert.checkNotNullParam("selector", selector);
         return () -> new SelectingServerSSLEngine(selector);
+    }
+
+    /**
+     * Get the value of the given key from the SSL session, or a default value if the key is not set.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param defaultValue the value to return if the key is not present
+     * @return the session value or the default value
+     */
+    public static Object getOrDefault(SSLSession sslSession, String key, Object defaultValue) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        final Object value = sslSession.getValue(key);
+        return value != null ? value : defaultValue;
+    }
+
+    /**
+     * Put a value on the session if the value is not yet set.  This method is atomic with respect to other methods
+     * on this class.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param newValue the value to set (must not be {@code null})
+     * @return the existing value, or {@code null} if the value was successfully set
+     */
+    public static Object putSessionValueIfAbsent(SSLSession sslSession, String key, Object newValue) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("newValue", newValue);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            if (existing == null) {
+                sslSession.putValue(key, newValue);
+                return null;
+            } else {
+                return existing;
+            }
+        }
+    }
+
+    /**
+     * Remove and return a value on the session.  This method is atomic with respect to other methods on this class.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @return the existing value, or {@code null} if no such value was set
+     */
+    public static Object removeSessionValue(SSLSession sslSession, String key) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            sslSession.removeValue(key);
+            return existing;
+        }
+    }
+
+    /**
+     * Remove the given key-value pair on the session.  This method is atomic with respect to other methods on this class.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to remove (must not be {@code null})
+     * @param value the value to remove (must not be {@code null})
+     * @return {@code true} if the key/value pair was removed, {@code false} if the key was not present or the value was not equal to the given value
+     */
+    public static boolean removeSessionValue(SSLSession sslSession, String key, Object value) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("value", value);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            if (Objects.equals(existing, value)) {
+                sslSession.removeValue(key);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Replace the given key's value with a new value.  If there is no value for the given key, no action is performed.
+     * This method is atomic with respect to other methods on this class.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param newValue the value to set (must not be {@code null})
+     * @return the existing value, or {@code null} if the value was not set
+     */
+    public static Object replaceSessionValue(SSLSession sslSession, String key, Object newValue) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("newValue", newValue);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            if (existing != null) sslSession.putValue(key, newValue);
+            return existing;
+        }
+    }
+
+    /**
+     * Replace the given key's value with a new value if (and only if) it is mapped to the given existing value.
+     * This method is atomic with respect to other methods on this class.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param oldValue the value to match (must not be {@code null})
+     * @param newValue the value to set (must not be {@code null})
+     * @return {@code true} if the value was matched and replaced, or {@code false} if the value did not match and no action was taken
+     */
+    public static boolean replaceSessionValue(SSLSession sslSession, String key, Object oldValue, Object newValue) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("oldValue", oldValue);
+        Assert.checkNotNullParam("newValue", newValue);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            if (Objects.equals(existing, oldValue)) {
+                sslSession.putValue(key, newValue);
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Get or compute the value for the given key, storing the computed value (if one is generated).  The function
+     * must not generate a {@code null} value or an unspecified exception will result.
+     *
+     * @param sslSession the SSL session (must not be {@code null})
+     * @param key the key to retrieve (must not be {@code null})
+     * @param mappingFunction the function to apply to acquire the value (must not be {@code null})
+     * @return the stored or new value (not {@code null})
+     */
+    public static Object computeIfAbsent(SSLSession sslSession, String key, Function<String, ?> mappingFunction) {
+        Assert.checkNotNullParam("sslSession", sslSession);
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("mappingFunction", mappingFunction);
+        synchronized (sslSession) {
+            final Object existing = sslSession.getValue(key);
+            if (existing == null) {
+                Object newValue = mappingFunction.apply(key);
+                Assert.assertNotNull(newValue);
+                sslSession.putValue(key, newValue);
+                return newValue;
+            } else {
+                return existing;
+            }
+        }
     }
 }

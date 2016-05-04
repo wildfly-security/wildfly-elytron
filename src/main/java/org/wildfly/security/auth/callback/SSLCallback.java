@@ -27,7 +27,8 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 /**
- * A callback which provides information about the SSL/TLS security layer involved in an authentication.
+ * A callback which provides information to the callback handler about the established SSL/TLS security layer involved
+ * in an authentication.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

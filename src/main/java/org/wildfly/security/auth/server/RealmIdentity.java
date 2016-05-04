@@ -42,7 +42,7 @@ public interface RealmIdentity {
 
     /**
      * Get the decoded principal for this realm identity, if any.  This method <em>may</em> return the principal object
-     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(String, Principal, Evidence)}, but
+     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(IdentityLocator)}, but
      * is not required to do so.  Any existent realm identity (i.e. any identity which returns {@code true} on invocation
      * of {@link #exists()}) which was not provided with a name or principal <em>must</em> return a non-{@code null}
      * principal (which should have been decoded from the evidence provided to the {@code getRealmIdentity} method).
@@ -148,14 +148,6 @@ public interface RealmIdentity {
     }
 
     /**
-     * Determine if this realm identity was created by the given security realm.
-     *
-     * @param securityRealm the security realm to check
-     * @return {@code true} if this realm identity was created by the given security realm, {@code false} otherwise
-     */
-    boolean createdBySecurityRealm(SecurityRealm securityRealm);
-
-    /**
      * The anonymous realm identity.
      */
     RealmIdentity ANONYMOUS = new RealmIdentity() {
@@ -186,10 +178,6 @@ public interface RealmIdentity {
         public boolean exists() throws RealmUnavailableException {
             return true;
         }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-            return SecurityRealm.EMPTY_REALM == securityRealm;
-        }
     };
 
     /**
@@ -217,10 +205,6 @@ public interface RealmIdentity {
         }
 
         public boolean exists() throws RealmUnavailableException {
-            return false;
-        }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
             return false;
         }
     };

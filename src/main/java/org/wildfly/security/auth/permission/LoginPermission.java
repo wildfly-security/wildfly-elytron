@@ -51,4 +51,15 @@ public final class LoginPermission extends AbstractBooleanPermission<LoginPermis
      */
     public LoginPermission(@SuppressWarnings("unused") final String name, @SuppressWarnings("unused") final String actions) {
     }
+
+    private static final LoginPermission INSTANCE = new LoginPermission();
+
+    /**
+     * Get the instance of this class.
+     *
+     * @return the instance of this class
+     */
+    public static LoginPermission getInstance() {
+        return INSTANCE;
+    }
 }

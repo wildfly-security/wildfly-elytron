@@ -21,7 +21,6 @@ package org.wildfly.security.auth.realm.ldap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,12 +57,12 @@ import javax.naming.ldap.Rdn;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.CloseableIterator;
+import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.MapAttributes;
@@ -106,17 +105,17 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final String name, final Principal principal, final Evidence evidence) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
         // todo: read/write locking
-        return getRealmIdentityForUpdate(name, principal, evidence);
+        return getRealmIdentityForUpdate(locator);
     }
 
     @Override
-    public ModifiableRealmIdentity getRealmIdentityForUpdate(String name, final Principal principal, final Evidence evidence) {
-        if (name == null) {
+    public ModifiableRealmIdentity getRealmIdentityForUpdate(final IdentityLocator locator) {
+        if (! locator.hasName()) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
-        name = nameRewriter.rewriteName(name);
+        String name = nameRewriter.rewriteName(locator.getName());
         if (name == null) {
             throw log.invalidName();
         }
@@ -147,7 +146,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     while (result.hasMore()) {
                         SearchResult entry = result.next();
                         String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                        list.add(getRealmIdentityForUpdate(name, null, null));
+                        list.add(getRealmIdentityForUpdate(IdentityLocator.fromName(name)));
                     }
                 } finally {
                     result.close();
@@ -175,7 +174,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     while (result.hasMore()) {
                         SearchResult entry = result.next();
                         String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                        list.add(getRealmIdentityForUpdate(name, null, null));
+                        list.add(getRealmIdentityForUpdate(IdentityLocator.fromName(name)));
                     }
                 } finally {
                     result.close();
@@ -477,10 +476,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             return exists;
-        }
-
-        public boolean createdBySecurityRealm(final SecurityRealm securityRealm) {
-            return LdapSecurityRealm.this == securityRealm;
         }
 
         private LdapIdentity getIdentity() throws RealmUnavailableException {
