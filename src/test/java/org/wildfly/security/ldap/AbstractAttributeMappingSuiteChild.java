@@ -63,7 +63,7 @@ public abstract class AbstractAttributeMappingSuiteChild {
                                         .build()
                                         .build()).build();
 
-        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
+        builder.setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.from(new LoginPermission()));
 
         SecurityDomain securityDomain = builder.build();
 

@@ -93,7 +93,7 @@ public class ElytronPolicyEnforcementTest extends AbstractAuthorizationTestCase 
         builder.addRealm("default", securityRealm).build();
         builder.setDefaultRealmName("default");
 
-        builder.setPermissionMapper((principal, roles) -> {
+        builder.setPermissionMapper((permissionMappable, roles) -> {
             PermissionCollection collection;
             if (roles.contains("Administrator")) {
                 collection = PermissionUtil.readOnlyCollectionOf(

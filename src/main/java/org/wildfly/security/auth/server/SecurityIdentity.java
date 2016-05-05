@@ -46,6 +46,7 @@ import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
+import org.wildfly.security.authz.PermissionMappable;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
 import org.wildfly.security.permission.ElytronPermission;
@@ -56,7 +57,7 @@ import org.wildfly.security.permission.PermissionVerifier;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class SecurityIdentity implements PermissionVerifier {
+public final class SecurityIdentity implements PermissionVerifier, PermissionMappable {
     static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
 

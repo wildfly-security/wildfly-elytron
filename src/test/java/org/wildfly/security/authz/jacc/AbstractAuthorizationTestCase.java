@@ -70,7 +70,7 @@ public abstract class AbstractAuthorizationTestCase {
 
         builder.setDefaultRealmName("default");
 
-        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new RunAsPrincipalPermission("*")));
+        builder.setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.from(new RunAsPrincipalPermission("*")));
 
         builder.addRealm("default",realm).setRoleMapper(rolesToMap -> {
             HashSet<String> roles = new HashSet<>();

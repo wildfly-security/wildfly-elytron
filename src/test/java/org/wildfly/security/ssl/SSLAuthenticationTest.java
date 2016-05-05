@@ -75,7 +75,7 @@ public class SSLAuthenticationTest {
                 .setDefaultRealmName("KeystoreRealm")
                 .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
                 .setPreRealmRewriter(s -> s.toLowerCase())
-                .setPermissionMapper((principal, roles) -> PermissionVerifier.ALL)
+                .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
                 .build();
 
         serverContext = new SSLContextBuilder()

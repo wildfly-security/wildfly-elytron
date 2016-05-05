@@ -82,15 +82,15 @@ public class IdentityPropagationTest {
         builder.addRealm("users", realm1).build();
         builder.addRealm("managers", realm2).build();
         builder.setDefaultRealmName("users");
-        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
+        builder.setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.from(new LoginPermission()));
         domain1 = builder.build();
 
         // domain2 contains one of the realms
         builder = SecurityDomain.builder();
         builder.addRealm("usersRealm", realm1).setRoleMapper(rolesToMap -> Roles.of("UserRole")).build();
         builder.setDefaultRealmName("usersRealm");
-        builder.setPermissionMapper((principal, roles) -> {
-            if (principal.getName().equals("joe")) {
+        builder.setPermissionMapper((permissionMappable, roles) -> {
+            if (permissionMappable.getPrincipal().getName().equals("joe")) {
                 return PermissionVerifier.from(new LoginPermission());
             }
             return PermissionVerifier.NONE;
@@ -101,7 +101,7 @@ public class IdentityPropagationTest {
         builder = SecurityDomain.builder();
         builder.addRealm("managersRealm", realm2).setRoleMapper(rolesToMap -> Roles.of("ManagerRole")).build();
         builder.setDefaultRealmName("managersRealm");
-        builder.setPermissionMapper((principal, roles) -> PermissionVerifier.from(new LoginPermission()));
+        builder.setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.from(new LoginPermission()));
         HashSet<SecurityDomain> trustedSecurityDomains = new HashSet<>();
         trustedSecurityDomains.add(domain2);
         builder.setTrustedSecurityDomainPredicate(trustedSecurityDomains::contains);

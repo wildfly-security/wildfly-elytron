@@ -357,10 +357,9 @@ public final class SecurityDomain {
 
     PermissionVerifier mapPermissions(SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
-        Principal principal = securityIdentity.getPrincipal();
         Roles roles = securityIdentity.getRoles();
 
-        return this.permissionMapper.mapPermissions(principal, roles);
+        return this.permissionMapper.mapPermissions(securityIdentity, roles);
     }
 
     NameRewriter getPreRealmRewriter() {

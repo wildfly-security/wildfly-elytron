@@ -223,9 +223,9 @@ public class SaslServerBuilder {
         if (permissionsMap == null) {
             permissionsMap = new HashMap<String, Permissions>();
         }
-        domainBuilder.setPermissionMapper((principal, roles) -> {
+        domainBuilder.setPermissionMapper((permissionMappable, roles) -> {
             final PermissionVerifier v = PermissionVerifier.from(new LoginPermission());
-            final Permissions permissions = permissionsMap.get(principal.toString());
+            final Permissions permissions = permissionsMap.get(permissionMappable.getPrincipal().toString());
             return permissions == null ? v : v.or(PermissionVerifier.from(permissions));
         });
 

@@ -18,7 +18,6 @@
 package org.wildfly.security.authz;
 
 import java.security.Permission;
-import java.security.Principal;
 
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.permission.PermissionVerifier;
@@ -34,19 +33,19 @@ import org.wildfly.security.permission.PermissionVerifier;
 public interface PermissionMapper {
 
     /**
-     * <p>Returns a {@link PermissionVerifier} with all the permissions associated with the given identity.
+     * <p>Returns a {@link PermissionVerifier} with all the permissions associated with the given information.
      *
      * <p>Once returned, client code can use the {@link PermissionVerifier#implies(Permission)} to check if a given permission is granted or not
      * to the given principal. Implementors must make sure that the returned collection is immutable.
      *
-     * @param principal a principal previously obtained and authenticated from a security domain (must not be {@code null})
-     * @param roles a set of roles associated with the given principal after all role mapping was applied by security domain (may be {@code null})
+     * @param permissionMappable the object to which permissions can be mapped (must not be {@code null})
+     * @param roles a set of effective roles after all role mapping was applied by security domain (may be {@code null})
      * @return a permission verifier (not {@code null})
      */
-    PermissionVerifier mapPermissions(Principal principal, Roles roles);
+    PermissionVerifier mapPermissions(PermissionMappable permissionMappable, Roles roles);
 
     /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionVerifier}.
      */
-    PermissionMapper EMPTY_PERMISSION_MAPPER = (principal, roles) -> PermissionVerifier.NONE;
+    PermissionMapper EMPTY_PERMISSION_MAPPER = (permissionMappable, roles) -> PermissionVerifier.NONE;
 }
