@@ -45,7 +45,7 @@ public class SecurityIdentityServerMechanismFactory implements HttpServerAuthent
 
     private final HttpServerAuthenticationMechanismFactory delegate;
 
-    private SecurityIdentityServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate) {
+    public SecurityIdentityServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate) {
         this.delegate = checkNotNullParam("delegate", delegate);
     }
 

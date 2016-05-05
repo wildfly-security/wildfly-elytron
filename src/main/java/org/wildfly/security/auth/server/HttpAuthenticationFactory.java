@@ -38,6 +38,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.util.SecurityIdentityServerMechanismFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 
@@ -54,7 +55,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
     }
 
     HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
-        return factoryTransformation.apply(getFactory()).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
+        return new SecurityIdentityServerMechanismFactory(factoryTransformation.apply(getFactory())).createAuthenticationMechanism(name, Collections.emptyMap(), callbackHandler);
     }
 
     Collection<String> getAllSupportedMechNames() {
