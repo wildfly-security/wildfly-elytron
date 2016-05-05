@@ -22,14 +22,27 @@ import java.util.Arrays;
 
 import javax.security.auth.Destroyable;
 
+/**
+ * A piece of evidence that is comprised of a password guess.
+ */
 public final class PasswordGuessEvidence implements Evidence, Destroyable {
     private final char[] guess;
     private boolean destroyed;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param guess the password guess
+     */
     public PasswordGuessEvidence(final char[] guess) {
         this.guess = guess;
     }
 
+    /**
+     * Get the password guess.
+     *
+     * @return the password guess
+     */
     public char[] getGuess() {
         return guess;
     }
