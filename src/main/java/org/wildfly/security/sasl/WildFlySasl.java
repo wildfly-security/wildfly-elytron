@@ -95,9 +95,9 @@ public final class WildFlySasl {
     public static final String MECHANISM_QUERY_ALL = "wildfly.sasl.mechanism-query-all";
 
     /**
-     * The property which holds the negotiated realm identity after a successful SASL server-side authentication.
+     * The property which holds the negotiated security identity after a successful SASL server-side authentication.
      */
-    public static final String SECURITY_IDENTITY = "wildfly.sasl.realm-identity";
+    public static final String SECURITY_IDENTITY = "wildfly.sasl.security-identity";
 
     /**
      * The immutable empty names array.
