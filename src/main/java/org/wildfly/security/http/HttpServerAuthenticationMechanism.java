@@ -44,6 +44,37 @@ public interface HttpServerAuthenticationMechanism {
     void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException;
 
     /**
+     * Get the property negotiated as a result of authentication.
+     *
+     * Mechanisms only make properties available after indicating a successful authentication has completed.
+     *
+     * @param propertyName the name of the property.
+     * @return the value of the property or {@code null} if the specified property is not available.
+     */
+    default Object getNegotiatedProperty(String propertyName) {
+        return null;
+    }
+
+    /**
+     * Get the strongly typed property negotiated as a result of authentication.
+     *
+     * Mechanisms only make properties available after indicating a successful authentication has completed.
+     *
+     * Note: This form of the mechanism will also return {@code null} if the property is set but is of a different type.
+     *
+     * @param propertyName the name of the property.
+     * @param type the expected type of the property.
+     * @return the value of the property or {@code null} if the specified property is not available or is of a different type..
+     */
+    default <T> T getNegotiationProperty(String propertyName, Class<T> type) {
+        Object property = getNegotiatedProperty(propertyName);
+        if (property != null && type.isInstance(property)) {
+            return type.cast(property);
+        }
+        return null;
+    }
+
+    /**
      * Dispose of any resources currently held by this authentication mechanism.
      */
     default void dispose() {
