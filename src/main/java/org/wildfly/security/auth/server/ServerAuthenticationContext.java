@@ -737,7 +737,7 @@ public final class ServerAuthenticationContext {
                                 final X500Principal principal = evidence.getPrincipal();
                                 if (principal != null) {
                                     setAuthenticationPrincipal(principal);
-                                    final boolean authorized = verifyEvidence(evidence);
+                                    final boolean authorized = verifyEvidence(evidence) && authorize();
                                     authorizationCallback.setAuthorized(authorized);
                                     if (authorized) {
                                         // cache identity

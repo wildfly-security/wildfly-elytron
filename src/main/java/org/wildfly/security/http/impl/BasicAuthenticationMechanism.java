@@ -40,11 +40,11 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
-import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -122,11 +122,17 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                     try {
                         String username = usernameChars.toString();
                         if (authenticate(username, passwordChars.array())) {
-                            SecurityIdentityCallback securityIdentityCallback = new SecurityIdentityCallback();
-                            callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED, securityIdentityCallback });
+                            if (authorize(username)) {
+                                callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
 
-                            request.authenticationComplete(securityIdentityCallback.getSecurityIdentity());
-                            return;
+                                request.authenticationComplete();
+                                return;
+                            } else {
+                                callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
+                                request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
+                                return;
+                            }
+
                         } else {
                             callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
                             request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
@@ -171,6 +177,20 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
             throw new HttpAuthenticationException(e);
         } finally {
             evidence.destroy();
+        }
+    }
+
+    private boolean authorize(String username) throws HttpAuthenticationException {
+        AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, username);
+
+        try {
+            callbackHandler.handle(new Callback[] {authorizeCallback});
+
+            return authorizeCallback.isAuthorized();
+        } catch (UnsupportedCallbackException e) {
+            return false;
+        } catch (IOException e) {
+            throw new HttpAuthenticationException(e);
         }
     }
 

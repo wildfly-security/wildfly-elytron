@@ -89,20 +89,25 @@ public interface HttpServerRequest extends HttpServerScopes {
     /**
      * Notification that authentication is now complete.
      *
-     * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
+     * After this point the framework will perform an authorization check for the authenticated user and if successful establish
+     * the identity of the request.
+     *
      * @param responder a {@link HttpServerMechanismsResponder} that can send a response.
      */
-    void authenticationComplete(SecurityIdentity securityIdentity, final HttpServerMechanismsResponder responder);
+    void authenticationComplete(final HttpServerMechanismsResponder responder);
 
     /**
      * Notification that authentication is now complete.
+     *
+     * After this point the framework will perform an authorization check for the authenticated user and if successful establish
+     * the identity of the request.
      *
      * If this form is called no response is expected from this mechanism.
      *
      * @param securityIdentity the {@link SecurityIdentity} established as a result of this authentication.
      */
-    default void authenticationComplete(SecurityIdentity securityIdentity) {
-        authenticationComplete(securityIdentity, null);
+    default void authenticationComplete() {
+        authenticationComplete(null);
     }
 
     /**

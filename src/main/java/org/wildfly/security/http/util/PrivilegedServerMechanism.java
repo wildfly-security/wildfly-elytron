@@ -35,7 +35,6 @@ import java.util.Set;
 
 import javax.net.ssl.SSLSession;
 
-import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -97,6 +96,17 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
     }
 
+    @Override
+    public Object getNegotiatedProperty(String propertyName) {
+        return mechanism.getNegotiatedProperty(propertyName);
+    }
+
+    @Override
+    public <T> T getNegotiationProperty(String propertyName, Class<T> type) {
+        return mechanism.getNegotiationProperty(propertyName, type);
+    }
+
+
     private HttpServerMechanismsResponder wrap(final HttpServerMechanismsResponder toWrap) {
         return toWrap != null ? (HttpServerResponse r) -> AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
             toWrap.sendResponse(r);
@@ -153,8 +163,8 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
-        public void authenticationComplete(SecurityIdentity securityIdentity, HttpServerMechanismsResponder responder) {
-            wrapped.authenticationComplete(securityIdentity, wrap(responder));
+        public void authenticationComplete(HttpServerMechanismsResponder responder) {
+            wrapped.authenticationComplete(wrap(responder));
         }
 
         @Override

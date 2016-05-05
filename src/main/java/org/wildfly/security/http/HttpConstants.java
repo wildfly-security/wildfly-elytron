@@ -28,6 +28,15 @@ public class HttpConstants {
     }
 
     /*
+     * Negotiated Properties
+     */
+
+    /**
+     * The property which holds the negotiated security identity after a successful HTTP server-side authentication.
+     */
+    public static final String SECURITY_IDENTITY = "wildfly.http.security-identity";
+
+    /*
      * Header Fields
      */
 
