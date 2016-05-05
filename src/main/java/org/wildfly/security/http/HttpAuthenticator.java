@@ -18,6 +18,8 @@
 
 package org.wildfly.security.http;
 
+import static org.wildfly.security.http.HttpConstants.SECURITY_IDENTITY;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.OK;
@@ -182,7 +184,9 @@ public class HttpAuthenticator {
         @Override
         public void authenticationComplete(HttpServerMechanismsResponder responder) {
             authenticated = true;
-            httpExchangeSpi.authenticationComplete(currentMechanism.getMechanismName());
+            httpExchangeSpi.authenticationComplete(
+                    currentMechanism.getNegotiationProperty(SECURITY_IDENTITY, SecurityIdentity.class),
+                    currentMechanism.getMechanismName());
             successResponder = responder;
         }
 
