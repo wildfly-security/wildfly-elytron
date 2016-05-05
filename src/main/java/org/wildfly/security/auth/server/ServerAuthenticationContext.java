@@ -1519,7 +1519,7 @@ public final class ServerAuthenticationContext {
 
             final PeerIdentity[] peerIdentities = capturedIdentity.getPeerIdentities();
 
-            final SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), peerIdentities)));
+            final SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), peerIdentities, capturedIdentity.getPublicCredentials(), capturedIdentity.getPrivateCredentialsPrivate())));
             if (requireLoginPermission) {
                 if (! authorizedIdentity.implies(LoginPermission.getInstance())) {
                     SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentityFailedAuthorizationEvent(authorizedIdentity.getAuthorizationIdentity(), authorizedIdentity.getPrincipal(), authenticationPrincipal));
