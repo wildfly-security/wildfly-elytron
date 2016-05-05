@@ -70,10 +70,20 @@ public final class X509PeerCertificateChainEvidence implements AlgorithmEvidence
         return getFirstCertificate().getPublicKey().getAlgorithm();
     }
 
+    /**
+     * Get the first certificate in the peer certificate chain.
+     *
+     * @return the first certificate in the peer certificate chain
+     */
     public X509Certificate getFirstCertificate() {
         return peerCertificateChain[0];
     }
 
+    /**
+     * Get the last certificate in the peer certificate chain.
+     *
+     * @return the last certificate in the peer certificate chain
+     */
     public X509Certificate getLastCertificate() {
         return peerCertificateChain[peerCertificateChain.length - 1];
     }
