@@ -22,6 +22,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 import java.io.InputStream;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -172,7 +173,7 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
-        public String getRequestURI() {
+        public URI getRequestURI() {
             return wrapped.getRequestURI();
         }
 

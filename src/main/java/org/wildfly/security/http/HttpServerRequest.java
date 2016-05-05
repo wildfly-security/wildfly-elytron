@@ -20,6 +20,7 @@ package org.wildfly.security.http;
 
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -150,12 +151,11 @@ public interface HttpServerRequest extends HttpServerScopes {
     String getRequestMethod();
 
     /**
-     * Reconstructs the URL the client used to make the request. The returned URL contains a protocol, server name, port
-     * number, and server path, but it does not include query string parameters.
+     * Get the URI representation for the current request.
      *
-     * @return a <code>String</code> containing the part of the URL from the protocol name up to the query string
+     * @return the URI representation for the current request.
      */
-    String getRequestURI();
+    URI getRequestURI();
 
     /**
      * Returns the parameters received in the current request.
