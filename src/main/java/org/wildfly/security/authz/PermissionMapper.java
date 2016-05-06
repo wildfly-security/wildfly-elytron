@@ -45,6 +45,50 @@ public interface PermissionMapper {
     PermissionVerifier mapPermissions(PermissionMappable permissionMappable, Roles roles);
 
     /**
+     * Returns a new mapper where the {@link PermissionVerifier} created by this {@link PermissionMapper} is combined with the
+     * {@code PermissionVerifier} of the {@code other} {@code PermissionMapper} using 'and'.
+     *
+     * @param other the other {@link PermissionMapper} to combine with this {@link PermissionMapper}
+     * @return the combined {@link PermissionMapper}
+     */
+    default PermissionMapper and(final PermissionMapper other) {
+        return (p, r) -> mapPermissions(p, r).and(other.mapPermissions(p, r));
+    }
+
+    /**
+     * Returns a new mapper where the {@link PermissionVerifier} created by this {@link PermissionMapper} is combined with the
+     * {@code PermissionVerifier} of the {@code other} {@code PermissionMapper} using 'or'.
+     *
+     * @param other the other {@link PermissionMapper} to combine with this {@link PermissionMapper}
+     * @return the combined {@link PermissionMapper}
+     */
+    default PermissionMapper or(final PermissionMapper other) {
+        return (p, r) -> mapPermissions(p, r).or(other.mapPermissions(p, r));
+    }
+
+    /**
+     * Returns a new mapper where the {@link PermissionVerifier} created by this {@link PermissionMapper} is combined with the
+     * {@code PermissionVerifier} of the {@code other} {@code PermissionMapper} using 'xor'.
+     *
+     * @param other the other {@link PermissionMapper} to combine with this {@link PermissionMapper}
+     * @return the combined {@link PermissionMapper}
+     */
+    default PermissionMapper xor(final PermissionMapper other) {
+        return (p, r) -> mapPermissions(p, r).xor(other.mapPermissions(p, r));
+    }
+
+    /**
+     * Returns a new mapper where the {@link PermissionVerifier} created by this {@link PermissionMapper} is combined with the
+     * {@code PermissionVerifier} of the {@code other} {@code PermissionMapper} using 'unless'.
+     *
+     * @param other the other {@link PermissionMapper} to combine with this {@link PermissionMapper}
+     * @return the combined {@link PermissionMapper}
+     */
+    default PermissionMapper unless(final PermissionMapper other) {
+        return (p, r) -> mapPermissions(p, r).unless(other.mapPermissions(p, r));
+    }
+
+    /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionVerifier}.
      */
     PermissionMapper EMPTY_PERMISSION_MAPPER = (permissionMappable, roles) -> PermissionVerifier.NONE;
