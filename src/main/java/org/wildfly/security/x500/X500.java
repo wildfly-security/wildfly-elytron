@@ -128,7 +128,7 @@ public final class X500 {
      * @return the X.509 certificate array (not {@code null})
      * @throws ArrayStoreException if one of the certificates in the array is not an {@code X509Certificate}
      */
-    public static X509Certificate[] asX509CertificateArray(Object... certificates) throws ArrayStoreException {
+    public static X509Certificate[] asX509CertificateArray(Object[] certificates) throws ArrayStoreException {
         if (certificates.length == 0) {
             return NO_CERTIFICATES;
         } else if (certificates instanceof X509Certificate[]) {
