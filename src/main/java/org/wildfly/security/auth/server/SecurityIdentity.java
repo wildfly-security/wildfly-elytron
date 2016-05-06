@@ -649,6 +649,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     /**
+     * Convenience method to determine if this identity is anonymous.
+     *
+     * @return {@code true} if the identity is anonymous, {@code false} otherwise
+     */
+    public boolean isAnonymous() {
+        return principal instanceof AnonymousPrincipal;
+    }
+
+    /**
      * Create a new security identity which is the same as this one, but which includes the given credential as a
      * public credential.
      *

@@ -1383,7 +1383,7 @@ public final class ServerAuthenticationContext {
         @Override
         boolean authorize(final boolean requireLoginPermission) throws RealmUnavailableException {
             final SecurityIdentity capturedIdentity = this.capturedIdentity;
-            if (capturedIdentity.getPrincipal() instanceof AnonymousPrincipal) {
+            if (capturedIdentity.isAnonymous()) {
                 return authorizeAnonymous(requireLoginPermission);
             }
             final AtomicReference<State> stateRef = getStateRef();
@@ -1401,11 +1401,11 @@ public final class ServerAuthenticationContext {
             final SecurityDomain domain = sourceIdentity.getSecurityDomain();
             // Check that the given security identity evidence either corresponds to the same realm that created the
             // current authentication identity or it corresponds to a domain that is trusted by the current domain
-            final Principal importedPrincipal = importedIdentity.getPrincipal();
-            if (AnonymousPrincipal.getInstance().equals(importedPrincipal)) {
+            if (importedIdentity.isAnonymous()) {
                 AnonymousAuthorizedState newState = new AnonymousAuthorizedState(domain.getAnonymousSecurityIdentity());
                 return stateRef.compareAndSet(this, newState) || stateRef.get().importIdentity(importedIdentity);
             }
+            final Principal importedPrincipal = importedIdentity.getPrincipal();
             if (domain == importedIdentity.getSecurityDomain()) {
                 // it's authorized already because it's the same domain
                 AuthorizedState newState = new AuthorizedState(importedIdentity, importedPrincipal, importedIdentity.getRealmInfo(), mechanismConfiguration, getMechanismRealmConfiguration());
