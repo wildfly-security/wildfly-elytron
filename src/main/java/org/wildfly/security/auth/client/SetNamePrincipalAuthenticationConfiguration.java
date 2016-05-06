@@ -43,7 +43,7 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
     void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
         Callback callback = callbacks[index];
         if (callback instanceof NameCallback) {
-            ((NameCallback) callback).setName(principal.getName());
+            ((NameCallback) callback).setName(doRewriteUser(principal.getName()));
         } else {
             super.handleCallback(callbacks, index);
         }
