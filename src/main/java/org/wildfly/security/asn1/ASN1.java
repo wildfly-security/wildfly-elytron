@@ -190,6 +190,21 @@ public class ASN1 {
     public static final String OID_SHA1 = "1.3.14.3.2.26";
 
     /**
+     * Algorithm ID for RSA keys used for any purpose.
+     */
+    public static final String OID_RSA = "1.2.840.113549.1.1.1";
+
+    /**
+     * Algorithm ID for DSA keys used for any purpose.
+     */
+    public static final String OID_DSA = "1.2.840.10040.4.1";
+
+    /**
+     * Algorithm ID for EC keys used for any purpose.
+     */
+    public static final String OID_EC = "1.2.840.10045.2.1";
+
+    /**
      * Format an AS.1 string from the given decoder as a string.
      *
      * @param decoder the ASN.1 decoder
@@ -212,8 +227,7 @@ public class ASN1 {
             final int type = decoder.peekType();
             switch (type) {
                 case INTEGER_TYPE: {
-                    decoder.decodeOctetString();
-                    builder.append("[int]");
+                    builder.append("[int:").append(decoder.decodeInteger()).append("]");
                     break;
                 }
                 case BIT_STRING_TYPE: {
@@ -264,6 +278,25 @@ public class ASN1 {
 //                    break;
                 }
             }
+        }
+    }
+
+    /**
+     * Resolves a key algorithm based on a given <code>oid</code>.
+     *
+     * @param oid an ASN.1 object identifier or OID (not {@code null})
+     * @return the string representing the key algorithm or null if no algorithm could be resolved for the given OID
+     */
+    public static String keyAlgorithmFromOid(String oid) {
+        switch (oid) {
+            case OID_RSA:
+                return "RSA";
+            case OID_DSA:
+                return "DSA";
+            case OID_EC:
+                return "EC";
+            default:
+                return null;
         }
     }
 

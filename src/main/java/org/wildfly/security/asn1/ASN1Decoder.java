@@ -19,6 +19,8 @@
 package org.wildfly.security.asn1;
 
 
+import java.math.BigInteger;
+
 /**
  * An interface for decoding ASN.1 encoded values from an input stream.
  *
@@ -154,6 +156,14 @@ public interface ASN1Decoder {
     byte[] decodeBitString() throws ASN1Exception;
 
     /**
+     * Decode the next ASN.1 element as a bit string where the value is a ASN.1 INTEGER.
+     *
+     * @return a {@link BigInteger} decoded from the bit string
+     * @throws ASN1Exception if the next element is not a bit string or its value is not an integer
+     */
+    BigInteger decodeBitStringAsInteger();
+
+    /**
      * Decode the next ASN.1 element as a bit string.
      *
      * @return the decoded bit string as a binary string, with any unused bits removed
@@ -184,6 +194,14 @@ public interface ASN1Decoder {
      * @throws ASN1Exception if the next element is not a bit string
      */
     String decodeObjectIdentifier() throws ASN1Exception;
+
+    /**
+     * Decode the next ASN.1 element as an integer.
+     *
+     * @return an integer decoded from the next element
+     * @throws ASN1Exception if the next element is not an integer
+     */
+    BigInteger decodeInteger();
 
     /**
      * Decode the next ASN.1 element as a null element.

@@ -31,6 +31,9 @@ import org.junit.runner.RunWith;
 import org.wildfly.security.auth.realm.token.validator.JwtValidator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.evidence.BearerTokenEvidence;
+import org.wildfly.security.pem.Pem;
+import org.wildfly.security.sasl.test.BaseTestCase;
+import org.wildfly.security.util.ByteStringBuilder;
 
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
@@ -45,18 +48,21 @@ import static org.wildfly.security.auth.server.IdentityLocator.fromEvidence;
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 @RunWith(JMockit.class)
-public class JwtSecurityRealmTest {
+public class JwtSecurityRealmTest extends BaseTestCase {
 
     @Test
     public void testUsingGeneratedPublicKey() throws Exception {
         KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        ByteStringBuilder publicKeyPem = new ByteStringBuilder();
+
+        Pem.generatePemPublicKey(publicKeyPem, keyPair.getPublic());
 
         TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
                 .principalClaimName("sub")
                 .validator(JwtValidator.builder()
                         .issuer("elytron-oauth2-realm")
                         .audience("my-app-valid")
-                        .publicKey(keyPair.getPublic()).build())
+                        .publicKey(publicKeyPem.toArray()).build())
                 .build();
 
         RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(createJwt(keyPair, 10, 0))));

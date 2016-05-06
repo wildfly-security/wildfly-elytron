@@ -18,10 +18,20 @@
 
 package org.wildfly.security.asn1;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 import org.wildfly.security.util.ByteStringBuilder;
+
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.spec.DSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for DER encoding. The expected results for these test cases were generated using
@@ -379,5 +389,87 @@ public class DEREncoderTest {
 
         byte[] expected = new byte[] {48, 84, 22, 11, 116, 101, 115, 116, 32, 115, 116, 114, 105, 110, 103, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17,  49, 59, 4, 8, 1, 35, 69, 103, -119, -85, -51, -17, 48, 16, 22, 7, 116, 101, 115, 116, 105, 110, 103, 22, 5, 97, 103, 97, 105, 110, 22, 14, 116, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116, 22, 13, 116, 101, 115, 116, 49, 64, 114, 115, 97, 46, 99, 111, 109};
         assertArrayEquals(expected, target.toArray());
+    }
+
+    @Test
+    public void testEncodeInteger() throws Exception {
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+        encoder.encodeInteger(123);
+        DERDecoder decoder = new DERDecoder(target.toArray());
+        assertEquals(123, decoder.decodeInteger().intValue());
+    }
+
+    @Test
+    public void testEncodeDSAKey() throws Exception {
+        KeyPair keyPair = KeyPairGenerator.getInstance("DSA").generateKeyPair();
+        PublicKey publicKey = keyPair.getPublic();
+        KeyFactory keyFactory = KeyFactory.getInstance("DSA");
+        DSAPublicKeySpec keySpec = keyFactory.getKeySpec(publicKey, DSAPublicKeySpec.class);
+
+        // dsa public key and params
+        BigInteger y = keySpec.getY();
+        BigInteger p = keySpec.getP();
+        BigInteger q = keySpec.getQ();
+        BigInteger g = keySpec.getG();
+
+        ByteStringBuilder target = new ByteStringBuilder();
+        DEREncoder encoder = new DEREncoder(target);
+
+        encoder.startSequence();
+        encoder.startSequence();
+        encoder.encodeObjectIdentifier(ASN1.OID_DSA);
+        encoder.startSequence();
+        encoder.encodeInteger(p);
+        encoder.encodeInteger(q);
+        encoder.encodeInteger(g);
+        encoder.endSequence();
+        encoder.endSequence();
+        encoder.encodeBitString(y);
+        encoder.endSequence();
+
+        byte[] der = target.toArray();
+        DERDecoder decoder = new DERDecoder(der);
+        decoder.startSequence();
+        decoder.startSequence();
+        assertEquals(ASN1.OID_DSA, decoder.decodeObjectIdentifier());
+        decoder.startSequence();
+
+        BigInteger decodedP = decoder.decodeInteger();
+        assertEquals(p, decodedP);
+        BigInteger decodedQ = decoder.decodeInteger();
+        assertEquals(q, decodedQ);
+        BigInteger decodedG = decoder.decodeInteger();
+        assertEquals(g, decodedG);
+        BigInteger decodedY = decoder.decodeBitStringAsInteger();
+        assertEquals(y, decodedY);
+
+        DSAPublicKeySpec dsaPublicKeySpec = new DSAPublicKeySpec(decodedY, decodedP, decodedQ, decodedG);
+        PublicKey keyFromSpec = keyFactory.generatePublic(dsaPublicKeySpec);
+        PublicKey keyFromDer = keyFactory.generatePublic(new X509EncodedKeySpec(der));
+
+        assertNotNull(keyFromSpec);
+
+        PrivateKey privateKey = keyPair.getPrivate();
+        byte[] toSign = "signed_content".getBytes();
+
+        Signature signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+
+        signature.initSign(privateKey);
+        signature.update(toSign);
+
+        byte[] contentSignature = signature.sign();
+
+        signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+
+        signature.initVerify(keyFromSpec);
+        signature.update(toSign);
+        assertTrue(signature.verify(contentSignature));
+
+        signature = Signature.getInstance(ASN1.OID_SHA1_WITH_DSA);
+
+        signature.initVerify(keyFromDer);
+        signature.update(toSign);
+        assertTrue(signature.verify(contentSignature));
     }
 }

@@ -488,6 +488,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1117, value = "Invalid signature algorithm [%s]")
     RealmUnavailableException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
 
+    @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
+    IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
@@ -605,6 +608,12 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
     SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
+
+    @Message(id = 3023, value = "PublicKey parse error")
+    IllegalArgumentException publicKeyParseError(@Cause Throwable cause);
+
+    @Message(id = 3024, value = "Unsupported key encoding format [%s]")
+    IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
 
     /* ssl package */
 
@@ -1201,8 +1210,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* asn1 package */
 
-    @Message(id = 7001, value = "Unrecognized encoding algorithm")
-    ASN1Exception asnUnrecognisedAlgorithm();
+    @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
+    ASN1Exception asnUnrecognisedAlgorithm(String algorithm);
 
     @Message(id = 7002, value = "Invalid general name type")
     ASN1Exception asnInvalidGeneralNameType();

@@ -68,7 +68,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(IdentityLocator identityLocator) throws RealmUnavailableException {
-        return new OAuth2RealmIdentity(identityLocator.getEvidence());
+        return new TokenRealmIdentity(identityLocator.getEvidence());
     }
 
     @Override
@@ -89,12 +89,12 @@ public final class TokenSecurityRealm implements SecurityRealm {
         return evidenceType != null && evidenceType.equals(BearerTokenEvidence.class);
     }
 
-    final class OAuth2RealmIdentity implements RealmIdentity {
+    final class TokenRealmIdentity implements RealmIdentity {
 
         private final BearerTokenEvidence evidence;
         private Attributes claims;
 
-        OAuth2RealmIdentity(Evidence evidence) {
+        TokenRealmIdentity(Evidence evidence) {
             if (evidence != null && isBearerTokenEvidence(evidence.getClass())) {
                 this.evidence = (BearerTokenEvidence) evidence;
             } else {

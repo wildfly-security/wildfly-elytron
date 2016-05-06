@@ -25,7 +25,6 @@ import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.pem.Pem;
 import org.wildfly.security.pem.PemEntry;
 import org.wildfly.security.util.ByteIterator;
-import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.CodePointIterator;
 
 import javax.json.Json;
@@ -68,7 +67,7 @@ public class JwtValidator implements TokenValidator {
     private final Set<String> issuers;
     private final Set<String> audiences;
 
-    private final byte[] publicKey;
+    private final PublicKey publicKey;
 
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
@@ -196,10 +195,8 @@ public class JwtValidator implements TokenValidator {
 
     private Signature createSignature(String encodedHeader, String encodedClaims) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException, RealmUnavailableException {
         Signature signature = Signature.getInstance(resolveAlgorithm(encodedHeader));
-        Iterator<PemEntry<?>> pemEntryIterator = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(this.publicKey));
-        PublicKey publicKey = (PublicKey) pemEntryIterator.next().getEntry();
 
-        signature.initVerify(publicKey);
+        signature.initVerify(this.publicKey);
         signature.update((encodedHeader + "." + encodedClaims).getBytes());
 
         return signature;
@@ -238,7 +235,7 @@ public class JwtValidator implements TokenValidator {
 
         private Set<String> issuers = new LinkedHashSet<>();
         private Set<String> audience = new LinkedHashSet<>();
-        private byte[] publicKey;
+        private PublicKey publicKey;
 
         private Builder() {
         }
@@ -270,11 +267,19 @@ public class JwtValidator implements TokenValidator {
         /**
          * A public key in its PEM format used to validate the signature.
          *
-         * @param publicKey the public key in its PEM format (must not be {@code null})
+         * @param publicKeyPem the public key in its PEM format (must not be {@code null})
          * @return this instance
          */
-        public Builder publicKey(byte[] publicKey) {
+        public Builder publicKey(byte[] publicKeyPem) {
+            Iterator<PemEntry<?>> pemEntryIterator = Pem.parsePemContent(CodePointIterator.ofUtf8Bytes(publicKeyPem));
+            PublicKey publicKey = pemEntryIterator.next().tryCast(PublicKey.class);
+
+            if (publicKey == null) {
+                throw log.tokenRealmJwtInvalidPublicKeyPem();
+            }
+
             this.publicKey = publicKey;
+
             return this;
         }
 
@@ -285,11 +290,8 @@ public class JwtValidator implements TokenValidator {
          * @return this instance
          */
         public Builder publicKey(PublicKey publicKey) {
-            ByteStringBuilder builder = new ByteStringBuilder();
-
-            Pem.generatePemPublicKey(builder, publicKey);
-
-            return publicKey(builder.toArray());
+            this.publicKey = publicKey;
+            return this;
         }
 
         /**
