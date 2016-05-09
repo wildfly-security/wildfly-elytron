@@ -31,6 +31,19 @@ import org.wildfly.security.permission.PermissionVerifier;
 /**
  * A simple {@link PermissionMapper} implementation that maps to pre-defined {@link PermissionVerifier} instances.
  *
+ * This {@code PermissionMapper} is constructed using a {@link Builder} which is used to construct an ordered list of
+ * {@code PermissionVerifier} instances along with a set of principal names and a list of principal names.
+ *
+ * At the time {@link #mapPermissions(PermissionMappable, Roles)} is called this list is iterated to find corresponding
+ * definitions where either the name of the {@link Principal} within the {@link PermissionMappable} is contained
+ * within the mapping or the {@link Roles} in the {@code mapPermission} call contain at least one of the roles in the mapping
+ * then the associated {@code PermissionVerifier} will be used.
+ *
+ * It is possible that multiple mappings could be matched during the call to {@link #mapPermissions(PermissionMappable, Roles)}
+ * and this is why the ordering is important, by default only the first match will be used however this can be overridden by
+ * calling {@link Builder#setMappingMode(MappingMode)} to choose a different mode to combine the resulting
+ * {@link PermissionVerifier} instances.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class SimplePermissionMapper implements PermissionMapper {
@@ -89,7 +102,7 @@ public class SimplePermissionMapper implements PermissionMapper {
 
         private boolean built = false;
 
-        private MappingMode mappingMode;
+        private MappingMode mappingMode = MappingMode.FIRST_MATCH;
 
         private final List<Mapping> mappings = new ArrayList<>();
 
