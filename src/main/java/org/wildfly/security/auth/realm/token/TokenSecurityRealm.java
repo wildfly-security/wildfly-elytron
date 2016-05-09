@@ -63,7 +63,7 @@ public final class TokenSecurityRealm implements SecurityRealm {
             this.principalClaimName = configuration.principalClaimName;
         }
 
-        this.strategy = Assert.checkNotNullParam("tokenValidationStrategy(", configuration.strategy);
+        this.strategy = Assert.checkNotNullParam("tokenValidationStrategy", configuration.strategy);
     }
 
     @Override
