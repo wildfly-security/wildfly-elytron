@@ -265,10 +265,12 @@ public final class Pem {
     public static void generatePemPublicKey(ByteStringBuilder target, PublicKey publicKey) {
         Assert.checkNotNullParam("target", target);
         Assert.checkNotNullParam("publicKey", publicKey);
-        String format = publicKey.getFormat();
-        if (!"X.509".equals(format)) {
-            throw log.publicKeyUnsupportedEncodingFormat(format);
+        try {
+            KeyFactory instance = KeyFactory.getInstance(publicKey.getAlgorithm());
+            X509EncodedKeySpec keySpec = instance.getKeySpec(publicKey, X509EncodedKeySpec.class);
+            generatePemContent(target, PUBLIC_KEY_FORMAT, ByteIterator.ofBytes(keySpec.getEncoded()));
+        } catch (Exception e) {
+            throw log.publicKeyParseError(e);
         }
-        generatePemContent(target, PUBLIC_KEY_FORMAT, ByteIterator.ofBytes(publicKey.getEncoded()));
     }
 }
