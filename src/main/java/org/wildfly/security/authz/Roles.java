@@ -18,6 +18,8 @@
 
 package org.wildfly.security.authz;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.common.Assert.checkNotEmptyParam;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -41,6 +43,40 @@ public interface Roles extends Iterable<String> {
      * @return {@code true} if the role is contained in this collection, {@code false} otherwise
      */
     boolean contains(String roleName);
+
+    /**
+     * Determine if this collection contains any of the given role names.
+     *
+     * @param desiredRoles the roles to check.
+     * @return {@code true} if this collection contains any of the desired roles, {@code false} otherwise.
+     */
+    default boolean containsAny(Set<String> desiredRoles) {
+        checkNotNullParam("desiredRoles", desiredRoles);
+        for (String current : desiredRoles) {
+            if (contains(current)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine if this collection contains all of the given role names.
+     *
+     * @param desiredRoles the roles to check.
+     * @return {@code true} if this collection contains all of the desired roles, {@code false} otherwise.
+     */
+    default boolean containsAll(Set<String> desiredRoles) {
+        checkNotNullParam("desiredRoles", desiredRoles);
+        checkNotEmptyParam("desiredRoles", desiredRoles);
+        for (String current : desiredRoles) {
+            if (contains(current) == false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     /**
      * Determine whether this roles collection is empty.
