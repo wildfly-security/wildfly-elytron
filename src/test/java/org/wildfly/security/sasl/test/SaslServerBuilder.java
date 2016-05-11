@@ -48,6 +48,8 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.permission.PermissionVerifier;
+import org.wildfly.security.sasl.WildFlySasl;
+import org.wildfly.security.sasl.util.AvailableRealmsSaslServerFactory;
 import org.wildfly.security.sasl.util.ChannelBindingSaslServerFactory;
 import org.wildfly.security.sasl.util.CredentialSaslServerFactory;
 import org.wildfly.security.sasl.util.KeyManagerCredentialSaslServerFactory;
@@ -232,6 +234,9 @@ public class SaslServerBuilder {
         SecurityDomain domain = domainBuilder.build();
         SaslServerFactory factory = obtainSaslServerFactory(serverFactoryClass);
         if (properties != null && properties.size() > 0) {
+            if (properties.containsKey(WildFlySasl.REALM_LIST)) {
+                factory = new AvailableRealmsSaslServerFactory(factory);
+            }
             factory = new PropertiesSaslServerFactory(factory, properties);
         }
         if (bindingTypeAndData != null) {

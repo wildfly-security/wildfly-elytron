@@ -21,7 +21,6 @@ package org.wildfly.security.sasl.digest;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -43,9 +42,6 @@ import org.wildfly.security.sasl.WildFlySasl;
  */
 @MetaInfServices(value = SaslServerFactory.class)
 public class DigestServerFactory extends AbstractDigestFactory implements SaslServerFactory {
-
-    public static final char REALM_DELIMITER = ' ';
-    public static final char REALM_ESCAPE_CHARACTER = '\\';
 
     public DigestServerFactory() {
     }
@@ -72,12 +68,6 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
             throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanism, e).toSaslException();
         }
         if (realms == null) {
-            String realmList = (String)props.get(WildFlySasl.REALM_LIST);
-            if (realmList != null) {
-                realms = realmsPropertyToArray(realmList);
-            }
-        }
-        if (realms == null) {
             realms = new String[] { serverName };
         }
 
@@ -94,52 +84,4 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         server.init();
         return server;
     }
-
-    /**
-     * Helper for getting value of REALM_PROPERTY from array of realms
-     */
-    public static String realmsArrayToProperty(String[] array){
-        StringBuilder realms = new StringBuilder();
-        for(int j=0; j<array.length; j++){
-            if(j != 0) realms.append(REALM_DELIMITER);
-            for(int i=0; i<array[j].length(); i++){
-                switch(array[j].charAt(i)){
-                    case REALM_ESCAPE_CHARACTER:
-                        realms.append(REALM_ESCAPE_CHARACTER);
-                        realms.append(REALM_ESCAPE_CHARACTER);
-                        break;
-                    case REALM_DELIMITER:
-                        realms.append(REALM_ESCAPE_CHARACTER);
-                        realms.append(REALM_DELIMITER);
-                        break;
-                    default:
-                        realms.append(array[j].charAt(i));
-                }
-            }
-        }
-        return realms.toString();
-    }
-
-    static String[] realmsPropertyToArray(String property){
-        ArrayList<String> array = new ArrayList<String>();
-        StringBuilder realm = new StringBuilder();
-        boolean wasSlash = false;
-        for(int i=0; i<property.length(); i++){
-            char c = property.charAt(i);
-            if(wasSlash){
-                realm.append(property.charAt(i));
-                wasSlash = false;
-            }else if(c==REALM_ESCAPE_CHARACTER){
-                wasSlash = true;
-            }else if(c==REALM_DELIMITER){
-                array.add(realm.toString());
-                realm = new StringBuilder();
-            }else{
-                realm.append(property.charAt(i));
-            }
-        }
-        array.add(realm.toString());
-        return array.toArray(new String[array.size()]);
-    }
-
 }
