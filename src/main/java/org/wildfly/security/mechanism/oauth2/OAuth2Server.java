@@ -75,14 +75,13 @@ public class OAuth2Server {
                         throw log.mechInvalidClientMessage(this.mechanismName);
                     }
                     authorizationID = byteIterator.delimitedBy(',').asUtf8String().drainToString();
-                } else if (c == ',') {
-                    throw log.mechInvalidClientMessage(this.mechanismName);
+                    if (byteIterator.next() != ',') {
+                        throw ElytronMessages.log.mechInvalidClientMessage(this.mechanismName);
+                    }
                 }
             }
 
-            String oauth2Part = byteIterator.asUtf8String().drainToString();
-            String[] keyValues = oauth2Part.split(KV_DELIMITER);
-            String auth = getValue("auth", keyValues);
+            String auth = getValue("auth", byteIterator.asUtf8String().drainToString());
 
             if (auth == null) {
                 throw log.mechInvalidClientMessage(this.mechanismName);
@@ -94,14 +93,12 @@ public class OAuth2Server {
         }
     }
 
-    private String getValue(String key, String[] keyValues) {
-        for (String current : keyValues) {
+    private String getValue(String key, String keyValuesPart) {
+        for (String current : keyValuesPart.split(KV_DELIMITER)) {
             String[] keyValue = current.split("=");
 
-            if (keyValue.length == 2) {
-                if (keyValue[0].equals(key)) {
-                    return keyValue[1];
-                }
+            if (keyValue[0].equals(key)) {
+                return keyValue[1];
             }
         }
 

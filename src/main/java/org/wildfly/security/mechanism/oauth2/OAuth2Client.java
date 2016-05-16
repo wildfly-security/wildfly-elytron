@@ -72,7 +72,7 @@ public class OAuth2Client {
             StringPrep.encode(this.authorizationId, encoded, StringPrep.PROFILE_SASL_STORED | StringPrep.MAP_SCRAM_LOGIN_CHARS);
         }
 
-        encoded.append(",").append(KV_DELIMITER).append("auth").append("=").append("Bearer").append(" ").append(token).append(KV_DELIMITER).append(KV_DELIMITER);
+        encoded.append(",").append(KV_DELIMITER).append("auth").append("=").append("Bearer").append(" ").append(token).append(KV_DELIMITER);
 
         return new OAuth2InitialClientMessage(null, null, encoded.toArray());
     }

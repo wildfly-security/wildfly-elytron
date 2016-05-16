@@ -121,6 +121,50 @@ public class OAuth2SaslTest extends BaseTestCase {
         assertTrue(saslClient.isComplete());
     }
 
+    @Test
+    public void testSuccessfulWithoutAuthorizationId() throws Exception {
+        SaslClientFactory saslClientFactory = obtainSaslClientFactory(OAuth2SaslClientFactory.class);
+
+        assertNotNull("OAuth2SaslClientFactory not found", saslClientFactory);
+
+        SaslClient saslClient = saslClientFactory.createSaslClient(new String[]{SaslMechanismInformation.Names.OAUTHBEARER}, null, "imap", "resourceserver.com", Collections.emptyMap(), new CallbackHandler() {
+            @Override
+            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+                for (Callback callback : callbacks) {
+                    if (callback instanceof BearerTokenCallback) {
+                        BearerTokenCallback bearerTokenCallback = (BearerTokenCallback) callback;
+                        JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
+
+                        tokenBuilder.add("active", true);
+                        tokenBuilder.add("username", "elytron@jboss.org");
+
+                        bearerTokenCallback.setToken(tokenBuilder.build().toString());
+                    }
+                }
+            }
+        });
+
+        assertNotNull("OAuth2SaslClient is null", saslClient);
+
+        SaslServer saslServer = new SaslServerBuilder(OAuth2SaslServerFactory.class, SaslMechanismInformation.Names.OAUTHBEARER)
+                .setServerName("resourceserver.com")
+                .setProtocol("imap")
+                .addRealm("oauth-realm", createSecurityRealmMock())
+                .setDefaultRealmName("oauth-realm")
+                .build();
+
+        byte[] message = AbstractSaslParticipant.NO_BYTES;
+
+        do {
+            message = saslClient.evaluateChallenge(message);
+            if (message == null) break;
+            message = saslServer.evaluateResponse(message);
+        } while (message != null);
+
+        assertTrue(saslServer.isComplete());
+        assertTrue(saslClient.isComplete());
+    }
+
     /**
      * Tests error messages from server, usually after an usuccessful authentication. Where in this case, the server must
      * return a JSON with details about what it failed.
