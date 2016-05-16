@@ -744,6 +744,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5018, value = "[%s] Channel binding data changed")
     AuthenticationMechanismException mechChannelBindingChanged(String mechName);
 
+    @Message(id = 5019, value = "[%s] No token was given")
+    AuthenticationMechanismException mechNoTokenGiven(String mechanismName);
+
     // 5019
 
     // 5020
