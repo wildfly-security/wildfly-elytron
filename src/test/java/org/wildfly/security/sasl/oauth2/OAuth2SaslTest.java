@@ -24,7 +24,8 @@ import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.callback.BearerTokenCallback;
-import org.wildfly.security.auth.realm.oauth2.OAuth2SecurityRealm;
+import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
+import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -182,17 +183,16 @@ public class OAuth2SaslTest extends BaseTestCase {
 
     private SecurityRealm createSecurityRealmMock() throws MalformedURLException {
         configureReplayTokenIntrospectionEndpoint();
-        return OAuth2SecurityRealm.builder()
+        return TokenSecurityRealm.builder().validator(OAuth2IntrospectValidator.builder()
                 .clientId("wildfly-elytron")
                 .clientSecret("dont_tell_me")
-                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect"))
-                .build();
+                .tokenIntrospectionUrl(new URL("http://as.test.org/oauth2/token/introspect")).build()).build();
     }
 
     private void configureReplayTokenIntrospectionEndpoint() {
         final Class<?> classToMock;
         try {
-            classToMock = Class.forName("org.wildfly.security.auth.realm.oauth2.OAuth2Util", true, OAuth2SecurityRealm.class.getClassLoader());
+            classToMock = Class.forName("org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator", true, TokenSecurityRealm.class.getClassLoader());
         } catch (ClassNotFoundException e) {
             throw new NoClassDefFoundError(e.getMessage());
         }
