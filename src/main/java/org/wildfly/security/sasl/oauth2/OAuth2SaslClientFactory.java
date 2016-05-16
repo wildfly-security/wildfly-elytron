@@ -54,7 +54,8 @@ public final class OAuth2SaslClientFactory implements SaslClientFactory {
         }
 
         if ("true".equals(props.get(Sasl.POLICY_NOPLAINTEXT))
-                || "true".equals(props.get(Sasl.POLICY_NOACTIVE))) {
+                || "true".equals(props.get(Sasl.POLICY_NOACTIVE))
+                || "true".equals(props.get(Sasl.POLICY_NODICTIONARY))) {
             return new String[] {};
         }
 
