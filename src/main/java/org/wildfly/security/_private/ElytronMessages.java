@@ -447,16 +447,16 @@ public interface ElytronMessages extends BasicLogger {
     RealmUnavailableException ldapRealmAttributesSettingFailed(String identity, @Cause Throwable cause);
 
     @Message(id = 1104, value = "OAuth2-based realm failed to obtain principal")
-    RuntimeException oauth2RealmFailedToObtainPrincipal(@Cause Throwable cause);
+    RuntimeException tokenRealmFailedToObtainPrincipal(@Cause Throwable cause);
 
     @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
-    RealmUnavailableException oauth2RealmTokenIntrospectionFailed(@Cause Throwable cause);
+    RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
 
     @Message(id = 1106, value = "OAuth2-based realm requires a SSLContext when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException oauth2RealmSSLContextNotSpecified(URL tokenIntrospectionUrl);
+    IllegalStateException tokenRealmOAuth2SSLContextNotSpecified(URL tokenIntrospectionUrl);
 
     @Message(id = 1107, value = "OAuth2-based realm requires a HostnameVerifier when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException oauth2RealmHostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
+    IllegalStateException tokenRealmOAuth2HostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
 
     @Message(id = 1108, value = "Ldap-backed realm identity search failed")
     RuntimeException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
@@ -472,6 +472,24 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1112, value = "Authentication cannot succeed; not authorized")
     IllegalStateException cannotSucceedNotAuthorized();
+
+    @Message(id = 1113, value = "Token-based realm failed to obtain principal from token using claim [%s]")
+    RealmUnavailableException tokenRealmFailedToObtainPrincipalWithClaim(String claimName);
+
+    @Message(id = 1114, value = "Invalid token format. Tokens must have a signature part accordingly with JWS specification")
+    RealmUnavailableException tokenRealmJwtInvalidFormat();
+
+    @Message(id = 1115, value = "Failed to parse token")
+    RealmUnavailableException tokenRealmJwtParseFailed(@Cause Throwable cause);
+
+    @Message(id = 1116, value = "Signature verification failed")
+    RealmUnavailableException tokenRealmJwtSignatureCheckFailed(@Cause Throwable cause);
+
+    @Message(id = 1117, value = "Invalid signature algorithm [%s]")
+    RealmUnavailableException tokenRealmJwtSignatureInvalidAlgorithm(String algorithm);
+
+    @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
+    IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
 
     /* keystore package */
 
@@ -590,6 +608,12 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3022, value = "Permission check failed: %s is not implied by %s")
     SecurityException permissionCheckFailed(Permission permission, PermissionVerifier permissionVerifier);
+
+    @Message(id = 3023, value = "PublicKey parse error")
+    IllegalArgumentException publicKeyParseError(@Cause Throwable cause);
+
+    @Message(id = 3024, value = "Unsupported key encoding format [%s]")
+    IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
 
     /* ssl package */
 
@@ -1186,8 +1210,8 @@ public interface ElytronMessages extends BasicLogger {
 
     /* asn1 package */
 
-    @Message(id = 7001, value = "Unrecognized encoding algorithm")
-    ASN1Exception asnUnrecognisedAlgorithm();
+    @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")
+    ASN1Exception asnUnrecognisedAlgorithm(String algorithm);
 
     @Message(id = 7002, value = "Invalid general name type")
     ASN1Exception asnInvalidGeneralNameType();

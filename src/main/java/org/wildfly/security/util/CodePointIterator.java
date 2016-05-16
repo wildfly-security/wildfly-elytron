@@ -20,9 +20,11 @@ package org.wildfly.security.util;
 
 import org.wildfly.common.Assert;
 
-import static org.wildfly.security.util.Alphabet.*;
-
 import java.util.NoSuchElementException;
+import java.util.function.IntPredicate;
+
+import static org.wildfly.security.util.Alphabet.Base32Alphabet;
+import static org.wildfly.security.util.Alphabet.Base64Alphabet;
 
 /**
  * A code point by code point iterator.
@@ -935,6 +937,122 @@ public abstract class CodePointIterator extends NumericIterator {
             return EMPTY;
         }
         return ByteIterator.ofBytes(bytes, offs, len).asLatin1String();
+    }
+
+    /**
+     * Get a sub-iterator that removes the following code points: <code>10</code>(\n) and <code>13</code>(\r).
+     *
+     * @return the code point iterator
+     */
+    public CodePointIterator skipCrLf() {
+        return skip(value -> value == '\n' || value == '\r');
+    }
+
+    /**
+     * Get a sub-iterator that removes code points based on a <code>predicate</code>.
+     *
+     * @param predicate a {@link IntPredicate} that evaluates the code points that should be skipper. Returning true from the predicate
+     * indicates that the code point must be skipped.
+     * @return the code point iterator
+     */
+    public CodePointIterator skip(IntPredicate predicate) {
+        if (!hasNext()) {
+            return EMPTY;
+        }
+
+        return new CodePointIterator() {
+            public boolean hasNext() {
+                return CodePointIterator.this.hasNext() && !skip(peekNext());
+            }
+
+            public boolean hasPrev() {
+                return CodePointIterator.this.hasPrev() && !skip(peekPrev());
+            }
+
+            public int next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+
+                return CodePointIterator.this.next();
+            }
+
+            public int peekNext() throws NoSuchElementException {
+                if (!CodePointIterator.this.hasNext()) {
+                    throw new NoSuchElementException();
+                }
+
+                int next = seekNext(CodePointIterator.this.peekNext());
+
+                if (!skip(next)) {
+                    return next;
+                }
+
+                return next;
+            }
+
+            private int seekNext(int next) throws NoSuchElementException {
+                if (!CodePointIterator.this.hasNext()) {
+                    return next;
+                }
+
+                next = CodePointIterator.this.next();
+
+                if (skip(next)) {
+                    return seekNext(next);
+                }
+
+                CodePointIterator.this.prev();
+
+                return next;
+            }
+
+            public int prev() {
+                if (!hasPrev()) {
+                    throw new NoSuchElementException();
+                }
+
+                return CodePointIterator.this.prev();
+            }
+
+            public int peekPrev() throws NoSuchElementException {
+                if (!CodePointIterator.this.hasPrev()) {
+                    throw new NoSuchElementException();
+                }
+
+                int prev = seekPrev(CodePointIterator.this.peekPrev());
+
+                if (!skip(prev)) {
+                    return prev;
+                }
+
+                return prev;
+            }
+
+            private int seekPrev(int prev) throws NoSuchElementException {
+                if (!CodePointIterator.this.hasPrev()) {
+                    return prev;
+                }
+
+                prev = CodePointIterator.this.prev();
+
+                if (skip(prev)) {
+                    return seekPrev(prev);
+                }
+
+                CodePointIterator.this.next();
+
+                return prev;
+            }
+
+            public int offset() {
+                return CodePointIterator.this.offset();
+            }
+
+            private boolean skip(int c) {
+                return predicate.test(c);
+            }
+        };
     }
 
     /**

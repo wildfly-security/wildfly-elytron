@@ -156,7 +156,7 @@ class EntityUtil {
                 omitParametersField = true;
                 break;
             }
-            default: throw log.asnUnrecognisedAlgorithm();
+            default: throw log.asnUnrecognisedAlgorithm(algorithm);
         }
         encodeAlgorithmIdentifier(encoder, algorithmOid(algorithm), omitParametersField);
     }

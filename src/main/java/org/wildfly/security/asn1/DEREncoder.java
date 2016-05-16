@@ -283,6 +283,13 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void encodeBitString(BigInteger integer) {
+        ByteStringBuilder target = new ByteStringBuilder();
+        new DEREncoder(target).encodeInteger(integer);
+        encodeBitString(target.toArray());
+    }
+
+    @Override
     public void encodeObjectIdentifier(String objectIdentifier) throws ASN1Exception {
         int len = objectIdentifier.length();
         if (len == 0) {
@@ -372,6 +379,11 @@ public class DEREncoder implements ASN1Encoder {
         if (implicitTag == -1) {
             implicitTag = clazz | number;
         }
+    }
+
+    @Override
+    public void encodeInteger(BigInteger integer) {
+        writeElement(INTEGER_TYPE, integer.toByteArray());
     }
 
     @Override

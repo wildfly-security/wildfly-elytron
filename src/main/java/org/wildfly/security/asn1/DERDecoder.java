@@ -236,6 +236,17 @@ public class DERDecoder implements ASN1Decoder {
     }
 
     @Override
+    public BigInteger decodeBitStringAsInteger() {
+        DERDecoder decoder = new DERDecoder(decodeBitString());
+
+        if (decoder.peekType() != INTEGER_TYPE) {
+            throw log.asnUnexpectedTag();
+        }
+
+        return decoder.decodeInteger();
+    }
+
+    @Override
     public String decodeBitStringAsString() throws ASN1Exception {
         readTag(BIT_STRING_TYPE);
         int length = readLength();
@@ -335,6 +346,15 @@ public class DERDecoder implements ASN1Decoder {
             }
         }
         return objectIdentifierStr.toString();
+    }
+
+    @Override
+    public BigInteger decodeInteger() throws ASN1Exception {
+        if (INTEGER_TYPE != peekType()) {
+            throw log.asnUnexpectedTag();
+        }
+
+        return new BigInteger(drainElementValue());
     }
 
     @Override
@@ -517,6 +537,15 @@ public class DERDecoder implements ASN1Decoder {
         } catch (NoSuchElementException e) {
             throw log.asnUnexpectedEndOfInput();
         }
+    }
+
+    /**
+     * Decodes an OID and resolve its corresponding key algorithm.
+     *
+     * @return the key algorithm associated with the OID or null if no algorithm could be resolved
+     */
+    public String decodeObjectIdentifierAsKeyAlgorithm() {
+        return keyAlgorithmFromOid(decodeObjectIdentifier());
     }
 
     /**

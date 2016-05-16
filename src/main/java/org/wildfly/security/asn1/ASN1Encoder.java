@@ -19,6 +19,7 @@
 package org.wildfly.security.asn1;
 
 import java.io.Flushable;
+import java.math.BigInteger;
 
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -171,6 +172,13 @@ public interface ASN1Encoder extends Flushable {
     void encodeBitString(String binaryStr);
 
     /**
+     * Encode an ASN.1 bit string where the value represents the binary form of the given <code>integer</code>.
+     *
+     * @param integer the integer to encode as a binary string
+     */
+    void encodeBitString(BigInteger integer);
+
+    /**
      * Encode an ASN.1 object identifier value.
      *
      * @param objectIdentifier the object identifier to encode
@@ -199,6 +207,22 @@ public interface ASN1Encoder extends Flushable {
      * @param number the tag number for the implicit tag
      */
     void encodeImplicit(int clazz, int number);
+
+    /**
+     * Encode an ASN.1 <code>integer</code> value.
+     *
+     * @param integer the integer to encode
+     */
+    default void encodeInteger(int integer) {
+        encodeInteger(BigInteger.valueOf(integer));
+    }
+
+    /**
+     * Encode an ASN.1 <code>integer</code> value.
+     *
+     * @param integer the integer to encode
+     */
+    void encodeInteger(BigInteger integer);
 
     /**
      * Write an already encoded ASN.1 value to the target destination.
