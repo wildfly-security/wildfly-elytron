@@ -508,6 +508,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1123, value = "Too many Kerberos principals found.")
     GeneralSecurityException tooManyKerberosPrincipalsFound();
 
+    @Message(id = 1124, value = "The security realm does not support updating a credential")
+    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

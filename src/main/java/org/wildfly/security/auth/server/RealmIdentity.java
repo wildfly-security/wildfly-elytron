@@ -97,6 +97,17 @@ public interface RealmIdentity {
     }
 
     /**
+     * Update a credential of this realm identity.
+     *
+     * @param credential the new credential (must not be {@code null})
+     * @throws UnsupportedOperationException if the implementing class does not support updating a credential
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default void updateCredential(Credential credential) throws RealmUnavailableException {
+        throw log.credentialUpdateNotSupportedByRealm();
+    }
+
+    /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})

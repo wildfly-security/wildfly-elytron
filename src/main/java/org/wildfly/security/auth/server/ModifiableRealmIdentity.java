@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -57,6 +58,11 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
      * @throws RealmUnavailableException if updating the credentials fails for some reason
      */
     void setCredentials(Collection<? extends Credential> credentials) throws RealmUnavailableException;
+
+    default void updateCredential(Credential credential) throws RealmUnavailableException {
+        // todo: Need a way to just replace a single credential instead
+        setCredentials(Collections.singletonList(credential));
+    }
 
     /**
      * Modify the attributes collection of this identity.  If the identity does not exist, an exception is thrown.
