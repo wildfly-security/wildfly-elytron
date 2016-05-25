@@ -30,6 +30,8 @@ import static org.wildfly.security.http.HttpConstants.POST;
 import static org.wildfly.security.http.HttpConstants.SEE_OTHER;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -61,6 +63,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
     private static final String DEFAULT_POST_LOCATION = "j_security_check";
 
+    private final String contextPath;
     private final String loginPage;
     private final String errorPage;
     private final String postLocation;
@@ -72,18 +75,9 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         String postLocation = (String) properties.get(CONFIG_POST_LOCATION);
         this.postLocation = postLocation != null ? postLocation : DEFAULT_POST_LOCATION;
 
-        loginPage = createPage(properties, CONFIG_LOGIN_PAGE);
-        errorPage = createPage(properties, CONFIG_ERROR_PAGE);
-    }
-
-    private String createPage(final Map<String, ?> properties, String pageConfig) {
-        String page = (String) properties.get(pageConfig);
-        if (page != null) {
-            String contextPath = (String) properties.get(CONFIG_CONTEXT_PATH);
-            return contextPath != null ? contextPath + page : page;
-        } else {
-            return null;
-        }
+        contextPath = properties.containsKey(CONFIG_CONTEXT_PATH) ? (String) properties.get(CONFIG_CONTEXT_PATH) : "";
+        loginPage = (String) properties.get(CONFIG_LOGIN_PAGE);
+        errorPage = (String) properties.get(CONFIG_ERROR_PAGE);
     }
 
     @Override
@@ -130,12 +124,12 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
         // Register challenger
         if (loginPage != null) {
-            request.noAuthenticationInProgress((response) -> sendLoginByRedirect(request, response));
+            request.noAuthenticationInProgress((response) -> sendLogin(request, response));
         }
     }
 
     private void error(String message, HttpServerRequest request) {
-        request.authenticationFailed(message, this::sendErrorByRedirect);
+        request.authenticationFailed(message, (response) -> sendPage(errorPage, request, response));
     }
 
     private void attemptAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
@@ -188,17 +182,40 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         }
     }
 
-    void sendLoginByRedirect(HttpServerRequest request, HttpServerResponse response) {
-        HttpScope session;
-        if ( (session = request.getScope(Scope.SESSION)) != null && session.supportsAttachments()) {
+    void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+        // Save the current request.
+
+        HttpScope session = request.getScope(Scope.SESSION);
+        if (session != null && session.supportsAttachments()) {
             session.setAttachment(LOCATION_KEY, request.getRequestURI().getPath());
         }
 
-        sendRedirect(response, loginPage);
+        sendPage(loginPage, request, response);
     }
 
-    void sendErrorByRedirect(HttpServerResponse response) {
-        sendRedirect(response, errorPage);
+    void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+        // Work out how and send the login page.
+        HttpScope application = request.getScope(Scope.APPLICATION);
+        if (application != null && application.supportsResources()) {
+            try (InputStream pageStream = application.getResource(page)) {
+                if (pageStream != null) {
+                    OutputStream responseStream = response.getOutputStream();
+                    if (responseStream != null) {
+                        byte[] content = new byte[1024];
+                        int length;
+                        while ((length = pageStream.read(content)) > 0) {
+                            responseStream.write(content, 0, length);
+                        }
+
+                        return;
+                    }
+                }
+            } catch (IOException e) {
+                throw new HttpAuthenticationException(e);
+            }
+        }
+
+        sendRedirect(response, contextPath + page);
     }
 
     private void sendRedirect(HttpServerResponse response, String location) {

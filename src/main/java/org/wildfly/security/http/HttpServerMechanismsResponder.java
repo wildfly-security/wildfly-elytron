@@ -31,6 +31,6 @@ public interface HttpServerMechanismsResponder {
      *
      * @param response the {@link HttpServerResponse} to use to set the response / challenge.
      */
-    void sendResponse(HttpServerResponse response);
+    void sendResponse(HttpServerResponse response) throws HttpAuthenticationException;
 
 }

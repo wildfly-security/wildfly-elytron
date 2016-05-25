@@ -122,7 +122,9 @@ public class HttpAuthenticator {
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
-                        responders.forEach((HttpServerMechanismsResponder r) -> r.sendResponse(this) );
+                        for (HttpServerMechanismsResponder responder : responders) {
+                            responder.sendResponse(this);
+                        }
                         if (statusCode > 0) {
                             httpExchangeSpi.setStatusCode(statusCode);
                         } else {
