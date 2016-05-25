@@ -107,7 +107,12 @@ public class HttpAuthenticator {
 
                     if (isAuthenticated()) {
                         if (successResponder != null) {
+                            statusCodeAllowed = true;
                             successResponder.sendResponse(this);
+                            if (statusCode > 0) {
+                                httpExchangeSpi.setStatusCode(statusCode);
+                                return false;
+                            }
                         }
                         return true;
                     }
