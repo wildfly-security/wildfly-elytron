@@ -194,6 +194,10 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     void sendPage(String page, HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
+        if (response.forward(page)) {
+            return;
+        }
+
         // Work out how and send the login page.
         HttpScope application = request.getScope(Scope.APPLICATION);
         if (application != null && application.supportsResources()) {
