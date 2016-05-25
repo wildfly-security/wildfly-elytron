@@ -241,4 +241,14 @@ public interface HttpExchangeSpi {
      * @return the output stream
      */
     OutputStream getResponseOutputStream();
+
+    /**
+     * Forward the current request to a different path.
+     *
+     * @return the desired status code from forwarding or {@code -1} if forwarding was not successful.
+     */
+     default int forward(String path) {
+         return -1;
+     }
+
 }

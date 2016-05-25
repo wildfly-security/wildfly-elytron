@@ -286,6 +286,18 @@ public class HttpAuthenticator {
             httpExchangeSpi.setResponseCookie(cookie);
         }
 
+        @Override
+        public boolean forward(String path) {
+            int statusCode = httpExchangeSpi.forward(path);
+            if (statusCode > 0) {
+                setStatusCode(statusCode);
+
+                return true;
+            }
+
+            return false;
+        }
+
     }
 
     /**

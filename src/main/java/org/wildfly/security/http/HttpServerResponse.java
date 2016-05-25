@@ -56,4 +56,12 @@ public interface HttpServerResponse {
      * @return the output stream
      */
     OutputStream getOutputStream();
+
+    /**
+     * Forward the current request to a different path.
+     *
+     * @return {@code true} if forwarding was supported and successful, {@code false} otherwise.
+     */
+     boolean forward(String path);
+
 }
