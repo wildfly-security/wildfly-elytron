@@ -218,4 +218,18 @@ public interface HttpServerRequest extends HttpServerScopes {
      */
     InetSocketAddress getSourceAddress();
 
+    /**
+     * Suspend the current request so that it can be subsequently resumed.
+     *
+     * @return {@code true} if suspending requests is supported, {@code false} otherwise.
+     */
+    boolean suspendRequest();
+
+    /**
+     * Resume any previously suspended request.
+     *
+     * @return {@code true} if resuming requests is supported, {@code false} otherwise.
+     */
+    boolean resumeRequest();
+
 }

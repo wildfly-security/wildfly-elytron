@@ -298,6 +298,16 @@ public class HttpAuthenticator {
             return false;
         }
 
+        @Override
+        public boolean suspendRequest() {
+            return httpExchangeSpi.suspendRequest();
+        }
+
+        @Override
+        public boolean resumeRequest() {
+            return httpExchangeSpi.resumeRequest();
+        }
+
     }
 
     /**

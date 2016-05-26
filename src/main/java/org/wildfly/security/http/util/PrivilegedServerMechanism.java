@@ -233,6 +233,17 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
             return wrapped.getSourceAddress();
         }
 
+        @Override
+        public boolean suspendRequest() {
+            return wrapped.suspendRequest();
+        }
+
+        @Override
+        public boolean resumeRequest() {
+            return wrapped.resumeRequest();
+        }
+
+
     }
 
 }
