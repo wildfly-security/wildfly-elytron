@@ -102,7 +102,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                     if (authenticate(username, password) && authorize(username)) {
                         succeed();
                         request.authenticationComplete();
-
+                        request.resumeRequest();
                         return;
                     } else {
                         identityCredentials.dispose();
@@ -188,6 +188,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         HttpScope session = request.getScope(Scope.SESSION);
         if (session != null && session.supportsAttachments()) {
             session.setAttachment(LOCATION_KEY, request.getRequestURI().getPath());
+            request.suspendRequest();
         }
 
         sendPage(loginPage, request, response);
@@ -226,22 +227,6 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         response.addResponseHeader(LOCATION, location);
         response.setStatusCode(SEE_OTHER);
     }
-
-    /*
-     * Suspend / Resume Options
-     *
-     * 1 - Cache URL only and redirect as GET request.
-     * 2 - Delegate suspend / resume to HTTP server - i.e. cache the whole request.
-     * 3 - Ignore address of security intercept and rederect to pre-defined location after auth.
-     */
-
-    /*
-     * Challenge Options
-     *
-     * 1 - Redirect to login page / error page.
-     * 2 - Access resource and serve directly.
-     * 3 - Internally forward request to page.
-     */
 
     final class FormIdentityCredentials {
         private final String username;
