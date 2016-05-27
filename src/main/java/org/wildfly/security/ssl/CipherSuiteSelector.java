@@ -410,7 +410,8 @@ public abstract class CipherSuiteSelector {
                         } else {
                             switch (name) {
                                 /* -- openssl special -- */
-                                case "DEFAULT":             current = current.deleteFully(CipherSuitePredicate.matchOpenSslDefaultDeletes()); break;
+                                case "DEFAULT":             current = current.add(CipherSuitePredicate.matchOpenSslAll())
+                                                                             .deleteFully(CipherSuitePredicate.matchOpenSslDefaultDeletes()); break;
                                 case "COMPLEMENTOFDEFAULT": current = current.add(CipherSuitePredicate.matchAnonDH()); break;
                                 case "ALL":                 current = current.add(CipherSuitePredicate.matchOpenSslAll()); break;
                                 case "COMPLEMENTOFALL":     current = current.add(CipherSuitePredicate.matchOpenSslComplementOfAll()); break;
