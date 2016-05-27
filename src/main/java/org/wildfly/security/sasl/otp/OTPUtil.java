@@ -43,6 +43,7 @@ class OTPUtil {
 
     public static final int[] DELIMS = new int[] {'\n', '\r', '\t', ' '};
     public static final String[] RESPONSE_TYPES = new String[] { WORD_RESPONSE, INIT_WORD_RESPONSE, HEX_RESPONSE, INIT_HEX_RESPONSE };
+    public static final String[] PASSWORD_FORMAT_TYPES = new String[] { PASS_PHRASE, DIRECT_OTP };
 
     private static final int FOUR_LETTER_WORDS_OFFSET = 571;
     private static final byte[] randomCharDictionary;
@@ -345,6 +346,17 @@ class OTPUtil {
                 return 3;
             default:
                 throw log.mechInvalidOTPResponseType().toSaslException();
+        }
+    }
+
+    public static int getPasswordFormatTypeChoiceIndex(String passwordFormatType) throws SaslException {
+        switch (passwordFormatType) {
+            case PASS_PHRASE:
+                return 0;
+            case DIRECT_OTP:
+                return 1;
+            default:
+                throw log.mechInvalidOTPPasswordFormatType().toSaslException();
         }
     }
 

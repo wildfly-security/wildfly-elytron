@@ -100,7 +100,6 @@ final class OTPSaslClient extends AbstractSaslClient {
                 final CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(challenge);
                 final CodePointIterator di = cpi.delimitedBy(' ');
                 final String otp;
-                String responseType;
 
                 // Parse challenge
                 final String algorithm = di.drainToString();
@@ -122,33 +121,45 @@ final class OTPSaslClient extends AbstractSaslClient {
                     }
                 }
 
-                // Try obtaining a pass phrase first
                 int defaultResponseTypeChoice = (sequenceNumber < MIN_SEQUENCE_NUMBER) ? getResponseTypeChoiceIndex(INIT_WORD_RESPONSE) : getResponseTypeChoiceIndex(WORD_RESPONSE);
                 final ExtendedChoiceCallback responseTypeChoiceCallback = new ExtendedChoiceCallback("One-time password response type",
                         RESPONSE_TYPES, defaultResponseTypeChoice, false, true);
-                PasswordCallback passwordCallback = new PasswordCallback("Pass phrase", false);
-                handleCallbacks(nameCallback, responseTypeChoiceCallback, passwordCallback);
-                responseType = responseTypeChoiceCallback.getSelectedIndexes() != null ? RESPONSE_TYPES[responseTypeChoiceCallback.getSelectedIndexes()[0]]
+                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback("One-time password format type",
+                        PASSWORD_FORMAT_TYPES, getPasswordFormatTypeChoiceIndex(PASS_PHRASE), false, true);
+                handleCallbacks(nameCallback, responseTypeChoiceCallback, passwordFormatTypeChoiceCallback);
+                String responseType = responseTypeChoiceCallback.getSelectedIndexes() != null ? RESPONSE_TYPES[responseTypeChoiceCallback.getSelectedIndexes()[0]]
                         : RESPONSE_TYPES[responseTypeChoiceCallback.getDefaultChoice()];
-                final char[] passPhraseChars = passwordCallback.getPassword();
-                passwordCallback.clearPassword();
-                if (passPhraseChars != null) {
-                    // Generate the OTP using the pass phrase and format it appropriately
-                    final String passPhrase = getPasswordFromPasswordChars(passPhraseChars);
-                    validatePassPhrase(passPhrase);
-                    if (seed.equals(passPhrase)) {
-                        throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
-                    }
-                    otp = formatOTP(generateOTP(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
-                } else {
-                    // Try obtaining the OTP directly instead
-                    final ParameterCallback parameterCallback = new ParameterCallback(OneTimePasswordAlgorithmSpec.class);
-                    parameterCallback.setParameterSpec(new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber));
-                    passwordCallback = new PasswordCallback("One-time password", false);
-                    handleCallbacks(nameCallback, responseTypeChoiceCallback, parameterCallback, passwordCallback);
-                    responseType = responseTypeChoiceCallback.getSelectedIndexes() != null ? RESPONSE_TYPES[responseTypeChoiceCallback.getSelectedIndexes()[0]]
-                            : RESPONSE_TYPES[responseTypeChoiceCallback.getDefaultChoice()];
-                    otp = getOTP(passwordCallback);
+                String passwordFormatType = passwordFormatTypeChoiceCallback.getSelectedIndexes() != null ? PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getSelectedIndexes()[0]]
+                        : PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getDefaultChoice()];
+
+                PasswordCallback passwordCallback = new PasswordCallback("Pass phrase or one-time password", false);
+                switch (passwordFormatType) {
+                    case PASS_PHRASE:
+                        // Try obtaining a pass phrase
+                        handleCallbacks(nameCallback, passwordCallback);
+                        final char[] passPhraseChars = passwordCallback.getPassword();
+                        passwordCallback.clearPassword();
+                        if (passPhraseChars != null) {
+                            // Generate the OTP using the pass phrase and format it appropriately
+                            final String passPhrase = getPasswordFromPasswordChars(passPhraseChars);
+                            validatePassPhrase(passPhrase);
+                            if (seed.equals(passPhrase)) {
+                                throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
+                            }
+                            otp = formatOTP(generateOTP(algorithm, passPhrase, seed, sequenceNumber), responseType, alternateDictionary);
+                        } else {
+                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                        }
+                        break;
+                    case DIRECT_OTP:
+                        // Try obtaining the OTP directly
+                        final ParameterCallback parameterCallback = new ParameterCallback(OneTimePasswordAlgorithmSpec.class);
+                        parameterCallback.setParameterSpec(new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber));
+                        handleCallbacks(nameCallback, parameterCallback, passwordCallback);
+                        otp = getOTP(passwordCallback);
+                        break;
+                    default:
+                        throw log.mechInvalidOTPPasswordFormatType().toSaslException();
                 }
                 negotiationComplete();
                 return createOTPResponse(algorithm, seed, otp, responseType);
@@ -202,39 +213,51 @@ final class OTPSaslClient extends AbstractSaslClient {
                     newSeed = generateRandomAlphanumericString(DEFAULT_SEED_LENGTH, random);
                 } while (newSeed.equals(seed));
 
-                // Try to obtain a new pass phrase first
-                PasswordCallback passwordCallback = new PasswordCallback("New pass phrase", false);
-                handleCallbacks(nameCallback, passwordCallback);
-                final char[] newPassPhraseChars = passwordCallback.getPassword();
-                passwordCallback.clearPassword();
-                if (newPassPhraseChars != null) {
-                    // Generate the new OTP using the new pass phrase and format it appropriately
-                    newSequenceNumber = DEFAULT_SEQUENCE_NUMBER;
-                    newAlgorithm = algorithm;
-                    final String newPassPhrase = getPasswordFromPasswordChars(newPassPhraseChars);
-                    validatePassPhrase(newPassPhrase);
-                    if (newSeed.equals(newPassPhrase)) {
-                        throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
-                    }
-                    newOTP = formatOTP(generateOTP(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
-                } else {
-                    // Try obtaining the new OTP directly instead
-                    OneTimePasswordAlgorithmSpec defaultAlgorithmSpec = new OneTimePasswordAlgorithmSpec(algorithm,
-                            newSeed.getBytes(StandardCharsets.US_ASCII), DEFAULT_SEQUENCE_NUMBER);
-                    ParameterCallback parameterCallback = new ParameterCallback(defaultAlgorithmSpec, OneTimePasswordAlgorithmSpec.class);
-                    passwordCallback = new PasswordCallback("New one-time password", false);
-                    handleCallbacks(nameCallback, parameterCallback, passwordCallback);
-                    newOTP = getOTP(passwordCallback);
-                    OneTimePasswordAlgorithmSpec algorithmSpec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
-                    if (algorithmSpec == null) {
-                        throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
-                    }
-                    newAlgorithm = algorithmSpec.getAlgorithm();
-                    validateAlgorithm(newAlgorithm);
-                    newSequenceNumber = algorithmSpec.getSequenceNumber();
-                    validateSequenceNumber(newSequenceNumber);
-                    newSeed = new String(algorithmSpec.getSeed(), StandardCharsets.US_ASCII);
-                    validateSeed(newSeed);
+                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback("New one-time password format type",
+                        PASSWORD_FORMAT_TYPES, getPasswordFormatTypeChoiceIndex(PASS_PHRASE), false, true);
+                handleCallbacks(nameCallback, passwordFormatTypeChoiceCallback);
+                String newPasswordFormatType = passwordFormatTypeChoiceCallback.getSelectedIndexes() != null ? PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getSelectedIndexes()[0]]
+                        : PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getDefaultChoice()];
+
+                PasswordCallback passwordCallback = new PasswordCallback("New pass phrase or one-time password", false);
+                switch (newPasswordFormatType) {
+                    case PASS_PHRASE:
+                        // Try to obtain a new pass phrase
+                        handleCallbacks(nameCallback, passwordCallback);
+                        final char[] newPassPhraseChars = passwordCallback.getPassword();
+                        passwordCallback.clearPassword();
+                        if (newPassPhraseChars != null) {
+                            // Generate the new OTP using the new pass phrase and format it appropriately
+                            newSequenceNumber = DEFAULT_SEQUENCE_NUMBER;
+                            newAlgorithm = algorithm;
+                            final String newPassPhrase = getPasswordFromPasswordChars(newPassPhraseChars);
+                            validatePassPhrase(newPassPhrase);
+                            if (newSeed.equals(newPassPhrase)) {
+                                throw log.mechOTPPassPhraseAndSeedMustNotMatch().toSaslException();
+                            }
+                            newOTP = formatOTP(generateOTP(newAlgorithm, newPassPhrase, newSeed, newSequenceNumber), responseType, alternateDictionary);
+                        } else {
+                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                        }
+                        break;
+                    case DIRECT_OTP:
+                        // Try obtaining the new OTP directly
+                        ParameterCallback parameterCallback = new ParameterCallback(OneTimePasswordAlgorithmSpec.class);
+                        handleCallbacks(nameCallback, parameterCallback, passwordCallback);
+                        newOTP = getOTP(passwordCallback);
+                        OneTimePasswordAlgorithmSpec algorithmSpec = (OneTimePasswordAlgorithmSpec) parameterCallback.getParameterSpec();
+                        if (algorithmSpec == null) {
+                            throw log.mechNoPasswordGiven(getMechanismName()).toSaslException();
+                        }
+                        newAlgorithm = algorithmSpec.getAlgorithm();
+                        validateAlgorithm(newAlgorithm);
+                        newSequenceNumber = algorithmSpec.getSequenceNumber();
+                        validateSequenceNumber(newSequenceNumber);
+                        newSeed = new String(algorithmSpec.getSeed(), StandardCharsets.US_ASCII);
+                        validateSeed(newSeed);
+                        break;
+                    default:
+                        throw log.mechInvalidOTPPasswordFormatType().toSaslException();
                 }
                 response.append(createInitResponse(newAlgorithm, newSeed, newSequenceNumber, newOTP));
                 break;

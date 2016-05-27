@@ -1208,6 +1208,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5166, value = "[%s] Server rejected authentication")
     ScramServerException scramServerRejectedAuthentication(String mechName, @Param ScramServerErrorCode errorCode);
 
+    @Message(id = 5167, value = "Invalid OTP password format type")
+    AuthenticationMechanismException mechInvalidOTPPasswordFormatType();
+
     /* http package */
 
     @Message(id = 6000, value = "Status code can not be set at this time.")

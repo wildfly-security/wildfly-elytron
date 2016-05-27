@@ -44,6 +44,16 @@ public final class OTP {
     public static final String INIT_HEX_RESPONSE = "init-hex";
     public static final String INIT_WORD_RESPONSE = "init-word";
 
+    /**
+     * Pass phrase format.
+     */
+    public static final String PASS_PHRASE = "pass-phrase";
+
+    /**
+     * Direct OTP format (either hexadecimal or multi-word OTP).
+     */
+    public static final String DIRECT_OTP = "direct-otp";
+
     // OTP parameters
     public static final int MAX_AUTHORIZATION_ID_LENGTH = 255;
     public static final int MAX_AUTHENTICATION_ID_LENGTH = 255;
