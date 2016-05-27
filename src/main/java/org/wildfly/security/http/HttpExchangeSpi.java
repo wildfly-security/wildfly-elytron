@@ -241,4 +241,34 @@ public interface HttpExchangeSpi {
      * @return the output stream
      */
     OutputStream getResponseOutputStream();
+
+    /**
+     * Forward the current request to a different path.
+     *
+     * @return the desired status code from forwarding or {@code -1} if forwarding was not successful.
+     */
+     default int forward(String path) {
+         return -1;
+     }
+
+     /**
+      * Suspend the current request so that it can be subsequently resumed.
+      *
+      * The server may use any strategy it deems appropriate to suspend the current request and store the state ready for a subsequent request.
+      *
+      * @return {@code true} if suspension is supported, {@code false} otherwise.
+      */
+     default boolean suspendRequest() {
+         return false;
+     }
+
+     /**
+      * Resume a previously suspended request.
+      *
+      * @return {@code true} if resuming a request is supported, {@code false} otherwise.
+      */
+     default boolean resumeRequest() {
+         return false;
+     }
+
 }

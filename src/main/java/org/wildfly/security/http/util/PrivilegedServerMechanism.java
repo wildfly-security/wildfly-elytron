@@ -25,7 +25,6 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collection;
@@ -108,10 +107,22 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
 
 
     private HttpServerMechanismsResponder wrap(final HttpServerMechanismsResponder toWrap) {
-        return toWrap != null ? (HttpServerResponse r) -> AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-            toWrap.sendResponse(r);
-            return null;
-        }, accessControlContext) : null;
+        return toWrap != null ? (HttpServerResponse r) ->
+            {
+                try {
+                    AccessController.doPrivileged((PrivilegedExceptionAction<Void>) () -> {
+                        toWrap.sendResponse(r);
+                        return null;
+                    }
+                    , accessControlContext);
+                } catch (PrivilegedActionException e) {
+                    if (e.getCause() instanceof HttpAuthenticationException) {
+                        throw (HttpAuthenticationException) e.getCause();
+                    }
+                    throw new HttpAuthenticationException(e);
+                }
+            }
+            : null;
     }
 
     private class HttpServerRequestWrapper implements HttpServerRequest {
@@ -221,6 +232,17 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         public InetSocketAddress getSourceAddress() {
             return wrapped.getSourceAddress();
         }
+
+        @Override
+        public boolean suspendRequest() {
+            return wrapped.suspendRequest();
+        }
+
+        @Override
+        public boolean resumeRequest() {
+            return wrapped.resumeRequest();
+        }
+
 
     }
 

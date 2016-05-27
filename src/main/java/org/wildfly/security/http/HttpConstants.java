@@ -37,6 +37,29 @@ public class HttpConstants {
     public static final String SECURITY_IDENTITY = "wildfly.http.security-identity";
 
     /*
+     * Mechanism Configuration Properties
+     */
+
+    private static final String CONFIG_BASE = HttpConstants.class.getPackage().getName();
+    public static final String CONFIG_CONTEXT_PATH = CONFIG_BASE + ".context-path";
+    public static final String CONFIG_REALM = CONFIG_BASE + ".realm";
+
+    /**
+     * The context relative path of the login page.
+     */
+    public static final String CONFIG_LOGIN_PAGE = CONFIG_BASE + ".login-page";
+
+    /**
+     * The context relative path of the error page.
+     */
+    public static final String CONFIG_ERROR_PAGE = CONFIG_BASE + ".error-page";
+
+    /**
+     * This defines the location used by mechanisms dependent on the response to the challenge being sent in using 'POST'.
+     */
+    public static final String CONFIG_POST_LOCATION = CONFIG_BASE + ".post-location";
+
+    /*
      * Header Fields
      */
 
@@ -49,6 +72,7 @@ public class HttpConstants {
      */
 
     public static final String AUTHORIZATION = "Authorization";
+    public static final String LOCATION = "Location";
     public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
     /*
@@ -57,13 +81,25 @@ public class HttpConstants {
 
     public static final String BASIC_NAME = "BASIC";
     public static final String CLIENT_CERT_NAME = "CLIENT_CERT";
+    public static final String FORM_NAME = "FORM";
 
     /*
      * Response Codes
      */
 
     public static final int OK = 200;
+    public static final int SEE_OTHER = 303;
+    public static final int TEMPORARY_REDIRECT = 307;
     public static final int UNAUTHORIZED = 401;
     public static final int FORBIDDEN = 403;
 
+    /*
+     * Methods
+     */
+
+    public static final String POST = "POST";
+
+
+
 }
+

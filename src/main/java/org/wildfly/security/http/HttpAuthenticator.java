@@ -107,7 +107,12 @@ public class HttpAuthenticator {
 
                     if (isAuthenticated()) {
                         if (successResponder != null) {
+                            statusCodeAllowed = true;
                             successResponder.sendResponse(this);
+                            if (statusCode > 0) {
+                                httpExchangeSpi.setStatusCode(statusCode);
+                                return false;
+                            }
                         }
                         return true;
                     }
@@ -117,7 +122,9 @@ public class HttpAuthenticator {
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
-                        responders.forEach((HttpServerMechanismsResponder r) -> r.sendResponse(this) );
+                        for (HttpServerMechanismsResponder responder : responders) {
+                            responder.sendResponse(this);
+                        }
                         if (statusCode > 0) {
                             httpExchangeSpi.setStatusCode(statusCode);
                         } else {
@@ -277,6 +284,28 @@ public class HttpAuthenticator {
         @Override
         public void setResponseCookie(HttpServerCookie cookie) {
             httpExchangeSpi.setResponseCookie(cookie);
+        }
+
+        @Override
+        public boolean forward(String path) {
+            int statusCode = httpExchangeSpi.forward(path);
+            if (statusCode > 0) {
+                setStatusCode(statusCode);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean suspendRequest() {
+            return httpExchangeSpi.suspendRequest();
+        }
+
+        @Override
+        public boolean resumeRequest() {
+            return httpExchangeSpi.resumeRequest();
         }
 
     }

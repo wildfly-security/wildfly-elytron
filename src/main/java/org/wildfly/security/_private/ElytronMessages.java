@@ -1211,6 +1211,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6006, value = "An authorization check for user '%s' failed using mechanism '%s'.")
     String authorizationFailed(String username, String mechanismName);
 
+    @Message(id = 6007, value = "Username or password missing from authentication attempt.")
+    String usernameOrPasswordMissing();
+
     /* asn1 package */
 
     @Message(id = 7001, value = "Unrecognized encoding algorithm [%s]")

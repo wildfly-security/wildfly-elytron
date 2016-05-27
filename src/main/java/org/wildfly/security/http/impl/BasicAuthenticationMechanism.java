@@ -36,18 +36,10 @@ import java.nio.CharBuffer;
 import java.util.List;
 import java.util.function.Supplier;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.sasl.AuthorizeCallback;
-import javax.security.sasl.RealmCallback;
 
-import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
-import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
-import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
-import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.util.ByteIterator;
@@ -57,30 +49,31 @@ import org.wildfly.security.util.ByteIterator;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechanism {
 
     // TODO - Undertow also has a silent mode for HTTP authentication.
 
     private static final String CHALLENGE_PREFIX = "Basic ";
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
 
-    private final CallbackHandler callbackHandler;
     private final boolean includeCharset;
-    private final String realm;
+    final String mechanismRealm;
+    private final String displayRealm;
 
     /**
      * Construct a new instance of {@code BasicAuthenticationMechanism}.
      *
      * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
-     * @param realm the realm name to include in the challenge to the client.
-     * @param includeCharset should the charset be incuded in the challenge.
+     * @param mechanismRealm the name of the realm to be passed back in the callbacks for authentication.
+     * @param displayRealm the realm name that should be sent in the challenge to the client, if {@code null} the name of the host will be sent instead.
+     * @param includeCharset should the charset be included in the challenge.
      */
-    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String realm, final boolean includeCharset) {
-        checkNotNullParam("callbackHandler", callbackHandler);
+    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String mechanismRealm, final String displayRealm, final boolean includeCharset) {
+        super(checkNotNullParam("callbackHandler", callbackHandler), mechanismRealm);
 
-        this.callbackHandler = callbackHandler;
         this.includeCharset = includeCharset;
-        this.realm = realm;
+        this.mechanismRealm = mechanismRealm;
+        this.displayRealm = displayRealm;
     }
 
     /**
@@ -123,18 +116,20 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
                         String username = usernameChars.toString();
                         if (authenticate(username, passwordChars.array())) {
                             if (authorize(username)) {
-                                callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.SUCCEEDED });
+                                succeed();
 
                                 request.authenticationComplete();
                                 return;
                             } else {
-                                callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
+                                fail();
+
                                 request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
                                 return;
                             }
 
                         } else {
-                            callbackHandler.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
+                            fail();
+
                             request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
                             return;
                         }
@@ -153,53 +148,12 @@ class BasicAuthenticationMechanism implements HttpServerAuthenticationMechanism 
         request.noAuthenticationInProgress(response -> prepareResponse(() -> getHostName(request), response));
     }
 
-    private boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
-        RealmCallback realmCallback = realm != null ? new RealmCallback("User realm", realm) : null;
-        NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
-        nameCallback.setName(username);
-        final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);
-        EvidenceVerifyCallback evidenceVerifyCallback = new EvidenceVerifyCallback(evidence);
-
-        try {
-            final Callback[] callbacks;
-            if (realmCallback != null) {
-                callbacks = new Callback[] { realmCallback, nameCallback, evidenceVerifyCallback };
-            } else {
-                callbacks = new Callback[] { nameCallback, evidenceVerifyCallback };
-            }
-
-            callbackHandler.handle(callbacks);
-
-            return evidenceVerifyCallback.isVerified();
-        } catch (UnsupportedCallbackException e) {
-            return false;
-        } catch (IOException e) {
-            throw new HttpAuthenticationException(e);
-        } finally {
-            evidence.destroy();
-        }
-    }
-
-    private boolean authorize(String username) throws HttpAuthenticationException {
-        AuthorizeCallback authorizeCallback = new AuthorizeCallback(username, username);
-
-        try {
-            callbackHandler.handle(new Callback[] {authorizeCallback});
-
-            return authorizeCallback.isAuthorized();
-        } catch (UnsupportedCallbackException e) {
-            return false;
-        } catch (IOException e) {
-            throw new HttpAuthenticationException(e);
-        }
-    }
-
     private String getHostName(HttpServerRequest request) {
         return request.getFirstRequestHeaderValue(HOST);
     }
 
     private void prepareResponse(Supplier<String> hostnameSupplier, HttpServerResponse response) {
-        String realmName = realm != null ? realm : hostnameSupplier.get();
+        String realmName = displayRealm != null ? displayRealm : hostnameSupplier.get();
 
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(realmName).append("\"");

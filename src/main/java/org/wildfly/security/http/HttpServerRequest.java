@@ -193,7 +193,7 @@ public interface HttpServerRequest extends HttpServerScopes {
      * Get the first value for the parameter specified.
      *
      * @param name the name of the parameter the first value is required for.
-     * @return the first value of the named parameter or {@code null} if the paramter is not available.
+     * @return the first value of the named parameter or {@code null} if the parameter is not available.
      */
     String getFirstParameterValue(String name);
 
@@ -217,5 +217,19 @@ public interface HttpServerRequest extends HttpServerScopes {
      * @return the source address of the HTTP request
      */
     InetSocketAddress getSourceAddress();
+
+    /**
+     * Suspend the current request so that it can be subsequently resumed.
+     *
+     * @return {@code true} if suspending requests is supported, {@code false} otherwise.
+     */
+    boolean suspendRequest();
+
+    /**
+     * Resume any previously suspended request.
+     *
+     * @return {@code true} if resuming requests is supported, {@code false} otherwise.
+     */
+    boolean resumeRequest();
 
 }
