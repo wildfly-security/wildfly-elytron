@@ -268,6 +268,7 @@ public abstract class ProtocolSelector {
                 protocol = iterator.next();
                 b.append(protocol);
                 while (iterator.hasNext()) {
+                    protocol = iterator.next();
                     b.append(", ");
                     b.append(protocol);
                 }
@@ -304,6 +305,7 @@ public abstract class ProtocolSelector {
                 protocol = iterator.next();
                 b.append(protocol);
                 while (iterator.hasNext()) {
+                    protocol = iterator.next();
                     b.append(", ");
                     b.append(protocol);
                 }
@@ -336,6 +338,7 @@ public abstract class ProtocolSelector {
                 protocol = iterator.next();
                 b.append(protocol);
                 while (iterator.hasNext()) {
+                    protocol = iterator.next();
                     b.append(", ");
                     b.append(protocol);
                 }

@@ -60,8 +60,10 @@ final class WildFlySecurityManagerPermissionCollection extends PermissionCollect
         final AbstractPermissionCollection collection = new WildFlySecurityManagerPermission("*").newPermissionCollection();
         final StringMapping<WildFlySecurityManagerPermission> mapping = WildFlySecurityManagerPermission.mapping;
         int bits = p1;
+        int test;
         while (bits != 0) {
-            collection.add(mapping.getItemById(Integer.numberOfTrailingZeros(Integer.lowestOneBit(bits))));
+            collection.add(mapping.getItemById(Integer.numberOfTrailingZeros(test = Integer.lowestOneBit(bits))));
+            bits &= ~test;
         }
         if (isReadOnly()) {
             collection.setReadOnly();
