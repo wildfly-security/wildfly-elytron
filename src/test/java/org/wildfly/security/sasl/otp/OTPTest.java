@@ -47,6 +47,7 @@ import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -534,6 +535,7 @@ public class OTPTest extends BaseTestCase {
     }
 
     @Test
+    @Ignore("Depends on ELY-558")
     public void testMultipleSimultaneousAuthenticationSessions() throws Exception {
         final SaslServerFactory serverFactory = obtainSaslServerFactory(OTPSaslServerFactory.class);
         assertNotNull(serverFactory);

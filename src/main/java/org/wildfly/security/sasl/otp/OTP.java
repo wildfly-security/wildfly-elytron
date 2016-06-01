@@ -56,7 +56,6 @@ public final class OTP {
     public static final int DEFAULT_SEQUENCE_NUMBER = 499;
     public static final char DICTIONARY_DELIMITER = ' ';
     public static final int DICTIONARY_SIZE = 2048;
-    public static final int LOCK_TIMEOUT = 300;
 
     static boolean isMatched(final Map<String, ?> props) {
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
