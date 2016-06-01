@@ -56,6 +56,7 @@ import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
+import org.wildfly.security.auth.callback.ServerNameCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
 import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.LoginPermission;
@@ -592,6 +593,21 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Set the server name for the current authentication attempt, if a server specific mechanism configuration is available
+     * this will be used instead of the default configuration.
+     *
+     * The server name needs to be set before the mechanism realm name is set.
+     *
+     * @param serverName
+     * @throws IllegalStateException
+     * @throws IllegalArgumentException
+     */
+    public void setServerName(String serverName) throws IllegalStateException, IllegalArgumentException {
+        Assert.checkNotNullParam("serverName", serverName);
+        stateRef.get().setServerName(serverName);
+    }
+
+    /**
      * Set the mechanism realm name to be equal to the given name.  If no mechanism realms are configured, the realm
      * name is ignored.
      *
@@ -774,11 +790,14 @@ public final class ServerAuthenticationContext {
                     }
                     setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof ServerNameCallback) {
+                    ServerNameCallback snc = (ServerNameCallback) callback;
+                    setServerName(snc.getServerName());
+                    handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
                 }
             }
-
         };
     }
 
@@ -916,6 +935,10 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
+        void setServerName(String serverName) {
+            throw log.noAuthenticationInProgress();
+        }
+
         void succeed() {
             throw log.noAuthenticationInProgress();
         }
@@ -980,6 +1003,15 @@ public final class ServerAuthenticationContext {
             }
             if (currentConfiguration != configuration) {
                 throw log.mechRealmAlreadySelected();
+            }
+        }
+
+        @Override
+        void setServerName(String serverName) {
+            final MechanismConfiguration currentConfiguration = getMechanismConfiguration();
+            final MechanismConfiguration newConfiguration = currentConfiguration.forServer(serverName);
+            if (currentConfiguration != newConfiguration) {
+                throw log.serverNameAlreadySelected();
             }
         }
 
@@ -1224,6 +1256,18 @@ public final class ServerAuthenticationContext {
                 return MechanismRealmConfiguration.NO_REALM;
             }
         }
+
+        @Override
+        void setServerName(String serverName) {
+            final MechanismConfiguration currentConfiguration = getMechanismConfiguration();
+            final MechanismConfiguration newConfiguration = currentConfiguration.forServer(serverName);
+            if (currentConfiguration != newConfiguration) {
+                if (! stateRef.compareAndSet(this, new InitialState(capturedIdentity, newConfiguration))) {
+                    stateRef.get().setServerName(serverName);
+                }
+            }
+        }
+
     }
 
     final class RealmAssignedState extends UnassignedState {
