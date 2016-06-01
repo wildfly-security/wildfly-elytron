@@ -64,7 +64,6 @@ public class HttpConstants {
      */
 
     public static final String CHARSET = "charset";
-    public static final String HOST = "Host";
     public static final String REALM = "realm";
 
     /*
@@ -72,6 +71,7 @@ public class HttpConstants {
      */
 
     public static final String AUTHORIZATION = "Authorization";
+    public static final String HOST = "Host";
     public static final String LOCATION = "Location";
     public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
 
