@@ -28,7 +28,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -692,10 +691,10 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof ServerCredentialCallback) {
                     final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
 
-                    final List<SecurityFactory<Credential>> serverCredentials = stateRef.get().getMechanismConfiguration().getServerCredentialFactories();
-                    for (SecurityFactory<Credential> factory : serverCredentials) {
+                    SecurityFactory<Credential> serverCredentialFactory = stateRef.get().getMechanismConfiguration().getServerCredentialFactory();
+                    if (serverCredentialFactory != null) {
                         try {
-                            final Credential credential = factory.create();
+                            final Credential credential = serverCredentialFactory.create();
                             if (serverCredentialCallback.isCredentialSupported(credential)) {
                                 serverCredentialCallback.setCredential(credential);
                                 handleOne(callbacks, idx + 1);
