@@ -52,6 +52,7 @@ import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
@@ -291,6 +292,18 @@ public final class ServerAuthenticationContext {
 
     ServerAuthenticationContext(final SecurityIdentity capturedIdentity, final MechanismConfigurationSelector mechanismConfigurationSelector) {
         stateRef = new AtomicReference<>(new InactiveState(capturedIdentity, mechanismConfigurationSelector));
+    }
+
+    /**
+     * Set information about the current mechanism and request for this authentication attempt.
+     *
+     * @param mechanismType the type of the authentication mechanism.
+     * @param mechanismName the name of the authentication mechanism.
+     * @param hostName the host name for the request triggering the authentication.
+     * @param protocol the protocol for the request triggering the authentication.
+     */
+    public void setMechanismInformation(final String mechanismType, final String mechanismName, final String hostName, final String protocol) {
+        stateRef.get().setMechanismInformation(mechanismType, mechanismName, hostName, protocol);
     }
 
     /**
@@ -774,6 +787,10 @@ public final class ServerAuthenticationContext {
                     }
                     setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
+                } else if (callback instanceof MechanismInformation) {
+                    MechanismInformationCallback mic = (MechanismInformationCallback) callback;
+                    setMechanismInformation(mic.getMechanismType(), mic.getMechanismName(), mic.getHostName(), mic.getProtocol());
+                    handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
                 }
@@ -896,6 +913,10 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
+        void setMechanismInformation(final String mechanismType, final String mechanismName, final String hostName, final String protocol) {
+            throw log.noAuthenticationInProgress();
+        }
+
         void setName(String name) throws RealmUnavailableException {
             throw log.noAuthenticationInProgress();
         }
@@ -950,6 +971,14 @@ public final class ServerAuthenticationContext {
             this.mechanismName = mechanismName;
             this.hostName = hostName;
             this.protocol = protocol;
+        }
+
+        @Override
+        void setMechanismInformation(String mechanismType, String mechanismName, String hostName, String protocol) {
+            State nextState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismType, mechanismName, hostName, protocol);
+            if (! stateRef.compareAndSet(this, nextState)) {
+                stateRef.get().setMechanismInformation(mechanismType, mechanismName, hostName, protocol);
+            }
         }
 
         @Override
@@ -1052,7 +1081,7 @@ public final class ServerAuthenticationContext {
                 }
             });
             if (mechanismConfiguration == null) {
-                throw log.unableToSelectMechanismConfiguration(mechanismName, hostName, protocol);
+                throw log.unableToSelectMechanismConfiguration(mechanismType, mechanismName, hostName, protocol);
             }
             InitialState initialState = new InitialState(capturedIdentity, mechanismConfiguration);
             stateRef.compareAndSet(this, initialState);
@@ -1112,6 +1141,11 @@ public final class ServerAuthenticationContext {
             if (currentConfiguration != configuration) {
                 throw log.mechRealmAlreadySelected();
             }
+        }
+
+        @Override
+        void setMechanismInformation(String mechanismType, String mechanismName, String hostName, String protocol) {
+            throw log.tooLateToSetMechanismInformation();
         }
 
         abstract SecurityIdentity getSourceIdentity();
