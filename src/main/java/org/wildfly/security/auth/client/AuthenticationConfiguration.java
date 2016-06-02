@@ -30,6 +30,7 @@ import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -513,6 +514,16 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useChoice(BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate, String choice) {
         return matchPredicate == null ? this : new SetChoiceAuthenticationConfiguration(this, matchPredicate, choice);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given parameter specification.
+     *
+     * @param parameterSpec the algorithm parameter specification to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useParameterSpec(AlgorithmParameterSpec parameterSpec) {
+        return parameterSpec == null ? this : new SetParameterSpecAuthenticationConfiguration(this, parameterSpec);
     }
 
     /**
