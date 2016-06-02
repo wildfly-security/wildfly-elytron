@@ -18,10 +18,16 @@
 
 package org.wildfly.security.sasl.otp;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
+import javax.security.auth.callback.ChoiceCallback;
 import javax.security.sasl.Sasl;
 
+import org.wildfly.security.auth.callback.ExtendedChoiceCallback;
+import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
@@ -66,6 +72,53 @@ public final class OTP {
     public static final int DEFAULT_SEQUENCE_NUMBER = 499;
     public static final char DICTIONARY_DELIMITER = ' ';
     public static final int DICTIONARY_SIZE = 2048;
+
+    // OTP prompts
+    public static final String RESPONSE_TYPE_PROMPT = "One-time password response type";
+    public static final String PASSWORD_FORMAT_TYPE_PROMPT = "One-time password format type";
+    public static final String NEW_PASSWORD_FORMAT_TYPE_PROMPT = "New one-time password format type";
+    public static final String PASSWORD_PROMPT = "Pass phrase or one-time password";
+    public static final String NEW_PASSWORD_PROMPT = "New pass phrase or one-time password";
+
+    /**
+     * A predicate which is true when the given callback type and prompt match the OTP response type choice callback.
+     */
+    public static final BiPredicate<Class<? extends ChoiceCallback>, String> MATCH_RESPONSE_CHOICE =
+            (choiceCallbackType, prompt) -> ExtendedChoiceCallback.class.isAssignableFrom(choiceCallbackType) && RESPONSE_TYPE_PROMPT.equals(prompt);
+
+    /**
+     * A predicate which is true when the given callback type and prompt match the OTP password format type choice callback.
+     */
+    public static final BiPredicate<Class<? extends ChoiceCallback>, String> MATCH_PASSWORD_FORMAT_CHOICE =
+            (choiceCallbackType, prompt) -> ExtendedChoiceCallback.class.isAssignableFrom(choiceCallbackType) && PASSWORD_FORMAT_TYPE_PROMPT.equals(prompt);
+
+    /**
+     * A predicate which is true when the given callback type and prompt match the OTP new password format type choice callback.
+     */
+    public static final BiPredicate<Class<? extends ChoiceCallback>, String> MATCH_NEW_PASSWORD_FORMAT_CHOICE =
+            (choiceCallbackType, prompt) -> ExtendedChoiceCallback.class.isAssignableFrom(choiceCallbackType) && NEW_PASSWORD_FORMAT_TYPE_PROMPT.equals(prompt);
+
+    /**
+     * A predicate which is true when the given callback type and prompt match the OTP password callback.
+     */
+    public static final Predicate<String> MATCH_PASSWORD = (prompt) -> PASSWORD_PROMPT.equals(prompt);
+
+    /**
+     * A predicate which is true when the given callback type and prompt match the OTP new password callback.
+     */
+    public static final Predicate<String> MATCH_NEW_PASSWORD = (prompt) -> NEW_PASSWORD_PROMPT.equals(prompt);
+
+    /**
+     * Get the parameter specification for a one-time password generated using the given algorithm, seed, and sequence number.
+     *
+     * @param algorithm the algorithm
+     * @param seed the seed
+     * @param sequenceNumber the sequence number
+     * @return the parameter specification for a one-time password generated using the given algorithm, seed, and sequence number
+     */
+    public static OneTimePasswordAlgorithmSpec getOTPParameterSpec(final String algorithm, final String seed, final int sequenceNumber) {
+        return new OneTimePasswordAlgorithmSpec(algorithm, seed.getBytes(StandardCharsets.US_ASCII), sequenceNumber);
+    }
 
     static boolean isMatched(final Map<String, ?> props) {
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {

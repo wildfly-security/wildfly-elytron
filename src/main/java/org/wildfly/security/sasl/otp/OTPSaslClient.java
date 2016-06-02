@@ -122,9 +122,9 @@ final class OTPSaslClient extends AbstractSaslClient {
                 }
 
                 int defaultResponseTypeChoice = (sequenceNumber < MIN_SEQUENCE_NUMBER) ? getResponseTypeChoiceIndex(INIT_WORD_RESPONSE) : getResponseTypeChoiceIndex(WORD_RESPONSE);
-                final ExtendedChoiceCallback responseTypeChoiceCallback = new ExtendedChoiceCallback("One-time password response type",
+                final ExtendedChoiceCallback responseTypeChoiceCallback = new ExtendedChoiceCallback(RESPONSE_TYPE_PROMPT,
                         RESPONSE_TYPES, defaultResponseTypeChoice, false, true);
-                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback("One-time password format type",
+                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback(PASSWORD_FORMAT_TYPE_PROMPT,
                         PASSWORD_FORMAT_TYPES, getPasswordFormatTypeChoiceIndex(PASS_PHRASE), false, true);
                 handleCallbacks(nameCallback, responseTypeChoiceCallback, passwordFormatTypeChoiceCallback);
                 String responseType = responseTypeChoiceCallback.getSelectedIndexes() != null ? RESPONSE_TYPES[responseTypeChoiceCallback.getSelectedIndexes()[0]]
@@ -132,7 +132,7 @@ final class OTPSaslClient extends AbstractSaslClient {
                 String passwordFormatType = passwordFormatTypeChoiceCallback.getSelectedIndexes() != null ? PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getSelectedIndexes()[0]]
                         : PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getDefaultChoice()];
 
-                PasswordCallback passwordCallback = new PasswordCallback("Pass phrase or one-time password", false);
+                PasswordCallback passwordCallback = new PasswordCallback(PASSWORD_PROMPT, false);
                 switch (passwordFormatType) {
                     case PASS_PHRASE:
                         // Try obtaining a pass phrase
@@ -213,13 +213,13 @@ final class OTPSaslClient extends AbstractSaslClient {
                     newSeed = generateRandomAlphanumericString(DEFAULT_SEED_LENGTH, random);
                 } while (newSeed.equals(seed));
 
-                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback("New one-time password format type",
+                final ExtendedChoiceCallback passwordFormatTypeChoiceCallback = new ExtendedChoiceCallback(NEW_PASSWORD_FORMAT_TYPE_PROMPT,
                         PASSWORD_FORMAT_TYPES, getPasswordFormatTypeChoiceIndex(PASS_PHRASE), false, true);
                 handleCallbacks(nameCallback, passwordFormatTypeChoiceCallback);
                 String newPasswordFormatType = passwordFormatTypeChoiceCallback.getSelectedIndexes() != null ? PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getSelectedIndexes()[0]]
                         : PASSWORD_FORMAT_TYPES[passwordFormatTypeChoiceCallback.getDefaultChoice()];
 
-                PasswordCallback passwordCallback = new PasswordCallback("New pass phrase or one-time password", false);
+                PasswordCallback passwordCallback = new PasswordCallback(NEW_PASSWORD_PROMPT, false);
                 switch (newPasswordFormatType) {
                     case PASS_PHRASE:
                         // Try to obtain a new pass phrase
