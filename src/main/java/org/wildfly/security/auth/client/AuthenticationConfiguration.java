@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.net.ssl.KeyManager;
@@ -329,7 +330,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(Password password) {
-        return password == null ? this : new SetPasswordAuthenticationConfiguration(this, password);
+        return usePassword(password, null);
     }
 
     /**
@@ -339,7 +340,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(char[] password) {
-        return password == null ? this : usePassword(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password));
+        return usePassword(password, null);
     }
 
     /**
@@ -349,7 +350,43 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(String password) {
-        return password == null ? this : usePassword(password.toCharArray());
+        return usePassword(password, null);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
+     *
+     * @param password the password to use
+     * @param matchPredicate the predicate to determine if a password callback prompt is relevant for the given password or
+     *                       {@code null} to use the given password regardless of the prompt
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
+        return password == null ? this : new SetPasswordAuthenticationConfiguration(this, password, matchPredicate);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
+     *
+     * @param password the password to use
+     * @param matchPredicate the predicate to determine if a password callback prompt is relevant for the given password or
+     *                       {@code null} to use the given password regardless of the prompt
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration usePassword(char[] password, Predicate<String> matchPredicate) {
+        return password == null ? this : usePassword(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password), matchPredicate);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
+     *
+     * @param password the password to use
+     * @param matchPredicate the predicate to determine if a password callback prompt is relevant for the given password or
+     *                       {@code null} to use the given password regardless of the prompt
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration usePassword(String password, Predicate<String> matchPredicate) {
+        return password == null ? this : usePassword(password.toCharArray(), matchPredicate);
     }
 
     /**
