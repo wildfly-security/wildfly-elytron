@@ -55,6 +55,8 @@ import org.wildfly.security._private.ElytronMessages;
  */
 final class SSLExplorer {
 
+    private static final MechanismDatabase database = MechanismDatabase.getInstance();
+
     // Private constructor prevents construction outside this class.
     private SSLExplorer() {
     }
@@ -254,13 +256,32 @@ final class SSLExplorer {
             byte helloVersionMajor = input.get();
             byte helloVersionMinor = input.get();
 
+            int csLen = getInt16(input); // in units of 3 bytes
+            input.getShort(); // session_id_length
+            input.getShort(); // challenge_length
+
+            List<String> ciphers = new ArrayList<>();
+
+            while (csLen >= 3) {
+                int lead = getInt8(input);
+                int byte1 = getInt8(input);
+                int byte2 = getInt8(input);
+                if (lead == 0) {
+                    final MechanismDatabase.Entry entry = database.getCipherSuiteById(byte1, byte2);
+                    if (entry != null) ciphers.add(entry.getName());
+                }
+                // skip any non-TLS cipher suites
+                csLen -= 3;
+            }
+
             // 0x00: major version of SSLv20
             // 0x02: minor version of SSLv20
             //
             // SNIServerName is an extension, SSLv20 doesn't support extension.
             return new SSLConnectionInformationImpl((byte)0x00, (byte)0x02,
                         helloVersionMajor, helloVersionMinor,
-                        Collections.emptyList(), Collections.emptyList());
+                        Collections.emptyList(), Collections.emptyList(),
+                        ciphers.isEmpty() ? Collections.emptyList() : ciphers);
         } catch (BufferUnderflowException ignored) {
             throw ElytronMessages.log.invalidHandshakeRecord();
         }
@@ -404,8 +425,17 @@ final class SSLExplorer {
         // ignore session id
         ignoreByteVector8(input);
 
+        ArrayList<String> ciphers = new ArrayList<>();
+
         // ignore cipher_suites
-        ignoreByteVector16(input);
+        int csLen = getInt16(input);
+        while (csLen > 0) {
+            int byte1 = getInt8(input);
+            int byte2 = getInt8(input);
+            final MechanismDatabase.Entry entry = database.getCipherSuiteById(byte1, byte2);
+            if (entry != null) ciphers.add(entry.getName());
+            csLen -= 2;
+        }
 
         // ignore compression methods
         ignoreByteVector8(input);
@@ -419,7 +449,8 @@ final class SSLExplorer {
 
         return new SSLConnectionInformationImpl(
                 recordMajorVersion, recordMinorVersion,
-                helloMajorVersion, helloMinorVersion, snList, alpnProtocols);
+                helloMajorVersion, helloMinorVersion, snList, alpnProtocols,
+                ciphers.isEmpty() ? Collections.emptyList() : ciphers);
     }
 
     /*
@@ -618,15 +649,17 @@ final class SSLExplorer {
         private final String helloVersion;
         private final List<SNIServerName> sniNames;
         private final List<String> alpnProtocols;
+        private final List<String> ciphers;
 
         SSLConnectionInformationImpl(byte recordMajorVersion, byte recordMinorVersion,
-                byte helloMajorVersion, byte helloMinorVersion,
-                List<SNIServerName> sniNames, final List<String> alpnProtocols) {
+            byte helloMajorVersion, byte helloMinorVersion,
+            List<SNIServerName> sniNames, final List<String> alpnProtocols, final List<String> ciphers) {
 
             this.recordVersion = getVersionString(recordMajorVersion, recordMinorVersion);
             this.helloVersion = getVersionString(helloMajorVersion, helloMinorVersion);
             this.sniNames = sniNames;
             this.alpnProtocols = alpnProtocols;
+            this.ciphers = ciphers;
         }
 
         private static String getVersionString(final byte helloMajorVersion, final byte helloMinorVersion) {
@@ -666,8 +699,14 @@ final class SSLExplorer {
             return Collections.unmodifiableList(sniNames);
         }
 
+        @Override
         public List<String> getProtocols() {
             return Collections.unmodifiableList(alpnProtocols);
+        }
+
+        @Override
+        public List<String> getCipherSuites() {
+            return Collections.unmodifiableList(ciphers);
         }
 
         private static String unknownVersion(byte major, byte minor) {

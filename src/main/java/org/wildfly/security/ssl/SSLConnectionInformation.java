@@ -46,6 +46,15 @@ public interface SSLConnectionInformation {
     }
 
     /**
+     * Get the list of cipher suites that the client has requested.
+     *
+     * @return the list of cipher suites
+     */
+    default List<String> getCipherSuites() {
+        return Collections.emptyList();
+    }
+
+    /**
      * Returns the record version of an SSL/TLS connection.
      *
      * @return the record version (not {@code null})
