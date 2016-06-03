@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.server;
 
+import java.util.function.Predicate;
+
 /**
  * A selector to choose which {@link MechanismConfiguration} to use based on information know about the current authentication
  * attempt.
@@ -33,6 +35,37 @@ public interface MechanismConfigurationSelector {
      * @return the {@link MechanismConfiguration} to use for the current authentication attempt.
      */
     MechanismConfiguration selectConfiguration(MechanismInformation mechanismInformation);
+
+    /**
+     * Create a simple {@link MechanismConfigurationSelector} that is paired with a {@link Predicate<MechanismInformation>} to
+     * test if the configuration should be used for the supplied information.
+     *
+     * @param predicate the predicate to test the {@code MechanismInformation}
+     * @param mechanismConfiguration the {@code MechanismConfiguration} to return if the test passes.
+     * @return a simple {@code MechanismConfigurationSelector} backed by a {@link Predicate} to test if the configuration should be returned.
+     */
+    static MechanismConfigurationSelector predicateSelector(final Predicate<MechanismInformation> predicate, final MechanismConfiguration mechanismConfiguration) {
+        return information -> predicate.test(information) ? mechanismConfiguration : null;
+    }
+
+    /**
+     * Create a {@link MechanismConfigurationSelector} that is an aggregation of other selectors, when called the selectors will be called in order and the first
+     * {@link MechanismConfiguration} returned will be used.
+     *
+     * @param configurationSelectors the {@link MechanismConfigurationSelector} instances to aggregate.
+     * @return the {@link MechanismConfigurationSelector} that is an aggregation of the supplied selectors.
+     */
+    static MechanismConfigurationSelector aggregate(final MechanismConfigurationSelector ... configurationSelectors) {
+        return information -> {
+            for (MechanismConfigurationSelector current : configurationSelectors) {
+                MechanismConfiguration configuration = current.selectConfiguration(information);
+                if (configuration != null) {
+                    return configuration;
+                }
+            }
+            return null;
+        };
+    }
 
     /**
      * Create a constant {@link MechanismConfigurationSelector} which will always return the same {@link MechanismConfiguration}
