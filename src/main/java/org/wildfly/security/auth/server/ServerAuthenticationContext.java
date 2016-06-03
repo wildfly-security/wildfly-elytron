@@ -285,12 +285,12 @@ public final class ServerAuthenticationContext {
 
     private final AtomicReference<State> stateRef;
 
-    ServerAuthenticationContext(final SecurityDomain domain, final MechanismConfiguration mechanismConfiguration) {
-        this(domain.getCurrentSecurityIdentity(), mechanismConfiguration);
+    ServerAuthenticationContext(final SecurityDomain domain, final MechanismConfigurationSelector mechanismConfigurationSelector) {
+        this(domain.getCurrentSecurityIdentity(), mechanismConfigurationSelector);
     }
 
-    ServerAuthenticationContext(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration) {
-        stateRef = new AtomicReference<>(new InitialState(capturedIdentity, mechanismConfiguration));
+    ServerAuthenticationContext(final SecurityIdentity capturedIdentity, final MechanismConfigurationSelector mechanismConfigurationSelector) {
+        stateRef = new AtomicReference<>(new InactiveState(capturedIdentity, mechanismConfigurationSelector));
     }
 
     /**
@@ -927,6 +927,137 @@ public final class ServerAuthenticationContext {
         boolean isDone() {
             return false;
         }
+    }
+
+    final class InactiveState extends State {
+
+        private final SecurityIdentity capturedIdentity;
+        private final MechanismConfigurationSelector mechansimConfigurationSelector;
+        private final String mechanismType;
+        private final String mechanismName;
+        private final String hostName;
+        private final String protocol;
+
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector) {
+            this(capturedIdentity, mechansimConfigurationSelector, null, null, null, null);
+        }
+
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector,
+                String mechansimType, String mechanismName, String hostName, String protocol) {
+            this.capturedIdentity = capturedIdentity;
+            this.mechansimConfigurationSelector = mechansimConfigurationSelector;
+            this.mechanismType = mechansimType;
+            this.mechanismName = mechanismName;
+            this.hostName = hostName;
+            this.protocol = protocol;
+        }
+
+        @Override
+        SecurityDomain getSecurityDomain() {
+            return capturedIdentity.getSecurityDomain();
+        }
+
+        boolean authorize(String authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().authorize(authorizationId, authorizeRunAs);
+        }
+
+        @Override
+        void setMechanismRealmName(String name) {
+            transition();
+            stateRef.get().setMechanismRealmName(name);
+        }
+
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            transition();
+            return stateRef.get().getMechanismRealmConfiguration();
+        }
+
+        @Override
+        void fail() {
+            transition();
+            stateRef.get().fail();
+        }
+
+        @Override
+        boolean authorizeAnonymous(boolean requireLoginPermission) {
+            transition();
+            return stateRef.get().authorizeAnonymous(requireLoginPermission);
+        }
+
+        @Override
+        boolean authorize(boolean requireLoginPermission) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().authorize(requireLoginPermission);
+        }
+
+        @Override
+        boolean importIdentity(SecurityIdentity identity) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().importIdentity(identity);
+        }
+
+        @Override
+        void setName(String name) throws RealmUnavailableException {
+            transition();
+            stateRef.get().setName(name);
+        }
+
+        @Override
+        SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            return getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
+        }
+
+        @Override
+        boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().verifyEvidence(evidence);
+        }
+
+        @Override
+        void setPrincipal(Principal principal) throws RealmUnavailableException {
+            transition();
+            stateRef.get().setPrincipal(principal);
+        }
+
+        @Override
+        MechanismConfiguration getMechanismConfiguration() {
+            transition();
+            return stateRef.get().getMechanismConfiguration();
+        }
+
+        private void transition() {
+            MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(new MechanismInformation() {
+
+                @Override
+                public String getProtocol() {
+                    return protocol;
+                }
+
+                @Override
+                public String getMechanismName() {
+                    return mechanismName;
+                }
+
+                @Override
+                public String getMechanismType() {
+                    return mechanismType;
+                }
+
+                @Override
+                public String getHostName() {
+                    return hostName;
+                }
+            });
+            if (mechanismConfiguration == null) {
+                throw log.unableToSelectMechanismConfiguration(mechanismName, hostName, protocol);
+            }
+            InitialState initialState = new InitialState(capturedIdentity, mechanismConfiguration);
+            stateRef.compareAndSet(this, initialState);
+        }
+
     }
 
     abstract class ActiveState extends State {

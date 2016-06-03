@@ -92,13 +92,12 @@ public interface MechanismAuthenticationFactory<M, F, E extends Exception> {
         Builder<M, F, E> setSecurityDomain(SecurityDomain securityDomain);
 
         /**
-         * Add a mechanism to the factory being built.  The same configuration may be used for more than one mechanism.
+         * Set the {@link MechanismConfigurationSelector} for the factory being built.
          *
-         * @param mechanismName the mechanism name (may not be {@code null})
-         * @param mechanismConfiguration the configuration to use (may not be {@code null})
+         * @param mechanismConfigurationSelector the {@link MechanismConfigurationSelector} for the factory being built.
          * @return this builder
          */
-        Builder<M, F, E> addMechanism(String mechanismName, MechanismConfiguration mechanismConfiguration);
+        Builder<M, F, E> setMechanismConfigurationSelector(MechanismConfigurationSelector mechanismConfigurationSelector);
 
         /**
          * Set the mechanism's underlying factory.

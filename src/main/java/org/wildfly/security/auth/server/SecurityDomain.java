@@ -118,27 +118,27 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(CREATE_AUTH_CONTEXT);
         }
-        return new ServerAuthenticationContext(this, MechanismConfiguration.EMPTY);
+        return new ServerAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
     }
 
     /**
      * Create a new authentication context for this security domain which can be used to carry out a single authentication
-     * operation.  The context is configured with a collection of mechanism realms to offer.
+     * operation.
      *
-     * @param mechanismConfiguration the mechanism configuration to use
+     * @param mechanismConfigurationSelector the selector to use to obtain the mechanism configuration
      * @return the new authentication context
      */
-    public ServerAuthenticationContext createNewAuthenticationContext(MechanismConfiguration mechanismConfiguration) {
+    public ServerAuthenticationContext createNewAuthenticationContext(MechanismConfigurationSelector mechanismConfigurationSelector) {
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             sm.checkPermission(CREATE_AUTH_CONTEXT);
         }
-        return new ServerAuthenticationContext(this, mechanismConfiguration);
+        return new ServerAuthenticationContext(this, mechanismConfigurationSelector);
     }
 
-    ServerAuthenticationContext createNewAuthenticationContext(SecurityIdentity capturedIdentity, MechanismConfiguration mechanismConfiguration) {
+    ServerAuthenticationContext createNewAuthenticationContext(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector) {
         assert capturedIdentity.getSecurityDomain() == this;
-        return new ServerAuthenticationContext(capturedIdentity, mechanismConfiguration);
+        return new ServerAuthenticationContext(capturedIdentity, mechanismConfigurationSelector);
     }
 
     /**

@@ -37,6 +37,7 @@ import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
 import org.wildfly.security.auth.server.MechanismConfiguration;
+import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
 import org.wildfly.security.auth.server.SaslAuthenticationFactory;
 import org.wildfly.security.auth.server.SecurityDomain;
@@ -264,7 +265,7 @@ public class SaslServerBuilder {
         for (MechanismRealmConfiguration realmConfiguration : mechanismRealms.values()) {
             mechBuilder.addMechanismRealm(realmConfiguration);
         }
-        builder.addMechanism(mechanismName, mechBuilder.build());
+        builder.setMechanismConfigurationSelector(MechanismConfigurationSelector.constantSelector(mechBuilder.build()));
         final SaslServer server = builder.build().createMechanism(mechanismName);
         if (!dontAssertBuiltServer) {
             Assert.assertNotNull(server);

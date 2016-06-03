@@ -460,7 +460,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         }
 
         final SecurityDomain domain = this.securityDomain;
-        final ServerAuthenticationContext context = domain.createNewAuthenticationContext(this, MechanismConfiguration.EMPTY);
+        final ServerAuthenticationContext context = domain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
         try {
             if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
                 throw log.runAsAuthorizationFailed(getPrincipal(), new NamePrincipal(name), null);
