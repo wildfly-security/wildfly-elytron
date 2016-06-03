@@ -79,11 +79,12 @@ import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
 /**
- * Server-side authentication context.  Instances of this class are used to preform all authentication and re-authorization
+ * Server-side authentication context.  Instances of this class are used to perform all authentication and re-authorization
  * operations that involve the usage of an identity in a {@linkplain SecurityDomain security domain}.
  * <p>
  * There are various effective states, described as follows:
  * <ul>
+ *     <li>The <em>inactive</em> state.</li>
  *     <li>
  *         The <em>unassigned</em> states:
  *         <ul>
@@ -110,11 +111,18 @@ import org.wildfly.security.x500.X500;
  * </ul>
  *
  * <p>
- * When an instance of this class is first constructed, it is in the <em>initial</em> state.  In this state, the context
- * retains an <em>captured {@linkplain SecurityIdentity identity}</em> and an optional <em>{@linkplain MechanismConfiguration mechanism configuration}</em>.
- * The <em>captured identity</em> may be used for various context-sensitive authorization decisions.  The <em>mechanism
- * configuration</em> is used to associate an authentication mechanism-specific configuration, including rewriters,
- * {@linkplain MechanismRealmConfiguration mechanism realms}, server credential factories, and more.
+ * When an instance of this class is first constructed, it is in the <em>inactive</em> state. In this state, the context retains
+ * a <em>captured {@linkplain SecurityIdentity identity}</em> and contains a reference to a
+ * <em>{@linkplain MechanismConfigurationSelector}</em>. The <em>captured identity</em> may be used for various
+ * context-sensitive authorization decisions. Additional mechanism information can be supplied to this state so that when
+ * authentication begins an appropriate <em>{@linkplain MechanismConfiguration}</em> can be selected.
+ * <p>
+ * Once authentication commences the state will automatically transition to the <em>initial</em> state. In this state, the
+ * context retains an <em>captured {@linkplain SecurityIdentity identity}</em> and a <em>{@linkplain MechanismConfiguration mechanism configuration}</em>
+ * which was resolved from the information supplied to the <em>inactive</em> state. The <em>captured identity</em> may be
+ * used for various context-sensitive authorization decisions.  The <em>mechanism configuration</em> is used to associate
+ * an authentication mechanism-specific configuration, including rewriters, {@linkplain MechanismRealmConfiguration mechanism realms},
+ * server credential factories, and more.
  * <p>
  * When an authentication mechanism is "realm-aware" (that is, it has a notion of realms that is specific to that particular
  * authentication mechanism, e.g. <a href="https://tools.ietf.org/html/rfc2831">the DIGEST-MD5 SASL mechanism</a>), it
