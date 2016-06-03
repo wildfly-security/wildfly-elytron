@@ -69,6 +69,21 @@ public final class AuthenticationCompleteCallbackSaslServerFactory extends Abstr
                     throw e;
                 }
             }
+
+            @Override
+            public void dispose() throws SaslException {
+                SaslException deferred = null;
+                try {
+                    super.dispose();
+                } catch (SaslException e) {
+                    deferred = e;
+                } catch (Throwable ignored) {}
+                if (complete.compareAndSet(false, true)) try {
+                    cbh.handle(new Callback[] { AuthenticationCompleteCallback.FAILED });
+                } catch (Throwable ignored) {
+                }
+                if (deferred != null) throw deferred;
+            }
         };
     }
 }
