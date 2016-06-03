@@ -37,6 +37,15 @@ public interface SSLConnectionInformation {
     }
 
     /**
+     * Get the ALPN protocol names of this connection (if any).
+     *
+     * @return the ALPN protocol names of this connection, or an empty list if there are none
+     */
+    default List<String> getProtocols() {
+        return Collections.emptyList();
+    }
+
+    /**
      * Returns the record version of an SSL/TLS connection.
      *
      * @return the record version (not {@code null})

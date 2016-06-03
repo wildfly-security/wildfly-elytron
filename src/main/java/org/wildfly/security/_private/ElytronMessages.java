@@ -653,8 +653,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4012, value = "Unsupported SSL/TLS record")
     SSLHandshakeException unsupportedSslRecord();
 
-    @Message(id = 4013, value = "Invalid SNI extension")
-    SSLProtocolException invalidSniExt();
+    @Message(id = 4013, value = "Invalid TLS extension data")
+    SSLProtocolException invalidTlsExt();
 
     @Message(id = 4014, value = "Not enough data in record to fill declared item size")
     SSLProtocolException notEnoughData();

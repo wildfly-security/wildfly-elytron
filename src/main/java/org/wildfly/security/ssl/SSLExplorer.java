@@ -40,6 +40,7 @@ import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.StandardConstants;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -259,7 +260,7 @@ final class SSLExplorer {
             // SNIServerName is an extension, SSLv20 doesn't support extension.
             return new SSLConnectionInformationImpl((byte)0x00, (byte)0x02,
                         helloVersionMajor, helloVersionMinor,
-                        Collections.emptyList());
+                        Collections.emptyList(), Collections.emptyList());
         } catch (BufferUnderflowException ignored) {
             throw ElytronMessages.log.invalidHandshakeRecord();
         }
@@ -390,7 +391,7 @@ final class SSLExplorer {
             byte recordMajorVersion,
             byte recordMinorVersion) throws SSLException {
 
-        List<SNIServerName> snList = Collections.emptyList();
+        ExtensionInfo info = null;
 
         // client version
         byte helloMajorVersion = input.get();
@@ -410,12 +411,15 @@ final class SSLExplorer {
         ignoreByteVector8(input);
 
         if (input.remaining() > 0) {
-            snList = exploreExtensions(input);
+            info = exploreExtensions(input);
         }
+
+        final List<SNIServerName> snList = info != null ? info.sni : Collections.emptyList();
+        final List<String> alpnProtocols = info != null ? info.alpn : Collections.emptyList();
 
         return new SSLConnectionInformationImpl(
                 recordMajorVersion, recordMinorVersion,
-                helloMajorVersion, helloMinorVersion, snList);
+                helloMajorVersion, helloMinorVersion, snList, alpnProtocols);
     }
 
     /*
@@ -430,16 +434,21 @@ final class SSLExplorer {
      *     truncated_hmac(4), status_request(5), (65535)
      * } ExtensionType;
      */
-    private static List<SNIServerName> exploreExtensions(ByteBuffer input)
+    private static ExtensionInfo exploreExtensions(ByteBuffer input)
             throws SSLException {
+
+        List<SNIServerName> sni = Collections.emptyList();
+        List<String> alpn = Collections.emptyList();
 
         int length = getInt16(input);           // length of extensions
         while (length > 0) {
-            int extType = getInt16(input);      // extenson type
+            int extType = getInt16(input);      // extension type
             int extLen = getInt16(input);       // length of extension data
 
             if (extType == 0x00) {      // 0x00: type of server name indication
-                return exploreSNIExt(input, extLen);
+                sni = exploreSNIExt(input, extLen);
+            } else if (extType == 0x10) { // 0x10: type of alpn
+                alpn = exploreALPN(input, extLen);
             } else {                    // ignore other extensions
                 ignoreByteVector(input, extLen);
             }
@@ -447,7 +456,42 @@ final class SSLExplorer {
             length -= extLen + 4;
         }
 
-        return Collections.emptyList();
+        return new ExtensionInfo(sni, alpn);
+    }
+
+    /*
+     * opaque ProtocolName<1..2^8-1>;
+     *
+     * struct {
+     *     ProtocolName protocol_name_list<2..2^16-1>
+     * } ProtocolNameList;
+     *
+     */
+    private static List<String> exploreALPN(ByteBuffer input,
+            int extLen) throws SSLException {
+        final ArrayList<String> strings = new ArrayList<>();
+
+        int rem = extLen;
+        if (extLen >= 2) {
+            int listLen = getInt16(input);
+            if (listLen == 0 || listLen + 2 != extLen) {
+                throw ElytronMessages.log.invalidTlsExt();
+            }
+
+            rem -= 2;
+            while (rem > 0) {
+                int len = getInt8(input);
+                if (len > rem) {
+                    throw ElytronMessages.log.notEnoughData();
+                }
+                byte[] b = new byte[len];
+                input.get(b);
+                strings.add(new String(b, StandardCharsets.UTF_8));
+
+                rem -= len + 1;
+            }
+        }
+        return strings.isEmpty() ? Collections.emptyList() : strings;
     }
 
     /*
@@ -477,7 +521,7 @@ final class SSLExplorer {
         if (extLen >= 2) {     // "server_name" extension in ClientHello
             int listLen = getInt16(input);     // length of server_name_list
             if (listLen == 0 || listLen + 2 != extLen) {
-                throw ElytronMessages.log.invalidSniExt();
+                throw ElytronMessages.log.invalidTlsExt();
             }
 
             remains -= 2;     // 0x02: the length field of server_name_list
@@ -510,11 +554,11 @@ final class SSLExplorer {
                                                 // HostName length: 2 bytes
             }
         } else if (extLen == 0) {     // "server_name" extension in ServerHello
-            throw ElytronMessages.log.invalidSniExt();
+            throw ElytronMessages.log.invalidTlsExt();
         }
 
         if (remains != 0) {
-            throw ElytronMessages.log.invalidSniExt();
+            throw ElytronMessages.log.invalidTlsExt();
         }
 
         return Collections.unmodifiableList(new ArrayList<>(sniMap.values()));
@@ -552,25 +596,37 @@ final class SSLExplorer {
         }
     }
 
-    private static class UnknownServerName extends SNIServerName {
+    static final class UnknownServerName extends SNIServerName {
         UnknownServerName(int code, byte[] encoded) {
             super(code, encoded);
         }
     }
 
-    private static final class SSLConnectionInformationImpl implements SSLConnectionInformation {
+    static final class ExtensionInfo {
+        final List<SNIServerName> sni;
+        final List<String> alpn;
+
+        ExtensionInfo(final List<SNIServerName> sni, final List<String> alpn) {
+            this.sni = sni;
+            this.alpn = alpn;
+        }
+    }
+
+    static final class SSLConnectionInformationImpl implements SSLConnectionInformation {
 
         private final String recordVersion;
         private final String helloVersion;
         private final List<SNIServerName> sniNames;
+        private final List<String> alpnProtocols;
 
         SSLConnectionInformationImpl(byte recordMajorVersion, byte recordMinorVersion,
                 byte helloMajorVersion, byte helloMinorVersion,
-                List<SNIServerName> sniNames) {
+                List<SNIServerName> sniNames, final List<String> alpnProtocols) {
 
             this.recordVersion = getVersionString(recordMajorVersion, recordMinorVersion);
             this.helloVersion = getVersionString(helloMajorVersion, helloMinorVersion);
             this.sniNames = sniNames;
+            this.alpnProtocols = alpnProtocols;
         }
 
         private static String getVersionString(final byte helloMajorVersion, final byte helloMinorVersion) {
@@ -608,6 +664,10 @@ final class SSLExplorer {
         @Override
         public List<SNIServerName> getSNIServerNames() {
             return Collections.unmodifiableList(sniNames);
+        }
+
+        public List<String> getProtocols() {
+            return Collections.unmodifiableList(alpnProtocols);
         }
 
         private static String unknownVersion(byte major, byte minor) {
