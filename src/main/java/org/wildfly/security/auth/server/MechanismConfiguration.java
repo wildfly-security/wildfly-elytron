@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.common.Assert.assertNotNull;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
@@ -25,6 +26,7 @@ import static java.util.Collections.unmodifiableList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,16 +43,21 @@ import org.wildfly.security.credential.Credential;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MechanismConfiguration {
+
+    private final MechanismConfiguration parent;
     private final NameRewriter preRealmRewriter;
     private final NameRewriter postRealmRewriter;
     private final NameRewriter finalRewriter;
     private final RealmMapper realmMapper;
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
-    private final List<SecurityFactory<Credential>> serverCredentialFactories;
+    private final SecurityFactory<Credential> serverCredentialFactory;
+    private final Map<String, MechanismConfiguration> serverSpecificConfiguration;
 
-    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final List<SecurityFactory<Credential>> serverCredentialFactories) {
+    MechanismConfiguration(final MechanismConfiguration parent, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final SecurityFactory<Credential> serverCredentialFactory) {
+        this.parent = parent;
+        serverSpecificConfiguration = parent == null ? new HashMap<>() : null;
         Assert.checkNotNullParam("mechanismRealms", mechanismRealms);
-        Assert.checkNotNullParam("serverCredentials", serverCredentialFactories);
+        this.serverCredentialFactory = serverCredentialFactory;
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
         this.finalRewriter = finalRewriter;
@@ -75,7 +82,28 @@ public final class MechanismConfiguration {
                 this.mechanismRealms = Collections.unmodifiableMap(map);
             }
         }
-        this.serverCredentialFactories = serverCredentialFactories;
+    }
+
+    void addServerConfiguration(final String serverName, final MechanismConfiguration serverConfiguration) {
+        assertNotNull(serverSpecificConfiguration);
+        serverSpecificConfiguration.put(serverName, serverConfiguration);
+    }
+
+    /**
+     * Obtain the server specific {@code MechanismConfiguration}, if no server specific configuration is set the default is returned instead.
+     *
+     * @param serverName the name of the server the specific configuration is required for.
+     * @return the server specific {@code MechanismConfiguration}, if no server specific configuration is set the default is returned instead.
+     */
+    public MechanismConfiguration forServer(final String serverName) {
+        if (parent != null) {
+            return parent.forServer(serverName);
+        }
+
+        assertNotNull(serverSpecificConfiguration);
+        MechanismConfiguration result = serverSpecificConfiguration.get(serverName);
+
+        return result != null ? result : this;
     }
 
     /**
@@ -125,12 +153,12 @@ public final class MechanismConfiguration {
     }
 
     /**
-     * Get the server credentials.
+     * Get the server credential factory.
      *
-     * @return the server credentials
+     * @return the server credential factory.
      */
-    public List<SecurityFactory<Credential>> getServerCredentialFactories() {
-        return serverCredentialFactories;
+    public SecurityFactory<Credential> getServerCredentialFactory() {
+        return serverCredentialFactory;
     }
 
     /**
@@ -154,84 +182,110 @@ public final class MechanismConfiguration {
         return new Builder();
     }
 
-    public static final class Builder {
+    public abstract static class AbstractBuilder<T, R> {
+
         private static final MechanismRealmConfiguration[] NO_REALM_CONFIGS = new MechanismRealmConfiguration[0];
-        @SuppressWarnings("unchecked")
-        private static final SecurityFactory<Credential>[] NO_CREDENTIALS = new SecurityFactory[0];
 
         private NameRewriter preRealmRewriter;
         private NameRewriter postRealmRewriter;
         private NameRewriter finalRewriter;
         private RealmMapper realmMapper;
         private List<MechanismRealmConfiguration> mechanismRealms;
-        private List<SecurityFactory<Credential>> serverCredentials;
+        private SecurityFactory<Credential> serverCredentialFactory;
 
         /**
          * Construct a new instance.
          */
-        Builder() {
+        AbstractBuilder() {
         }
 
-        public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {
+        public T setPreRealmRewriter(final NameRewriter preRealmRewriter) {
             this.preRealmRewriter = preRealmRewriter;
-            return this;
+            return getThis();
         }
 
-        public Builder setPostRealmRewriter(final NameRewriter postRealmRewriter) {
+        public T setPostRealmRewriter(final NameRewriter postRealmRewriter) {
             this.postRealmRewriter = postRealmRewriter;
-            return this;
+            return getThis();
         }
 
-        public Builder setFinalRewriter(final NameRewriter finalRewriter) {
+        public T setFinalRewriter(final NameRewriter finalRewriter) {
             this.finalRewriter = finalRewriter;
-            return this;
+            return getThis();
         }
 
-        public Builder setRealmMapper(final RealmMapper realmMapper) {
+        public T setRealmMapper(final RealmMapper realmMapper) {
             this.realmMapper = realmMapper;
-            return this;
+            return getThis();
         }
 
-        public Builder addMechanismRealm(MechanismRealmConfiguration configuration) {
+        public T addMechanismRealm(MechanismRealmConfiguration configuration) {
             Assert.checkNotNullParam("configuration", configuration);
             List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
             if (mechanismRealms == null) {
                 mechanismRealms = this.mechanismRealms = new ArrayList<>(1);
             }
             mechanismRealms.add(configuration);
-            return this;
+            return getThis();
         }
 
         /**
-         * Add a server credential.
+         * Set the server credential.
          *
-         * @param credential the credential to add (must not be {@code null})
+         * @param credential the credential to set (must not be {@code null})
          * @return this builder
          */
-        public Builder addServerCredential(Credential credential) {
-            Assert.checkNotNullParam("credential", credential);
-            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
-            if (serverCredentials == null) {
-                serverCredentials = this.serverCredentials = new ArrayList<>(1);
-            }
-            serverCredentials.add(new FixedSecurityFactory<>(credential));
-            return this;
+        public T setServerCredential(Credential credential) {
+            this.serverCredentialFactory = new FixedSecurityFactory<Credential>(Assert.checkNotNullParam("credential", credential));
+
+            return getThis();
         }
 
         /**
-         * Add a server credential factory.
+         * Set the server credential factory.
          *
          * @param credentialFactory the credential factory to add (must not be {@code null})
          * @return this builder
          */
-        public Builder addServerCredential(SecurityFactory<Credential> credentialFactory) {
-            Assert.checkNotNullParam("credential", credentialFactory);
-            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
-            if (serverCredentials == null) {
-                serverCredentials = this.serverCredentials = new ArrayList<>(1);
+        public T setServerCredential(SecurityFactory<Credential> credentialFactory) {
+            this.serverCredentialFactory = Assert.checkNotNullParam("credentialFactory", credentialFactory);
+
+            return getThis();
+        }
+
+        protected MechanismConfiguration build(MechanismConfiguration parent) {
+            List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
+            if (mechanismRealms == null) {
+                mechanismRealms = emptyList();
+            } else {
+                mechanismRealms = unmodifiableList(asList(mechanismRealms.toArray(NO_REALM_CONFIGS)));
             }
-            serverCredentials.add(credentialFactory);
-            return this;
+            return new MechanismConfiguration(parent, preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentialFactory);
+        }
+
+        public abstract R build();
+
+        protected abstract T getThis();
+
+    }
+
+    public static final class Builder extends AbstractBuilder<Builder, MechanismConfiguration> {
+
+        private final List<ServerBuilder> serverBuilders = new ArrayList<>();
+
+        /**
+         * Create a new {@code Builder} for a named server.
+         *
+         * This method should only be called once for each unique server name.
+         *
+         * @param serverName the name of the server the configuration is being built for.
+         * @return a new {@code Builder} for a named server.
+         */
+        public ServerBuilder forServer(String serverName) {
+            ServerBuilder serverBuilder = new ServerBuilder(serverName, this);
+            serverBuilders.add(serverBuilder);
+
+            return serverBuilder;
         }
 
         /**
@@ -240,24 +294,52 @@ public final class MechanismConfiguration {
          * mechanism does not support realms, {@code mechanismRealms} is ignored.
          */
         public MechanismConfiguration build() {
-            List<MechanismRealmConfiguration> mechanismRealms = this.mechanismRealms;
-            if (mechanismRealms == null) {
-                mechanismRealms = emptyList();
-            } else {
-                mechanismRealms = unmodifiableList(asList(mechanismRealms.toArray(NO_REALM_CONFIGS)));
-            }
-            List<SecurityFactory<Credential>> serverCredentials = this.serverCredentials;
-            if (serverCredentials == null) {
-                serverCredentials = emptyList();
-            } else {
-                serverCredentials = unmodifiableList(asList(serverCredentials.toArray(NO_CREDENTIALS)));
-            }
-            return new MechanismConfiguration(preRealmRewriter, postRealmRewriter, finalRewriter, realmMapper, mechanismRealms, serverCredentials);
+            final MechanismConfiguration parentConfiguration = super.build(null);
+            serverBuilders.forEach((sb) -> sb.buildServerConfiguration(parentConfiguration));
+
+            return parentConfiguration;
         }
+
+        @Override
+        protected Builder getThis() {
+            return this;
+        }
+    }
+
+    public static final class ServerBuilder extends AbstractBuilder<ServerBuilder, Builder> {
+
+        private final String serverName;
+        private final Builder parent;
+
+        ServerBuilder(String serverName, Builder parent) {
+            this.serverName = serverName;
+            this.parent = parent;
+        }
+
+        void buildServerConfiguration(MechanismConfiguration parent) {
+            MechanismConfiguration serverConfiguration = super.build(parent);
+            parent.addServerConfiguration(serverName, serverConfiguration);
+        }
+
+        /**
+         * Finish building this server specific configuration and obtain a reference back to the parent {@code Builder}.
+         *
+         * @return a reference to the parent {@code Builder}
+         */
+        @Override
+        public Builder build() {
+            return parent;
+        }
+
+        @Override
+        protected ServerBuilder getThis() {
+            return this;
+        }
+
     }
 
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(null, null, null, null, emptyList(), emptyList());
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(null, null, null, null, null, emptyList(), null);
 }
