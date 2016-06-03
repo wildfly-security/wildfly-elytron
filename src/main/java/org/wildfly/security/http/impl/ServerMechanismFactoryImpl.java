@@ -17,22 +17,17 @@
  */
 package org.wildfly.security.http.impl;
 
-import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
+import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.kohsuke.MetaInfServices;
-import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -66,36 +61,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
     public HttpServerAuthenticationMechanism createAuthenticationMechanism(String mechanismName, Map<String, ?> properties, CallbackHandler callbackHandler) throws HttpAuthenticationException {
         switch (mechanismName) {
             case BASIC_NAME:
-                String displayRealm = (String) properties.get(CONFIG_REALM);
-                String[] realms = null;
-                final String mechanismRealm;
-                final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
-                try {
-                    callbackHandler.handle(new Callback[] { availableRealmsCallback });
-                    realms = availableRealmsCallback.getRealmNames();
-                } catch (UnsupportedCallbackException ignored) {
-                } catch (HttpAuthenticationException e) {
-                    throw e;
-                } catch (IOException e) {
-                    throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(mechanismName, e).toHttpAuthenticationException();
-                }
-                if (displayRealm == null) {
-                    displayRealm = realms == null || realms.length == 0 ? null : realms[0];
-                    mechanismRealm = displayRealm;
-                } else if (realms != null) {
-                    String resolvedRealm = null;
-                    for (String candidate : realms) {
-                        if (displayRealm.equals(candidate)) {
-                            resolvedRealm = displayRealm;
-                            break;
-                        }
-                    }
-                    mechanismRealm = resolvedRealm;
-                } else {
-                    mechanismRealm = null;
-                }
-
-                return new BasicAuthenticationMechanism(callbackHandler, mechanismRealm, displayRealm, false);
+                return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
             case FORM_NAME:
