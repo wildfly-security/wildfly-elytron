@@ -21,6 +21,8 @@ import java.io.Serializable;
 
 import javax.security.auth.callback.CallbackHandler;
 
+import org.wildfly.security.auth.server.MechanismInformation;
+
 /**
  * A {@link Callback} to pass the information about the current mechanism to the {@link CallbackHandler}.
  *
@@ -32,60 +34,24 @@ public class MechanismInformationCallback implements ExtendedCallback, Serializa
 
     private static final long serialVersionUID = -8376970360160709801L;
 
-    private final String mechanismType;
-    private final String mechanismName;
-    private final String hostName;
-    private final String protocol;
+    private final MechanismInformation mechanismInformation;
 
     /**
      * Construct a new instance with the appropriate mechanism information.
      *
-     * @param mechanismType the mechanism type.
-     * @param mechanismName the name of the mechanism.
-     * @param hostName the host name for the current authentication.
-     * @param protocol the protocol for the current authentication.
+     * @param mechanismInformation the mechanism information for the current authentication attempt.
      */
-    public MechanismInformationCallback(final String mechanismType, final String mechanismName, final String hostName, final String protocol) {
-        this.mechanismType = mechanismType;
-        this.mechanismName = mechanismName;
-        this.hostName = hostName;
-        this.protocol = protocol;
+    public MechanismInformationCallback(final MechanismInformation mechanismInformation) {
+        this.mechanismInformation = mechanismInformation;
     }
 
     /**
-     * Get the type of the mechanism for the current authentication.
+     * Get the type of the mechanism information for the current authentication attempt.
      *
      * @return the type of the mechanism for the current authentication.
      */
-    public String getMechanismType() {
-        return mechanismType;
-    }
-
-    /**
-     * Get the name of the mechanism for the current authentication.
-     *
-     * @return the name of the mechanism for the current authentication.
-     */
-    public String getMechanismName() {
-        return mechanismName;
-    }
-
-    /**
-     * Get the host name for the current authentication.
-     *
-     * @return the host name for the current authentication.
-     */
-    public String getHostName() {
-        return hostName;
-    }
-
-    /**
-     * Get the protocol for the current authentication.
-     *
-     * @return the protocol for the current authentication.
-     */
-    public String getProtocol() {
-        return protocol;
+    public MechanismInformation getMechanismInformation() {
+        return mechanismInformation;
     }
 
 }

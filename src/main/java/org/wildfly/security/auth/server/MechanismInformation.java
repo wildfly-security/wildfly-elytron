@@ -53,4 +53,27 @@ public interface MechanismInformation {
      */
     String getProtocol();
 
+    MechanismInformation DEFAULT = new MechanismInformation() {
+
+        @Override
+        public String getProtocol() {
+            return null;
+        }
+
+        @Override
+        public String getMechanismType() {
+            return null;
+        }
+
+        @Override
+        public String getMechanismName() {
+            return null;
+        }
+
+        @Override
+        public String getHostName() {
+            return null;
+        }
+    };
+
 }

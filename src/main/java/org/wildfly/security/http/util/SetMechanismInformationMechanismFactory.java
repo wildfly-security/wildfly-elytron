@@ -27,6 +27,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
+import org.wildfly.security.auth.server.MechanismInformation;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
@@ -81,8 +82,32 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
                 }
 
                 try {
-                    callbackHandler.handle(new Callback[] { new MechanismInformationCallback("HTTP", getMechanismName(),
-                            resolvedHostName, request.getRequestURI().getScheme()) });
+                    final String mechanismName = getMechanismName();
+                    final String hostName = resolvedHostName;
+                    final String protocol = request.getRequestURI().getScheme();
+                    callbackHandler.handle(new Callback[] { new MechanismInformationCallback(new MechanismInformation() {
+
+                        @Override
+                        public String getProtocol() {
+                            return protocol;
+                        }
+
+                        @Override
+                        public String getMechanismType() {
+                            return "HTTP";
+                        }
+
+                        @Override
+                        public String getMechanismName() {
+                            return mechanismName;
+                        }
+
+                        @Override
+                        public String getHostName() {
+                            return hostName;
+                        }
+                    })});
+
                 } catch (IOException e) {
                     throw new HttpAuthenticationException(e);
                 } catch (UnsupportedCallbackException ignored) {

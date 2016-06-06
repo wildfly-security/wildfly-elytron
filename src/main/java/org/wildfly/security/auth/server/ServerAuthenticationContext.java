@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -305,13 +306,10 @@ public final class ServerAuthenticationContext {
     /**
      * Set information about the current mechanism and request for this authentication attempt.
      *
-     * @param mechanismType the type of the authentication mechanism.
-     * @param mechanismName the name of the authentication mechanism.
-     * @param hostName the host name for the request triggering the authentication.
-     * @param protocol the protocol for the request triggering the authentication.
+     * @param mechanismInformation the mechanism information about the current authentication attempt.
      */
-    public void setMechanismInformation(final String mechanismType, final String mechanismName, final String hostName, final String protocol) {
-        stateRef.get().setMechanismInformation(mechanismType, mechanismName, hostName, protocol);
+    public void setMechanismInformation(final MechanismInformation mechanismInformation) {
+        stateRef.get().setMechanismInformation(mechanismInformation);
     }
 
     /**
@@ -797,7 +795,7 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof MechanismInformation) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
-                    setMechanismInformation(mic.getMechanismType(), mic.getMechanismName(), mic.getHostName(), mic.getProtocol());
+                    setMechanismInformation(mic.getMechanismInformation());
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
@@ -921,7 +919,7 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
-        void setMechanismInformation(final String mechanismType, final String mechanismName, final String hostName, final String protocol) {
+        void setMechanismInformation(final MechanismInformation mechanismInformation) {
             throw log.noAuthenticationInProgress();
         }
 
@@ -962,30 +960,25 @@ public final class ServerAuthenticationContext {
 
         private final SecurityIdentity capturedIdentity;
         private final MechanismConfigurationSelector mechansimConfigurationSelector;
-        private final String mechanismType;
-        private final String mechanismName;
-        private final String hostName;
-        private final String protocol;
+        private final MechanismInformation mechanismInformation;
 
         public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector) {
-            this(capturedIdentity, mechansimConfigurationSelector, null, null, null, null);
+            this(capturedIdentity, mechansimConfigurationSelector, MechanismInformation.DEFAULT);
         }
 
         public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector,
-                String mechansimType, String mechanismName, String hostName, String protocol) {
+                MechanismInformation mechanismInformation) {
             this.capturedIdentity = capturedIdentity;
             this.mechansimConfigurationSelector = mechansimConfigurationSelector;
-            this.mechanismType = mechansimType;
-            this.mechanismName = mechanismName;
-            this.hostName = hostName;
-            this.protocol = protocol;
+            this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
+
         }
 
         @Override
-        void setMechanismInformation(String mechanismType, String mechanismName, String hostName, String protocol) {
-            State nextState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismType, mechanismName, hostName, protocol);
+        void setMechanismInformation(MechanismInformation mechanismInformation) {
+            State nextState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismInformation);
             if (! stateRef.compareAndSet(this, nextState)) {
-                stateRef.get().setMechanismInformation(mechanismType, mechanismName, hostName, protocol);
+                stateRef.get().setMechanismInformation(mechanismInformation);
             }
         }
 
@@ -1066,30 +1059,11 @@ public final class ServerAuthenticationContext {
         }
 
         private void transition() {
-            MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(new MechanismInformation() {
-
-                @Override
-                public String getProtocol() {
-                    return protocol;
-                }
-
-                @Override
-                public String getMechanismName() {
-                    return mechanismName;
-                }
-
-                @Override
-                public String getMechanismType() {
-                    return mechanismType;
-                }
-
-                @Override
-                public String getHostName() {
-                    return hostName;
-                }
-            });
+            MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(mechanismInformation);
             if (mechanismConfiguration == null) {
-                throw log.unableToSelectMechanismConfiguration(mechanismType, mechanismName, hostName, protocol);
+                throw log.unableToSelectMechanismConfiguration(mechanismInformation.getMechanismType(),
+                        mechanismInformation.getMechanismName(), mechanismInformation.getHostName(),
+                        mechanismInformation.getProtocol());
             }
             InitialState initialState = new InitialState(capturedIdentity, mechanismConfiguration);
             stateRef.compareAndSet(this, initialState);
@@ -1152,7 +1126,7 @@ public final class ServerAuthenticationContext {
         }
 
         @Override
-        void setMechanismInformation(String mechanismType, String mechanismName, String hostName, String protocol) {
+        void setMechanismInformation(MechanismInformation mechanismInformation) {
             throw log.tooLateToSetMechanismInformation();
         }
 

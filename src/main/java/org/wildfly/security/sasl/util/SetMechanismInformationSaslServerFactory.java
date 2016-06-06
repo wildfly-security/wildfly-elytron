@@ -28,6 +28,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
+import org.wildfly.security.auth.server.MechanismInformation;
 
 /**
  * A {@link SaslServerFactory} implementation that will always ensure mechanism information is passed to the {@link CallbackHandler} before the first authentication callbacks.
@@ -55,7 +56,28 @@ public final class SetMechanismInformationSaslServerFactory extends AbstractDele
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 if (informationSent == false) {
                     informationSent = true;
-                    cbh.handle(new Callback[] { new MechanismInformationCallback("SASL", mechanism, serverName, protocol) });
+                    cbh.handle(new Callback[] { new MechanismInformationCallback(new MechanismInformation() {
+
+                        @Override
+                        public String getProtocol() {
+                            return protocol;
+                        }
+
+                        @Override
+                        public String getMechanismType() {
+                            return "SASL";
+                        }
+
+                        @Override
+                        public String getMechanismName() {
+                            return mechanism;
+                        }
+
+                        @Override
+                        public String getHostName() {
+                            return serverName;
+                        }
+                    }) });
                 }
                 cbh.handle(callbacks);
             }
