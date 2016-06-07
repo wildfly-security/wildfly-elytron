@@ -48,8 +48,8 @@ import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 public final class SaslAuthenticationFactory extends AbstractMechanismAuthenticationFactory<SaslServer, SaslServerFactory, SaslException> {
     private final SaslServerFactory saslServerFactory;
 
-    SaslAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final SaslServerFactory saslServerFactory) {
-        super(securityDomain, mechanismConfigurations, saslServerFactory);
+    SaslAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final SaslServerFactory saslServerFactory) {
+        super(securityDomain, mechanismConfigurationSelector, saslServerFactory);
         this.saslServerFactory = saslServerFactory;
     }
 
@@ -116,8 +116,8 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             return this;
         }
 
-        public Builder addMechanism(final String mechanismName, final MechanismConfiguration mechanismConfiguration) {
-            super.addMechanism(mechanismName, mechanismConfiguration);
+        public Builder setMechanismConfigurationSelector(final MechanismConfigurationSelector mechanismConfigurationSelector) {
+            super.setMechanismConfigurationSelector(mechanismConfigurationSelector);
             return this;
         }
 
@@ -131,7 +131,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }
-            return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurations(), factory);
+            return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), factory);
         }
     }
 }

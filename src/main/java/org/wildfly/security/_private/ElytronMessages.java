@@ -491,6 +491,12 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1118, value = "Public key could not be obtained. Probably due to an invalid PEM format.")
     IllegalArgumentException tokenRealmJwtInvalidPublicKeyPem();
 
+    @Message(id = 1119, value = "Unable to resolve MechanismConfiguration for mechanismType='%s', mechanismName='%s', hostName='%s', protocol='%s'.")
+    IllegalStateException unableToSelectMechanismConfiguration(String mechanismType, String mechanismName, String hostName, String protocol);
+
+    @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
+    IllegalStateException tooLateToSetMechanismInformation();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

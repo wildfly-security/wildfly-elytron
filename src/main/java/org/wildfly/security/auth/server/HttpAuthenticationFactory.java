@@ -23,7 +23,6 @@ import static java.util.Collections.singleton;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -50,8 +49,8 @@ import org.wildfly.security.password.interfaces.DigestPassword;
  */
 public final class HttpAuthenticationFactory extends AbstractMechanismAuthenticationFactory<HttpServerAuthenticationMechanism, HttpServerAuthenticationMechanismFactory, HttpAuthenticationException> {
 
-    HttpAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final HttpServerAuthenticationMechanismFactory factory) {
-        super(securityDomain, mechanismConfigurations, factory);
+    HttpAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final HttpServerAuthenticationMechanismFactory factory) {
+        super(securityDomain, mechanismConfigurationSelector, factory);
     }
 
     HttpServerAuthenticationMechanism doCreate(final String name, final CallbackHandler callbackHandler, final UnaryOperator<HttpServerAuthenticationMechanismFactory> factoryTransformation) throws HttpAuthenticationException {
@@ -142,8 +141,8 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
             return this;
         }
 
-        public Builder addMechanism(final String mechanismName, final MechanismConfiguration mechanismConfiguration) {
-            super.addMechanism(mechanismName, mechanismConfiguration);
+        public Builder setMechanismConfigurationSelector(final MechanismConfigurationSelector mechanismConfigurationSelector) {
+            super.setMechanismConfigurationSelector(mechanismConfigurationSelector);
             return this;
         }
 
@@ -153,7 +152,7 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
         }
 
         public HttpAuthenticationFactory build() {
-            return new HttpAuthenticationFactory(getSecurityDomain(), getMechanismConfigurations(), getFactory());
+            return new HttpAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), getFactory());
         }
     }
 }

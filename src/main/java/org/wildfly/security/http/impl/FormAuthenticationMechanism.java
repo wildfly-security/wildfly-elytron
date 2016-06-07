@@ -69,7 +69,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     private final String postLocation;
 
     FormAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
-        super(checkNotNullParam("callbackHandler", callbackHandler), null);
+        super(checkNotNullParam("callbackHandler", callbackHandler));
         checkNotNullParam("properties", properties);
 
         String postLocation = (String) properties.get(CONFIG_POST_LOCATION);
@@ -99,7 +99,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                 String username = identityCredentials.getUsername();
                 char[] password = identityCredentials.getPassword();
                 try {
-                    if (authenticate(username, password) && authorize(username)) {
+                    if (authenticate(null, username, password) && authorize(username)) {
                         succeed();
                         request.authenticationComplete();
                         request.resumeRequest();
@@ -143,7 +143,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
         char[] passwordChars = password.toCharArray();
         try {
-            if (authenticate(username, passwordChars)) {
+            if (authenticate(null, username, passwordChars)) {
                 if (authorize(username)) {
                     succeed();
 

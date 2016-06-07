@@ -34,11 +34,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.List;
-import java.util.function.Supplier;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
@@ -57,23 +59,20 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
     private static final int PREFIX_LENGTH = CHALLENGE_PREFIX.length();
 
     private final boolean includeCharset;
-    final String mechanismRealm;
-    private final String displayRealm;
+    private final String configuredRealm;
 
     /**
      * Construct a new instance of {@code BasicAuthenticationMechanism}.
      *
      * @param callbackHandler the {@link CallbackHandler} to use to verify the supplied credentials and to notify to establish the current identity.
-     * @param mechanismRealm the name of the realm to be passed back in the callbacks for authentication.
-     * @param displayRealm the realm name that should be sent in the challenge to the client, if {@code null} the name of the host will be sent instead.
+     * @param configuredRealm a configured realm name from the configuration.
      * @param includeCharset should the charset be included in the challenge.
      */
-    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String mechanismRealm, final String displayRealm, final boolean includeCharset) {
-        super(checkNotNullParam("callbackHandler", callbackHandler), mechanismRealm);
+    BasicAuthenticationMechanism(final CallbackHandler callbackHandler, final String configuredRealm, final boolean includeCharset) {
+        super(checkNotNullParam("callbackHandler", callbackHandler));
 
         this.includeCharset = includeCharset;
-        this.mechanismRealm = mechanismRealm;
-        this.displayRealm = displayRealm;
+        this.configuredRealm = configuredRealm;
     }
 
     /**
@@ -90,6 +89,41 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
      */
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
+        final String displayRealmName;
+        String mechanismRealm = null;
+
+        String[] realms = null;
+        final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();
+        try {
+            callbackHandler.handle(new Callback[] { availableRealmsCallback });
+            realms = availableRealmsCallback.getRealmNames();
+        } catch (UnsupportedCallbackException ignored) {
+        } catch (HttpAuthenticationException e) {
+            throw e;
+        } catch (IOException e) {
+            throw ElytronMessages.log.mechCallbackHandlerFailedForUnknownReason(BASIC_NAME, e).toHttpAuthenticationException();
+        }
+
+        if (configuredRealm != null) {
+            displayRealmName = configuredRealm;
+        } else if (realms != null && realms.length > 0) {
+            displayRealmName = realms[0];
+            mechanismRealm = displayRealmName;
+        } else {
+            displayRealmName = request.getFirstRequestHeaderValue(HOST);
+        }
+
+        if (mechanismRealm == null && realms != null && realms.length > 0) {
+            for (String current : realms) {
+                if (displayRealmName.equals(current)) {
+                    mechanismRealm = displayRealmName;
+                }
+            }
+            if (mechanismRealm == null) {
+                mechanismRealm = realms[0];
+            }
+        }
+
         List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
         if (authorizationValues != null) {
             for (String current : authorizationValues) {
@@ -100,7 +134,7 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                     int colonPos = indexOf(decodedValue, ':');
                     if (colonPos <= 0) {
                         // We flag as failed so the browser is re-challenged - sending an error the browser believes it's input was valid.
-                        request.authenticationFailed(log.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(() -> getHostName(request), response));
+                        request.authenticationFailed(log.incorrectlyFormattedHeader(AUTHORIZATION), response -> prepareResponse(displayRealmName, response));
                         return;
                     }
 
@@ -114,7 +148,7 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                     passwordChars.get(password);
                     try {
                         String username = usernameChars.toString();
-                        if (authenticate(username, passwordChars.array())) {
+                        if (authenticate(mechanismRealm, username, passwordChars.array())) {
                             if (authorize(username)) {
                                 succeed();
 
@@ -123,14 +157,14 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                             } else {
                                 fail();
 
-                                request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
+                                request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
                                 return;
                             }
 
                         } else {
                             fail();
 
-                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(() -> getHostName(request), response));
+                            request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
                             return;
                         }
                     } catch (IOException | UnsupportedCallbackException e) {
@@ -145,16 +179,11 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
             }
         }
 
-        request.noAuthenticationInProgress(response -> prepareResponse(() -> getHostName(request), response));
+        request.noAuthenticationInProgress(response -> prepareResponse(displayRealmName, response));
     }
 
-    private String getHostName(HttpServerRequest request) {
-        return request.getFirstRequestHeaderValue(HOST);
-    }
 
-    private void prepareResponse(Supplier<String> hostnameSupplier, HttpServerResponse response) {
-        String realmName = displayRealm != null ? displayRealm : hostnameSupplier.get();
-
+    private void prepareResponse(String realmName, HttpServerResponse response) {
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
         sb.append(REALM).append("=\"").append(realmName).append("\"");
         if (includeCharset) {

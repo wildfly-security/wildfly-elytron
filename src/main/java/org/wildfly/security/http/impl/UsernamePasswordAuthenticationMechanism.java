@@ -40,21 +40,19 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
  */
 abstract class UsernamePasswordAuthenticationMechanism implements HttpServerAuthenticationMechanism {
 
-    private final CallbackHandler callbackHandler;
-    private final String mechanismRealm;
+    protected final CallbackHandler callbackHandler;
 
     /**
      * @param callbackHandler
      * @param mechanismRealm
      */
-    protected UsernamePasswordAuthenticationMechanism(CallbackHandler callbackHandler, String mechanismRealm) {
+    protected UsernamePasswordAuthenticationMechanism(CallbackHandler callbackHandler) {
         super();
         this.callbackHandler = callbackHandler;
-        this.mechanismRealm = mechanismRealm;
     }
 
-    protected boolean authenticate(String username, char[] password) throws HttpAuthenticationException {
-        RealmCallback realmCallback = mechanismRealm != null ? new RealmCallback("User realm", mechanismRealm) : null;
+    protected boolean authenticate(String realmName, String username, char[] password) throws HttpAuthenticationException {
+        RealmCallback realmCallback = realmName != null ? new RealmCallback("User realm", realmName) : null;
         NameCallback nameCallback = new NameCallback("Remote Authentication Name", username);
         nameCallback.setName(username);
         final PasswordGuessEvidence evidence = new PasswordGuessEvidence(password);

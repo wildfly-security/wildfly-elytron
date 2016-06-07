@@ -19,9 +19,7 @@
 package org.wildfly.security.auth.server;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.function.UnaryOperator;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -35,12 +33,12 @@ import org.wildfly.security.evidence.Evidence;
 abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception> implements MechanismAuthenticationFactory<M, F, E> {
 
     private final SecurityDomain securityDomain;
-    private final Map<String, MechanismConfiguration> mechanismConfigurations;
+    private final MechanismConfigurationSelector mechanismConfigurationSelector;
     private final F factory;
 
-    AbstractMechanismAuthenticationFactory(final SecurityDomain securityDomain, final Map<String, MechanismConfiguration> mechanismConfigurations, final F factory) {
+    AbstractMechanismAuthenticationFactory(final SecurityDomain securityDomain, final MechanismConfigurationSelector mechanismConfigurationSelector, final F factory) {
         this.securityDomain = securityDomain;
-        this.mechanismConfigurations = mechanismConfigurations;
+        this.mechanismConfigurationSelector = mechanismConfigurationSelector;
         this.factory = factory;
     }
 
@@ -53,11 +51,7 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
     }
 
     public M createMechanism(final String name, final UnaryOperator<F> factoryTransformation) throws E {
-        MechanismConfiguration configuration = mechanismConfigurations.get(name);
-        if (configuration == null) {
-            configuration = MechanismConfiguration.EMPTY;
-        }
-        return doCreate(name, new ServerAuthenticationContext(securityDomain, configuration).createCallbackHandler(), factoryTransformation);
+        return doCreate(name, new ServerAuthenticationContext(securityDomain, mechanismConfigurationSelector).createCallbackHandler(), factoryTransformation);
     }
 
     abstract M doCreate(String name, CallbackHandler callbackHandler, final UnaryOperator<F> factoryTransformation) throws E;
@@ -81,10 +75,6 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
     public Collection<String> getMechanismNames() {
         final Collection<String> names = new LinkedHashSet<>();
         top: for (String mechName : getAllSupportedMechNames()) {
-            MechanismConfiguration mechConfig = mechanismConfigurations.get(mechName);
-            if (mechConfig == null) {
-                continue;
-            }
             // if the mech doesn't need credentials, then we support it for sure
             if (! usesCredentials(mechName)) {
                 names.add(mechName);
@@ -133,7 +123,7 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
 
     abstract static class Builder<M, F, E extends Exception> implements MechanismAuthenticationFactory.Builder<M, F, E> {
         private SecurityDomain securityDomain;
-        private Map<String, MechanismConfiguration> mechanismConfigurations = new LinkedHashMap<>();
+        private MechanismConfigurationSelector mechanismConfigurationSelector;
         private F factory;
 
         Builder() {
@@ -145,10 +135,8 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
             return this;
         }
 
-        public Builder<M, F, E> addMechanism(String mechanismName, MechanismConfiguration mechanismConfiguration) {
-            Assert.checkNotNullParam("mechanismName", mechanismName);
-            Assert.checkNotNullParam("mechanismConfiguration", mechanismConfiguration);
-            mechanismConfigurations.put(mechanismName, mechanismConfiguration);
+        public Builder<M, F, E> setMechanismConfigurationSelector(final MechanismConfigurationSelector mechanismConfigurationSelector) {
+            this.mechanismConfigurationSelector = mechanismConfigurationSelector;
             return this;
         }
 
@@ -162,8 +150,8 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
             return securityDomain;
         }
 
-        Map<String, MechanismConfiguration> getMechanismConfigurations() {
-            return mechanismConfigurations;
+        MechanismConfigurationSelector getMechanismConfigurationSelector() {
+            return mechanismConfigurationSelector;
         }
 
         F getFactory() {

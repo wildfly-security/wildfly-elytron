@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -28,7 +29,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -53,6 +53,7 @@ import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
+import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
@@ -79,11 +80,12 @@ import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
 /**
- * Server-side authentication context.  Instances of this class are used to preform all authentication and re-authorization
+ * Server-side authentication context.  Instances of this class are used to perform all authentication and re-authorization
  * operations that involve the usage of an identity in a {@linkplain SecurityDomain security domain}.
  * <p>
  * There are various effective states, described as follows:
  * <ul>
+ *     <li>The <em>inactive</em> state.</li>
  *     <li>
  *         The <em>unassigned</em> states:
  *         <ul>
@@ -110,11 +112,18 @@ import org.wildfly.security.x500.X500;
  * </ul>
  *
  * <p>
- * When an instance of this class is first constructed, it is in the <em>initial</em> state.  In this state, the context
- * retains an <em>captured {@linkplain SecurityIdentity identity}</em> and an optional <em>{@linkplain MechanismConfiguration mechanism configuration}</em>.
- * The <em>captured identity</em> may be used for various context-sensitive authorization decisions.  The <em>mechanism
- * configuration</em> is used to associate an authentication mechanism-specific configuration, including rewriters,
- * {@linkplain MechanismRealmConfiguration mechanism realms}, server credential factories, and more.
+ * When an instance of this class is first constructed, it is in the <em>inactive</em> state. In this state, the context retains
+ * a <em>captured {@linkplain SecurityIdentity identity}</em> and contains a reference to a
+ * <em>{@linkplain MechanismConfigurationSelector}</em>. The <em>captured identity</em> may be used for various
+ * context-sensitive authorization decisions. Additional mechanism information can be supplied to this state so that when
+ * authentication begins an appropriate <em>{@linkplain MechanismConfiguration}</em> can be selected.
+ * <p>
+ * Once authentication commences the state will automatically transition to the <em>initial</em> state. In this state, the
+ * context retains an <em>captured {@linkplain SecurityIdentity identity}</em> and a <em>{@linkplain MechanismConfiguration mechanism configuration}</em>
+ * which was resolved from the information supplied to the <em>inactive</em> state. The <em>captured identity</em> may be
+ * used for various context-sensitive authorization decisions.  The <em>mechanism configuration</em> is used to associate
+ * an authentication mechanism-specific configuration, including rewriters, {@linkplain MechanismRealmConfiguration mechanism realms},
+ * server credential factories, and more.
  * <p>
  * When an authentication mechanism is "realm-aware" (that is, it has a notion of realms that is specific to that particular
  * authentication mechanism, e.g. <a href="https://tools.ietf.org/html/rfc2831">the DIGEST-MD5 SASL mechanism</a>), it
@@ -286,12 +295,21 @@ public final class ServerAuthenticationContext {
 
     private final AtomicReference<State> stateRef;
 
-    ServerAuthenticationContext(final SecurityDomain domain, final MechanismConfiguration mechanismConfiguration) {
-        this(domain.getCurrentSecurityIdentity(), mechanismConfiguration);
+    ServerAuthenticationContext(final SecurityDomain domain, final MechanismConfigurationSelector mechanismConfigurationSelector) {
+        this(domain.getCurrentSecurityIdentity(), mechanismConfigurationSelector);
     }
 
-    ServerAuthenticationContext(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration) {
-        stateRef = new AtomicReference<>(new InitialState(capturedIdentity, mechanismConfiguration));
+    ServerAuthenticationContext(final SecurityIdentity capturedIdentity, final MechanismConfigurationSelector mechanismConfigurationSelector) {
+        stateRef = new AtomicReference<>(new InactiveState(capturedIdentity, mechanismConfigurationSelector));
+    }
+
+    /**
+     * Set information about the current mechanism and request for this authentication attempt.
+     *
+     * @param mechanismInformation the mechanism information about the current authentication attempt.
+     */
+    public void setMechanismInformation(final MechanismInformation mechanismInformation) {
+        stateRef.get().setMechanismInformation(mechanismInformation);
     }
 
     /**
@@ -692,10 +710,10 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof ServerCredentialCallback) {
                     final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
 
-                    final List<SecurityFactory<Credential>> serverCredentials = stateRef.get().getMechanismConfiguration().getServerCredentialFactories();
-                    for (SecurityFactory<Credential> factory : serverCredentials) {
+                    SecurityFactory<Credential> serverCredentialFactory = stateRef.get().getMechanismConfiguration().getServerCredentialFactory();
+                    if (serverCredentialFactory != null) {
                         try {
-                            final Credential credential = factory.create();
+                            final Credential credential = serverCredentialFactory.create();
                             if (serverCredentialCallback.isCredentialSupported(credential)) {
                                 serverCredentialCallback.setCredential(credential);
                                 handleOne(callbacks, idx + 1);
@@ -774,6 +792,10 @@ public final class ServerAuthenticationContext {
                         mechanismRealm = rcb.getDefaultText();
                     }
                     setMechanismRealmName(mechanismRealm);
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof MechanismInformation) {
+                    MechanismInformationCallback mic = (MechanismInformationCallback) callback;
+                    setMechanismInformation(mic.getMechanismInformation());
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
@@ -897,6 +919,10 @@ public final class ServerAuthenticationContext {
             throw log.noAuthenticationInProgress();
         }
 
+        void setMechanismInformation(final MechanismInformation mechanismInformation) {
+            throw log.noAuthenticationInProgress();
+        }
+
         void setName(String name) throws RealmUnavailableException {
             throw log.noAuthenticationInProgress();
         }
@@ -928,6 +954,121 @@ public final class ServerAuthenticationContext {
         boolean isDone() {
             return false;
         }
+    }
+
+    final class InactiveState extends State {
+
+        private final SecurityIdentity capturedIdentity;
+        private final MechanismConfigurationSelector mechansimConfigurationSelector;
+        private final MechanismInformation mechanismInformation;
+
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector) {
+            this(capturedIdentity, mechansimConfigurationSelector, MechanismInformation.DEFAULT);
+        }
+
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector,
+                MechanismInformation mechanismInformation) {
+            this.capturedIdentity = capturedIdentity;
+            this.mechansimConfigurationSelector = mechansimConfigurationSelector;
+            this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
+
+        }
+
+        @Override
+        void setMechanismInformation(MechanismInformation mechanismInformation) {
+            State nextState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismInformation);
+            if (! stateRef.compareAndSet(this, nextState)) {
+                stateRef.get().setMechanismInformation(mechanismInformation);
+            }
+        }
+
+        @Override
+        SecurityDomain getSecurityDomain() {
+            return capturedIdentity.getSecurityDomain();
+        }
+
+        boolean authorize(String authorizationId, boolean authorizeRunAs) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().authorize(authorizationId, authorizeRunAs);
+        }
+
+        @Override
+        void setMechanismRealmName(String name) {
+            transition();
+            stateRef.get().setMechanismRealmName(name);
+        }
+
+
+        @Override
+        MechanismRealmConfiguration getMechanismRealmConfiguration() {
+            transition();
+            return stateRef.get().getMechanismRealmConfiguration();
+        }
+
+        @Override
+        void fail() {
+            transition();
+            stateRef.get().fail();
+        }
+
+        @Override
+        boolean authorizeAnonymous(boolean requireLoginPermission) {
+            transition();
+            return stateRef.get().authorizeAnonymous(requireLoginPermission);
+        }
+
+        @Override
+        boolean authorize(boolean requireLoginPermission) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().authorize(requireLoginPermission);
+        }
+
+        @Override
+        boolean importIdentity(SecurityIdentity identity) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().importIdentity(identity);
+        }
+
+        @Override
+        void setName(String name) throws RealmUnavailableException {
+            transition();
+            stateRef.get().setName(name);
+        }
+
+        @Override
+        SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            return getSecurityDomain().getEvidenceVerifySupport(evidenceType, algorithmName);
+        }
+
+        @Override
+        boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+            transition();
+            return stateRef.get().verifyEvidence(evidence);
+        }
+
+        @Override
+        void setPrincipal(Principal principal) throws RealmUnavailableException {
+            transition();
+            stateRef.get().setPrincipal(principal);
+        }
+
+        @Override
+        MechanismConfiguration getMechanismConfiguration() {
+            transition();
+            return stateRef.get().getMechanismConfiguration();
+        }
+
+        private void transition() {
+            MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(mechanismInformation);
+            if (mechanismConfiguration == null) {
+                throw log.unableToSelectMechanismConfiguration(mechanismInformation.getMechanismType(),
+                        mechanismInformation.getMechanismName(), mechanismInformation.getHostName(),
+                        mechanismInformation.getProtocol());
+            }
+            InitialState initialState = new InitialState(capturedIdentity, mechanismConfiguration);
+            stateRef.compareAndSet(this, initialState);
+        }
+
     }
 
     abstract class ActiveState extends State {
@@ -982,6 +1123,11 @@ public final class ServerAuthenticationContext {
             if (currentConfiguration != configuration) {
                 throw log.mechRealmAlreadySelected();
             }
+        }
+
+        @Override
+        void setMechanismInformation(MechanismInformation mechanismInformation) {
+            throw log.tooLateToSetMechanismInformation();
         }
 
         abstract SecurityIdentity getSourceIdentity();
