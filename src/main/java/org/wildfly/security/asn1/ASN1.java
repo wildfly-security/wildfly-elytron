@@ -325,6 +325,100 @@ public class ASN1 {
         }
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
+    public static String oidFromSignatureAlgorithm(String algorithmName) {
+        switch (algorithmName) {
+            case "NONEwithRSA": {
+                return null;
+            }
+            case "MD2withRSA": {
+                return OID_MD2_WITH_RSA;
+            }
+            case "MD5withRSA": {
+                return OID_MD5_WITH_RSA;
+            }
+            case "SHA1withRSA": {
+                return OID_SHA1_WITH_RSA;
+            }
+            case "SHA256withRSA": {
+                return OID_SHA256_WITH_RSA;
+            }
+            case "SHA384withRSA": {
+                return OID_SHA384_WITH_RSA;
+            }
+            case "SHA512withRSA": {
+                return OID_SHA512_WITH_RSA;
+            }
+            case "NONEwithDSA": {
+                return null;
+            }
+            case "SHA1withDSA": {
+                return OID_SHA1_WITH_DSA;
+            }
+            case "NONEwithECDSA": {
+                return null;
+            }
+            case "ECDSA": // obsolete alias for SHA1withECDSA
+            case "SHA1withECDSA": {
+                return OID_SHA1_WITH_ECDSA;
+            }
+            case "SHA256withECDSA": {
+                return OID_SHA256_WITH_ECDSA;
+            }
+            case "SHA384withECDSA": {
+                return OID_SHA384_WITH_ECDSA;
+            }
+            case "SHA512withECDSA": {
+                return OID_SHA512_WITH_ECDSA;
+            }
+            default: {
+                return null;
+            }
+        }
+    }
+
+    @SuppressWarnings("SpellCheckingInspection")
+    public static String signatureAlgorithmFromOid(String oid) {
+        switch (oid) {
+            case OID_MD2_WITH_RSA: {
+                return "MD2withRSA";
+            }
+            case OID_MD5_WITH_RSA: {
+                return "MD5withRSA";
+            }
+            case OID_SHA1_WITH_RSA: {
+                return "SHA1withRSA";
+            }
+            case OID_SHA256_WITH_RSA: {
+                return "SHA256withRSA";
+            }
+            case OID_SHA384_WITH_RSA: {
+                return "SHA384withRSA";
+            }
+            case OID_SHA512_WITH_RSA: {
+                return "SHA512withRSA";
+            }
+            case OID_SHA1_WITH_DSA: {
+                return "SHA1withDSA";
+            }
+            case OID_SHA1_WITH_ECDSA: {
+                return "SHA1withECDSA";
+            }
+            case OID_SHA256_WITH_ECDSA: {
+                return "SHA256withECDSA";
+            }
+            case OID_SHA384_WITH_ECDSA: {
+                return "SHA384withECDSA";
+            }
+            case OID_SHA512_WITH_ECDSA: {
+                return "SHA512withECDSA";
+            }
+            default: {
+                return null;
+            }
+        }
+    }
+
     static void validatePrintableByte(final int b) throws ASN1Exception {
         switch (b) {
             case ' ':
