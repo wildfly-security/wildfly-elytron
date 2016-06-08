@@ -20,8 +20,8 @@ package org.wildfly.security.sasl.entity;
 
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
-import static org.wildfly.security.sasl.entity.GeneralName.*;
-import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
+import static org.wildfly.security.x500.GeneralName.*;
+import static org.wildfly.security.x500.TrustedAuthority.*;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
@@ -50,6 +50,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500PrincipalUtil;
 

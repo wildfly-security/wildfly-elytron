@@ -47,10 +47,12 @@ import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
-import org.wildfly.security.sasl.entity.GeneralName.DNSName;
-import org.wildfly.security.sasl.entity.GeneralName.DirectoryName;
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.GeneralName.DNSName;
+import org.wildfly.security.x500.GeneralName.DirectoryName;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.security.x500.TrustedAuthority;
 
 /**
  * SaslClient for the ISO/IEC 9798-3 authentication mechanism as defined by
