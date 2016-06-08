@@ -38,6 +38,7 @@ class MechanismDatabase {
 
     private final Map<String, Entry> entriesByStdName;
     private final Map<String, Entry> entriesByOSSLName;
+    private final Entry[][] algorithmsById;
 
     static MechanismDatabase getInstance() {
         return INSTANCE;
@@ -66,6 +67,7 @@ class MechanismDatabase {
         final Map<SecurityLevel, List<Entry>> entriesByLevel = new EnumMap<SecurityLevel, List<Entry>>(SecurityLevel.class);
 
         final Map<String, String> aliases = new HashMap<>();
+        final Entry[][] algorithms = new Entry[256][];
 
         for (Map.Entry<String, String> mapEntry : properties.stringMapEntries()) {
             final String name = mapEntry.getKey();
@@ -73,7 +75,7 @@ class MechanismDatabase {
             final String[] strings = p.split(rawValue);
             if (strings.length == 1 && strings[0].startsWith("alias:")) {
                 aliases.put(name, strings[0].substring(6));
-            } else if (strings.length != 11) {
+            } else if (strings.length != 11 && strings.length != 13) {
                 log.warnInvalidStringCountForMechanismDatabaseEntry(name);
             } else {
                 boolean ok = true;
@@ -126,6 +128,15 @@ class MechanismDatabase {
                     algBits = 0;
                     ok = false;
                 }
+                int byte1, byte2;
+                try {
+                    byte1 = Integer.parseInt(strings[11], 16);
+                    byte2 = Integer.parseInt(strings[12], 16);
+                } catch (ArrayIndexOutOfBoundsException | NumberFormatException ignored) {
+                    // ignore the entry
+                    byte1 = -1;
+                    byte2 = -1;
+                }
                 if (ok) {
                     final Entry entry = new Entry(name, openSslName, new ArrayList<String>(0), kex, auth, enc, digest, prot, export, level, fips, strBits, algBits);
                     if (entriesByStdName.containsKey(name)) {
@@ -150,6 +161,13 @@ class MechanismDatabase {
                     addTo(entriesByDigest, digest, entry);
                     addTo(entriesByProtocol, prot, entry);
                     addTo(entriesByLevel, level, entry);
+                    if (byte1 != -1 && byte2 != -1) {
+                        Entry[] row = algorithms[byte1];
+                        if (row == null) {
+                            row = algorithms[byte1] = new Entry[256];
+                        }
+                        row[byte2] = entry;
+                    }
                 }
             }
         }
@@ -176,6 +194,7 @@ class MechanismDatabase {
 
         this.entriesByStdName = entriesByStdName;
         this.entriesByOSSLName = entriesByOSSLName;
+        this.algorithmsById = algorithms;
     }
 
     static String[] replaceEdh(String... strings) {
@@ -218,6 +237,17 @@ class MechanismDatabase {
 
     Entry getCipherSuiteOpenSSLName(final String cipherSuite) {
         return entriesByOSSLName.get(cipherSuite);
+    }
+
+    Entry getCipherSuiteById(final int byte1, final int byte2) {
+        if (byte1 < 0 || byte1 > 255 || byte2 < 0 || byte2 > 255) {
+            return null;
+        }
+        final Entry[] row = algorithmsById[byte1];
+        if (row == null) {
+            return null;
+        }
+        return row[byte2];
     }
 
     static final class Entry {
