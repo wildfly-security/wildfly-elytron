@@ -28,6 +28,8 @@ import java.util.Arrays;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.security.asn1.ASN1Encodable;
+import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
@@ -38,7 +40,7 @@ import org.wildfly.security.util.ByteStringBuilder;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public abstract class GeneralName {
+public abstract class GeneralName implements ASN1Encodable {
 
     // General name types
     public static final int OTHER_NAME = 0;
@@ -75,6 +77,31 @@ public abstract class GeneralName {
      * @return the name
      */
     public abstract Object getName();
+
+    /**
+     * <p>
+     * Encode this {@code GeneralName} element using the given ASN.1 encoder,
+     * where {@code GeneralName} is defined as:
+     *
+     * <pre>
+     *      GeneralName ::= CHOICE {
+     *          otherName                       [0]     OtherName,
+     *          rfc822Name                      [1]     IA5String,
+     *          dNSName                         [2]     IA5String,
+     *          x400Address                     [3]     ORAddress,
+     *          directoryName                   [4]     Name,
+     *          ediPartyName                    [5]     EDIPartyName,
+     *          uniformResourceIdentifier       [6]     IA5String,
+     *          iPAddress                       [7]     OCTET STRING,
+     *          registeredID                    [8]     OBJECT IDENTIFIER
+     *      }
+     * </pre>
+     * </p>
+     *
+     * @param encoder the encoder (must not be {@code null})
+     * @throws ASN1Exception if the general name is invalid
+     */
+    public abstract void encodeTo(ASN1Encoder encoder);
 
     /**
      * A generic name.
@@ -143,6 +170,14 @@ public abstract class GeneralName {
             return encodedName.clone();
         }
 
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.startSequence();
+            encoder.encodeObjectIdentifier(getObjectIdentifier());
+            encoder.writeEncoded(getEncodedValue());
+            encoder.endSequence();
+        }
+
         public String getObjectIdentifier() {
             return typeId;
         }
@@ -187,6 +222,11 @@ public abstract class GeneralName {
             return name;
         }
 
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeIA5String(getName());
+        }
+
         public boolean equals(final Object obj) {
             return obj instanceof RFC822Name && equals((RFC822Name) obj);
         }
@@ -221,6 +261,11 @@ public abstract class GeneralName {
 
         public String getName() {
             return name;
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeIA5String(getName());
         }
 
         public boolean equals(final Object obj) {
@@ -300,6 +345,11 @@ public abstract class GeneralName {
             return encodedName.clone();
         }
 
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.writeEncoded(getName());
+        }
+
         public boolean equals(final Object obj) {
             return obj instanceof X400Address && equals((X400Address) obj);
         }
@@ -334,6 +384,12 @@ public abstract class GeneralName {
 
         public String getName() {
             return name;
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.startExplicit(getType());
+            encoder.writeEncoded(new X500Principal(getName()).getEncoded());
+            encoder.endExplicit();
         }
 
         public boolean equals(final Object obj) {
@@ -409,6 +465,11 @@ public abstract class GeneralName {
             return encodedName.clone();
         }
 
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.writeEncoded(getName());
+        }
+
         public boolean equals(final Object obj) {
             return obj instanceof EDIPartyName && equals((EDIPartyName) obj);
         }
@@ -443,6 +504,11 @@ public abstract class GeneralName {
 
         public String getName() {
             return name;
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeIA5String(getName());
         }
 
         public boolean equals(final Object obj) {
@@ -497,6 +563,11 @@ public abstract class GeneralName {
             return address;
         }
 
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeOctetString(getName());
+        }
+
         public boolean equals(final Object obj) {
             return obj instanceof IPAddress && equals((IPAddress) obj);
         }
@@ -536,7 +607,7 @@ public abstract class GeneralName {
         }
 
         public int hashCode() {
-            return address.hashCode();
+            return Arrays.hashCode(address);
         }
 
         private static byte[] parseIPAddress(String strAddress) throws ASN1Exception {
@@ -618,6 +689,11 @@ public abstract class GeneralName {
 
         public String getName() {
             return name;
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeObjectIdentifier(getName());
         }
 
         public boolean equals(final Object obj) {

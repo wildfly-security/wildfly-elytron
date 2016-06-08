@@ -21,14 +21,21 @@ package org.wildfly.security.x500;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+
+import javax.security.auth.x500.X500Principal;
+
+import org.wildfly.security.asn1.ASN1Encodable;
+import org.wildfly.security.asn1.ASN1Encoder;
+import org.wildfly.security.asn1.ASN1Exception;
 
 /**
  * A representation of a trusted certificate authority.
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public abstract class TrustedAuthority {
+public abstract class TrustedAuthority implements ASN1Encodable {
 
     // Trusted authority types
     public static final int AUTHORITY_NAME = 0;
@@ -63,6 +70,32 @@ public abstract class TrustedAuthority {
     public abstract Object getIdentifier();
 
     /**
+     * <p>
+     * Encode this {@code TrustedAuth} element using the given trusted authority and DER encoder,
+     * where {@code TrustedAuth} is defined as:
+     *
+     * <pre>
+     *      TrustedAuth ::= CHOICE {
+     *          authorityName         [0] Name,
+     *              -- SubjectName from CA certificate
+     *          issuerNameHash        [1] OCTET STRING,
+     *              -- SHA-1 hash of Authority's DN
+     *          issuerKeyHash         [2] OCTET STRING,
+     *              -- SHA-1 hash of Authority's public key
+     *          authorityCertificate  [3] Certificate,
+     *              -- CA certificate
+     *          pkcs15KeyHash         [4] OCTET STRING
+     *              -- PKCS #15 key hash
+     *      }
+     * </pre>
+     * </p>
+     *
+     * @param encoder the DER encoder (must not be {@code null})
+     * @throws ASN1Exception if any of the trusted authorities are invalid
+     */
+    public abstract void encodeTo(final ASN1Encoder encoder) throws ASN1Exception;
+
+    /**
      * A trusted authority that is identified by its name.
      *
      * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
@@ -83,6 +116,12 @@ public abstract class TrustedAuthority {
 
         public String getIdentifier() {
             return name;
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.startExplicit(getType());
+            encoder.writeEncoded(new X500Principal(name).getEncoded());
+            encoder.endExplicit();
         }
     }
 
@@ -108,6 +147,15 @@ public abstract class TrustedAuthority {
         public X509Certificate getIdentifier() {
             return cert;
         }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            try {
+                encoder.writeEncoded(cert.getEncoded());
+            } catch (CertificateEncodingException e) {
+                throw new ASN1Exception(e);
+            }
+        }
     }
 
     /**
@@ -130,6 +178,11 @@ public abstract class TrustedAuthority {
 
         public byte[] getIdentifier() {
             return hash.clone();
+        }
+
+        public void encodeTo(final ASN1Encoder encoder) {
+            encoder.encodeImplicit(getType());
+            encoder.encodeOctetString(hash);
         }
     }
 
