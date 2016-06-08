@@ -65,14 +65,14 @@ public class X500AttributePrincipalDecoderTest {
         PrincipalDecoder dcDecoder, dcDecoder1,  cnDecoder, ouDecoder, concatenatingDecoder;
         principal = new X500Principal("cn=bob.smith,cn=bob,ou=people,dc=example,dc=redhat,dc=com");
         dcDecoder = new X500AttributePrincipalDecoder(X500.OID_DC);
-        cnDecoder = new X500AttributePrincipalDecoder(X500.OID_CN, 1);
+        cnDecoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME, 1);
         concatenatingDecoder = PrincipalDecoder.concatenating(cnDecoder, "@", dcDecoder);
         assertEquals("bob.smith@example.redhat.com", concatenatingDecoder.getName(principal));
 
 
         principal = new X500Principal("cn=bob.smith,ou=people,dc=example,dc=redhat");
-        cnDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("cn"), "=", new X500AttributePrincipalDecoder(X500.OID_CN));
-        ouDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("ou"), "=", new X500AttributePrincipalDecoder(X500.OID_OU, 1));
+        cnDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("cn"), "=", new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME));
+        ouDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("ou"), "=", new X500AttributePrincipalDecoder(X500.OID_AT_ORGANIZATIONAL_UNIT_NAME, 1));
         dcDecoder = PrincipalDecoder.concatenating(PrincipalDecoder.constant("dc"), "=", new X500AttributePrincipalDecoder(X500.OID_DC, 1));
         dcDecoder1 = PrincipalDecoder.concatenating(PrincipalDecoder.constant("dc"), "=", new X500AttributePrincipalDecoder(X500.OID_DC, 1, 1));
         concatenatingDecoder = PrincipalDecoder.concatenating(",", dcDecoder1, dcDecoder, ouDecoder, cnDecoder);
@@ -83,7 +83,7 @@ public class X500AttributePrincipalDecoderTest {
     public void testDecodeWithRequiredAttributes() {
         X500Principal principal;
         // require the principal to have both CN and OU attributes
-        X500AttributePrincipalDecoder decoder = new X500AttributePrincipalDecoder(X500.OID_CN, ",", 0, 2, false, X500.OID_CN, X500.OID_OU);
+        X500AttributePrincipalDecoder decoder = new X500AttributePrincipalDecoder(X500.OID_AT_COMMON_NAME, ",", 0, 2, false, X500.OID_AT_COMMON_NAME, X500.OID_AT_ORGANIZATIONAL_UNIT_NAME);
 
         principal = new X500Principal("cn=bob.smith,cn=bsmith,dc=example,dc=redhat,dc=com"); // missing an OU attribute
         assertEquals(null, decoder.getName(principal));

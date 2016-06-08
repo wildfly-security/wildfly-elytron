@@ -642,7 +642,7 @@ class EntityUtil {
             // Check if the DNSName matches the DirectoryName's (most specific) Common Name field.
             // Although specifying a DNS name using the Common Name field has been deprecated, it is
             // still used in practice (e.g., see http://tools.ietf.org/html/rfc2818).
-            String[] cnValues = X500PrincipalUtil.getAttributeValues(new X500Principal(((DirectoryName) actualGeneralName).getName()), X500.OID_CN);
+            String[] cnValues = X500PrincipalUtil.getAttributeValues(new X500Principal(((DirectoryName) actualGeneralName).getName()), X500.OID_AT_COMMON_NAME);
             String dnsName = ((DNSName) generalName).getName();
             return dnsName.equalsIgnoreCase(cnValues[0]);
         } else {

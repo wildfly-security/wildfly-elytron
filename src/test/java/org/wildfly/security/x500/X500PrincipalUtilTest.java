@@ -38,7 +38,7 @@ public class X500PrincipalUtilTest {
         System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
         System.out.println(principal.getName());
         assertArrayEquals(new String[] { "redhat", "com" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC));
-        assertArrayEquals(new String[] { "david.lloyd" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_CN));
+        assertArrayEquals(new String[] { "david.lloyd" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_AT_COMMON_NAME));
         principal = new X500Principal("uid=david.lloyd,dc=redhat,dc=com");
         System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
         System.out.println(principal.getName());
@@ -48,16 +48,16 @@ public class X500PrincipalUtilTest {
         System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
         System.out.println(principal.getName());
         assertArrayEquals(new String[] { "redhat", "com" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC));
-        assertArrayEquals(new String[] { "David M. Lloyd" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_CN));
+        assertArrayEquals(new String[] { "David M. Lloyd" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_AT_COMMON_NAME));
         assertArrayEquals(new String[] { "david.lloyd" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_UID));
         principal = new X500Principal("cn=banana,cn=apple,dc=peanut,dc=butter,dc=com,dc=faux");
         System.out.println(ASN1.formatAsn1(new DERDecoder(principal.getEncoded())));
         System.out.println(principal.getName());
         assertArrayEquals(new String[] { "peanut", "butter", "com", "faux" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC));
-        assertArrayEquals(new String[] { "banana", "apple" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_CN));
+        assertArrayEquals(new String[] { "banana", "apple" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_AT_COMMON_NAME));
         assertArrayEquals(new String[] { "faux", "com", "butter", "peanut" }, X500PrincipalUtil.getAttributeValues(principal, X500.OID_DC, true));
         principal = new X500Principal("cn=Bob Smith+uid=bsmith,ou=people,dc=redhat,dc=com");
-        assertTrue(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_CN, X500.OID_UID, X500.OID_DC));
-        assertFalse(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_UID, X500.OID_L, X500.OID_DC));
+        assertTrue(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_AT_COMMON_NAME, X500.OID_UID, X500.OID_DC));
+        assertFalse(X500PrincipalUtil.containsAllAttributes(principal, X500.OID_UID, X500.OID_AT_LOCALITY_NAME, X500.OID_DC));
     }
 }
