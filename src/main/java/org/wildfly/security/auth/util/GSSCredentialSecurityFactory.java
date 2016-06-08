@@ -60,8 +60,8 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
     private static final String KRB5LoginModule = "com.sun.security.auth.module.Krb5LoginModule";
     private static final String IBMKRB5LoginModule = "com.ibm.security.auth.module.Krb5LoginModule";
 
-    private static final Oid KERBEROS_V5;
-    private static final Oid SPNEGO;
+    public static final Oid KERBEROS_V5;
+    public static final Oid SPNEGO;
 
     static {
         try {
