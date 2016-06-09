@@ -236,9 +236,8 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void encodePrintableString(final String str) {
-        int c, i = 0;
-        for (c = str.codePointAt(i); i < str.length(); i = str.offsetByCodePoints(i, 1)) {
-            validatePrintableByte(c);
+        for (int i = 0; i < str.length(); i = str.offsetByCodePoints(i, 1)) {
+            validatePrintableByte(str.codePointAt(i));
         }
         writeElement(PRINTABLE_STRING_TYPE, str.getBytes(StandardCharsets.US_ASCII));
     }
