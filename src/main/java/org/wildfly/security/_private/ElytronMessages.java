@@ -34,6 +34,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
+import java.time.ZonedDateTime;
 
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
@@ -1469,4 +1470,48 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage
     @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
+
+    /* X.500 exceptions */
+
+    @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")
+    IllegalArgumentException extensionAlreadyExists(String oid);
+
+    @Message(id = 10001, value = "No signature algorithm name given")
+    IllegalArgumentException noSignatureAlgorithmNameGiven();
+
+    @Message(id = 10002, value = "Signature algorithm name \"%s\" is not recognized")
+    IllegalArgumentException unknownSignatureAlgorithmName(String signatureAlgorithmName);
+
+    @Message(id = 10003, value = "No signing key given")
+    IllegalArgumentException noSigningKeyGiven();
+
+    @Message(id = 10004, value = "Signing key algorithm name \"%s\" is not compatible with signature algorithm name \"%s\"")
+    IllegalArgumentException signingKeyNotCompatWithSig(String signingKeyAlgorithm, String signatureAlgorithmName);
+
+    @Message(id = 10005, value = "Not-valid-before date of %s is after not-valid-after date of %s")
+    IllegalArgumentException validAfterBeforeValidBefore(ZonedDateTime notValidBefore, ZonedDateTime notValidAfter);
+
+    @Message(id = 10006, value = "No issuer DN given")
+    IllegalArgumentException noIssuerDnGiven();
+
+    @Message(id = 10007, value = "No public key given")
+    IllegalArgumentException noPublicKeyGiven();
+
+    @Message(id = 10008, value = "Issuer and subject unique ID are only allowed in certificates with version 2 or higher")
+    IllegalArgumentException uniqueIdNotAllowed();
+
+    @Message(id = 10009, value = "Extensions are only allowed in certificates with version 3 or higher")
+    IllegalArgumentException extensionsNotAllowed();
+
+    @Message(id = 10010, value = "X.509 encoding of public key with algorithm \"%s\" failed")
+    IllegalArgumentException invalidKeyForCert(String publicKeyAlgorithm, @Cause Exception cause);
+
+    @Message(id = 10011, value = "Failed to sign certificate")
+    IllegalArgumentException certSigningFailed(@Cause Exception cause);
+
+    @Message(id = 10012, value = "Certificate serial number must be positive")
+    IllegalArgumentException serialNumberTooSmall();
+
+    @Message(id = 10013, value = "Certificate serial number too large (cannot exceed 20 octets)")
+    IllegalArgumentException serialNumberTooLarge();
 }
