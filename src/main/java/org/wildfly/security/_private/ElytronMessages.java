@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +44,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
 import javax.security.auth.callback.Callback;
+import javax.security.auth.login.LoginException;
 import javax.security.jacc.PolicyContextException;
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamReader;
@@ -496,6 +498,15 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1120, value = "Too late to set mechanism information as authentication has already begun.")
     IllegalStateException tooLateToSetMechanismInformation();
+
+    @Message(id = 1121, value = "Unable to perform initial JAAS login.")
+    GeneralSecurityException unableToPerformInitialLogin(@Cause LoginException cause);
+
+    @Message(id = 1122, value = "No Kerberos principals found.")
+    GeneralSecurityException noKerberosPrincipalsFound();
+
+    @Message(id = 1123, value = "Too many Kerberos principals found.")
+    GeneralSecurityException tooManyKerberosPrincipalsFound();
 
     /* keystore package */
 
