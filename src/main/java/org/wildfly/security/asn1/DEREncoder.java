@@ -22,11 +22,16 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.asn1.ASN1.*;
 
 import java.math.BigInteger;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.LinkedList;
 
 import org.wildfly.security.util.ByteIterator;
@@ -44,6 +49,8 @@ public class DEREncoder implements ASN1Encoder {
     private static final byte[] NULL_CONTENTS = new byte[0];
     private static final TagComparator TAG_COMPARATOR = new TagComparator();
     private static final LexicographicComparator LEXICOGRAPHIC_COMPARATOR = new LexicographicComparator();
+    private static final byte[] BOOLEAN_TRUE_AS_BYTES = new byte[] { ~0 };
+    private static final byte[] BOOLEAN_FALSE_AS_BYTES = new byte[] { 0 };
 
     private final ArrayDeque<EncoderState> states = new ArrayDeque<EncoderState>();
     private final ArrayList<ByteStringBuilder> buffers = new ArrayList<ByteStringBuilder>();
@@ -237,6 +244,24 @@ public class DEREncoder implements ASN1Encoder {
     }
 
     @Override
+    public void encodeUTF8String(final String str) {
+        writeElement(UTF8_STRING_TYPE, str.getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Override
+    public void encodeBMPString(final String str) {
+        // technically this may fail if str contains a code point outside of the BMP
+        writeElement(BMP_STRING_TYPE, str.getBytes(StandardCharsets.UTF_16BE));
+    }
+
+    private static final Charset UTF_32BE = Charset.forName("UTF-32BE");
+
+    @Override
+    public void encodeUniversalString(final String str) {
+        writeElement(UNIVERSAL_STRING_TYPE, str.getBytes(UTF_32BE));
+    }
+
+    @Override
     public void encodeBitString(byte[] str) {
         encodeBitString(str, 0); // All bits will be used
     }
@@ -247,6 +272,27 @@ public class DEREncoder implements ASN1Encoder {
         contents[0] = (byte) numUnusedBits;
         System.arraycopy(str, 0, contents, 1, str.length);
         writeElement(BIT_STRING_TYPE, contents);
+    }
+
+    @Override
+    public void encodeBitString(final EnumSet<?> enumSet) {
+        int ord;
+        final BitSet bitSet = new BitSet();
+        for (Enum<?> anEnum : enumSet) {
+            ord = anEnum.ordinal();
+            bitSet.set(ord);
+        }
+        encodeBitString(bitSet);
+    }
+
+    @Override
+    public void encodeBitString(final BitSet bitSet) {
+        final byte[] array = bitSet.toByteArray();
+        final int unusedBits = - bitSet.length() & 0b111;
+        for (int i = 0; i < array.length; i++) {
+            array[i] = (byte) (Integer.reverse(array[i]) >> 24);
+        }
+        encodeBitString(array, unusedBits);
     }
 
     @Override
@@ -287,6 +333,13 @@ public class DEREncoder implements ASN1Encoder {
         ByteStringBuilder target = new ByteStringBuilder();
         new DEREncoder(target).encodeInteger(integer);
         encodeBitString(target.toArray());
+    }
+
+    private static final DateTimeFormatter GENERALIZED_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMddHHmmssX");
+
+    @Override
+    public void encodeGeneralizedTime(final ZonedDateTime time) {
+        writeElement(GENERALIZED_TIME_TYPE, GENERALIZED_TIME_FORMAT.format(time).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -379,6 +432,11 @@ public class DEREncoder implements ASN1Encoder {
         if (implicitTag == -1) {
             implicitTag = clazz | number;
         }
+    }
+
+    @Override
+    public void encodeBoolean(final boolean value) {
+        writeElement(BOOLEAN_TYPE, value ? BOOLEAN_TRUE_AS_BYTES : BOOLEAN_FALSE_AS_BYTES);
     }
 
     @Override

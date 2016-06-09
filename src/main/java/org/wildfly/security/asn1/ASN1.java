@@ -30,6 +30,11 @@ import org.wildfly.security.util._private.Arrays2;
 public class ASN1 {
 
     /**
+     * The universal boolean type tag.
+     */
+    public static final int BOOLEAN_TYPE = 1;
+
+    /**
      * The universal integer type tag.
      */
     public static final int INTEGER_TYPE = 2;
@@ -55,6 +60,11 @@ public class ASN1 {
     public static final int OBJECT_IDENTIFIER_TYPE = 6;
 
     /**
+     * The universal UTF-8 string type tag.
+     */
+    public static final int UTF8_STRING_TYPE = 12;
+
+    /**
      * The universal printable string type tag.
      */
     public static final int PRINTABLE_STRING_TYPE = 19;
@@ -63,6 +73,21 @@ public class ASN1 {
      * The universal IA5 string type tag.
      */
     public static final int IA5_STRING_TYPE = 22;
+
+    /**
+     * A type for representing timestamps.
+     */
+    public static final int GENERALIZED_TIME_TYPE = 24;
+
+    /**
+     * The universal (UTF-32 big-endian) string type tag.
+     */
+    public static final int UNIVERSAL_STRING_TYPE = 28;
+
+    /**
+     * The universal BMP (UTF-16 big-endian) string type tag.
+     */
+    public static final int BMP_STRING_TYPE = 30;
 
     /**
      * The universal sequence type tag.
