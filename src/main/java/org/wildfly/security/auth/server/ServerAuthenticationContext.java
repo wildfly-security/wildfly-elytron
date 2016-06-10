@@ -793,7 +793,7 @@ public final class ServerAuthenticationContext {
                     }
                     setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof MechanismInformation) {
+                } else if (callback instanceof MechanismInformationCallback) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
                     setMechanismInformation(mic.getMechanismInformation());
                     handleOne(callbacks, idx + 1);

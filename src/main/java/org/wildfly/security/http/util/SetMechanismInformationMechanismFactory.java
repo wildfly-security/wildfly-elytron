@@ -77,7 +77,7 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
                       }
                   } else {
                       int colon = host.lastIndexOf(':');
-                      resolvedHostName = colon > 0 ? host.substring(0, colon -1) : host;
+                      resolvedHostName = colon > 0 ? host.substring(0, colon) : host;
                   }
                 }
 
