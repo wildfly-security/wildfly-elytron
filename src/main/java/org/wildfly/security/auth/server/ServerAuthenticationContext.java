@@ -1731,7 +1731,7 @@ public final class ServerAuthenticationContext {
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
-                if (authorizationId.equals(authenticationPrincipal.getName())) {
+                if (nameAssignedState.getAuthenticationPrincipal().getName().equals(authenticationPrincipal.getName())) {
                     // same identity; clean up & return
                     return this;
                 }
