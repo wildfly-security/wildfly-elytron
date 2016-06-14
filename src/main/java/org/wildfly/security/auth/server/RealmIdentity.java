@@ -24,6 +24,7 @@ import java.security.Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
@@ -97,6 +98,17 @@ public interface RealmIdentity {
     }
 
     /**
+     * Update a credential of this realm identity.
+     *
+     * @param credential the new credential (must not be {@code null})
+     * @throws UnsupportedOperationException if the implementing class does not support updating a credential
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default void updateCredential(Credential credential) throws RealmUnavailableException {
+        throw log.credentialUpdateNotSupportedByRealm();
+    }
+
+    /**
      * Determine whether a given type of evidence is definitely verifiable, possibly verifiable, or definitely not verifiable.
      *
      * @param evidenceType the type of evidence to be verified (must not be {@code null})
@@ -145,6 +157,16 @@ public interface RealmIdentity {
         } else {
             throw log.userDoesNotExist();
         }
+    }
+
+    /**
+     * Get the attributes for the realm identity.
+     *
+     * @return the attributes, or {@code null} if the implementing class does not support getting attributes
+     * @throws RealmUnavailableException if accessing the attributes fails for some reason
+     */
+    default Attributes getAttributes() throws RealmUnavailableException {
+        return null;
     }
 
     /**

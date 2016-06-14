@@ -508,6 +508,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1123, value = "Too many Kerberos principals found.")
     GeneralSecurityException tooManyKerberosPrincipalsFound();
 
+    @Message(id = 1124, value = "The security realm does not support updating a credential")
+    UnsupportedOperationException credentialUpdateNotSupportedByRealm();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
@@ -1204,6 +1207,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5166, value = "[%s] Server rejected authentication")
     ScramServerException scramServerRejectedAuthentication(String mechName, @Param ScramServerErrorCode errorCode);
+
+    @Message(id = 5167, value = "Invalid OTP password format type")
+    AuthenticationMechanismException mechInvalidOTPPasswordFormatType();
 
     /* http package */
 

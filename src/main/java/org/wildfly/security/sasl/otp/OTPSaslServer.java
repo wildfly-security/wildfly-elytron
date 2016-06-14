@@ -23,7 +23,6 @@ import static org.wildfly.security.sasl.otp.OTP.EXT;
 import static org.wildfly.security.sasl.otp.OTP.HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_HEX_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTP.INIT_WORD_RESPONSE;
-import static org.wildfly.security.sasl.otp.OTP.LOCK_TIMEOUT;
 import static org.wildfly.security.sasl.otp.OTP.OTP_PREFIX;
 import static org.wildfly.security.sasl.otp.OTP.WORD_RESPONSE;
 import static org.wildfly.security.sasl.otp.OTPUtil.convertFromHex;
@@ -39,7 +38,6 @@ import static org.wildfly.security.sasl.otp.OTPUtil.validateUserName;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -51,8 +49,6 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
-import org.wildfly.security.auth.callback.TimeoutCallback;
-import org.wildfly.security.auth.callback.TimeoutUpdateCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -79,8 +75,6 @@ final class OTPSaslServer extends AbstractSaslServer {
     private NameCallback nameCallback;
     private String userName;
     private String authorizationID;
-    private long time;
-    private boolean locked;
 
     OTPSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler) {
         super(mechanismName, protocol, serverName, callbackHandler);
@@ -117,8 +111,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
                 nameCallback = new NameCallback("Remote authentication name", userName);
                 CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
-                final TimeoutCallback timeoutCallback = new TimeoutCallback();
-                handleCallbacks(nameCallback, credentialCallback, timeoutCallback);
+                handleCallbacks(nameCallback, credentialCallback);
                 final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
                 final OneTimePassword previousPassword = credential.getPassword(OneTimePassword.class);
                 if (previousPassword == null) {
@@ -132,18 +125,6 @@ final class OTPSaslServer extends AbstractSaslServer {
                 validateSequenceNumber(previousSequenceNumber);
                 previousHash = previousPassword.getHash();
 
-                // Prevent a user from starting multiple simultaneous authentication sessions using the
-                // timeout approach described in https://tools.ietf.org/html/rfc2289#section-9.0
-                long timeout = timeoutCallback.getTimeout();
-                time = Instant.now().getEpochSecond();
-                if (time < timeout) {
-                    // An authentication attempt is already in progress for this user
-                    throw log.mechMultipleSimultaneousOTPAuthenticationsNotAllowed().toSaslException();
-                } else {
-                    updateTimeout(time + LOCK_TIMEOUT);
-                    locked = true;
-                }
-
                 final ByteStringBuilder challenge = new ByteStringBuilder();
                 challenge.append(previousAlgorithm);
                 challenge.append(' ');
@@ -156,9 +137,6 @@ final class OTPSaslServer extends AbstractSaslServer {
                 return challenge.toArray();
             }
             case ST_PROCESS_RESPONSE: {
-                if (Instant.now().getEpochSecond() > (time + LOCK_TIMEOUT)) {
-                    throw log.mechServerTimedOut(getMechanismName()).toSaslException();
-                }
                 final CodePointIterator cpi = CodePointIterator.ofUtf8Bytes(response);
                 final CodePointIterator di = cpi.delimitedBy(':');
                 final String responseType = di.drainToString().toLowerCase(Locale.ENGLISH);
@@ -249,9 +227,6 @@ final class OTPSaslServer extends AbstractSaslServer {
     public void dispose() throws SaslException {
         previousHash = null;
         previousSeed = null;
-        if (locked && (Instant.now().getEpochSecond() < (time + LOCK_TIMEOUT))) {
-            updateTimeout(0);
-        }
     }
 
     /**
@@ -269,8 +244,6 @@ final class OTPSaslServer extends AbstractSaslServer {
             throw log.mechPasswordNotVerified(getMechanismName()).toSaslException();
         }
         updateCredential(newAlgorithm, newPasswordSpec);
-        updateTimeout(0);
-        locked = false;
     }
 
     private void updateCredential(final String newAlgorithm, final OneTimePasswordSpec newPasswordSpec) throws SaslException {
@@ -284,8 +257,4 @@ final class OTPSaslServer extends AbstractSaslServer {
         }
     }
 
-    private void updateTimeout(final long newTimeout) throws SaslException {
-        final TimeoutUpdateCallback timeoutUpdateCallback = new TimeoutUpdateCallback(newTimeout);
-        handleCallbacks(nameCallback, timeoutUpdateCallback);
-    }
 }

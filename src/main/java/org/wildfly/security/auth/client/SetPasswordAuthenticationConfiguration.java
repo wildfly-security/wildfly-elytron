@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.PasswordCallback;
@@ -42,11 +43,14 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  */
 class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration {
 
+    private static final Predicate<String> ALWAYS_MATCH_PREDICATE = (prompt) -> true;
     private final Password password;
+    private final Predicate<String> matchPredicate;
 
-    SetPasswordAuthenticationConfiguration(final AuthenticationConfiguration parent, final Password password) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+    SetPasswordAuthenticationConfiguration(final AuthenticationConfiguration parent, final Password password, final Predicate<String> matchPredicate) {
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class), matchPredicate != null);
         this.password = password;
+        this.matchPredicate = matchPredicate == null ? ALWAYS_MATCH_PREDICATE : matchPredicate;
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws IOException, UnsupportedCallbackException {
@@ -58,13 +62,16 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
                 return;
             }
         } else if (callback instanceof PasswordCallback) {
-            if (password instanceof TwoWayPassword) try {
-                PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), ClearPasswordSpec.class);
-                ((PasswordCallback) callback).setPassword(clearPasswordSpec.getEncodedPassword());
-                return;
-            } catch (GeneralSecurityException e) {
-                // fall out
+            PasswordCallback passwordCallback = (PasswordCallback) callback;
+            if (matchPredicate.test(passwordCallback.getPrompt())) {
+                if (password instanceof TwoWayPassword) try {
+                    PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                    ClearPasswordSpec clearPasswordSpec = passwordFactory.getKeySpec(passwordFactory.translate(password), ClearPasswordSpec.class);
+                    passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+                    return;
+                } catch (GeneralSecurityException e) {
+                    // fall out
+                }
             }
         }
         super.handleCallback(callbacks, index);
@@ -83,6 +90,6 @@ class SetPasswordAuthenticationConfiguration extends AuthenticationConfiguration
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SetPasswordAuthenticationConfiguration(newParent, password);
+        return new SetPasswordAuthenticationConfiguration(newParent, password, matchPredicate);
     }
 }
