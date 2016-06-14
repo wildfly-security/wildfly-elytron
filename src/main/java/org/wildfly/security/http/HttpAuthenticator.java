@@ -122,12 +122,15 @@ public class HttpAuthenticator {
                 if (required || (authenticationAttempted && ignoreOptionalFailures == false)) {
                     statusCodeAllowed = true;
                     if (responders.size() > 0) {
+                        boolean statusSet = false;
                         for (HttpServerMechanismsResponder responder : responders) {
                             responder.sendResponse(this);
+                            if (statusSet == false && statusCode > 0 && statusCode != OK) {
+                                httpExchangeSpi.setStatusCode(statusCode);
+                                statusSet = true;
+                            }
                         }
-                        if (statusCode > 0) {
-                            httpExchangeSpi.setStatusCode(statusCode);
-                        } else {
+                        if (statusSet == false) {
                             httpExchangeSpi.setStatusCode(OK);
                         }
                     } else {

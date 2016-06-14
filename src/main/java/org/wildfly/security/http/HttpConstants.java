@@ -64,6 +64,7 @@ public class HttpConstants {
      */
 
     public static final String CHARSET = "charset";
+    public static final String NEGOTIATE = "Negotiate";
     public static final String REALM = "realm";
 
     /*
@@ -82,6 +83,7 @@ public class HttpConstants {
     public static final String BASIC_NAME = "BASIC";
     public static final String CLIENT_CERT_NAME = "CLIENT_CERT";
     public static final String FORM_NAME = "FORM";
+    public static final String SPNEGO_NAME = "SPNEGO";
 
     /*
      * Response Codes

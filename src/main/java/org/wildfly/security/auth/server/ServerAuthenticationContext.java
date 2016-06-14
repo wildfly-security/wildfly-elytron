@@ -805,7 +805,7 @@ public final class ServerAuthenticationContext {
                     }
                     setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof MechanismInformation) {
+                } else if (callback instanceof MechanismInformationCallback) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
                     setMechanismInformation(mic.getMechanismInformation());
                 } else if (callback instanceof CredentialUpdateCallback) {
@@ -1760,7 +1760,7 @@ public final class ServerAuthenticationContext {
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
-                if (authorizationId.equals(authenticationPrincipal.getName())) {
+                if (nameAssignedState.getAuthenticationPrincipal().getName().equals(authenticationPrincipal.getName())) {
                     // same identity; clean up & return
                     return this;
                 }
