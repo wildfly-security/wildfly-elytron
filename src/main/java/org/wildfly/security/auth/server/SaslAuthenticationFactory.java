@@ -38,6 +38,7 @@ import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
+import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
 import org.wildfly.security.sasl.util.TrustManagerSaslServerFactory;
 
 /**
@@ -127,7 +128,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
         }
 
         public SaslAuthenticationFactory build() {
-            AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(getFactory());
+            AbstractDelegatingSaslServerFactory factory = new AuthenticationCompleteCallbackSaslServerFactory(new SetMechanismInformationSaslServerFactory(getFactory()));
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }
