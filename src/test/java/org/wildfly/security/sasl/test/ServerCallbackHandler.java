@@ -100,7 +100,7 @@ public class ServerCallbackHandler implements CallbackHandler {
                 }
             } else if (current instanceof EvidenceVerifyCallback && expectedPassword != null) {
                 EvidenceVerifyCallback pvc = (EvidenceVerifyCallback) current;
-                pvc.setVerified(Arrays.equals(expectedPassword, ((PasswordGuessEvidence)pvc.getEvidence()).getGuess()));
+                pvc.setVerified(Arrays.equals(expectedPassword, pvc.applyToEvidence(PasswordGuessEvidence.class, PasswordGuessEvidence::getGuess)));
             } else if (current instanceof PasswordCallback && expectedPassword != null) {
                 PasswordCallback pcb = (PasswordCallback) current;
                 pcb.setPassword(expectedPassword);

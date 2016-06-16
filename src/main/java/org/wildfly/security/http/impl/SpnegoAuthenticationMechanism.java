@@ -90,8 +90,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
             try {
                 callbackHandler.handle(new Callback[] { gssCredentialCallback });
-                GSSCredentialCredential credentialCredential = (GSSCredentialCredential) gssCredentialCallback.getCredential();
-                gssCredential = credentialCredential != null ? credentialCredential.getGssCredential() : null;
+                gssCredential = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
             } catch (IOException | UnsupportedCallbackException e) {
                 throw log.mechCallbackHandlerFailedForUnknownReason(SPNEGO_NAME, e).toHttpAuthenticationException();
             }

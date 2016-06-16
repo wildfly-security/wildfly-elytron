@@ -918,7 +918,7 @@ public class OTPTest extends BaseTestCase {
                                OneTimePassword expectedUpdatedPassword, String algorithmName) throws RealmUnavailableException {
         SecurityDomain securityDomain = domainReference.getReference();
         RealmIdentity realmIdentity = securityDomain.mapName(userName);
-        OneTimePassword updatedPassword = (OneTimePassword) realmIdentity.getCredential(PasswordCredential.class, algorithmName).getPassword();
+        OneTimePassword updatedPassword = realmIdentity.getCredential(PasswordCredential.class, algorithmName).getPassword(OneTimePassword.class);
 
         assertEquals(expectedUpdatedPassword.getAlgorithm(), updatedPassword.getAlgorithm());
         assertArrayEquals(expectedUpdatedPassword.getHash(), updatedPassword.getHash());

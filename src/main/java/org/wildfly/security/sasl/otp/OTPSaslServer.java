@@ -112,8 +112,7 @@ final class OTPSaslServer extends AbstractSaslServer {
                 nameCallback = new NameCallback("Remote authentication name", userName);
                 CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
                 handleCallbacks(nameCallback, credentialCallback);
-                final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
-                final OneTimePassword previousPassword = credential.getPassword(OneTimePassword.class);
+                final OneTimePassword previousPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(OneTimePassword.class));
                 if (previousPassword == null) {
                     throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
                 }

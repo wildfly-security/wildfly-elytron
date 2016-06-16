@@ -186,7 +186,7 @@ public class PasswordSupportSuiteChild {
 
         verifyPasswordSupport(newIdentity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
-        OneTimePassword otp = (OneTimePassword) newIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword();
+        OneTimePassword otp = newIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword(OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(65, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());

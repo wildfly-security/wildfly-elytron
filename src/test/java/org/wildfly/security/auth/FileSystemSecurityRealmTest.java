@@ -280,7 +280,7 @@ public class FileSystemSecurityRealmTest {
         assertTrue(existingIdentity.exists());
         assertTrue(existingIdentity.verifyEvidence(new PasswordGuessEvidence("secretPassword".toCharArray())));
 
-        OneTimePassword otp = (OneTimePassword) existingIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword();
+        OneTimePassword otp = existingIdentity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword(OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(OneTimePassword.ALGORITHM_OTP_SHA1, otp.getAlgorithm());
         assertArrayEquals(hash, otp.getHash());

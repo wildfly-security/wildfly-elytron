@@ -164,8 +164,7 @@ class OtpCredentialLoader implements CredentialPersister {
 
         @Override
         public void persistCredential(final Credential credential) throws RealmUnavailableException {
-            PasswordCredential passwordCredential = (PasswordCredential) credential;
-            OneTimePassword password = (OneTimePassword) passwordCredential.getPassword();
+            OneTimePassword password = credential.castAndApply(PasswordCredential.class, c -> c.getPassword(OneTimePassword.class));
             DirContext context;
             try {
                 context = contextFactory.obtainDirContext(null);

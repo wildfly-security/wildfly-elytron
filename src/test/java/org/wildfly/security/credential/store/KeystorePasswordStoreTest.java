@@ -35,7 +35,6 @@ import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
 import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
-import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
@@ -96,8 +95,7 @@ public class KeystorePasswordStoreTest {
      * @return plain text password as {@code char[]}
      */
     char[] getPasswordFromCredential(PasswordCredential passwordCredential) {
-        Password p = passwordCredential.getPassword();
-        return ((ClearPassword)p).getPassword();
+        return passwordCredential.getPassword().castAndApply(ClearPassword.class, ClearPassword::getPassword);
     }
 
     /**

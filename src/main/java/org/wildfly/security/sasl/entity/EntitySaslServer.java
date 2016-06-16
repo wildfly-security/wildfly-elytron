@@ -223,7 +223,7 @@ final class EntitySaslServer extends AbstractSaslServer {
 
                     try {
                         tryHandleCallbacks(credentialCallback);
-                        final X509CertificateChainPrivateCredential serverCertChainPrivateCredential = (X509CertificateChainPrivateCredential) credentialCallback.getCredential();
+                        final X509CertificateChainPrivateCredential serverCertChainPrivateCredential = credentialCallback.getCredential(X509CertificateChainPrivateCredential.class);
                         if (serverCertChainPrivateCredential != null) {
                             serverCertChain = serverCertChainPrivateCredential.getCertificateChain();
                             if ((serverCertChain != null) && (serverCertChain.length > 0)) {
