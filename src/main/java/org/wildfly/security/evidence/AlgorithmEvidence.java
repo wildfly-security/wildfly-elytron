@@ -18,6 +18,8 @@
 
 package org.wildfly.security.evidence;
 
+import java.util.function.Function;
+
 /**
  * A piece of evidence which supports multiple algorithms.
  *
@@ -30,4 +32,8 @@ public interface AlgorithmEvidence extends Evidence {
      * @return the algorithm name
      */
     String getAlgorithm();
+
+    default <E, R> R castAndApply(Class<E> evidenceType, String algorithmName, Function<E, R> function) {
+        return evidenceType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(evidenceType.cast(this)) : null;
+    }
 }

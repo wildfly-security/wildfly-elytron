@@ -21,6 +21,7 @@ package org.wildfly.security.auth.server;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
+import java.util.function.Function;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -95,6 +96,40 @@ public interface RealmIdentity {
         } else {
             return getCredential(credentialType);
         }
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType);
+        return credential == null ? null : credential.castAndApply(credentialType, function);
+    }
+
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType, algorithmName);
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
     }
 
     /**

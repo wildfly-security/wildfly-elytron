@@ -22,6 +22,7 @@ import java.security.KeyStore;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
@@ -84,6 +85,56 @@ public interface Credential {
         Assert.checkNotNullParam("providerSupplier", providerSupplier);
         Assert.checkNotNullParam("evidence", evidence);
         return false;
+    }
+
+    /**
+     * Cast this credential type if the type and algorithm matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param <C> the credential type
+     * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
+     */
+    default <C> C castAs(Class<C> credentialType, String algorithmName) {
+        return castAndApply(credentialType, algorithmName, Function.identity());
+    }
+
+    /**
+     * Cast this credential type if the type matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param <C> the credential type
+     * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
+     */
+    default <C> C castAs(Class<C> credentialType) {
+        return castAndApply(credentialType, Function.identity());
+    }
+
+    /**
+     * Cast this credential type and apply a function if the type matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param function the function to apply
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the credential is not of the given type
+     */
+    default <C, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
+        return credentialType.isInstance(this) && algorithmName == null ? function.apply(credentialType.cast(this)) : null;
+    }
+
+    /**
+     * Cast this credential type and apply a function if the type matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param function the function to apply
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the credential is not of the given type
+     */
+    default <C, R> R castAndApply(Class<C> credentialType, Function<C, R> function) {
+        return credentialType.isInstance(this) ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**

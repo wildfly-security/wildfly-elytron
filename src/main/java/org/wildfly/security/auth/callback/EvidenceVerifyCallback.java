@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.callback;
 
+import java.util.function.Function;
+
 import org.wildfly.security.evidence.Evidence;
 
 import javax.security.auth.callback.Callback;
@@ -47,6 +49,58 @@ public class EvidenceVerifyCallback implements ExtendedCallback {
      */
     public Evidence getEvidence() {
         return evidence;
+    }
+
+    /**
+     * Get the acquired evidence, if it is set and of the given type, and if so, return the evidence cast to the type.
+     *
+     * @param evidenceType the evidence type class (must not be {@code null})
+     * @param <C> the evidence type
+     * @return the evidence, or {@code null} if the criteria wasn't met
+     */
+    public <C extends Evidence> C getEvidence(Class<C> evidenceType) {
+        return applyToEvidence(evidenceType, Function.identity());
+    }
+
+    /**
+     * Get the acquired evidence, if it is set and of the given type and algorithm, and if so, return the evidence cast to the type.
+     *
+     * @param evidenceType the evidence type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param <C> the evidence type
+     * @return the evidence, or {@code null} if the criteria are not met
+     */
+    public <C extends Evidence> C getEvidence(Class<C> evidenceType, String algorithmName) {
+        return applyToEvidence(evidenceType, algorithmName, Function.identity());
+    }
+
+    /**
+     * Apply the given function to the acquired evidence, if it is set and of the given type.
+     *
+     * @param evidenceType the evidence type class (must not be {@code null})
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the evidence type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    public <C extends Evidence, R> R applyToEvidence(Class<C> evidenceType, Function<C, R> function) {
+        final Evidence evidence = this.evidence;
+        return evidence == null ? null : evidence.castAndApply(evidenceType, function);
+    }
+
+    /**
+     * Apply the given function to the acquired evidence, if it is set and of the given type and algorithm.
+     *
+     * @param evidenceType the evidence type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the evidence type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    public <C extends Evidence, R> R applyToEvidence(Class<C> evidenceType, String algorithmName, Function<C, R> function) {
+        final Evidence evidence = this.evidence;
+        return evidence == null ? null : evidence.castAndApply(evidenceType, algorithmName, function);
     }
 
     /**
