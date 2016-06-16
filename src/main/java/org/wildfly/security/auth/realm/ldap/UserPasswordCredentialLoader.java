@@ -191,7 +191,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
             }
             try {
-                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword((Password) credential);
+                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword(credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword));
                 Assert.assertNotNull(composedPassword);
 
                 Attributes attributes = new BasicAttributes();
