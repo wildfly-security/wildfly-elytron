@@ -72,9 +72,9 @@ public final class MechanismUtil {
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
-                final Credential credential = credentialCallback.getCredential();
-                if (credential instanceof PasswordCredential) {
-                    S password = ((PasswordCredential) credential).getPassword(passwordType);
+                final PasswordCredential credential = credentialCallback.getCredential(PasswordCredential.class);
+                if (credential != null) {
+                    S password = credential.getPassword(passwordType);
                     if (password != null) {
                         return password;
                     }

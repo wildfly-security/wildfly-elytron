@@ -89,6 +89,17 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
     }
 
     /**
+     * Get the credential if it is of the given type; otherwise return {@code null}.
+     *
+     * @param type the credential type class
+     * @param <P> the credential type
+     * @return the credential, or {@code null} if the credential is not of the given type
+     */
+    public <C extends Credential> C getCredential(Class<C> type) {
+        return type.isInstance(credential) ? type.cast(credential) : null;
+    }
+
+    /**
      * Set the credential.  The credential must be of the supported type and algorithm.
      *
      * @param credential the credential, or {@code null} to indicate that no credential is available

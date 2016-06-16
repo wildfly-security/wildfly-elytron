@@ -52,7 +52,6 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
@@ -618,8 +617,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm(getMechanismName()));
         try {
             tryHandleCallbacks(realmCallback, nameCallback, credentialCallback);
-            PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
-            DigestPassword password = (DigestPassword) credential.getPassword();
+            PasswordCredential credential = credentialCallback.getCredential(PasswordCredential.class);
+            DigestPassword password = credential.getPassword(DigestPassword.class);
             return password.getDigest();
         } catch (UnsupportedCallbackException e) {
             if (e.getCallback() == credentialCallback) {
@@ -645,8 +644,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
                 throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), e).toSaslException();
             }
         }
-        final Credential credential = credentialCallback.getCredential();
-        TwoWayPassword password = ((PasswordCredential)credential).getPassword(TwoWayPassword.class);
+        final PasswordCredential credential = credentialCallback.getCredential(PasswordCredential.class);
+        TwoWayPassword password = credential.getPassword(TwoWayPassword.class);
         char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
         try {
             password.destroy();
