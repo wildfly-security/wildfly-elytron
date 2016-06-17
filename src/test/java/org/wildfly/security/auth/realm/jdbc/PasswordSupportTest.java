@@ -92,7 +92,7 @@ public class PasswordSupportTest {
 
         assertFalse(realmIdentity.verifyEvidence(invalidPassword));
 
-        ClearPassword storedPassword = (ClearPassword) realmIdentity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword();
+        ClearPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword(ClearPassword.class);
 
         assertNotNull(storedPassword);
         assertArrayEquals(password.getPassword(), storedPassword.getPassword());
@@ -124,7 +124,7 @@ public class PasswordSupportTest {
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
         assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("invalid".toCharArray())));
 
-        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword();
+        BCryptPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword(BCryptPassword.class);
 
         assertNotNull(storedPassword);
 
@@ -162,7 +162,7 @@ public class PasswordSupportTest {
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence(userPassword.toCharArray())));
         assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("invalid".toCharArray())));
 
-        BCryptPassword storedPassword = (BCryptPassword) realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword();
+        BCryptPassword storedPassword = realmIdentity.getCredential(PasswordCredential.class, BCryptPassword.ALGORITHM_BCRYPT).getPassword(BCryptPassword.class);
 
         assertNotNull(storedPassword);
     }

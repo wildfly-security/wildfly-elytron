@@ -85,8 +85,10 @@ public final class ElytronAuthenticator extends Authenticator {
         char[] password = null;
         try {
             callbackHandler.handle(new Callback[] { nameCallback, credentialCallback });
-            final PasswordCredential credential = (PasswordCredential) credentialCallback.getCredential();
-            final TwoWayPassword twoWayPassword = credential.getPassword(TwoWayPassword.class);
+            final TwoWayPassword twoWayPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
+            if (twoWayPassword == null) {
+                return null;
+            }
             final PasswordFactory factory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm());
             final ClearPasswordSpec keySpec = factory.getKeySpec(twoWayPassword, ClearPasswordSpec.class);
             password = keySpec.getEncodedPassword();

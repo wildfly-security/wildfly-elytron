@@ -40,7 +40,6 @@ import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.sasl.entity.TrustedAuthority;
 import org.wildfly.security.ssl.SSLUtils;
@@ -81,10 +80,9 @@ public final class TrustManagerSaslServerFactory extends AbstractDelegatingSaslS
                     iterator.remove();
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
-                    final Evidence evidence = evidenceVerifyCallback.getEvidence();
-                    if (evidence instanceof X509PeerCertificateChainEvidence) {
+                    final X509PeerCertificateChainEvidence peerCertificateChainEvidence = evidenceVerifyCallback.getEvidence(X509PeerCertificateChainEvidence.class);
+                    if (peerCertificateChainEvidence != null) {
                         final X509TrustManager trustManager = getTrustManager();
-                        final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
                         try {
                             trustManager.checkClientTrusted(peerCertificateChainEvidence.getPeerCertificateChain(), peerCertificateChainEvidence.getAlgorithm());
                             evidenceVerifyCallback.setVerified(true);

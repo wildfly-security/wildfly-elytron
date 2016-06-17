@@ -158,19 +158,20 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
         @Override
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            if (evidence instanceof PasswordGuessEvidence) {
+            char[] guess = evidence.castAndApply(PasswordGuessEvidence.class, PasswordGuessEvidence::getGuess);
+            if (guess != null) {
                 final PasswordCredential credential = getCredential(PasswordCredential.class, null);
-                if (credential != null) try {
-                    char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
-                    final Password password = credential.getPassword();
-                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                    final Password translated = passwordFactory.translate(password);
-                    return passwordFactory.verify(translated, guess);
-                } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-                    return false;
+                if (credential != null) {
+                    try {
+                        final Password password = credential.getPassword();
+                        final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                        final Password translated = passwordFactory.translate(password);
+                        return passwordFactory.verify(translated, guess);
+                    } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                        return false;
+                    }
                 }
             }
-
             return false;
         }
 
@@ -190,7 +191,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
             }
             try {
-                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword((Password) credential);
+                byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword(credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword));
                 Assert.assertNotNull(composedPassword);
 
                 Attributes attributes = new BasicAttributes();

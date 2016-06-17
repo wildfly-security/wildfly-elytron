@@ -170,7 +170,7 @@ final class EntitySaslClient extends AbstractSaslClient {
                     PrivateKey privateKey;
                     try {
                         tryHandleCallbacks(trustedAuthoritiesCallback, credentialCallback);
-                        final X509CertificateChainPrivateCredential clientCertChainPrivateCredential = (X509CertificateChainPrivateCredential) credentialCallback.getCredential();
+                        final X509CertificateChainPrivateCredential clientCertChainPrivateCredential = credentialCallback.getCredential(X509CertificateChainPrivateCredential.class);
                         if (clientCertChainPrivateCredential != null) {
                             clientCertChain = clientCertChainPrivateCredential.getCertificateChain();
                             if ((clientCertChain != null) && (clientCertChain.length > 0)) {

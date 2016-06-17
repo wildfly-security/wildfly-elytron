@@ -18,6 +18,8 @@
 
 package org.wildfly.security.credential;
 
+import java.util.function.Function;
+
 /**
  * A credential which has an associated algorithm name.
  */
@@ -29,4 +31,8 @@ public interface AlgorithmCredential extends Credential {
      * @return the algorithm name
      */
     String getAlgorithm();
+
+    default <C, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
+        return credentialType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(credentialType.cast(this)) : null;
+    }
 }

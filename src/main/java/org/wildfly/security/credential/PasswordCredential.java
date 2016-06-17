@@ -62,7 +62,7 @@ public final class PasswordCredential implements AlgorithmCredential {
      * @return the password, or {@code null} if the password is not of the given type
      */
     public <P extends Password> P getPassword(Class<P> type) {
-        return type.isInstance(password) ? type.cast(password) : null;
+        return getPassword().castAs(type);
     }
 
     public String getAlgorithm() {

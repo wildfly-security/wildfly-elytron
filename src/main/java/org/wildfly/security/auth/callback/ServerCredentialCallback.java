@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.callback;
 
 import java.io.Serializable;
+import java.util.function.Function;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -82,6 +83,60 @@ public final class ServerCredentialCallback implements ExtendedCallback, Seriali
      */
     public Credential getCredential() {
         return credential;
+    }
+
+    /**
+     * Get the acquired credential, if it is set and of the given type, and if so, return the credential cast to the type.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param <C> the credential type
+     * @return the credential, or {@code null} if the criteria wasn't met
+     */
+    public <C extends Credential> C getCredential(Class<C> credentialType) {
+        return applyToCredential(credentialType, Function.identity());
+    }
+
+    /**
+     * Get the acquired credential, if it is set and of the given type and algorithm, and if so, return the credential cast to the type.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param <C> the credential type
+     * @return the credential, or {@code null} if the criteria are not met
+     */
+    public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) {
+        return applyToCredential(credentialType, algorithmName, Function.identity());
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type.  By calling this method,
+     * it is possible to apply transformations to the stored credential without failing if the credential was not set.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) {
+        final Credential credential = this.credential;
+        return credential == null ? null : credential.castAndApply(credentialType, function);
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.  By calling this method,
+     * it is possible to apply transformations to the stored credential without failing if the credential was not set.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) {
+        final Credential credential = this.credential;
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
     }
 
     /**

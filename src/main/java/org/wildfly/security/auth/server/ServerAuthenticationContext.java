@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -584,6 +585,40 @@ public final class ServerAuthenticationContext {
     }
 
     /**
+     * Apply the given function to the acquired credential, if it is set and of the given type.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType);
+        return credential == null ? null : credential.castAndApply(credentialType, function);
+    }
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     *
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     * @throws IllegalStateException if no authentication has been initiated or authentication is already completed
+     */
+    public <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
+        final Credential credential = getCredential(credentialType, algorithmName);
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
+    }
+
+    /**
      * Verify the given evidence.
      *
      * @param evidence the evidence to verify
@@ -684,22 +719,18 @@ public final class ServerAuthenticationContext {
                     final PasswordCallback passwordCallback = (PasswordCallback) callback;
 
                     if (getCredentialAcquireSupport(PasswordCredential.class).mayBeSupported()) {
-                        final PasswordCredential credential = getCredential(PasswordCredential.class);
-
-                        if (credential != null) {
-                            final TwoWayPassword password = credential.getPassword(TwoWayPassword.class);
-                            if (password != null) {
-                                final ClearPasswordSpec clearPasswordSpec;
-                                try {
-                                    final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
-                                    clearPasswordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
-                                } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-                                    throw new FastUnsupportedCallbackException(callback);
-                                }
-                                passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
-                                handleOne(callbacks, idx + 1);
-                                return;
+                        final TwoWayPassword password = applyToCredential(PasswordCredential.class, c -> c.getPassword(TwoWayPassword.class));
+                        if (password != null) {
+                            final ClearPasswordSpec clearPasswordSpec;
+                            try {
+                                final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+                                clearPasswordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
+                            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                                throw new FastUnsupportedCallbackException(callback);
                             }
+                            passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
+                            handleOne(callbacks, idx + 1);
+                            return;
                         }
                         throw new FastUnsupportedCallbackException(callback);
                     }

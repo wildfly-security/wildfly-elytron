@@ -30,7 +30,6 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
-import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
@@ -57,9 +56,8 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
         final Callback callback = callbacks[index];
         if (callback instanceof EvidenceVerifyCallback) {
             final EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
-            final Evidence evidence = evidenceVerifyCallback.getEvidence();
-            if (evidence instanceof X509PeerCertificateChainEvidence) {
-                final X509PeerCertificateChainEvidence peerCertificateChainEvidence = (X509PeerCertificateChainEvidence) evidence;
+            final X509PeerCertificateChainEvidence peerCertificateChainEvidence = evidenceVerifyCallback.getEvidence(X509PeerCertificateChainEvidence.class);
+            if (peerCertificateChainEvidence != null) {
                 X509TrustManager trustManager;
                 try {
                     trustManager = trustManagerFactory.create();

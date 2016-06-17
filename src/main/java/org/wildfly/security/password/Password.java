@@ -19,6 +19,7 @@
 package org.wildfly.security.password;
 
 import java.security.Key;
+import java.util.function.Function;
 
 /**
  * A password key.
@@ -26,4 +27,54 @@ import java.security.Key;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface Password extends Key {
+
+    /**
+     * Cast this password type if the type and algorithm matches.
+     *
+     * @param passwordType the password type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param <P> the password type
+     * @return the password cast as the target type, or {@code null} if the password does not match the criteria
+     */
+    default <P> P castAs(Class<P> passwordType, String algorithmName) {
+        return castAndApply(passwordType, algorithmName, Function.identity());
+    }
+
+    /**
+     * Cast this password type if the type matches.
+     *
+     * @param passwordType the password type class to check
+     * @param <P> the password type
+     * @return the password cast as the target type, or {@code null} if the password does not match the criteria
+     */
+    default <P> P castAs(Class<P> passwordType) {
+        return castAndApply(passwordType, Function.identity());
+    }
+
+    /**
+     * Cast this password type and apply a function if the type matches.
+     *
+     * @param passwordType the password type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param function the function to apply
+     * @param <P> the password type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the password is not of the given type
+     */
+    default <P, R> R castAndApply(Class<P> passwordType, String algorithmName, Function<P, R> function) {
+        return passwordType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(passwordType.cast(this)) : null;
+    }
+
+    /**
+     * Cast this password type and apply a function if the type matches.
+     *
+     * @param passwordType the password type class to check
+     * @param function the function to apply
+     * @param <P> the password type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the password is not of the given type
+     */
+    default <P, R> R castAndApply(Class<P> passwordType, Function<P, R> function) {
+        return passwordType.isInstance(this) ? function.apply(passwordType.cast(this)) : null;
+    }
 }
