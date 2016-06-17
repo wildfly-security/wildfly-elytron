@@ -35,18 +35,91 @@ public final class X500 {
 
     private X500() {}
 
-    // RFC 4514 attribute type strings
+    // RFC 4514, 4517, 4519, and 5280 attribute type strings
 
-    public static final String OID_CN       = "2.5.4.3";
-    public static final String OID_C        = "2.5.4.6";
-    public static final String OID_L        = "2.5.4.7";
-    public static final String OID_ST       = "2.5.4.8";
-    public static final String OID_STREET   = "2.5.4.9";
-    public static final String OID_O        = "2.5.4.10";
-    public static final String OID_OU       = "2.5.4.11";
+    public static final String OID_AT                               = "2.5.4";
+
+    public static final String OID_AT_COMMON_NAME                   = OID_AT + ".3";
+    public static final String OID_AT_SURNAME                       = OID_AT + ".4";
+    public static final String OID_AT_SERIAL_NUMBER                 = OID_AT + ".5";
+    public static final String OID_AT_COUNTRY_NAME                  = OID_AT + ".6";
+    public static final String OID_AT_LOCALITY_NAME                 = OID_AT + ".7";
+    public static final String OID_AT_STATE_OR_PROVINCE_NAME        = OID_AT + ".8";
+    public static final String OID_AT_STREET_ADDRESS                = OID_AT + ".9";
+    public static final String OID_AT_ORGANIZATION_NAME             = OID_AT + ".10";
+    public static final String OID_AT_ORGANIZATIONAL_UNIT_NAME      = OID_AT + ".11";
+    public static final String OID_AT_TITLE                         = OID_AT + ".12";
+    public static final String OID_AT_DESCRIPTION                   = OID_AT + ".13";
+    public static final String OID_AT_BUSINESS_CATEGORY             = OID_AT + ".15";
+    public static final String OID_AT_TELEPHONE_NUMBER              = OID_AT + ".20";
+    public static final String OID_AT_FAX_NUMBER                    = OID_AT + ".23";
+    public static final String OID_AT_NAME                          = OID_AT + ".41";
+    public static final String OID_AT_GIVEN_NAME                    = OID_AT + ".42";
+    public static final String OID_AT_INITIALS                      = OID_AT + ".43";
+    public static final String OID_AT_GENERATION_QUALIFIER          = OID_AT + ".44";
+    public static final String OID_AT_DN_QUALIFIER                  = OID_AT + ".46";
+    public static final String OID_AT_HOUSE_IDENTIFIER              = OID_AT + ".51";
+    public static final String OID_AT_PSEUDONYM                     = OID_AT + ".65";
 
     public static final String OID_UID      = "0.9.2342.19200300.100.1.1";
     public static final String OID_DC       = "0.9.2342.19200300.100.1.25";
+
+    // RFC 5280 IDs
+
+    public static final String OID_CE                               = "2.5.29";
+    public static final String OID_CE_SUBJECT_DIRECTORY_ATTRIBUTES  = OID_CE + ".9";
+    public static final String OID_CE_SUBJECT_KEY_IDENTIFIER        = OID_CE + ".14";
+    public static final String OID_CE_KEY_USAGE                     = OID_CE + ".15";
+    public static final String OID_CE_PRIVATE_KEY_USAGE_PERIOD      = OID_CE + ".16";
+    public static final String OID_CE_SUBJECT_ALT_NAME              = OID_CE + ".17";
+    public static final String OID_CE_ISSUER_ALT_NAME               = OID_CE + ".18";
+    public static final String OID_CE_BASIC_CONSTRAINTS             = OID_CE + ".19";
+    public static final String OID_CE_CRL_NUMBER                    = OID_CE + ".20";
+    public static final String OID_CE_CRL_REASONS                   = OID_CE + ".21";
+    public static final String OID_CE_HOLD_INSTRUCTION_CODE         = OID_CE + ".23";
+    public static final String OID_CE_INVALIDITY_DATE               = OID_CE + ".24";
+    public static final String OID_CE_DELTA_CLR_INDICATOR           = OID_CE + ".27";
+    public static final String OID_CE_ISSUING_DISTRIBUTION_POINT    = OID_CE + ".28";
+    public static final String OID_CE_CERTIFICATE_ISSUER            = OID_CE + ".29";
+    public static final String OID_CE_NAME_CONSTRAINTS              = OID_CE + ".30";
+    public static final String OID_CE_CRL_DISTRIBUTION_POINTS       = OID_CE + ".31";
+    public static final String OID_CE_CERTIFICATE_POLICIES          = OID_CE + ".32";
+    public static final String OID_CE_POLICY_MAPPINGS               = OID_CE + ".33";
+    public static final String OID_CE_AUTHORITY_KEY_IDENTIFIER      = OID_CE + ".35";
+    public static final String OID_CE_POLICY_CONSTRAINTS            = OID_CE + ".36";
+    public static final String OID_CE_EXT_KEY_USAGE                 = OID_CE + ".37";
+    public static final String OID_CE_FRESHEST_CRL                  = OID_CE + ".46";
+    public static final String OID_CE_INHIBIT_ANY_POLICY            = OID_CE + ".54";
+
+    public static final String OID_PKIX                             = "1.3.6.1.5.5.7";
+    public static final String OID_PE                               = OID_PKIX + ".1";
+    public static final String OID_QT                               = OID_PKIX + ".2";
+    public static final String OID_KP                               = OID_PKIX + ".3";
+    public static final String OID_AD                               = OID_PKIX + ".48";
+
+    public static final String OID_PE_AUTHORITY_INFO_ACCESS         = OID_PE + ".1";
+    public static final String OID_PE_SUBJECT_INFO_ACCESS           = OID_PE + ".11";
+
+    public static final String OID_QT_CPS                           = OID_QT + ".1";
+    public static final String OID_QT_UNOTICE                       = OID_QT + ".2";
+
+    public static final String OID_KP_SERVER_AUTH                   = OID_KP + ".1";
+    public static final String OID_KP_CLIENT_AUTH                   = OID_KP + ".2";
+    public static final String OID_KP_CODE_SIGNING                  = OID_KP + ".3";
+    public static final String OID_KP_EMAIL_PROTECTION              = OID_KP + ".4";
+    public static final String OID_KP_TIME_STAMPING                 = OID_KP + ".8";
+    public static final String OID_KP_OCSP_SIGNING                  = OID_KP + ".9";
+
+    public static final String OID_AD_OCSP                          = OID_AD + ".1";
+    public static final String OID_AD_CA_ISSUERS                    = OID_AD + ".2";
+    public static final String OID_AD_TIME_STAMPING                 = OID_AD + ".3";
+    public static final String OID_AD_CA_REPOSITORY                 = OID_AD + ".5";
+
+    public static final String OID_HOLD_INSTRUCTION                 = "2.2.840.10040.2";
+    @Deprecated // deprecated by RFC 5280
+    public static final String OID_HOLD_INSTRUCTION_NONE            = OID_HOLD_INSTRUCTION + ".1";
+    public static final String OID_HOLD_INSTRUCTION_CALL_ISSUER     = OID_HOLD_INSTRUCTION + ".2";
+    public static final String OID_HOLD_INSTRUCTION_REJECT          = OID_HOLD_INSTRUCTION + ".3";
 
     /**
      * Convert an array into a {@link X509Certificate X509Certificate[]}.

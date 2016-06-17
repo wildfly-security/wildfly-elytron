@@ -21,7 +21,7 @@ package org.wildfly.security.auth.callback;
 import java.io.Serializable;
 import java.util.List;
 
-import org.wildfly.security.sasl.entity.TrustedAuthority;
+import org.wildfly.security.x500.TrustedAuthority;
 
 /**
  * An optional callback used to retrieve information about trusted certificate authorities

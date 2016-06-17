@@ -20,8 +20,8 @@ package org.wildfly.security.sasl.entity;
 
 import static org.wildfly.security.asn1.ASN1.*;
 import static org.wildfly.security.sasl.entity.Entity.*;
-import static org.wildfly.security.sasl.entity.GeneralName.*;
-import static org.wildfly.security.sasl.entity.TrustedAuthority.*;
+import static org.wildfly.security.x500.GeneralName.*;
+import static org.wildfly.security.x500.TrustedAuthority.*;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
@@ -50,6 +50,8 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.x500.GeneralName;
+import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.x500.X500;
 import org.wildfly.security.x500.X500PrincipalUtil;
 
@@ -163,67 +165,6 @@ class EntityUtil {
 
     /**
      * <p>
-     * Encode a {@code GeneralName} element using the given DER encoder,
-     * where {@code GeneralName} is defined as:
-     *
-     * <pre>
-     *      GeneralName ::= CHOICE {
-     *          otherName                       [0]     OtherName,
-     *          rfc822Name                      [1]     IA5String,
-     *          dNSName                         [2]     IA5String,
-     *          x400Address                     [3]     ORAddress,
-     *          directoryName                   [4]     Name,
-     *          ediPartyName                    [5]     EDIPartyName,
-     *          uniformResourceIdentifier       [6]     IA5String,
-     *          iPAddress                       [7]     OCTET STRING,
-     *          registeredID                    [8]     OBJECT IDENTIFIER
-     *      }
-     * </pre>
-     * </p>
-     *
-     * @param encoder the DER encoder
-     * @param generalName the general name
-     * @throws ASN1Exception if the general name is invalid
-     */
-    public static void encodeGeneralName(final DEREncoder encoder, GeneralName generalName) throws ASN1Exception {
-        if (generalName instanceof OtherName) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.startSequence();
-            encoder.encodeObjectIdentifier(((OtherName) generalName).getObjectIdentifier());
-            encoder.writeEncoded(((OtherName) generalName).getEncodedValue());
-            encoder.endSequence();
-        } else if (generalName instanceof RFC822Name) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.encodeIA5String(((RFC822Name) generalName).getName());
-        } else if (generalName instanceof DNSName) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.encodeIA5String(((DNSName) generalName).getName());
-        } else if (generalName instanceof X400Address) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.writeEncoded(((X400Address) generalName).getName());
-        } else if (generalName instanceof DirectoryName) {
-            encoder.startExplicit(generalName.getType());
-            encoder.writeEncoded((new X500Principal(((DirectoryName) generalName).getName())).getEncoded());
-            encoder.endExplicit();
-        } else if (generalName instanceof EDIPartyName) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.writeEncoded(((EDIPartyName) generalName).getName());
-        } else if (generalName instanceof URIName) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.encodeIA5String(((URIName) generalName).getName());
-        } else if (generalName instanceof IPAddress) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.encodeOctetString(((IPAddress) generalName).getName());
-        } else if (generalName instanceof RegisteredID) {
-            encoder.encodeImplicit(generalName.getType());
-            encoder.encodeObjectIdentifier(((RegisteredID) generalName).getName());
-        } else {
-            throw log.asnInvalidGeneralNameType();
-        }
-    }
-
-    /**
-     * <p>
      * Encode a {@code GeneralNames} element using the given DER encoder, where
      * {@code GeneralNames} is defined as:
      *
@@ -239,7 +180,7 @@ class EntityUtil {
     public static void encodeGeneralNames(final DEREncoder encoder, List<GeneralName> generalNames) throws ASN1Exception {
         encoder.startSequence();
         for (GeneralName generalName : generalNames) {
-            encodeGeneralName(encoder, generalName);
+            generalName.encodeTo(encoder);
         }
         encoder.endSequence();
     }
@@ -262,11 +203,11 @@ class EntityUtil {
             Collection<List<?>> subjectAltNames) throws ASN1Exception {
         encoder.startSequence();
         if (! subjectName.isEmpty()) {
-            encodeGeneralName(encoder, new DirectoryName(subjectName));
+            new DirectoryName(subjectName).encodeTo(encoder);
         }
         if (subjectAltNames != null) {
             for (List<?> altName : subjectAltNames) {
-                encodeGeneralName(encoder, convertToGeneralName(altName));
+                convertToGeneralName(altName).encodeTo(encoder);
             }
         }
         encoder.endSequence();
@@ -301,52 +242,6 @@ class EntityUtil {
     }
 
     /**
-     * <p>
-     * Encode a {@code TrustedAuth} element using the given trusted authority and DER encoder,
-     * where {@code TrustedAuth} is defined as:
-     *
-     * <pre>
-     *      TrustedAuth ::= CHOICE {
-     *          authorityName         [0] Name,
-     *              -- SubjectName from CA certificate
-     *          issuerNameHash        [1] OCTET STRING,
-     *              -- SHA-1 hash of Authority's DN
-     *          issuerKeyHash         [2] OCTET STRING,
-     *              -- SHA-1 hash of Authority's public key
-     *          authorityCertificate  [3] Certificate,
-     *              -- CA certificate
-     *          pkcs15KeyHash         [4] OCTET STRING
-     *              -- PKCS #15 key hash
-     *      }
-     * </pre>
-     * </p>
-     *
-     * @param encoder the DER encoder
-     * @param trustedAuthority a trusted authority, must be a {@link NameTrustedAuthority},
-     * a {@link CertificateTrustedAuthority}, or a {@link HashTrustedAuthority}
-     * @throws ASN1Exception if any of the trusted authorities are invalid
-     */
-    public static void encodeTrustedAuthority(final DEREncoder encoder, TrustedAuthority trustedAuthority) throws ASN1Exception {
-        if (trustedAuthority instanceof NameTrustedAuthority) {
-            encoder.startExplicit(trustedAuthority.getType());
-            encoder.writeEncoded((new X500Principal(((NameTrustedAuthority) trustedAuthority).getIdentifier())).getEncoded());
-            encoder.endExplicit();
-        } else if (trustedAuthority instanceof HashTrustedAuthority) {
-            encoder.encodeImplicit(trustedAuthority.getType());
-            encoder.encodeOctetString(((HashTrustedAuthority) trustedAuthority).getIdentifier());
-        } else if (trustedAuthority instanceof CertificateTrustedAuthority) {
-            encoder.encodeImplicit(trustedAuthority.getType());
-            try {
-                encoder.writeEncoded(((CertificateTrustedAuthority) trustedAuthority).getIdentifier().getEncoded());
-            } catch (CertificateEncodingException e) {
-                throw new ASN1Exception(e);
-            }
-        } else {
-            throw log.asnInvalidTrustedAuthorityType();
-        }
-    }
-
-    /**
      * Encode an ASN.1 sequence of trusted authorities using the given DER encoder.
      *
      * @param encoder the DER encoder
@@ -358,7 +253,7 @@ class EntityUtil {
             List<TrustedAuthority> trustedAuthorities) throws ASN1Exception {
         encoder.startSequence();
         for (TrustedAuthority trustedAuthority : trustedAuthorities) {
-            encodeTrustedAuthority(encoder, trustedAuthority);
+            trustedAuthority.encodeTo(encoder);
         }
         encoder.endSequence();
     }
@@ -642,7 +537,7 @@ class EntityUtil {
             // Check if the DNSName matches the DirectoryName's (most specific) Common Name field.
             // Although specifying a DNS name using the Common Name field has been deprecated, it is
             // still used in practice (e.g., see http://tools.ietf.org/html/rfc2818).
-            String[] cnValues = X500PrincipalUtil.getAttributeValues(new X500Principal(((DirectoryName) actualGeneralName).getName()), X500.OID_CN);
+            String[] cnValues = X500PrincipalUtil.getAttributeValues(new X500Principal(((DirectoryName) actualGeneralName).getName()), X500.OID_AT_COMMON_NAME);
             String dnsName = ((DNSName) generalName).getName();
             return dnsName.equalsIgnoreCase(cnValues[0]);
         } else {

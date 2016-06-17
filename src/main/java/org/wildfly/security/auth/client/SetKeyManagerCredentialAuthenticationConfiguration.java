@@ -19,8 +19,8 @@
 package org.wildfly.security.auth.client;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.entity.TrustedAuthority.CertificateTrustedAuthority;
-import static org.wildfly.security.sasl.entity.TrustedAuthority.NameTrustedAuthority;
+import static org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
+import static org.wildfly.security.x500.TrustedAuthority.NameTrustedAuthority;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -38,7 +38,7 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
-import org.wildfly.security.sasl.entity.TrustedAuthority;
+import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 

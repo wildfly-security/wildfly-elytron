@@ -20,6 +20,9 @@ package org.wildfly.security.asn1;
 
 import java.io.Flushable;
 import java.math.BigInteger;
+import java.time.ZonedDateTime;
+import java.util.BitSet;
+import java.util.EnumSet;
 
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -150,6 +153,27 @@ public interface ASN1Encoder extends Flushable {
     void encodePrintableString(String str);
 
     /**
+     * Encode an ASN.1 UTF8String string value.
+     *
+     * @param str the string to encode
+     */
+    void encodeUTF8String(String str);
+
+    /**
+     * Encode an ASN.1 BMPString string value.
+     *
+     * @param str the string to encode
+     */
+    void encodeBMPString(String str);
+
+    /**
+     * Encode an ASN.1 UniversalString string value.
+     *
+     * @param str the string to encode
+     */
+    void encodeUniversalString(String str);
+
+    /**
      * Encode an ASN.1 bit string value.
      *
      * @param str the byte array containing the bit string to encode (all bits in the bit string will be used)
@@ -165,6 +189,20 @@ public interface ASN1Encoder extends Flushable {
     void encodeBitString(byte[] str, int numUnusedBits);
 
     /**
+     * Encode an enum set as an ASN.1 bit string, with each ordinal value of the set representing a single bit.
+     *
+     * @param enumSet the enum set (must not be {@code null})
+     */
+    void encodeBitString(EnumSet<?> enumSet);
+
+    /**
+     * Encode an ASN.1 bit string value.
+     *
+     * @param bitSet the bit set (must not be {@code null})
+     */
+    void encodeBitString(BitSet bitSet);
+
+    /**
      * Encode an ASN.1 bit string value.
      *
      * @param binaryStr the bit string to encode, as a binary string
@@ -177,6 +215,13 @@ public interface ASN1Encoder extends Flushable {
      * @param integer the integer to encode as a binary string
      */
     void encodeBitString(BigInteger integer);
+
+    /**
+     * Encode an ASN.1 GeneralizedTime type.
+     *
+     * @param time the time to encode (must not be {@code null})
+     */
+    void encodeGeneralizedTime(ZonedDateTime time);
 
     /**
      * Encode an ASN.1 object identifier value.
@@ -207,6 +252,13 @@ public interface ASN1Encoder extends Flushable {
      * @param number the tag number for the implicit tag
      */
     void encodeImplicit(int clazz, int number);
+
+    /**
+     * Encode an ASN.1 {@code boolean} value.
+     *
+     * @param value the boolean to encode
+     */
+    void encodeBoolean(boolean value);
 
     /**
      * Encode an ASN.1 <code>integer</code> value.
