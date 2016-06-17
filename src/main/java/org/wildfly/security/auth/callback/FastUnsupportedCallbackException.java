@@ -89,4 +89,14 @@ public class FastUnsupportedCallbackException extends UnsupportedCallbackExcepti
      */
     public void setStackTrace(final StackTraceElement[] stackTrace) {
     }
+
+    /**
+     * Get the message for this exception, formatted with the callback.
+     *
+     * @return the message for this exception, with the callback (not {@code null})
+     */
+    public String getMessage() {
+        final String message = super.getMessage();
+        return message != null ? String.format("%s: %s", getCallback(), message) : String.valueOf(getCallback());
+    }
 }
