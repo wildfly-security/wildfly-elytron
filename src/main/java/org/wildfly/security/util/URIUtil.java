@@ -47,7 +47,7 @@ public final class URIUtil {
             final InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
             final String hostString = inetSocketAddress.getHostString();
             final InetAddress address = inetSocketAddress.getAddress();
-            if (address instanceof Inet6Address && hostString.equals(address.getHostAddress())) {
+            if (address instanceof Inet6Address && hostString != null && address != null && hostString.equals(address.getHostAddress())) {
                 return "[" + address.getHostAddress() + "]";
             } else {
                 return hostString;
