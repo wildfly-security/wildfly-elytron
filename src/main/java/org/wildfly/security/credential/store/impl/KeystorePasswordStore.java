@@ -410,7 +410,9 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
             if (!storeFile.canWrite()) {
                 throw log.cannotWriteStorageFie(storeFile.getAbsolutePath(), storeName);
             }
-            credentialStore.store(new FileOutputStream(storeFile), storagePassword);
+            try (FileOutputStream stream = new FileOutputStream(storeFile)) {
+                credentialStore.store(stream, storagePassword);
+            }
         } catch (GeneralSecurityException | IOException e) {
             if (storeFileActuallyCreated) {
                 // remove store file as something went wrong and next use will end up with empty file causing exception
@@ -457,7 +459,9 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
 
         try {
             KeyStore vaultStorage = KeyStore.getInstance(KEYSTORE_TYPE);
-            vaultStorage.load(new FileInputStream(storeFile), storagePassword);
+            try (FileInputStream stream = new FileInputStream(storeFile)) {
+                vaultStorage.load(stream, storagePassword);
+            }
             for (Enumeration<String> storedAliases = vaultStorage.aliases(); storedAliases.hasMoreElements();) {
                 String alias = storedAliases.nextElement();
                 if (!alias.equalsIgnoreCase(adminKeyAlias)) {
