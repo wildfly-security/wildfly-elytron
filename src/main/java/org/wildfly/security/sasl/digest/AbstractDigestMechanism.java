@@ -128,8 +128,12 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         secureRandomGenerator = new SecureRandom();
         hmacMD5 = getHmac();
 
+        final String algorithm = messageDigestAlgorithm(mechanismName);
+        if (algorithm == null) {
+            throw log.mechMacAlgorithmNotSupported(getMechanismName(), null).toSaslException();
+        }
         try { // H()
-            this.messageDigest = MessageDigest.getInstance(messageDigestAlgorithm(mechanismName));
+            this.messageDigest = MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
             throw log.mechMacAlgorithmNotSupported(getMechanismName(), e).toSaslException();
         }

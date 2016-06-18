@@ -160,6 +160,9 @@ public final class SecurityDomain {
         SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         assert securityRealm != null;
         name = this.postRealmRewriter.rewriteName(name);
+        if (name == null) {
+            throw log.invalidName();
+        }
         name = realmInfo.getNameRewriter().rewriteName(name);
         if (name == null) {
             throw log.invalidName();

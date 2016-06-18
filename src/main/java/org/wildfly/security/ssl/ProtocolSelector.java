@@ -314,7 +314,7 @@ public abstract class ProtocolSelector {
         }
 
         void applyFilter(final Set<Protocol> enabled, final EnumMap<Protocol, String> supported) {
-            enabled.remove(protocols);
+            enabled.removeAll(protocols);
         }
     }
 
