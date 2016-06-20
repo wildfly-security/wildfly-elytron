@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLSession;
@@ -49,13 +50,13 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  */
 public class HttpAuthenticator {
 
-    private final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+    private final Function<HttpServerRequest, List<HttpServerAuthenticationMechanism>> mechanismSupplier;
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
     private final boolean ignoreOptionalFailures;
     private volatile boolean authenticated = false;
 
-    private HttpAuthenticator(final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier, final HttpExchangeSpi httpExchangeSpi,
+    private HttpAuthenticator(final Function<HttpServerRequest, List<HttpServerAuthenticationMechanism>> mechanismSupplier, final HttpExchangeSpi httpExchangeSpi,
                               final boolean required, final boolean ignoreOptionalFailures) {
         this.mechanismSupplier = mechanismSupplier;
         this.httpExchangeSpi = httpExchangeSpi;
@@ -98,7 +99,7 @@ public class HttpAuthenticator {
         private volatile HttpServerMechanismsResponder successResponder;
 
         private boolean authenticate() throws HttpAuthenticationException {
-            List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.get();
+            List<HttpServerAuthenticationMechanism> authenticationMechanisms = mechanismSupplier.apply(this);
             responders = new ArrayList<>(authenticationMechanisms.size());
             try {
                 for (HttpServerAuthenticationMechanism nextMechanism : authenticationMechanisms) {
@@ -318,7 +319,7 @@ public class HttpAuthenticator {
      */
     public static class Builder {
 
-        private Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier;
+        private Function<HttpServerRequest, List<HttpServerAuthenticationMechanism>> mechanismSupplier;
         private HttpExchangeSpi httpExchangeSpi;
         private boolean required;
         private boolean ignoreOptionalFailures;
@@ -330,10 +331,10 @@ public class HttpAuthenticator {
          * Set the {@link Supplier<List<HttpServerAuthenticationMechanism>>} to use to obtain the actual {@link HttpServerAuthenticationMechanism} instances based
          * on the configured policy.
          *
-         * @param mechanismSupplier the {@link Supplier<List<HttpServerAuthenticationMechanism>>} with the configured authentication policy.
+         * @param mechanismSupplier the {@link Function<HttpServerRequest, List<HttpServerAuthenticationMechanism>>} with the configured authentication policy.
          * @return the {@link Builder} to allow method call chaining.
          */
-        public Builder setMechanismSupplier(Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier) {
+        public Builder setMechanismSupplier(Function<HttpServerRequest, List<HttpServerAuthenticationMechanism>> mechanismSupplier) {
             this.mechanismSupplier = mechanismSupplier;
 
             return this;
