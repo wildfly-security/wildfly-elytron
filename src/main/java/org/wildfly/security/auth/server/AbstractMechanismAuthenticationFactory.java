@@ -54,6 +54,17 @@ abstract class AbstractMechanismAuthenticationFactory<M, F, E extends Exception>
         return doCreate(name, new ServerAuthenticationContext(securityDomain, mechanismConfigurationSelector).createCallbackHandler(), factoryTransformation);
     }
 
+    /**
+     * Determine if the given {@link MechanismInformation} can actually be resolved to a {@link MechanismConfiguration}.
+     *
+     * @param mechanismInformation information about an authentication attempt
+     * @return {@code true} if the given {@link MechanismInformation} can be resolved to a {@link MechanismConfiguration},
+     * {@code false} otherwise
+     */
+    public boolean isMechAvailable(MechanismInformation mechanismInformation) {
+        return mechanismConfigurationSelector.selectConfiguration(mechanismInformation) != null;
+    }
+
     abstract M doCreate(String name, CallbackHandler callbackHandler, final UnaryOperator<F> factoryTransformation) throws E;
 
     abstract Collection<Class<? extends Evidence>> getSupportedEvidenceTypes(String mechName);
