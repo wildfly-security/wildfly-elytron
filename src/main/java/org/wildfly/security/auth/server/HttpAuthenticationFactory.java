@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
+import static org.wildfly.security.http.HttpConstants.HOST;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -37,6 +38,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpConstants;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
+import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.util.SecurityIdentityServerMechanismFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
@@ -114,6 +116,29 @@ public final class HttpAuthenticationFactory extends AbstractMechanismAuthentica
                 return false;
             }
         }
+    }
+
+    /**
+     * Get the host name from the given {@link HttpServerRequest}.
+     *
+     * @param httpServerRequest the HTTP request
+     * @return the host name derived from the given HTTP request
+     */
+    public static String getHostName(final HttpServerRequest httpServerRequest) {
+        final String host = httpServerRequest.getFirstRequestHeaderValue(HOST);
+        String resolvedHostName = null;
+        if (host != null) {
+            if (host.startsWith("[")) {
+                int close = host.indexOf(']');
+                if (close > 0) {
+                    resolvedHostName = host.substring(0, close);
+                }
+            } else {
+                int colon = host.lastIndexOf(':');
+                resolvedHostName = colon > 0 ? host.substring(0, colon) : host;
+            }
+        }
+        return resolvedHostName;
     }
 
     /**
