@@ -17,12 +17,10 @@
  */
 package org.wildfly.security.sasl.util;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -48,42 +46,35 @@ public final class SetMechanismInformationSaslServerFactory extends AbstractDele
 
     @Override
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        final CallbackHandler wrapper = new CallbackHandler() {
+        try {
+            final MechanismInformationCallback mechanismInformationCallback = new MechanismInformationCallback(new MechanismInformation() {
 
-            private volatile boolean informationSent = false;
-
-            @Override
-            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                if (informationSent == false) {
-                    informationSent = true;
-                    cbh.handle(new Callback[] { new MechanismInformationCallback(new MechanismInformation() {
-
-                        @Override
-                        public String getProtocol() {
-                            return protocol;
-                        }
-
-                        @Override
-                        public String getMechanismType() {
-                            return "SASL";
-                        }
-
-                        @Override
-                        public String getMechanismName() {
-                            return mechanism;
-                        }
-
-                        @Override
-                        public String getHostName() {
-                            return serverName;
-                        }
-                    }) });
+                @Override
+                public String getProtocol() {
+                    return protocol;
                 }
-                cbh.handle(callbacks);
-            }
-        };
 
-        return super.createSaslServer(mechanism, protocol, serverName, props, wrapper);
+                @Override
+                public String getMechanismType() {
+                    return "SASL";
+                }
+
+                @Override
+                public String getMechanismName() {
+                    return mechanism;
+                }
+
+                @Override
+                public String getHostName() {
+                    return serverName;
+                }
+            });
+            cbh.handle(new Callback[] { mechanismInformationCallback });
+        } catch (Throwable e) {
+            // The mechanism information could not be successfully resolved to a mechanism configuration
+            return null;
+        }
+        return super.createSaslServer(mechanism, protocol, serverName, props, cbh);
     }
 
 }
