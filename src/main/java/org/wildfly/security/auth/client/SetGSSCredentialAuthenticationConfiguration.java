@@ -38,7 +38,7 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
     private final GSSCredential credential;
 
     SetGSSCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final GSSCredential credential) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetPasswordAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetCredentialsConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
         this.credential = credential;
     }
 
