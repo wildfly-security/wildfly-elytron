@@ -33,7 +33,7 @@ public interface AlgorithmEvidence extends Evidence {
      */
     String getAlgorithm();
 
-    default <E, R> R castAndApply(Class<E> evidenceType, String algorithmName, Function<E, R> function) {
-        return evidenceType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(evidenceType.cast(this)) : null;
+    default <E extends Evidence, R> R castAndApply(Class<E> evidenceType, String algorithmName, Function<E, R> function) {
+        return evidenceType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) ? function.apply(evidenceType.cast(this)) : null;
     }
 }

@@ -36,7 +36,7 @@ public interface Password extends Key {
      * @param <P> the password type
      * @return the password cast as the target type, or {@code null} if the password does not match the criteria
      */
-    default <P> P castAs(Class<P> passwordType, String algorithmName) {
+    default <P extends Password> P castAs(Class<P> passwordType, String algorithmName) {
         return castAndApply(passwordType, algorithmName, Function.identity());
     }
 
@@ -47,7 +47,7 @@ public interface Password extends Key {
      * @param <P> the password type
      * @return the password cast as the target type, or {@code null} if the password does not match the criteria
      */
-    default <P> P castAs(Class<P> passwordType) {
+    default <P extends Password> P castAs(Class<P> passwordType) {
         return castAndApply(passwordType, Function.identity());
     }
 
@@ -61,8 +61,8 @@ public interface Password extends Key {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the password is not of the given type
      */
-    default <P, R> R castAndApply(Class<P> passwordType, String algorithmName, Function<P, R> function) {
-        return passwordType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(passwordType.cast(this)) : null;
+    default <P extends Password, R> R castAndApply(Class<P> passwordType, String algorithmName, Function<P, R> function) {
+        return passwordType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) ? function.apply(passwordType.cast(this)) : null;
     }
 
     /**
@@ -74,7 +74,7 @@ public interface Password extends Key {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the password is not of the given type
      */
-    default <P, R> R castAndApply(Class<P> passwordType, Function<P, R> function) {
+    default <P extends Password, R> R castAndApply(Class<P> passwordType, Function<P, R> function) {
         return passwordType.isInstance(this) ? function.apply(passwordType.cast(this)) : null;
     }
 }
