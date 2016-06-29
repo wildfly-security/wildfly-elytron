@@ -703,6 +703,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             try {
                 log.debugf("Removing identity [%s] with DN [%s] from LDAP", name, identity.getDistinguishedName());
                 context.destroySubcontext(new LdapName(identity.getDistinguishedName()));
+                identity = null; // force reload
             } catch (NamingException e) {
                 throw log.ldapRealmFailedDeleteIdentityFromServer(e);
             } finally {

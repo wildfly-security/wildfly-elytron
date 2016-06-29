@@ -48,6 +48,7 @@ import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 
 /**
@@ -69,18 +70,19 @@ public class PasswordSupportSuiteChild {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
             .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
             .identityMapping()
-            .setSearchDn("dc=elytron,dc=wildfly,dc=org")
-            .setRdnIdentifier("uid")
-            .build()
-            .otpCredentialLoader()
-            .setOtpAlgorithmAttribute("otpAlgorithm")
-            .setOtpHashAttribute("otpHash")
-            .setOtpSeedAttribute("otpSeed")
-            .setOtpSequenceAttribute("otpSequence")
-            .build()
-            .userPasswordCredentialLoader()
+                .setSearchDn("dc=elytron,dc=wildfly,dc=org")
+                .setRdnIdentifier("uid")
                 .build()
-                .build();
+            .otpCredentialLoader()
+                .setOtpAlgorithmAttribute("otpAlgorithm")
+                .setOtpHashAttribute("otpHash")
+                .setOtpSeedAttribute("otpSeed")
+                .setOtpSequenceAttribute("otpSequence")
+                .build()
+            .userPasswordCredentialLoader()
+                .enablePersistence()
+                .build()
+            .build();
     }
 
     @Test
@@ -191,6 +193,31 @@ public class PasswordSupportSuiteChild {
         assertEquals(65, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'o', 'p', 'q' }, otp.getHash());
         Assert.assertArrayEquals(new byte[] { 'r', 's', 't' }, otp.getSeed());
+    }
+
+    @Test
+    public void testUserPasswordUserUpdate() throws Exception {
+
+        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+        ClearPassword password = (ClearPassword) factory.generatePassword(new ClearPasswordSpec("createdPassword".toCharArray()));
+        assertNotNull(password);
+
+        ModifiableRealmIdentity identity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userToChange"));
+        assertNotNull(identity);
+
+        assertEquals(SupportLevel.POSSIBLY_SUPPORTED, simpleToDnRealm.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
+        assertEquals(SupportLevel.SUPPORTED, identity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
+
+        identity.setCredentials(Collections.singleton(new PasswordCredential(password)));
+
+        ModifiableRealmIdentity newIdentity = (ModifiableRealmIdentity) simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userToChange"));
+        assertNotNull(newIdentity);
+
+        verifyPasswordSupport(newIdentity, ClearPassword.ALGORITHM_CLEAR, SupportLevel.SUPPORTED);
+
+        ClearPassword password2 = newIdentity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword(ClearPassword.class);
+        assertNotNull(password2);
+        Assert.assertEquals("createdPassword", new String(password2.getPassword()));
     }
 
     private void performSimpleNameTest(String simpleName, String algorithm, char[] password) throws NoSuchAlgorithmException, InvalidKeyException, RealmUnavailableException {
