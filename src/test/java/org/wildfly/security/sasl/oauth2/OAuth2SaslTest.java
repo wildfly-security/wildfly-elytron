@@ -23,10 +23,11 @@ import mockit.MockUp;
 import mockit.integration.junit4.JMockit;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.wildfly.security.auth.callback.BearerTokenCallback;
+import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.realm.token.TokenSecurityRealm;
 import org.wildfly.security.auth.realm.token.validator.OAuth2IntrospectValidator;
 import org.wildfly.security.auth.server.SecurityRealm;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.mechanism.oauth2.OAuth2Server;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
@@ -53,7 +54,10 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 
 /**
@@ -87,14 +91,14 @@ public class OAuth2SaslTest extends BaseTestCase {
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
-                    if (callback instanceof BearerTokenCallback) {
-                        BearerTokenCallback bearerTokenCallback = (BearerTokenCallback) callback;
+                    if (callback instanceof CredentialCallback) {
+                        CredentialCallback credentialCallback = (CredentialCallback) callback;
                         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
                         tokenBuilder.add("active", true);
                         tokenBuilder.add("username", "elytron@jboss.org");
 
-                        bearerTokenCallback.setToken(tokenBuilder.build().toString());
+                        credentialCallback.setCredential(new BearerTokenCredential(tokenBuilder.build().toString()));
                     }
                 }
             }
@@ -131,14 +135,14 @@ public class OAuth2SaslTest extends BaseTestCase {
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
-                    if (callback instanceof BearerTokenCallback) {
-                        BearerTokenCallback bearerTokenCallback = (BearerTokenCallback) callback;
+                    if (callback instanceof CredentialCallback) {
+                        CredentialCallback credentialCallback = (CredentialCallback) callback;
                         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
                         tokenBuilder.add("active", true);
                         tokenBuilder.add("username", "elytron@jboss.org");
 
-                        bearerTokenCallback.setToken(tokenBuilder.build().toString());
+                        credentialCallback.setCredential(new BearerTokenCredential(tokenBuilder.build().toString()));
                     }
                 }
             }
@@ -181,13 +185,13 @@ public class OAuth2SaslTest extends BaseTestCase {
             @Override
             public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
                 for (Callback callback : callbacks) {
-                    if (callback instanceof BearerTokenCallback) {
-                        BearerTokenCallback bearerTokenCallback = (BearerTokenCallback) callback;
+                    if (callback instanceof CredentialCallback) {
+                        CredentialCallback credentialCallback = (CredentialCallback) callback;
                         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
 
                         tokenBuilder.add("active", false);
 
-                        bearerTokenCallback.setToken(tokenBuilder.build().toString());
+                        credentialCallback.setCredential(new BearerTokenCredential(tokenBuilder.build().toString()));
                     }
                 }
             }

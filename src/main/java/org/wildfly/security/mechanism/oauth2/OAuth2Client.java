@@ -19,7 +19,8 @@
 package org.wildfly.security.mechanism.oauth2;
 
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.callback.BearerTokenCallback;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -29,6 +30,7 @@ import org.wildfly.security.util.ByteStringBuilder;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import static org.wildfly.common.Assert.assertTrue;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
@@ -49,15 +51,18 @@ public class OAuth2Client {
     }
 
     public OAuth2InitialClientMessage getInitialResponse() throws AuthenticationMechanismException {
-        final BearerTokenCallback bearerTokenCallback = new BearerTokenCallback();
+        final CredentialCallback credentialCallback = new CredentialCallback(BearerTokenCredential.class);
 
         try {
-            MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, bearerTokenCallback);
+            MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, credentialCallback);
         } catch (UnsupportedCallbackException e) {
             throw ElytronMessages.log.mechCallbackHandlerDoesNotSupportUserName(this.mechanismName, e);
         }
 
-        final String token = bearerTokenCallback.getToken();
+        assertTrue(credentialCallback.isCredentialTypeSupported(BearerTokenCredential.class));
+
+        BearerTokenCredential credential = credentialCallback.getCredential(BearerTokenCredential.class);
+        final String token = credential.getToken();
 
         if (token == null) {
             throw ElytronMessages.log.mechNoTokenGiven(this.mechanismName);
