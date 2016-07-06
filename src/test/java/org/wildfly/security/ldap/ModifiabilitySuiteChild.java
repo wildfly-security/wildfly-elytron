@@ -85,13 +85,16 @@ public class ModifiabilitySuiteChild {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertFalse(identity.exists());
         identity.create();
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertTrue(identity.exists());
         identity.delete();
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewIdentity"));
         Assert.assertFalse(identity.exists());
+        identity.dispose();
     }
 
     @Test
@@ -101,13 +104,16 @@ public class ModifiabilitySuiteChild {
         ModifiableRealmIdentity identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertFalse(identity.exists());
         identity.create();
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertTrue(identity.exists());
         identity.delete();
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(horribleIdentityName));
         Assert.assertFalse(identity.exists());
+        identity.dispose();
     }
 
     @Test
@@ -122,9 +128,11 @@ public class ModifiabilitySuiteChild {
         newAttributes.addFirst("lastName", "Smith");
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("myNewAttributesIdentity"));
         Assert.assertFalse(identity.exists());
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName("JohnSmithsNewIdentity"));
         Assert.assertTrue(identity.exists());
@@ -135,6 +143,7 @@ public class ModifiabilitySuiteChild {
         Assert.assertEquals("Smith", attributes.get("lastName").get(0));
         Assert.assertEquals(0, attributes.get("description").size());
         Assert.assertEquals(2, attributes.get("phones").size());
+        identity.dispose();
     }
 
     @Test
@@ -149,9 +158,11 @@ public class ModifiabilitySuiteChild {
         newAttributes.addFirst("lastName", "Smith");
         newAttributes.addAll("phones", Arrays.asList("123456", "654321"));
         identity.setAttributes(newAttributes);
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(" myNewAttributesIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '"));
         Assert.assertFalse(identity.exists());
+        identity.dispose();
 
         identity = (ModifiableRealmIdentity) realm.getRealmIdentity(IdentityLocator.fromName(" JohnSmithsNewIdentity , \\ # + < > ; \" = / * ( ) . & - _ [ ] ` ~ | @ $ % ^ ? : { } ! '"));
         Assert.assertTrue(identity.exists());
@@ -162,6 +173,7 @@ public class ModifiabilitySuiteChild {
         Assert.assertEquals("Smith", attributes.get("lastName").get(0));
         Assert.assertEquals(0, attributes.get("description").size());
         Assert.assertEquals(2, attributes.get("phones").size());
+        identity.dispose();
     }
 
     @Test
@@ -172,6 +184,7 @@ public class ModifiabilitySuiteChild {
         while(iterator.hasNext()){
             ModifiableRealmIdentity identity = iterator.next();
             Assert.assertTrue(identity.exists());
+            identity.dispose();
             count++;
         }
         Assert.assertTrue(count > 10);

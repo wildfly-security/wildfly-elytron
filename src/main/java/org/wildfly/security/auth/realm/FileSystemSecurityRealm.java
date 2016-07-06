@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.xml.stream.XMLInputFactory;
@@ -60,6 +61,7 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
 import org.wildfly.security.auth.server.CloseableIterator;
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
@@ -99,6 +101,8 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
     private final Path root;
     private final NameRewriter nameRewriter;
     private final int levels;
+
+    private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
 
     /**
      * Construct a new instance.
@@ -153,11 +157,14 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
     }
 
     public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        // todo: read and write locking variants
-        return getRealmIdentityForUpdate(locator);
+        return getRealmIdentity(locator, false);
     }
 
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final IdentityLocator locator) {
+        return getRealmIdentity(locator, true);
+    }
+
+    private ModifiableRealmIdentity getRealmIdentity(final IdentityLocator locator, final boolean exclusive) {
         if (! locator.hasName()) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
@@ -165,7 +172,16 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         if (finalName == null) {
             throw ElytronMessages.log.invalidName();
         }
-        return new Identity(finalName, pathFor(finalName));
+
+        // Acquire the appropriate lock for the realm identity
+        IdentitySharedExclusiveLock realmIdentityLock = getRealmIdentityLockForName(finalName);
+        IdentityLock lock;
+        if (exclusive) {
+            lock = realmIdentityLock.lockExclusive();
+        } else {
+            lock = realmIdentityLock.lockShared();
+        }
+        return new Identity(finalName, pathFor(finalName), lock);
     }
 
     public CloseableIterator<ModifiableRealmIdentity> getRealmIdentityIterator() throws RealmUnavailableException {
@@ -264,6 +280,18 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         return SupportLevel.POSSIBLY_SUPPORTED;
     }
 
+    private IdentitySharedExclusiveLock getRealmIdentityLockForName(final String name) {
+        IdentitySharedExclusiveLock realmIdentityLock = realmIdentityLocks.get(name);
+        if (realmIdentityLock == null) {
+            final IdentitySharedExclusiveLock newRealmIdentityLock = new IdentitySharedExclusiveLock();
+            realmIdentityLock = realmIdentityLocks.putIfAbsent(name, newRealmIdentityLock);
+            if (realmIdentityLock == null) {
+                realmIdentityLock = newRealmIdentityLock;
+            }
+        }
+        return realmIdentityLock;
+    }
+
     @FunctionalInterface
     interface CredentialParseFunction {
         void parseCredential(String algorithm, String format, String body) throws RealmUnavailableException, XMLStreamException;
@@ -276,10 +304,12 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
         private final String name;
         private final Path path;
+        private IdentityLock lock;
 
-        Identity(final String name, final Path path) {
+        Identity(final String name, final Path path, final IdentityLock lock) {
             this.name = name;
             this.path = path;
+            this.lock = lock;
         }
 
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
@@ -572,6 +602,15 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             }
             streamWriter.writeEndElement();
             streamWriter.writeEndDocument();
+        }
+
+        public void dispose() {
+            // Release the lock for this realm identity
+            IdentityLock identityLock = lock;
+            lock = null;
+            if (identityLock != null) {
+                identityLock.release();
+            }
         }
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {

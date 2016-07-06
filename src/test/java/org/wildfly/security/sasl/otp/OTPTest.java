@@ -653,6 +653,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -687,6 +690,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -725,6 +731,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should be updated to the current OTP
             checkPassword(securityDomainReference, "userName", expectedUpdatedPassword, algorithm);
         } finally {
@@ -757,6 +766,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -788,6 +800,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -820,6 +835,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -852,6 +870,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -887,6 +908,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should be updated
             checkPassword(securityDomainReference, "userName", expectedUpdatedPassword, algorithm);
         } finally {
@@ -924,6 +948,7 @@ public class OTPTest extends BaseTestCase {
         assertArrayEquals(expectedUpdatedPassword.getHash(), updatedPassword.getHash());
         assertArrayEquals(expectedUpdatedPassword.getSeed(), updatedPassword.getSeed());
         assertEquals(expectedUpdatedPassword.getSequenceNumber(), updatedPassword.getSequenceNumber());
+        realmIdentity.dispose();
     }
 
     private void mockSeed(final String randomStr){

@@ -332,8 +332,10 @@ public class FileSystemSecurityRealmTest {
         FileSystemSecurityRealm securityRealm = new FileSystemSecurityRealm(getRootPath(), 1);
         ModifiableRealmIdentity identity1 = securityRealm.getRealmIdentityForUpdate(IdentityLocator.fromName("firstUser"));
         identity1.create();
+        identity1.dispose();
         ModifiableRealmIdentity identity2 = securityRealm.getRealmIdentityForUpdate(IdentityLocator.fromName("secondUser"));
         identity2.create();
+        identity2.dispose();
         return securityRealm;
     }
 

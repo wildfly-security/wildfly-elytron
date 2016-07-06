@@ -1808,6 +1808,19 @@ public final class ServerAuthenticationContext {
             return authorizedIdentity;
         }
 
+        @Override
+        boolean isSameName(String name) {
+            final SecurityDomain domain = authorizedIdentity.getSecurityDomain();
+            name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
+            return authenticationPrincipal.equals(new NamePrincipal(name));
+        }
+
+        @Override
+        boolean isSamePrincipal(final Principal principal) {
+            String name = authorizedIdentity.getSecurityDomain().getPrincipalDecoder().getName(principal);
+            return isSameName(name);
+        }
+
         RealmInfo getRealmInfo() {
             return realmInfo;
         }
@@ -1817,14 +1830,14 @@ public final class ServerAuthenticationContext {
         }
 
         AuthorizedState authorizeRunAs(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
+            if (isSameName(authorizationId)) {
+                // same identity; return
+                return this;
+            }
             final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, null);
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
-                if (nameAssignedState.getAuthenticationPrincipal().getName().equals(authenticationPrincipal.getName())) {
-                    // same identity; clean up & return
-                    return this;
-                }
                 if (authorizeRunAs && ! authorizedIdentity.implies(new RunAsPrincipalPermission(nameAssignedState.getAuthenticationPrincipal().getName()))) {
                     // not authorized; clean up & return
                     return null;
