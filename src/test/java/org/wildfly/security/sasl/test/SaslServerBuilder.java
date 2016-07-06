@@ -342,6 +342,7 @@ public class SaslServerBuilder {
             ModifiableRealmIdentity realmIdentity = mainRealm.getRealmIdentityForUpdate(IdentityLocator.fromName(username));
             realmIdentity.create();
             realmIdentity.setCredentials(Collections.singletonList(new PasswordCredential(password)));
+            realmIdentity.dispose();
 
             if (closeableReference != null) {
                 closeableReference.setReference(new Closeable() {
