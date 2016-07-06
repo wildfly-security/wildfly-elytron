@@ -95,7 +95,7 @@ public interface Credential {
      * @param <C> the credential type
      * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
      */
-    default <C> C castAs(Class<C> credentialType, String algorithmName) {
+    default <C extends Credential> C castAs(Class<C> credentialType, String algorithmName) {
         return castAndApply(credentialType, algorithmName, Function.identity());
     }
 
@@ -106,7 +106,7 @@ public interface Credential {
      * @param <C> the credential type
      * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
      */
-    default <C> C castAs(Class<C> credentialType) {
+    default <C extends Credential> C castAs(Class<C> credentialType) {
         return castAndApply(credentialType, Function.identity());
     }
 
@@ -120,7 +120,7 @@ public interface Credential {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the credential is not of the given type
      */
-    default <C, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
+    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
         return credentialType.isInstance(this) && algorithmName == null ? function.apply(credentialType.cast(this)) : null;
     }
 
@@ -133,7 +133,7 @@ public interface Credential {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the credential is not of the given type
      */
-    default <C, R> R castAndApply(Class<C> credentialType, Function<C, R> function) {
+    default <C extends Credential, R> R castAndApply(Class<C> credentialType, Function<C, R> function) {
         return credentialType.isInstance(this) ? function.apply(credentialType.cast(this)) : null;
     }
 

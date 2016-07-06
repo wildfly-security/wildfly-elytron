@@ -94,7 +94,7 @@ public final class SecurityDomain {
         this.categoryRoleMappers = copiedRoleMappers;
         // todo configurable
         final RealmInfo realmInfo = new RealmInfo();
-        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers, SecurityIdentity.NO_PEER_IDENTITIES)));
+        anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers, SecurityIdentity.NO_PEER_IDENTITIES, IdentityCredentials.NONE, IdentityCredentials.NONE)));
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
     }
 

@@ -22,6 +22,7 @@ import java.security.Principal;
 import java.time.Instant;
 
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.auth.server.IdentityCredentials;
 
 /**
  * An entity to which permissions can be mapped.
@@ -54,5 +55,14 @@ public interface PermissionMappable {
      */
     default Instant getCreationTime() {
         return null;
+    }
+
+    /**
+     * Get the public credentials of this entity.
+     *
+     * @return the public credentials (must not be {@code null})
+     */
+    default IdentityCredentials getPublicCredentials() {
+        return IdentityCredentials.NONE;
     }
 }

@@ -32,7 +32,7 @@ public interface AlgorithmCredential extends Credential {
      */
     String getAlgorithm();
 
-    default <C, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
-        return credentialType.isInstance(this) && getAlgorithm().equals(algorithmName) ? function.apply(credentialType.cast(this)) : null;
+    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
+        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) ? function.apply(credentialType.cast(this)) : null;
     }
 }

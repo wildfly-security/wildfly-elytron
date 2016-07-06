@@ -62,7 +62,9 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.ssl.CipherSuiteSelector;
@@ -363,7 +365,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
-        return password == null ? this : new SetPasswordAuthenticationConfiguration(this, password, matchPredicate);
+        return password == null ? this : useCredentials(IdentityCredentials.NONE.withCredential(new PasswordCredential(password)), matchPredicate);
     }
 
     /**
@@ -501,6 +503,30 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration useKeyManagerCredential(X509KeyManager keyManager) {
         return keyManager == null ? without(SetKeyManagerCredentialAuthenticationConfiguration.class) : new SetKeyManagerCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyManager));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given identity
+     * credentials to acquire the credential required for authentication.
+     *
+     * @param credentials the credentials to use
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useCredentials(IdentityCredentials credentials) {
+        return credentials == null ? without(SetCredentialsConfiguration.class) : new SetCredentialsConfiguration(this, () -> credentials);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given identity
+     * credentials to acquire the credential required for authentication.
+     *
+     * @param credentials the credentials to use
+     * @param matchPredicate the predicate to determine if a callback prompt is relevant for the given credentials or
+     *                       {@code null} to use the given credentials regardless of the prompt
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
+        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, () -> credentials) : new SetCredentialsConfiguration(this, () -> credentials, matchPredicate);
     }
 
     /**

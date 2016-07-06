@@ -46,7 +46,7 @@ public interface Evidence {
      * @param <E> the evidence type
      * @return the evidence cast as the target type, or {@code null} if the evidence does not match the criteria
      */
-    default <E> E castAs(Class<E> evidenceType, String algorithmName) {
+    default <E extends Evidence> E castAs(Class<E> evidenceType, String algorithmName) {
         return castAndApply(evidenceType, algorithmName, Function.identity());
     }
 
@@ -57,7 +57,7 @@ public interface Evidence {
      * @param <E> the evidence type
      * @return the evidence cast as the target type, or {@code null} if the evidence does not match the criteria
      */
-    default <E> E castAs(Class<E> evidenceType) {
+    default <E extends Evidence> E castAs(Class<E> evidenceType) {
         return castAndApply(evidenceType, Function.identity());
     }
 
@@ -71,7 +71,7 @@ public interface Evidence {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the evidence is not of the given type
      */
-    default <E, R> R castAndApply(Class<E> evidenceType, String algorithmName, Function<E, R> function) {
+    default <E extends Evidence, R> R castAndApply(Class<E> evidenceType, String algorithmName, Function<E, R> function) {
         return evidenceType.isInstance(this) && algorithmName == null ? function.apply(evidenceType.cast(this)) : null;
     }
 
@@ -84,7 +84,7 @@ public interface Evidence {
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the evidence is not of the given type
      */
-    default <E, R> R castAndApply(Class<E> evidenceType, Function<E, R> function) {
+    default <E extends Evidence, R> R castAndApply(Class<E> evidenceType, Function<E, R> function) {
         return evidenceType.isInstance(this) ? function.apply(evidenceType.cast(this)) : null;
     }
 }

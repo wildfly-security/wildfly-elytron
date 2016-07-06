@@ -49,6 +49,7 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMappable;
 import org.wildfly.security.authz.RoleMapper;
 import org.wildfly.security.authz.Roles;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.permission.ElytronPermission;
 import org.wildfly.security.permission.PermissionVerifier;
 
@@ -60,6 +61,7 @@ import org.wildfly.security.permission.PermissionVerifier;
 public final class SecurityIdentity implements PermissionVerifier, PermissionMappable {
     static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
+    private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
     private final SecurityDomain securityDomain;
     private final Principal principal;
@@ -69,12 +71,10 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private final PeerIdentity[] peerIdentities;
     private final Instant creationTime;
     private final PermissionVerifier verifier;
+    private final IdentityCredentials publicCredentials;
+    private final IdentityCredentials privateCredentials;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers) {
-        this(securityDomain, principal, realmInfo, authorizationIdentity, roleMappers, NO_PEER_IDENTITIES);
-    }
-
-    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final PeerIdentity[] peerIdentities) {
+    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final PeerIdentity[] peerIdentities, final IdentityCredentials publicCredentials, final IdentityCredentials privateCredentials) {
         this.securityDomain = securityDomain;
         this.principal = principal;
         this.realmInfo = realmInfo;
@@ -83,6 +83,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.peerIdentities = peerIdentities;
         this.creationTime = Instant.now();
         this.verifier = securityDomain.mapPermissions(this);
+        this.publicCredentials = publicCredentials;
+        this.privateCredentials = privateCredentials;
     }
 
     SecurityIdentity(final SecurityIdentity old, final PeerIdentity[] newPeerIdentities) {
@@ -94,6 +96,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.peerIdentities = newPeerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -105,6 +109,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
     }
 
     SecurityIdentity(final SecurityIdentity old, final PermissionVerifier verifier) {
@@ -116,6 +122,21 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final Credential credential, final boolean isPrivate) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.peerIdentities = old.peerIdentities;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.withCredential(credential);
+        this.privateCredentials = isPrivate ? old.privateCredentials.withCredential(credential) : old.privateCredentials;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -536,5 +557,55 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public Instant getCreationTime() {
         return creationTime;
+    }
+
+    /**
+     * Get the public credentials of this identity.
+     *
+     * @return the public credentials of this identity (not {@code null})
+     */
+    public IdentityCredentials getPublicCredentials() {
+        return publicCredentials;
+    }
+
+    /**
+     * Create a new security identity which is the same as this one, but which includes the given credential as a
+     * public credential.
+     *
+     * @param credential the credential (must not be {@code null})
+     * @return the new identity
+     */
+    public SecurityIdentity withPublicCredential(Credential credential) {
+        Assert.checkNotNullParam("credential", credential);
+        return new SecurityIdentity(this, credential, false);
+    }
+
+    /**
+     * Create a new security identity which is the same as this one, but which includes the given credential as a
+     * private credential.
+     *
+     * @param credential the credential (must not be {@code null})
+     * @return the new identity
+     */
+    public SecurityIdentity withPrivateCredential(Credential credential) {
+        Assert.checkNotNullParam("credential", credential);
+        return new SecurityIdentity(this, credential, true);
+    }
+
+    /**
+     * Get the private credentials of this identity.  The caller must have the {@code getPrivateCredentials} {@link ElytronPermission}.
+     *
+     * @return the private credentials of this identity (not {@code null})
+     */
+    public IdentityCredentials getPrivateCredentials() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(PRIVATE_CREDENTIALS_PERMISSION);
+        }
+        return getPrivateCredentialsPrivate();
+    }
+
+    IdentityCredentials getPrivateCredentialsPrivate() {
+        return privateCredentials;
     }
 }
