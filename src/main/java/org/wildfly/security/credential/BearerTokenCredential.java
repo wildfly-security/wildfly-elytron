@@ -16,49 +16,34 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.callback;
+package org.wildfly.security.credential;
+
+import static org.wildfly.common.Assert.checkNotNullParam;
 
 /**
- * A callback used to acquire a bearer token for authentication purposes.
+ * A {@link Credential} that usually holds a bearer security token.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class BearerTokenCallback implements ExtendedCallback {
+public final class BearerTokenCredential implements Credential {
 
-    private String token;
+    private final String token;
 
     /**
      * Construct a new instance.
+     *
+     * @param token the bearer security token (must not be {@code null})
      */
-    public BearerTokenCallback() {
-
+    public BearerTokenCredential(String token) {
+        this.token = checkNotNullParam("token", token);
     }
 
     /**
-     * Returns the bearer token.
+     * Get the bearer security token.
      *
-     * @return a string representing the bearer token
+     * @return the bearer security token
      */
     public String getToken() {
         return this.token;
-    }
-
-    /**
-     * Sets the bearer token.
-     *
-     * @param token a string representing the bearer token
-     */
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    @Override
-    public boolean isOptional() {
-        return false;
-    }
-
-    @Override
-    public boolean needsInformation() {
-        return true;
     }
 }
