@@ -42,13 +42,13 @@ import java.util.Arrays;
 import java.util.Locale;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
+import org.wildfly.security.auth.callback.ExclusiveNameCallback;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.OneTimePassword;
@@ -72,7 +72,7 @@ final class OTPSaslServer extends AbstractSaslServer {
     private String previousSeed;
     private int previousSequenceNumber;
     private byte[] previousHash;
-    private NameCallback nameCallback;
+    private ExclusiveNameCallback exclusiveNameCallback;
     private String userName;
     private String authorizationID;
 
@@ -109,9 +109,12 @@ final class OTPSaslServer extends AbstractSaslServer {
                 // Construct an OTP extended challenge, where:
                 // OTP extended challenge = <standard OTP challenge> ext[,<extension set id>[, ...]]
                 // standard OTP challenge = otp-<algorithm identifier> <sequence integer> <seed>
-                nameCallback = new NameCallback("Remote authentication name", userName);
+                exclusiveNameCallback = new ExclusiveNameCallback("Remote authentication name", userName, true, true);
                 CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class);
-                handleCallbacks(nameCallback, credentialCallback);
+                handleCallbacks(exclusiveNameCallback, credentialCallback);
+                if (! exclusiveNameCallback.hasExclusiveAccess()) {
+                    throw log.mechUnableToObtainExclusiveAccess(getMechanismName(), userName).toSaslException();
+                }
                 final OneTimePassword previousPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(OneTimePassword.class));
                 if (previousPassword == null) {
                     throw log.mechUnableToRetrievePassword(getMechanismName(), userName).toSaslException();
@@ -250,7 +253,7 @@ final class OTPSaslServer extends AbstractSaslServer {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(newAlgorithm);
             final OneTimePassword newPassword = (OneTimePassword) passwordFactory.generatePassword(newPasswordSpec);
             final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(new PasswordCredential(newPassword));
-            handleCallbacks(nameCallback, credentialUpdateCallback);
+            handleCallbacks(exclusiveNameCallback, credentialUpdateCallback);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw log.mechUnableToUpdatePassword(getMechanismName(), userName).toSaslException();
         }

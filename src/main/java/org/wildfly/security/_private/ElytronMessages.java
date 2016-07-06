@@ -1273,8 +1273,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5163, value = "[%s] Authentication mechanism server timed out")
     AuthenticationMechanismException mechServerTimedOut(String mechName);
 
-    @Message(id = 5164, value = "Multiple simultaneous OTP authentications are not allowed")
-    AuthenticationMechanismException mechMultipleSimultaneousOTPAuthenticationsNotAllowed();
+    @Message(id = 5164, value = "[%s] Unable to obtain exclusive access for \"%s\"")
+    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String mechName, String userName);
 
     @Message(id = 5165, value = "OTP re-initialization failed")
     AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
