@@ -131,4 +131,10 @@ public final class WildFlySasl {
      * Note: This is a client only property and is not used server side.
      */
     public static final String OTP_ALTERNATE_DICTIONARY = "wildfly.sasl.otp.alternate-dictionary";
+
+    /**
+     * The amount of time, in seconds, after which a server should terminate an authentication attempt. The default value
+     * is 150 seconds.
+     */
+    public static final String AUTHENTICATION_TIMEOUT = "wildfly.sasl.authentication-timeout";
 }

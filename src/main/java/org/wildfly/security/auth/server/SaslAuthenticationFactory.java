@@ -36,6 +36,7 @@ import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractDelegatingSaslServerFactory;
 import org.wildfly.security.sasl.util.AuthenticationCompleteCallbackSaslServerFactory;
+import org.wildfly.security.sasl.util.AuthenticationTimeoutSaslServerFactory;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityIdentitySaslServerFactory;
 import org.wildfly.security.sasl.util.SetMechanismInformationSaslServerFactory;
@@ -132,6 +133,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }
+            factory = new AuthenticationTimeoutSaslServerFactory(factory); // Use an authentication timeout
             return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), factory);
         }
     }
