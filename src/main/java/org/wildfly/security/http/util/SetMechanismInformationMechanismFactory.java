@@ -19,12 +19,10 @@ package org.wildfly.security.http.util;
 
 import static org.wildfly.security.http.HttpConstants.HOST;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.server.MechanismInformation;
@@ -108,9 +106,10 @@ public class SetMechanismInformationMechanismFactory implements HttpServerAuthen
                         }
                     })});
 
-                } catch (IOException e) {
-                    throw new HttpAuthenticationException(e);
-                } catch (UnsupportedCallbackException ignored) {
+                } catch (Throwable e) {
+                    // Give up now since the mechanism information could not be successfully resolved to a mechanism configuration
+                    request.noAuthenticationInProgress();
+                    return;
                 }
 
                 mechanism.evaluateRequest(request);

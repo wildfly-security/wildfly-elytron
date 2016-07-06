@@ -306,11 +306,14 @@ public final class ServerAuthenticationContext {
     }
 
     /**
-     * Set information about the current mechanism and request for this authentication attempt.
+     * Set information about the current mechanism and request for this authentication attempt. If the mechanism
+     * information cannot be resolved to a mechanism configuration, an exception is thrown.
      *
      * @param mechanismInformation the mechanism information about the current authentication attempt.
+     * @throws IllegalStateException if the mechanism information about the current authentication attempt cannot be
+     * resolved to a mechanism configuration
      */
-    public void setMechanismInformation(final MechanismInformation mechanismInformation) {
+    public void setMechanismInformation(final MechanismInformation mechanismInformation) throws IllegalStateException {
         stateRef.get().setMechanismInformation(mechanismInformation);
     }
 
@@ -838,7 +841,11 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof MechanismInformationCallback) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
-                    setMechanismInformation(mic.getMechanismInformation());
+                    try {
+                        setMechanismInformation(mic.getMechanismInformation());
+                    } catch (Exception e) {
+                        throw new IOException(e);
+                    }
                 } else if (callback instanceof CredentialUpdateCallback) {
                     final CredentialUpdateCallback credentialUpdateCallback = (CredentialUpdateCallback) callback;
                     updateCredential(credentialUpdateCallback.getCredential());
@@ -1026,7 +1033,8 @@ public final class ServerAuthenticationContext {
 
         @Override
         void setMechanismInformation(MechanismInformation mechanismInformation) {
-            State nextState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismInformation);
+            InactiveState inactiveState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismInformation);
+            InitialState nextState = inactiveState.selectMechanismConfiguration();
             if (! stateRef.compareAndSet(this, nextState)) {
                 stateRef.get().setMechanismInformation(mechanismInformation);
             }
@@ -1109,14 +1117,18 @@ public final class ServerAuthenticationContext {
         }
 
         private void transition() {
+            InitialState initialState = selectMechanismConfiguration();
+            stateRef.compareAndSet(this, initialState);
+        }
+
+        private InitialState selectMechanismConfiguration() {
             MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(mechanismInformation);
             if (mechanismConfiguration == null) {
                 throw log.unableToSelectMechanismConfiguration(mechanismInformation.getMechanismType(),
                         mechanismInformation.getMechanismName(), mechanismInformation.getHostName(),
                         mechanismInformation.getProtocol());
             }
-            InitialState initialState = new InitialState(capturedIdentity, mechanismConfiguration);
-            stateRef.compareAndSet(this, initialState);
+            return new InitialState(capturedIdentity, mechanismConfiguration);
         }
 
     }
