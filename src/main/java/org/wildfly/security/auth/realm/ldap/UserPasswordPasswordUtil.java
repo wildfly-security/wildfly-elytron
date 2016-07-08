@@ -21,6 +21,9 @@ package org.wildfly.security.auth.realm.ldap;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.*;
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.*;
+import static org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES;
+import static org.wildfly.security.password.interfaces.UnixDESCryptPassword.ALGORITHM_CRYPT_DES;
+import static org.wildfly.security.password.interfaces.ClearPassword.ALGORITHM_CLEAR;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -121,7 +124,7 @@ class UserPasswordPasswordUtil {
 
     private static Password createClearPassword(int skip, byte[] userPassword) {
         if (skip != 0) userPassword = Arrays.copyOfRange(userPassword, skip, userPassword.length);
-        return ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, new String(userPassword, StandardCharsets.UTF_8).toCharArray());
+        return ClearPassword.createRaw(ALGORITHM_CLEAR, new String(userPassword, StandardCharsets.UTF_8).toCharArray());
     }
 
     private static Password createSimpleDigestPassword(String algorithm, int prefixSize, byte[] userPassword)
@@ -163,7 +166,7 @@ class UserPasswordPasswordUtil {
         short salt = (short) (lo | hi << 6);
         byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 9, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
 
-        return UnixDESCryptPassword.createRaw(UnixDESCryptPassword.ALGORITHM_CRYPT_DES, salt, hash);
+        return UnixDESCryptPassword.createRaw(ALGORITHM_CRYPT_DES, salt, hash);
     }
 
     private static Password createBsdCryptBasedPassword(byte[] userPassword) throws InvalidKeySpecException {
@@ -190,7 +193,7 @@ class UserPasswordPasswordUtil {
         int salt = b0 | b1 << 6 | b2 << 12 | b3 << 18;
 
         byte[] hash = CodePointIterator.ofUtf8Bytes(userPassword, 16, 11).base64Decode(Base64Alphabet.MOD_CRYPT, false).drain();
-        return BSDUnixDESCryptPassword.createRaw(BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
+        return BSDUnixDESCryptPassword.createRaw(ALGORITHM_BSD_CRYPT_DES, hash, salt, iterationCount);
     }
 
     private static int expectedDigestLengthBytes(final String algorithm) {
@@ -243,13 +246,13 @@ class UserPasswordPasswordUtil {
         } else if (ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512.equals(algorithm)) {
             out.write(new byte[]{'{','s','s','h','a','5','1','2','}'});
             out.write(composeDigestSalt((SaltedSimpleDigestPassword) password));
-        } else if (BSDUnixDESCryptPassword.ALGORITHM_BSD_CRYPT_DES.equals(algorithm)) {
+        } else if (ALGORITHM_BSD_CRYPT_DES.equals(algorithm)) {
             out.write(new byte[] { '{', 'c', 'r', 'y', 'p', 't', '}', '_' });
             composeBsdCryptBasedPassword(out, (BSDUnixDESCryptPassword) password);
-        } else if (UnixDESCryptPassword.ALGORITHM_CRYPT_DES.equals(algorithm)) {
+        } else if (ALGORITHM_CRYPT_DES.equals(algorithm)) {
             out.write(new byte[]{'{','c','r','y','p','t','}'});
             composeCryptBasedPassword(out, (UnixDESCryptPassword) password);
-        } else if (ClearPassword.ALGORITHM_CLEAR.equals(algorithm)) {
+        } else if (ALGORITHM_CLEAR.equals(algorithm)) {
             return CodePointIterator.ofChars(((ClearPassword)password).getPassword()).asUtf8().drain();
         } else {
             return null;
@@ -284,5 +287,26 @@ class UserPasswordPasswordUtil {
         out.write(Base64Alphabet.MOD_CRYPT.encode(password.getSalt() >> 18 & 0x3f));
 
         out.write(ByteIterator.ofBytes(password.getHash()).base64Encode(Base64Alphabet.MOD_CRYPT, false).asUtf8().drain());
+    }
+
+    public static boolean isAlgorithmSupported(String algorithm) {
+        switch (algorithm) {
+            case ALGORITHM_SIMPLE_DIGEST_MD5:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_1:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_256:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_384:
+            case ALGORITHM_SIMPLE_DIGEST_SHA_512:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_MD5:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384:
+            case ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512:
+            case ALGORITHM_BSD_CRYPT_DES:
+            case ALGORITHM_CRYPT_DES:
+            case ALGORITHM_CLEAR:
+                return true;
+            default:
+                return false;
+        }
     }
 }

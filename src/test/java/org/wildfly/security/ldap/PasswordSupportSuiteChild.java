@@ -73,14 +73,14 @@ public class PasswordSupportSuiteChild {
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                 .setRdnIdentifier("uid")
                 .build()
+            .userPasswordCredentialLoader()
+                .enablePersistence()
+                .build()
             .otpCredentialLoader()
                 .setOtpAlgorithmAttribute("otpAlgorithm")
                 .setOtpHashAttribute("otpHash")
                 .setOtpSeedAttribute("otpSeed")
                 .setOtpSequenceAttribute("otpSequence")
-                .build()
-            .userPasswordCredentialLoader()
-                .enablePersistence()
                 .build()
             .build();
     }
@@ -134,7 +134,7 @@ public class PasswordSupportSuiteChild {
         RealmIdentity identity = simpleToDnRealm.getRealmIdentity(IdentityLocator.fromName("userWithOtp"));
         verifyPasswordSupport(identity, OneTimePassword.ALGORITHM_OTP_SHA1, SupportLevel.SUPPORTED);
 
-        OneTimePassword otp = identity.getCredential(PasswordCredential.class).getPassword(OneTimePassword.class);
+        OneTimePassword otp = identity.getCredential(PasswordCredential.class, OneTimePassword.ALGORITHM_OTP_SHA1).getPassword(OneTimePassword.class);
         assertNotNull(otp);
         assertEquals(1234, otp.getSequenceNumber());
         Assert.assertArrayEquals(new byte[] { 'a', 'b', 'c', 'd' }, otp.getHash());
