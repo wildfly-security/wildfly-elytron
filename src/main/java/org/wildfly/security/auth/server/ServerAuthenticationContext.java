@@ -696,9 +696,17 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
-                    // always re-set the authentication name to ensure it hasn't changed.
-                    setAuthenticationName(authorizeCallback.getAuthenticationID());
-                    authorizeCallback.setAuthorized(authorize(authorizeCallback.getAuthorizationID()));
+                    String authenticationID = authorizeCallback.getAuthenticationID();
+                    if (authenticationID != null) {
+                        // always re-set the authentication name to ensure it hasn't changed.
+                        setAuthenticationName(authenticationID);
+                    }
+                    String authorizationID = authorizeCallback.getAuthorizationID();
+                    if (authorizationID != null) {
+                        authorizeCallback.setAuthorized(authorize(authorizationID));
+                    } else {
+                        authorizeCallback.setAuthorized(authorize());
+                    }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof NameCallback) {
                     // login name
