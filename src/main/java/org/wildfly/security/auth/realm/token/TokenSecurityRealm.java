@@ -68,7 +68,10 @@ public final class TokenSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(IdentityLocator identityLocator) throws RealmUnavailableException {
-        return new TokenRealmIdentity(identityLocator.getEvidence());
+        if (identityLocator.hasEvidence()) {
+            return new TokenRealmIdentity(identityLocator.getEvidence());
+        }
+        return RealmIdentity.NON_EXISTENT;
     }
 
     @Override
