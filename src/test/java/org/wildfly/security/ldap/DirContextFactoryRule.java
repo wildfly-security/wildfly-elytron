@@ -95,6 +95,7 @@ public class DirContextFactoryRule implements TestRule {
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-role-mapping-tests.ldif"))
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-group-mapping-tests.ldif"))
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-otp-tests.ldif"))
+                    .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-keystore-tests.ldif"))
                     .addTcpServer("Default TCP", "localhost", LDAP_PORT)
                     .start();
         } catch (Exception e) {
