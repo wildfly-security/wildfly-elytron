@@ -34,8 +34,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 
+import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
 
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpScope;
@@ -59,7 +61,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     private static final String PASSWORD = "j_password";
 
     private static final String LOCATION_KEY = FormAuthenticationMechanism.class.getName() + ".Location";
-    private static final String IDENTITY_CREDENTIAL_KEY = FormAuthenticationMechanism.class.getName() + ".Identity-Credential";
+    private static final String AUTHENTICATED_PRINCIPAL_KEY = FormAuthenticationMechanism.class.getName() + ".authenticated-principal";
 
     private static final String DEFAULT_POST_LOCATION = "j_security_check";
 
@@ -90,30 +92,9 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
      */
     @Override
     public void evaluateRequest(final HttpServerRequest request) throws HttpAuthenticationException {
-
-        // Do we have a cached identity?
-        HttpScope session = request.getScope(Scope.SESSION);
-        if (session != null) {
-            FormIdentityCredentials identityCredentials = session.getAttachment(IDENTITY_CREDENTIAL_KEY, FormIdentityCredentials.class);
-            if (identityCredentials != null) {
-                String username = identityCredentials.getUsername();
-                char[] password = identityCredentials.getPassword();
-                try {
-                    if (authenticate(null, username, password) && authorize(username)) {
-                        succeed();
-                        request.authenticationComplete();
-                        request.resumeRequest();
-                        return;
-                    } else {
-                        identityCredentials.dispose();
-                        session.setAttachment(IDENTITY_CREDENTIAL_KEY, null);
-                    }
-                } catch (IOException | UnsupportedCallbackException e) {
-                    throw new HttpAuthenticationException(e);
-                } finally {
-                    fill(password, (char) 0x00);
-                }
-            }
+        // try to re-authenticate a cached principal, if any
+        if (attemptReAuthentication(request)) {
+            return;
         }
 
         // Is current request an authentication attempt?
@@ -150,7 +131,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
                     HttpScope session = request.getScope(Scope.SESSION);
                     HttpServerMechanismsResponder responder = null;
                     if (session != null) {
-                        session.setAttachment(IDENTITY_CREDENTIAL_KEY, new FormIdentityCredentials(username, password.toCharArray()));
+                        session.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, username);
 
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
@@ -163,16 +144,12 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
                     return;
                 } else {
-                    fail();
-
-                    error(log.authorizationFailed(username, FORM_NAME), request);
+                    failAndRedirectToErrorPage(request, username);
                     return;
                 }
 
             } else {
-                fail();
-
-                error(log.authenticationFailed(username, FORM_NAME), request);
+                failAndRedirectToErrorPage(request, username);
                 return;
             }
         } catch (IOException | UnsupportedCallbackException e) {
@@ -180,6 +157,39 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         } finally {
             fill(passwordChars, (char) 0x00);
         }
+    }
+
+    private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
+        // Do we have a cached identity?
+        HttpScope session = request.getScope(Scope.SESSION);
+        if (session != null) {
+            String principalName = session.getAttachment(AUTHENTICATED_PRINCIPAL_KEY, String.class);
+            if (principalName != null) {
+                try {
+                    AuthorizeCallback authorizeCallback = new AuthorizeCallback(principalName, null);
+                    this.callbackHandler.handle(new Callback[] {authorizeCallback});
+                    if (authorizeCallback.isAuthorized()) {
+                        succeed();
+                        request.authenticationComplete();
+                        request.resumeRequest();
+                        return true;
+                    }
+                    session.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null);
+                } catch (IOException | UnsupportedCallbackException e) {
+                    throw new HttpAuthenticationException(e);
+                }
+            }
+        }
+        return false;
+    }
+
+    private void failAndRedirectToErrorPage(HttpServerRequest request, String username) throws IOException, UnsupportedCallbackException {
+        HttpScope session = request.getScope(Scope.SESSION);
+        if (session != null) {
+            session.setAttachment(AUTHENTICATED_PRINCIPAL_KEY, null);
+        }
+        fail();
+        error(log.authorizationFailed(username, FORM_NAME), request);
     }
 
     void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
@@ -226,32 +236,5 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     private void sendRedirect(HttpServerResponse response, String location) {
         response.addResponseHeader(LOCATION, location);
         response.setStatusCode(SEE_OTHER);
-    }
-
-    final class FormIdentityCredentials {
-        private final String username;
-        private final char[] password;
-
-        FormIdentityCredentials(String username, char[] password) {
-            this.username = username;
-            this.password = new char[password.length];
-            System.arraycopy(password, 0, this.password, 0, password.length);
-        }
-
-        String getUsername() {
-            return username;
-        }
-
-        char[] getPassword() {
-            char[] password = new char[this.password.length];
-            System.arraycopy(this.password, 0, password, 0, this.password.length);
-
-            return password;
-        }
-
-        void dispose() {
-            fill(password, (char) 0x00);
-        }
-
     }
 }
