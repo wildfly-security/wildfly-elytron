@@ -18,6 +18,9 @@
 
 package org.wildfly.security.password.interfaces;
 
+import javax.security.auth.DestroyFailedException;
+import java.util.Arrays;
+
 class RawClearPassword extends RawPassword implements ClearPassword {
 
     private static final long serialVersionUID = -7982031201140935435L;
@@ -31,5 +34,40 @@ class RawClearPassword extends RawPassword implements ClearPassword {
 
     public char[] getPassword() throws IllegalStateException {
         return password.clone();
+    }
+
+    /**
+     * Destroy this {@code Object}.
+     * <p>
+     * <p> Sensitive information associated with this {@code Object}
+     * is destroyed or cleared.  Subsequent calls to certain methods
+     * on this {@code Object} will result in an
+     * {@code IllegalStateException} being thrown.
+     * <p>
+     * <p>
+     * The default implementation throws {@code DestroyFailedException}.
+     *
+     * @throws DestroyFailedException if the destroy operation fails. <p>
+     * @throws SecurityException      if the caller does not have permission
+     *                                to destroy this {@code Object}.
+     */
+    @Override
+    public void destroy() throws DestroyFailedException {
+        if (password != null)
+            Arrays.fill(password, (char)0);
+    }
+
+    /**
+     * Determine if this {@code Object} has been destroyed.
+     * <p>
+     * <p>
+     * The default implementation returns false.
+     *
+     * @return true if this {@code Object} has been destroyed,
+     * false otherwise.
+     */
+    @Override
+    public boolean isDestroyed() {
+        return password == null || password.length == 0 || password[0] == 0;
     }
 }
