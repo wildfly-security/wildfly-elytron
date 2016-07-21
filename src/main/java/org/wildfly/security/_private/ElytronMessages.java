@@ -1633,7 +1633,19 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
 
-    @Message(id = 9513, value = "Cannot perform operation '%s': Credential store is set non modifiable")
+    @Message(id = 9513, value = "Duplicate attribute (\"%s\") found in configuration.")
+    ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
+
+    @Message(id = 9514, value = "Duplicate credential store name found in configuration \"%s\"")
+    ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
+
+    @Message(id = 9515, value = "Credential store name \"%s\" not defined")
+    ConfigXMLParseException credentialStoreNameNotDefined(@Param XMLStreamReader reader, String storeName);
+
+    @Message(id = 9516, value = "Duplicate credential store name = \"%s\"")
+    IllegalArgumentException duplicateCredentialStore(String storeName);
+
+    @Message(id = 9517, value = "Cannot perform operation '%s': Credential store is set non modifiable")
     CredentialStoreException nonModifiableCredentialStore(String operation);
 
     /* X.500 exceptions */

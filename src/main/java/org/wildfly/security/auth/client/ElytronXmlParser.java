@@ -71,6 +71,7 @@ import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
 import org.wildfly.security.password.Password;
@@ -184,10 +185,11 @@ public final class ElytronXmlParser {
         ExceptionSupplier<RuleNode<AuthenticationConfiguration>, ConfigXMLParseException> authFactory = () -> null;
         ExceptionSupplier<RuleNode<SecurityFactory<SSLContext>>, ConfigXMLParseException> sslFactory = () -> null;
         Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap = new HashMap<>();
-        Map<String, ExceptionSupplier<SecurityFactory<SSLContext>, ConfigXMLParseException>> sslContextsMap = new HashMap<>();
+        Map<String, SecurityFactory<CredentialStore>> credentialStoresMap = new HashMap<>();        Map<String, ExceptionSupplier<SecurityFactory<SSLContext>, ConfigXMLParseException>> sslContextsMap = new HashMap<>();
         Map<String, ExceptionSupplier<AuthenticationConfiguration, ConfigXMLParseException>> authenticationConfigurationsMap = new HashMap<>();
         boolean netAuthenticator = false;
         int foundBits  = 0;
+        boolean credentialStores = false;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -228,6 +230,14 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 5);
                         netAuthenticator = true;
                         parseEmptyType(reader);
+                        break;
+                    }
+                    case "credential-stores": {
+                        if (credentialStores) {
+                            throw reader.unexpectedElement();
+                        }
+                        credentialStores = true;
+                        parseCredentialStoresType(reader, credentialStoresMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -591,6 +601,16 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 14);
                         final String protocol = parseNameType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProtocol(protocol));
+                        break;
+                    }
+                    case "credential-store-reference": {
+                        if (isSet(foundBits, 15)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 15);
+                        CredentialStoreReference credentialStoreReference = parseCredentialStoreRefType(reader,
+                                credentialStoresFactoryMap);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useCredentialStoreReference(
+                                credentialStoresFactoryMap.get(credentialStoreReference.getStore()),
+                                credentialStoreReference));
                         break;
                     }
                     default: {
@@ -996,7 +1016,270 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
+    /**
+     * Parse an XML element of type {@code credential-store-reference-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param credentialStoresNames set of Credential Store names already defined used for checking of duplicates
+     * @return {@link CredentialStoreReference} corresponding to given XML configuration element
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static CredentialStoreReference parseCredentialStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<CredentialStore>> credentialStoresNames) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        final CredentialStoreReference credentialStoreReference;
+        String store = null;
+        String alias = null;
+        String type = null;
+        String clearText = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            switch (reader.getAttributeLocalName(i)) {
+                case "store": {
+                    if (store != null) throw reader.unexpectedAttribute(i);
+                    store = reader.getAttributeValue(i);
+                    if (credentialStoresNames != null && !credentialStoresNames.containsKey(store)) {
+                        throw xmlLog.credentialStoreNameNotDefined(reader, store);
+                    }
+                    break;
+                }
+                case "alias": {
+                    if (alias != null) throw reader.unexpectedAttribute(i);
+                    alias = reader.getAttributeValue(i);
+                    break;
+                }
+                case "type": {
+                    if (type != null) throw reader.unexpectedAttribute(i);
+                    type = reader.getAttributeValue(i);
+                    break;
+                }
+                case "clear-text": {
+                    if (clearText != null) throw reader.unexpectedAttribute(i);
+                    clearText = reader.getAttributeValue(i);
+                    break;
+                }
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (store == null) {
+            if (clearText == null) {
+                throw missingAttribute(reader, "clear-text");
+            }
+            credentialStoreReference = new CredentialStoreReference(clearText.toCharArray());
+        } else {
+            if (alias == null) {
+                throw missingAttribute(reader, "alias");
+            }
+            credentialStoreReference = new CredentialStoreReference(store, alias, type);
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return credentialStoreReference;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code credential-stores-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param credentialStoresMap the map of  credential stores to use
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static void parseCredentialStoresType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<CredentialStore>> credentialStoresMap) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        if (attributeCount > 0) {
+            throw reader.unexpectedAttribute(0);
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                switch (reader.getNamespaceURI()) {
+                    case NS_ELYTRON_1_0: break;
+                    default: throw reader.unexpectedElement();
+                }
+                switch (reader.getLocalName()) {
+                    case "credential-store": {
+                        parseCredentialStoreType(reader, credentialStoresMap);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code key-store-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param credentialStoresMap the map of  credential stores to fill
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<CredentialStore>> credentialStoresMap) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String name = null;
+        String type = null;
+        String provider = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            switch (reader.getAttributeLocalName(i)) {
+                case "type": {
+                    if (type != null) throw reader.unexpectedAttribute(i);
+                    type = reader.getAttributeValue(i);
+                    break;
+                }
+                case "provider": {
+                    if (provider != null) throw reader.unexpectedAttribute(i);
+                    provider = reader.getAttributeValue(i);
+                    break;
+                }
+                case "name": {
+                    if (name != null) throw reader.unexpectedAttribute(i);
+                    name = reader.getAttributeValue(i);
+                    break;
+                }
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (name == null) {
+            throw missingAttribute(reader, "name");
+        }
+
+        final Map<String, String> attributesMap = new HashMap<>();
+        int attributesSectionCount = 0;
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                switch (reader.getNamespaceURI()) {
+                    case NS_ELYTRON_1_0: break;
+                    default: throw reader.unexpectedElement();
+                }
+                switch (reader.getLocalName()) {
+                    case "attributes": {
+                        if (++attributesSectionCount > 1) throw reader.unexpectedContent();
+                        parseAttributesType(reader, attributesMap);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                SecurityFactory<CredentialStore> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider);
+                if (!credentialStoresMap.containsKey(name)) {
+                    credentialStoresMap.put(name, credentialStoreSecurityFactory);
+                } else {
+                    throw xmlLog.duplicateCredentialStoreName(reader, name);
+                }
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
     // common types
+
+    /**
+     * Parse attributes {@code attributes-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param attributesMap the map to put attributes to.
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static void parseAttributesType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        if (attributeCount > 0) {
+            throw reader.unexpectedAttribute(0);
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                switch (reader.getNamespaceURI()) {
+                    case NS_ELYTRON_1_0: break;
+                    default: throw reader.unexpectedElement();
+                }
+                switch (reader.getLocalName()) {
+                    case "attribute": {
+                        parseAttributeType(reader, attributesMap);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an attribute {@code attribute-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param attributesMap the map to put attributes to.
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static void parseAttributeType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String name = null;
+        String value = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            final String attributeNamespace = reader.getAttributeNamespace(i);
+            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+                throw reader.unexpectedAttribute(i);
+            }
+            switch (reader.getAttributeLocalName(i)) {
+                case "name": {
+                    if (name != null) throw reader.unexpectedAttribute(i);
+                    name = reader.getAttributeValue(i);
+                    break;
+                }
+                case "value": {
+                    if (value != null) throw reader.unexpectedAttribute(i);
+                    value = reader.getAttributeValue(i);
+                    break;
+                }
+                default:
+                    throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedContent();
+            } else if (tag == END_ELEMENT) {
+                if (!attributesMap.containsKey(name)) {
+                    attributesMap.put(name, value);
+                } else {
+                    throw xmlLog.duplicateAttributeFound(reader, name);
+                }
+                return;
+            }
+            throw reader.unexpectedContent();
+        }
+        throw reader.unexpectedContent();
+    }
 
     /**
      * Parse an XML element of type {@code empty-type} from an XML reader.
