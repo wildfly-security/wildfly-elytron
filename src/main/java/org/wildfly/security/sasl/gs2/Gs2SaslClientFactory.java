@@ -65,18 +65,6 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol,
             final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        String name = null;
-        boolean plus = false;
-        final ChannelBindingCallback callback = new ChannelBindingCallback();
-        try {
-            cbh.handle(new Callback[] { callback });
-        } catch (SaslException e) {
-            throw e;
-        } catch (IOException e) {
-            throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
-        } catch (UnsupportedCallbackException e) {
-            // Ignored
-        }
         GSSManager gssManager = this.gssManager;
         final String[] supportedMechanisms;
         try {
@@ -84,12 +72,32 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         } catch (GSSException e) {
             throw log.mechGettingSupportedMechanismsFailed(e).toSaslException();
         }
-        final String bindingType = callback.getBindingType();
-        final byte[] bindingData = callback.getBindingData();
-        boolean bindingOk = (bindingType != null) && (bindingData != null);
+
+        String name = null;
+        boolean plus = false;
+        String bindingType = null;
+        byte[] bindingData = null;
+        boolean bindingOk = false;
         boolean bindingRequired = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
+        boolean bindingStatusDetermined = false;
         for (String mechanism : mechanisms) {
             if (! Gs2Util.isIncluded(mechanism, supportedMechanisms)) continue;
+            if (! bindingStatusDetermined) {
+                final ChannelBindingCallback callback = new ChannelBindingCallback();
+                try {
+                    cbh.handle(new Callback[] { callback });
+                } catch (SaslException e) {
+                    throw e;
+                } catch (IOException e) {
+                    throw log.mechFailedToDetermineChannelBindingStatus(e).toSaslException();
+                } catch (UnsupportedCallbackException e) {
+                    // Ignored
+                }
+                bindingType = callback.getBindingType();
+                bindingData = callback.getBindingData();
+                bindingOk = (bindingType != null) && (bindingData != null);
+                bindingStatusDetermined = true;
+            }
             if (mechanism.endsWith(PLUS_SUFFIX)) {
                 if (! bindingOk) continue;
                 plus = true;
