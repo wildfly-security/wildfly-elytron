@@ -732,6 +732,7 @@ public abstract class AuthenticationConfiguration {
         configureSaslProperties(properties);
         final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
         mechs.removeIf(n -> ! filterOneSaslMechanism(n));
+        if (mechs.isEmpty()) return null;
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
         return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);
