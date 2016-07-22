@@ -64,6 +64,15 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler cbh) throws SaslException {
+        GSSManager gssManager = this.gssManager;
+        final String[] supportedMechs;
+        try {
+            supportedMechs = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
+        } catch (GSSException e) {
+            throw log.mechGettingSupportedMechanismsFailed(e).toSaslException();
+        }
+        if (! Gs2Util.isIncluded(mechanism, supportedMechs)) return null;
+
         boolean plus = false;
         final ChannelBindingCallback channelBindingCallback = new ChannelBindingCallback();
         try {
@@ -75,14 +84,6 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         } catch (UnsupportedCallbackException e) {
             // Ignored
         }
-        GSSManager gssManager = this.gssManager;
-        final String[] supportedMechs;
-        try {
-            supportedMechs = Gs2Util.getSupportedSaslNamesForMechanisms(gssManager.getMechs());
-        } catch (GSSException e) {
-            throw log.mechGettingSupportedMechanismsFailed(e).toSaslException();
-        }
-        if (! Gs2Util.isIncluded(mechanism, supportedMechs)) return null;
         final String bindingType = channelBindingCallback.getBindingType();
         final byte[] bindingData = channelBindingCallback.getBindingData();
         boolean bindingOk = (bindingType != null) && (bindingData != null);
