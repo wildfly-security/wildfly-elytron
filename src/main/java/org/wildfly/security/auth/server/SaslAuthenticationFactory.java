@@ -133,7 +133,7 @@ public final class SaslAuthenticationFactory extends AbstractMechanismAuthentica
             if (! factory.delegatesThrough(TrustManagerSaslServerFactory.class)) {
                 factory = new TrustManagerSaslServerFactory(factory, null); // Use the default trust manager
             }
-            factory = new AuthenticationTimeoutSaslServerFactory(factory); // Use an authentication timeout
+            factory = new AuthenticationTimeoutSaslServerFactory(factory, SecurityDomain.getScheduledExecutorService()); // Use an authentication timeout
             return new SaslAuthenticationFactory(getSecurityDomain(), getMechanismConfigurationSelector(), factory);
         }
     }
