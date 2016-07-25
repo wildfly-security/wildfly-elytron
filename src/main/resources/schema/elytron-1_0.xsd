@@ -111,6 +111,7 @@
                 <xsd:element name="set-port" type="port-number-simple-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-user-name" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-anonymous" type="empty-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="set-mechanism-realm" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
@@ -122,7 +123,6 @@
                 <xsd:element name="ssl-protocol" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="use-system-providers" type="empty-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="use-module-providers" type="module-ref-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="use-mechanism-realm" type="name-type" minOccurs="1" maxOccurs="1"/>
             </xsd:choice>
         </xsd:sequence>
         <xsd:attribute name="name" type="xsd:string" use="optional"/>

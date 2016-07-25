@@ -402,6 +402,13 @@ public final class ElytronXmlParser {
                         configuration = () -> parentConfig.create().useAnonymous();
                         break;
                     }
+                    case "set-mechanism-realm": {
+                        gotConfig = true;
+                        final String realm = parseNameType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useRealm(realm);
+                        break;
+                    }
                     case "rewrite-user-name-regex": {
                         gotConfig = true;
                         final NameRewriter nameRewriter = parseRegexSubstitutionType(reader);
@@ -476,13 +483,6 @@ public final class ElytronXmlParser {
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
                         final Module module = parseModuleRefType(reader);
                         configuration = () -> parentConfig.create().useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader()));
-                        break;
-                    }
-                    case "use-mechanism-realm": {
-                        gotConfig = true;
-                        final String realm = parseNameType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useRealm(realm);
                         break;
                     }
                     default: throw reader.unexpectedElement();
