@@ -67,6 +67,7 @@ import java.util.ServiceLoader;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
+import org.kohsuke.MetaInfServices;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.CmdPasswordStore;
 import org.wildfly.security.credential.store.impl.ExecPasswordStore;
@@ -86,6 +87,7 @@ import org.wildfly.security.sasl.WildFlySasl;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
+@MetaInfServices(Provider.class)
 public class WildFlyElytronProvider extends Provider {
 
     private static final long serialVersionUID = 1267015094996624988L;
