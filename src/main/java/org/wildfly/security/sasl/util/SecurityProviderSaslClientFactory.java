@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -65,23 +66,43 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
 
     @Override
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        class Pair {
+            final Provider provider;
+            final SaslClientFactory saslClientFactory;
+
+            Pair(Provider provider, SaslClientFactory saslClientFactory) {
+                this.provider = provider;
+                this.saslClientFactory = saslClientFactory;
+            }
+        }
+
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
-        SaslClient saslClient;
+        final ArrayList<Pair> clientFactoryList = new ArrayList<>();
         for (Provider currentProvider : providerSupplier.get()) {
-            String[] filtered = SaslFactories.filterMechanismsByProvider(mechanisms, 0, 0, currentProvider, mechFilter);
-            if (filtered.length > 0) {
-                Set<Service> services = currentProvider.getServices();
-                if (services != null) {
-                    for (Service service : currentProvider.getServices()) {
-                        if (serviceType.equals(service.getType())) {
-                            try {
-                                saslClient = ((SaslClientFactory) service.newInstance(null)).createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
-                                if (saslClient != null) {
-                                    return saslClient;
-                                }
-                            } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
-                            }
+            Set<Service> services = currentProvider.getServices();
+            if (services != null) {
+                for (Service service : currentProvider.getServices()) {
+                    if (serviceType.equals(service.getType())) {
+                        try {
+                            clientFactoryList.add(new Pair(currentProvider, (SaslClientFactory) service.newInstance(null)));
+                        } catch (NoSuchAlgorithmException | ClassCastException | InvalidParameterException ignored) {
                         }
+                    }
+                }
+            }
+        }
+
+        SaslClient saslClient;
+        final String[] mechArray = new String[1];
+        for (String mechanism : mechanisms) {
+            mechArray[0] = mechanism;
+            for (Pair pair : clientFactoryList) {
+                // this is more efficient than it looks: the only possible returns are mechArray or a constant empty array
+                String[] filtered = SaslFactories.filterMechanismsByProvider(mechArray, 0, 0, pair.provider, mechFilter);
+                if (filtered.length > 0) {
+                    saslClient = pair.saslClientFactory.createSaslClient(mechArray, authorizationId, protocol, serverName, props, cbh);
+                    if (saslClient != null) {
+                        return saslClient;
                     }
                 }
             }

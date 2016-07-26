@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -59,24 +60,31 @@ public final class ServiceLoaderSaslClientFactory implements SaslClientFactory {
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        final ArrayList<SaslClientFactory> factoryList = new ArrayList<>();
         synchronized (loader) {
             final Iterator<SaslClientFactory> iterator = loader.iterator();
-            SaslClientFactory clientFactory;
-            SaslClient saslClient;
             for (;;) try {
                 // Service loader iterators can blow up in various ways; that's why the loop is structured this way
                 if (! iterator.hasNext()) {
                     break;
                 }
-                clientFactory = iterator.next();
+                factoryList.add(iterator.next());
+            } catch (ServiceConfigurationError ignored) {}
+        }
+        SaslClient saslClient;
+        final String[] mechArray = new String[1];
+        for (String mechanism : mechanisms) {
+            mechArray[0] = mechanism;
+            for (SaslClientFactory clientFactory : factoryList) {
                 // let SaslException bubble up
-                saslClient = clientFactory.createSaslClient(mechanisms, authorizationId, protocol, serverName, props, cbh);
+                saslClient = clientFactory.createSaslClient(mechArray, authorizationId, protocol, serverName, props, cbh);
                 if (saslClient != null) {
                     return saslClient;
                 }
-            } catch (ServiceConfigurationError ignored) {}
-            return null;
+            }
         }
+        // no mechs found
+        return null;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
