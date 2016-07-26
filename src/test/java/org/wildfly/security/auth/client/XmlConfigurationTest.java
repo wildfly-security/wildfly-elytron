@@ -63,7 +63,7 @@ public class XmlConfigurationTest {
             "            <match-userinfo name=\"fred\"/>\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
-            "            <use-mechanism-realm name=\"mainRealm\"/>\n" +
+            "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
             "        </rule>\n" +
             "    </rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
