@@ -21,9 +21,13 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
+import javax.security.sasl.SaslException;
 
 /**
  * A delegating {@link SaslClientFactory} which will sort the mechanism names using a supplied {@link Comparator<String>}.
@@ -37,6 +41,13 @@ public class SortedMechanismClientServerFactory extends AbstractDelegatingSaslCl
     public SortedMechanismClientServerFactory(final SaslClientFactory delegate, final Comparator<String> mechanismNameComparator) {
         super(delegate);
         this.mechanismNameComparator = checkNotNullParam("mechanismComparator", mechanismNameComparator);
+    }
+
+    @Override
+    public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        List<String> mechanismList = Arrays.asList(mechanisms);
+        mechanismList.sort(mechanismNameComparator);
+        return super.createSaslClient(mechanismList.toArray(new String[mechanismList.size()]), authorizationId, protocol, serverName, props, cbh);
     }
 
     @Override
