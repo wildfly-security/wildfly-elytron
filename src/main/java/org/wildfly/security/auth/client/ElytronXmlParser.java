@@ -416,6 +416,13 @@ public final class ElytronXmlParser {
                         configuration = () -> parentConfig.create().rewriteUser(nameRewriter);
                         break;
                     }
+                    case "set-mechanism-properties": {
+                        gotConfig = true;
+                        final Map<String, String> mechanismProperties = parsePropertiesType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().useMechanismProperties(mechanismProperties);
+                        break;
+                    }
                     case "allow-sasl-mechanisms": {
                         gotConfig = true;
                         final String[] names = parseNamesType(reader);
@@ -712,7 +719,7 @@ public final class ElytronXmlParser {
                     break;
                 }
                 default:
-                    throw reader.unexpectedAttribute(i);
+
             }
         }
         if (keyStoreName == null) {
@@ -1132,6 +1139,80 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedContent();
             }
         }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    public static Map<String, String> parsePropertiesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        if (reader.getAttributeCount() > 0) {
+            throw reader.unexpectedAttribute(0);
+        }
+
+        Map<String, String> propertiesMap = new HashMap<>();
+
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                switch (reader.getNamespaceURI()) {
+                    case NS_ELYTRON_1_0:
+                        break;
+                    default:
+                        throw reader.unexpectedElement();
+                }
+                switch (reader.getLocalName()) {
+                    case "property":
+                        final int attributeCount = reader.getAttributeCount();
+                        String key = null;
+                        String value = null;
+                        for (int i = 0; i < attributeCount; i++) {
+                            final String attributeNamespace = reader.getAttributeNamespace(i);
+                            if (attributeNamespace != null && !attributeNamespace.isEmpty()) {
+                                throw reader.unexpectedAttribute(i);
+                            }
+                            switch (reader.getAttributeLocalName(i)) {
+                                case "key":
+                                    if (key != null)
+                                        throw reader.unexpectedAttribute(i);
+                                    key = reader.getAttributeValue(i);
+                                    break;
+                                case "value":
+                                    if (value != null)
+                                        throw reader.unexpectedAttribute(i);
+                                    value = reader.getAttributeValue(i);
+                                    break;
+                                default:
+                                    throw reader.unexpectedAttribute(i);
+                            }
+                        }
+                        if (key == null) {
+                            throw missingAttribute(reader, "key");
+                        }
+                        if (value == null) {
+                            throw missingAttribute(reader, "value");
+                        }
+                        propertiesMap.put(key, value);
+                        if (reader.hasNext()) {
+                            final int innerTag = reader.nextTag();
+                            if (innerTag == START_ELEMENT) {
+                                throw reader.unexpectedElement();
+                            } else if (innerTag == END_ELEMENT) {
+                            } else {
+                                throw reader.unexpectedContent();
+                            }
+                        } else {
+                            throw reader.unexpectedDocumentEnd();
+                        }
+
+                        break;
+                    default:
+                        throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return propertiesMap;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+
         throw reader.unexpectedDocumentEnd();
     }
 
