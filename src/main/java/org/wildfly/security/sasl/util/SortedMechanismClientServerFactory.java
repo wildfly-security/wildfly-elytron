@@ -21,7 +21,6 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -45,9 +44,9 @@ public class SortedMechanismClientServerFactory extends AbstractDelegatingSaslCl
 
     @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName, Map<String, ?> props, CallbackHandler cbh) throws SaslException {
-        List<String> mechanismList = Arrays.asList(mechanisms);
-        mechanismList.sort(mechanismNameComparator);
-        return super.createSaslClient(mechanismList.toArray(new String[mechanismList.size()]), authorizationId, protocol, serverName, props, cbh);
+        String[] sortedMechanisms = mechanisms.clone();
+        Arrays.sort(sortedMechanisms, mechanismNameComparator);
+        return super.createSaslClient(sortedMechanisms, authorizationId, protocol, serverName, props, cbh);
     }
 
     @Override
