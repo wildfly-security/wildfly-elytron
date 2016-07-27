@@ -113,6 +113,7 @@
                 <xsd:element name="set-anonymous" type="empty-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-mechanism-realm" type="name-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="1" maxOccurs="1"/>
+                <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="1" maxOccurs="1" />
                 <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
                 <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="1" maxOccurs="1"/>

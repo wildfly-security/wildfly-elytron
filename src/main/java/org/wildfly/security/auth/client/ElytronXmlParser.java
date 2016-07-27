@@ -423,6 +423,13 @@ public final class ElytronXmlParser {
                         configuration = () -> parentConfig.create().useMechanismProperties(mechanismProperties);
                         break;
                     }
+                    case "allow-all-sasl-mechanisms": {
+                        gotConfig = true;
+                        parseEmptyType(reader);
+                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        configuration = () -> parentConfig.create().allowAllSaslMechanisms();
+                        break;
+                    }
                     case "allow-sasl-mechanisms": {
                         gotConfig = true;
                         final String[] names = parseNamesType(reader);
