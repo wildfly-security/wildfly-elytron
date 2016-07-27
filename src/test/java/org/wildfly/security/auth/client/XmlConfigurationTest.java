@@ -64,6 +64,10 @@ public class XmlConfigurationTest {
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
             "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
+            "            <set-mechanism-properties>\n" +
+            "                <property key=\"key-one\" value=\"value-one\"/>\n" +
+            "                <property key=\"key-two\" value=\"value-two\"/>\n" +
+            "            </set-mechanism-properties>\n" +
             "        </rule>\n" +
             "    </rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);

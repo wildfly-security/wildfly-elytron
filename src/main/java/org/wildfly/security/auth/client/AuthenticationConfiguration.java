@@ -619,6 +619,17 @@ public abstract class AuthenticationConfiguration {
     // SASL
 
     /**
+     * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
+     * the {@code SaslClientFactory} when the mechanism is created.
+     *
+     * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
+        return mechanismProperties == null || mechanismProperties.isEmpty() ? this : new SetMechanismPropertiesConfiguration(this, mechanismProperties);
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which sets the allowed mechanism set
      * to only include the given named mechanisms.
      *
