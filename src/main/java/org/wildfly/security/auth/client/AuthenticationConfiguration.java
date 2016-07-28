@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
@@ -741,7 +742,7 @@ public abstract class AuthenticationConfiguration {
     SaslClient createSaslClient(URI uri, SaslClientFactory clientFactory, Collection<String> serverMechanisms) throws SaslException {
         final HashMap<String, Object> properties = new HashMap<String, Object>();
         configureSaslProperties(properties);
-        final HashSet<String> mechs = new HashSet<String>(serverMechanisms);
+        final HashSet<String> mechs = new LinkedHashSet<String>(serverMechanisms);
         mechs.removeIf(n -> ! filterOneSaslMechanism(n));
         if (mechs.isEmpty()) return null;
         final String authorizationName = getAuthorizationName();
