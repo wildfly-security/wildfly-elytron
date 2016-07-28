@@ -63,6 +63,7 @@ public class XmlConfigurationTest {
             "            <match-userinfo name=\"fred\"/>\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
+            "            <allow-all-sasl-mechanisms />\n" +
             "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
             "            <set-mechanism-properties>\n" +
             "                <property key=\"key-one\" value=\"value-one\"/>\n" +

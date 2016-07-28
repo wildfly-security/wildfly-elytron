@@ -631,6 +631,15 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
+     * Create a new configuration which is the same as this configuration, but which allows all SASL mechanisms.
+     *
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration allowAllSaslMechanisms() {
+        return new SetAllowAllSaslMechanisms(this);
+    }
+
+    /**
      * Create a new configuration which is the same as this configuration, but which sets the allowed mechanism set
      * to only include the given named mechanisms.
      *
