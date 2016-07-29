@@ -168,6 +168,9 @@ class MechanismDatabase {
                         }
                         row[byte2] = entry;
                     }
+                    if (name.startsWith("TLS_")) {
+                        aliases.put("SSL_" + name.substring(4), name);
+                    }
                 }
             }
         }
