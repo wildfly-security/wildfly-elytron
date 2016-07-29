@@ -150,6 +150,10 @@ class MechanismDatabase {
                     addTo(entriesByDigest, digest, entry);
                     addTo(entriesByProtocol, prot, entry);
                     addTo(entriesByLevel, level, entry);
+
+                    if (name.startsWith("TLS_")) {
+                        aliases.put("SSL_" + name.substring(4), name);
+                    }
                 }
             }
         }
