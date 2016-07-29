@@ -64,7 +64,7 @@ public abstract class AbstractPermission<This extends AbstractPermission<This>> 
      */
     @SuppressWarnings("unchecked")
     public final boolean equals(final Object obj) {
-        return obj.getClass() == getClass() && equals((This) obj);
+        return obj != null && obj.getClass() == getClass() && equals((This) obj);
     }
 
     /**

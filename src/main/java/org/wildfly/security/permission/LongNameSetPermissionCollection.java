@@ -76,9 +76,9 @@ final class LongNameSetPermissionCollection extends NameSetPermissionCollection 
         final StringEnumeration nameEnumeration = getNameEnumeration();
         if ("*".equals(name)) {
             // add all names
-            bits = (1 << nameEnumeration.size()) - 1;
+            bits = (1L << nameEnumeration.size()) - 1;
         } else {
-            bits = 1 << nameEnumeration.indexOf(name);
+            bits = 1L << nameEnumeration.indexOf(name);
         }
         return bits;
     }
