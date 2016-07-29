@@ -656,7 +656,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         String realm = readOnlyRealmUsername ? realmCallback.getDefaultText() : realmCallback.getText();
         String username = readOnlyRealmUsername ? nameCallback.getDefaultName() : nameCallback.getName();
         byte[] digest_urp = userRealmPasswordDigest(messageDigest, username, realm, passwordChars);
-        if (passwordChars != null) Arrays.fill(passwordChars, (char)0); // wipe out the password
+        Arrays.fill(passwordChars, (char)0); // wipe out the password
         return digest_urp;
     }
 
