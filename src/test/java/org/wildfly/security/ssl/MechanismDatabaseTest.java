@@ -101,4 +101,18 @@ public class MechanismDatabaseTest {
             })
         );
     }
+
+    @Test
+    public void cipherSuiteSelector5() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA");
+        Assert.assertArrayEquals(
+            new String[] {
+                "SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+            },
+            selector.evaluate(new String[] {
+                "SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"
+            })
+        );
+    }
+
 }

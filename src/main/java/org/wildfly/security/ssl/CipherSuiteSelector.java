@@ -420,7 +420,7 @@ public abstract class CipherSuiteSelector {
 //                                case "SUITEB128ONLY":       return null;
 //                                case "SUITEB192":           return null;
                                 default: {
-                                    throw ElytronMessages.log.mechSelectorTokenNotAllowed(name, i.offset(), string);
+                                    throw ElytronMessages.log.mechSelectorUnknownToken(name, string);
                                 }
                             }
                         }
