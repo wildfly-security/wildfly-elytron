@@ -373,6 +373,10 @@ public final class X509CertificateBuilder {
         // signatureAlgorithm
         final String signatureAlgorithmName = this.signatureAlgorithmName;
         final String signatureAlgorithmOid = ASN1.oidFromSignatureAlgorithm(signatureAlgorithmName);
+        if (signatureAlgorithmOid == null) {
+            throw log.asnUnrecognisedAlgorithm(signatureAlgorithmName);
+        }
+
         derEncoder.startSequence(); // AlgorithmIdentifier
         derEncoder.encodeObjectIdentifier(signatureAlgorithmOid);
         derEncoder.endSequence(); // AlgorithmIdentifier
