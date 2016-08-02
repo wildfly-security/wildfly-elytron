@@ -9,7 +9,8 @@ org.wildfly.security.auth.realm
 org.wildfly.security.auth.realm.jdbc
 org.wildfly.security.auth.realm.jdbc.mapper
 org.wildfly.security.auth.realm.ldap
-org.wildfly.security.auth.realm.oauth2
+org.wildfly.security.auth.realm.token
+org.wildfly.security.auth.realm.token.validator
 org.wildfly.security.auth.server
 org.wildfly.security.auth.server.event
 org.wildfly.security.auth.util
@@ -27,6 +28,7 @@ org.wildfly.security.keystore
 org.wildfly.security.manager
 org.wildfly.security.manager.action
 org.wildfly.security.mechanism
+org.wildfly.security.mechanism.oauth2
 org.wildfly.security.mechanism.scram
 org.wildfly.security.password
 org.wildfly.security.password.impl
@@ -43,6 +45,7 @@ org.wildfly.security.sasl.external
 org.wildfly.security.sasl.gs2
 org.wildfly.security.sasl.gssapi
 org.wildfly.security.sasl.localuser
+org.wildfly.security.sasl.oauth2
 org.wildfly.security.sasl.otp
 org.wildfly.security.sasl.plain
 org.wildfly.security.sasl.scram
@@ -50,3 +53,4 @@ org.wildfly.security.sasl.util
 org.wildfly.security.ssl
 org.wildfly.security.util
 org.wildfly.security.x500
+org.wildfly.security.x500.cert
