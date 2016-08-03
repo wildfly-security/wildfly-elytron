@@ -62,7 +62,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final DirContextFactory contextFactory, final Class<? extends Credential> credentialType, final String credentialAlgorithm) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(DirContext context, final Class<? extends Credential> credentialType, final String credentialAlgorithm) throws RealmUnavailableException {
         if (credentialType == PasswordCredential.class) {
             if (credentialAlgorithm == null) return SupportLevel.SUPPORTED;
             if (UserPasswordPasswordUtil.isAlgorithmSupported(credentialAlgorithm)) return SupportLevel.POSSIBLY_SUPPORTED;
@@ -71,34 +71,34 @@ class UserPasswordCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public IdentityCredentialPersister forIdentity(DirContextFactory contextFactory, String distinguishedName) {
-        return new ForIdentityLoader(contextFactory, distinguishedName);
+    public IdentityCredentialPersister forIdentity(DirContext dirContext, String distinguishedName) {
+        return new ForIdentityLoader(dirContext, distinguishedName);
     }
 
     EvidenceVerifier toEvidenceVerifier() {
         return new EvidenceVerifier() {
 
             @Override
-            public SupportLevel getEvidenceVerifySupport(final DirContextFactory contextFactory, final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm) throws RealmUnavailableException {
+            public SupportLevel getEvidenceVerifySupport(DirContext context, final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm) throws RealmUnavailableException {
                 // If we can acquire PasswordCredential and it support provided evidence, we can verify.
                 if ( ! PasswordCredential.canVerifyEvidence(evidenceType, evidenceAlgorithm)) return SupportLevel.UNSUPPORTED;
-                return getCredentialAcquireSupport(contextFactory, PasswordCredential.class, evidenceAlgorithm);
+                return getCredentialAcquireSupport(context, PasswordCredential.class, evidenceAlgorithm);
             }
 
             @Override
-            public IdentityEvidenceVerifier forIdentity(DirContextFactory contextFactory, String distinguishedName) throws RealmUnavailableException {
-                return new ForIdentityLoader(contextFactory, distinguishedName);
+            public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName) throws RealmUnavailableException {
+                return new ForIdentityLoader(context, distinguishedName);
             }
         };
     }
 
     private class ForIdentityLoader implements IdentityCredentialPersister, IdentityEvidenceVerifier {
 
-        private final DirContextFactory contextFactory;
+        private final DirContext context;
         private final String distinguishedName;
 
-        public ForIdentityLoader(DirContextFactory contextFactory, String distinguishedName) {
-            this.contextFactory = contextFactory;
+        public ForIdentityLoader(DirContext context, String distinguishedName) {
+            this.context = context;
             this.distinguishedName = distinguishedName;
         }
 
@@ -124,16 +124,6 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
-
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Getting user-password credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
-                }
-                return null;
-            }
             try {
                 Attributes attributes = context.getAttributes(distinguishedName, new String[] { userPasswordAttributeName });
                 Attribute attribute = attributes.get(userPasswordAttributeName);
@@ -152,8 +142,6 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 if (log.isTraceEnabled()) {
                     log.trace("Getting user-password credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
                 }
-            } finally {
-                contextFactory.returnContext(context);
             }
             return null;
         }
@@ -174,12 +162,6 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         public void persistCredential(final Credential credential) throws RealmUnavailableException {
             // TODO - We probably need some better resolution here of the existing attributes - i.e. different types we would want to add, same type we would want to replace.
 
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
-            }
             try {
                 byte[] composedPassword = UserPasswordPasswordUtil.composeUserPassword(credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword));
                 Assert.assertNotNull(composedPassword);
@@ -191,19 +173,11 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
             } catch (NamingException | IOException e) {
                 throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
         }
 
         @Override
         public void clearCredentials() throws RealmUnavailableException {
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
-            }
             try {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(new BasicAttribute(userPasswordAttributeName));
@@ -213,8 +187,6 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 // ignore if already clear
             } catch (NamingException e) {
                 throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
         }
     }

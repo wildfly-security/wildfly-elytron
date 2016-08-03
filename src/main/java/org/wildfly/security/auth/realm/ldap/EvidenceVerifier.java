@@ -22,6 +22,8 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 
+import javax.naming.directory.DirContext;
+
 /**
  * An individual evidence verifier to associate with an LDAP {@link SecurityRealm}, multiple verifiers
  * can be associated with the realm allowing for different verification strategies to be applied to different named credentials.
@@ -33,13 +35,13 @@ interface EvidenceVerifier {
     /**
      * Get the {@link SupportLevel} for the level of evidence validation support for the named credential.
      *
-     * @param contextFactory the {@link DirContextFactory} to access the LDAP server
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param evidenceType the evidence type (must not be {@code null})
      * @param algorithmName the evidence algorithm name or {@code null} if none
      * @return the level of support for the named credential
      * @throws RealmUnavailableException if the realm is currently unable to handle requests
      */
-    SupportLevel getEvidenceVerifySupport(DirContextFactory contextFactory, Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(DirContext dirContext, Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityEvidenceVerifier} to verify the evidence for a specific identity.
@@ -47,10 +49,10 @@ interface EvidenceVerifier {
      * Note: By this point referrals relating to the identity should have been resolved so the {@link DirContextFactory} should
      * be suitable for use with the supplied {@code distinguishedName}
      *
-     * @param contextFactory the {@link DirContextFactory} to use to connect to LDAP.
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param distinguishedName the distinguished name of the identity.
      * @return An {@link IdentityEvidenceVerifier} for the specified identity identified by their distinguished name.
      */
-    IdentityEvidenceVerifier forIdentity(DirContextFactory contextFactory, String distinguishedName) throws RealmUnavailableException;
+    IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName) throws RealmUnavailableException;
 
 }

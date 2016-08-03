@@ -22,6 +22,8 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
+import javax.naming.directory.DirContext;
+
 /**
  * Within LDAP credentials could be stored in different ways, splitting out a CredentialLoader allows different strategies to be
  * plugged into the realm.
@@ -43,12 +45,12 @@ interface CredentialLoader {
      * Note: The DirContextFactory approach will be evolved further for better referral support so it makes it easier for it to
      * be passed in for each call.
      *
-     * @param contextFactory the dir context factory to use if a DirContext is required to query the server directly
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(DirContextFactory contextFactory, Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(DirContext dirContext, Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.
@@ -56,10 +58,10 @@ interface CredentialLoader {
      * Note: By this point referrals relating to the identity should have been resolved so the {@link DirContextFactory} should
      * be suitable for use with the supplied {@code distinguishedName}
      *
-     * @param contextFactory the {@link DirContextFactory} to use to connect to LDAP.
+     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param distinguishedName the distinguished name of the identity.
      * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
      */
-    IdentityCredentialLoader forIdentity(DirContextFactory contextFactory, String distinguishedName) throws RealmUnavailableException;
+    IdentityCredentialLoader forIdentity(DirContext dirContext, String distinguishedName) throws RealmUnavailableException;
 
 }

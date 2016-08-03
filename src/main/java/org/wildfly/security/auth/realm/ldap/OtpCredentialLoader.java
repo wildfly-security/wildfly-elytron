@@ -50,7 +50,7 @@ class OtpCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(final DirContextFactory contextFactory, final Class<? extends Credential> credentialType, final String algorithmName) {
+    public SupportLevel getCredentialAcquireSupport(final DirContext context, final Class<? extends Credential> credentialType, final String algorithmName) {
         if (credentialType == PasswordCredential.class) {
             if (algorithmName == null) {
                 return SupportLevel.SUPPORTED;
@@ -65,17 +65,17 @@ class OtpCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public ForIdentityLoader forIdentity(DirContextFactory contextFactory, String distinguishedName) {
-        return new ForIdentityLoader(contextFactory, distinguishedName);
+    public ForIdentityLoader forIdentity(DirContext context, String distinguishedName) {
+        return new ForIdentityLoader(context, distinguishedName);
     }
 
     private class ForIdentityLoader implements IdentityCredentialPersister {
 
-        private final DirContextFactory contextFactory;
+        private final DirContext context;
         private final String distinguishedName;
 
-        public ForIdentityLoader(DirContextFactory contextFactory, String distinguishedName) {
-            this.contextFactory = contextFactory;
+        public ForIdentityLoader(DirContext context, String distinguishedName) {
+            this.context = context;
             this.distinguishedName = distinguishedName;
         }
 
@@ -83,12 +83,6 @@ class OtpCredentialLoader implements CredentialPersister {
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
             if (credentialType != PasswordCredential.class) {
                 return SupportLevel.UNSUPPORTED;
-            }
-            DirContext context = null;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                if (log.isTraceEnabled()) log.trace("Getting otp credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
             }
             try {
                 Attributes attributes = context.getAttributes(distinguishedName,
@@ -104,8 +98,6 @@ class OtpCredentialLoader implements CredentialPersister {
 
             } catch (NamingException e) {
                 if (log.isTraceEnabled()) log.trace("Getting otp credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
             return SupportLevel.UNSUPPORTED;
         }
@@ -113,16 +105,6 @@ class OtpCredentialLoader implements CredentialPersister {
         @Override
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
             if (credentialType != PasswordCredential.class) {
-                return null;
-            }
-
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            }
-            catch (NamingException e) {
-                if (log.isTraceEnabled()) log.trace("Getting OTP credential of type "
-                        + credentialType.getName() + " failed. dn=" + distinguishedName, e);
                 return null;
             }
             try {
@@ -151,26 +133,18 @@ class OtpCredentialLoader implements CredentialPersister {
             } catch (NamingException | InvalidKeySpecException | NoSuchAlgorithmException e) {
                 if (log.isTraceEnabled()) log.trace("Getting OTP credential of type "
                         + credentialType.getName() + " failed. dn=" + distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
             return null;
         }
 
         @Override
         public boolean getCredentialPersistSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
-            return OtpCredentialLoader.this.getCredentialAcquireSupport(contextFactory, credentialType, algorithmName).mayBeSupported();
+            return OtpCredentialLoader.this.getCredentialAcquireSupport(context, credentialType, algorithmName).mayBeSupported();
         }
 
         @Override
         public void persistCredential(final Credential credential) throws RealmUnavailableException {
             OneTimePassword password = credential.castAndApply(PasswordCredential.class, c -> c.getPassword(OneTimePassword.class));
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
-            }
             try {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(algorithmAttributeName, password.getAlgorithm());
@@ -181,18 +155,10 @@ class OtpCredentialLoader implements CredentialPersister {
                 context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
             } catch (NamingException e) {
                 throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
         }
 
         @Override public void clearCredentials() throws RealmUnavailableException {
-            DirContext context;
-            try {
-                context = contextFactory.obtainDirContext(null);
-            } catch (NamingException e) {
-                throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
-            }
             try {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(new BasicAttribute(algorithmAttributeName));
@@ -205,8 +171,6 @@ class OtpCredentialLoader implements CredentialPersister {
                 // ignore if already clear
             } catch (NamingException e) {
                 throw log.ldapRealmCredentialClearingFailed(distinguishedName, e);
-            } finally {
-                contextFactory.returnContext(context);
             }
         }
     }

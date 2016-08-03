@@ -20,11 +20,15 @@ package org.wildfly.security.ldap;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.apacheds.LdapService;
+import org.wildfly.security.auth.realm.ldap.DelegatingLdapContext;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 import java.io.File;
 import java.security.Provider;
 import java.security.Security;
@@ -64,16 +68,19 @@ public class DirContextFactoryRule implements TestRule {
         };
     }
 
-    public DirContextFactory create() {
+    public ExceptionSupplier<DirContext, NamingException> create() {
         return create(SERVER_DN, SERVER_CREDENTIAL);
     }
 
-    public DirContextFactory create(String securityPrincipal, String credentials) {
-        return SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
-                .setSecurityPrincipal(securityPrincipal)
-                .setSecurityCredential(credentials)
-                .build();
+    public ExceptionSupplier<DirContext, NamingException> create(String securityPrincipal, String credentials) {
+        return () -> new DelegatingLdapContext(
+                SimpleDirContextFactoryBuilder.builder()
+                        .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
+                        .setSecurityPrincipal(securityPrincipal)
+                        .setSecurityCredential(credentials)
+                        .build(),
+                DirContextFactory.ReferralMode.IGNORE
+        );
     }
 
     private LdapService startEmbeddedServer() {

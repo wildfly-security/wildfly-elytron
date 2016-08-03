@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -61,11 +63,13 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.realm.ldap.DelegatingLdapContext;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
@@ -484,13 +488,17 @@ public class Gs2SuiteChild extends BaseTestCase {
         final SaslServerBuilder builder = new SaslServerBuilder(Gs2SaslServerFactory.class, mechanism)
                 .setDontAssertBuiltServer();
 
-        final DirContextFactory dirContextFactory = SimpleDirContextFactoryBuilder.builder()
-                .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
-                .setSecurityPrincipal("uid=Sasl_1,ou=Users,dc=wildfly,dc=org")
-                .setSecurityCredential("servicepwd")
-                .build();
+        final ExceptionSupplier<DirContext, NamingException> dirContextSupplier = () -> new DelegatingLdapContext(
+                SimpleDirContextFactoryBuilder.builder()
+                        .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
+                        .setSecurityPrincipal("uid=Sasl_1,ou=Users,dc=wildfly,dc=org")
+                        .setSecurityCredential("servicepwd")
+                        .build(),
+                DirContextFactory.ReferralMode.IGNORE
+        );
+
         final SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(dirContextFactory)
+                .setDirContextSupplier(dirContextSupplier)
                 .setNameRewriter(new RegexNameRewriter(Pattern.compile("(.*)@WILDFLY\\.ORG"), "$1", true))
                 .identityMapping()
                     .setSearchDn("dc=wildfly,dc=org")

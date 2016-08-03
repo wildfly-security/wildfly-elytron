@@ -68,7 +68,7 @@ public class PasswordSupportSuiteChild {
     @BeforeClass
     public static void createRealm() {
         simpleToDnRealm = LdapSecurityRealmBuilder.builder()
-            .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+            .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                 .setRdnIdentifier("uid")

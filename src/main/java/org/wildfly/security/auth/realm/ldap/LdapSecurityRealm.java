@@ -55,6 +55,7 @@ import javax.naming.ldap.PagedResultsResponseControl;
 import javax.naming.ldap.Rdn;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.CloseableIterator;
 import org.wildfly.security.auth.server.IdentityLocator;
@@ -78,7 +79,7 @@ import org.wildfly.security.evidence.Evidence;
  */
 class LdapSecurityRealm implements ModifiableSecurityRealm {
 
-    private final DirContextFactory dirContextFactory;
+    private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private final NameRewriter nameRewriter;
     private final IdentityMapping identityMapping;
     private final int pageSize;
@@ -87,14 +88,14 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     private final List<CredentialPersister> credentialPersisters;
     private final List<EvidenceVerifier> evidenceVerifiers;
 
-    LdapSecurityRealm(final DirContextFactory dirContextFactory, final NameRewriter nameRewriter,
+    LdapSecurityRealm(final ExceptionSupplier<DirContext, NamingException> dirContextSupplier, final NameRewriter nameRewriter,
                       final IdentityMapping identityMapping,
                       final List<CredentialLoader> credentialLoaders,
                       final List<CredentialPersister> credentialPersisters,
                       final List<EvidenceVerifier> evidenceVerifiers,
                       final int pageSize) {
 
-        this.dirContextFactory = dirContextFactory;
+        this.dirContextSupplier = dirContextSupplier;
         this.nameRewriter = nameRewriter;
         this.identityMapping = identityMapping;
         this.pageSize = pageSize;
@@ -121,6 +122,22 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         }
 
         return new LdapRealmIdentity(name);
+    }
+
+    private DirContext obtainContext() throws RealmUnavailableException {
+        try {
+            return dirContextSupplier.get();
+        } catch (NamingException e) {
+            throw log.ldapRealmFailedToObtainContext(e);
+        }
+    }
+
+    private void closeContext(DirContext dirContext) {
+        try {
+            dirContext.close();
+        } catch (NamingException e) {
+            log.debug("LdapSecurityRealm failed to close DirContext", e);
+        }
     }
 
     @Override
@@ -187,7 +204,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 list.clear();
 
                 try {
-                    context = dirContextFactory.obtainDirContext(null);
+                    context = dirContextSupplier.get();
                 } catch (NamingException e) {
                     throw log.ldapRealmIdentitySearchFailed(e);
                 }
@@ -209,7 +226,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 } catch (NamingException e) {
                     throw log.ldapRealmIdentitySearchFailed(e);
                 } finally {
-                    dirContextFactory.returnContext(context);
+                    closeContext(context);
                 }
             }
 
@@ -239,8 +256,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         Assert.checkNotNullParam("credentialType", credentialType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
+        DirContext dirContext = obtainContext();
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName);
+            SupportLevel support = loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -249,6 +267,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 response = support;
             }
         }
+        closeContext(dirContext);
 
         return response;
     }
@@ -258,8 +277,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         Assert.checkNotNullParam("evidenceType", evidenceType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
+        DirContext dirContext = obtainContext();
         for (EvidenceVerifier verifier : evidenceVerifiers) {
-            SupportLevel support = verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName);
+            SupportLevel support = verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -268,6 +288,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 response = support;
             }
         }
+        closeContext(dirContext);
 
         return response;
     }
@@ -305,9 +326,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             SupportLevel support = SupportLevel.UNSUPPORTED;
 
+            DirContext dirContext = obtainContext();
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName).mayBeSupported()) {
-                    IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, identity.getDistinguishedName());
+                if (loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName).mayBeSupported()) {
+                    IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
 
                     SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName);
                     if (temp != null && temp.isDefinitelySupported()) {
@@ -320,6 +342,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     }
                 }
             }
+            closeContext(dirContext);
 
             return support;
         }
@@ -341,9 +364,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return null;
             }
 
+            DirContext dirContext = obtainContext();
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContextFactory, credentialType, algorithmName).mayBeSupported()) {
-                    IdentityCredentialLoader icl = loader.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                if (loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName).mayBeSupported()) {
+                    IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
 
                     Credential credential = icl.getCredential(credentialType, algorithmName);
                     if (credentialType.isInstance(credential)) {
@@ -351,6 +375,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     }
                 }
             }
+            closeContext(dirContext);
 
             return null;
         }
@@ -363,13 +388,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 throw log.ldapRealmIdentityNotExists(name);
             }
 
+            DirContext dirContext = obtainContext();
+
             // verify support
             for (Credential credential : credentials) {
                 final Class<? extends Credential> credentialType = credential.getClass();
                 final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
                 boolean supported = false;
                 for (CredentialPersister persister : credentialPersisters) {
-                    IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                    IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
                     if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
                         supported = true;
                     }
@@ -381,7 +408,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             // clear
             for (CredentialPersister persister : credentialPersisters) {
-                IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
                 icp.clearCredentials();
             }
 
@@ -390,7 +417,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 final Class<? extends Credential> credentialType = credential.getClass();
                 final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
                 for (CredentialPersister persister : credentialPersisters) {
-                    IdentityCredentialPersister icp = persister.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+                    IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
                     if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
                         icp.persistCredential(credential);
                         // next credential
@@ -398,6 +425,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     }
                 }
             }
+
+            closeContext(dirContext);
         }
 
         @Override
@@ -417,20 +446,25 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             SupportLevel response = SupportLevel.UNSUPPORTED;
 
-            for (EvidenceVerifier verifier : evidenceVerifiers) {
-                if (verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName).mayBeSupported()) {
-                    final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+            DirContext dirContext = obtainContext();
+            try {
+                for (EvidenceVerifier verifier : evidenceVerifiers) {
+                    if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
+                        final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                    final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName);
-                    if (support != null && support.isDefinitelySupported()) {
-                        // As soon as one claims definite support we know it is supported.
-                        return support;
-                    }
+                        final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName);
+                        if (support != null && support.isDefinitelySupported()) {
+                            // As soon as one claims definite support we know it is supported.
+                            return support;
+                        }
 
-                    if (support != null && support.compareTo(support) < 0) {
-                        response = support;
+                        if (support != null && support.compareTo(support) < 0) {
+                            response = support;
+                        }
                     }
                 }
+            } finally {
+                closeContext(dirContext);
             }
             return response;
         }
@@ -450,16 +484,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return false;
             }
 
-            for (EvidenceVerifier verifier : evidenceVerifiers) {
-                if (verifier.getEvidenceVerifySupport(dirContextFactory, evidenceType, algorithmName).mayBeSupported()) {
-                    IdentityEvidenceVerifier iev = verifier.forIdentity(dirContextFactory, this.identity.getDistinguishedName());
+            DirContext dirContext = obtainContext();
+            try {
+                for (EvidenceVerifier verifier : evidenceVerifiers) {
+                    if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
+                        IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                    if (iev.verifyEvidence(evidence)) {
-                        return true;
+                        if (iev.verifyEvidence(evidence)) {
+                            return true;
+                        }
                     }
                 }
+            } finally {
+                closeContext(dirContext);
             }
-
             return false;
         }
 
@@ -480,10 +518,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
         private LdapIdentity getIdentity() throws RealmUnavailableException {
             log.debugf("Trying to create identity for principal [%s].", this.name);
-            DirContext context = null;
+            DirContext context;
 
             try {
-                context = dirContextFactory.obtainDirContext(null);
+                context = dirContextSupplier.get();
             } catch (NamingException e) {
                 throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
             }
@@ -501,8 +539,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     searchDn = ldapName.toString();
                 }
 
-                final DirContext finalContext = context;
-
                 LdapSearch ldapSearch = new LdapSearch(searchDn, String.format("(%s={0})", identityMapping.rdnIdentifier), name);
 
                 ldapSearch.setReturningAttributes(
@@ -516,7 +552,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                                 MapAttributes identityAttributes = new MapAttributes();
 
                                 identityAttributes.addAll(extractSingleAttributes(result));
-                                identityAttributes.addAll(extractFilteredAttributes(result, finalContext));
+                                identityAttributes.addAll(extractFilteredAttributes(result, context));
 
                                 return new LdapIdentity(result.getNameInNamespace(), identityAttributes.asReadOnly());
                             })
@@ -550,7 +586,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             } catch (NamingException e) {
                 throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
             } finally {
-                dirContextFactory.returnContext(context);
+                closeContext(context);
             }
         }
 
@@ -696,7 +732,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             DirContext context = null;
             try {
-                context = dirContextFactory.obtainDirContext(null);
+                context = dirContextSupplier.get();
             } catch (NamingException e) {
                 throw log.ldapRealmFailedDeleteIdentityFromServer(e);
             }
@@ -707,7 +743,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             } catch (NamingException e) {
                 throw log.ldapRealmFailedDeleteIdentityFromServer(e);
             } finally {
-                dirContextFactory.returnContext(context);
+                closeContext(context);
             }
         }
 
@@ -718,7 +754,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             DirContext context = null;
             try {
-                context = dirContextFactory.obtainDirContext(null);
+                context = dirContextSupplier.get();
             } catch (NamingException e) {
                 throw log.ldapRealmFailedCreateIdentityOnServer(e);
             }
@@ -732,7 +768,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             } catch (NamingException e) {
                 throw log.ldapRealmFailedCreateIdentityOnServer(e);
             } finally {
-                dirContextFactory.returnContext(context);
+                closeContext(context);
             }
         }
 
@@ -749,7 +785,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             DirContext context = null;
             try {
-                context = dirContextFactory.obtainDirContext(null);
+                context = dirContextSupplier.get();
             } catch (Exception e) {
                 throw log.ldapRealmAttributesSettingFailed(this.name, e);
             }
@@ -801,7 +837,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             } catch (Exception e) {
                 throw log.ldapRealmAttributesSettingFailed(this.name, e);
             } finally {
-                dirContextFactory.returnContext(context);
+                closeContext(context);
             }
         }
 
