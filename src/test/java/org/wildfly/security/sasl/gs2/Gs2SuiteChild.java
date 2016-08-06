@@ -59,9 +59,6 @@ import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.Oid;
-import org.jboss.logging.Logger;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
@@ -76,7 +73,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.util.RegexNameRewriter;
 import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.WildFlySasl;
-import org.wildfly.security.sasl.gssapi.TestKDC;
+import org.wildfly.security.sasl.gssapi.GssapiTestSuite;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.test.SaslServerBuilder;
 import org.wildfly.security.sasl.util.ChannelBindingSaslClientFactory;
@@ -89,44 +86,18 @@ import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
  *
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-public class Gs2Test extends BaseTestCase {
+public class Gs2SuiteChild extends BaseTestCase {
 
     private static final String TEST_SERVER_1 = "test_server_1";
-    private static TestKDC testKdc;
     private static Subject clientSubject;
     private static Subject serverSubject;
     private SaslServer saslServer;
     private SaslClient saslClient;
-    static String serverKeyTab;
-    static final String SERVER_KEY_TAB = "gs2ServerKeyTab";
-    private static Logger log = Logger.getLogger(Gs2Test.class);
 
     @BeforeClass
     public static void init() throws LoginException {
-        testKdc = new TestKDC(true);
-        testKdc.startDirectoryService();
-        testKdc.startKDC();
-        serverKeyTab = testKdc.generateKeyTab(SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
-        log.debug("keytab written to:" + serverKeyTab);
-
         clientSubject = loginClient();
-        serverSubject = loginServer(serverKeyTab);
-    }
-
-    @AfterClass
-    public static void stop() {
-        if (testKdc != null) {
-            testKdc.stopAll();
-            testKdc = null;
-        }
-        clientSubject = null;
-        serverSubject = null;
-    }
-
-    @After
-    public void dispose() throws Exception {
-        if(saslClient != null) saslClient.dispose();
-        if(saslServer != null) saslServer.dispose();
+        serverSubject = loginServer(GssapiTestSuite.serverKeyTab);
     }
 
     @Test

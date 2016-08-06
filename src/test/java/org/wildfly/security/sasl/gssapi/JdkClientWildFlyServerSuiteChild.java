@@ -35,11 +35,11 @@ import org.junit.BeforeClass;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
- * Test a WildFLy client can authenticate against a JDK server.
+ * Test a JDK supplied client can communicate with a WildFly server.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class WildFlyClientJdkServer extends BaseGssapiTests {
+public class JdkClientWildFlyServerSuiteChild extends BaseGssapiTests {
 
     private static Subject clientSubject;
     private static Subject serverSubject;
@@ -58,17 +58,18 @@ public class WildFlyClientJdkServer extends BaseGssapiTests {
 
     @Override
     protected SaslClient getSaslClient(final boolean authServer, final VerificationMode mode) throws Exception {
-        HashMap<String, String> props = new HashMap<String, String>();
-        props.put(WildFlySasl.RELAX_COMPLIANCE, Boolean.TRUE.toString());
-        SaslClient baseClient = createClient(clientSubject, true, authServer, mode, props);
+        Map<String, String> props = Collections.emptyMap();
+
+        SaslClient baseClient = createClient(clientSubject, false, authServer, mode, props);
 
         return new SubjectWrappingSaslClient(baseClient, clientSubject);
     }
 
     @Override
     protected SaslServer getSaslServer(final VerificationMode mode) throws Exception {
-        Map<String, String> props = Collections.emptyMap();
-        SaslServer baseServer = createServer(serverSubject, false, mode, props);
+        Map<String, String> props = new HashMap<String, String>();
+        props.put(WildFlySasl.RELAX_COMPLIANCE, Boolean.TRUE.toString());
+        SaslServer baseServer = createServer(serverSubject, true, mode, props);
 
         return new SubjectWrappingSaslServer(baseServer, serverSubject);
     }
