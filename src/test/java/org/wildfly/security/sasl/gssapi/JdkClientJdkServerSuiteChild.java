@@ -33,11 +33,12 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- * Test a WildFLy client can authenticate against a WildFly server.
+ * Sanity check that the JDK client and server implementations are interoperable.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class WildFlyClientWildFlyServer extends BaseGssapiTests {
+public class JdkClientJdkServerSuiteChild extends BaseGssapiTests {
+
     private static Subject clientSubject;
     private static Subject serverSubject;
 
@@ -56,7 +57,7 @@ public class WildFlyClientWildFlyServer extends BaseGssapiTests {
     @Override
     protected SaslClient getSaslClient(final boolean authServer, final VerificationMode mode) throws Exception {
         Map<String, String> props = Collections.emptyMap();
-        SaslClient baseClient = createClient(clientSubject, true, authServer, mode, props);
+        SaslClient baseClient = createClient(clientSubject, false, authServer, mode, props);
 
         return new SubjectWrappingSaslClient(baseClient, clientSubject);
     }
@@ -64,7 +65,7 @@ public class WildFlyClientWildFlyServer extends BaseGssapiTests {
     @Override
     protected SaslServer getSaslServer(final VerificationMode mode) throws Exception {
         Map<String, String> props = Collections.emptyMap();
-        SaslServer baseServer = createServer(serverSubject, true, mode, props);
+        SaslServer baseServer = createServer(serverSubject, false, mode, props);
 
         return new SubjectWrappingSaslServer(baseServer, serverSubject);
     }

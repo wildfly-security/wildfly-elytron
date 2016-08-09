@@ -23,35 +23,36 @@ import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
+import org.wildfly.security.sasl.gs2.Gs2SuiteChild;
 
 /**
- * Test suite to run all GSSAPI tests to allow various permutations of mechanism interaction to be verified.
+ * Test suite to run all GSSAPI and GS2 tests to allow various permutations of mechanism interaction to be verified.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 @RunWith(Suite.class)
 @SuiteClasses({
-    GSSSecurityFactory.class,
-    JdkClientJdkServer.class,
-    JdkClientWildFlyServer.class,
-    WildFlyClientJdkServer.class,
-    WildFlyClientWildFlyServer.class
+    GSSSecurityFactorySuiteChild.class,
+    JdkClientJdkServerSuiteChild.class,
+    JdkClientWildFlyServerSuiteChild.class,
+    WildFlyClientJdkServerSuiteChild.class,
+    WildFlyClientWildFlyServerSuiteChild.class,
+    GssapiCompatibilitySuiteChild.class,
+    Gs2SuiteChild.class
 })
 public class GssapiTestSuite {
 
     private static Logger log = Logger.getLogger(GssapiTestSuite.class);
 
-    static TestKDC testKdc;
-    static String serverKeyTab;
+    public static TestKDC testKdc;
+    public static String serverKeyTab;
 
     @BeforeClass
     public static void startServers() {
-        log.debug("Start");
-
-        TestKDC testKdc = new TestKDC();
+        log.debug("Starting KDC...");
+        testKdc = new TestKDC(true);
         testKdc.startDirectoryService();
         testKdc.startKDC();
-        GssapiTestSuite.testKdc = testKdc;
         serverKeyTab = testKdc.generateKeyTab(BaseGssapiTests.SERVER_KEY_TAB, "sasl/test_server_1@WILDFLY.ORG", "servicepwd");
         log.debug("keytab written to:" + serverKeyTab);
     }
@@ -63,5 +64,4 @@ public class GssapiTestSuite {
             testKdc = null;
         }
     }
-
 }

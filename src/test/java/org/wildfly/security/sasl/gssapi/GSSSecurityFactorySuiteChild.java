@@ -28,11 +28,11 @@ import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
 import org.wildfly.security.credential.GSSCredentialCredential;
 
 /**
- * Testing of obtaining a {@link GSSCredential} from the {@link GSSSecurityFactory}.
+ * Testing of obtaining a {@link GSSCredential} from the {@link GSSSecurityFactorySuiteChild}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public class GSSSecurityFactory {
+public class GSSSecurityFactorySuiteChild {
 
     @Test
     public void testCreate() throws Exception {
