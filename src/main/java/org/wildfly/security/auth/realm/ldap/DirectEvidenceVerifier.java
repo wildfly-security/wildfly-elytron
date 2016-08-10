@@ -21,9 +21,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
+import javax.naming.directory.InitialDirContext;
+import javax.naming.ldap.LdapContext;
 
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SupportLevel;
@@ -47,12 +46,12 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(final DirContextFactory contextFactory, final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-        return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getEvidenceVerifySupport(final DirContext context, final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        return evidenceType == PasswordGuessEvidence.class && context instanceof LdapContext ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
-    public IdentityEvidenceVerifier forIdentity(final DirContextFactory contextFactory, final String distinguishedName) throws RealmUnavailableException {
+    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
             @Override
             public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
@@ -64,26 +63,17 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
                 if (evidence instanceof PasswordGuessEvidence) {
                     char[] password = ((PasswordGuessEvidence) evidence).getGuess();
 
-                    DirContext dirContext = null;
-
                     try {
-                        dirContext = contextFactory.obtainDirContext(callbacks -> {
-                            for (Callback callback : callbacks) {
-                                if (NameCallback.class.isInstance(callback)) {
-                                    NameCallback nameCallback = (NameCallback) callback;
-                                    nameCallback.setName(distinguishedName);
-                                } else if (PasswordCallback.class.isInstance(callback)) {
-                                    PasswordCallback nameCallback = (PasswordCallback) callback;
-                                    nameCallback.setPassword(password);
-                                }
-                            }
-                        }, null);
-
+                        LdapContext userContext = ((LdapContext) dirContext).newInstance(null);
+                        userContext.addToEnvironment(InitialDirContext.SECURITY_PRINCIPAL, distinguishedName);
+                        userContext.addToEnvironment(InitialDirContext.SECURITY_CREDENTIALS, password);
+                        userContext.reconnect(null);
+                        userContext.close();
                         return true;
                     } catch (NamingException e) {
-                        log.debugf("Credential verification failed.", e);
+                        log.debugf("Credential direct evidence verification failed. DN: [%s]", distinguishedName, e);
                     } finally {
-                        contextFactory.discardContext(dirContext);
+                        ((PasswordGuessEvidence) evidence).destroy();
                     }
                 }
 

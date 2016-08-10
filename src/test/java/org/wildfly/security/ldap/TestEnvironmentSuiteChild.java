@@ -19,7 +19,7 @@
 package org.wildfly.security.ldap;
 
 import org.junit.Test;
-import org.wildfly.security.auth.realm.ldap.DirContextFactory;
+import org.wildfly.common.function.ExceptionSupplier;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
@@ -76,11 +76,11 @@ public class TestEnvironmentSuiteChild {
         System.setProperty("com.sun.jndi.ldap.connect.pool.timeout", "300000");
         System.setProperty("com.sun.jndi.ldap.connect.pool.debug", "all");
 
-        DirContextFactory factory = LdapTestSuite.dirContextFactory.create(principal, credential);
+        ExceptionSupplier<DirContext, NamingException> supplier = LdapTestSuite.dirContextFactory.create(principal, credential);
 
-        DirContext context = factory.obtainDirContext(null);
+        DirContext context = supplier.get();
         assertNotNull(context);
-        factory.returnContext(context);
+        context.close();
     }
 
 }

@@ -38,7 +38,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testSimpleToDn() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -55,7 +55,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testDnToSimple() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
@@ -71,7 +71,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testSimpleToSimpleValidate() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -88,7 +88,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testSimpleToSimpleReload() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -105,7 +105,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testDnToDnNoLookup() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
@@ -118,7 +118,7 @@ public class PrincipalMappingSuiteChild {
     @Test
     public void testDnToDnVerify() throws RealmUnavailableException {
         SecurityRealm realm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")

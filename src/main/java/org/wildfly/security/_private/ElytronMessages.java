@@ -293,8 +293,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1056, value = "Invalid salt \"%s%s%s%s\"")
     IllegalArgumentException invalidSalt(char b0, char b1, char b2, char b3);
 
-    @Message(id = 1057, value = "No DirContextFactory set")
-    IllegalStateException noDirContextFactorySet();
+    @Message(id = 1057, value = "No DirContext supplier set")
+    IllegalStateException noDirContextSupplierSet();
 
     @Message(id = 1058, value = "No principal mapping definition")
     IllegalStateException noPrincipalMappingDefinition();
@@ -511,6 +511,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1124, value = "The security realm does not support updating a credential")
     UnsupportedOperationException credentialUpdateNotSupportedByRealm();
+
+    @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
+    RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
 
     /* keystore package */
 

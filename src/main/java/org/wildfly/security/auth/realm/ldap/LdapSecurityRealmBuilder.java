@@ -21,11 +21,14 @@ package org.wildfly.security.auth.realm.ldap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealm.IdentityMapping;
 import org.wildfly.security.auth.server.ModifiableSecurityRealm;
 import org.wildfly.security.auth.server.NameRewriter;
 
+import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
 import javax.naming.ldap.LdapName;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,7 +50,7 @@ public class LdapSecurityRealmBuilder {
      */
 
     private boolean built = false;
-    private DirContextFactory dirContextFactory;
+    private ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
     private IdentityMapping identityMapping;
     private int pageSize = 50;
@@ -69,15 +72,15 @@ public class LdapSecurityRealmBuilder {
     }
 
     /**
-     * Set the directory context factory.
+     * Set the directory context supplier.
      *
-     * @param dirContextFactory the directory context factory
+     * @param dirContextSupplier the directory context supplier
      * @return this builder
      */
-    public LdapSecurityRealmBuilder setDirContextFactory(final DirContextFactory dirContextFactory) {
+    public LdapSecurityRealmBuilder setDirContextSupplier(final ExceptionSupplier<DirContext, NamingException> dirContextSupplier) {
         assertNotBuilt();
 
-        this.dirContextFactory = dirContextFactory;
+        this.dirContextSupplier = dirContextSupplier;
 
         return this;
     }
@@ -169,15 +172,15 @@ public class LdapSecurityRealmBuilder {
      */
     public ModifiableSecurityRealm build() {
         assertNotBuilt();
-        if (dirContextFactory == null) {
-            throw log.noDirContextFactorySet();
+        if (dirContextSupplier == null) {
+            throw log.noDirContextSupplierSet();
         }
         if (identityMapping == null) {
             throw log.noPrincipalMappingDefinition();
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextFactory, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
+        return new LdapSecurityRealm(dirContextSupplier, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
     }
 
     private void assertNotBuilt() {

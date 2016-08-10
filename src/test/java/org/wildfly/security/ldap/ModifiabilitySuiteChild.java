@@ -62,7 +62,7 @@ public class ModifiabilitySuiteChild {
         attributes.put(new BasicAttribute("description", "new user"));
 
         realm = LdapSecurityRealmBuilder.builder()
-            .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+            .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
             .setPageSize(3)
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")

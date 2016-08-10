@@ -20,6 +20,7 @@ package org.wildfly.security.ldap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
@@ -37,7 +38,7 @@ public class PasswordValidationSuiteChild {
     @Test
     public void testPlainUserWithSimpleName() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                     .setRdnIdentifier("uid")
@@ -51,12 +52,13 @@ public class PasswordValidationSuiteChild {
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("wrongPassword".toCharArray())));
     }
 
     @Test
     public void testPlainUserWithX500Name() throws Exception {
         SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
-                .setDirContextFactory(LdapTestSuite.dirContextFactory.create())
+                .setDirContextSupplier(LdapTestSuite.dirContextFactory.create())
                 .identityMapping()
                     .setRdnIdentifier("uid")
                     .build()
@@ -69,6 +71,7 @@ public class PasswordValidationSuiteChild {
         assertEquals("Identity verification level support", SupportLevel.SUPPORTED, credentialSupport);
 
         assertTrue(realmIdentity.verifyEvidence(new PasswordGuessEvidence("plainPassword".toCharArray())));
+        assertFalse(realmIdentity.verifyEvidence(new PasswordGuessEvidence("wrongPassword".toCharArray())));
     }
 
 }
