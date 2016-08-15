@@ -69,7 +69,6 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
-import org.wildfly.security.auth.realm.ldap.DelegatingLdapContext;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
@@ -488,14 +487,12 @@ public class Gs2SuiteChild extends BaseTestCase {
         final SaslServerBuilder builder = new SaslServerBuilder(Gs2SaslServerFactory.class, mechanism)
                 .setDontAssertBuiltServer();
 
-        final ExceptionSupplier<DirContext, NamingException> dirContextSupplier = () -> new DelegatingLdapContext(
+        final ExceptionSupplier<DirContext, NamingException> dirContextSupplier = () ->
                 SimpleDirContextFactoryBuilder.builder()
                         .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
                         .setSecurityPrincipal("uid=Sasl_1,ou=Users,dc=wildfly,dc=org")
                         .setSecurityCredential("servicepwd")
-                        .build(),
-                DirContextFactory.ReferralMode.IGNORE
-        );
+                        .build().obtainDirContext(DirContextFactory.ReferralMode.IGNORE);
 
         final SecurityRealm securityRealm = LdapSecurityRealmBuilder.builder()
                 .setDirContextSupplier(dirContextSupplier)

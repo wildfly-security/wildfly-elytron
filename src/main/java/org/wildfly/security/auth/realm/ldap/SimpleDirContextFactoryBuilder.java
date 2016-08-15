@@ -24,6 +24,7 @@ import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
+import javax.net.SocketFactory;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -41,6 +42,7 @@ public class SimpleDirContextFactoryBuilder {
 
     private static final String CONNECT_TIMEOUT = "com.sun.jndi.ldap.connect.timeout";
     private static final String READ_TIMEOUT = "com.sun.jndi.ldap.read.timeout";
+    private static final String SOCKET_FACTORY = "java.naming.ldap.factory.socket";
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
     private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
@@ -51,6 +53,7 @@ public class SimpleDirContextFactoryBuilder {
     private String securityAuthentication = "simple";
     private String securityPrincipal = null;
     private String securityCredential = null;
+    private SocketFactory socketFactory = null;
     private Properties connectionProperties;
     private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
@@ -128,6 +131,20 @@ public class SimpleDirContextFactoryBuilder {
     public SimpleDirContextFactoryBuilder setSecurityCredential(final String securityCredential) {
         assertNotBuilt();
         this.securityCredential = securityCredential;
+
+        return this;
+    }
+
+    /**
+     * Set the socket factory to be used by LDAP context.
+     * Used primarily for SSL connections.
+     *
+     * @param socketFactory the socket factory
+     * @return this builder
+     */
+    public SimpleDirContextFactoryBuilder setSocketFactory(final SocketFactory socketFactory) {
+        assertNotBuilt();
+        this.socketFactory = socketFactory;
 
         return this;
     }
@@ -240,6 +257,7 @@ public class SimpleDirContextFactoryBuilder {
             env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
             env.put(InitialDirContext.SECURITY_CREDENTIALS, String.valueOf(securityCredential));
             env.put(InitialDirContext.REFERRAL, mode == null ? ReferralMode.IGNORE.getValue() : mode.getValue());
+            if (socketFactory != null) env.put(SOCKET_FACTORY, ThreadLocalSSLSocketFactory.class.getName());
             env.put(CONNECT_TIMEOUT, Integer.toString(connectTimeout));
             env.put(READ_TIMEOUT, Integer.toString(readTimeout));
 
@@ -261,18 +279,29 @@ public class SimpleDirContextFactoryBuilder {
                 });
             }
 
-            InitialLdapContext context;
+            InitialLdapContext initialContext;
 
             try {
-                context = new InitialLdapContext(env, null);
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                initialContext = new InitialLdapContext(env, null);
             } catch (NamingException ne) {
                 log.debugf(ne, "Could not create [%s]. Failed to connect to LDAP server.", InitialLdapContext.class);
                 throw ne;
+            } finally {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
             }
 
-            log.debugf("[%s] successfully created. Connection established to LDAP server.", context);
+            log.debugf("[%s] successfully created. Connection established to LDAP server.", initialContext);
 
-            return context;
+            return new DelegatingLdapContext(initialContext, this::returnContext, (ldapContext, controls) -> {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                try {
+                    log.debugf("Reconnecting");
+                    ldapContext.reconnect(controls);
+                } finally {
+                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                }
+            });
         }
 
         @Override
