@@ -271,7 +271,7 @@ public final class SSLContextBuilder {
             sessionContext.setSessionTimeout(sessionTimeout);
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
-            sslContext.init(new KeyManager[] {
+            sslContext.init(keyManagerSecurityFactory == null ? null : new KeyManager[] {
                 keyManagerSecurityFactory.create()
             }, new TrustManager[] {
                 canAuthPeers ?
