@@ -88,17 +88,17 @@ public class SSLAuthenticationTest {
 
     @BeforeClass
     public static void setupClient() throws Exception {
-        SSLContext clientContext = SSLContext.getInstance("TLS");
-        clientContext.init(new KeyManager[] { getKeyManager("/ca/jks/ladybird.keystore") },
-                new TrustManager[] { getCATrustManager() }, null);
-
-        SSLAuthenticationTest.clientContext = clientContext;
+        clientContext = new SSLContextBuilder()
+                .setClientMode(true)
+                .setKeyManager(getKeyManager("/ca/jks/ladybird.keystore"))
+                .setTrustManager(getCATrustManager())
+                .build().create();
     }
 
     /**
      * Get the key manager backed by the specified key store.
      *
-     * @param keystoreName the name of the key store to load.
+     * @param keystorePath the path to the keystore with X509 private key
      * @return the initialised key manager.
      */
     private static X509ExtendedKeyManager getKeyManager(final String keystorePath) throws Exception {
@@ -174,7 +174,7 @@ public class SSLAuthenticationTest {
         assertTrue("Server SSL Session Valid", serverSession.isValid());
         SecurityIdentity identity =  (SecurityIdentity) serverSession.getValue(SSLUtils.SSL_SESSION_IDENTITY_KEY);
         assertNotNull(identity);
-        assertEquals("Principa Name", "ladybird", identity.getPrincipal().getName());
+        assertEquals("Principal Name", "ladybird", identity.getPrincipal().getName());
 
         SSLSocket clientSocket = socketFuture.get();
         SSLSession clientSession = clientSocket.getSession();
