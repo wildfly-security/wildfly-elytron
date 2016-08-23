@@ -382,6 +382,39 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     /**
+     * Run an action under a series of identities.
+     *
+     * @param action the action to run
+     * @param identities the identities to set up
+     * @param <T> the action return type
+     * @return the action result (may be {@code null})
+     * @throws PrivilegedActionException if the action fails
+     */
+    public static <T> T runAsAll(PrivilegedExceptionAction<T> action, SecurityIdentity... identities) throws PrivilegedActionException {
+        if (action == null) return null;
+        int length = identities.length;
+        SecurityIdentity[] oldIdentities = new SecurityIdentity[length];
+        for (int i = 0; i < length; i++) {
+            SecurityIdentity securityIdentity = identities[i];
+            SecurityDomain securityDomain = securityIdentity.getSecurityDomain();
+            oldIdentities[i] = securityDomain.getAndSetCurrentSecurityIdentity(securityIdentity);
+        }
+        try {
+            return action.run();
+        } catch (RuntimeException | PrivilegedActionException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new PrivilegedActionException(e);
+        } finally {
+            for (int i = 0; i < length; i++) {
+                SecurityIdentity oldIdentity = oldIdentities[i];
+                SecurityDomain securityDomain = oldIdentity.getSecurityDomain();
+                securityDomain.setCurrentSecurityIdentity(oldIdentity);
+            }
+        }
+    }
+
+    /**
      * Get the roles associated with this identity.
      *
      * @return the roles associated with this identity
