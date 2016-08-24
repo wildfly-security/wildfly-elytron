@@ -333,7 +333,17 @@ public final class ServerAuthenticationContext {
      * @throws IllegalStateException if the authentication is already complete
      */
     public boolean authorizeAnonymous() throws IllegalStateException {
-        return stateRef.get().authorizeAnonymous(true);
+        return authorizeAnonymous(true);
+    }
+
+    /**
+     * Set the authentication to anonymous, completing the authentication process.
+     *
+     * @param requireLoginPermission {@code true} if {@link LoginPermission} is required and {@code false} otherwise
+     * @throws IllegalStateException if the authentication is already complete
+     */
+    public boolean authorizeAnonymous(boolean requireLoginPermission) throws IllegalStateException {
+        return stateRef.get().authorizeAnonymous(requireLoginPermission);
     }
 
     /**

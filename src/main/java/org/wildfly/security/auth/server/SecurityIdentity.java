@@ -43,6 +43,7 @@ import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -483,8 +484,14 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain domain = this.securityDomain;
         final ServerAuthenticationContext context = domain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
         try {
-            if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
-                throw log.runAsAuthorizationFailed(getPrincipal(), new NamePrincipal(name), null);
+            if (AnonymousPrincipal.getInstance().getName().equals(name)) {
+                if (! context.authorizeAnonymous(false)) {
+                    throw log.runAsAuthorizationFailed(getPrincipal(), new AnonymousPrincipal(), null);
+                }
+            } else {
+                if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
+                    throw log.runAsAuthorizationFailed(getPrincipal(), new NamePrincipal(name), null);
+                }
             }
         } catch (RealmUnavailableException e) {
             throw log.runAsAuthorizationFailed(this.principal, context.getAuthenticationPrincipal(), e);
