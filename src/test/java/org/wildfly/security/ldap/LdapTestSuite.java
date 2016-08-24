@@ -33,10 +33,10 @@ import org.junit.runners.Suite;
         PasswordSupportSuiteChild.class,
         PasswordValidationSuiteChild.class,
         PrincipalMappingSuiteChild.class,
-        RoleMappingSuiteChild.class
+        RoleMappingSuiteChild.class,
+        KeyStoreSuiteChild.class
 })
 public class LdapTestSuite {
     @ClassRule
     public static DirContextFactoryRule dirContextFactory = new DirContextFactoryRule();
-
 }

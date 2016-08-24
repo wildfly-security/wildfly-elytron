@@ -565,6 +565,58 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2014, value = "Invalid first word '%s', must be one of ALL/NONE")
     IllegalArgumentException invalidFirstWord(String firstWord);
 
+    @Message(id = 2015, value = "Failed to obtain DirContext")
+    IllegalStateException failedToObtainDirContext(@Cause Throwable cause);
+
+    @Message(id = 2016, value = "Failed to return DirContext")
+    IllegalStateException failedToReturnDirContext(@Cause Throwable cause);
+
+    @Message(id = 2017, value = "LdapKeyStore failed to obtain alias [%s]")
+    IllegalStateException ldapKeyStoreFailedToObtainAlias(String alias, @Cause Throwable cause);
+
+    @Message(id = 2018, value = "LdapKeyStore failed to obtain certificate [%s]")
+    IllegalStateException ldapKeyStoreFailedToObtainCertificate(String alias, @Cause Throwable cause);
+
+    @Message(id = 2019, value = "LdapKeyStore failed to obtain certificate chain [%s]")
+    IllegalStateException ldapKeyStoreFailedToObtainCertificateChain(String alias, @Cause Throwable cause);
+
+    @Message(id = 2020, value = "LdapKeyStore failed to recover key of alias [%s]")
+    IllegalStateException ldapKeyStoreFailedToObtainKey(String alias, @Cause Throwable cause);
+
+    @Message(id = 2021, value = "LdapKeyStore failed to obtain alias by certificate")
+    IllegalStateException ldapKeyStoreFailedToObtainAliasByCertificate(@Cause Throwable cause);
+
+    @Message(id = 2022, value = "LdapKeyStore failed to recover key of alias [%s]")
+    UnrecoverableKeyException ldapKeyStoreFailedToRecoverKey(String alias, @Cause Throwable cause);
+
+    @Message(id = 2023, value = "LdapKeyStore failed to obtain creation date of alias [%s]")
+    IllegalStateException ldapKeyStoreFailedToObtainCreationDate(String alias, @Cause Throwable cause);
+
+    @Message(id = 2024, value = "Alias [%s] does not exist in LdapKeyStore and not configured for creation")
+    KeyStoreException creationNotConfigured(String alias);
+
+    @Message(id = 2025, value = "LdapKeyStore failed store alias [%s]")
+    KeyStoreException ldapKeyStoreFailedToStore(String alias, @Cause Throwable cause);
+
+    @Message(id = 2026, value = "LdapKeyStore failed to serialize certificate of alias [%s]")
+    KeyStoreException ldapKeyStoreFailedToSerializeCertificate(String alias, @Cause Throwable cause);
+
+    @Message(id = 2027, value = "LdapKeyStore failed to protect (pack into keystore) key of alias [%s]")
+    KeyStoreException ldapKeyStoreFailedToSerializeKey(String alias, @Cause Throwable cause);
+
+    @Message(id = 2028, value = "LdapKeyStore failed to delete alias [%s]")
+    KeyStoreException ldapKeyStoreFailedToDelete(String alias, @Cause Throwable cause);
+
+    @Message(id = 2029, value = "LdapKeyStore failed to delete alias [%s] - alias not found")
+    KeyStoreException ldapKeyStoreFailedToDeleteNonExisting(String alias);
+
+    @Message(id = 2030, value = "LdapKeyStore failed to test alias [%s] existence")
+    IllegalStateException ldapKeyStoreFailedToTestAliasExistence(String alias, @Cause Throwable cause);
+
+    @Message(id = 2031, value = "LdapKeyStore failed to iterate aliases")
+    IllegalStateException ldapKeyStoreFailedToIterateAliases(@Cause Throwable cause);
+
+
     /* util package */
 
     @Message(id = 3001, value = "Unexpected padding")
