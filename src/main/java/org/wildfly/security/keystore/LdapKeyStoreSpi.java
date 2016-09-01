@@ -63,35 +63,41 @@ import java.util.List;
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class LdapKeyStoreSpi extends KeyStoreSpi {
+class LdapKeyStoreSpi extends KeyStoreSpi {
 
     private final String ENV_BINARY_ATTRIBUTES = "java.naming.ldap.attributes.binary";
     private final String CREATE_TIMESTAMP_ATTRIBUTE = "createTimestamp"; // RFC4512
     private final String MODIFY_TIMESTAMP_ATTRIBUTE = "modifyTimestamp"; // RFC4512
 
-    private ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
-    private String searchPath;
-    private String filterAlias;
-    private String filterCertificate;
-    private String filterIterate;
-    private LdapName createPath;
-    private String createRdn;
-    private Attributes createAttributes;
-    private String aliasAttribute;
-    private String certificateAttribute;
-    private String certificateType;
-    private String certificateChainAttribute;
-    private String certificateChainType;
-    private String certificateChainEncoding;
-    private String keyAttribute;
-    private String keyType;
+    private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
+    private final String searchPath;
+    private final int searchScope;
+    private final int searchTimeLimit;
+    private final String filterAlias;
+    private final String filterCertificate;
+    private final String filterIterate;
+    private final LdapName createPath;
+    private final String createRdn;
+    private final Attributes createAttributes;
+    private final String aliasAttribute;
+    private final String certificateAttribute;
+    private final String certificateType;
+    private final String certificateChainAttribute;
+    private final String certificateChainEncoding;
+    private final String keyAttribute;
+    private final String keyType;
 
-    LdapKeyStoreSpi(ExceptionSupplier<DirContext, NamingException> dirContextSupplier, String searchPath, String filterAlias, String filterCertificate,
-                    String filterIterate, LdapName createPath, String createRdn, Attributes createAttributes,
-                    String aliasAttribute, String certificateAttribute, String certificateType, String certificateChainAttribute,
-                    String certificateChainType, String certificateChainEncoding, String keyAttribute, String keyType) {
+    LdapKeyStoreSpi(ExceptionSupplier<DirContext, NamingException> dirContextSupplier, String searchPath, int searchScope, int searchTimeLimit,
+                    String filterAlias, String filterCertificate, String filterIterate,
+                    LdapName createPath, String createRdn, Attributes createAttributes,
+                    String aliasAttribute,
+                    String certificateAttribute, String certificateType,
+                    String certificateChainAttribute, String certificateChainEncoding,
+                    String keyAttribute, String keyType) {
         this.dirContextSupplier = dirContextSupplier;
         this.searchPath = searchPath;
+        this.searchScope = searchScope;
+        this.searchTimeLimit = searchTimeLimit;
         this.filterAlias = filterAlias;
         this.filterCertificate = filterCertificate;
         this.filterIterate = filterIterate;
@@ -102,7 +108,6 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         this.certificateAttribute = certificateAttribute;
         this.certificateType = certificateType;
         this.certificateChainAttribute = certificateChainAttribute;
-        this.certificateChainType = certificateChainType;
         this.certificateChainEncoding = certificateChainEncoding;
         this.keyAttribute = keyAttribute;
         this.keyType = keyType;
@@ -133,14 +138,20 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         }
     }
 
-    private SearchResult searchAlias(DirContext dirContext, String alias, byte[] cert, String[] returningAttributes) throws NamingException {
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        ctls.setReturningAttributes(returningAttributes);
+    private SearchControls createSearchControl(String[] returningAttributes) {
+        SearchControls controls = new SearchControls();
+        controls.setSearchScope(searchScope);
+        controls.setTimeLimit(searchTimeLimit);
+        controls.setReturningAttributes(returningAttributes);
+        return controls;
+    }
 
+    private SearchResult searchAlias(DirContext dirContext, String alias, byte[] cert, String[] returningAttributes) throws NamingException {
+        SearchControls ctls = createSearchControl(returningAttributes);
         NamingEnumeration<SearchResult> results = (cert == null) ?
                 dirContext.search(searchPath, filterAlias, new String[]{alias}, ctls) :
                 dirContext.search(searchPath, filterCertificate, new Object[]{cert}, ctls);
+
         if (!results.hasMore()) {
             log.debugf("Alias [%s] not found in LdapKeyStore", alias);
             return null;
@@ -189,7 +200,7 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
             byte[] bytes = (byte[]) attribute.get();
             if (bytes == null) return null;
             InputStream is = new ByteArrayInputStream(bytes);
-            CertificateFactory certFactory = CertificateFactory.getInstance(certificateChainType);
+            CertificateFactory certFactory = CertificateFactory.getInstance(certificateType);
             Collection<? extends Certificate> chain = certFactory.generateCertificates(is);
             return chain.toArray(new Certificate[chain.size()]);
         } catch (CertificateException | NamingException e) {
@@ -236,7 +247,6 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
     }
 
     private void storeAttributes(String alias, List<ModificationItem> items) throws KeyStoreException {
-        ModificationItem[] modItemsArray = items.toArray(new ModificationItem[items.size()]);
         DirContext context = obtainDirContext();
         try {
             SearchResult result = searchAlias(context, alias, null, new String[]{});
@@ -251,11 +261,13 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
 
                 log.debugf("Creating keystore alias [%s] with DN [%s] in LDAP", alias, distinguishName.toString());
                 context.createSubcontext(distinguishName, createAttributes);
+
+                items.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(aliasAttribute, alias)));
             } else {
                 distinguishName = new LdapName(result.getNameInNamespace());
             }
 
-            context.modifyAttributes(distinguishName, modItemsArray);
+            context.modifyAttributes(distinguishName, items.toArray(new ModificationItem[items.size()]));
         } catch (NamingException e) {
             throw log.ldapKeyStoreFailedToStore(alias, e);
         } finally {
@@ -298,18 +310,14 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         try {
             List<ModificationItem> items = new LinkedList<>();
 
-            BasicAttribute keyAttr = new BasicAttribute(keyAttribute);
-            keyAttr.add(keystoreBytes);
-            items.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, keyAttr));
+            items.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute(keyAttribute, keystoreBytes)));
 
-            BasicAttribute chainAttr = new BasicAttribute(certificateChainAttribute);
-            CertificateFactory certFactory = CertificateFactory.getInstance(certificateChainType);
+            CertificateFactory certFactory = CertificateFactory.getInstance(certificateType);
             CertPath certPath = certFactory.generateCertPath(Arrays.asList(chain));
-            chainAttr.add(certPath.getEncoded(certificateChainEncoding));
+            BasicAttribute chainAttr = new BasicAttribute(certificateChainAttribute, certPath.getEncoded(certificateChainEncoding));
             items.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, chainAttr));
 
-            BasicAttribute certificateAttr = new BasicAttribute(certificateAttribute);
-            certificateAttr.add(chain[0].getEncoded());
+            BasicAttribute certificateAttr = new BasicAttribute(certificateAttribute, chain[0].getEncoded());
             items.add(new ModificationItem(DirContext.REPLACE_ATTRIBUTE, certificateAttr));
 
             storeAttributes(alias, items);
@@ -339,7 +347,7 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         DirContext context = obtainDirContext();
         if (context == null) return false;
         try {
-            NamingEnumeration<SearchResult> results = context.search(searchPath, filterAlias, new String[]{alias}, null);
+            NamingEnumeration<SearchResult> results = context.search(searchPath, filterAlias, new String[]{alias}, createSearchControl(new String[]{aliasAttribute}));
             boolean found = results.hasMore();
             results.close();
             return found;
@@ -355,7 +363,7 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         DirContext context = obtainDirContext();
         if (context == null) return null;
         try {
-            NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, null); // TODO pagination
+            NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, createSearchControl(new String[]{aliasAttribute})); // TODO pagination
             List<String> aliases = new LinkedList<>();
             while (results.hasMore()) {
                 aliases.add((String) results.next().getAttributes().get(aliasAttribute).get());
@@ -373,7 +381,7 @@ public class LdapKeyStoreSpi extends KeyStoreSpi {
         DirContext context = obtainDirContext();
         if (context == null) return 0;
         try {
-            NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, null);
+            NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, createSearchControl(new String[]{aliasAttribute}));
             int count = 0;
             while (results.hasMore()) {
                 results.next();

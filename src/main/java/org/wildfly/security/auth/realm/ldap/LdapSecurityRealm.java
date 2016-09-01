@@ -157,8 +157,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                         new PagedResultsControl(pageSize, cookie, Control.CRITICAL)
                 });
 
-                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
-                        identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter, createSearchControls(identityMapping.rdnIdentifier));
                 try {
                     while (result.hasMore()) {
                         SearchResult entry = result.next();
@@ -185,8 +184,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             private void loadCompleteResult(DirContext context) throws NamingException {
                 end = true;
-                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter,
-                        identityMapping.iteratorFilterArgs, createSearchControls(identityMapping.rdnIdentifier));
+                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter, createSearchControls(identityMapping.rdnIdentifier));
                 try {
                     while (result.hasMore()) {
                         SearchResult entry = result.next();
@@ -942,9 +940,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         private final LdapName newIdentityParent;
         private final Attributes newIdentityAttributes;
         private final String iteratorFilter;
-        private final Object[] iteratorFilterArgs;
 
-        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes, String iteratorFilter, Object[] iteratorFilterArgs) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes, String iteratorFilter) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
@@ -954,7 +951,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             this.newIdentityParent = newIdentityParent;
             this.newIdentityAttributes = newIdentityAttributes;
             this.iteratorFilter = iteratorFilter;
-            this.iteratorFilterArgs = iteratorFilterArgs;
         }
     }
 }

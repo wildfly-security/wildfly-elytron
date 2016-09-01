@@ -49,6 +49,8 @@ public class LdapSecurityRealmBuilder {
      *  modification after the build is complete.
      */
 
+    private static final int DEFAULT_SEARCH_TIME_LIMIT = 10000;
+
     private boolean built = false;
     private ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
@@ -199,12 +201,11 @@ public class LdapSecurityRealmBuilder {
         private String searchDn = null;
         private boolean searchRecursive = false;
         private String nameAttribute;
-        private int searchTimeLimit = 10000;
+        private int searchTimeLimit = DEFAULT_SEARCH_TIME_LIMIT;
         private List<AttributeMapping> attributes = new ArrayList<>();
         private LdapName newIdentityParent = null;
         private Attributes newIdentityAttributes = null;
         private String iteratorFilter;
-        private Object[] iteratorFilterArgs;
 
         /**
          * <p>Set the name of the context to be used when executing queries.
@@ -240,9 +241,9 @@ public class LdapSecurityRealmBuilder {
         }
 
         /**
-         * Sets the time limit of the SearchControls in milliseconds.
+         * Sets the time limit of LDAP search in milliseconds.
          *
-         * @param limit the limit in milliseconds. Defaults to 5000 milliseconds.
+         * @param limit the limit in milliseconds. Defaults to {@value #DEFAULT_SEARCH_TIME_LIMIT} milliseconds.
          * @return this builder
          */
         public IdentityMappingBuilder setSearchTimeLimit(int limit) {
@@ -253,7 +254,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         /**
-         * Set the name of the attribute in LDAP that holds the user name.
+         * Set the name of the attribute in LDAP that holds the user name and will appear in path of new entries.
          *
          * @param nameAttribute the name attribute
          * @return this builder
@@ -286,13 +287,6 @@ public class LdapSecurityRealmBuilder {
             return this;
         }
 
-        public IdentityMappingBuilder setIteratorFilterArgs(Object[] iteratorFilterArgs) {
-            assertNotBuilt();
-
-            this.iteratorFilterArgs = iteratorFilterArgs;
-            return this;
-        }
-
         /**
          * Define an attribute mapping configuration.
          *
@@ -312,7 +306,7 @@ public class LdapSecurityRealmBuilder {
 
             return LdapSecurityRealmBuilder.this.setIdentityMapping(new IdentityMapping(
                     searchDn, searchRecursive, searchTimeLimit, nameAttribute, attributes,
-                    newIdentityParent, newIdentityAttributes, iteratorFilter, iteratorFilterArgs));
+                    newIdentityParent, newIdentityAttributes, iteratorFilter));
         }
 
         private void assertNotBuilt() {
