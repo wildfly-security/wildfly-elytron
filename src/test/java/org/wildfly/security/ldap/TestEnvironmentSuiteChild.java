@@ -26,45 +26,15 @@ import javax.naming.directory.DirContext;
 import java.util.Properties;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 /**
- * Test case to test connectivity to the server, also verifies that the user accounts in use are all correctly registered.
+ * Test case to test connectivity to the server.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class TestEnvironmentSuiteChild {
-
     @Test
-    public void testPlain() throws NamingException {
-        testUser("uid=plainUser,dc=elytron,dc=wildfly,dc=org", "plainPassword");
-    }
-
-    @Test
-    public void testSha512() throws NamingException {
-        testUser("uid=sha512User,dc=elytron,dc=wildfly,dc=org", "sha512Password");
-    }
-
-    @Test
-    public void testSsha512() throws NamingException {
-        testUser("uid=ssha512User,dc=elytron,dc=wildfly,dc=org", "ssha512Password");
-    }
-
-    @Test
-    public void testCrypt() throws NamingException {
-        testUser("uid=cryptUser,dc=elytron,dc=wildfly,dc=org", "cryptIt");
-    }
-
-    private void testUser(final String principal, final String credential) throws NamingException {
-        runTest(principal, credential);
-        try {
-            runTest(principal, "BAD");
-            fail("Expected exception not thrown");
-        } catch (NamingException e) {
-        }
-    }
-
-    private void runTest(final String principal, final String credential) throws NamingException {
+    public void testConnection() throws NamingException {
         Properties additionalConnectionProperties = new Properties();
 
         // let's configure connection pooling
@@ -76,11 +46,10 @@ public class TestEnvironmentSuiteChild {
         System.setProperty("com.sun.jndi.ldap.connect.pool.timeout", "300000");
         System.setProperty("com.sun.jndi.ldap.connect.pool.debug", "all");
 
-        ExceptionSupplier<DirContext, NamingException> supplier = LdapTestSuite.dirContextFactory.create(principal, credential);
-
+        ExceptionSupplier<DirContext, NamingException> supplier = LdapTestSuite.dirContextFactory.create();
         DirContext context = supplier.get();
         assertNotNull(context);
+
         context.close();
     }
-
 }

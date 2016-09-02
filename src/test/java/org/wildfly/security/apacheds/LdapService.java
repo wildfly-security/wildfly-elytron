@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -184,7 +185,7 @@ public class LdapService implements Closeable {
          * @param port - The port to listen on.
          * @return This Builder for subsequent changes.
          */
-        public Builder addTcpServer(final String serviceName, final String hostName, final int port) {
+        public Builder addTcpServer(final String serviceName, final String hostName, final int port, final String keyStore, final String keyStorePassword) throws URISyntaxException {
             assertNotStarted();
             if (directoryService == null) {
                 throw new IllegalStateException("The Directory service has not been created.");
@@ -192,8 +193,11 @@ public class LdapService implements Closeable {
 
             LdapServer server = new LdapServer();
             server.setServiceName(serviceName);
-            Transport ldap = new TcpTransport( hostName, port, 3, 5 );
-            server.addTransports(ldap);
+            Transport ldaps = new TcpTransport( hostName, port, 3, 5 );
+            ldaps.enableSSL(true);
+            server.addTransports(ldaps);
+            server.setKeystoreFile(getClass().getResource(keyStore).getFile());
+            server.setCertificatePassword(keyStorePassword);
             server.setDirectoryService(directoryService);
 
             servers.add(server);

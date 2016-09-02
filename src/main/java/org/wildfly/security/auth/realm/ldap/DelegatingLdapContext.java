@@ -39,25 +39,50 @@ import javax.naming.ldap.LdapContext;
 import java.util.Hashtable;
 
 /**
- * Delegating {@link LdapContext}, which use {@link DirContextFactory} to obtain and return context.
- * Context is obtained on construction and returned instead of closing.
+ * Delegating {@link LdapContext} allowing redefine close and reconnect operations.
+ * Used by {@link SimpleDirContextFactoryBuilder} to ensure context returning instead of close.
+ *
+ * If the context is copied using {@link #newInstance(Control[])}, close handler will not used by the copy.
+ * On the other hand, reconnect handler will used by both of them.
+ *
  * If non-Ldap context is obtained, LdapContext specific methods throws {@link UnsupportedOperationException}.
  *
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
-public class DelegatingLdapContext implements LdapContext {
+class DelegatingLdapContext implements LdapContext {
 
-    DirContext delegating;
-    DirContextFactory factory;
+    final DirContext delegating;
+    final CloseHandler closeHandler;
+    final ReconnectHandler reconnectHandler;
 
-    public DelegatingLdapContext(DirContextFactory dirContextFactory, DirContextFactory.ReferralMode mode) throws NamingException {
-        factory = dirContextFactory;
-        delegating = factory.obtainDirContext(mode);
+    interface CloseHandler {
+        void handle(DirContext context) throws NamingException;
+    }
+
+    interface ReconnectHandler {
+        void handle(LdapContext context, Control[] controls) throws NamingException;
+    }
+
+    DelegatingLdapContext(DirContext delegating, CloseHandler closeHandler, ReconnectHandler reconnectHandler) throws NamingException {
+        this.delegating = delegating;
+        this.closeHandler = closeHandler;
+        this.reconnectHandler = reconnectHandler;
+    }
+
+    // for needs of newInstance()
+    private DelegatingLdapContext(DirContext delegating, ReconnectHandler reconnectHandler) throws NamingException {
+        this.delegating = delegating;
+        this.closeHandler = null; // close handler should not be applied to copy
+        this.reconnectHandler = reconnectHandler;
     }
 
     @Override
     public void close() throws NamingException {
-        factory.returnContext(delegating);
+        if (closeHandler == null) {
+            delegating.close();
+        } else {
+            closeHandler.handle(delegating);
+        }
     }
 
     // LdapContext specific
@@ -71,13 +96,14 @@ public class DelegatingLdapContext implements LdapContext {
     @Override
     public LdapContext newInstance(Control[] requestControls) throws NamingException {
         if ( ! (delegating instanceof LdapContext)) throw Assert.unsupported();
-        return ((LdapContext) delegating).newInstance(requestControls);
+        LdapContext newContext = ((LdapContext) delegating).newInstance(requestControls);
+        return new DelegatingLdapContext(newContext, reconnectHandler);
     }
 
     @Override
-    public void reconnect(Control[] connCtls) throws NamingException {
+    public void reconnect(Control[] controls) throws NamingException {
         if ( ! (delegating instanceof LdapContext)) throw Assert.unsupported();
-        ((LdapContext) delegating).reconnect(connCtls);
+        reconnectHandler.handle((LdapContext) delegating, controls);
     }
 
     @Override

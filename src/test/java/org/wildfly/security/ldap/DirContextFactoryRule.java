@@ -23,13 +23,17 @@ import org.junit.runners.model.Statement;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.apacheds.LdapService;
-import org.wildfly.security.auth.realm.ldap.DelegatingLdapContext;
 import org.wildfly.security.auth.realm.ldap.DirContextFactory;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.security.KeyStore;
 import java.security.Provider;
 import java.security.Security;
 
@@ -69,18 +73,26 @@ public class DirContextFactoryRule implements TestRule {
     }
 
     public ExceptionSupplier<DirContext, NamingException> create() {
-        return create(SERVER_DN, SERVER_CREDENTIAL);
-    }
+        SocketFactory socketFactory;
+        try {
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(new FileInputStream(getClass().getResource("/ca/jks/ca.truststore").getFile()), "Elytron".toCharArray());
+            TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustFactory.init(keyStore);
 
-    public ExceptionSupplier<DirContext, NamingException> create(String securityPrincipal, String credentials) {
-        return () -> new DelegatingLdapContext(
-                SimpleDirContextFactoryBuilder.builder()
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, trustFactory.getTrustManagers(), null);
+            socketFactory = context.getSocketFactory();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+
+        return () -> SimpleDirContextFactoryBuilder.builder()
                         .setProviderUrl(String.format("ldap://localhost:%d/", LDAP_PORT))
-                        .setSecurityPrincipal(securityPrincipal)
-                        .setSecurityCredential(credentials)
-                        .build(),
-                DirContextFactory.ReferralMode.IGNORE
-        );
+                        .setSecurityPrincipal(SERVER_DN)
+                        .setSecurityCredential(SERVER_CREDENTIAL)
+                        .setSocketFactory(socketFactory)
+                        .build().obtainDirContext(DirContextFactory.ReferralMode.IGNORE);
     }
 
     private LdapService startEmbeddedServer() {
@@ -96,7 +108,7 @@ public class DirContextFactoryRule implements TestRule {
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-group-mapping-tests.ldif"))
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-otp-tests.ldif"))
                     .importLdif(PasswordSupportSuiteChild.class.getResourceAsStream("/ldap/elytron-keystore-tests.ldif"))
-                    .addTcpServer("Default TCP", "localhost", LDAP_PORT)
+                    .addTcpServer("Default TCP", "localhost", LDAP_PORT, "/ca/jks/localhost.keystore", "Elytron")
                     .start();
         } catch (Exception e) {
             throw new RuntimeException("Could not start LDAP embedded server.", e);
