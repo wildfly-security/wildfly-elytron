@@ -18,6 +18,8 @@
 
 package org.wildfly.security.permission;
 
+import org.wildfly.common.Assert;
+
 import java.security.Permission;
 
 /**
@@ -37,17 +39,17 @@ public abstract class AbstractNamedPermission<This extends AbstractNamedPermissi
     /**
      * Construct a new instance.
      *
-     * @param name the permission name
+     * @param name the permission name (must not be {@code null})
      */
     protected AbstractNamedPermission(final String name) {
-        super(name);
+        super(Assert.checkNotNullParam("name", name));
     }
 
     /**
      * Create a new permission which is identical to this one, except with a new {@code name}.
      *
-     * @param name the name to use
-     * @return the new permission (must not be {@code null})
+     * @param name the name to use (must not be {@code null})
+     * @return the new permission
      */
     public abstract This withName(String name);
 
