@@ -189,9 +189,9 @@ public final class TokenSecurityRealm implements SecurityRealm {
         }
 
         /**
-         * The name of the claim returned from the token introspection endpoint that contains the principal's name.
+         * The name of the claim that should be used to obtain the principal's name.
          *
-         * @param name the name of the claim containing the principal's name. Defaults to <code>username</code>
+         * @param name the name of the claim that should be used to obtain the principal's name. Defaults to <code>username</code>
          * @return this instance
          */
         public Builder principalClaimName(String name) {
