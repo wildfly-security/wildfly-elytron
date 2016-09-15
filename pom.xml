@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.jboss</groupId>
         <artifactId>jboss-parent</artifactId>
-        <version>20</version>
+        <version>21</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -49,7 +49,7 @@
     </licenses>
 
     <scm>
-        <connection>svm:git@github.com:wildfly-security/wildfly-elytron.git</connection>
+        <connection>scm:git:git@github.com:wildfly-security/wildfly-elytron.git</connection>
         <url>https://github.com/wildfly-security/wildfly-elytron</url>
     </scm>
 
@@ -83,6 +83,8 @@
 
         <!-- version from jboss-parent is 6.15 but then some checks fail -->
         <version.checkstyle>6.8</version.checkstyle>
+        <!-- Modularized JDK support (various workarounds) - activated via profile -->
+        <modular.jdk.args/>
     </properties>
 
     <build>
@@ -123,12 +125,13 @@
                         </systemPropertyVariables>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         <trimStackTrace>false</trimStackTrace>
-                        <printSummary>true</printSummary>
                         <includes>
                             <include>**/*Test.java</include>
                             <include>**/*TestSuite.java</include>
                         </includes>
-                        <forkMode>always</forkMode>
+                        <childDelegation>true</childDelegation>
+                        <reuseForks>false</reuseForks>
+                        <argLine>${modular.jdk.args}</argLine>
                     </configuration>
                 </plugin>
 
@@ -425,6 +428,42 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>modularizedJdk</id>
+            <activation>
+                <jdk>9</jdk>
+            </activation>
+            <properties>
+                <!-- [WFCORE-1431] remove SASL workaround -->
+                <modular.jdk.args>--add-modules java.corba,java.sql --add-exports java.security.sasl/com.sun.security.sasl.digest=ALL-UNNAMED
+                --add-exports java.security.sasl/com.sun.security.sasl=ALL-UNNAMED --add-exports jdk.unsupported/sun.reflect=ALL-UNNAMED
+                --add-exports java.base/sun.security.x509=ALL-UNNAMED
+                </modular.jdk.args>
+                <!-- There are lots of issues with checkstyle runtime on JDK9, it somewhat works but really slows down build, disabling it for now-->
+                <checkstyle.skip>true</checkstyle.skip>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${version.compiler.plugin}</version>
+                        <configuration>
+                            <!-- fork is needed so compiler args can be used -->
+                            <fork>true</fork>
+                            <compilerArgs>
+                                <arg>-J--add-modules</arg>
+                                <arg>-Jjava.annotations.common</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <repositories>
         <repository>
