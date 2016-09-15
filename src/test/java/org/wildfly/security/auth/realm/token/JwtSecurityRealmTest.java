@@ -73,6 +73,25 @@ public class JwtSecurityRealmTest extends BaseTestCase {
     }
 
     @Test
+    public void testEmptyConfiguration() throws Exception {
+        KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
+        ByteStringBuilder publicKeyPem = new ByteStringBuilder();
+
+        Pem.generatePemPublicKey(publicKeyPem, keyPair.getPublic());
+
+        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+                .principalClaimName("sub")
+                .validator(JwtValidator.builder().build())
+                .build();
+
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(createJwt(keyPair, 10, 0))));
+
+        assertNotNull(realmIdentity);
+        assertTrue(realmIdentity.exists());
+        assertEquals("elytron@jboss.org", realmIdentity.getRealmIdentityPrincipal().getName());
+    }
+
+    @Test
     public void testWithMultipleAudience() throws Exception {
         KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
 

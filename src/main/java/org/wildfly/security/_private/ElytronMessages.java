@@ -515,6 +515,18 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1125, value = "Ldap-backed realm failed to obtain context")
     RealmUnavailableException ldapRealmFailedToObtainContext(@Cause Throwable cause);
 
+    @LogMessage(level = WARN)
+    @Message(id = 1126, value = "Jwt-based token realm not configured with a list of valid issuers. Ignoring issuer verification.")
+    void tokenRealmJwtWarnNoIssuerIgnoringIssuerCheck();
+
+    @LogMessage(level = WARN)
+    @Message(id = 1127, value = "Jwt-based token not configured with a list of valid audiences. Ignoring audience verification.")
+    void tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
+
+    @LogMessage(level = WARN)
+    @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
+    void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")

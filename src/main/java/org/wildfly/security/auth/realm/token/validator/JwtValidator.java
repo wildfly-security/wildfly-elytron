@@ -48,8 +48,11 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.util.JsonUtil.toAttributes;
 
 /**
- * A {@link TokenValidator} capable of validating and parsing JWT. Most of the validations performed by this validator are
+ * <p>A {@link TokenValidator} capable of validating and parsing JWT. Most of the validations performed by this validator are
  * based on RFC-7523 (JSON Web Token (JWT) Profile for OAuth 2.0 Client Authentication and Authorization Grants).
+ *
+ * <p>This validator can also be used as a JWT parser only. In this case, for security reasons, you need to make sure that
+ * JWT validations such as issuer, audience and signature checks are performed before obtaining identities from this realm.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
@@ -72,7 +75,19 @@ public class JwtValidator implements TokenValidator {
     JwtValidator(Builder configuration) {
         this.issuers = checkNotNullParam("issuers", configuration.issuers);
         this.audiences = checkNotNullParam("audience", configuration.audience);
-        this.publicKey = checkNotNullParam("publicKey", configuration.publicKey);
+        this.publicKey = configuration.publicKey;
+
+        if (issuers.isEmpty()) {
+            log.tokenRealmJwtWarnNoIssuerIgnoringIssuerCheck();
+        }
+
+        if (audiences.isEmpty()) {
+            log.tokenRealmJwtWarnNoAudienceIgnoringAudienceCheck();
+        }
+
+        if (publicKey == null) {
+            log.tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
+        }
     }
 
     @Override
@@ -134,6 +149,9 @@ public class JwtValidator implements TokenValidator {
     }
 
     private boolean verifySignature(String encodedHeader, String encodedClaims, String encodedSignature) throws RealmUnavailableException {
+        if (publicKey == null) {
+            return true;
+        }
         try {
             Base64.Decoder urlDecoder = Base64.getUrlDecoder();
             byte[] decodedSignature = urlDecoder.decode(encodedSignature);
@@ -168,7 +186,7 @@ public class JwtValidator implements TokenValidator {
 
         boolean valid = audClaimArray.stream()
                 .map(jsonValue -> (JsonString) jsonValue)
-                .anyMatch(audience1 -> audiences.contains(audience1.getString()));
+                .anyMatch(audience1 -> audiences.contains(audience1.getString())) || audiences.isEmpty();
 
         if (!valid) {
             log.debugf("Audience check failed. Provided [%s] but was expected [%s].", audClaimArray.toArray(), this.audiences);
@@ -184,7 +202,7 @@ public class JwtValidator implements TokenValidator {
             return false;
         }
 
-        boolean valid = this.issuers.contains(issuer);
+        boolean valid = this.issuers.contains(issuer) || this.issuers.isEmpty();
 
         if (!valid) {
             log.debugf("Issuer check failed. Provided [%s] but was expected [%s].", issuer, this.issuers);
@@ -241,10 +259,12 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * Defines one or more string values representing an unique identifier for the entities that are allowed as issuers of a given JWT. During validation
+         * <p>Defines one or more string values representing an unique identifier for the entities that are allowed as issuers of a given JWT. During validation
          * JWT tokens must have a <code>iss</code> claim that contains one of the values defined here.
          *
-         * @param issuer one or more string values representing the issuers (must not be {@code null})
+         * <p>If not provided, the validator will not perform validations based on the issuer claim.
+         *
+         * @param issuer one or more string values representing the valid issuers
          * @return this instance
          */
         public Builder issuer(String... issuer) {
@@ -253,10 +273,12 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * Defines one or more string values representing the audiences supported by this configuration. During validation JWT tokens
+         * <p>Defines one or more string values representing the audiences supported by this configuration. During validation JWT tokens
          * must have an <code>aud</code> claim that contains one of the values defined here.
          *
-         * @param audience one or more string values representing the audience (must not be {@code null})
+         * <p>If not provided, the validator will not perform validations based on the audience claim.
+         *
+         * @param audience one or more string values representing the valid audiences
          * @return this instance
          */
         public Builder audience(String... audience) {
@@ -265,9 +287,11 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * A public key in its PEM format used to validate the signature.
+         * <p>A public key in its PEM format used to validate the signature.
          *
-         * @param publicKeyPem the public key in its PEM format (must not be {@code null})
+         * <p>If not provided, the validator will not validate signatures.
+         *
+         * @param publicKeyPem the public key in its PEM format
          * @return this instance
          */
         public Builder publicKey(byte[] publicKeyPem) {
@@ -284,9 +308,11 @@ public class JwtValidator implements TokenValidator {
         }
 
         /**
-         * A {@link PublicKey} format used to validate the signature.
+         * <p>A {@link PublicKey} format used to validate the signature.
          *
-         * @param publicKey the public key in its PEM format (must not be {@code null})
+         * <p>If not provided, the validator will not validate signatures.
+         *
+         * @param publicKey the public key in its PEM format
          * @return this instance
          */
         public Builder publicKey(PublicKey publicKey) {
