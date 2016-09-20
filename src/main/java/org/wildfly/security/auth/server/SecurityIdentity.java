@@ -503,7 +503,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      *        with the given name, {@code false} to just check if the caller has the
      *        {@code setRunAsPermission} {@link RuntimePermission}
      * @return the new security identity
-     * @throws SecurityException if the caller does not have the {@code setRunAsPermission}
+     * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
      *         {@link ElytronPermission} or if the operation authorization failed for any other reason
      */
     public SecurityIdentity createRunAsIdentity(String name, boolean authorize) throws SecurityException {
@@ -514,20 +514,47 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             sm.checkPermission(SET_RUN_AS_PERMISSION);
         }
 
-        final SecurityDomain domain = this.securityDomain;
-        final ServerAuthenticationContext context = domain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
+        final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
         try {
-            if (AnonymousPrincipal.getInstance().getName().equals(name)) {
-                if (! context.authorizeAnonymous(false)) {
-                    throw log.runAsAuthorizationFailed(getPrincipal(), new AnonymousPrincipal(), null);
-                }
-            } else {
-                if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
-                    throw log.runAsAuthorizationFailed(getPrincipal(), new NamePrincipal(name), null);
-                }
+            if (! (context.importIdentity(this) && context.authorize(name, authorize))) {
+                throw log.runAsAuthorizationFailed(principal, new NamePrincipal(name), null);
             }
         } catch (RealmUnavailableException e) {
-            throw log.runAsAuthorizationFailed(this.principal, context.getAuthenticationPrincipal(), e);
+            throw log.runAsAuthorizationFailed(principal, context.getAuthenticationPrincipal(), e);
+        }
+        return context.getAuthorizedIdentity();
+    }
+
+    /**
+     * Attempt to create a new identity that can be used to run as an anonymous user. If the
+     * current identity is not authorized to run as an anonymous user, an exception is thrown.
+     *
+     * @return the new security identity
+     * @throws SecurityException if the operation authorization failed for any reason
+     */
+    public SecurityIdentity createRunAsAnonymous() throws SecurityException {
+        return createRunAsAnonymous(true);
+    }
+
+    /**
+     * Attempt to create a new identity that can be used to run as an anonymous user
+     *
+     * @param authorize {@code true} to check the current identity is authorized to run as a user
+     *        with the given name, {@code false} to just check if the caller has the
+     *        {@code setRunAsPermission} {@link RuntimePermission}
+     * @return the new security identity
+     * @throws SecurityException if the caller does not have the {@code setRunAsPrincipal}
+     *         {@link ElytronPermission} or if the operation authorization failed for any other reason
+     */
+    public SecurityIdentity createRunAsAnonymous(boolean authorize) throws SecurityException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(SET_RUN_AS_PERMISSION);
+        }
+
+        final ServerAuthenticationContext context = securityDomain.createNewAuthenticationContext(this, MechanismConfigurationSelector.constantSelector(MechanismConfiguration.EMPTY));
+        if (! context.authorizeAnonymous(false)) {
+            throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
         }
         return context.getAuthorizedIdentity();
     }
