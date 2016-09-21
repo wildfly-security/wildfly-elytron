@@ -20,6 +20,7 @@ package org.wildfly.security.authz;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -68,18 +69,18 @@ public class SimplePermissionMapper implements PermissionMapper {
             if (current.principals.contains(permissionMappable.getPrincipal().getName()) || roles.containsAny(current.roles)) {
                     switch (mappingMode) {
                         case FIRST_MATCH:
-                            return current.permissionVerifer;
+                            return current.permissionVerifier;
                         case AND:
-                            result = result != null ? result.and(current.permissionVerifer) : current.permissionVerifer;
+                            result = result != null ? result.and(current.permissionVerifier) : current.permissionVerifier;
                             break;
                         case OR:
-                            result = result != null ? result.or(current.permissionVerifer) : current.permissionVerifer;
+                            result = result != null ? result.or(current.permissionVerifier) : current.permissionVerifier;
                             break;
                         case UNLESS:
-                            result = result != null ? result.unless(current.permissionVerifer) : current.permissionVerifer;
+                            result = result != null ? result.unless(current.permissionVerifier) : current.permissionVerifier;
                             break;
                         case XOR:
-                            result = result != null ? result.xor(current.permissionVerifer) : current.permissionVerifer;
+                            result = result != null ? result.xor(current.permissionVerifier) : current.permissionVerifier;
                             break;
                 }
             }
@@ -162,12 +163,12 @@ public class SimplePermissionMapper implements PermissionMapper {
 
         private final Set<String> roles;
 
-        private final PermissionVerifier permissionVerifer;
+        private final PermissionVerifier permissionVerifier;
 
-        private Mapping(Set<String> principals, Set<String> roles, PermissionVerifier permissionVerifer) {
+        private Mapping(Set<String> principals, Set<String> roles, PermissionVerifier permissionVerifier) {
             this.principals = new HashSet<>(checkNotNullParam("principals", principals));
             this.roles = Collections.unmodifiableSet(new HashSet<>(checkNotNullParam("roles", roles)));
-            this.permissionVerifer = checkNotNullParam("permissionVerifier", permissionVerifer);
+            this.permissionVerifier = checkNotNullParam("permissionVerifier", permissionVerifier);
         }
 
     }
