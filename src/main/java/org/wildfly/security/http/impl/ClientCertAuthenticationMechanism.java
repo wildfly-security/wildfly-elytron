@@ -20,17 +20,26 @@ package org.wildfly.security.http.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
-import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
+import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.server.SecurityIdentity;
+import org.wildfly.security.cache.CachedIdentity;
+import org.wildfly.security.cache.IdentityCache;
+import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
+import org.wildfly.security.x500.X500;
+
+import java.security.cert.X509Certificate;
 
 /**
  * The CLIENT_CERT authentication mechanism.
@@ -38,6 +47,8 @@ import org.wildfly.security.mechanism.MechanismUtil;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
+
+    private static final String CACHED_IDENTITY_KEY = FormAuthenticationMechanism.class.getName() + ".cached-identity";
 
     private final CallbackHandler callbackHandler;
 
@@ -68,8 +79,24 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             request.noAuthenticationInProgress();
             return;
         }
+        if (attemptReAuthentication(request)) {
+            return;
+        }
+        if (attemptAuthentication(request, sslSession)) {
+            return;
+        }
+        fail(request);
+    }
 
-        final SSLSessionAuthorizationCallback callback = new SSLSessionAuthorizationCallback(sslSession);
+    private boolean attemptAuthentication(HttpServerRequest request, SSLSession sslSession) throws HttpAuthenticationException {
+        X509Certificate[] x509Certificates;
+        try {
+            x509Certificates = X500.asX509CertificateArray((Object[]) sslSession.getPeerCertificates());
+        } catch (SSLPeerUnverifiedException e) {
+            throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+        }
+        X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
+        EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
         try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, callback);
         } catch (AuthenticationMechanismException e) {
@@ -77,15 +104,36 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         } catch (UnsupportedCallbackException e) {
             throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
         }
+        if (callback.isVerified()) {
+            CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(evidence.getPrincipal(), createIdentityCache(request), true);
+            try {
+                MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
+            } catch (AuthenticationMechanismException e) {
+                throw e.toHttpAuthenticationException();
+            } catch (UnsupportedCallbackException e) {
+                throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+            }
 
-        if (callback.isAuthorized()) try {
+            if (authorizeCallback.isAuthorized()) if (succeed(request)) return true;
+        }
+        return false;
+    }
+
+    private boolean succeed(HttpServerRequest request) throws HttpAuthenticationException {
+        try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, AuthenticationCompleteCallback.SUCCEEDED);
             request.authenticationComplete();
+            return true;
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
             // ignored
-        } else try {
+        }
+        return false;
+    }
+
+    private void fail(HttpServerRequest request) throws HttpAuthenticationException {
+        try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
             request.authenticationFailed(log.authenticationFailed(CLIENT_CERT_NAME));
         } catch (AuthenticationMechanismException e) {
@@ -95,4 +143,43 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         }
     }
 
+    private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
+        CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(createIdentityCache(request), true);
+        try {
+            MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
+        } catch (AuthenticationMechanismException e) {
+            throw e.toHttpAuthenticationException();
+        } catch (UnsupportedCallbackException e) {
+            throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+        }
+        if (authorizeCallback.isAuthorized()) {
+            return succeed(request);
+        }
+        return false;
+    }
+
+    private IdentityCache createIdentityCache(HttpServerRequest request) {
+        SSLSession sslSession = request.getSSLSession();
+        if (sslSession == null) {
+            return null;
+        }
+        return new IdentityCache() {
+            @Override
+            public void put(SecurityIdentity identity) {
+                sslSession.putValue(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), identity));
+            }
+
+            @Override
+            public CachedIdentity get() {
+                return (CachedIdentity) sslSession.getValue(CACHED_IDENTITY_KEY);
+            }
+
+            @Override
+            public CachedIdentity remove() {
+                CachedIdentity cachedIdentity = get();
+                sslSession.removeValue(CACHED_IDENTITY_KEY);
+                return cachedIdentity;
+            }
+        };
+    }
 }
