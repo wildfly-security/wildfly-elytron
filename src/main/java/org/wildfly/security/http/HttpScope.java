@@ -128,21 +128,20 @@ public interface HttpScope {
     }
 
     /**
-     * Does this scope support registration to receive destruction notifications?
+     * Does this scope support registration to receive notifications?
      *
-     * @return {@code true} if this scope supports registration for destruction notifications, {@code false} otherwise.
+     * @return {@code true} if this scope supports registration for notifications, {@code false} otherwise.
      */
     default boolean supportsNotifications() {
         return false;
     }
 
     /**
-     * Register a {@link Consumer<HttpServerScopes>} to receive a notification when this scope is destroyed.
+     * Register a {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
      *
-     * @param notificationConsumer the {@link Consumer<HttpServerScopes>} to receive a notification when this scope is
-     *        destroyed.
+     * @param notificationConsumer the {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
      */
-    default void registerForNotification(Consumer<HttpServerScopes> notificationConsumer) {
+    default void registerForNotification(Consumer<HttpScopeNotification> notificationConsumer) {
     }
 
 }

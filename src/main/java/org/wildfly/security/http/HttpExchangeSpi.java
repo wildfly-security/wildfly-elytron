@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +35,7 @@ import org.wildfly.security.auth.server.SecurityIdentity;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public interface HttpExchangeSpi {
+public interface HttpExchangeSpi extends HttpServerScopes {
 
     /**
      * Get a list of all of the values set for the specified header within the HTTP request.
@@ -74,40 +73,6 @@ public interface HttpExchangeSpi {
      *         exists.
      */
     default SSLSession getSSLSession() {
-        return null;
-    }
-
-    /**
-     * Get the {@link HttpScope} for the {@link Scope} specified.
-     *
-     * Note: The list of scopes could increase in future versions, implementations of this method should return {@code null} for
-     * any unrecognised scope.
-     *
-     * @param scope the scope required.
-     * @return the scope or {@code null} if it is not available.
-     */
-    default HttpScope getScope(Scope scope) {
-        return null;
-    }
-
-    /**
-     * Get the IDs of the scope specified.
-     *
-     * @param scope the scope the IDs are required for.
-     * @return the IDs of the scope specified or {@code null} if referencing this scope by ID is not supported.
-     */
-    default Collection<String> getScopeIds(Scope scope) {
-        return null;
-    }
-
-    /**
-     * Get the {@link HttpScope} with the specific ID for the {@link Scope} specified.
-     *
-     * @param scope the scope required.
-     * @param id the id of the required scope.
-     * @return the {@link HttpScope} with the specific ID for the {@link Scope} specified, or {@code null} if it does not exist or is not supported.
-     */
-    default HttpScope getScope(Scope scope, String id) {
         return null;
     }
 

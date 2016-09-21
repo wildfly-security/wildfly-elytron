@@ -162,6 +162,16 @@ public class HttpAuthenticator {
         }
 
         @Override
+        public boolean exists(Scope scope) {
+            return httpExchangeSpi.exists(scope);
+        }
+
+        @Override
+        public HttpScope create(Scope scope) {
+            return httpExchangeSpi.create(scope);
+        }
+
+        @Override
         public HttpScope getScope(Scope scope) {
             return httpExchangeSpi.getScope(scope);
         }

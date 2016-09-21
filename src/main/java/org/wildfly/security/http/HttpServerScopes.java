@@ -27,6 +27,22 @@ import java.util.Collection;
 public interface HttpServerScopes {
 
     /**
+     * Returns {@code true} if the specified scope exists.
+     *
+     * @param scope the scope required.
+     * @return {@code true} if the specified scope exists. Otherwise, {@code false}
+     */
+    boolean exists(Scope scope);
+
+    /**
+     * Create the specified scope if available. This method may return the same scope (with the same identifier) if the scope already exists.
+     *
+     * @param scope the scope required.
+     * @return @return the scope specified or {@code null} if not supported.
+     */
+    HttpScope create(Scope scope);
+
+    /**
      * Get the specified {@link HttpScope} if available.
      *
      * @param scope the type of the scope required.
