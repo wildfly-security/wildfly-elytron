@@ -51,7 +51,9 @@ public class SecurityIdentityRule implements TestRule {
             throw new RuntimeException("@RunAs is missing on test method or test class.");
         }
 
-        final SecurityIdentity runAsIdentity = securityDomain.getCurrentSecurityIdentity().createRunAsIdentity(runAs.value());
+        final SecurityIdentity runAsIdentity = runAs.value().equals("anonymous") ?
+                securityDomain.getCurrentSecurityIdentity().createRunAsAnonymous() :
+                securityDomain.getCurrentSecurityIdentity().createRunAsIdentity(runAs.value());
         return new RunAsSecurityIdentity(base, runAsIdentity);
     }
 

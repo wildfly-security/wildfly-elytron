@@ -28,6 +28,9 @@ import org.wildfly.security.util.StringMapping;
  *     <li>{@code createAuthenticator}</li>
  *     <li>{@code createAuthenticationContextConfigurationClient}</li>
  *     <li>{@code createSecurityDomain}</li>
+ *     <li>{@code setRunAsPrincipal}</li>
+ *     <li>{@code createServerAuthenticationContext}</li>
+ *     <li>{@code getPrivateCredentials}</li>
  * </ul>
  * The {@code actions} are not used and should be empty or {@code null}.
  *
