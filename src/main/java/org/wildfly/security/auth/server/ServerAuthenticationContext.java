@@ -830,6 +830,7 @@ public final class ServerAuthenticationContext {
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CachedIdentityAuthorizeCallback) {
                     CachedIdentityAuthorizeCallback authorizeCallback = (CachedIdentityAuthorizeCallback) callback;
+                    authorizeCallback.setSecurityDomain(stateRef.get().getSecurityDomain());
                     SecurityIdentity authorizedIdentity = null;
                     try {
                         SecurityIdentity identity = authorizeCallback.getIdentity();

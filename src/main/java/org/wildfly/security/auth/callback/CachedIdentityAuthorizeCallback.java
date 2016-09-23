@@ -18,12 +18,15 @@
 
 package org.wildfly.security.auth.callback;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
 import org.wildfly.security.cache.IdentityCache;
 
 import java.security.Principal;
+import java.util.function.Function;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 
@@ -41,10 +44,11 @@ import static org.wildfly.common.Assert.checkNotNullParam;
  */
 public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
 
-    private final IdentityCache identityCache;
+    private final Function<SecurityDomain, IdentityCache> identityCache;
     private final boolean localCache;
     private Principal principal;
     private boolean authorized;
+    private SecurityDomain securityDomain;
 
     /**
      * Creates a new instance in order to authorize identities managed by the given <code>identityCache</code>.
@@ -52,9 +56,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * @param identityCache the identity cache
      */
     public CachedIdentityAuthorizeCallback(IdentityCache identityCache) {
-        checkNotNullParam("identityCache", identityCache);
-        this.identityCache = identityCache;
-        this.localCache = false;
+        this(identityCache, false);
     }
 
     /**
@@ -66,6 +68,20 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      *                   {@code identityCache} will be considered.
      */
     public CachedIdentityAuthorizeCallback(IdentityCache identityCache, boolean localCache) {
+        this(securityDomain1 -> identityCache, localCache);
+    }
+
+    /**
+     * <p>Creates a new instance in order to authorize identities managed by the given <code>identityCache</code>.
+     *
+     * <p>This constructor can be used to perform caching operations (e.g.: put, get and remove) in the context of a {@link SecurityDomain}.
+     *
+     * @param identityCache a function that creates an {@link IdentityCache} given a {@link SecurityDomain}
+     * @param localCache if true, indicates that authorization should be based on the given {@code identityCache} only. In case the mechanism
+     *                   performing the authorization is wrapped by another one that provides a top-level cache (eg.: SSO), only the given
+     *                   {@code identityCache} will be considered.
+     */
+    public CachedIdentityAuthorizeCallback(Function<SecurityDomain, IdentityCache> identityCache, boolean localCache) {
         checkNotNullParam("identityCache", identityCache);
         this.identityCache = identityCache;
         this.localCache = localCache;
@@ -91,11 +107,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      *                   {@code identityCache} will be considered.
      */
     public CachedIdentityAuthorizeCallback(Principal principal, IdentityCache identityCache, boolean localCache) {
-        checkNotNullParam("principal", principal);
-        checkNotNullParam("identityCache", identityCache);
-        this.principal = principal;
-        this.identityCache = identityCache;
-        this.localCache = localCache;
+        this(principal, securityDomain -> identityCache, localCache);
     }
 
     /**
@@ -105,11 +117,26 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * @param identityCache the identity cache
      */
     public CachedIdentityAuthorizeCallback(Principal principal, IdentityCache identityCache) {
+        this(principal, securityDomain -> identityCache, false);
+    }
+
+    /**
+     * <p>Creates a new instance to authenticate, authorize and cache the identity associated with the given <code>principal</code>.
+     *
+     * <p>This constructor can be used to perform caching operations (e.g.: put, get and remove) in the context of a {@link SecurityDomain}.
+     *
+     * @param principal the principal associated with the identity
+     * @param identityCache a function that creates an {@link IdentityCache} given a {@link SecurityDomain}
+     * @param localCache if true, indicates that authorization should be based on the given {@code identityCache} only. In case the mechanism
+     *                   performing the authorization is wrapped by another one that provides a top-level cache (eg.: SSO), only the given
+     *                   {@code identityCache} will be considered.
+     */
+    public CachedIdentityAuthorizeCallback(Principal principal, Function<SecurityDomain, IdentityCache> identityCache, boolean localCache) {
         checkNotNullParam("principal", principal);
         checkNotNullParam("identityCache", identityCache);
         this.principal = principal;
         this.identityCache = identityCache;
-        this.localCache = false;
+        this.localCache = localCache;
     }
 
     /**
@@ -128,9 +155,9 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      */
     public void setAuthorized(SecurityIdentity securityIdentity) {
         if (authorized = securityIdentity != null) {
-            this.identityCache.put(securityIdentity);
+            createDomainCache().put(securityIdentity);
         } else {
-            this.identityCache.remove();
+            createDomainCache().remove();
         }
     }
 
@@ -140,7 +167,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * @return the principal (not {@code null})
      */
     public Principal getPrincipal() {
-        CachedIdentity cachedIdentity = identityCache.get();
+        CachedIdentity cachedIdentity = createDomainCache().get();
         if (cachedIdentity != null) {
             return new NamePrincipal(cachedIdentity.getName());
         }
@@ -162,7 +189,7 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
      * @return the cached identity or null if there is no entry in the cache
      */
     public SecurityIdentity getIdentity() {
-        CachedIdentity cachedIdentity = identityCache.get();
+        CachedIdentity cachedIdentity = createDomainCache().get();
         if (cachedIdentity != null) {
             return cachedIdentity.getSecurityIdentity();
         }
@@ -178,6 +205,16 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
         return localCache;
     }
 
+    /**
+     * Set the current {@link SecurityDomain} in order to obtain identities from the cache
+     *
+     * @param securityDomain the current security domain
+     */
+    public void setSecurityDomain(SecurityDomain securityDomain) {
+        Assert.checkNotNullParam("securityDomain", securityDomain);
+        this.securityDomain = securityDomain;
+    }
+
     @Override
     public boolean isOptional() {
         return false;
@@ -186,5 +223,9 @@ public class CachedIdentityAuthorizeCallback implements ExtendedCallback {
     @Override
     public boolean needsInformation() {
         return false;
+    }
+
+    private IdentityCache createDomainCache() {
+        return this.identityCache.apply(securityDomain);
     }
 }

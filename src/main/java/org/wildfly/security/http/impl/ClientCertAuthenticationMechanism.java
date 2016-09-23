@@ -28,6 +28,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.cache.CachedIdentity;
 import org.wildfly.security.cache.IdentityCache;
@@ -37,9 +38,12 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
+import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
 import java.security.cert.X509Certificate;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * The CLIENT_CERT authentication mechanism.
@@ -47,8 +51,6 @@ import java.security.cert.X509Certificate;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class ClientCertAuthenticationMechanism implements HttpServerAuthenticationMechanism {
-
-    private static final String CACHED_IDENTITY_KEY = FormAuthenticationMechanism.class.getName() + ".cached-identity";
 
     private final CallbackHandler callbackHandler;
 
@@ -158,27 +160,28 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         return false;
     }
 
-    private IdentityCache createIdentityCache(HttpServerRequest request) {
+    private Function<SecurityDomain, IdentityCache> createIdentityCache(HttpServerRequest request) {
         SSLSession sslSession = request.getSSLSession();
         if (sslSession == null) {
             return null;
         }
-        return new IdentityCache() {
+        return securityDomain -> new IdentityCache() {
+
+            final ConcurrentHashMap<SecurityDomain, CachedIdentity> identities = (ConcurrentHashMap<SecurityDomain, CachedIdentity>) SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap());
+
             @Override
             public void put(SecurityIdentity identity) {
-                sslSession.putValue(CACHED_IDENTITY_KEY, new CachedIdentity(getMechanismName(), identity));
+                identities.putIfAbsent(securityDomain, new CachedIdentity(getMechanismName(), identity));
             }
 
             @Override
             public CachedIdentity get() {
-                return (CachedIdentity) sslSession.getValue(CACHED_IDENTITY_KEY);
+                return identities.get(securityDomain);
             }
 
             @Override
             public CachedIdentity remove() {
-                CachedIdentity cachedIdentity = get();
-                sslSession.removeValue(CACHED_IDENTITY_KEY);
-                return cachedIdentity;
+                return identities.remove(securityDomain);
             }
         };
     }
