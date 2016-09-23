@@ -118,7 +118,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public void put(SecurityIdentity  identity) {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (session == null) {
+                if (!session.exists()) {
                     return;
                 }
 
@@ -129,7 +129,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public CachedIdentity get() {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (session == null) {
+                if (!session.exists()) {
                     return null;
                 }
 
@@ -140,7 +140,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             public CachedIdentity remove() {
                 HttpScope session = getSessionScope(request, createSession);
 
-                if (session == null) {
+                if (!session.exists()) {
                     return null;
                 }
 
@@ -171,10 +171,9 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
             if (authenticate(null, username, passwordChars)) {
                 if (authorize(username, request)) {
                     succeed();
-
-                    HttpScope session = request.getScope(Scope.SESSION);
+                    HttpScope session = getSessionScope(request, true);
                     HttpServerMechanismsResponder responder = null;
-                    if (session != null) {
+                    if (session.exists()) {
                         String postAuthenticationPath;
                         String originalPath = session.getAttachment(LOCATION_KEY, String.class);
                         if (originalPath != null) {
@@ -253,8 +252,8 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     void sendLogin(HttpServerRequest request, HttpServerResponse response) throws HttpAuthenticationException {
         // Save the current request.
 
-        HttpScope session = getSessionScope(request, false);
-        if (session != null && session.supportsAttachments()) {
+        HttpScope session = getSessionScope(request, true);
+        if (session.supportsAttachments()) {
             session.setAttachment(LOCATION_KEY, request.getRequestURI().getPath());
             request.suspendRequest();
         }
@@ -297,12 +296,12 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     private HttpScope getSessionScope(HttpServerRequest request, boolean createSession) {
-        if (request.exists(Scope.SESSION)) {
-            return request.getScope(Scope.SESSION);
-        } else if (createSession) {
-            return request.create(Scope.SESSION);
+        HttpScope scope = request.getScope(Scope.SESSION);
+
+        if (!scope.exists() && createSession) {
+            scope.create();
         }
 
-        return null;
+        return scope;
     }
 }

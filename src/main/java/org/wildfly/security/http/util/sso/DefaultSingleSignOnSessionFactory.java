@@ -237,7 +237,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
 
             HttpScope scope = request.getScope(Scope.SESSION);
 
-            if (scope == null) {
+            if (!scope.exists()) {
                 return null;
             }
 
@@ -288,7 +288,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
                 String localSessionId = verifyLogoutRequest(logoutMessage);
                 HttpScope scope = request.getScope(Scope.SESSION, localSessionId);
 
-                if (scope == null) {
+                if (!scope.exists()) {
                     return false;
                 }
 
@@ -322,8 +322,8 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
             if (getLocalSession() == null) {
                 HttpScope scope = request.getScope(Scope.SESSION);
 
-                if (scope == null) {
-                    scope = request.create(Scope.SESSION);
+                if (!scope.exists()) {
+                    scope.create();
                 }
 
                 String localSessionId = createLocalSessionId(scope.getID(), request);
@@ -349,7 +349,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
         }
 
         void invalidateLocalSession(HttpScope scope) {
-            if (scope == null) {
+            if (!scope.exists()) {
                 return;
             }
             scope.setAttachment(SESSION_INVALIDATING_ATTRIBUTE, true);

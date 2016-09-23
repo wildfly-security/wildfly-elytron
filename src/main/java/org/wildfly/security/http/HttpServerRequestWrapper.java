@@ -42,16 +42,6 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     }
 
     @Override
-    public boolean exists(Scope scope) {
-        return delegate.exists(scope);
-    }
-
-    @Override
-    public HttpScope create(Scope scope) {
-        return delegate.create(scope);
-    }
-
-    @Override
     public HttpScope getScope(Scope scope) {
         return delegate.getScope(scope);
     }

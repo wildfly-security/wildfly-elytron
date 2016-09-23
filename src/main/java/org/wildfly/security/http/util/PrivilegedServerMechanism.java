@@ -149,16 +149,6 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
-        public boolean exists(Scope scope) {
-            return wrapped.exists(scope);
-        }
-
-        @Override
-        public HttpScope create(Scope scope) {
-            return wrapped.create(scope);
-        }
-
-        @Override
         public HttpScope getScope(Scope scope) {
             return wrapped.getScope(scope);
         }
