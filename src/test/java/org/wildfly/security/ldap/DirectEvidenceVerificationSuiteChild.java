@@ -33,7 +33,7 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class PasswordValidationSuiteChild {
+public class DirectEvidenceVerificationSuiteChild {
 
     @Test
     public void testPlainUserWithSimpleName() throws Exception {

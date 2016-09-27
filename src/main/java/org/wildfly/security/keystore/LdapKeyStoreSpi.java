@@ -128,13 +128,15 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     }
 
     private void returnDirContext(DirContext context) {
-        if (binaryAttributesBackup != null) {
-            try {
+        try {
+            if (binaryAttributesBackup == null) {
+                context.removeFromEnvironment(ENV_BINARY_ATTRIBUTES);
+            } else {
                 context.addToEnvironment(ENV_BINARY_ATTRIBUTES, binaryAttributesBackup);
-                context.close();
-            } catch (NamingException e) {
-                throw log.failedToReturnDirContext(e);
             }
+            context.close();
+        } catch (NamingException e) {
+            throw log.failedToReturnDirContext(e);
         }
     }
 
