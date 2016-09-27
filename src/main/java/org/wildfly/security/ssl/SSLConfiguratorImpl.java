@@ -32,6 +32,7 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     private final CipherSuiteSelector cipherSuiteSelector;
     private final boolean wantClientAuth;
     private final boolean needClientAuth;
+    private final boolean useCipherSuitesOrder;
     private final boolean clientMode;
 
     /**
@@ -42,9 +43,10 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
      * @param wantClientAuth {@code true} to request client authentication
      * @param needClientAuth {@code true} to require client authentication
      */
-    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean wantClientAuth, final boolean needClientAuth) {
+    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean wantClientAuth, final boolean needClientAuth, final boolean useCipherSuitesOrder) {
         this.protocolSelector = protocolSelector;
         this.cipherSuiteSelector = cipherSuiteSelector;
+        this.useCipherSuitesOrder = useCipherSuitesOrder;
         this.wantClientAuth = wantClientAuth;
         this.needClientAuth = needClientAuth;
         clientMode = false;
@@ -56,9 +58,10 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
      * @param protocolSelector the protocol selector (must not be {@code null})
      * @param cipherSuiteSelector the cipher suite selector (must not be {@code null})
      */
-    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector) {
+    SSLConfiguratorImpl(final ProtocolSelector protocolSelector, final CipherSuiteSelector cipherSuiteSelector, final boolean useCipherSuitesOrder) {
         this.protocolSelector = protocolSelector;
         this.cipherSuiteSelector = cipherSuiteSelector;
+        this.useCipherSuitesOrder = useCipherSuitesOrder;
         this.wantClientAuth = false;
         this.needClientAuth = false;
         clientMode = true;
@@ -67,9 +70,9 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     void configure(SSLParameters params, String[] supportedProtocols, String[] supportedCipherSuites) {
         params.setProtocols(protocolSelector.evaluate(supportedProtocols));
         params.setCipherSuites(cipherSuiteSelector.evaluate(supportedCipherSuites));
-        params.setUseCipherSuitesOrder(true);
-        params.setNeedClientAuth(needClientAuth);
-        params.setWantClientAuth(wantClientAuth);
+        params.setUseCipherSuitesOrder(useCipherSuitesOrder);
+        params.setWantClientAuth(wantClientAuth); // unsets need
+        if (needClientAuth) params.setNeedClientAuth(needClientAuth); // unsets want
     }
 
     public void configure(final SSLContext context, final SSLServerSocket sslServerSocket) {
