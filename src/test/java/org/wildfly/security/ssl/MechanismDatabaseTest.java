@@ -115,4 +115,17 @@ public class MechanismDatabaseTest {
         );
     }
 
+    @Test
+    public void cipherSuiteSelector6() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA");
+        Assert.assertArrayEquals(
+                new String[] {
+                        "TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"
+                },
+                selector.evaluate(new String[] {
+                        "TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"
+                })
+        );
+    }
+
 }

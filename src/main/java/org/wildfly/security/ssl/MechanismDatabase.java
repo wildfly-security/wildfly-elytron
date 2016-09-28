@@ -74,14 +74,18 @@ class MechanismDatabase {
             final String rawValue = mapEntry.getValue();
             final String[] strings = p.split(rawValue);
             if (strings.length == 1 && strings[0].startsWith("alias:")) {
-                aliases.put(name, strings[0].substring(6));
+                String target = strings[0].substring(6);
+                aliases.put(name, target);
+                if (name.startsWith("TLS_")) {
+                    aliases.put("SSL_" + name.substring(4), target);
+                }
             } else if (strings.length != 11 && strings.length != 13) {
                 log.warnInvalidStringCountForMechanismDatabaseEntry(name);
             } else {
                 boolean ok = true;
                 final String openSslName = strings[0];
-                final KeyAgreement kex = KeyAgreement.forName(strings[1]);
-                if (kex == null) {
+                final KeyAgreement key = KeyAgreement.forName(strings[1]);
+                if (key == null) {
                     log.warnInvalidKeyExchangeForMechanismDatabaseEntry(strings[1], name);
                     ok = false;
                 }
@@ -138,7 +142,7 @@ class MechanismDatabase {
                     byte2 = -1;
                 }
                 if (ok) {
-                    final Entry entry = new Entry(name, openSslName, new ArrayList<String>(0), kex, auth, enc, digest, prot, export, level, fips, strBits, algBits);
+                    final Entry entry = new Entry(name, openSslName, new ArrayList<String>(0), key, auth, enc, digest, prot, export, level, fips, strBits, algBits);
                     if (entriesByStdName.containsKey(name)) {
                         log.warnInvalidDuplicateMechanismDatabaseEntry(name);
                     } else {
@@ -149,13 +153,13 @@ class MechanismDatabase {
                     } else {
                         entriesByOSSLName.put(openSslName, entry);
                     }
-                    if (kex == KeyAgreement.DHE) {
+                    if (key == KeyAgreement.DHE) {
                         final String newKey = join("-", replaceEdh(openSslName.split("-")));
                         if (!entriesByOSSLName.containsKey(newKey)) {
                             entriesByOSSLName.put(newKey, entry);
                         }
                     }
-                    addTo(entriesByKeyExchange, kex, entry);
+                    addTo(entriesByKeyExchange, key, entry);
                     addTo(entriesByAuthentication, auth, entry);
                     addTo(entriesByEncryption, enc, entry);
                     addTo(entriesByDigest, digest, entry);
