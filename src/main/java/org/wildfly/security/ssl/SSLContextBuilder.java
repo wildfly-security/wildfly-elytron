@@ -55,6 +55,7 @@ public final class SSLContextBuilder {
     private SecurityDomain securityDomain;
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
+    private boolean useCipherSuitesOrder = true;
     private boolean wantClientAuth;
     private boolean needClientAuth;
     private boolean authenticationOptional;
@@ -97,6 +98,18 @@ public final class SSLContextBuilder {
     public SSLContextBuilder setProtocolSelector(final ProtocolSelector protocolSelector) {
         Assert.checkNotNullParam("protocolSelector", protocolSelector);
         this.protocolSelector = protocolSelector;
+
+        return this;
+    }
+
+    /**
+     * Sets whether the local cipher suites preference should be honored.
+     *
+     * @param useCipherSuitesOrder whether the local cipher suites preference should be honored.
+     */
+    public SSLContextBuilder setUseCipherSuitesOrder(final boolean useCipherSuitesOrder) {
+        Assert.checkNotNullParam("useCipherSuitesOrder", useCipherSuitesOrder);
+        this.useCipherSuitesOrder = useCipherSuitesOrder;
 
         return this;
     }
@@ -279,7 +292,7 @@ public final class SSLContextBuilder {
                     x509TrustManager
             }, null);
             // now, set up the wrapping configuration
-            final SSLConfigurator sslConfigurator = clientMode ? new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector) : new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth);
+            final SSLConfigurator sslConfigurator = clientMode ? new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, useCipherSuitesOrder) : new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth, useCipherSuitesOrder);
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator);
             return new DelegatingSSLContext(contextSpi);
         });
