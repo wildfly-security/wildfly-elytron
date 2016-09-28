@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -57,6 +58,8 @@ import javax.naming.ldap.Rdn;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock;
+import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
 import org.wildfly.security.auth.server.CloseableIterator;
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.ModifiableRealmIdentity;
@@ -88,6 +91,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     private final List<CredentialPersister> credentialPersisters;
     private final List<EvidenceVerifier> evidenceVerifiers;
 
+    private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
+
     LdapSecurityRealm(final ExceptionSupplier<DirContext, NamingException> dirContextSupplier, final NameRewriter nameRewriter,
                       final IdentityMapping identityMapping,
                       final List<CredentialLoader> credentialLoaders,
@@ -107,12 +112,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        // todo: read/write locking
-        return getRealmIdentityForUpdate(locator);
+        return getRealmIdentity(locator, false);
     }
 
     @Override
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final IdentityLocator locator) {
+        return getRealmIdentity(locator, true);
+    }
+
+    private ModifiableRealmIdentity getRealmIdentity(final IdentityLocator locator, final boolean exclusive) {
         if (! locator.hasName()) {
             return ModifiableRealmIdentity.NON_EXISTENT;
         }
@@ -121,7 +129,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             throw log.invalidName();
         }
 
-        return new LdapRealmIdentity(name);
+        // Acquire the appropriate lock for the realm identity
+        IdentitySharedExclusiveLock realmIdentityLock = getRealmIdentityLockForName(name);
+        IdentityLock lock;
+        if (exclusive) {
+            lock = realmIdentityLock.lockExclusive();
+        } else {
+            lock = realmIdentityLock.lockShared();
+        }
+        return new LdapRealmIdentity(name, lock);
     }
 
     private DirContext obtainContext() throws RealmUnavailableException {
@@ -301,13 +317,27 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         return searchControls;
     }
 
+    private IdentitySharedExclusiveLock getRealmIdentityLockForName(final String name) {
+        IdentitySharedExclusiveLock realmIdentityLock = realmIdentityLocks.get(name);
+        if (realmIdentityLock == null) {
+            final IdentitySharedExclusiveLock newRealmIdentityLock = new IdentitySharedExclusiveLock();
+            realmIdentityLock = realmIdentityLocks.putIfAbsent(name, newRealmIdentityLock);
+            if (realmIdentityLock == null) {
+                realmIdentityLock = newRealmIdentityLock;
+            }
+        }
+        return realmIdentityLock;
+    }
+
     private class LdapRealmIdentity implements ModifiableRealmIdentity {
 
         private final String name;
         private LdapIdentity identity;
+        private IdentityLock lock;
 
-        LdapRealmIdentity(final String name) {
+        LdapRealmIdentity(final String name, final IdentityLock lock) {
             this.name = name;
+            this.lock = lock;
         }
 
         @Override
@@ -425,6 +455,16 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             closeContext(dirContext);
+        }
+
+        @Override
+        public void dispose() {
+            // Release the lock for this realm identity
+            IdentityLock identityLock = lock;
+            lock = null;
+            if (identityLock != null) {
+                identityLock.release();
+            }
         }
 
         @Override

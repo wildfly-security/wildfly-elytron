@@ -18,20 +18,26 @@
 
 package org.wildfly.security.auth.server;
 
+import static java.security.AccessController.doPrivileged;
 import static java.util.Collections.emptyMap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
+import java.security.PrivilegedAction;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
+import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -748,5 +754,20 @@ public final class SecurityDomain {
                 throw log.builderAlreadyBuilt();
             }
         }
+    }
+
+    private static class ScheduledExecutorServiceProvider {
+        private static final ThreadFactory threadFactory = doPrivileged((PrivilegedAction<JBossThreadFactory>) ()
+                -> new JBossThreadFactory(new ThreadGroup("SecurityDomain ThreadGroup"), Boolean.FALSE, null, "%G - %t", null, null));
+        private static final ScheduledThreadPoolExecutor INSTANCE = new ScheduledThreadPoolExecutor(1, threadFactory);
+
+        static {
+            INSTANCE.setRemoveOnCancelPolicy(true);
+            INSTANCE.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        }
+    }
+
+    public static ScheduledExecutorService getScheduledExecutorService() {
+        return ScheduledExecutorServiceProvider.INSTANCE;
     }
 }

@@ -48,6 +48,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslClient;
@@ -57,7 +61,6 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -551,7 +554,6 @@ public class OTPTest extends BaseTestCase {
     }
 
     @Test
-    @Ignore("Depends on ELY-558")
     public void testMultipleSimultaneousAuthenticationSessions() throws Exception {
         final String algorithm = ALGORITHM_OTP_MD5;
         final SaslClientFactory clientFactory = obtainSaslClientFactory(OTPSaslClientFactory.class);
@@ -576,36 +578,47 @@ public class OTPTest extends BaseTestCase {
             final SaslClient saslClient2 = clientFactory.createSaslClient(new String[] { SaslMechanismInformation.Names.OTP }, null, "test", "testserver1.example.com",
                     Collections.<String, Object>emptyMap(), cbh);
 
+            final ExecutorService executorService = Executors.newFixedThreadPool(2);
+            final Callable<Boolean> attempt1 = () -> {
+                boolean attemptFailed = false;
+                byte[] message1 = saslClient1.evaluateChallenge(new byte[0]);
+                message1 = saslServer1.evaluateResponse(message1);
+                message1 = saslClient1.evaluateChallenge(message1);
+                try {
+                    saslServer1.evaluateResponse(message1);
+                } catch (SaslException e) {
+                    attemptFailed = true;
+                    saslServer1.dispose();
+                }
+                return attemptFailed;
+            };
+            final Callable<Boolean> attempt2 = () -> {
+                boolean attemptFailed = false;
+                byte[] message2 = saslClient2.evaluateChallenge(new byte[0]);
+                message2 = saslServer2.evaluateResponse(message2);
+                message2 = saslClient2.evaluateChallenge(message2);
+                try {
+                    saslServer2.evaluateResponse(message2);
+                } catch (SaslException e) {
+                    attemptFailed = true;
+                    saslServer2.dispose();
+                }
+                return attemptFailed;
+            };
 
-            byte[] message1 = saslClient1.evaluateChallenge(new byte[0]);
-            assertFalse(saslClient1.isComplete());
-            assertFalse(saslServer1.isComplete());
-
-            byte[] message2 = saslClient2.evaluateChallenge(new byte[0]);
-            assertFalse(saslClient2.isComplete());
-            assertFalse(saslServer2.isComplete());
-
-            message1 = saslServer1.evaluateResponse(message1);
-            assertEquals("otp-md5 499 ke1234 ext", new String(message1, StandardCharsets.UTF_8));
-            assertFalse(saslServer1.isComplete());
-            assertFalse(saslClient1.isComplete());
-
+            Future<Boolean> result1, result2;
             try {
-                saslServer2.evaluateResponse(message2);
-                fail("Expected SaslException not thrown");
-            } catch (SaslException expected) {
+                result1 = executorService.submit(attempt1);
+                result2 = executorService.submit(attempt2);
+            } finally {
+                executorService.shutdown();
             }
 
-            // The first authentication attempt should still succeed
-            message1 = saslClient1.evaluateChallenge(message1);
-            assertEquals("word:BOND FOGY DRAB NE RISE MART", new String(message1, StandardCharsets.UTF_8));
-            assertTrue(saslClient1.isComplete());
-            assertFalse(saslServer1.isComplete());
-
-            message1 = saslServer1.evaluateResponse(message1);
-            assertTrue(saslServer1.isComplete());
-            assertNull(message1);
-            assertEquals("userName", saslServer1.getAuthorizationID());
+            boolean attempt1Failed = result1.get();
+            boolean attempt2Failed = result2.get();
+            if ((attempt1Failed && attempt2Failed) || (! attempt1Failed && ! attempt2Failed)) {
+                fail("Exactly one of the authentication attempts should have succeeded");
+            }
 
             // Check the password is updated
             checkPassword(securityDomainReference, "userName", expectedUpdatedPassword, algorithm);
@@ -653,6 +666,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -687,6 +703,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -725,6 +744,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should be updated to the current OTP
             checkPassword(securityDomainReference, "userName", expectedUpdatedPassword, algorithm);
         } finally {
@@ -757,6 +779,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -788,6 +813,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -820,6 +848,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -852,6 +883,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should remain unchanged
             checkPassword(securityDomainReference, "userName", (OneTimePassword) password, algorithm);
         } finally {
@@ -887,6 +921,9 @@ public class OTPTest extends BaseTestCase {
                 fail("Expected SaslException not thrown");
             } catch (SaslException expected) {
             }
+            saslClient.dispose();
+            saslServer.dispose();
+
             // The password should be updated
             checkPassword(securityDomainReference, "userName", expectedUpdatedPassword, algorithm);
         } finally {
@@ -924,6 +961,7 @@ public class OTPTest extends BaseTestCase {
         assertArrayEquals(expectedUpdatedPassword.getHash(), updatedPassword.getHash());
         assertArrayEquals(expectedUpdatedPassword.getSeed(), updatedPassword.getSeed());
         assertEquals(expectedUpdatedPassword.getSequenceNumber(), updatedPassword.getSequenceNumber());
+        realmIdentity.dispose();
     }
 
     private void mockSeed(final String randomStr){

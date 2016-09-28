@@ -180,6 +180,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1018, value = "Filesystem-backed realm encountered invalid password algorithm \"%s\" in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidPasswordAlgorithm(String algorithm, Path path, int lineNumber, String name);
 
+    @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
+    RealmUnavailableException unableToObtainExclusiveAccess();
+
     // 1019
 
     @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
@@ -1270,8 +1273,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5163, value = "[%s] Authentication mechanism server timed out")
     AuthenticationMechanismException mechServerTimedOut(String mechName);
 
-    @Message(id = 5164, value = "Multiple simultaneous OTP authentications are not allowed")
-    AuthenticationMechanismException mechMultipleSimultaneousOTPAuthenticationsNotAllowed();
+    @Message(id = 5164, value = "[%s] Unable to obtain exclusive access for \"%s\"")
+    AuthenticationMechanismException mechUnableToObtainExclusiveAccess(String mechName, String userName);
 
     @Message(id = 5165, value = "OTP re-initialization failed")
     AuthenticationMechanismException mechOTPReinitializationFailed(@Cause Throwable cause);
