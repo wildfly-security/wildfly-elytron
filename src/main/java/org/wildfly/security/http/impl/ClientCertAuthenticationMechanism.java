@@ -42,6 +42,7 @@ import org.wildfly.security.ssl.SSLUtils;
 import org.wildfly.security.x500.X500;
 
 import java.security.cert.X509Certificate;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -167,7 +168,7 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         }
         return securityDomain -> new IdentityCache() {
 
-            final ConcurrentHashMap<SecurityDomain, CachedIdentity> identities = (ConcurrentHashMap<SecurityDomain, CachedIdentity>) SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap());
+            final Map<SecurityDomain, CachedIdentity> identities = SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new ConcurrentHashMap<>());
 
             @Override
             public void put(SecurityIdentity identity) {
