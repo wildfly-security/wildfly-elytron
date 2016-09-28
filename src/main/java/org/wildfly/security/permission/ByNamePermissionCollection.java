@@ -20,6 +20,7 @@ package org.wildfly.security.permission;
 
 import java.security.Permission;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -48,11 +49,15 @@ public final class ByNamePermissionCollection extends AbstractPermissionCollecti
     }
 
     public Iterator<Permission> iterator() {
-        return all != null ? Collections.singleton(all).iterator() : Arrays.asList(byName.values().toArray(PermissionUtil.NO_PERMISSIONS)).iterator();
+        return getIterablePermissions().iterator();
     }
 
     public Enumeration<Permission> elements() {
-        return Collections.enumeration(all != null ? Collections.singleton(all) : Arrays.asList(byName.values().toArray(PermissionUtil.NO_PERMISSIONS)));
+        return Collections.enumeration(getIterablePermissions());
+    }
+
+    private Collection<Permission> getIterablePermissions() {
+        return all != null ? Collections.singleton(all) : Arrays.asList(byName.values().toArray(PermissionUtil.NO_PERMISSIONS));
     }
 
     protected void doAdd(final AbstractPermission<?> permission) {

@@ -22,6 +22,7 @@ import java.security.Permission;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Set;
 
 /**
  * A permission collection type which either does or does not hold its instance.
@@ -45,11 +46,15 @@ public final class BooleanPermissionCollection extends AbstractPermissionCollect
     }
 
     public Iterator<Permission> iterator() {
-        return added ? Collections.<Permission>singleton(getSourcePermission()).iterator() : Collections.emptyIterator();
+        return added ? getSingletonCollection().iterator() : Collections.emptyIterator();
     }
 
     public Enumeration<Permission> elements() {
-        return added ? Collections.enumeration(Collections.<Permission>singleton(getSourcePermission())) : Collections.emptyEnumeration();
+        return added ? Collections.enumeration(getSingletonCollection()) : Collections.emptyEnumeration();
+    }
+
+    private Set<Permission> getSingletonCollection() {
+        return Collections.singleton(getSourcePermission());
     }
 
     protected void doAdd(final AbstractPermission<?> permission) {
