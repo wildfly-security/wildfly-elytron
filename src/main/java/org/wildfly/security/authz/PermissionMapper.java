@@ -89,6 +89,15 @@ public interface PermissionMapper {
     }
 
     /**
+     * Returns a new mapper that maps all to pre-defined {@link PermissionVerifier} instance.
+     * @param verifier the {@link PermissionVerifier} that will be returned for anybody.
+     * @return the constant {@link PermissionVerifier}
+     */
+    static PermissionMapper createConstant(PermissionVerifier verifier) {
+        return (p, r) -> verifier;
+    }
+
+    /**
      * A default implementation that does nothing but returns an empty and read-only {@link PermissionVerifier}.
      */
     PermissionMapper EMPTY_PERMISSION_MAPPER = (permissionMappable, roles) -> PermissionVerifier.NONE;
