@@ -18,6 +18,8 @@
 
 package org.wildfly.security.keystore;
 
+import org.wildfly.security._private.ElytronMessages;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -54,6 +56,7 @@ public class AtomicLoadKeyStore extends KeyStore {
     public static AtomicLoadKeyStore newInstance(final String type, final Provider provider) {
         AtomicLoadKeyStoreSpi keyStoreSpi = new AtomicLoadKeyStoreSpi(() -> KeyStore.getInstance(type, provider));
 
+        ElytronMessages.tls.tracef("AtomicLoadKeyStore creating:  type = %s,  provider =  %s", type, provider);
         return new AtomicLoadKeyStore(keyStoreSpi, provider, type);
     }
 

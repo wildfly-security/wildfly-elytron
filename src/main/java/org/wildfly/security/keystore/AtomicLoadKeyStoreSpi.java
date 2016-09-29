@@ -18,6 +18,8 @@
 
 package org.wildfly.security.keystore;
 
+import org.wildfly.security._private.ElytronMessages;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -46,6 +48,8 @@ class AtomicLoadKeyStoreSpi extends DelegatingKeyStoreSpi {
 
     @Override
     public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
+
+        ElytronMessages.tls.tracef("AtomicLoadKeyStore loading:  stream = %s,  password = %b", stream, password);
         try {
             KeyStore keyStore = keyStoreFactory.getInstance();
             keyStore.load(stream, password);

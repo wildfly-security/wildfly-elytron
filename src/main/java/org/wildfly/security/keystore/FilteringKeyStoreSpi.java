@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.keystore;
 
+import org.wildfly.security._private.ElytronMessages;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.Key;
@@ -47,6 +49,7 @@ class FilteringKeyStoreSpi extends DelegatingKeyStoreSpi {
     FilteringKeyStoreSpi(final KeyStore keyStore, final Predicate<String> aliasPredicate) {
         this.keyStore = keyStore;
         this.aliasPredicate = aliasPredicate;
+        ElytronMessages.tls.tracef("FilteringKeyStore initialization:  keyStore = %s,  aliasPredicate = %s", keyStore, aliasPredicate);
     }
 
     @Override

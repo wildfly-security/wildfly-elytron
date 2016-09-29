@@ -125,6 +125,7 @@
                             <test.level>${test.level}</test.level>
                         </systemPropertyVariables>
                         <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                        <enableAssertions>true</enableAssertions>
                         <trimStackTrace>false</trimStackTrace>
                         <includes>
                             <include>**/*Test.java</include>
