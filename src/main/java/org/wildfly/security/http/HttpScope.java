@@ -44,14 +44,18 @@ public interface HttpScope {
      *
      * @return {@code true} if this scope exists. Otherwise, {@code false}
      */
-    boolean exists();
+    default boolean exists() {
+        return true;
+    }
 
     /**
      * Create this scope..
      *
      * @return {@code true} if the scope was created. Otherwise, {@code false} indicating that this scope was already created or that creation is not support.
      */
-    boolean create();
+    default boolean create() {
+        return false;
+    }
 
     /**
      * Does this scope support attachments?
