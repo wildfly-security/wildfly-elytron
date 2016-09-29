@@ -392,14 +392,14 @@ public final class SSLUtils {
      * @param mappingFunction the function to apply to acquire the value (must not be {@code null})
      * @return the stored or new value (not {@code null})
      */
-    public static Object computeIfAbsent(SSLSession sslSession, String key, Function<String, ?> mappingFunction) {
+    public static <R> R computeIfAbsent(SSLSession sslSession, String key, Function<String, R> mappingFunction) {
         Assert.checkNotNullParam("sslSession", sslSession);
         Assert.checkNotNullParam("key", key);
         Assert.checkNotNullParam("mappingFunction", mappingFunction);
         synchronized (sslSession) {
-            final Object existing = sslSession.getValue(key);
+            final R existing = (R) sslSession.getValue(key);
             if (existing == null) {
-                Object newValue = mappingFunction.apply(key);
+                R newValue = mappingFunction.apply(key);
                 Assert.assertNotNull(newValue);
                 sslSession.putValue(key, newValue);
                 return newValue;

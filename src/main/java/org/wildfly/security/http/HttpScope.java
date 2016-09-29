@@ -40,6 +40,20 @@ public interface HttpScope {
     }
 
     /**
+     * Returns {@code true} if this scope exists.
+     *
+     * @return {@code true} if this scope exists. Otherwise, {@code false}
+     */
+    boolean exists();
+
+    /**
+     * Create this scope..
+     *
+     * @return {@code true} if the scope was created. Otherwise, {@code false} indicating that this scope was already created or that creation is not support.
+     */
+    boolean create();
+
+    /**
      * Does this scope support attachments?
      *
      * @return {@code true} if this scope supports attachments, {@code false} otherwise}
@@ -128,21 +142,20 @@ public interface HttpScope {
     }
 
     /**
-     * Does this scope support registration to receive destruction notifications?
+     * Does this scope support registration to receive notifications?
      *
-     * @return {@code true} if this scope supports registration for destruction notifications, {@code false} otherwise.
+     * @return {@code true} if this scope supports registration for notifications, {@code false} otherwise.
      */
     default boolean supportsNotifications() {
         return false;
     }
 
     /**
-     * Register a {@link Consumer<HttpServerScopes>} to receive a notification when this scope is destroyed.
+     * Register a {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
      *
-     * @param notificationConsumer the {@link Consumer<HttpServerScopes>} to receive a notification when this scope is
-     *        destroyed.
+     * @param notificationConsumer the {@link Consumer<HttpScopeNotification>} to receive notifications from this scope.
      */
-    default void registerForNotification(Consumer<HttpServerScopes> notificationConsumer) {
+    default void registerForNotification(Consumer<HttpScopeNotification> notificationConsumer) {
     }
 
 }

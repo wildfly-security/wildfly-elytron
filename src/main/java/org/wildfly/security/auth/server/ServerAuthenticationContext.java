@@ -25,23 +25,18 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
-import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.security.auth.x500.X500Principal;
 import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 
@@ -50,6 +45,7 @@ import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
+import org.wildfly.security.auth.callback.CachedIdentityAuthorizeCallback;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.CredentialUpdateCallback;
@@ -58,7 +54,6 @@ import org.wildfly.security.auth.callback.ExclusiveNameCallback;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.callback.MechanismInformationCallback;
 import org.wildfly.security.auth.callback.PeerPrincipalCallback;
-import org.wildfly.security.auth.callback.SSLSessionAuthorizationCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
@@ -75,12 +70,9 @@ import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
-import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.ssl.SSLUtils;
-import org.wildfly.security.x500.X500;
 
 /**
  * Server-side authentication context.  Instances of this class are used to perform all authentication and re-authorization
@@ -833,38 +825,6 @@ public final class ServerAuthenticationContext {
                         }
                     }
                     handleOne(callbacks, idx + 1);
-                } else if (callback instanceof SSLSessionAuthorizationCallback) {
-                    final SSLSessionAuthorizationCallback authorizationCallback = (SSLSessionAuthorizationCallback) callback;
-                    final SSLSession sslSession = authorizationCallback.getSslSession();
-                    final IdentityCache cache = (IdentityCache) SSLUtils.computeIfAbsent(sslSession, "org.wildfly.elytron.identity-cache", key -> new IdentityCache());
-                    final SecurityDomain securityDomain = stateRef.get().getSecurityDomain();
-                    final SecurityIdentity identity = cache.identities.get(securityDomain);
-                    if (identity != null) {
-                        authorizationCallback.setAuthorized(importIdentity(identity));
-                    } else {
-                        final X509Certificate[] x509Certificates;
-                        try {
-                            try {
-                                x509Certificates = X500.asX509CertificateArray((Object[]) sslSession.getPeerCertificates());
-                                final X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
-                                final X500Principal principal = evidence.getPrincipal();
-                                if (principal != null) {
-                                    setAuthenticationPrincipal(principal);
-                                    final boolean authorized = verifyEvidence(evidence) && authorize();
-                                    authorizationCallback.setAuthorized(authorized);
-                                    if (authorized) {
-                                        // cache identity
-                                        cache.identities.putIfAbsent(securityDomain, getAuthorizedIdentity());
-                                    }
-                                }
-                            } catch (ArrayStoreException ignored) {
-                                // unauthorized; fall out
-                            }
-                        } catch (SSLPeerUnverifiedException e) {
-                            // unauthorized; fall out
-                        }
-                    }
-                    handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
                     final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
                     if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
@@ -898,6 +858,30 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof CredentialUpdateCallback) {
                     final CredentialUpdateCallback credentialUpdateCallback = (CredentialUpdateCallback) callback;
                     updateCredential(credentialUpdateCallback.getCredential());
+                    handleOne(callbacks, idx + 1);
+                } else if (callback instanceof CachedIdentityAuthorizeCallback) {
+                    CachedIdentityAuthorizeCallback authorizeCallback = (CachedIdentityAuthorizeCallback) callback;
+                    authorizeCallback.setSecurityDomain(stateRef.get().getSecurityDomain());
+                    SecurityIdentity authorizedIdentity = null;
+                    try {
+                        SecurityIdentity identity = authorizeCallback.getIdentity();
+                        if (identity != null && importIdentity(identity)) {
+                            authorizedIdentity = getAuthorizedIdentity();
+                            return;
+                        }
+                        Principal principal = authorizeCallback.getPrincipal();
+                        if (principal == null) {
+                            principal = authorizeCallback.getAuthorizationPrincipal();
+                        }
+                        if (principal != null) {
+                            setAuthenticationPrincipal(principal);
+                            authorize();
+                            authorizedIdentity = getAuthorizedIdentity();
+                            return;
+                        }
+                    } finally {
+                        authorizeCallback.setAuthorized(authorizedIdentity);
+                    }
                     handleOne(callbacks, idx + 1);
                 } else {
                     CallbackUtil.unsupported(callback);
@@ -1921,6 +1905,14 @@ public final class ServerAuthenticationContext {
                 if (! ok) realmIdentity.dispose();
             }
         }
+
+        @Override
+        void succeed() {
+            if (authorizedIdentity != null) {
+                return;
+            }
+            super.succeed();
+        }
     }
 
     final class AuthorizedAuthenticationState extends AuthorizedState {
@@ -2017,8 +2009,4 @@ public final class ServerAuthenticationContext {
             return true;
         }
     };
-
-    static class IdentityCache {
-        final ConcurrentHashMap<SecurityDomain, SecurityIdentity> identities = new ConcurrentHashMap<>();
-    }
 }
