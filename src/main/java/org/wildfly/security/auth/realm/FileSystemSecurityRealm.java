@@ -359,6 +359,13 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
+
+            if (ElytronMessages.log.isTraceEnabled()) {
+                final LoadedIdentity loadedIdentity = loadIdentity(false, true);
+                ElytronMessages.log.tracef("Trying to authenticate identity %s using FileSystemSecurityRealm",
+                        (loadedIdentity != null) ? loadedIdentity.getName() : "null");
+            }
+
             List<Credential> credentials = loadCredentials();
             ElytronMessages.log.tracef("FileSystemSecurityRealm - verification evidence [%s] against [%d] credentials...", evidence, credentials.size());
             for (Credential credential : credentials) {

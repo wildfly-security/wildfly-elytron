@@ -110,6 +110,9 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             try {
                 gssContext = GSSManager.getInstance().createContext(serviceGssCredential);
 
+                log.tracef("Using SpnegoAuthenticationMechanism to authenticate %s using the following mechanisms: [%s]",
+                        serviceGssCredential.getName(), serviceGssCredential.getMechs());
+
                 if (connectionScope != null) {
                     connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
                     log.tracef("Caching GSSContext %s", gssContext);

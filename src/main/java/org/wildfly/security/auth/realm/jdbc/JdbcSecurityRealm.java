@@ -179,6 +179,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
         @Override
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
+
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
@@ -255,6 +256,8 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         private <E> E executePrincipalQuery(QueryConfiguration configuration, ResultSetCallback<E> resultSetCallback) {
             String sql = configuration.getSql();
+
+            log.tracef("Executing principalQuery %s with value %s", sql, name);
 
             try (
                     Connection connection = getConnection(configuration);

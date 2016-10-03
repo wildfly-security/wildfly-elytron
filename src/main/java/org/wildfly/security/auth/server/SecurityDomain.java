@@ -645,6 +645,7 @@ public final class SecurityDomain {
             final String defaultRealmName = this.defaultRealmName;
             Assert.checkNotNullParam("defaultRealmName", defaultRealmName);
             final LinkedHashMap<String, RealmInfo> realmMap = new LinkedHashMap<>(realms.size());
+
             for (RealmBuilder realmBuilder : realms.values()) {
                 realmMap.put(realmBuilder.getName(), new RealmInfo(realmBuilder));
             }
@@ -654,6 +655,13 @@ public final class SecurityDomain {
 
             assertNotBuilt();
             built = true;
+
+            if(log.isTraceEnabled()) {
+                log.tracef("Building security domain with defaultRealmName %s.", defaultRealmName);
+                if(realmMap.size() > 1) {
+                    log.tracef("The following additional realms were added: %s.", realmMap.keySet().toString());
+                }
+            }
 
             return new SecurityDomain(this, realmMap);
         }

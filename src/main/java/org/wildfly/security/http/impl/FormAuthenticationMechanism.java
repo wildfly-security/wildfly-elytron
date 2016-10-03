@@ -170,6 +170,7 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
         try {
             if (authenticate(null, username, passwordChars)) {
                 if (authorize(username, request)) {
+                    log.debugf("User %s authenticated successfully using FormAuthenticationMechanism!", username);
                     succeed();
                     HttpScope session = getSessionScope(request, true);
                     HttpServerMechanismsResponder responder = null;
@@ -205,6 +206,8 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     private boolean authorize(String username, HttpServerRequest request) throws HttpAuthenticationException {
+        log.tracef("Authorizing username: [%s], Request URI: [%s], Context path: [%s]", username, request.getRequestURI(), this.contextPath);
+
         IdentityCache identityCache = createIdentityCache(request, true);
         if (identityCache != null) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(username, identityCache);
@@ -219,6 +222,17 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
     }
 
     private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
+        if (log.isTraceEnabled()) {
+            if (getSessionScope(request, false) != null) {
+                log.tracef("Trying to re-authenticate session %s using FormAuthenticationMechanism. Request URI: [%s], Context path: [%s]",
+                        getSessionScope(request, false).getID(), request.getRequestURI(), this.contextPath);
+            } else {
+                log.tracef("Unable to re-authenticate using FormAuthenticationMechanism. There is no session attached to the following request. " +
+                        "Request URI: [%s], Context path: [%s]", request.getRequestURI(), this.contextPath);
+            }
+        }
+
+
         IdentityCache identityCache = createIdentityCache(request, false);
         if (identityCache != null) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(identityCache);
