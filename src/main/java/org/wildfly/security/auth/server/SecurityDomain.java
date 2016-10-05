@@ -39,7 +39,6 @@ import java.util.function.UnaryOperator;
 
 import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
@@ -157,23 +156,30 @@ public final class SecurityDomain {
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
         Assert.checkNotNullParam("name", name);
-        name = this.preRealmRewriter.rewriteName(name);
-        if (name == null) {
+        String preRealmName = this.preRealmRewriter.rewriteName(name);
+        if (preRealmName == null) {
             throw log.invalidName();
         }
-        String realmName = mapRealmName(name, null, null);
+
+        String realmName = mapRealmName(preRealmName, null, null);
         RealmInfo realmInfo = getRealmInfo(realmName);
         SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         assert securityRealm != null;
-        name = this.postRealmRewriter.rewriteName(name);
-        if (name == null) {
+
+        String postRealmName = this.postRealmRewriter.rewriteName(preRealmName);
+        if (postRealmName == null) {
             throw log.invalidName();
         }
-        name = realmInfo.getNameRewriter().rewriteName(name);
-        if (name == null) {
+
+        String realmRewrittenName = realmInfo.getNameRewriter().rewriteName(postRealmName);
+        if (realmRewrittenName == null) {
             throw log.invalidName();
         }
-        return securityRealm.getRealmIdentity(IdentityLocator.fromName(name));
+
+        log.tracef("Name mapping: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
+                name, preRealmName, realmName, postRealmName, realmRewrittenName);
+
+        return securityRealm.getRealmIdentity(IdentityLocator.fromName(realmRewrittenName));
     }
 
     /**
@@ -188,7 +194,7 @@ public final class SecurityDomain {
         Assert.checkNotNullParam("principal", principal);
         final String name = principalDecoder.getName(principal);
         if (name == null) {
-            throw ElytronMessages.log.unrecognizedPrincipalType(principal);
+            throw log.unrecognizedPrincipalType(principal);
         }
         return mapName(name);
     }
@@ -353,22 +359,39 @@ public final class SecurityDomain {
 
         AuthorizationIdentity identity = securityIdentity.getAuthorizationIdentity();
         RealmInfo realmInfo = securityIdentity.getRealmInfo();
-        RoleDecoder roleDecoder = realmInfo.getRoleDecoder(); // zeroth role mapping, just grab roles from the identity
-        Roles mappedRoles = roleDecoder.decodeRoles(identity);
-        RoleMapper realmRoleMapper = realmInfo.getRoleMapper();
+
+        // zeroth role mapping, just grab roles from the identity
+        Roles decodedRoles = realmInfo.getRoleDecoder().decodeRoles(identity);
 
         // apply the first level mapping, which is based on the role mapper associated with a realm.
-        mappedRoles = realmRoleMapper.mapRoles(mappedRoles);
+        Roles realmMappedRoles = realmInfo.getRoleMapper().mapRoles(decodedRoles);
 
         // apply the second level mapping, which is based on the role mapper associated with this security domain.
-        return this.roleMapper.mapRoles(mappedRoles);
+        Roles domainMappedRoles = roleMapper.mapRoles(realmMappedRoles);
+
+        if (log.isTraceEnabled()) {
+            log.tracef("Role mapping: principal [%s] -> decoded roles [%s] -> realm mapped roles [%s] -> domain mapped roles [%s]",
+                    securityIdentity.getPrincipal(), String.join(", ", decodedRoles), String.join(", ", realmMappedRoles), String.join(", ", domainMappedRoles));
+        }
+
+        return domainMappedRoles;
     }
 
-    PermissionVerifier mapPermissions(SecurityIdentity securityIdentity) {
+    PermissionVerifier mapPermissions(final SecurityIdentity securityIdentity) {
         Assert.checkNotNullParam("securityIdentity", securityIdentity);
-        Roles roles = securityIdentity.getRoles();
+        final Roles roles = securityIdentity.getRoles();
+        PermissionVerifier verifier = permissionMapper.mapPermissions(securityIdentity, roles);
 
-        return this.permissionMapper.mapPermissions(securityIdentity, roles);
+        if (log.isTraceEnabled()) {
+            return (permission) -> {
+                boolean decision = verifier.implies(permission);
+                log.tracef("Permission mapping: identity [%s] with roles [%s] implies %s = %b",
+                        securityIdentity.getPrincipal(), String.join(", ", roles), permission, decision);
+                return decision;
+            };
+        } else {
+            return verifier;
+        }
     }
 
     NameRewriter getPreRealmRewriter() {

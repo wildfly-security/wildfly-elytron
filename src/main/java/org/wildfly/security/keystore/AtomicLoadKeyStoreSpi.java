@@ -49,7 +49,7 @@ class AtomicLoadKeyStoreSpi extends DelegatingKeyStoreSpi {
     @Override
     public void engineLoad(InputStream stream, char[] password) throws IOException, NoSuchAlgorithmException, CertificateException {
 
-        ElytronMessages.tls.tracef("AtomicLoadKeyStore loading:  stream = %s,  password = %b", stream, password);
+        ElytronMessages.tls.tracef("AtomicLoadKeyStore loading:  stream = %s,  password = %b", stream, password != null);
         try {
             KeyStore keyStore = keyStoreFactory.getInstance();
             keyStore.load(stream, password);

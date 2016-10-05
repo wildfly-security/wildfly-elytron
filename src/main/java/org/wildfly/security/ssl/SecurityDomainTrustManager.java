@@ -85,7 +85,10 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
         boolean ok = false;
         try {
             final SupportLevel evidenceSupport = authenticationContext.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, evidence.getAlgorithm());
-            if (evidenceSupport.mayBeSupported() && authenticationContext.verifyEvidence(evidence) && authenticationContext.authorize()) {
+            boolean verified = false;
+            boolean authorized = false;
+            if (evidenceSupport.mayBeSupported() && (verified = authenticationContext.verifyEvidence(evidence)) && (authorized = authenticationContext.authorize())) {
+                ElytronMessages.log.tracef("Authentication succeed for principal [%s]", principal);
                 authenticationContext.succeed();
                 if (handshakeSession != null) {
                     handshakeSession.putValue(SSLUtils.SSL_SESSION_IDENTITY_KEY, authenticationContext.getAuthorizedIdentity());
@@ -93,14 +96,16 @@ class SecurityDomainTrustManager extends X509ExtendedTrustManager {
                 ok = true;
                 return;
             }
+            ElytronMessages.log.tracef("Credential validation: evidence support = %s  verified = %b  authorized = %b", evidenceSupport, verified, authorized);
+
             if (authenticationOptional) {
-                ElytronMessages.log.tracef("Authentication failed for '%s', ignoring as authentication optional.", principal);
+                ElytronMessages.log.tracef("Credential validation failed: certificate is not trusted for principal [%s], ignoring as authentication is optional", principal);
             } else {
                 throw ElytronMessages.log.notTrusted(principal);
             }
         } catch (RealmUnavailableException e) {
             if (authenticationOptional) {
-                ElytronMessages.log.tracef("Authentication failed for '%s' as the realm is unavailable,", principal);
+                ElytronMessages.log.tracef(e, "Certificate not trusted due to realm failure for principal [%s]", principal);
             } else {
                 throw ElytronMessages.log.notTrustedRealmProblem(e, principal);
             }

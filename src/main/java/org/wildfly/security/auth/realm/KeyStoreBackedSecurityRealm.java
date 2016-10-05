@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableEntryException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -75,11 +76,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     private KeyStore.Entry getEntry(String name) {
         try {
             return keyStore.getEntry(name, null);
-        } catch (NoSuchAlgorithmException e) {
-            return null;
-        } catch (UnrecoverableEntryException e) {
-            return null;
-        } catch (KeyStoreException e) {
+        } catch (NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException e) {
+            ElytronMessages.log.tracef(e, "Obtaining entry [%s] from KeyStore failed", name);
             return null;
         }
     }
@@ -148,10 +146,16 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);
             if (entry == null) {
+                ElytronMessages.log.tracef("Evidence verification failed - alias [%s] does not exist in KeyStore", name);
                 return false;
             }
             final Credential credential = Credential.fromKeyStoreEntry(entry);
-            return credential != null && credential.canVerify(evidence) && credential.verify(evidence);
+            if (credential != null && credential.canVerify(evidence) && credential.verify(evidence)) {
+                ElytronMessages.log.tracef("Evidence verification succeed for alias [%s]", name);
+                return true;
+            }
+            ElytronMessages.log.tracef("Evidence verification failed - credential of alias [%s] rejected it", name);
+            return false;
         }
 
         public boolean exists() throws RealmUnavailableException {
