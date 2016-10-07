@@ -474,7 +474,8 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
                 }
             }
 
-            adminKey = ((KeyStore.SecretKeyEntry) vaultStorage.getEntry(adminKeyAlias, adminKeyProtectionParam)).getSecretKey();
+            KeyStore.Entry adminKeyEntry = vaultStorage.getEntry(adminKeyAlias, adminKeyProtectionParam);
+            adminKey = adminKeyEntry != null ? ((KeyStore.SecretKeyEntry)adminKeyEntry).getSecretKey() : null;
             if (adminKey == null) {
                 throw log.storeAdminKeyNotPresent(storeName, adminKeyAlias);
             }
