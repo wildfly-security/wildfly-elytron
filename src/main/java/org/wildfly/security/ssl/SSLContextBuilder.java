@@ -52,6 +52,9 @@ import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SSLContextBuilder {
+    private static final int DEFAULT_SESSION_CACHE_SIZE = 0;
+    private static final int DEFAULT_SESSION_TIMEOUT = 0;
+
     private SecurityDomain securityDomain;
     private CipherSuiteSelector cipherSuiteSelector = CipherSuiteSelector.openSslDefault();
     private ProtocolSelector protocolSelector = ProtocolSelector.DEFAULT_SELECTOR;
@@ -271,8 +274,8 @@ public final class SSLContextBuilder {
         final Supplier<Provider[]> providerSupplier = this.providerSupplier;
         final boolean clientMode = this.clientMode;
         final boolean authenticationOptional = this.authenticationOptional;
-        final int sessionCacheSize = this.sessionCacheSize;
-        final int sessionTimeout = this.sessionTimeout;
+        final int sessionCacheSize = (this.sessionCacheSize < 0) ? DEFAULT_SESSION_CACHE_SIZE : this.sessionCacheSize;
+        final int sessionTimeout = (this.sessionTimeout < 0) ? DEFAULT_SESSION_TIMEOUT : this.sessionTimeout;
         final boolean wantClientAuth = this.wantClientAuth;
         final boolean needClientAuth = this.needClientAuth;
         return new OneTimeSecurityFactory<SSLContext>(() -> {
