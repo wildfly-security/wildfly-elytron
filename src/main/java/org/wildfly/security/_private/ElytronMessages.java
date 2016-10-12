@@ -714,10 +714,10 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4002, value = "Empty certificate chain is not trusted")
     CertificateException emptyChainNotTrusted();
 
-    @Message(id = 4003, value = "Certificate not trusted due to realm failure for principal %s")
+    @Message(id = 4003, value = "Certificate not trusted due to realm failure for principal [%s]")
     CertificateException notTrustedRealmProblem(@Cause RealmUnavailableException e, Principal principal);
 
-    @Message(id = 4004, value = "Credential validation failed; certificate is not trusted for principal %s")
+    @Message(id = 4004, value = "Credential validation failed: certificate is not trusted for principal [%s]")
     CertificateException notTrusted(Principal principal);
 
     @Message(id = 4005, value = "No default trust manager available")

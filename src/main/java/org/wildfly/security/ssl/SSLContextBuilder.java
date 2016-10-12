@@ -27,12 +27,14 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSessionContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509ExtendedKeyManager;
+import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.PrincipalDecoder;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
@@ -278,24 +280,52 @@ public final class SSLContextBuilder {
         final int sessionTimeout = (this.sessionTimeout < 0) ? DEFAULT_SESSION_TIMEOUT : this.sessionTimeout;
         final boolean wantClientAuth = this.wantClientAuth;
         final boolean needClientAuth = this.needClientAuth;
-        return new OneTimeSecurityFactory<SSLContext>(() -> {
+        final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
+
+        return new OneTimeSecurityFactory<>(() -> {
             final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
             SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();
             sessionContext.setSessionCacheSize(sessionCacheSize);
             sessionContext.setSessionTimeout(sessionTimeout);
+            final X509KeyManager x509KeyManager = keyManagerSecurityFactory == null ? null : keyManagerSecurityFactory.create();
             final X509TrustManager x509TrustManager = trustManagerSecurityFactory.create();
             final boolean canAuthPeers = securityDomain != null && securityDomain.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class).mayBeSupported();
-            sslContext.init(keyManagerSecurityFactory == null ? null : new KeyManager[] {
-                keyManagerSecurityFactory.create()
-            }, new TrustManager[] {
-                canAuthPeers ?
-                    new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional) :
-                    x509TrustManager
+
+            if (ElytronMessages.tls.isTraceEnabled()) {
+                ElytronMessages.tls.tracef("SSLContext initialization:%n" +
+                                "    securityDomain = %s%n" +
+                                "    canAuthPeers = %s%n" +
+                                "    cipherSuiteSelector = %s%n" +
+                                "    protocolSelector = %s%n" +
+                                "    x509TrustManager = %s%n" +
+                                "    x509KeyManager = %s%n" +
+                                "    providerSupplier = %s%n" +
+                                "    clientMode = %s%n" +
+                                "    authenticationOptional = %s%n" +
+                                "    sessionCacheSize = %s%n" +
+                                "    sessionTimeout = %s%n" +
+                                "    wantClientAuth = %s%n" +
+                                "    needClientAuth = %s%n" +
+                                "    useCipherSuitesOrder = %s%n",
+                        securityDomain, canAuthPeers, cipherSuiteSelector, protocolSelector, x509TrustManager,
+                        x509KeyManager, providerSupplier, clientMode, authenticationOptional, sessionCacheSize,
+                        sessionTimeout, wantClientAuth, needClientAuth, useCipherSuitesOrder);
+            }
+
+            sslContext.init(x509KeyManager == null ? null : new KeyManager[]{
+                    x509KeyManager
+            }, new TrustManager[]{
+                    canAuthPeers ?
+                            new SecurityDomainTrustManager(x509TrustManager, securityDomain, authenticationOptional) :
+                            x509TrustManager
             }, null);
+
             // now, set up the wrapping configuration
-            final SSLConfigurator sslConfigurator = clientMode ? new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, useCipherSuitesOrder) : new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth, useCipherSuitesOrder);
+            final SSLConfigurator sslConfigurator = clientMode ?
+                    new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, useCipherSuitesOrder) :
+                    new SSLConfiguratorImpl(protocolSelector, cipherSuiteSelector, wantClientAuth || canAuthPeers, needClientAuth, useCipherSuitesOrder);
             final ConfiguredSSLContextSpi contextSpi = new ConfiguredSSLContextSpi(sslContext, sslConfigurator);
             return new DelegatingSSLContext(contextSpi);
         });

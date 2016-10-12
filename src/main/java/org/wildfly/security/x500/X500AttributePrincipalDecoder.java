@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.PrincipalDecoder;
 
 /**
@@ -175,13 +176,19 @@ public final class X500AttributePrincipalDecoder implements PrincipalDecoder {
             return null;
         }
         if (requiredOids != null && requiredOids.length != 0 && ! X500PrincipalUtil.containsAllAttributes(x500Principal, requiredOids)) {
+            ElytronMessages.log.tracef("X500 principal [%s] was not decoded - does not contain required oids", x500Principal);
             return null;
         }
         final String[] values = X500PrincipalUtil.getAttributeValues(x500Principal, oid, reverse);
         if (values.length == 0) {
+            ElytronMessages.log.tracef("X500 principal [%s] was not decoded - no values of attribute [%s]", x500Principal, oid);
             return null;
         } else {
-            return Arrays.stream(values).skip(startSegment).limit(maximumSegments).collect(Collectors.joining(joiner));
+            final String name = Arrays.stream(values).skip(startSegment).limit(maximumSegments).collect(Collectors.joining(joiner));
+            if (ElytronMessages.log.isTraceEnabled()) {
+                ElytronMessages.log.tracef("X500 principal [%s] decoded as name [%s] (attribute values: [%s])", x500Principal, name, String.join(", ", values));
+            }
+            return name;
         }
     }
 }

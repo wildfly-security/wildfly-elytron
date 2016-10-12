@@ -42,6 +42,7 @@ import javax.security.sasl.RealmCallback;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
@@ -936,16 +937,20 @@ public final class ServerAuthenticationContext {
 
     NameAssignedState assignName(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismRealmConfiguration mechanismRealmConfiguration, String name, Principal originalPrincipal, final Evidence evidence, final boolean exclusive) throws RealmUnavailableException {
         final SecurityDomain domain = capturedIdentity.getSecurityDomain();
-        name = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
+        final String preRealmName = rewriteAll(name, mechanismRealmConfiguration.getPreRealmRewriter(), mechanismConfiguration.getPreRealmRewriter(), domain.getPreRealmRewriter());
         // principal *must* be captured at this point
-        final NamePrincipal principal = new NamePrincipal(name);
-        String realmName = mapAll(name, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
+        final NamePrincipal principal = new NamePrincipal(preRealmName);
+        String realmName = mapAll(preRealmName, mechanismRealmConfiguration.getRealmMapper(), mechanismConfiguration.getRealmMapper(), domain.getRealmMapper(), domain.getDefaultRealmName());
         final RealmInfo realmInfo = domain.getRealmInfo(realmName);
-        name = rewriteAll(name, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
-        name = rewriteAll(name, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
+        final String postRealmName = rewriteAll(preRealmName, mechanismRealmConfiguration.getPostRealmRewriter(), mechanismConfiguration.getPostRealmRewriter(), domain.getPostRealmRewriter());
+        final String finalName = rewriteAll(postRealmName, mechanismRealmConfiguration.getFinalRewriter(), mechanismConfiguration.getFinalRewriter(), realmInfo.getNameRewriter());
+
+        log.tracef("Name assigning: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
+                name, preRealmName, realmName, postRealmName, finalName);
+
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final IdentityLocator.Builder locatorBuilder = IdentityLocator.builder();
-        locatorBuilder.setName(name);
+        locatorBuilder.setName(finalName);
         locatorBuilder.setPrincipal(principal);
         locatorBuilder.setEvidence(evidence);
         final RealmIdentity realmIdentity;
@@ -1581,6 +1586,7 @@ public final class ServerAuthenticationContext {
             final RealmIdentity realmIdentity = this.realmIdentity;
 
             if (! realmIdentity.exists()) {
+                ElytronMessages.log.trace("Authorization failed - realm identity does not exists");
                 return null;
             }
 
@@ -1595,11 +1601,13 @@ public final class ServerAuthenticationContext {
             if (requireLoginPermission) {
                 if (! authorizedIdentity.implies(LoginPermission.getInstance())) {
                     SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentityFailedAuthorizationEvent(authorizedIdentity.getAuthorizationIdentity(), authorizedIdentity.getPrincipal(), authenticationPrincipal));
+                    ElytronMessages.log.trace("Authorization failed - identity does not have required LoginPermission");
                     return null;
                 } else {
                     SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentitySuccessfulAuthorizationEvent(authorizedIdentity.getAuthorizationIdentity(), authorizedIdentity.getPrincipal(), authenticationPrincipal));
                 }
             }
+            ElytronMessages.log.trace("Authorization succeed");
             return new AuthorizedAuthenticationState(authorizedIdentity, authenticationPrincipal, realmInfo, realmIdentity, mechanismRealmConfiguration, mechanismConfiguration);
         }
 
@@ -1883,23 +1891,25 @@ public final class ServerAuthenticationContext {
 
         AuthorizedState authorizeRunAs(final String authorizationId, final boolean authorizeRunAs) throws RealmUnavailableException {
             if (isSameName(authorizationId)) {
-                // same identity; return
+                ElytronMessages.log.trace("RunAs authorization succeed - the same identity");
                 return this;
             }
             final NameAssignedState nameAssignedState = assignName(authorizedIdentity, getMechanismConfiguration(), getMechanismRealmConfiguration(), authorizationId, null, null);
             final RealmIdentity realmIdentity = nameAssignedState.getRealmIdentity();
             boolean ok = false;
             try {
-                if (authorizeRunAs && ! authorizedIdentity.implies(new RunAsPrincipalPermission(nameAssignedState.getAuthenticationPrincipal().getName()))) {
-                    // not authorized; clean up & return
+                String targetName = nameAssignedState.getAuthenticationPrincipal().getName();
+                if (authorizeRunAs && ! authorizedIdentity.implies(new RunAsPrincipalPermission(targetName))) {
+                    ElytronMessages.log.tracef("RunAs authorization failed - identity does not have required RunAsPrincipalPermission(%s)", targetName);
                     return null;
                 }
                 final AuthorizedAuthenticationState newState = nameAssignedState.doAuthorization(false);
                 if (newState == null) {
-                    // not authorized; clean up & return
+                    ElytronMessages.log.trace("RunAs authorization failed");
                     return null;
                 }
                 ok = true;
+                ElytronMessages.log.trace("RunAs authorization succeed");
                 return newState;
             } finally {
                 if (! ok) realmIdentity.dispose();
