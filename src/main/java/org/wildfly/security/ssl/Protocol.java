@@ -19,6 +19,8 @@
 package org.wildfly.security.ssl;
 
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The protocol type for SSL/TLS cipher suite selection and protocol selection.
@@ -29,40 +31,49 @@ public enum Protocol {
     /**
      * The SSL version 2 protocol.
      */
-    SSLv2,
+    SSLv2 ("SSLv2"),
     /**
      * The SSL version 3 protocol.
      */
-    SSLv3,
+    SSLv3 ("SSLv3"),
     /**
      * The TLS version 1.0 protocol.
      */
-    TLSv1,
+    TLSv1 ("TLSv1"),
     /**
      * The TLS version 1.1 protocol.  Note that there are no cipher suites which are specifically defined in this protocol.
      */
-    TLSv1_1,
+    TLSv1_1 ("TLSv1.1"),
     /**
      * The TLS version 1.2 protocol.
      */
-    TLSv1_2,
+    TLSv1_2 ("TLSv1.2"),
     /**
      * The TLS version 1.3 protocol.
      */
-    TLSv1_3,
+    TLSv1_3 ("TLSv1.3"),
     ;
+
     static final int fullSize = values().length;
 
-    static Protocol forName(final String name) {
-        switch (name) {
-            case "SSLv2": return SSLv2;
-            case "SSLv3": return SSLv3;
-            case "TLSv1": return TLSv1;
-            case "TLSv1.1": return TLSv1_1;
-            case "TLSv1.2": return TLSv1_2;
-            case "TLSv1.3": return TLSv1_3;
-            default: return null;
+    static final Map<String, Protocol> map;
+
+    static {
+        map = new HashMap<>();
+        Protocol[] protocols = values();
+        for (int i = 0; i < fullSize; i++) {
+            map.put(protocols[i].name, protocols[i]);
         }
+    }
+
+    public final String name;
+
+    Protocol(String name) {
+        this.name = name;
+    }
+
+    public static Protocol forName(final String name) {
+        return map.get(name);
     }
 
     /**
