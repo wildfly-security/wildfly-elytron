@@ -161,7 +161,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
 
     private Attributes obtainAliasOrCertificateAttributes(String alias, byte[] cert, String[] attributes) {
         DirContext context = obtainDirContext();
-        if (context == null) return null;
+        if (context == null) {
+            log.trace("Unable to obtain DirContext");
+            return null;
+        }
         try {
             SearchResult result = searchAlias(context, alias, cert, attributes);
             if (result == null) return null;
@@ -176,7 +179,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public Certificate engineGetCertificate(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{certificateAttribute});
-        if (attributes == null) return null; // alias does not exist
+        if (attributes == null) {
+            log.tracef("Alias [%s] does not exist", alias);
+            return null;
+        }
         try {
             Attribute attribute = attributes.get(certificateAttribute);
             if (attribute == null) return null;
@@ -193,7 +199,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public Certificate[] engineGetCertificateChain(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{certificateChainAttribute});
-        if (attributes == null) return null; // alias does not exist
+        if (attributes == null) {
+            log.tracef("Alias [%s] does not exist", alias);
+            return null;
+        }
         try {
             Attribute attribute = attributes.get(certificateChainAttribute);
             if (attribute == null) return null;
@@ -211,7 +220,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public Key engineGetKey(String alias, char[] password) throws NoSuchAlgorithmException, UnrecoverableKeyException {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{keyAttribute});
-        if (attributes == null) return null; // alias does not exist
+        if (attributes == null) {
+            log.tracef("Alias [%s] does not exist", alias);
+            return null;
+        }
         try {
             Attribute attribute = attributes.get(keyAttribute);
             if (attribute == null) return null; // alias does not identify a key-related entry
@@ -230,7 +242,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public Date engineGetCreationDate(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{CREATE_TIMESTAMP_ATTRIBUTE, MODIFY_TIMESTAMP_ATTRIBUTE});
-        if (attributes == null) return null;
+        if (attributes == null) {
+            log.tracef("Alias [%s] does not exist", alias);
+            return null;
+        }
         try {
             Attribute creationAttribute = attributes.get(CREATE_TIMESTAMP_ATTRIBUTE);
             Attribute modificationAttribute = attributes.get(MODIFY_TIMESTAMP_ATTRIBUTE);
@@ -239,6 +254,7 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
             } else if (creationAttribute != null && creationAttribute.get() != null) {
                 return LdapGeneralizedTimeUtil.generalizedTimeToDate((String) creationAttribute.get());
             } else {
+                log.tracef("LDAP entry of alias [%s] does not have create nor modify timestamp attributes", alias);
                 return null;
             }
         } catch (ParseException | NamingException e) {
@@ -345,7 +361,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public boolean engineContainsAlias(String alias) {
         DirContext context = obtainDirContext();
-        if (context == null) return false;
+        if (context == null) {
+            log.trace("Unable to obtain DirContext");
+            return false;
+        }
         try {
             NamingEnumeration<SearchResult> results = context.search(searchPath, filterAlias, new String[]{alias}, createSearchControl(new String[]{aliasAttribute}));
             boolean found = results.hasMore();
@@ -361,12 +380,16 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public Enumeration<String> engineAliases() {
         DirContext context = obtainDirContext();
-        if (context == null) return null;
+        if (context == null) {
+            log.trace("Unable to obtain DirContext");
+            return null;
+        }
         try {
             NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, createSearchControl(new String[]{aliasAttribute})); // TODO pagination
             List<String> aliases = new LinkedList<>();
             while (results.hasMore()) {
-                aliases.add((String) results.next().getAttributes().get(aliasAttribute).get());
+                Attribute attribute = results.next().getAttributes().get(aliasAttribute);
+                if (attribute != null) aliases.add((String) attribute.get());
             }
             return Collections.enumeration(aliases);
         } catch (NamingException e) {
@@ -379,7 +402,10 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public int engineSize() {
         DirContext context = obtainDirContext();
-        if (context == null) return 0;
+        if (context == null) {
+            log.trace("Unable to obtain DirContext");
+            return 0;
+        }
         try {
             NamingEnumeration<SearchResult> results = context.search(searchPath, filterIterate, null, createSearchControl(new String[]{aliasAttribute}));
             int count = 0;
@@ -398,9 +424,11 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
     @Override
     public boolean engineIsKeyEntry(String alias) {
         Attributes attributes = obtainAliasOrCertificateAttributes(alias, null, new String[]{keyAttribute});
-        if (attributes == null) return false;
-        Attribute attribute = attributes.get(keyAttribute);
-        if (attribute == null) return false;
+        Attribute attribute = attributes == null ? null : attributes.get(keyAttribute);
+        if (attribute == null) {
+            log.tracef("Alias [%s] is not key entry", alias);
+            return false;
+        }
         try {
             byte[] bytes = (byte[]) attribute.get();
             return bytes != null;
@@ -428,9 +456,11 @@ class LdapKeyStoreSpi extends KeyStoreSpi {
         try {
             byte[] certBytes = cert.getEncoded();
             Attributes attributes = obtainAliasOrCertificateAttributes(null, certBytes, new String[]{aliasAttribute});
-            if (attributes == null) return null;
-            Attribute attribute = attributes.get(aliasAttribute);
-            if (attribute == null) return null;
+            Attribute attribute = attributes == null ? null : attributes.get(aliasAttribute);
+            if (attribute == null) {
+                log.tracef("Certificate not found in LDAP: [%s]", cert);
+                return null;
+            }
             return (String) attribute.get();
         } catch (CertificateException | NamingException e) {
             throw log.ldapKeyStoreFailedToObtainAliasByCertificate(e);

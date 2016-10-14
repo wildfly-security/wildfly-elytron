@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.naming.InvalidNameException;
 import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -568,16 +569,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 String name = this.name;
 
                 if (this.name.startsWith(identityMapping.rdnIdentifier)) { // getting identity by DN
-                    LdapName ldapName = new LdapName(this.name);
-                    int rdnIdentifierPosition = ldapName.size() - 1;
-                    Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
+                    try {
+                        LdapName ldapName = new LdapName(this.name);
+                        int rdnIdentifierPosition = ldapName.size() - 1;
+                        Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
 
-                    name = rdnIdentifier.getValue().toString();
-                    ldapName.remove(rdnIdentifierPosition);
-                    searchDn = ldapName.toString();
+                        name = rdnIdentifier.getValue().toString();
+                        ldapName.remove(rdnIdentifierPosition);
+                        searchDn = ldapName.toString();
+                    } catch (InvalidNameException e) {
+                        log.tracef(e, "Getting identity [%s] by distinguish name failed - continuation by name", this.name);
+                    }
                 }
 
-                LdapSearch ldapSearch = new LdapSearch(searchDn, String.format("(%s={0})", identityMapping.rdnIdentifier), name);
+                LdapSearch ldapSearch = new LdapSearch(searchDn, identityMapping.filterName, name);
 
                 ldapSearch.setReturningAttributes(
                         identityMapping.attributes.stream()
@@ -620,9 +625,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
                     return null;
                 }
-
-            } catch (NamingException e) {
-                throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
             } finally {
                 closeContext(context);
             }
@@ -979,9 +981,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         public final int searchTimeLimit;
         private final LdapName newIdentityParent;
         private final Attributes newIdentityAttributes;
+        private final String filterName;
         private final String iteratorFilter;
 
-        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes, String iteratorFilter) {
+        public IdentityMapping(String searchDn, boolean searchRecursive, int searchTimeLimit, String rdnIdentifier, List<AttributeMapping> attributes, LdapName newIdentityParent, Attributes newIdentityAttributes, String filterName, String iteratorFilter) {
             Assert.checkNotNullParam("rdnIdentifier", rdnIdentifier);
             this.searchDn = searchDn;
             this.searchRecursive = searchRecursive;
@@ -990,6 +993,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             this.attributes = attributes;
             this.newIdentityParent = newIdentityParent;
             this.newIdentityAttributes = newIdentityAttributes;
+            this.filterName = filterName;
             this.iteratorFilter = iteratorFilter;
         }
     }

@@ -205,6 +205,7 @@ public class LdapSecurityRealmBuilder {
         private List<AttributeMapping> attributes = new ArrayList<>();
         private LdapName newIdentityParent = null;
         private Attributes newIdentityAttributes = null;
+        private String filterName;
         private String iteratorFilter;
 
         /**
@@ -280,6 +281,13 @@ public class LdapSecurityRealmBuilder {
             return this;
         }
 
+        public IdentityMappingBuilder setFilterName(String filterName) {
+            assertNotBuilt();
+
+            this.filterName = filterName;
+            return this;
+        }
+
         public IdentityMappingBuilder setIteratorFilter(String iteratorFilter) {
             assertNotBuilt();
 
@@ -304,9 +312,11 @@ public class LdapSecurityRealmBuilder {
             assertNotBuilt();
             built = true;
 
+            if (filterName == null) filterName = String.format("(%s={0})", nameAttribute);
+
             return LdapSecurityRealmBuilder.this.setIdentityMapping(new IdentityMapping(
                     searchDn, searchRecursive, searchTimeLimit, nameAttribute, attributes,
-                    newIdentityParent, newIdentityAttributes, iteratorFilter));
+                    newIdentityParent, newIdentityAttributes, filterName, iteratorFilter));
         }
 
         private void assertNotBuilt() {
