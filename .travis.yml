@@ -1,0 +1,18 @@
+language: java
+jdk:
+- oraclejdk8
+notifications:
+  email: false
+env:
+  global:
+    secure: EAmOqz5mDImXqnRH9RANHGTwzs3QHxWkdrz9dF+lECU1jfmmOFr2QP7Vp3WExLcX2J2j5erhRX1F9G9r2pLS2JkShKOgDmQ4rl/1FvQFppUhtuimnyw6sR+sp+VXZ5CCl1QowX+1uukjVlfxWDfYDNI1DUuHwbcQW8PnZj7z+IM=
+addons:
+  coverity_scan:
+    project:
+      name: wildfly-security/wildfly-elytron
+      description: Elytron Coverity Scan via Travis CI
+    notification_email: josef.cacek@gmail.com
+    build_command_prepend: mvn clean
+    build_command: mvn -DskipTests=true compile
+    branch_pattern: master
+
