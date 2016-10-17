@@ -45,12 +45,11 @@ interface CredentialLoader {
      * Note: The DirContextFactory approach will be evolved further for better referral support so it makes it easier for it to
      * be passed in for each call.
      *
-     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(DirContext dirContext, Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityCredentialLoader} to query the credentials for a specific identity.

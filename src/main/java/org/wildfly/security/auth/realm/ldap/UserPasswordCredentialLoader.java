@@ -62,7 +62,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public SupportLevel getCredentialAcquireSupport(DirContext context, final Class<? extends Credential> credentialType, final String credentialAlgorithm) throws RealmUnavailableException {
+    public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm) throws RealmUnavailableException {
         if (credentialType == PasswordCredential.class) {
             if (credentialAlgorithm == null) return SupportLevel.SUPPORTED;
             if (UserPasswordPasswordUtil.isAlgorithmSupported(credentialAlgorithm)) return SupportLevel.POSSIBLY_SUPPORTED;
@@ -82,7 +82,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             public SupportLevel getEvidenceVerifySupport(DirContext context, final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm) throws RealmUnavailableException {
                 // If we can acquire PasswordCredential and it support provided evidence, we can verify.
                 if ( ! PasswordCredential.canVerifyEvidence(evidenceType, evidenceAlgorithm)) return SupportLevel.UNSUPPORTED;
-                return getCredentialAcquireSupport(context, PasswordCredential.class, evidenceAlgorithm);
+                return getCredentialAcquireSupport(PasswordCredential.class, evidenceAlgorithm);
             }
 
             @Override
