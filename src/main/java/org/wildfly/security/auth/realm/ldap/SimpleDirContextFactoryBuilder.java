@@ -293,15 +293,7 @@ public class SimpleDirContextFactoryBuilder {
 
             log.debugf("[%s] successfully created. Connection established to LDAP server.", initialContext);
 
-            return new DelegatingLdapContext(initialContext, this::returnContext, (ldapContext, controls) -> {
-                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
-                try {
-                    log.debugf("Reconnecting");
-                    ldapContext.reconnect(controls);
-                } finally {
-                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
-                }
-            });
+            return new DelegatingLdapContext(initialContext, this::returnContext, socketFactory);
         }
 
         @Override
