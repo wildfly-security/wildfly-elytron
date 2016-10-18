@@ -120,6 +120,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
         private int minimumRemainingLifetime;
         private int requestLifetime;
         private boolean debug;
+        private Map<String, Object> options;
 
         Builder() {
         }
@@ -229,6 +230,19 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             return this;
         }
 
+        /**
+         * Set other configuration options for {@code Krb5LoginModule}
+         *
+         * @param options the configuration options which will be appended to options passed into {@code Krb5LoginModule}
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setOptions(final Map<String, Object> options) {
+            assertNotBuilt();
+            this.options = options;
+
+            return this;
+        }
+
         public SecurityFactory<GSSKerberosCredential> build() throws IOException {
             assertNotBuilt();
             final Configuration configuration = createConfiguration();
@@ -271,7 +285,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                             throw log.tooManyKerberosPrincipalsFound();
                         }
                         KerberosPrincipal principal = principals.iterator().next();
-                        log.tracef("Creating GSSName for Principal '%s'" , principal);
+                        log.tracef("Creating GSSName for Principal '%s'", principal);
                         GSSName name = manager.createName(principal.getName(), GSSName.NT_USER_NAME, KERBEROS_V5);
 
                         return new GSSKerberosCredential(manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
@@ -296,7 +310,6 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
             }
             options.put("principal", principal);
 
-            final AppConfigurationEntry ace;
             if (IS_IBM) {
                 options.put("noAddress", "true");
                 options.put("credsType", (isServer && !obtainKerberosTicket) ? "acceptor" : "initiator");
@@ -306,6 +319,10 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKe
                 options.put("useKeyTab", "true");
                 options.put("keyTab", keyTab.getAbsolutePath());
                 options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
+            }
+
+            if (this.options != null) {
+                options.putAll(this.options);
             }
 
             log.tracef("Created LoginContext configuration: %s", options.toString());
