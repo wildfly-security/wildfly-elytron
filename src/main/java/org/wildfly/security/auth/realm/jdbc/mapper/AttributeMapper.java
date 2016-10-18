@@ -20,6 +20,7 @@ package org.wildfly.security.auth.realm.jdbc.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.realm.jdbc.ColumnMapper;
 
 /**
@@ -31,6 +32,7 @@ public class AttributeMapper implements ColumnMapper {
     private final String name;
 
     public AttributeMapper(int index, String name) {
+        Assert.checkMinimumParameter("index", 1, index);
         this.index = index;
         this.name = name;
     }
