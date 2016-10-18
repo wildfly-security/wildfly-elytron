@@ -40,7 +40,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.naming.InvalidNameException;
-import javax.naming.Name;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
@@ -555,6 +554,30 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             return exists;
         }
 
+        private LdapSearch searchIdentityByDn() {
+            if ( ! name.regionMatches(true, 0, identityMapping.rdnIdentifier, 0, identityMapping.rdnIdentifier.length())) {
+                return null;
+            } // equal sign not checked here as whitespaces can be between yet
+            try {
+                LdapName ldapName = new LdapName(name);
+                int rdnPosition = ldapName.size() - 1;
+                Rdn rdnIdentifier = ldapName.getRdn(rdnPosition);
+                if ( ! rdnIdentifier.getType().equalsIgnoreCase(identityMapping.rdnIdentifier)) { // uid=...
+                    log.tracef("Getting identity [%s] by DN skipped - RDN does not match [%s]", name, identityMapping.rdnIdentifier);
+                    return null;
+                }
+                if (identityMapping.searchDn != null && ! ldapName.startsWith(new LdapName(identityMapping.searchDn).getRdns())) { // ...,search-dn
+                    log.tracef("Getting identity [%s] by DN skipped - DN not in search-dn [%s]", name, identityMapping.searchDn);
+                    return null;
+                }
+                ldapName.remove(rdnPosition); // TODO consider OBJECT_SCOPE instead
+                return new LdapSearch(ldapName.toString(), identityMapping.filterName, rdnIdentifier.getValue().toString());
+            } catch (InvalidNameException e) {
+                log.tracef(e, "Getting identity [%s] by DN failed - will continue by name", name);
+            }
+            return null;
+        }
+
         private LdapIdentity getIdentity() throws RealmUnavailableException {
             log.debugf("Trying to create identity for principal [%s].", this.name);
             DirContext context;
@@ -565,24 +588,10 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
             }
             try {
-                String searchDn = identityMapping.searchDn;
-                String name = this.name;
-
-                if (this.name.startsWith(identityMapping.rdnIdentifier)) { // getting identity by DN
-                    try {
-                        LdapName ldapName = new LdapName(this.name);
-                        int rdnIdentifierPosition = ldapName.size() - 1;
-                        Rdn rdnIdentifier = ldapName.getRdn(rdnIdentifierPosition);
-
-                        name = rdnIdentifier.getValue().toString();
-                        ldapName.remove(rdnIdentifierPosition);
-                        searchDn = ldapName.toString();
-                    } catch (InvalidNameException e) {
-                        log.tracef(e, "Getting identity [%s] by distinguish name failed - continuation by name", this.name);
-                    }
+                LdapSearch ldapSearch = searchIdentityByDn();
+                if (ldapSearch == null) { // not found by DN, search by name
+                    ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.filterName, name);
                 }
-
-                LdapSearch ldapSearch = new LdapSearch(searchDn, identityMapping.filterName, name);
 
                 ldapSearch.setReturningAttributes(
                         identityMapping.attributes.stream()
@@ -770,7 +779,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 throw log.noSuchIdentity();
             }
 
-            DirContext context = null;
+            DirContext context;
             try {
                 context = dirContextSupplier.get();
             } catch (NamingException e) {
@@ -803,7 +812,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 distinguishName.add(new Rdn(identityMapping.rdnIdentifier, name));
 
                 log.debugf("Creating identity [%s] with DN [%s] in LDAP", name, distinguishName.toString());
-                context.createSubcontext((Name) distinguishName, identityMapping.newIdentityAttributes);
+                context.createSubcontext(distinguishName, identityMapping.newIdentityAttributes);
 
             } catch (NamingException e) {
                 throw log.ldapRealmFailedCreateIdentityOnServer(e);
