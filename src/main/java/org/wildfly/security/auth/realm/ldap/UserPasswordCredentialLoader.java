@@ -127,14 +127,16 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             try {
                 Attributes attributes = context.getAttributes(distinguishedName, new String[] { userPasswordAttributeName });
                 Attribute attribute = attributes.get(userPasswordAttributeName);
-                final int size = attribute.size();
-                for (int i = 0; i < size; i++) {
-                    byte[] value = (byte[]) attribute.get(i);
+                if (attribute != null) {
+                    final int size = attribute.size();
+                    for (int i = 0; i < size; i++) {
+                        byte[] value = (byte[]) attribute.get(i);
 
-                    Password password = parseUserPassword(value);
+                        Password password = parseUserPassword(value);
 
-                    if (credentialType.isAssignableFrom(PasswordCredential.class) && (credentialAlgorithm == null || credentialAlgorithm.equals(password.getAlgorithm()))) {
-                        return credentialType.cast(new PasswordCredential(password));
+                        if (credentialType.isAssignableFrom(PasswordCredential.class) && (credentialAlgorithm == null || credentialAlgorithm.equals(password.getAlgorithm()))) {
+                            return credentialType.cast(new PasswordCredential(password));
+                        }
                     }
                 }
 
