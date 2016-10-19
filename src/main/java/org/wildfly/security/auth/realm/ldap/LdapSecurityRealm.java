@@ -669,10 +669,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                             NamingEnumeration<?> attributeValues = null;
 
                             try {
-                                attributeValues = ldapAttribute.getAll();
+                                if (ldapAttribute != null) {
+                                    attributeValues = ldapAttribute.getAll();
 
-                                while (attributeValues.hasMore()) {
-                                    values.add(attributeValues.next().toString());
+                                    while (attributeValues.hasMore()) {
+                                        values.add(attributeValues.next().toString());
+                                    }
                                 }
                             } catch (Exception cause) {
                                 throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
