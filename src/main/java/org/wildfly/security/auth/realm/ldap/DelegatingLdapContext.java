@@ -36,6 +36,7 @@ import javax.naming.ldap.Control;
 import javax.naming.ldap.ExtendedRequest;
 import javax.naming.ldap.ExtendedResponse;
 import javax.naming.ldap.LdapContext;
+import javax.net.SocketFactory;
 import java.util.Hashtable;
 
 /**
@@ -53,27 +54,27 @@ class DelegatingLdapContext implements LdapContext {
 
     final DirContext delegating;
     final CloseHandler closeHandler;
-    final ReconnectHandler reconnectHandler;
+    final SocketFactory socketFactory;
 
     interface CloseHandler {
         void handle(DirContext context) throws NamingException;
     }
 
-    interface ReconnectHandler {
-        void handle(LdapContext context, Control[] controls) throws NamingException;
+    interface Handler {
+        void handle() throws NamingException;
     }
 
-    DelegatingLdapContext(DirContext delegating, CloseHandler closeHandler, ReconnectHandler reconnectHandler) throws NamingException {
+    DelegatingLdapContext(DirContext delegating, CloseHandler closeHandler, SocketFactory socketFactory) throws NamingException {
         this.delegating = delegating;
         this.closeHandler = closeHandler;
-        this.reconnectHandler = reconnectHandler;
+        this.socketFactory = socketFactory;
     }
 
     // for needs of newInstance()
-    private DelegatingLdapContext(DirContext delegating, ReconnectHandler reconnectHandler) throws NamingException {
+    private DelegatingLdapContext(DirContext delegating, SocketFactory socketFactory) throws NamingException {
         this.delegating = delegating;
         this.closeHandler = null; // close handler should not be applied to copy
-        this.reconnectHandler = reconnectHandler;
+        this.socketFactory = socketFactory;
     }
 
     @Override
@@ -83,6 +84,57 @@ class DelegatingLdapContext implements LdapContext {
         } else {
             closeHandler.handle(delegating);
         }
+    }
+
+    // for needs of search()
+    private NamingEnumeration<SearchResult> wrap(NamingEnumeration<SearchResult> delegating) {
+        return new NamingEnumeration<SearchResult> () {
+
+            @Override
+            public boolean hasMoreElements() {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                try {
+                    return delegating.hasMoreElements();
+                } finally {
+                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                }
+            }
+
+            @Override
+            public SearchResult nextElement() {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                try {
+                    return delegating.nextElement();
+                } finally {
+                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                }
+            }
+
+            @Override
+            public SearchResult next() throws NamingException {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                try {
+                    return delegating.next();
+                } finally {
+                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                }
+            }
+
+            @Override
+            public boolean hasMore() throws NamingException {
+                if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+                try {
+                    return delegating.hasMore();
+                } finally {
+                    if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+                }
+            }
+
+            @Override
+            public void close() throws NamingException {
+                delegating.close();
+            }
+        };
     }
 
     // LdapContext specific
@@ -97,13 +149,18 @@ class DelegatingLdapContext implements LdapContext {
     public LdapContext newInstance(Control[] requestControls) throws NamingException {
         if ( ! (delegating instanceof LdapContext)) throw Assert.unsupported();
         LdapContext newContext = ((LdapContext) delegating).newInstance(requestControls);
-        return new DelegatingLdapContext(newContext, reconnectHandler);
+        return new DelegatingLdapContext(newContext, socketFactory);
     }
 
     @Override
     public void reconnect(Control[] controls) throws NamingException {
         if ( ! (delegating instanceof LdapContext)) throw Assert.unsupported();
-        reconnectHandler.handle((LdapContext) delegating, controls);
+        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        try {
+            ((LdapContext) delegating).reconnect(controls);
+        } finally {
+            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+        }
     }
 
     @Override
@@ -224,42 +281,42 @@ class DelegatingLdapContext implements LdapContext {
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes, String[] attributesToReturn) throws NamingException {
-        return delegating.search(name, matchingAttributes, attributesToReturn);
+        return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes, String[] attributesToReturn) throws NamingException {
-        return delegating.search(name, matchingAttributes, attributesToReturn);
+        return wrap(delegating.search(name, matchingAttributes, attributesToReturn));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes) throws NamingException {
-        return delegating.search(name, matchingAttributes);
+        return wrap(delegating.search(name, matchingAttributes));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes) throws NamingException {
-        return delegating.search(name, matchingAttributes);
+        return wrap(delegating.search(name, matchingAttributes));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, String filter, SearchControls cons) throws NamingException {
-        return delegating.search(name, filter, cons);
+        return wrap(delegating.search(name, filter, cons));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, String filter, SearchControls cons) throws NamingException {
-        return delegating.search(name, filter, cons);
+        return wrap(delegating.search(name, filter, cons));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(Name name, String filterExpr, Object[] filterArgs, SearchControls cons) throws NamingException {
-        return delegating.search(name, filterExpr, filterArgs, cons);
+        return wrap(delegating.search(name, filterExpr, filterArgs, cons));
     }
 
     @Override
     public NamingEnumeration<SearchResult> search(String name, String filterExpr, Object[] filterArgs, SearchControls cons) throws NamingException {
-        return delegating.search(name, filterExpr, filterArgs, cons);
+        return wrap(delegating.search(name, filterExpr, filterArgs, cons));
     }
 
     @Override
