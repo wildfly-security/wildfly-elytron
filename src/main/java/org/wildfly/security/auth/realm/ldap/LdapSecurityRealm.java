@@ -270,9 +270,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         Assert.checkNotNullParam("credentialType", credentialType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
-        DirContext dirContext = obtainContext();
         for (CredentialLoader loader : credentialLoaders) {
-            SupportLevel support = loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName);
+            SupportLevel support = loader.getCredentialAcquireSupport(credentialType, algorithmName);
             if (support.isDefinitelySupported()) {
                 // One claiming it is definitely supported is enough!
                 return support;
@@ -281,7 +280,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 response = support;
             }
         }
-        closeContext(dirContext);
 
         return response;
     }
@@ -356,7 +354,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             DirContext dirContext = obtainContext();
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
 
                     SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName);
@@ -394,7 +392,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
             DirContext dirContext = obtainContext();
             for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(dirContext, credentialType, algorithmName).mayBeSupported()) {
+                if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
 
                     Credential credential = icl.getCredential(credentialType, algorithmName);
