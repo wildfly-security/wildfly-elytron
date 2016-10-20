@@ -219,7 +219,7 @@ public class SimpleDirContextFactoryBuilder {
 
         @Override
         public DirContext obtainDirContext(ReferralMode mode) throws NamingException {
-            return createDirContext(securityPrincipal, securityCredential.toCharArray(), null);
+            return createDirContext(securityPrincipal, securityCredential.toCharArray(), mode);
         }
 
         @Override
