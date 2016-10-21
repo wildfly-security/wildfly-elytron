@@ -711,7 +711,9 @@ public final class ServerAuthenticationContext {
                 final AtomicReference<State> stateRef = getStateRef();
                 final Callback callback = callbacks[idx];
                 if (callback instanceof AnonymousAuthorizationCallback) {
-                    ((AnonymousAuthorizationCallback) callback).setAuthorized(authorizeAnonymous());
+                    boolean authorized = authorizeAnonymous();
+                    log.tracef("Handling AnonymousAuthorizationCallback: authorized = %b", authorized);
+                    ((AnonymousAuthorizationCallback) callback).setAuthorized(authorized);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AuthorizeCallback) {
                     final AuthorizeCallback authorizeCallback = (AuthorizeCallback) callback;
@@ -721,18 +723,18 @@ public final class ServerAuthenticationContext {
                         setAuthenticationName(authenticationID);
                     }
                     String authorizationID = authorizeCallback.getAuthorizationID();
-                    if (authorizationID != null) {
-                        authorizeCallback.setAuthorized(authorize(authorizationID));
-                    } else {
-                        authorizeCallback.setAuthorized(authorize());
-                    }
+                    boolean authorized = authorizationID != null ? authorize(authorizationID) : authorize();
+                    log.tracef("Handling AuthorizeCallback: authenticationID = %s  authorizationID = %s  authorized = %b", authenticationID, authorizationID, authorized);
+                    authorizeCallback.setAuthorized(authorized);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof  ExclusiveNameCallback) {
                     final ExclusiveNameCallback exclusiveNameCallback = ((ExclusiveNameCallback) callback);
                     // login name
                     final String name = exclusiveNameCallback.getDefaultName();
                     try {
-                        if (exclusiveNameCallback.needsExclusiveAccess()) {
+                        boolean exclusive = exclusiveNameCallback.needsExclusiveAccess();
+                        log.tracef("Handling ExclusiveNameCallback: authenticationName = %s  needsExclusiveAccess = %b", name, exclusive);
+                        if (exclusive) {
                             setAuthenticationName(name, true);
                             exclusiveNameCallback.setExclusiveAccess(true);
                         } else {
@@ -746,6 +748,7 @@ public final class ServerAuthenticationContext {
                     // login name
                     final String name = ((NameCallback) callback).getDefaultName();
                     try {
+                        log.tracef("Handling NameCallback: authenticationName = %s", name);
                         setAuthenticationName(name);
                     } catch (Exception e) {
                         throw new IOException(e);
@@ -755,6 +758,7 @@ public final class ServerAuthenticationContext {
                     // login name
                     final Principal principal = ((PeerPrincipalCallback) callback).getPrincipal();
                     try {
+                        log.tracef("Handling PeerPrincipalCallback: principal = %s", principal);
                         setAuthenticationPrincipal(principal);
                     } catch (Exception e) {
                         throw new IOException(e);
@@ -771,16 +775,20 @@ public final class ServerAuthenticationContext {
                                 final PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
                                 clearPasswordSpec = passwordFactory.getKeySpec(password, ClearPasswordSpec.class);
                             } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                                log.trace(e);
                                 throw new FastUnsupportedCallbackException(callback);
                             }
+                            log.tracef("Handling PasswordCallback: obtained successfully");
                             passwordCallback.setPassword(clearPasswordSpec.getEncodedPassword());
                             handleOne(callbacks, idx + 1);
                             return;
                         }
+                        log.tracef("Handling PasswordCallback: failed to obtain PasswordCredential");
                         throw new FastUnsupportedCallbackException(callback);
                     }
 
                     // otherwise just fail out; some mechanisms will try again with different credentials
+                    log.tracef("Handling PasswordCallback: PasswordCredential may not be supported");
                     throw new FastUnsupportedCallbackException(callback);
 
                 } else if (callback instanceof CredentialCallback) {
@@ -788,12 +796,14 @@ public final class ServerAuthenticationContext {
 
                     final Credential credential = getCredential(credentialCallback.getCredentialType(), credentialCallback.getAlgorithm());
                     if (credential != null) {
+                        log.tracef("Handling CredentialCallback: obtained successfully");
                         credentialCallback.setCredential(credential);
                         handleOne(callbacks, idx + 1);
                         return;
                     }
 
                     // otherwise just fail out; some mechanisms will try again with different credentials
+                    log.tracef("Handling CredentialCallback: failed to obtain credential");
                     throw new FastUnsupportedCallbackException(callback);
                 } else if (callback instanceof ServerCredentialCallback) {
                     final ServerCredentialCallback serverCredentialCallback = (ServerCredentialCallback) callback;
@@ -803,15 +813,18 @@ public final class ServerAuthenticationContext {
                         try {
                             final Credential credential = serverCredentialFactory.create();
                             if (serverCredentialCallback.isCredentialSupported(credential)) {
+                                log.tracef("Handling ServerCredentialCallback: obtained successfully");
                                 serverCredentialCallback.setCredential(credential);
                                 handleOne(callbacks, idx + 1);
                                 return;
                             }
                         } catch (GeneralSecurityException e) {
                             // skip this credential
+                            log.trace(e);
                         }
                     }
 
+                    log.tracef("Handling ServerCredentialCallback: failed to obtain credential");
                     throw new FastUnsupportedCallbackException(callback);
                 } else if (callback instanceof EvidenceVerifyCallback) {
                     EvidenceVerifyCallback evidenceVerifyCallback = (EvidenceVerifyCallback) callback;
@@ -820,23 +833,31 @@ public final class ServerAuthenticationContext {
                 } else if (callback instanceof AuthenticationCompleteCallback) {
                     if (! isDone()) {
                         if (((AuthenticationCompleteCallback) callback).succeeded()) {
+                            log.tracef("Handling AuthenticationCompleteCallback: succeed");
                             succeed();
                         } else {
+                            log.tracef("Handling AuthenticationCompleteCallback: fail");
                             fail();
                         }
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SocketAddressCallback) {
                     final SocketAddressCallback socketAddressCallback = (SocketAddressCallback) callback;
+                    log.tracef("Handling SocketAddressCallback");
                     if (socketAddressCallback.getKind() == SocketAddressCallback.Kind.PEER) {
                         // todo: filter by IP address
                     }
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof SecurityIdentityCallback) {
-                    ((SecurityIdentityCallback) callback).setSecurityIdentity(getAuthorizedIdentity());
+                    SecurityIdentity identity = getAuthorizedIdentity();
+                    log.tracef("Handling SecurityIdentityCallback: identity = %s", identity);
+                    ((SecurityIdentityCallback) callback).setSecurityIdentity(identity);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof AvailableRealmsCallback) {
                     Collection<String> names = stateRef.get().getMechanismConfiguration().getMechanismRealmNames();
+                    if (log.isTraceEnabled()) {
+                        log.tracef("Handling AvailableRealmsCallback: realms = [%s]", String.join(", ", names));
+                    }
                     if (! names.isEmpty()) {
                         ((AvailableRealmsCallback) callback).setRealmNames(names.toArray(new String[names.size()]));
                     }
@@ -847,30 +868,34 @@ public final class ServerAuthenticationContext {
                     if (mechanismRealm == null) {
                         mechanismRealm = rcb.getDefaultText();
                     }
+                    log.tracef("Handling RealmCallback: selected = [%s]", mechanismRealm);
                     setMechanismRealmName(mechanismRealm);
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof MechanismInformationCallback) {
                     MechanismInformationCallback mic = (MechanismInformationCallback) callback;
                     try {
+                        log.tracef("Handling MechanismInformationCallback");
                         setMechanismInformation(mic.getMechanismInformation());
                     } catch (Exception e) {
                         throw new IOException(e);
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {
                     final CredentialUpdateCallback credentialUpdateCallback = (CredentialUpdateCallback) callback;
+                    log.tracef("Handling CredentialUpdateCallback");
                     updateCredential(credentialUpdateCallback.getCredential());
                     handleOne(callbacks, idx + 1);
                 } else if (callback instanceof CachedIdentityAuthorizeCallback) {
                     CachedIdentityAuthorizeCallback authorizeCallback = (CachedIdentityAuthorizeCallback) callback;
                     authorizeCallback.setSecurityDomain(stateRef.get().getSecurityDomain());
                     SecurityIdentity authorizedIdentity = null;
+                    Principal principal = null;
                     try {
                         SecurityIdentity identity = authorizeCallback.getIdentity();
                         if (identity != null && importIdentity(identity)) {
                             authorizedIdentity = getAuthorizedIdentity();
                             return;
                         }
-                        Principal principal = authorizeCallback.getPrincipal();
+                        principal = authorizeCallback.getPrincipal();
                         if (principal == null) {
                             principal = authorizeCallback.getAuthorizationPrincipal();
                         }
@@ -881,6 +906,7 @@ public final class ServerAuthenticationContext {
                             return;
                         }
                     } finally {
+                        log.tracef("Handling CachedIdentityAuthorizeCallback: principal = %s  authorizedIdentity = %s", principal, authorizedIdentity);
                         authorizeCallback.setAuthorized(authorizedIdentity);
                     }
                     handleOne(callbacks, idx + 1);
