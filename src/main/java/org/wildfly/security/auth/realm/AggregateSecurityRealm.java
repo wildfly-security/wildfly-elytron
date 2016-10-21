@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.realm;
 
+import java.security.Principal;
+
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.event.RealmAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmAuthorizationEvent;
@@ -99,6 +101,11 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         Identity(final RealmIdentity authenticationIdentity, final RealmIdentity authorizationIdentity) {
             this.authenticationIdentity = authenticationIdentity;
             this.authorizationIdentity = authorizationIdentity;
+        }
+
+        @Override
+        public Principal getRealmIdentityPrincipal() {
+            return authenticationIdentity.getRealmIdentityPrincipal();
         }
 
         @Override
