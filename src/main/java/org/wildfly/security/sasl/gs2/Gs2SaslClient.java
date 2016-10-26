@@ -93,7 +93,7 @@ final class Gs2SaslClient extends AbstractSaslClient {
             tryHandleCallbacks(credentialCallback);
             credential = credentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
         } catch (UnsupportedCallbackException e) {
-            // Ignored (act as the default initiator principal instead)
+            log.trace("Unable to obtain GSSCredential, ignored (act as the default initiator principal instead)", e);
         }
         try {
             gssContext = gssManager.createContext(acceptorName, mechanism, credential, GSSContext.INDEFINITE_LIFETIME);

@@ -80,6 +80,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
         // Do we already have a cached identity? If so use it.
         if (gssContext != null && gssContext.isEstablished() && authorizeEstablishedContext(gssContext)) {
+            log.trace("Successfully authorized using cached identity");
             request.authenticationComplete();
             return;
         }
@@ -89,6 +90,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             final GSSCredential gssCredential;
 
             try {
+                log.trace("Obtaining GSSCredential from callbackHandler...");
                 callbackHandler.handle(new Callback[] { gssCredentialCallback });
                 gssCredential = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
             } catch (IOException | UnsupportedCallbackException e) {
@@ -97,6 +99,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
             if (gssCredential == null) {
                 // We can't obtain a credential, we have no chance of performing SPNEGO authentication so give up now.
+                log.trace("Obtaining GSSCredential from callbackHandler failed - null credential");
                 request.noAuthenticationInProgress();
                 return;
             }
@@ -104,20 +107,23 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
             Optional<String> challenge = authorizationValues != null ? authorizationValues.stream()
                     .filter(s -> s.startsWith(CHALLENGE_PREFIX)).limit(1).map(s -> s.substring(CHALLENGE_PREFIX.length()))
-                    .findFirst() : Optional.ofNullable(null);
+                    .findFirst() : Optional.empty();
+
+            if (log.isTraceEnabled()) {
+                log.tracef("Sent HTTP authorizations: [%s]", authorizationValues == null ? "null" : String.join(", ", authorizationValues));
+            }
 
             // Do we have an incoming response to a challenge? If so process it.
             if (challenge.isPresent()) {
-                if (gssContext == null) {
-                    GSSManager gssManager = GSSManager.getInstance();
-                    try {
-                        gssContext = gssManager.createContext(gssCredential);
-                    } catch (GSSException e) {
-                        throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
-                    }
-                    if (connectionScope != null) {
-                        connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
-                    }
+                log.trace("Processing incoming response to a challenge...");
+                GSSManager gssManager = GSSManager.getInstance();
+                try {
+                    gssContext = gssManager.createContext(gssCredential);
+                } catch (GSSException e) {
+                    throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
+                }
+                if (connectionScope != null) {
+                    connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
                 }
 
                 byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
@@ -125,7 +131,9 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     final byte[] responseToken = gssContext.acceptSecContext(decodedValue, 0, decodedValue.length);
 
                     if (gssContext.isEstablished()) {
+                        log.trace("GSSContext established, authorizing...");
                         if (authorizeEstablishedContext(gssContext)) {
+                            log.trace("GSSContext established and authorized - authentication complete");
                             if (responseToken != null) {
                                 request.authenticationComplete(
                                         response -> sendIntermediateChallenge(responseToken, response, true));
@@ -134,6 +142,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                             }
                             return;
                         } else {
+                            log.trace("Authorization failed");
                             request.authenticationFailed(
                                     log.authorizationFailed(gssContext.getSrcName().toString(), SPNEGO_NAME));
                         }
@@ -179,6 +188,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             callbackHandler.handle(new Callback[] {authorize});
 
             authorized = authorize.isAuthorized();
+            log.tracef("Authorized by callbackHandler = %b", authorized);
         } catch (GSSException e) {
             try {
                 MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);

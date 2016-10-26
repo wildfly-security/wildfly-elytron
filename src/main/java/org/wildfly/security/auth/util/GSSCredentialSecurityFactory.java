@@ -87,9 +87,12 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         GSSCredential currentCredential = cachedCredential;
         try {
             if (currentCredential != null && currentCredential.getRemainingLifetime() >= minimumRemainingLifetime) {
+                log.tracef("Used cached GSSCredential [%s]", currentCredential);
                 return new GSSCredentialCredential(currentCredential);
             }
+            log.tracef("No valid cached credential, obtaining new one...");
             currentCredential = rawSupplier.get();
+            log.tracef("Obtained GSSCredential [%s]", currentCredential);
             this.cachedCredential = currentCredential;
 
             return new GSSCredentialCredential(currentCredential);
@@ -222,8 +225,10 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
             try {
                 final LoginContext lc = new LoginContext("KDC", subject, (c) -> {
                     throw new FastUnsupportedCallbackException(c[0]);
-                } , configuration);
+                }, configuration);
+                log.tracef("Logging in using LoginContext and subject [%s]", subject);
                 lc.login();
+                log.tracef("Logging in using LoginContext and subject [%s] succeed", subject);
 
                 final GSSManager manager = GSSManager.getInstance();
                 return Subject.doAs(subject, new PrivilegedExceptionAction<GSSCredential>() {
@@ -256,7 +261,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         }
 
         private Configuration createConfiguration() throws IOException {
-            Map<String, Object> options = new HashMap<String, Object>();
+            Map<String, Object> options = new HashMap<>();
             if (debug) {
                 options.put("debug", "true");
             }
@@ -267,24 +272,24 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
                 options.put("noAddress", "true");
                 options.put("credsType", isServer ? "acceptor" : "initiator");
                 options.put("useKeytab", keyTab.toURI().toURL().toString());
-                ace = new AppConfigurationEntry(IBMKRB5LoginModule, REQUIRED, options);
             } else {
                 options.put("storeKey", "true");
                 options.put("useKeyTab", "true");
                 options.put("keyTab", keyTab.getAbsolutePath());
                 options.put("isInitiator", isServer ? "false" : "true");
-
-                ace = new AppConfigurationEntry(KRB5LoginModule, REQUIRED, options);
             }
 
-            final AppConfigurationEntry[] aceArray = new AppConfigurationEntry[] { ace };
+            log.tracef("Created LoginContext configuration: %s", options.toString());
+
+            final AppConfigurationEntry[] aceArray = new AppConfigurationEntry[] {
+                    new AppConfigurationEntry(IS_IBM ? IBMKRB5LoginModule : KRB5LoginModule, REQUIRED, options)
+            };
 
             return new Configuration() {
 
                 @Override
                 public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
                     assert "KDC".equals(name);
-
                     return aceArray;
                 }
 
@@ -296,7 +301,6 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
                 throw log.builderAlreadyBuilt();
             }
         }
-
 
     }
 }

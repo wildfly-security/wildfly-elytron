@@ -57,7 +57,6 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
      * @param delegate the factory holding the target mechanisms
      * @param singleSignOnSessionFactory a custom {@link SingleSignOnManager}
      * @param configuration the configuration related with the cookie representing user's session
-     * @param identifierFactory a factory that will be used to create session identifiers
      */
     public SingleSignOnServerMechanismFactory(HttpServerAuthenticationMechanismFactory delegate, SingleSignOnSessionFactory singleSignOnSessionFactory, SingleSignOnConfiguration configuration) {
         this.delegate = delegate;

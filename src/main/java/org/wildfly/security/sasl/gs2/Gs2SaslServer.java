@@ -284,6 +284,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         } catch (GSSException e) {
             throw log.mechUnableToDeterminePeerName(getMechanismName(), e).toSaslException();
         }
+        log.tracef("checking if [%s] is authorized to act as [%s]...", authenticationID, authorizationID);
         if (authorizationID == null) {
             authorizationID = authenticationID;
         }
@@ -292,6 +293,7 @@ final class Gs2SaslServer extends AbstractSaslServer {
         if (! authorizeCallback.isAuthorized()) {
             throw log.mechAuthorizationFailed(getMechanismName(), authenticationID, authorizationID).toSaslException();
         }
+        log.trace("authorization id check successful");
     }
 
     private void skipDelimiter(ByteIterator bi) throws SaslException {
