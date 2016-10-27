@@ -347,20 +347,26 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             List<Credential> credentials = loadCredentials();
             for (Credential credential : credentials) {
                 if (credential.canVerify(evidenceType, algorithmName)) {
+                    ElytronMessages.log.tracef("FileSystemSecurityRealm - evidence verification SUPPORTED: type = [%s]  algorithm = [%s]  credentials = [%d]", evidenceType, algorithmName, credentials.size());
                     return SupportLevel.SUPPORTED;
                 }
             }
+            ElytronMessages.log.tracef("FileSystemSecurityRealm - evidence verification UNSUPPORTED: type = [%s]  algorithm = [%s]  credentials = [%d]", evidenceType, algorithmName, credentials.size());
             return SupportLevel.UNSUPPORTED;
         }
 
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
             List<Credential> credentials = loadCredentials();
+            ElytronMessages.log.tracef("FileSystemSecurityRealm - verification evidence [%s] against [%d] credentials...", evidence, credentials.size());
             for (Credential credential : credentials) {
                 if (credential.canVerify(evidence)) {
-                    return credential.verify(evidence);
+                    boolean verified = credential.verify(evidence);
+                    ElytronMessages.log.tracef("FileSystemSecurityRealm - verification against credential [%s] = %b", credential, verified);
+                    return verified;
                 }
             }
+            ElytronMessages.log.tracef("FileSystemSecurityRealm - no credential able to verify evidence [%s]", evidence);
             return false;
         }
 

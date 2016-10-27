@@ -83,11 +83,14 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             return;
         }
         if (attemptReAuthentication(request)) {
+            log.trace("ClientCertAuthenticationMechanism: re-authentication succeed");
             return;
         }
         if (attemptAuthentication(request, sslSession)) {
+            log.trace("ClientCertAuthenticationMechanism: authentication succeed");
             return;
         }
+        log.trace("ClientCertAuthenticationMechanism: both, re-authentication and authentication, failed");
         fail(request);
     }
 
@@ -107,7 +110,9 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         } catch (UnsupportedCallbackException e) {
             throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
         }
-        if (callback.isVerified()) {
+        boolean verified = callback.isVerified();
+        log.tracef("X509PeerCertificateChainEvidence was verified by EvidenceVerifyCallback handler: %b", verified);
+        if (verified) {
             CachedIdentityAuthorizeCallback authorizeCallback = new CachedIdentityAuthorizeCallback(evidence.getPrincipal(), createIdentityCache(request), true);
             try {
                 MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, authorizeCallback);
@@ -117,7 +122,9 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
                 throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
             }
 
-            if (authorizeCallback.isAuthorized()) if (succeed(request)) return true;
+            boolean authorized = authorizeCallback.isAuthorized();
+            log.tracef("X509PeerCertificateChainEvidence was authorized by CachedIdentityAuthorizeCallback(%s) handler: %b", evidence.getPrincipal(), authorized);
+            if (authorized) if (succeed(request)) return true;
         }
         return false;
     }
@@ -155,7 +162,9 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
         } catch (UnsupportedCallbackException e) {
             throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
         }
-        if (authorizeCallback.isAuthorized()) {
+        boolean authorized = authorizeCallback.isAuthorized();
+        log.tracef("Identity was authorized by CachedIdentityAuthorizeCallback handler: %b", authorized);
+        if (authorized) {
             return succeed(request);
         }
         return false;

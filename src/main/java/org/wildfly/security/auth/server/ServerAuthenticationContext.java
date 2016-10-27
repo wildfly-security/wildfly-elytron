@@ -1414,6 +1414,7 @@ public final class ServerAuthenticationContext {
             // TODO: this method probably should never cause a state change... consider setEvidence or something instead?
             final AtomicReference<State> stateRef = getStateRef();
             final Principal evidencePrincipal = evidence.getPrincipal();
+            log.tracef("Evidence verification: evidence = %s  evidencePrincipal = %s", evidence, evidencePrincipal);
             final MechanismRealmConfiguration mechanismRealmConfiguration = getMechanismRealmConfiguration();
             if (evidencePrincipal != null) {
                 String name = getSecurityDomain().getPrincipalDecoder().getName(evidencePrincipal);
