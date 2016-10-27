@@ -38,8 +38,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.IdentityLocator;
@@ -61,6 +59,7 @@ import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.util.ByteIterator;
+import org.wildfly.security.util.CodePointIterator;
 
 /**
  * A {@link SecurityRealm} implementation that makes use of the legacy properties files.
@@ -73,11 +72,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final String REALM_COMMENT_PREFIX = "$REALM_NAME=";
     private static final String REALM_COMMENT_SUFFIX = "$";
 
-    private static final Pattern HASHED_PATTERN = Pattern.compile("#??([^#]*)=(([\\da-f]{2})+)$");
-    private static final Pattern PLAIN_PATTERN = Pattern.compile("#??([^#]*)=([^=]*)");
-
     private final boolean plainText;
-    private final Pattern currentPattern;
 
     private final String groupsAttribute;
 
@@ -85,7 +80,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
         this.plainText = builder.plainText;
-        currentPattern = plainText ? PLAIN_PATTERN : HASHED_PATTERN;
         groupsAttribute = builder.groupsAttribute;
     }
 
@@ -231,7 +225,6 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         String realmName = null;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(passwordsStream, StandardCharsets.UTF_8))) {
-
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
                 final String trimmed = currentLine.trim();
@@ -243,13 +236,25 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         realmName = trimmed.substring(start, end);
                     }
                 } else {
-                    final Matcher matcher = currentPattern.matcher(trimmed);
-                    if (matcher.matches()) {
-                        String accountName = matcher.group(1);
-                        String passwordRepresentation = matcher.group(2);
-                        boolean commented = trimmed.startsWith(COMMENT_PREFIX);
-                        if (commented == false) {
-                            accounts.put(accountName, new AccountEntry(accountName, passwordRepresentation, groups.getProperty(accountName)));
+                    if ( ! trimmed.startsWith(COMMENT_PREFIX)) {
+                        String username = null;
+                        StringBuilder builder = new StringBuilder();
+
+                        CodePointIterator it = CodePointIterator.ofString(trimmed);
+                        while (it.hasNext()) {
+                            int cp = it.next();
+                            if (cp == '\\' && it.hasNext()) { // escape
+                                builder.appendCodePoint(it.next());
+                            } else if (username == null && (cp == '=' || cp == ':')) { // username-password delimiter
+                                username = builder.toString().trim();
+                                builder = new StringBuilder();
+                            } else {
+                                builder.appendCodePoint(cp);
+                            }
+                        }
+                        if (username != null) { // end of line and delimiter was read
+                            String password = builder.toString().trim();
+                            accounts.put(username, new AccountEntry(username, password, groups.getProperty(username)));
                         }
                     }
                 }

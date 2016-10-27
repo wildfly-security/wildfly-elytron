@@ -175,4 +175,33 @@ public class LegacyPropertiesSecurityRealmTest {
 
         badIdentity.dispose();
     }
+
+    @Test
+    public void testPlainFileSpecialChars() throws Exception {
+        SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
+                .setPasswordsStream(this.getClass().getResourceAsStream("clear-special.properties"))
+                .setPlainText(true)
+                .build();
+
+        testClear(realm, "elytron", "password");
+        testClear(realm, "space man", "space password");
+        testClear(realm, "elytronumlautöäü", "password");
+        testClear(realm, "elytron用戶", "password");
+        testClear(realm, "backslash\\", "password");
+        testClear(realm, "backslash\\inthemiddle", "password");
+        testClear(realm, "dn=elytron,dc=wildfly,dc=org", "password");
+        testClear(realm, "elytron1", "pass=word");
+        testClear(realm, "elytron2", "password\\");
+        testClear(realm, "elytron3", "pass\\word");
+        testClear(realm, "elytron4", "passwordWithumlautöäü");
+        testClear(realm, "elytron5", "用戶");
+    }
+
+    private void testClear(SecurityRealm realm, String username, String password) throws Exception {
+        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName(username));
+        assertTrue("Exists", identity.exists());
+        ClearPassword elytronClear = identity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword(ClearPassword.class);
+        assertEquals(password, new String(elytronClear.getPassword()));
+        identity.dispose();
+    }
 }
