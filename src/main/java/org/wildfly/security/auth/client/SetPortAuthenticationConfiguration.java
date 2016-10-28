@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.client;
 
-import java.net.URI;
-
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -36,7 +34,7 @@ class SetPortAuthenticationConfiguration extends AuthenticationConfiguration {
         return new SetPortAuthenticationConfiguration(newParent, port);
     }
 
-    int getPort(final URI uri) {
+    int getPort() {
         return port;
     }
 }

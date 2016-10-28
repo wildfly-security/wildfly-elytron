@@ -21,7 +21,6 @@ package org.wildfly.security.auth.client;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -119,12 +118,12 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
-        String getHost(final URI uri) {
-            return uri.getHost();
+        String getHost() {
+            return null;
         }
 
-        int getPort(final URI uri) {
-            return uri.getPort();
+        int getPort() {
+            return -1;
         }
 
         Principal getPrincipal() {
@@ -163,6 +162,10 @@ public abstract class AuthenticationConfiguration {
         Supplier<Provider[]> getProviderSupplier() {
             return Security::getProviders;
         }
+
+        boolean delegatesThrough(final Class<?> clazz) {
+            return false;
+        }
     }.useAnonymous().useTrustManager(null);
 
     private final AuthenticationConfiguration parent;
@@ -188,12 +191,12 @@ public abstract class AuthenticationConfiguration {
         return parent.getPrincipal();
     }
 
-    String getHost(URI uri) {
-        return parent.getHost(uri);
+    String getHost() {
+        return parent.getHost();
     }
 
-    int getPort(URI uri) {
-        return parent.getPort(uri);
+    int getPort() {
+        return parent.getPort();
     }
 
     // internal actions
@@ -265,6 +268,10 @@ public abstract class AuthenticationConfiguration {
         AuthenticationConfiguration newParent = parent.without(clazz);
         if (parent == newParent) return this;
         return reparent(newParent);
+    }
+
+    boolean delegatesThrough(Class<?> clazz) {
+        return clazz.isInstance(this) || parent.delegatesThrough(clazz);
     }
 
     // assembly methods - rewrite
@@ -756,14 +763,7 @@ public abstract class AuthenticationConfiguration {
         if (mechs.isEmpty()) return null;
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
-        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);
-    }
-
-    InetSocketAddress getDestinationInetAddress(URI uri, int defaultPort) {
-        final String host = getHost(uri);
-        int port = getPort(uri);
-        if (port == -1) port = defaultPort;
-        return new InetSocketAddress(host, port);
+        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(), properties, callbackHandler);
     }
 
     SSLContext createSslContext() throws GeneralSecurityException {
