@@ -155,7 +155,7 @@ public final class ElytronXmlParser {
      * @return the authentication context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         SecurityFactory<AuthenticationContext> futureContext = null;
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
@@ -219,7 +219,7 @@ public final class ElytronXmlParser {
      * @return the authentication context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientRulesType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+    static SecurityFactory<AuthenticationContext> parseAuthenticationClientRulesType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -264,7 +264,7 @@ public final class ElytronXmlParser {
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseAuthenticationClientRuleType(ConfigurationXMLStreamReader reader, final List<SecurityFactory<RuleConfigurationPair>> rulesList, final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+    static void parseAuthenticationClientRuleType(ConfigurationXMLStreamReader reader, final List<SecurityFactory<RuleConfigurationPair>> rulesList, final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String _extends = null;
@@ -404,7 +404,7 @@ public final class ElytronXmlParser {
                     }
                     case "set-mechanism-realm": {
                         gotConfig = true;
-                        final String realm = parseNameType(reader);
+                        final String realm = parseNameType(reader, true);
                         final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
                         configuration = () -> parentConfig.create().useRealm(realm);
                         break;
@@ -523,7 +523,7 @@ public final class ElytronXmlParser {
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseKeyStoresType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+    static void parseKeyStoresType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -558,7 +558,7 @@ public final class ElytronXmlParser {
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+    static void parseKeyStoreType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
@@ -705,7 +705,7 @@ public final class ElytronXmlParser {
      * @return the key store entry factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static SecurityFactory<KeyStore.Entry> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+    static SecurityFactory<KeyStore.Entry> parseKeyStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String keyStoreName = null;
         String alias = null;
@@ -797,7 +797,7 @@ public final class ElytronXmlParser {
      * @param reader the XML stream reader
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseEmptyType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static void parseEmptyType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -822,7 +822,19 @@ public final class ElytronXmlParser {
      * @return the parsed name
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static String parseNameType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static String parseNameType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        return parseNameType(reader, false);
+    }
+
+    /**
+     * Parse an XML element of type {@code name-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param optional is the name attribute optional?
+     * @return the parsed name
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static String parseNameType(ConfigurationXMLStreamReader reader, boolean optional) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -836,7 +848,7 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedAttribute(i);
             }
         }
-        if (name == null) {
+        if (name == null && !optional) {
             throw missingAttribute(reader, "name");
         }
         if (reader.hasNext()) {
@@ -859,7 +871,7 @@ public final class ElytronXmlParser {
      * @return the port number (1-65535 inclusive)
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static int parsePortType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static int parsePortType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         int number = -1;
         for (int i = 0; i < attributeCount; i ++) {
@@ -904,7 +916,7 @@ public final class ElytronXmlParser {
      * @return the regular expression based name rewriter
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static NameRewriter parseRegexSubstitutionType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static NameRewriter parseRegexSubstitutionType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         Pattern pattern = null;
         String replacement = null;
@@ -947,7 +959,7 @@ public final class ElytronXmlParser {
      * @return the array of parsed names
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static String[] parseNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static String[] parseNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String[] names = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -985,7 +997,7 @@ public final class ElytronXmlParser {
      * @return the parsed URI
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static URI parseUriType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static URI parseUriType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         URI uri = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1022,7 +1034,7 @@ public final class ElytronXmlParser {
      * @return the parsed cipher suite selector
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static CipherSuiteSelector parseCipherSuiteSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static CipherSuiteSelector parseCipherSuiteSelectorType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         CipherSuiteSelector selector = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1059,7 +1071,7 @@ public final class ElytronXmlParser {
      * @return the parsed protocol selector
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static ProtocolSelector parseProtocolSelectorNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static ProtocolSelector parseProtocolSelectorNamesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         ProtocolSelector selector = ProtocolSelector.empty();
         for (String name : parseNamesType(reader)) {
             selector = selector.add(name);
@@ -1074,7 +1086,7 @@ public final class ElytronXmlParser {
      * @return the corresponding module
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
-    public static Module parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static Module parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String slot = null;
@@ -1119,7 +1131,7 @@ public final class ElytronXmlParser {
      * @return the clear password characters
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
-    public static char[] parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static char[] parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         char[] password = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1149,7 +1161,7 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    public static Map<String, String> parsePropertiesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static Map<String, String> parsePropertiesType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         if (reader.getAttributeCount() > 0) {
             throw reader.unexpectedAttribute(0);
         }

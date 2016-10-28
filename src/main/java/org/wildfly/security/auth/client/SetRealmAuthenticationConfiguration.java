@@ -33,7 +33,7 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
     private final String realm;
 
     SetRealmAuthenticationConfiguration(final AuthenticationConfiguration parent, final String realm) {
-        super(parent);
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.realm = realm;
     }
 

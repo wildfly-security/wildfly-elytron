@@ -38,7 +38,7 @@ class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration {
 
     SetChoiceAuthenticationConfiguration(final AuthenticationConfiguration parent, final BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate,
                                          final String choice) {
-        super(parent, true);
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class), true);
         this.matchPredicate = matchPredicate;
         this.choice = choice;
     }
