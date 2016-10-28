@@ -81,7 +81,7 @@ public class HttpConstants {
      */
 
     public static final String BASIC_NAME = "BASIC";
-    public static final String CLIENT_CERT_NAME = "CLIENT_CERT";
+    public static final String CLIENT_CERT_NAME = "CLIENT-CERT";
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
 
