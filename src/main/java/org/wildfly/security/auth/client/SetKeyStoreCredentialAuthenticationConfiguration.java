@@ -38,6 +38,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.SecretKeyCredential;
@@ -53,7 +54,7 @@ import org.wildfly.security.x500.X500;
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationConfiguration implements CredentialSetting {
 
     private final SecurityFactory<KeyStore.Entry> entryFactory;
 
@@ -62,7 +63,7 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
     }
 
     SetKeyStoreCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<KeyStore.Entry> entryFactory) {
-        super(parent.without(SetCredentialsConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+        super(parent.without(CredentialSetting.class));
         this.entryFactory = entryFactory;
     }
 

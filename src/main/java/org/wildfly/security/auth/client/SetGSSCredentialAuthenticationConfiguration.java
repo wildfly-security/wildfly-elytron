@@ -27,18 +27,19 @@ import javax.security.sasl.Sasl;
 
 import org.ietf.jgss.GSSCredential;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
 import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfiguration implements CredentialSetting {
 
     private final GSSCredential credential;
 
     SetGSSCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final GSSCredential credential) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetCredentialsConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+        super(parent.without(CredentialSetting.class));
         this.credential = credential;
     }
 

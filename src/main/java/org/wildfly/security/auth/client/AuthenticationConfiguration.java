@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -114,7 +115,7 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
-        AuthenticationConfiguration without(final Class<? extends AuthenticationConfiguration> clazz) {
+        AuthenticationConfiguration without(final Class<?> clazz) {
             return this;
         }
 
@@ -165,6 +166,10 @@ public abstract class AuthenticationConfiguration {
 
         boolean delegatesThrough(final Class<?> clazz) {
             return false;
+        }
+
+        Function<String, IdentityCredentials> getCredentialsFunction() {
+            return prompt -> IdentityCredentials.NONE;
         }
     }.useAnonymous().useTrustManager(null);
 
@@ -261,11 +266,22 @@ public abstract class AuthenticationConfiguration {
         parent.configureKeyManager(builder);
     }
 
+    Function<String, IdentityCredentials> getCredentialsFunction() {
+        return parent.getCredentialsFunction();
+    }
+
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
 
-    AuthenticationConfiguration without(Class<? extends AuthenticationConfiguration> clazz) {
+    AuthenticationConfiguration without(Class<?> clazz) {
         if (clazz.isInstance(this)) return parent;
         AuthenticationConfiguration newParent = parent.without(clazz);
+        if (parent == newParent) return this;
+        return reparent(newParent);
+    }
+
+    AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
+        if (clazz1.isInstance(this) || clazz2.isInstance(this)) return parent;
+        AuthenticationConfiguration newParent = parent.without(clazz1, clazz2);
         if (parent == newParent) return this;
         return reparent(newParent);
     }
@@ -534,7 +550,8 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
-        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, () -> credentials) : new SetCredentialsConfiguration(this, () -> credentials, matchPredicate);
+        final Function<String, IdentityCredentials> credentialsFunction = getCredentialsFunction();
+        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, p -> credentials) : new SetCredentialsConfiguration(this, p -> matchPredicate.test(p) ? credentials : credentialsFunction.apply(p));
     }
 
     /**
@@ -796,4 +813,11 @@ public abstract class AuthenticationConfiguration {
         }
         return SSLUtils.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
     }
+
+    // interfaces
+
+    interface UserSetting {}
+    interface CredentialSetting {}
+    // TODO: ELY-106
+    interface SSLCredentialSetting {}
 }

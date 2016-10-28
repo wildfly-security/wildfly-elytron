@@ -25,17 +25,18 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
 import org.wildfly.security.auth.principal.NamePrincipal;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfiguration implements UserSetting {
 
     private final NamePrincipal principal;
 
     SetNamePrincipalAuthenticationConfiguration(final AuthenticationConfiguration parent, final NamePrincipal principal) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class));
+        super(parent.without(UserSetting.class));
         this.principal = principal;
     }
 
