@@ -38,6 +38,7 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
+import org.ietf.jgss.GSSName;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSCredentialCredential;
@@ -142,15 +143,16 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                             }
                             return;
                         } else {
-                            log.trace("Authorization failed");
-                            request.authenticationFailed(
-                                    log.authorizationFailed(gssContext.getSrcName().toString(), SPNEGO_NAME));
+                            log.trace("Authorization of established GSSContext failed");
+                            GSSName gssName = gssContext.getSrcName();
+                            request.authenticationFailed(log.authorizationFailed(gssName == null ? null : gssName.toString(), SPNEGO_NAME));
                         }
                     } else if (responseToken != null) {
                         request.authenticationInProgress(response -> sendIntermediateChallenge(responseToken, response, false));
                         return;
                     }
                 } catch (GSSException e) {
+                    log.trace(e);
                     try {
                         MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
                     } catch (AuthenticationMechanismException | UnsupportedCallbackException ignored) {
@@ -183,12 +185,17 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
         boolean authorized = false;
         try {
-            String clientName = gssContext.getSrcName().toString();
+            GSSName srcName = gssContext.getSrcName();
+            if (srcName == null) {
+                log.trace("Authorization failed - clientName (name of GSSContext initiator) is null - wrong realm or kdc?");
+                return false;
+            }
+            String clientName = srcName.toString();
             AuthorizeCallback authorize = new AuthorizeCallback(clientName, clientName);
             callbackHandler.handle(new Callback[] {authorize});
 
             authorized = authorize.isAuthorized();
-            log.tracef("Authorized by callbackHandler = %b", authorized);
+            log.tracef("Authorized by callbackHandler = %b  clientName = [%s]", authorized, clientName);
         } catch (GSSException e) {
             try {
                 MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
