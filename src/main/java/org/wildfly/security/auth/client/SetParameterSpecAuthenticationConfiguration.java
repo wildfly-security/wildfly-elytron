@@ -36,7 +36,7 @@ class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfigur
     private final AlgorithmParameterSpec parameterSpec;
 
     SetParameterSpecAuthenticationConfiguration(final AuthenticationConfiguration parent, final AlgorithmParameterSpec parameterSpec) {
-        super(parent);
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.parameterSpec = parameterSpec;
     }
 

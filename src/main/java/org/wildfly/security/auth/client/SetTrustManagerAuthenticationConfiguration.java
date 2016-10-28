@@ -40,7 +40,7 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
     private final SecurityFactory<X509TrustManager> trustManagerFactory;
 
     SetTrustManagerAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509TrustManager> trustManagerFactory) {
-        super(parent);
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
         this.trustManagerFactory = trustManagerFactory;
     }
 
