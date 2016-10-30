@@ -68,7 +68,8 @@ import org.wildfly.security.util.CodePointIterator;
  */
 public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
-    private static final String COMMENT_PREFIX = "#";
+    private static final String COMMENT_PREFIX1 = "#";
+    private static final String COMMENT_PREFIX2 = "!";
     private static final String REALM_COMMENT_PREFIX = "$REALM_NAME=";
     private static final String REALM_COMMENT_SUFFIX = "$";
 
@@ -228,7 +229,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
                 final String trimmed = currentLine.trim();
-                if (trimmed.startsWith(COMMENT_PREFIX) && trimmed.contains(REALM_COMMENT_PREFIX)) {
+                if (trimmed.startsWith(COMMENT_PREFIX1) && trimmed.contains(REALM_COMMENT_PREFIX)) {
                     // this is the line that contains the realm name.
                     int start = trimmed.indexOf(REALM_COMMENT_PREFIX) + REALM_COMMENT_PREFIX.length();
                     int end = trimmed.indexOf(REALM_COMMENT_SUFFIX, start);
@@ -236,7 +237,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                         realmName = trimmed.substring(start, end);
                     }
                 } else {
-                    if ( ! trimmed.startsWith(COMMENT_PREFIX)) {
+                    if ( ! (trimmed.startsWith(COMMENT_PREFIX1) || trimmed.startsWith(COMMENT_PREFIX2)) ) {
                         String username = null;
                         StringBuilder builder = new StringBuilder();
 

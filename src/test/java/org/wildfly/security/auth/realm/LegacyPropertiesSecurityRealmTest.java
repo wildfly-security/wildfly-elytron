@@ -224,7 +224,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that lines started with explanation mark in user property file are considered as comment.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_exclamationMarkAsComment() throws Exception {
         checkVerifyIdentityFail(specialCharsRealm, "elytronWithExclamationMark", ELYTRON_SIMPLE_PASSWORD);
         checkVerifyIdentityFail(specialCharsRealm, "!elytronWithExclamationMark", ELYTRON_SIMPLE_PASSWORD);
@@ -269,7 +268,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that username in property file can finish with backslash.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_endBackslashUsername() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "backslash\\", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -278,7 +276,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that username in property file can contain backslash.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_backslashInTheMiddleUsername() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "backslash\\inthemiddle", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -295,7 +292,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that username in property file can contain '=' character.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_equalsSignUsername() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "dn=elytron,dc=wildfly,dc=org", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -304,7 +300,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can contain '=' character.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-688")
     public void testSpecialChar_equalsSignPassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron1", "pass=word");
     }
@@ -313,7 +308,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can contain escaped '=' character.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-688")
     public void testSpecialChar_escapedEqualsSignPassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron2", "pass=word");
     }
@@ -322,7 +316,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can finish with backslash.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_endBackslashPassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron3", "password\\");
     }
@@ -331,7 +324,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can contain backslash.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_backslashInTheMiddlePassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron4", "pass\\word");
     }
@@ -374,7 +366,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that colon can be used as delimiter for username and password in plain text property file.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testPlainFile_colonAsDelimiter() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -383,13 +374,12 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that colon can be used as delimiter for username and password in hashed property file.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testHashedFile_colonAsDelimiter() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
                 .setPasswordsStream(this.getClass().getResourceAsStream("colondelimiter.properties"))
                 .build();
 
-        checkVerifyIdentity(realm, "elytron", ELYTRON_SIMPLE_PASSWORD);
+        checkVerifyIdentity(realm, "elytron", ELYTRON_PASSWORD_CLEAR);
     }
 
     private void checkVerifyIdentity(SecurityRealm realm, String username, String goodPassword)
@@ -400,6 +390,7 @@ public class LegacyPropertiesSecurityRealmTest {
     private void checkVerifyIdentity(SecurityRealm realm, String username, String goodPassword,
             String wrongPassword) throws RealmUnavailableException {
         RealmIdentity elytronIdentity = realm.getRealmIdentity(IdentityLocator.fromName(username));
+        assertTrue(elytronIdentity.exists());
         PasswordGuessEvidence goodPasswordEvidence = new PasswordGuessEvidence(goodPassword.toCharArray());
         PasswordGuessEvidence wrongPasswordEvidence = new PasswordGuessEvidence(wrongPassword.toCharArray());
         assertTrue(elytronIdentity.verifyEvidence(goodPasswordEvidence));
