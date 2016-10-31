@@ -119,6 +119,10 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
+        AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
+            return this;
+        }
+
         String getHost() {
             return null;
         }
