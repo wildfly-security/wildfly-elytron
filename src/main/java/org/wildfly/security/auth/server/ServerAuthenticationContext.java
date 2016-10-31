@@ -877,6 +877,7 @@ public final class ServerAuthenticationContext {
                         log.tracef("Handling MechanismInformationCallback");
                         setMechanismInformation(mic.getMechanismInformation());
                     } catch (Exception e) {
+                        log.trace(e);
                         throw new IOException(e);
                     }
                 } else if (callback instanceof CredentialUpdateCallback) {
@@ -1097,24 +1098,23 @@ public final class ServerAuthenticationContext {
     final class InactiveState extends State {
 
         private final SecurityIdentity capturedIdentity;
-        private final MechanismConfigurationSelector mechansimConfigurationSelector;
+        private final MechanismConfigurationSelector mechanismConfigurationSelector;
         private final MechanismInformation mechanismInformation;
 
-        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector) {
-            this(capturedIdentity, mechansimConfigurationSelector, MechanismInformation.DEFAULT);
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector) {
+            this(capturedIdentity, mechanismConfigurationSelector, MechanismInformation.DEFAULT);
         }
 
-        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechansimConfigurationSelector,
+        public InactiveState(SecurityIdentity capturedIdentity, MechanismConfigurationSelector mechanismConfigurationSelector,
                 MechanismInformation mechanismInformation) {
             this.capturedIdentity = capturedIdentity;
-            this.mechansimConfigurationSelector = mechansimConfigurationSelector;
+            this.mechanismConfigurationSelector = mechanismConfigurationSelector;
             this.mechanismInformation = checkNotNullParam("mechanismInformation", mechanismInformation);
-
         }
 
         @Override
         void setMechanismInformation(MechanismInformation mechanismInformation) {
-            InactiveState inactiveState = new InactiveState(capturedIdentity, mechansimConfigurationSelector, mechanismInformation);
+            InactiveState inactiveState = new InactiveState(capturedIdentity, mechanismConfigurationSelector, mechanismInformation);
             InitialState nextState = inactiveState.selectMechanismConfiguration();
             if (! stateRef.compareAndSet(this, nextState)) {
                 stateRef.get().setMechanismInformation(mechanismInformation);
@@ -1208,13 +1208,13 @@ public final class ServerAuthenticationContext {
         }
 
         private InitialState selectMechanismConfiguration() {
-            MechanismConfiguration mechanismConfiguration = mechansimConfigurationSelector.selectConfiguration(mechanismInformation);
+            MechanismConfiguration mechanismConfiguration = mechanismConfigurationSelector.selectConfiguration(mechanismInformation);
             if (mechanismConfiguration == null) {
                 throw log.unableToSelectMechanismConfiguration(mechanismInformation.getMechanismType(),
                         mechanismInformation.getMechanismName(), mechanismInformation.getHostName(),
                         mechanismInformation.getProtocol());
             }
-            return new InitialState(capturedIdentity, mechanismConfiguration);
+            return new InitialState(capturedIdentity, mechanismConfiguration, mechanismConfigurationSelector);
         }
 
     }
@@ -1492,8 +1492,11 @@ public final class ServerAuthenticationContext {
 
     final class InitialState extends UnassignedState {
 
-        InitialState(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration) {
+        private final MechanismConfigurationSelector mechanismConfigurationSelector;
+
+        InitialState(final SecurityIdentity capturedIdentity, final MechanismConfiguration mechanismConfiguration, final MechanismConfigurationSelector mechanismConfigurationSelector) {
             super(capturedIdentity, mechanismConfiguration);
+            this.mechanismConfigurationSelector = mechanismConfigurationSelector;
         }
 
         @Override
@@ -1522,6 +1525,15 @@ public final class ServerAuthenticationContext {
                 return mechanismConfiguration.getMechanismRealmConfiguration(iterator.next());
             } else {
                 return MechanismRealmConfiguration.NO_REALM;
+            }
+        }
+
+        @Override
+        void setMechanismInformation(MechanismInformation mechanismInformation) {
+            InactiveState inactiveState = new InactiveState(capturedIdentity, mechanismConfigurationSelector, mechanismInformation);
+            InitialState nextState = inactiveState.selectMechanismConfiguration();
+            if (! stateRef.compareAndSet(this, nextState)) {
+                stateRef.get().setMechanismInformation(mechanismInformation);
             }
         }
     }
