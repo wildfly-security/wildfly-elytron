@@ -81,11 +81,56 @@
     <xsd:element name="authentication-client" type="authentication-client-type"/>
 
     <xsd:complexType name="authentication-client-type">
-        <xsd:all minOccurs="1" maxOccurs="1">
-            <xsd:element name="key-stores" type="key-stores-type" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="rules" type="authentication-client-rules-type" minOccurs="0" maxOccurs="1"/>
-            <xsd:element name="net-authenticator" type="empty-type" minOccurs="0" maxOccurs="1"/>
+        <xsd:all>
+            <xsd:element name="key-stores" type="key-stores-type" minOccurs="0"/>
+            <xsd:element name="rules" type="authentication-client-rules-type" minOccurs="0"/>
+            <xsd:element name="net-authenticator" type="empty-type" minOccurs="0"/>
+            <xsd:element name="ssl-context-rules" type="ssl-context-rules-type" minOccurs="0"/>
+            <xsd:element name="ssl-contexts" type="ssl-contexts-type" minOccurs="0"/>
         </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="ssl-contexts-type">
+        <xsd:all>
+            <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="0"/>
+            <xsd:element name="cipher-suite" type="ssl-cipher-selector-type" minOccurs="0"/>
+            <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
+            <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
+            <xsd:choice minOccurs="0">
+                <xsd:element name="use-system-providers" type="empty-type"/>
+                <xsd:element name="use-module-providers" type="module-ref-type"/>
+            </xsd:choice>
+        </xsd:all>
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="ssl-context-rules-type">
+        <xsd:sequence minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="rule" type="ssl-context-rule-type" minOccurs="1" maxOccurs="1"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
+    <xsd:group name="match-rule-group">
+        <xsd:all>
+            <xsd:element name="match-no-userinfo" type="empty-type" minOccurs="0"/>
+            <xsd:element name="match-userinfo" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-protocol" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-host" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-path" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-port" type="port-number-type" minOccurs="0"/>
+            <xsd:element name="match-urn" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-domain" type="name-type" minOccurs="0"/>
+        </xsd:all>
+    </xsd:group>
+
+    <xsd:complexType name="ssl-context-rule-type">
+        <xsd:sequence minOccurs="1" maxOccurs="1">
+            <xsd:group ref="match-rule-group" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:choice>
+                <xsd:element name="use-ssl-context" type="name-type"/>
+                <xsd:element name="use-default-ssl-context" type="empty-type"/>
+            </xsd:choice>
+        </xsd:sequence>
     </xsd:complexType>
 
     <xsd:complexType name="authentication-client-rules-type">
@@ -96,39 +141,29 @@
 
     <xsd:complexType name="authentication-client-rule-type">
         <xsd:sequence minOccurs="1" maxOccurs="1">
-            <xsd:choice minOccurs="0" maxOccurs="unbounded">
-                <xsd:element name="match-no-userinfo" type="empty-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-userinfo" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-protocol" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-host" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-path" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-port" type="port-number-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-urn" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="match-domain" type="name-type" minOccurs="1" maxOccurs="1"/>
-            </xsd:choice>
-            <xsd:choice minOccurs="0" maxOccurs="unbounded">
-                <xsd:element name="set-host" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-port" type="port-number-simple-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-user-name" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-anonymous" type="empty-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="1" maxOccurs="1" />
-                <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="clear-password" type="clear-password-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="set-authorization-name" type="name-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="key-store-ssl-certificate" type="key-store-ref-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="ssl-cipher-suite" type="ssl-cipher-selector-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="ssl-protocol" type="names-list-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="use-system-providers" type="empty-type" minOccurs="1" maxOccurs="1"/>
-                <xsd:element name="use-module-providers" type="module-ref-type" minOccurs="1" maxOccurs="1"/>
-            </xsd:choice>
+            <xsd:group ref="match-rule-group" minOccurs="0" maxOccurs="unbounded"/>
+            <xsd:all>
+                <xsd:element name="set-host" type="name-type" minOccurs="0"/>
+                <xsd:element name="set-port" type="port-number-simple-type" minOccurs="0"/>
+                <xsd:choice minOccurs="0">
+                    <xsd:element name="set-user-name" type="name-type" minOccurs="0"/>
+                    <xsd:element name="set-anonymous" type="empty-type" minOccurs="0"/>
+                </xsd:choice>
+                <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
+                <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="0"/>
+                <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="0"/>
+                <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
+                <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
+                <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
+                <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="0"/>
+                <xsd:element name="clear-password" type="clear-password-type" minOccurs="0"/>
+                <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
+                <xsd:choice minOccurs="0">
+                    <xsd:element name="use-system-providers" type="empty-type"/>
+                    <xsd:element name="use-module-providers" type="module-ref-type"/>
+                </xsd:choice>
+            </xsd:all>
         </xsd:sequence>
-        <xsd:attribute name="name" type="xsd:string" use="optional"/>
-        <xsd:attribute name="extends" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="key-stores-type">

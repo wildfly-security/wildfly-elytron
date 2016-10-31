@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.Provider;
@@ -42,11 +43,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -131,8 +130,8 @@ public abstract class AuthenticationConfiguration {
             return AnonymousPrincipal.getInstance();
         }
 
-        SSLContext getSslContext() {
-            return null;
+        SSLContext getSslContext() throws NoSuchAlgorithmException {
+            return SSLContext.getDefault();
         }
 
         void configureSslEngine(final SSLEngine sslEngine) {
@@ -230,7 +229,7 @@ public abstract class AuthenticationConfiguration {
         return null;
     }
 
-    SSLContext getSslContext() {
+    SSLContext getSslContext() throws GeneralSecurityException {
         return parent.getSslContext();
     }
 
@@ -688,31 +687,8 @@ public abstract class AuthenticationConfiguration {
     // SSL
 
     /**
-     * Create a new configuration which is the same as this configuration, but which uses the given protocol selector
-     * for choosing an SSL/TLS protocol.
-     *
-     * @param protocolSelector the protocol selector
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslProtocolSelector(ProtocolSelector protocolSelector) {
-        return protocolSelector == null ? without(ProtocolSelectorAuthenticationConfiguration.class) : new ProtocolSelectorAuthenticationConfiguration(this, protocolSelector);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given cipher suite selector
-     * for choosing the set of SSL/TLS cipher suites.
-     *
-     * @param cipherSuiteSelector the cipher suite selector
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslCipherSuiteSelector(CipherSuiteSelector cipherSuiteSelector) {
-        return cipherSuiteSelector == null ? without(CipherSuiteSelectorAuthenticationConfiguration.class) : new CipherSuiteSelectorAuthenticationConfiguration(this, cipherSuiteSelector);
-    }
-
-    /**
      * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
-     * for choosing the set of SSL/TLS cipher suites.  Using a predefined SSL context will remove any configured client
-     * authentication (e.g. certificates) or server trust configurations.
+     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
      *
      * @param sslContext the SSL context to use
      * @return the new configuration
@@ -722,45 +698,17 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
-     * Use the given private key and X.509 certificate chain for SSL/TLS client authentication.
+     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
+     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
      *
-     * @param privateKey the client private key
-     * @param certificateChain the client certificate chain
+     * @param sslContextFactory the SSL context factory to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useSslClientCredential(PrivateKey privateKey, X509Certificate... certificateChain) {
-        return certificateChain == null || certificateChain.length == 0 || privateKey == null ? without(SSLClientCertificateConfiguration.class) : useSslClientCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+    public AuthenticationConfiguration useSslContext(SecurityFactory<SSLContext> sslContextFactory) {
+        return sslContextFactory == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContextFactory);
     }
 
-    /**
-     * Use the given private key and X.509 certificate chain for SSL/TLS client authentication.
-     *
-     * @param credential the credential containing the private key and certificate chain
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslClientCredential(X509CertificateChainPrivateCredential credential) {
-        return credential == null ? without(SSLClientCertificateConfiguration.class) : useSslClientCredential(new FixedSecurityFactory<>(credential));
-    }
-
-    /**
-     * Use the given private key and X.509 certificate chain for SSL/TLS client authentication.
-     *
-     * @param credentialFactory a factory which produces the credential containing the private key and certificate chain
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslClientCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
-        return credentialFactory == null ? without(SSLClientCertificateConfiguration.class) : new SSLClientCertificateConfiguration(this, credentialFactory);
-    }
-
-    /**
-     * Use the given key manager in place of any SSL client authentication configuration.
-     *
-     * @param keyManager the key manager to use
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslClientKeyManager(X509KeyManager keyManager) {
-        return keyManager == null ? without(SSLClientKeyManagerConfiguration.class) : new SSLClientKeyManagerConfiguration(this, new FixedSecurityFactory<>(keyManager));
-    }
+    // other
 
     public AuthenticationConfiguration useRealm(String realm) {
         return new SetRealmAuthenticationConfiguration(this, realm);
@@ -783,41 +731,8 @@ public abstract class AuthenticationConfiguration {
         return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(), properties, callbackHandler);
     }
 
-    SSLContext createSslContext() throws GeneralSecurityException {
-        SSLContext sslContext = getSslContext();
-        if (sslContext == null) {
-            sslContext = SSLContext.getDefault();
-        } else {
-            final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(getProtocolSelector(), getProviderSupplier());
-            sslContext = sslContextFactory.create();
-            final SecurityFactory<X509KeyManager> keyManagerFactory = getX509KeyManagerFactory();
-            final KeyManager keyManager;
-            if (keyManagerFactory != null) {
-                keyManager = keyManagerFactory.create();
-            } else {
-                final ConfigurationKeyManager.Builder builder = ConfigurationKeyManager.builder();
-                configureKeyManager(builder);
-                keyManager = builder.build();
-            }
-            final KeyManager[] keyManagers = new KeyManager[] { keyManager };
-            final SecurityFactory<X509TrustManager> trustManagerFactory = getX509TrustManagerFactory();
-            final TrustManager trustManager;
-            if (trustManagerFactory != null) {
-                trustManager = trustManagerFactory.create();
-            } else {
-                // should never happen though
-                trustManager = null;
-            }
-            final TrustManager[] trustManagers = new TrustManager[] { trustManager };
-            sslContext.init(keyManagers, trustManagers, null);
-        }
-        return SSLUtils.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
-    }
-
     // interfaces
 
     interface UserSetting {}
     interface CredentialSetting {}
-    // TODO: ELY-106
-    interface SSLCredentialSetting {}
 }

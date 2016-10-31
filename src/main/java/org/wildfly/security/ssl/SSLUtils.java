@@ -75,12 +75,29 @@ public final class SSLUtils {
      * @return the SSL context factory
      */
     public static SecurityFactory<SSLContext> createSslContextFactory(ProtocolSelector protocolSelector, Supplier<Provider[]> providerSupplier) {
+        return createSslContextFactory(protocolSelector, providerSupplier, null);
+    }
+
+    /**
+     * Create an SSL context factory which locates the best context by searching the preferred providers in order using
+     * the rules established in the given protocol selector.  If there are no matches, a factory is returned which
+     *
+     * @param protocolSelector the protocol selector
+     * @param providerSupplier the provider supplier
+     * @param providerName the provider name to select, or {@code null} to allow any
+     * @return the SSL context factory
+     */
+    public static SecurityFactory<SSLContext> createSslContextFactory(ProtocolSelector protocolSelector, Supplier<Provider[]> providerSupplier, String providerName) {
         Provider[] providers = providerSupplier.get();
         Map<String, Provider> preferredProviderByAlgorithm = new IdentityHashMap<>();
 
         // compile all the providers that support SSLContext.
 
         for (Provider provider : providers) {
+            // if a provider name was given, filter by it
+            if (providerName != null && ! providerName.equals(provider.getName())) {
+                continue;
+            }
             Set<Service> services = provider.getServices();
             if (services != null) {
                 for (Provider.Service service : services) {

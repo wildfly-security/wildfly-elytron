@@ -61,6 +61,7 @@ import org.jboss.logging.annotations.Param;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ConfigXMLParseException;
+import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
@@ -529,6 +530,12 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = WARN)
     @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
     void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
+
+    @Message(id = 1129, value = "Unknown SSL context specified")
+    IllegalArgumentException unknownSslContextSpecified();
+
+    @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
+    ConfigXMLParseException duplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
 
     /* keystore package */
 
