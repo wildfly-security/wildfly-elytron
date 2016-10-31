@@ -29,6 +29,7 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -36,12 +37,12 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetCertificateCredentialAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetCertificateCredentialAuthenticationConfiguration extends AuthenticationConfiguration implements CredentialSetting {
 
     private final SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory;
 
     SetCertificateCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
-        super(parent.without(SetCredentialsConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class));
+        super(parent.without(CredentialSetting.class));
         this.credentialFactory = credentialFactory;
     }
 

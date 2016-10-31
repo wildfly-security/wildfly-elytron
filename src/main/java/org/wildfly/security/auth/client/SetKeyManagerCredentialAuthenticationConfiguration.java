@@ -38,6 +38,7 @@ import javax.security.auth.x500.X500Principal;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.auth.callback.TrustedAuthoritiesCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
 import org.wildfly.security.x500.TrustedAuthority;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
@@ -45,12 +46,12 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationConfiguration implements CredentialSetting {
 
     private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
     SetKeyManagerCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
-        super(parent.without(SetCredentialsConfiguration.class).without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+        super(parent.without(CredentialSetting.class));
         this.keyManagerFactory = keyManagerFactory;
     }
 

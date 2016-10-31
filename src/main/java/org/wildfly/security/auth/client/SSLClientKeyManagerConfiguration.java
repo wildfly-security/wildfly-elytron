@@ -23,16 +23,17 @@ import java.security.GeneralSecurityException;
 import javax.net.ssl.X509KeyManager;
 
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.SSLCredentialSetting;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SSLClientKeyManagerConfiguration extends AuthenticationConfiguration {
+class SSLClientKeyManagerConfiguration extends AuthenticationConfiguration implements SSLCredentialSetting {
 
     private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
     SSLClientKeyManagerConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
-        super(parent.without(SSLClientCertificateConfiguration.class));
+        super(parent.without(SSLCredentialSetting.class));
         this.keyManagerFactory = keyManagerFactory;
     }
 

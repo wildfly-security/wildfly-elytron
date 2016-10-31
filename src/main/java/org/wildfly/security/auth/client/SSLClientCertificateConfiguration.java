@@ -21,17 +21,18 @@ package org.wildfly.security.auth.client;
 import java.security.GeneralSecurityException;
 
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.SSLCredentialSetting;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SSLClientCertificateConfiguration extends AuthenticationConfiguration {
+class SSLClientCertificateConfiguration extends AuthenticationConfiguration implements SSLCredentialSetting {
 
     private final SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory;
 
     SSLClientCertificateConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
-        super(parent.without(SSLClientKeyManagerConfiguration.class), true);
+        super(parent.without(SSLCredentialSetting.class), true);
         this.credentialFactory = credentialFactory;
     }
 

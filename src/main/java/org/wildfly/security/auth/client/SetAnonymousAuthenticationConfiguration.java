@@ -25,16 +25,17 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguration implements UserSetting {
 
     SetAnonymousAuthenticationConfiguration(final AuthenticationConfiguration parent) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class).without(SetNamePrincipalAuthenticationConfiguration.class));
+        super(parent.without(UserSetting.class));
     }
 
     boolean filterOneSaslMechanism(final String mechanismName) {

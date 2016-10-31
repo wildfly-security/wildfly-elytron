@@ -21,7 +21,6 @@ package org.wildfly.security.auth.client;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URI;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -39,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -115,16 +115,16 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
-        AuthenticationConfiguration without(final Class<? extends AuthenticationConfiguration> clazz) {
+        AuthenticationConfiguration without(final Class<?> clazz) {
             return this;
         }
 
-        String getHost(final URI uri) {
-            return uri.getHost();
+        String getHost() {
+            return null;
         }
 
-        int getPort(final URI uri) {
-            return uri.getPort();
+        int getPort() {
+            return -1;
         }
 
         Principal getPrincipal() {
@@ -163,6 +163,14 @@ public abstract class AuthenticationConfiguration {
         Supplier<Provider[]> getProviderSupplier() {
             return Security::getProviders;
         }
+
+        boolean delegatesThrough(final Class<?> clazz) {
+            return false;
+        }
+
+        Function<String, IdentityCredentials> getCredentialsFunction() {
+            return prompt -> IdentityCredentials.NONE;
+        }
     }.useAnonymous().useTrustManager(null);
 
     private final AuthenticationConfiguration parent;
@@ -188,12 +196,12 @@ public abstract class AuthenticationConfiguration {
         return parent.getPrincipal();
     }
 
-    String getHost(URI uri) {
-        return parent.getHost(uri);
+    String getHost() {
+        return parent.getHost();
     }
 
-    int getPort(URI uri) {
-        return parent.getPort(uri);
+    int getPort() {
+        return parent.getPort();
     }
 
     // internal actions
@@ -258,13 +266,28 @@ public abstract class AuthenticationConfiguration {
         parent.configureKeyManager(builder);
     }
 
+    Function<String, IdentityCredentials> getCredentialsFunction() {
+        return parent.getCredentialsFunction();
+    }
+
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
 
-    AuthenticationConfiguration without(Class<? extends AuthenticationConfiguration> clazz) {
+    AuthenticationConfiguration without(Class<?> clazz) {
         if (clazz.isInstance(this)) return parent;
         AuthenticationConfiguration newParent = parent.without(clazz);
         if (parent == newParent) return this;
         return reparent(newParent);
+    }
+
+    AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
+        if (clazz1.isInstance(this) || clazz2.isInstance(this)) return parent;
+        AuthenticationConfiguration newParent = parent.without(clazz1, clazz2);
+        if (parent == newParent) return this;
+        return reparent(newParent);
+    }
+
+    boolean delegatesThrough(Class<?> clazz) {
+        return clazz.isInstance(this) || parent.delegatesThrough(clazz);
     }
 
     // assembly methods - rewrite
@@ -527,7 +550,8 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
-        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, () -> credentials) : new SetCredentialsConfiguration(this, () -> credentials, matchPredicate);
+        final Function<String, IdentityCredentials> credentialsFunction = getCredentialsFunction();
+        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, p -> credentials) : new SetCredentialsConfiguration(this, p -> matchPredicate.test(p) ? credentials : credentialsFunction.apply(p));
     }
 
     /**
@@ -756,14 +780,7 @@ public abstract class AuthenticationConfiguration {
         if (mechs.isEmpty()) return null;
         final String authorizationName = getAuthorizationName();
         final CallbackHandler callbackHandler = getCallbackHandler();
-        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(uri), properties, callbackHandler);
-    }
-
-    InetSocketAddress getDestinationInetAddress(URI uri, int defaultPort) {
-        final String host = getHost(uri);
-        int port = getPort(uri);
-        if (port == -1) port = defaultPort;
-        return new InetSocketAddress(host, port);
+        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(), properties, callbackHandler);
     }
 
     SSLContext createSslContext() throws GeneralSecurityException {
@@ -796,4 +813,11 @@ public abstract class AuthenticationConfiguration {
         }
         return SSLUtils.createConfiguredSslContext(sslContext, new ClientSSLConfigurator(this));
     }
+
+    // interfaces
+
+    interface UserSetting {}
+    interface CredentialSetting {}
+    // TODO: ELY-106
+    interface SSLCredentialSetting {}
 }

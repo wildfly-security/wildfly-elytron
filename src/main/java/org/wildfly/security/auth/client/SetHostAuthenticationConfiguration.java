@@ -18,8 +18,6 @@
 
 package org.wildfly.security.auth.client;
 
-import java.net.URI;
-
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -36,7 +34,7 @@ class SetHostAuthenticationConfiguration extends AuthenticationConfiguration {
         return new SetHostAuthenticationConfiguration(newParent, hostName);
     }
 
-    String getHost(final URI uri) {
+    String getHost() {
         return hostName;
     }
 }

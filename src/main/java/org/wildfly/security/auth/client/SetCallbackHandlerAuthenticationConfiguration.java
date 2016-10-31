@@ -24,15 +24,18 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
+import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfiguration implements UserSetting, CredentialSetting {
 
     private final CallbackHandler callbackHandler;
 
     SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
-        super(parent.without(SetNamePrincipalAuthenticationConfiguration.class).without(SetCredentialsConfiguration.class).without(SetKeyStoreCredentialAuthenticationConfiguration.class).without(SetAnonymousAuthenticationConfiguration.class).without(SetGSSCredentialAuthenticationConfiguration.class).without(SetKeyManagerCredentialAuthenticationConfiguration.class).without(SetCertificateCredentialAuthenticationConfiguration.class));
+        super(parent.without(UserSetting.class, CredentialSetting.class));
         this.callbackHandler = callbackHandler;
     }
 

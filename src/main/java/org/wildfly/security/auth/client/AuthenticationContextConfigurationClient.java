@@ -34,6 +34,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.permission.ElytronPermission;
 
 /**
@@ -65,65 +67,141 @@ public final class AuthenticationContextConfigurationClient {
     /**
      * Get the authentication configuration which matches the given URI, or {@link AuthenticationConfiguration#EMPTY} if there is none.
      *
-     * @param uri the URI to match
-     * @param authenticationContext the authentication context to examine
+     * @param uri the URI to match (must not be {@code null})
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
      * @return the matching configuration
      */
     public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext) {
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
         final int idx = authenticationContext.ruleMatching(uri);
         if (idx == -1) return AuthenticationConfiguration.EMPTY;
-        return authenticationContext.getAuthenticationConfiguration(idx);
+        AuthenticationConfiguration configuration = authenticationContext.getAuthenticationConfiguration(idx);
+        final String uriHost = uri.getHost();
+        if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
+            configuration = configuration.useHost(uriHost);
+        }
+        final int port = uri.getPort();
+        if (port != -1 && ! configuration.delegatesThrough(SetPortAuthenticationConfiguration.class)) {
+            configuration = configuration.usePort(port);
+        }
+        final String userInfo = uri.getUserInfo();
+        if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
+            configuration = configuration.useName(userInfo);
+        }
+        return configuration;
+    }
+
+    /**
+     * Get the authentication configuration which matches the given URI, or {@link AuthenticationConfiguration#EMPTY} if there is none, setting
+     * a default protocol port.
+     *
+     * @param uri the URI to match (must not be {@code null})
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @param protocolDefaultPort the protocol-default port
+     * @return the matching configuration
+     */
+    public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext, int protocolDefaultPort) {
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
+        final int idx = authenticationContext.ruleMatching(uri);
+        if (idx == -1) return AuthenticationConfiguration.EMPTY;
+        AuthenticationConfiguration configuration = authenticationContext.getAuthenticationConfiguration(idx);
+        final String uriHost = uri.getHost();
+        if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
+            configuration = configuration.useHost(uriHost);
+        }
+        int port = uri.getPort();
+        if (port == -1) port = protocolDefaultPort;
+        if (port != -1 && ! configuration.delegatesThrough(SetPortAuthenticationConfiguration.class)) {
+            configuration = configuration.usePort(port);
+        }
+        final String userInfo = uri.getUserInfo();
+        if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
+            configuration = configuration.useName(userInfo);
+        }
+        return configuration;
     }
 
     /**
      * Get an authentication callback handler for the given configuration.
      *
-     * @param configuration the configuration
+     * @param configuration the configuration (must not be {@code null})
      * @return the callback handler
      */
     public CallbackHandler getCallbackHandler(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
         return configuration.getCallbackHandler();
     }
 
     /**
      * Get the actual host to use for the given configuration and URI.
      *
-     * @param uri the URI
-     * @param configuration the configuration
+     * @param uri the URI (must not be {@code null})
+     * @param configuration the configuration (must not be {@code null})
      * @return the real host to use
      */
     public String getRealHost(URI uri, AuthenticationConfiguration configuration) {
-        return configuration.getHost(uri);
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("configuration", configuration);
+        final String configurationHost = configuration.getHost();
+        return configurationHost == null ? uri.getHost() : configurationHost;
+    }
+
+    /**
+     * Get the actual host to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the real host to use
+     */
+    public String getRealHost(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getHost();
     }
 
     /**
      * Get the actual port to use for the given configuration and URI.
      *
-     * @param uri the URI
-     * @param configuration the configuration
+     * @param uri the URI (must not be {@code null})
+     * @param configuration the configuration (must not be {@code null})
      * @return the real port to use
      */
     public int getRealPort(URI uri, AuthenticationConfiguration configuration) {
-        return configuration.getPort(uri);
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("configuration", configuration);
+        final int configurationPort = configuration.getPort();
+        return configurationPort == -1 ? uri.getPort() : configurationPort;
+    }
+
+    /**
+     * Get the actual port to use for the given configuration.
+     *
+     * @param configuration the configuration (must not be {@code null})
+     * @return the real port to use
+     */
+    public int getRealPort(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return configuration.getPort();
     }
 
     /**
      * Get the principal to use for the given configuration.
      *
-     * @param configuration the configuration
+     * @param configuration the configuration (must not be {@code null})
      * @return the principal
      */
     public Principal getPrincipal(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
         return configuration.getPrincipal();
     }
 
     /**
      * Create a SASL client using the given URI and configuration from the given SASL client factory.
      *
-     * @param uri the target URI
-     * @param configuration the authentication configuration
-     * @param clientFactory the SASL client factory to delegate to
-     * @param offeredMechanisms the available mechanisms
+     * @param uri the target URI (must not be {@code null})
+     * @param configuration the authentication configuration (must not be {@code null})
+     * @param clientFactory the SASL client factory to delegate to (must not be {@code null})
+     * @param offeredMechanisms the available mechanisms (must not be {@code null})
      * @return the SASL client, or {@code null} if no clients were available or could be configured
      */
     public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, SaslClientFactory clientFactory, Collection<String> offeredMechanisms) throws SaslException {
@@ -131,15 +209,33 @@ public final class AuthenticationContextConfigurationClient {
     }
 
     /**
-     * Get the address of the destination from a URI.  The configuration may rewrite the destination as needed.
+     * Get the address of the destination from a configuration and URI.  The configuration may rewrite the destination as needed.
      *
-     * @param uri the connection URI
-     * @param configuration the authentication configuration to use
-     * @param protocolDefaultPort the default port for the protocol used in the URI
+     * @param uri the connection URI (must not be {@code null})
+     * @param configuration the authentication configuration to use (must not be {@code null})
+     * @param protocolDefaultPort the default port for the protocol
      * @return the address of the destination
      */
     public InetSocketAddress getDestinationInetSocketAddress(URI uri, AuthenticationConfiguration configuration, int protocolDefaultPort) {
-        return configuration.getDestinationInetAddress(uri, protocolDefaultPort);
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("configuration", configuration);
+        String host = configuration.getHost();
+        if (host == null) host = uri.getHost();
+        int port = configuration.getPort();
+        if (port == -1) port = uri.getPort();
+        if (port == -1) port = protocolDefaultPort;
+        return new InetSocketAddress(host, port);
+    }
+
+    /**
+     * Get the address of the destination from a configuration.  The configuration may rewrite the destination as needed.
+     *
+     * @param configuration the authentication configuration to use (must not be {@code null})
+     * @return the address of the destination
+     */
+    public InetSocketAddress getDestinationInetSocketAddress(AuthenticationConfiguration configuration) {
+        Assert.checkNotNullParam("configuration", configuration);
+        return new InetSocketAddress(configuration.getHost(), configuration.getPort());
     }
 
     /**
