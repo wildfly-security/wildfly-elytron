@@ -167,6 +167,8 @@ public abstract class PeerIdentity {
             } finally {
                 safePostAssociate();
             }
+        } catch (RuntimeException | PrivilegedActionException e) {
+            throw e;
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
@@ -216,6 +218,8 @@ public abstract class PeerIdentity {
             } finally {
                 safePostAssociate();
             }
+        } catch (RuntimeException | PrivilegedActionException e) {
+            throw e;
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
@@ -458,6 +462,8 @@ public abstract class PeerIdentity {
         }
         try {
             return privilegedAction.run();
+        } catch (RuntimeException | PrivilegedActionException e) {
+            throw e;
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
@@ -529,6 +535,8 @@ public abstract class PeerIdentity {
         }
         try {
             return privilegedAction.run(parameter);
+        } catch (RuntimeException | PrivilegedActionException e) {
+            throw e;
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
