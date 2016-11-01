@@ -40,9 +40,12 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -146,7 +149,21 @@ public final class ElytronXmlParser {
                 }
             }
         }
-        return new FixedSecurityFactory<>(AuthenticationContext.EMPTY);
+        // Try legacy configuration next
+        final ServiceLoader<LegacyConfiguration> loader = ServiceLoader.load(LegacyConfiguration.class, ElytronXmlParser.class.getClassLoader());
+        final Iterator<LegacyConfiguration> iterator = loader.iterator();
+        final List<LegacyConfiguration> configs = new ArrayList<>();
+        for (;;) try {
+            if (! iterator.hasNext()) break;
+            configs.add(iterator.next());
+        } catch (ServiceConfigurationError ignored) {}
+        return () -> {
+            for (LegacyConfiguration config : configs) {
+                final AuthenticationContext context = config.getConfiguredAuthenticationContext();
+                if (context != null) return context;
+            }
+            return AuthenticationContext.EMPTY;
+        };
     }
 
     // authentication client types
