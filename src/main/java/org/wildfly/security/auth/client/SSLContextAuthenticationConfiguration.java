@@ -18,25 +18,34 @@
 
 package org.wildfly.security.auth.client;
 
+import java.security.GeneralSecurityException;
+
 import javax.net.ssl.SSLContext;
+
+import org.wildfly.security.SecurityFactory;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 class SSLContextAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private final SSLContext sslContext;
+    private final SecurityFactory<SSLContext> sslContextFactory;
 
     SSLContextAuthenticationConfiguration(final AuthenticationConfiguration parent, final SSLContext sslContext) {
+        this(parent, () -> sslContext);
+    }
+
+    SSLContextAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<SSLContext> sslContextFactory) {
         super(parent);
-        this.sslContext = sslContext;
+        this.sslContextFactory = sslContextFactory;
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new SSLContextAuthenticationConfiguration(newParent, sslContext);
+        return new SSLContextAuthenticationConfiguration(newParent, sslContextFactory);
     }
 
-    SSLContext getSslContext() {
-        return sslContext;
+    SSLContext getSslContext() throws GeneralSecurityException {
+        final SSLContext context = sslContextFactory.create();
+        return context == null ? SSLContext.getDefault() : context;
     }
 }

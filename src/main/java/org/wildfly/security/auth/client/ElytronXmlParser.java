@@ -23,7 +23,6 @@ import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
-import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
 import java.io.FileInputStream;
@@ -36,17 +35,22 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.Provider;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
+import javax.net.ssl.SSLContext;
 
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
@@ -54,6 +58,7 @@ import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
+import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.OneTimeSecurityFactory;
 import org.wildfly.security.SecurityFactory;
@@ -69,6 +74,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
+import org.wildfly.security.ssl.SSLContextBuilder;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.x500.X500;
 
@@ -109,10 +115,7 @@ public final class ElytronXmlParser {
         if (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case START_ELEMENT: {
-                    switch (reader.getNamespaceURI()) {
-                        case NS_ELYTRON_1_0: break;
-                        default: throw reader.unexpectedElement();
-                    }
+                    checkElementNamespace(reader);
                     switch (reader.getLocalName()) {
                         case "authentication-client": {
                             SecurityFactory<AuthenticationContext> futureContext = parseAuthenticationClientType(reader);
@@ -157,28 +160,39 @@ public final class ElytronXmlParser {
      */
     static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         SecurityFactory<AuthenticationContext> futureContext = null;
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
-            throw reader.unexpectedAttribute(0);
-        }
-        boolean rules = false;
-        boolean keyStores = false;
-        boolean netAuthenticator = false;
+        requireNoAttributes(reader);
+        SecurityFactory<RuleNode<AuthenticationConfiguration>> authFactory = null;
+        SecurityFactory<RuleNode<SecurityFactory<SSLContext>>> sslFactory = null;
         Map<String, SecurityFactory<KeyStore>> keyStoresMap = new HashMap<>();
+        Map<String, SecurityFactory<SSLContext>> sslContextsMap = new HashMap<>();
+        boolean keyStores = false;
+        boolean sslContexts = false;
+        boolean netAuthenticator = false;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
-                    default: throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "rules": {
-                        if (rules) {
+                        if (authFactory != null) {
                             throw reader.unexpectedElement();
                         }
-                        rules = true;
-                        futureContext = parseAuthenticationClientRulesType(reader, keyStoresMap);
+                        authFactory = parseAuthenticationClientRulesType(reader, keyStoresMap);
+                        break;
+                    }
+                    case "ssl-context-rules": {
+                        if (sslFactory != null) {
+                            throw reader.unexpectedElement();
+                        }
+                        sslFactory = parseSslContextRulesType(reader, sslContextsMap);
+                        break;
+                    }
+                    case "ssl-contexts": {
+                        if (sslContexts) {
+                            throw reader.unexpectedElement();
+                        }
+                        sslContexts = true;
+                        parseSslContextsType(reader, sslContextsMap, keyStoresMap);
                         break;
                     }
                     case "key-stores": {
@@ -203,7 +217,9 @@ public final class ElytronXmlParser {
                 if (netAuthenticator) {
                     Authenticator.setDefault(new ElytronAuthenticator());
                 }
-                return futureContext == null ? new FixedSecurityFactory<>(AuthenticationContext.EMPTY) : futureContext;
+                final SecurityFactory<RuleNode<AuthenticationConfiguration>> finalAuthFactory = authFactory;
+                final SecurityFactory<RuleNode<SecurityFactory<SSLContext>>> finalSslFactory = sslFactory;
+                return () -> new AuthenticationContext(finalAuthFactory != null ? finalAuthFactory.create() : null, finalSslFactory != null ? finalSslFactory.create() : null);
             } else {
                 throw reader.unexpectedContent();
             }
@@ -211,43 +227,216 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    /**
-     * Parse an XML element of type {@code authentication-client-rules-type} from an XML reader.
-     *
-     * @param reader the XML stream reader
-     * @param keyStoresMap the map of key stores to use
-     * @return the authentication context factory
-     * @throws ConfigXMLParseException if the resource failed to be parsed
-     */
-    static SecurityFactory<AuthenticationContext> parseAuthenticationClientRulesType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
+    private static void parseSslContextsType(final ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<SSLContext>> sslContextsMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+        final int count = reader.getAttributeCount();
+        if (count == 0) {
+            throw reader.missingRequiredAttribute(null, "name");
+        }
+        checkAttributeNamespace(reader, 0);
+        if (! reader.getAttributeLocalName(0).equals("name")) {
             throw reader.unexpectedAttribute(0);
         }
-        final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap = new HashMap<>();
-        final List<SecurityFactory<RuleConfigurationPair>> rulesList = new ArrayList<>();
+        if (count > 1) {
+            throw reader.unexpectedAttribute(1);
+        }
+        final String name = reader.getAttributeValue(1);
+        if (sslContextsMap.containsKey(name)) {
+            throw xmlLog.duplicateSslContextName(name, reader);
+        }
+        int foundBits = 0;
+        Supplier<Provider[]> providersSupplier = Security::getProviders;
+        String providerName = null;
+        CipherSuiteSelector cipherSuiteSelector = null;
+        ProtocolSelector protocolSelector = null;
+        PrivateKeyKeyStoreEntryCredentialFactory credentialFactory = null;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "key-store-ssl-certificate": {
+                        if (isSet(foundBits, 0)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 0);
+                        credentialFactory = new PrivateKeyKeyStoreEntryCredentialFactory(parseKeyStoreRefType(reader, keyStoresMap));
+                        break;
+                    }
+                    case "ssl-cipher-suite": {
+                        if (isSet(foundBits, 1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 1);
+                        cipherSuiteSelector = parseCipherSuiteSelectorType(reader);
+                        break;
+                    }
+                    case "ssl-protocol": {
+                        if (isSet(foundBits, 2)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 2);
+                        protocolSelector = parseProtocolSelectorNamesType(reader);
+                        break;
+                    }
+                    case "provider-name": {
+                        if (isSet(foundBits, 3)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 3);
+                        providerName = parseNameType(reader);
+                        break;
+                    }
+                    // these two are a <choice> which is why they share a bit #; you can have only one of them
+                    case "use-system-providers": {
+                        if (isSet(foundBits, 4)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 4);
+                        parseEmptyType(reader);
+                        // no action; this is a way of explicitly specifying the default
+                        break;
+                    }
+                    case "use-module-providers": {
+                        if (isSet(foundBits, 4)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 4);
+                        final Module module = parseModuleRefType(reader);
+                        providersSupplier = new ServiceLoaderSupplier<>(Provider.class, module.getClassLoader());
+                        break;
+                    }
                     default: throw reader.unexpectedElement();
                 }
+            } else if (tag != END_ELEMENT) {
+                throw reader.unexpectedContent();
+            } else {
+                // ready to register!
+                final Supplier<Provider[]> finalProvidersSupplier = providersSupplier;
+                final ProtocolSelector finalProtocolSelector = protocolSelector;
+                final CipherSuiteSelector finalCipherSuiteSelector = cipherSuiteSelector;
+                final String finalProviderName = providerName;
+                final PrivateKeyKeyStoreEntryCredentialFactory finalCredentialFactory = credentialFactory;
+                sslContextsMap.put(name, () -> {
+                    final SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+                    sslContextBuilder.setClientMode(true);
+                    if (finalCipherSuiteSelector != null) {
+                        sslContextBuilder.setCipherSuiteSelector(finalCipherSuiteSelector);
+                    }
+                    if (finalProtocolSelector != null) {
+                        sslContextBuilder.setProtocolSelector(finalProtocolSelector);
+                    }
+                    if (finalCredentialFactory != null) {
+                        final ConfigurationKeyManager.Builder builder = new ConfigurationKeyManager.Builder();
+                        final X509CertificateChainPrivateCredential privateCredential = finalCredentialFactory.create();
+                        builder.addCredential(privateCredential);
+                        sslContextBuilder.setKeyManager(builder.build());
+                    }
+                    sslContextBuilder.setProviderName(finalProviderName);
+                    sslContextBuilder.setProviderSupplier(finalProvidersSupplier);
+                    sslContextBuilder.setUseCipherSuitesOrder(true);
+                    return sslContextBuilder.build().create();
+                });
+                return;
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code ssl-context-rules-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param sslContextsMap the SSL contexts map
+     * @return the SSL context factory
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static SecurityFactory<RuleNode<SecurityFactory<SSLContext>>> parseSslContextRulesType(final ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<SSLContext>> sslContextsMap) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        final List<ExceptionUnaryOperator<RuleNode<SecurityFactory<SSLContext>>, GeneralSecurityException>> rulesList = new ArrayList<>();
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "rule": {
-                        parseAuthenticationClientRuleType(reader, rulesList, rulesMap, keyStoresMap);
+                        rulesList.add(parseSslContextRuleType(reader, sslContextsMap));
                         break;
                     }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 return new OneTimeSecurityFactory<>(() -> {
-                    AuthenticationContext context = AuthenticationContext.EMPTY;
-                    for (SecurityFactory<RuleConfigurationPair> pairFactory : rulesList) {
-                        final RuleConfigurationPair pair = pairFactory.create();
-                        context = context.with(pair.getMatchRule(), pair.getConfiguration());
+                    RuleNode<SecurityFactory<SSLContext>> node = null;
+                    final ListIterator<ExceptionUnaryOperator<RuleNode<SecurityFactory<SSLContext>>, GeneralSecurityException>> iterator = rulesList.listIterator(rulesList.size());
+                    // iterate backwards to build the singly-linked list in constant time
+                    while (iterator.hasPrevious()) {
+                        node = iterator.previous().apply(node);
                     }
-                    return context;
+                    return node;
+                });
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    static ExceptionUnaryOperator<RuleNode<SecurityFactory<SSLContext>>, GeneralSecurityException> parseSslContextRuleType(final ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<SSLContext>> sslContextsMap) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        if (! reader.hasNext()) {
+            throw reader.unexpectedDocumentEnd();
+        }
+        int tag = reader.nextTag();
+        if (tag == START_ELEMENT) {
+            final MatchRule rule = parseMatchRuleGroup(reader);
+            tag = reader.getEventType();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "use-ssl-context": {
+                        final String name = parseNameType(reader);
+                        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+                        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedElement();
+                        return next -> {
+                            final SecurityFactory<SSLContext> factory = sslContextsMap.get(name);
+                            if (factory == null) throw xmlLog.unknownSslContextSpecified();
+                            return new RuleNode<>(next, rule, factory);
+                        };
+                    }
+                    case "use-default-ssl-context": {
+                        parseEmptyType(reader);
+                        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+                        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedElement();
+                        return next -> new RuleNode<>(next, rule, SSLContext::getDefault);
+                    }
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
+                }
+            }
+        }
+        throw reader.missingRequiredElement(NS_ELYTRON_1_0, "use-ssl-context/use-default-ssl-context");
+    }
+
+    /**
+     * Parse an XML element of type {@code authentication-client-rules-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param keyStoresMap the map of key stores to use
+     * @return the authentication configuration factory
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static SecurityFactory<RuleNode<AuthenticationConfiguration>> parseAuthenticationClientRulesType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        final List<ExceptionUnaryOperator<RuleNode<AuthenticationConfiguration>, GeneralSecurityException>> rulesList = new ArrayList<>();
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "rule": {
+                        rulesList.add(parseAuthenticationClientRuleType(reader, keyStoresMap));
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return new OneTimeSecurityFactory<>(() -> {
+                    RuleNode<AuthenticationConfiguration> node = null;
+                    final ListIterator<ExceptionUnaryOperator<RuleNode<AuthenticationConfiguration>, GeneralSecurityException>> iterator = rulesList.listIterator(rulesList.size());
+                    // iterate backwards to build the singly-linked list in constant time
+                    while (iterator.hasPrevious()) {
+                        node = iterator.previous().apply(node);
+                    }
+                    return node;
                 });
             } else {
                 throw reader.unexpectedContent();
@@ -260,260 +449,237 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code authentication-client-rule-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @param rulesList the list to which rule-configuration pairs should be appended
      * @param keyStoresMap the map of key stores to use
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    static void parseAuthenticationClientRuleType(ConfigurationXMLStreamReader reader, final List<SecurityFactory<RuleConfigurationPair>> rulesList, final Map<String, SecurityFactory<RuleConfigurationPair>> rulesMap, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        String name = null;
-        String _extends = null;
-        for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
-            switch (reader.getAttributeLocalName(i)) {
-                case "extends": {
-                    if (_extends != null) throw reader.unexpectedAttribute(i);
-                    _extends = reader.getAttributeValue(i);
-                    break;
-                }
-                case "name": {
-                    if (name != null) throw reader.unexpectedAttribute(i);
-                    name = reader.getAttributeValue(i);
-                    break;
-                }
-                default:
-                    throw reader.unexpectedAttribute(i);
-            }
+    static ExceptionUnaryOperator<RuleNode<AuthenticationConfiguration>, GeneralSecurityException> parseAuthenticationClientRuleType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        ExceptionUnaryOperator<AuthenticationConfiguration, GeneralSecurityException> configuration = ignored -> AuthenticationConfiguration.EMPTY;
+        if (! reader.hasNext()) {
+            throw reader.unexpectedDocumentEnd();
         }
-        SecurityFactory<MatchRule> rule;
-        SecurityFactory<AuthenticationConfiguration> configuration;
-        if (_extends == null) {
-            rule = new FixedSecurityFactory<>(MatchRule.ALL);
-            configuration = new FixedSecurityFactory<>(AuthenticationConfiguration.EMPTY);
-        } else {
-            final String ext = _extends;
-            rule = () -> {
-                final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                if (factory == null) throw log.missingReferenceInExtends();
-                return factory.create().getMatchRule();
-            };
-            configuration = () -> {
-                final SecurityFactory<RuleConfigurationPair> factory = rulesMap.get(ext);
-                if (factory == null) throw log.missingReferenceInExtends();
-                return factory.create().getConfiguration();
-            };
-        }
-        boolean gotConfig = false;
-        while (reader.hasNext()) {
-            final int tag = reader.nextTag();
+        final MatchRule rule = parseMatchRuleGroup(reader);
+        int foundBits = 0;
+        int tag = reader.getEventType();
+        for (;;) {
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
-                    default: throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
-                    // -- match --
-                    case "match-no-userinfo": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        parseEmptyType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchNoUser();
-                        break;
-                    }
-                    case "match-userinfo": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String userName = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchUser(userName);
-                        break;
-                    }
-                    case "match-protocol": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String protoName = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchProtocol(protoName);
-                        break;
-                    }
-                    case "match-host": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String hostName = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchHost(hostName);
-                        break;
-                    }
-                    case "match-path": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String pathName = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchPath(pathName);
-                        break;
-                    }
-                    case "match-port": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final int port = parsePortType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchPort(port);
-                        break;
-                    }
-                    case "match-urn": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String urnString = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchUrnName(urnString);
-                        break;
-                    }
-                    case "match-domain": {
-                        if (gotConfig) throw reader.unexpectedElement();
-                        final String domainName = parseNameType(reader);
-                        final SecurityFactory<MatchRule> parentRule = rule;
-                        rule = () -> parentRule.create().matchLocalSecurityDomain(domainName);
-                        break;
-                    }
-
                     // -- set --
                     case "set-host": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 0)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 0);
                         final String hostName = parseNameType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useHost(hostName);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useHost(hostName));
                         break;
                     }
                     case "set-port": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 1);
                         final int port = parsePortType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().usePort(port);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.usePort(port));
                         break;
                     }
+                    // these two are a <choice> which is why they share a bit #; you can have only one of them
                     case "set-user-name": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 2)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 2);
                         final String userName = parseNameType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useName(userName);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useName(userName));
                         break;
                     }
                     case "set-anonymous": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 2)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 2);
                         parseEmptyType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useAnonymous();
+                        configuration = andThenOp(configuration, AuthenticationConfiguration::useAnonymous);
                         break;
                     }
                     case "set-mechanism-realm": {
-                        gotConfig = true;
-                        final String realm = parseNameType(reader, true);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useRealm(realm);
+                        if (isSet(foundBits, 3)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 3);
+                        final String realm = parseNameType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useRealm(realm));
                         break;
                     }
                     case "rewrite-user-name-regex": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 4)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 4);
                         final NameRewriter nameRewriter = parseRegexSubstitutionType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().rewriteUser(nameRewriter);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.rewriteUser(nameRewriter));
                         break;
                     }
                     case "set-mechanism-properties": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 5)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 5);
                         final Map<String, String> mechanismProperties = parsePropertiesType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useMechanismProperties(mechanismProperties);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useMechanismProperties(mechanismProperties));
                         break;
                     }
                     case "allow-all-sasl-mechanisms": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 6)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 6);
                         parseEmptyType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().allowAllSaslMechanisms();
+                        configuration = andThenOp(configuration, AuthenticationConfiguration::allowAllSaslMechanisms);
                         break;
                     }
                     case "allow-sasl-mechanisms": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 7)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 7);
                         final String[] names = parseNamesType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().allowSaslMechanisms(names);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.allowSaslMechanisms(names));
                         break;
                     }
                     case "forbid-sasl-mechanisms": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 8)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 8);
                         final String[] names = parseNamesType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().forbidSaslMechanisms(names);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.forbidSaslMechanisms(names));
                         break;
                     }
                     case "key-store-credential": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 9)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 9);
                         final SecurityFactory<KeyStore.Entry> factory = parseKeyStoreRefType(reader, keyStoresMap);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useKeyStoreCredential(factory.create());
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useKeyStoreCredential(factory.create()));
                         break;
                     }
                     case "clear-password": {
-                        gotConfig = true;
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        if (isSet(foundBits, 10)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 10);
                         final char[] password = parseClearPassword(reader);
-                        configuration = () -> parentConfig.create().usePassword(ClearPassword.createRaw("clear", password));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.usePassword(password));
                         break;
                     }
                     case "set-authorization-name": {
-                        gotConfig = true;
+                        if (isSet(foundBits, 11)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 11);
                         final String authName = parseNameType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useAuthorizationName(authName);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useAuthorizationName(authName));
                         break;
                     }
-                    case "key-store-ssl-certificate": {
-                        gotConfig = true;
-                        final SecurityFactory<KeyStore.Entry> factory = parseKeyStoreRefType(reader, keyStoresMap);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useSslClientCredential(new PrivateKeyKeyStoreEntryCredentialFactory(factory));
-                        break;
-                    }
-                    case "ssl-cipher-suite": {
-                        gotConfig = true;
-                        final CipherSuiteSelector selector = parseCipherSuiteSelectorType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useSslCipherSuiteSelector(selector);
-                        break;
-                    }
-                    case "ssl-protocol": {
-                        gotConfig = true;
-                        final ProtocolSelector selector = parseProtocolSelectorNamesType(reader);
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useSslProtocolSelector(selector);
-                        break;
-                    }
+                    // these two are a <choice> which is why they share a bit #; you can have only one of them
                     case "use-system-providers": {
-                        gotConfig = true;
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
-                        configuration = () -> parentConfig.create().useProviders(null);
+                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 12);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
                         break;
                     }
                     case "use-module-providers": {
-                        gotConfig = true;
-                        final SecurityFactory<AuthenticationConfiguration> parentConfig = configuration;
+                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 12);
                         final Module module = parseModuleRefType(reader);
-                        configuration = () -> parentConfig.create().useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader()));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader())));
                         break;
                     }
-                    default: throw reader.unexpectedElement();
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
                 }
             } else if (tag == END_ELEMENT) {
-                final OneTimeSecurityFactory<MatchRule> finalRule = new OneTimeSecurityFactory<MatchRule>(rule);
-                final OneTimeSecurityFactory<AuthenticationConfiguration> finalConfig = new OneTimeSecurityFactory<AuthenticationConfiguration>(configuration);
-                final SecurityFactory<RuleConfigurationPair> finalPair = () -> new RuleConfigurationPair(finalRule.create(), finalConfig.create());
-                rulesList.add(finalPair);
-                if (name != null) {
-                    rulesMap.put(name, finalPair);
-                }
-                return;
+                final ExceptionUnaryOperator<AuthenticationConfiguration, GeneralSecurityException> finalConfiguration = configuration;
+                return next -> new RuleNode<>(next, rule, finalConfiguration.apply(AuthenticationConfiguration.EMPTY));
             } else {
                 throw reader.unexpectedContent();
             }
+            if (! reader.hasNext()) {
+                throw reader.unexpectedDocumentEnd();
+            }
+            tag = reader.nextTag();
         }
+    }
+
+    /**
+     * Parse the XML match-rule group.  On return, the reader will be positioned either at a start tag for an element
+     * that is not included in this group, or at an end tag.
+     *
+     * @param reader the XML reader
+     * @return the parsed match rule
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static MatchRule parseMatchRuleGroup(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        MatchRule rule = MatchRule.ALL;
+        int foundBits = 0;
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    // -- match --
+                    case "match-no-userinfo": {
+                        if (isSet(foundBits, 0)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 0);
+                        parseEmptyType(reader);
+                        rule = rule.matchNoUser();
+                        break;
+                    }
+                    case "match-userinfo": {
+                        if (isSet(foundBits, 1)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 1);
+                        rule = rule.matchUser(parseNameType(reader));
+                        break;
+                    }
+                    case "match-protocol": {
+                        if (isSet(foundBits, 2)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 2);
+                        rule = rule.matchProtocol(parseNameType(reader));
+                        break;
+                    }
+                    case "match-host": {
+                        if (isSet(foundBits, 3)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 3);
+                        rule = rule.matchHost(parseNameType(reader));
+                        break;
+                    }
+                    case "match-path": {
+                        if (isSet(foundBits, 4)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 4);
+                        rule = rule.matchPath(parseNameType(reader));
+                        break;
+                    }
+                    case "match-port": {
+                        if (isSet(foundBits, 5)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 5);
+                        rule = rule.matchPort(parsePortType(reader));
+                        break;
+                    }
+                    case "match-urn": {
+                        if (isSet(foundBits, 6)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 6);
+                        rule = rule.matchUrnName(parseNameType(reader));
+                        break;
+                    }
+                    case "match-domain": {
+                        if (isSet(foundBits, 7)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 7);
+                        rule = rule.matchLocalSecurityDomain(parseNameType(reader));
+                        break;
+                    }
+                    default: {
+                        return rule;
+                    }
+                }
+            } else {
+                return rule;
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static boolean isSet(int var, int bit) {
+        return (var & 1 << bit) != 0;
+    }
+
+    private static int setBit(int var, int bit) {
+        return var | 1 << bit;
+    }
+
+    private static <T> UnaryOperator<T> andThenOp(UnaryOperator<T> first, UnaryOperator<T> second) {
+        return t -> second.apply(first.apply(t));
+    }
+
+    private static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
+        return t -> second.apply(first.apply(t));
     }
 
     /**
@@ -524,17 +690,11 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static void parseKeyStoresType(ConfigurationXMLStreamReader reader, final Map<String, SecurityFactory<KeyStore>> keyStoresMap) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
-            throw reader.unexpectedAttribute(0);
-        }
+        requireNoAttributes(reader);
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
-                    default: throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "key-store": {
                         parseKeyStoreType(reader, keyStoresMap);
@@ -565,10 +725,7 @@ public final class ElytronXmlParser {
         String provider = null;
         Boolean wrap = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "type": {
                     if (type != null) throw reader.unexpectedAttribute(i);
@@ -611,10 +768,7 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
-                    default: throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "key-store-credential": {
                         // group 2
@@ -710,10 +864,7 @@ public final class ElytronXmlParser {
         String keyStoreName = null;
         String alias = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "key-store-name": {
                     if (keyStoreName != null) throw reader.unexpectedAttribute(i);
@@ -739,10 +890,7 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0: break;
-                    default: throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "key-store-credential": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
@@ -762,7 +910,7 @@ public final class ElytronXmlParser {
                 return new KeyStoreEntrySecurityFactory(() -> {
                     final SecurityFactory<KeyStore> keyStoreSecurityFactory = keyStoresMap.get(finalKeyStoreName);
                     if (keyStoreSecurityFactory == null) {
-                        throw log.unknownKeyStoreSpecified();
+                        throw xmlLog.unknownKeyStoreSpecified();
                     }
                     return keyStoreSecurityFactory.create();
                 }, alias, keyStoreCredential == null ? null : () -> {
@@ -798,10 +946,7 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static void parseEmptyType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
-        final int attributeCount = reader.getAttributeCount();
-        if (attributeCount > 0) {
-            throw reader.unexpectedAttribute(0);
-        }
+        requireNoAttributes(reader);
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -838,10 +983,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("name")) {
                 name = reader.getAttributeValue(i);
             } else {
@@ -875,10 +1017,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         int number = -1;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("number")) {
                 String s = reader.getAttributeValue(i);
                 try {
@@ -921,10 +1060,7 @@ public final class ElytronXmlParser {
         Pattern pattern = null;
         String replacement = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("pattern")) {
                 pattern = Pattern.compile(reader.getAttributeValue(i));
             } else if (reader.getAttributeLocalName(i).equals("replacement")) {
@@ -963,10 +1099,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         String[] names = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("names")) {
                 String s = reader.getAttributeValue(i);
                 names = s.trim().split("\\s+");
@@ -1001,10 +1134,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         URI uri = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("uri")) {
                 uri = reader.getURIAttributeValue(i);
             } else {
@@ -1038,10 +1168,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         CipherSuiteSelector selector = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("selector")) {
                 selector = CipherSuiteSelector.fromString(reader.getAttributeValue(i));
             } else {
@@ -1091,10 +1218,7 @@ public final class ElytronXmlParser {
         String name = null;
         String slot = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("name")) {
                 name = reader.getAttributeValue(i);
             } else if (reader.getAttributeLocalName(i).equals("slot")) {
@@ -1115,7 +1239,7 @@ public final class ElytronXmlParser {
                 try {
                     return Module.getModuleFromCallerModuleLoader(identifier);
                 } catch (ModuleLoadException e) {
-                    throw log.noModuleFound(reader, e, identifier);
+                    throw xmlLog.noModuleFound(reader, e, identifier);
                 }
             } else {
                 throw reader.unexpectedContent();
@@ -1135,10 +1259,7 @@ public final class ElytronXmlParser {
         final int attributeCount = reader.getAttributeCount();
         char[] password = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             if (reader.getAttributeLocalName(i).equals("password")) {
                 password = reader.getAttributeValue(i).toCharArray();
             } else {
@@ -1171,22 +1292,14 @@ public final class ElytronXmlParser {
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
-                switch (reader.getNamespaceURI()) {
-                    case NS_ELYTRON_1_0:
-                        break;
-                    default:
-                        throw reader.unexpectedElement();
-                }
+                checkElementNamespace(reader);
                 switch (reader.getLocalName()) {
                     case "property":
                         final int attributeCount = reader.getAttributeCount();
                         String key = null;
                         String value = null;
                         for (int i = 0; i < attributeCount; i++) {
-                            final String attributeNamespace = reader.getAttributeNamespace(i);
-                            if (attributeNamespace != null && !attributeNamespace.isEmpty()) {
-                                throw reader.unexpectedAttribute(i);
-                            }
+                            checkAttributeNamespace(reader, i);
                             switch (reader.getAttributeLocalName(i)) {
                                 case "key":
                                     if (key != null)
@@ -1237,6 +1350,26 @@ public final class ElytronXmlParser {
 
     // util
 
+    private static void checkElementNamespace(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        if (! reader.getNamespaceURI().equals(NS_ELYTRON_1_0)) {
+            throw reader.unexpectedElement();
+        }
+    }
+
+    private static void checkAttributeNamespace(final ConfigurationXMLStreamReader reader, final int idx) throws ConfigXMLParseException {
+        final String attributeNamespace = reader.getAttributeNamespace(idx);
+        if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
+            throw reader.unexpectedAttribute(idx);
+        }
+    }
+
+    private static void requireNoAttributes(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        if (attributeCount > 0) {
+            throw reader.unexpectedAttribute(0);
+        }
+    }
+
     private static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {
         return reader.missingRequiredAttribute(null, name);
     }
@@ -1286,7 +1419,7 @@ public final class ElytronXmlParser {
             try (InputStream fis = createStream()) {
                 keyStore.load(fis, passwordFactory == null ? null : passwordFactory.create());
             } catch (IOException e) {
-                throw log.failedToLoadKeyStoreData(e);
+                throw xmlLog.failedToLoadKeyStoreData(e);
             }
             return keyStore;
         }
@@ -1349,10 +1482,10 @@ public final class ElytronXmlParser {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
+                final X509Certificate[] certificateChain = X500.asX509CertificateArray((Object[]) privateKeyEntry.getCertificateChain());
                 return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
             }
-            throw log.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
+            throw xmlLog.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
         }
     }
 }

@@ -70,6 +70,7 @@ public final class SSLContextBuilder {
     private SecurityFactory<X509ExtendedKeyManager> keyManagerSecurityFactory;
     private SecurityFactory<X509TrustManager> trustManagerSecurityFactory = SSLUtils.getDefaultX509TrustManagerSecurityFactory();
     private Supplier<Provider[]> providerSupplier = Security::getProviders;
+    private String providerName;
 
     /**
      * Set the security domain to use to authenticate clients.
@@ -252,6 +253,18 @@ public final class SSLContextBuilder {
     }
 
     /**
+     * Set the provider name.
+     *
+     * @param name the provider name (must not be {@code null})
+     * @return this builder
+     */
+    public SSLContextBuilder setProviderName(final String name) {
+        Assert.checkNotNullParam("name", name);
+        this.providerName = name;
+        return this;
+    }
+
+    /**
      * Set the client mode of the target SSL context.
      *
      * @param clientMode {@code true} to use client mode, {@code false} otherwise
@@ -283,7 +296,7 @@ public final class SSLContextBuilder {
         final boolean useCipherSuitesOrder = this.useCipherSuitesOrder;
 
         return new OneTimeSecurityFactory<>(() -> {
-            final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier);
+            final SecurityFactory<SSLContext> sslContextFactory = SSLUtils.createSslContextFactory(protocolSelector, providerSupplier, providerName);
             // construct the original context
             final SSLContext sslContext = sslContextFactory.create();
             SSLSessionContext sessionContext = clientMode ? sslContext.getClientSessionContext() : sslContext.getServerSessionContext();

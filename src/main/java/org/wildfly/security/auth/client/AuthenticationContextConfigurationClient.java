@@ -23,7 +23,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Collection;
@@ -35,6 +34,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.permission.ElytronPermission;
 
@@ -74,9 +74,9 @@ public final class AuthenticationContextConfigurationClient {
     public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
-        final int idx = authenticationContext.ruleMatching(uri);
-        if (idx == -1) return AuthenticationConfiguration.EMPTY;
-        AuthenticationConfiguration configuration = authenticationContext.getAuthenticationConfiguration(idx);
+        final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri);
+        if (node == null) return AuthenticationConfiguration.EMPTY;
+        AuthenticationConfiguration configuration = node.getConfiguration();
         final String uriHost = uri.getHost();
         if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
             configuration = configuration.useHost(uriHost);
@@ -104,9 +104,9 @@ public final class AuthenticationContextConfigurationClient {
     public AuthenticationConfiguration getAuthenticationConfiguration(URI uri, AuthenticationContext authenticationContext, int protocolDefaultPort) {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
-        final int idx = authenticationContext.ruleMatching(uri);
-        if (idx == -1) return AuthenticationConfiguration.EMPTY;
-        AuthenticationConfiguration configuration = authenticationContext.getAuthenticationConfiguration(idx);
+        final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri);
+        if (node == null) return AuthenticationConfiguration.EMPTY;
+        AuthenticationConfiguration configuration = node.getConfiguration();
         final String uriHost = uri.getHost();
         if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
             configuration = configuration.useHost(uriHost);
@@ -121,6 +121,21 @@ public final class AuthenticationContextConfigurationClient {
             configuration = configuration.useName(userInfo);
         }
         return configuration;
+    }
+
+    /**
+     * Get the SSL context which matches the given URI, or {@link SSLContext#getDefault()} if there is none.
+     *
+     * @param uri the URI to match (must not be {@code null})
+     * @param authenticationContext the authentication context to examine (must not be {@code null})
+     * @return the matching SSL context
+     */
+    public SSLContext getSSLContext(URI uri, AuthenticationContext authenticationContext) throws GeneralSecurityException {
+        Assert.checkNotNullParam("uri", uri);
+        Assert.checkNotNullParam("authenticationContext", authenticationContext);
+        final RuleNode<SecurityFactory<SSLContext>> node = authenticationContext.sslRuleMatching(uri);
+        if (node == null) return SSLContext.getDefault();
+        return node.getConfiguration().create();
     }
 
     /**
@@ -236,17 +251,6 @@ public final class AuthenticationContextConfigurationClient {
     public InetSocketAddress getDestinationInetSocketAddress(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
         return new InetSocketAddress(configuration.getHost(), configuration.getPort());
-    }
-
-    /**
-     * Get an SSL context for the given URI.
-     *
-     * @param configuration the authentication configuration to use
-     * @return the SSL context
-     * @throws NoSuchAlgorithmException if an SSL context with the configured protocol failed to be instantiated
-     */
-    public SSLContext getSslContext(AuthenticationConfiguration configuration) throws GeneralSecurityException {
-        return configuration.createSslContext();
     }
 
     /**

@@ -24,13 +24,15 @@ import java.net.URI;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.util.Arrays;
 import java.util.function.Supplier;
+
+import javax.net.ssl.SSLContext;
 
 import org.wildfly.common.context.ContextManager;
 import org.wildfly.common.context.Contextual;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
+import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.Version;
 
 /**
@@ -47,22 +49,18 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
         CONTEXT_MANAGER.setGlobalDefaultSupplier(() -> DefaultAuthenticationContextProvider.DEFAULT);
     }
 
-    private final RuleConfigurationPair[] rules;
-
-    private static final RuleConfigurationPair[] NO_RULES = new RuleConfigurationPair[0];
+    final RuleNode<AuthenticationConfiguration> authRules;
+    final RuleNode<SecurityFactory<SSLContext>> sslRules;
 
     static final AuthenticationContext EMPTY = new AuthenticationContext();
 
     private AuthenticationContext() {
-        this(NO_RULES, false);
+        this(null, null);
     }
 
-    AuthenticationContext(final RuleConfigurationPair[] rules, boolean clone) {
-        if (clone) {
-            this.rules = rules.clone();
-        } else {
-            this.rules = rules;
-        }
+    AuthenticationContext(final RuleNode<AuthenticationConfiguration> authRules, final RuleNode<SecurityFactory<SSLContext>> sslRules) {
+        this.authRules = authRules;
+        this.sslRules = sslRules;
     }
 
     /**
@@ -83,6 +81,30 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
         return SUPPLIER.get();
     }
 
+    private static <T> RuleNode<T> with(RuleNode<T> node, MatchRule rule, T item) {
+        return node == null ? new RuleNode<T>(null, rule, item) : node.with(rule, item);
+    }
+
+    private static <T> RuleNode<T> with(RuleNode<T> node, MatchRule rule, T item, int idx) {
+        return node == null ? new RuleNode<T>(null, rule, item) : node.with(rule, item, idx);
+    }
+
+    private static <T> RuleNode<T> replacing(RuleNode<T> node, MatchRule rule, T item, int idx) {
+        return node == null ? new RuleNode<T>(null, rule, item) : node.replacing(rule, item, idx);
+    }
+
+    private static <T> RuleNode<T> withAll(RuleNode<T> node, RuleNode<T> otherNode) {
+        return node == null ? otherNode : otherNode == null ? node : node.withAll(otherNode);
+    }
+
+    private static <T> RuleNode<T> withAll(RuleNode<T> node, RuleNode<T> otherNode, int idx) {
+        return node == null ? otherNode : otherNode == null ? node : node.withAll(otherNode, idx);
+    }
+
+    private static <T> RuleNode<T> without(RuleNode<T> node, int idx) {
+        return node == null ? null : node.without(idx);
+    }
+
     /**
      * Get a new authentication context which is the same as this one, but which includes the given rule and configuration at
      * the end of its list.
@@ -93,15 +115,20 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      */
     public AuthenticationContext with(MatchRule rule, AuthenticationConfiguration configuration) {
         if (configuration == null || rule == null) return this;
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (length == 0) {
-            return new AuthenticationContext(new RuleConfigurationPair[] { new RuleConfigurationPair(rule, configuration) }, false);
-        } else {
-            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + 1);
-            copy[length] = new RuleConfigurationPair(rule, configuration);
-            return new AuthenticationContext(copy, false);
-        }
+        return new AuthenticationContext(with(authRules, rule, configuration), sslRules);
+    }
+
+    /**
+     * Get a new authentication context which is the same as this one, but which includes the given rule and SSL context at
+     * the end of its SSL context list.
+     *
+     * @param rule the rule to match
+     * @param sslContext the SSL context to select when the rule matches
+     * @return the combined authentication context
+     */
+    public AuthenticationContext withSsl(MatchRule rule, SecurityFactory<SSLContext> sslContext) {
+        if (sslContext == null || rule == null) return this;
+        return new AuthenticationContext(authRules, with(sslRules, rule, sslContext));
     }
 
     /**
@@ -113,18 +140,7 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      */
     public AuthenticationContext with(AuthenticationContext other) {
         if (other == null) return this;
-        final RuleConfigurationPair[] rules = this.rules;
-        final RuleConfigurationPair[] otherRules = other.rules;
-        final int length = rules.length;
-        final int otherLength = otherRules.length;
-        if (length == 0) {
-            return other;
-        } else if (otherLength == 0) {
-            return this;
-        }
-        final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + otherLength);
-        System.arraycopy(otherRules, 0, copy, length, otherLength);
-        return new AuthenticationContext(copy, false);
+        return new AuthenticationContext(withAll(authRules, other.authRules), withAll(sslRules, other.sslRules));
     }
 
     /**
@@ -139,19 +155,22 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      */
     public AuthenticationContext with(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
         if (configuration == null || rule == null) return this;
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx < 0 || idx > length) {
-            throw new IndexOutOfBoundsException();
-        }
-        if (length == 0) {
-            return new AuthenticationContext(new RuleConfigurationPair[] { new RuleConfigurationPair(rule, configuration) }, false);
-        } else {
-            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + 1);
-            System.arraycopy(copy, idx, copy, idx + 1, length - idx);
-            copy[idx] = new RuleConfigurationPair(rule, configuration);
-            return new AuthenticationContext(copy, false);
-        }
+        return new AuthenticationContext(with(authRules, rule, configuration, idx), sslRules);
+    }
+
+    /**
+     * Get a new authentication context which is the same as this one, but which includes the given rule and SSL context
+     * inserted at the position of its list indicated by the {@code idx} parameter.
+     *
+     * @param idx the index at which insertion should be done
+     * @param rule the rule to match
+     * @param sslContext the SSL context to select when the rule matches
+     * @return the combined authentication context
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public AuthenticationContext withSsl(int idx, MatchRule rule, SecurityFactory<SSLContext> sslContext) throws IndexOutOfBoundsException {
+        if (sslContext == null || rule == null) return this;
+        return new AuthenticationContext(authRules, with(sslRules, rule, sslContext, idx));
     }
 
     /**
@@ -166,14 +185,22 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      */
     public AuthenticationContext replacing(int idx, MatchRule rule, AuthenticationConfiguration configuration) throws IndexOutOfBoundsException {
         if (configuration == null || rule == null) return this;
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx < 0 || idx > length) {
-            throw new IndexOutOfBoundsException();
-        }
-        final RuleConfigurationPair[] copy = rules.clone();
-        copy[idx] = new RuleConfigurationPair(rule, configuration);
-        return new AuthenticationContext(copy, false);
+        return new AuthenticationContext(replacing(authRules, rule, configuration, idx), sslRules);
+    }
+
+    /**
+     * Get a new authentication context which is the same as this one, but which replaces the rule and SSL context at the given
+     * index with the given rule and SSL context.
+     *
+     * @param idx the index at which insertion should be done
+     * @param rule the rule to match
+     * @param sslContext the SSL context to select when the rule matches
+     * @return the combined authentication context
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public AuthenticationContext replacingSslContext(int idx, MatchRule rule, SecurityFactory<SSLContext> sslContext) throws IndexOutOfBoundsException {
+        if (sslContext == null || rule == null) return this;
+        return new AuthenticationContext(authRules, replacing(sslRules, rule, sslContext, idx));
     }
 
     /**
@@ -186,25 +213,22 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
     public AuthenticationContext with(int idx, AuthenticationContext other) throws IndexOutOfBoundsException {
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx == length) return with(other);
-        if (idx == 0) return other.with(this);
-        if (idx < 0 || idx > length) {
-            throw new IndexOutOfBoundsException();
-        }
         if (other == null) return this;
-        final RuleConfigurationPair[] otherRules = other.rules;
-        final int otherLength = otherRules.length;
-        if (otherLength == 0) return this;
-        if (length == 0) {
-            return other;
-        } else {
-            final RuleConfigurationPair[] copy = Arrays.copyOf(rules, length + otherLength);
-            System.arraycopy(copy, idx, copy, idx + otherLength, length - idx);
-            System.arraycopy(otherRules, 0, copy, idx, otherLength);
-            return new AuthenticationContext(copy, false);
-        }
+        return new AuthenticationContext(withAll(authRules, other.authRules, idx), sslRules);
+    }
+
+    /**
+     * Get a new authentication context which is the same as this one, but which includes the rules and SSL contexts of the
+     * given context inserted at the position of this context's list indicated by the {@code idx} parameter.
+     *
+     * @param idx the index at which insertion should be done
+     * @param other the other authentication context
+     * @return the combined authentication context
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public AuthenticationContext withSsl(int idx, AuthenticationContext other) throws IndexOutOfBoundsException {
+        if (other == null) return this;
+        return new AuthenticationContext(authRules, withAll(sslRules, other.sslRules, idx));
     }
 
     /**
@@ -216,50 +240,37 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
      * @throws IndexOutOfBoundsException if the index is out of bounds
      */
     public AuthenticationContext without(int idx) throws IndexOutOfBoundsException {
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx < 0 || idx >= length) {
-            throw new IndexOutOfBoundsException();
-        }
-        if (length == 1) {
-            assert idx == 0;
-            return EMPTY;
-        }
-        final RuleConfigurationPair[] copy;
-        if (idx == 0) {
-            copy = Arrays.copyOfRange(rules, 1, length - 1);
-        } else if (idx == length - 1) {
-            copy = Arrays.copyOfRange(rules, 0, length - 1);
-        } else {
-            copy = Arrays.copyOfRange(rules, 0, length - 1);
-            System.arraycopy(rules, idx + 1, copy, idx, length - idx - 1);
-        }
-        return new AuthenticationContext(copy, false);
+        return new AuthenticationContext(without(authRules, idx), sslRules);
     }
 
-    int ruleMatching(URI uri) {
-        for (int i = 0, rulesLength = rules.length; i < rulesLength; i++) {
-            if (rules[i].getMatchRule().matches(uri)) return i;
-        }
-        return -1;
+    /**
+     * Get a new authentication context which is the same as this one, but without the rule and configuration at the index
+     * indicated by the {@code idx} parameter.
+     *
+     * @param idx the index at which removal should be done
+     * @return the modified authentication context
+     * @throws IndexOutOfBoundsException if the index is out of bounds
+     */
+    public AuthenticationContext withoutSsl(int idx) throws IndexOutOfBoundsException {
+        return new AuthenticationContext(authRules, without(sslRules, idx));
     }
 
-    MatchRule getMatchRule(int idx) {
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx < 0 || idx >= length) {
-            throw new IndexOutOfBoundsException();
+    RuleNode<AuthenticationConfiguration> authRuleMatching(URI uri) {
+        RuleNode<AuthenticationConfiguration> node = this.authRules;
+        while (node != null) {
+            if (node.getRule().matches(uri)) return node;
+            node = node.getNext();
         }
-        return rules[idx].getMatchRule();
+        return null;
     }
 
-    AuthenticationConfiguration getAuthenticationConfiguration(int idx) {
-        final RuleConfigurationPair[] rules = this.rules;
-        final int length = rules.length;
-        if (idx < 0 || idx >= length) {
-            throw new IndexOutOfBoundsException();
+    RuleNode<SecurityFactory<SSLContext>> sslRuleMatching(URI uri) {
+        RuleNode<SecurityFactory<SSLContext>> node = this.sslRules;
+        while (node != null) {
+            if (node.getRule().matches(uri)) return node;
+            node = node.getNext();
         }
-        return rules[idx].getConfiguration();
+        return null;
     }
 
     /**
