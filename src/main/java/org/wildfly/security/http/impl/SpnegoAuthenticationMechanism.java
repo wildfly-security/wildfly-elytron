@@ -78,6 +78,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
     public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
         HttpScope connectionScope = request.getScope(Scope.CONNECTION);
         GSSContext gssContext = connectionScope != null ? connectionScope.getAttachment(GSS_CONTEXT_KEY, GSSContext.class) : null;
+        log.tracef("Evaluating SPNEGO request: cached GSSContext = %s", gssContext);
 
         // Do we already have a cached identity? If so use it.
         if (gssContext != null && gssContext.isEstablished() && authorizeEstablishedContext(gssContext)) {
@@ -86,7 +87,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             return;
         }
 
-        if (gssContext == null) {
+        if (gssContext == null) { // init GSSContext
             ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSCredentialCredential.class);
             final GSSCredential gssCredential;
 
@@ -99,71 +100,78 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             }
 
             if (gssCredential == null) {
-                // We can't obtain a credential, we have no chance of performing SPNEGO authentication so give up now.
-                log.trace("Obtaining GSSCredential from callbackHandler failed - null credential");
+                log.trace("GSSCredential from callbackHandler is null - cannot perform SPNEGO authentication");
                 request.noAuthenticationInProgress();
                 return;
             }
 
-            List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
-            Optional<String> challenge = authorizationValues != null ? authorizationValues.stream()
-                    .filter(s -> s.startsWith(CHALLENGE_PREFIX)).limit(1).map(s -> s.substring(CHALLENGE_PREFIX.length()))
-                    .findFirst() : Optional.empty();
+            try {
+                gssContext = GSSManager.getInstance().createContext(gssCredential);
 
-            if (log.isTraceEnabled()) {
-                log.tracef("Sent HTTP authorizations: [%s]", authorizationValues == null ? "null" : String.join(", ", authorizationValues));
-            }
-
-            // Do we have an incoming response to a challenge? If so process it.
-            if (challenge.isPresent()) {
-                log.trace("Processing incoming response to a challenge...");
-                GSSManager gssManager = GSSManager.getInstance();
-                try {
-                    gssContext = gssManager.createContext(gssCredential);
-                } catch (GSSException e) {
-                    throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
-                }
                 if (connectionScope != null) {
                     connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
+                    log.tracef("Caching GSSContext %s", gssContext);
                 }
-
-                byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
-                try {
-                    final byte[] responseToken = gssContext.acceptSecContext(decodedValue, 0, decodedValue.length);
-
-                    if (gssContext.isEstablished()) {
-                        log.trace("GSSContext established, authorizing...");
-                        if (authorizeEstablishedContext(gssContext)) {
-                            log.trace("GSSContext established and authorized - authentication complete");
-                            if (responseToken != null) {
-                                request.authenticationComplete(
-                                        response -> sendIntermediateChallenge(responseToken, response, true));
-                            } else {
-                                request.authenticationComplete();
-                            }
-                            return;
-                        } else {
-                            log.trace("Authorization of established GSSContext failed");
-                            GSSName gssName = gssContext.getSrcName();
-                            request.authenticationFailed(log.authorizationFailed(gssName == null ? null : gssName.toString(), SPNEGO_NAME));
-                        }
-                    } else if (responseToken != null) {
-                        request.authenticationInProgress(response -> sendIntermediateChallenge(responseToken, response, false));
-                        return;
-                    }
-                } catch (GSSException e) {
-                    log.trace(e);
-                    try {
-                        MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
-                    } catch (AuthenticationMechanismException | UnsupportedCallbackException ignored) {
-                    }
-                    request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
-                    return;
-                }
+            } catch (GSSException e) {
+                throw log.mechUnableToCreateGssContext(SPNEGO_NAME, e).toHttpAuthenticationException();
             }
         }
 
-        // No authentication yet so prepare to challenge.
+        // authentication exchange
+        List<String> authorizationValues = request.getRequestHeaderValues(AUTHORIZATION);
+        Optional<String> challenge = authorizationValues != null ? authorizationValues.stream()
+                .filter(s -> s.startsWith(CHALLENGE_PREFIX)).limit(1).map(s -> s.substring(CHALLENGE_PREFIX.length()))
+                .findFirst() : Optional.empty();
+
+        if (log.isTraceEnabled()) {
+            log.tracef("Sent HTTP authorizations: [%s]", authorizationValues == null ? "null" : String.join(", ", authorizationValues));
+        }
+
+        // Do we have an incoming response to a challenge? If so, process it.
+        if (challenge.isPresent()) {
+            log.trace("Processing incoming response to a challenge...");
+
+            byte[] decodedValue = ByteIterator.ofBytes(challenge.get().getBytes(UTF_8)).base64Decode().drain();
+            try {
+                final byte[] responseToken = gssContext.acceptSecContext(decodedValue, 0, decodedValue.length);
+
+                if (gssContext.isEstablished()) {
+                    log.trace("GSSContext established, authorizing...");
+                    if (authorizeEstablishedContext(gssContext)) {
+                        log.trace("GSSContext established and authorized - authentication complete");
+
+                        if (responseToken != null) {
+                            request.authenticationComplete(response -> sendIntermediateChallenge(responseToken, response, true));
+                        } else {
+                            request.authenticationComplete();
+                        }
+                        return;
+                    } else {
+                        log.trace("Authorization of established GSSContext failed");
+                        GSSName gssName = gssContext.getSrcName();
+                        request.authenticationFailed(log.authorizationFailed(gssName == null ? null : gssName.toString(), SPNEGO_NAME));
+                        return;
+                    }
+                } else if (responseToken != null) {
+                    log.trace("Sending negotiation token to the peer");
+                    request.authenticationInProgress(response -> sendIntermediateChallenge(responseToken, response, false));
+                    return;
+                }
+            } catch (GSSException e) {
+                log.trace("GSSContext message exchange failed", e);
+                try {
+                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
+                } catch (AuthenticationMechanismException | UnsupportedCallbackException ignored) {
+                }
+                request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
+                return;
+            }
+        }
+
+        log.trace("Request lacks valid authentication credentials");
+        if (connectionScope != null) {
+            connectionScope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
+        }
         request.noAuthenticationInProgress(this::sendBareChallenge);
     }
 
