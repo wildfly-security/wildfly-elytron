@@ -43,7 +43,7 @@ public abstract class PeerIdentityContext {
      *
      * @return the currently set peer identity for this context, or {@code null} if no identity is set
      */
-    public final PeerIdentity getCurrentIdentity() {
+    public PeerIdentity getCurrentIdentity() {
         return currentIdentity.get();
     }
 
