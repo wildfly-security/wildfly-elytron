@@ -38,7 +38,7 @@ public class PasswordBasedEncryptionUtilTest {
     @Test
     public void testEncryptEncode() throws GeneralSecurityException {
 
-        String[] algorithms = {"PBEWithHmacSHA1andAES_128","PBEWithHmacSHA256AndAES_256","PBEWithMD5AndDES"};
+        String[] algorithms = {"PBEWithHmacSHA1andAES_128","PBEWithHmacSHA256AndAES_128","PBEWithMD5AndDES"};
 
         Alphabet[] alphabets = {
                 Alphabet.Base64Alphabet.STANDARD,
@@ -104,7 +104,7 @@ public class PasswordBasedEncryptionUtilTest {
     public void testPBKDF() throws GeneralSecurityException {
 
         String keyAlgorithm = "PBKDF2WithHmacSHA1";
-        String transformation = "PBEWithHmacSHA256AndAES_256";
+        String transformation = "PBEWithHmacSHA256AndAES_128";
         String parameters = transformation;
 
         PasswordBasedEncryptionUtil pbeUtil1 =
