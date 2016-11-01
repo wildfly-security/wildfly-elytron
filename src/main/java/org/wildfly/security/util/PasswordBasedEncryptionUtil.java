@@ -54,7 +54,7 @@ public final class PasswordBasedEncryptionUtil {
     private final AlgorithmParameters algorithmParameters;
     private final Alphabet alphabet;
 
-    private PasswordBasedEncryptionUtil(Cipher cipher, AlgorithmParameters algorithmParameters, Alphabet alphabet) {
+    PasswordBasedEncryptionUtil(Cipher cipher, AlgorithmParameters algorithmParameters, Alphabet alphabet) {
         this.cipher = cipher;
         this.alphabet = alphabet;
         this.algorithmParameters = algorithmParameters;
@@ -180,82 +180,162 @@ public final class PasswordBasedEncryptionUtil {
         private String encodedIV;
         private AlgorithmParameters algorithmParameters;
 
-        Builder password(char[] initialKeyAsChars) {
-            password = initialKeyAsChars;
+        /**
+         * Set password to use to generate the encryption key
+         * @param password the password
+         * @return this Builder
+         */
+        public Builder password(char[] password) {
+            this.password = password;
             return this;
         }
 
-        Builder password(String initialKeyString) {
-            password = initialKeyString.toCharArray();
+        /**
+         * Set password to use to generate the encryption key
+         * @param password the password
+         * @return this Builder
+         */
+        public Builder password(String password) {
+            this.password = password.toCharArray();
             return this;
         }
 
-        Builder iv(byte[] iv) {
+        /**
+         * Set initialization vector for use with AES algorithms
+         * @param iv the raw IV
+         * @return this Builder
+         */
+        public Builder iv(byte[] iv) {
             ivSpec = new IvParameterSpec(iv);
             return this;
         }
 
-        Builder iv(String encodedIV) {
+        /**
+         * Set initialization vector for use with AES algorithms
+         * @param encodedIV IV encoded using {@link Alphabet} set in this builder (or default)
+         * @return this Builder
+         */
+        public Builder iv(String encodedIV) {
             this.encodedIV = encodedIV;
             return this;
         }
 
-        Builder transformation(String transformation) {
+        /**
+         * Transformation name to use as {@code Cipher} parameter.
+         * @param transformation the name of transformation
+         * @return this Builder
+         */
+        public Builder transformation(String transformation) {
             this.transformation = transformation;
             return this;
         }
 
-        Builder parametersAlgorithm(String parametersAlgorithm) {
+        /**
+         * Set the name of parameter's algorithm to initialize the {@code Cipher}
+         * @param parametersAlgorithm the name of parameter's algorithm
+         * @return this Builder
+         */
+        public Builder parametersAlgorithm(String parametersAlgorithm) {
             this.parametersAlgorithm = parametersAlgorithm;
             return this;
         }
 
-        Builder salt(String salt) {
+        /**
+         * Set salt for key derivation.
+         * @param salt the salt
+         * @return this Builder
+         */
+        public Builder salt(String salt) {
             this.salt = salt.getBytes(StandardCharsets.UTF_8);
             return this;
         }
 
-        Builder salt(byte[] salt) {
+        /**
+         * Set salt for key derivation.
+         * @param salt the salt
+         * @return this Builder
+         */
+        public Builder salt(byte[] salt) {
             this.salt = salt;
             return this;
         }
 
-        Builder iteration(int iteration) {
+        /**
+         * Set number of iteration for key derivation.
+         * @param iteration the number of iterations
+         * @return this Builder
+         */
+        public Builder iteration(int iteration) {
             this.iteration = iteration;
             return this;
         }
 
-        Builder keyAlgorithm(String keyAlgorithm) {
+        /**
+         * Set the key derivation algorithm.
+         * @param keyAlgorithm the algorithm
+         * @return this Builder
+         */
+        public Builder keyAlgorithm(String keyAlgorithm) {
             this.keyAlgorithm = keyAlgorithm;
             return this;
         }
 
-        Builder keyLength(int keyLength) {
+        /**
+         * Set the key length.
+         * @param keyLength the length
+         * @return this Builder
+         */
+        public Builder keyLength(int keyLength) {
             this.keyLength = keyLength;
             return this;
         }
 
-        Builder cipherIteration(int cipherIteration) {
+        /**
+         * Set the number of iterations for {@code Cipher}
+         * @param cipherIteration number of iterations
+         * @return this Builder
+         */
+        public Builder cipherIteration(int cipherIteration) {
             this.cipherIteration = cipherIteration;
             return this;
         }
 
-        Builder cipherSalt (byte[] cipherSalt) {
+        /**
+         * Set salt for the {@code Cipher}
+         * @param cipherSalt the salt
+         * @return this Builder
+         */
+        public Builder cipherSalt (byte[] cipherSalt) {
             this.cipherSalt = cipherSalt;
             return this;
         }
 
-        Builder cipherSalt (String cipherSalt) {
+        /**
+         * Set salt for the {@code Cipher}
+         * @param cipherSalt the salt
+         * @return this Builder
+         */
+        public Builder cipherSalt (String cipherSalt) {
             this.cipherSalt = cipherSalt.getBytes(StandardCharsets.UTF_8);
             return this;
         }
 
-        Builder provider(Provider provider) {
+        /**
+         * Set the JCA provider which contains all classes needed by built utility class.
+         * @param provider the provider
+         * @return this Builder
+         */
+        public Builder provider(Provider provider) {
             this.provider = provider;
             return this;
         }
 
-        Builder provider(String providerName) {
+        /**
+         * Set the JCA provider name which contains all classes needed by built utility class.
+         * @param providerName the provider name
+         * @return this Builder
+         */
+        public Builder provider(String providerName) {
             Assert.checkNotNullParam("providerName", providerName);
             provider = Security.getProvider(providerName);
             if (provider == null) {
@@ -264,22 +344,40 @@ public final class PasswordBasedEncryptionUtil {
             return this;
         }
 
-        Builder alphabet(Alphabet alphabet) {
+        /**
+         * Set the alphabet to encode/decode result of encryption/decryption.
+         * @param alphabet the {@link Alphabet} instance
+         * @return this Builder
+         */
+        public Builder alphabet(Alphabet alphabet) {
             this.alphabet = alphabet;
             return this;
         }
 
-        Builder encryptMode() {
+        /**
+         * Set encryption mode for chosen {@code Cipher}
+         * @return this Builder
+         */
+        public Builder encryptMode() {
             cipherMode = Cipher.ENCRYPT_MODE;
             return this;
         }
 
-        Builder decryptMode() {
+        /**
+         * Set decryption mode for chosen {@code Cipher}
+         * @return this Builder
+         */
+        public Builder decryptMode() {
             cipherMode = Cipher.DECRYPT_MODE;
             return this;
         }
 
-        Builder algorithmParameters(AlgorithmParameters algorithmParameters) {
+        /**
+         * Set algorithm parameters for {@code Cipher} initialization.
+         * @param algorithmParameters the algorithm parameters instance in form required by the used {@code Cipher}
+         * @return this Builder
+         */
+        public Builder algorithmParameters(AlgorithmParameters algorithmParameters) {
             if (this.algorithmParameters == null) {
                 this.algorithmParameters = algorithmParameters;
             }
@@ -329,7 +427,12 @@ public final class PasswordBasedEncryptionUtil {
             return new SecretKeySpec(partialKey.getEncoded(), transformation);
         }
 
-        PasswordBasedEncryptionUtil build() throws IllegalArgumentException, GeneralSecurityException {
+        /**
+         * Builds PBE utility class instance
+         * @return PBE utility class instance {@link PasswordBasedEncryptionUtil}
+         * @throws GeneralSecurityException when something goes wrong while initializing encryption related objects
+         */
+        public PasswordBasedEncryptionUtil build() throws GeneralSecurityException {
             if (iteration <= -1) {
                 throw log.iterationCountNotSpecified();
             }
