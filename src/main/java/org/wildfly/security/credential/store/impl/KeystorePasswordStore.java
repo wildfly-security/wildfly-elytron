@@ -222,14 +222,14 @@ public class KeystorePasswordStore extends CredentialStoreSpi {
         Collections.addAll(ca,
                 NAME, STORE_FILE, STORE_PASSWORD, STORE_BASE,
                 CREATE_STORAGE, KEY_ALIAS, KEY_PASSWORD,
-                KEY_SIZE, CRYPTO_ALGORITHM, RELOADABLE);
+                KEY_SIZE, CRYPTO_ALGORITHM, RELOADABLE, MODIFIABLE);
         supportedConfigurationAttributes = Collections.unmodifiableSet(ca);
     }
 
     // used for reporting only / do not modify
     private String storeName;
     private boolean reloadable = false;
-    private boolean modifiable = false;
+    private boolean modifiable = true;
     private File storeFile = null;
     private String storeBase = "";
     private char[] storagePassword = null;

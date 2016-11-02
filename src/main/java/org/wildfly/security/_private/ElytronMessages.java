@@ -1577,6 +1577,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
     void warnWrongBase64EncodedString(String base64);
 
+    @Message(id = 9513, value = "Cannot perform operation '%s': Credential store is set non modifiable")
+    CredentialStoreException nonModifiableCredentialStore(String operation);
+
     /* X.500 exceptions */
 
     @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")
