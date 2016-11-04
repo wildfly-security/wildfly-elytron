@@ -36,8 +36,8 @@ class MatchPathRule extends MatchRule {
         }
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
-        return uri.isAbsolute() && prefixes(uri.getPath()) && super.matches(uri, abstractType, abstractTypeAuthority);
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+        return uri.isAbsolute() && prefixes(uri.getPath()) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {

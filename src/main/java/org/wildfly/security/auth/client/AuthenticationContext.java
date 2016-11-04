@@ -255,19 +255,19 @@ public final class AuthenticationContext implements Contextual<AuthenticationCon
         return new AuthenticationContext(authRules, without(sslRules, idx));
     }
 
-    RuleNode<AuthenticationConfiguration> authRuleMatching(URI uri, String abstractType, String abstractTypeAuthority) {
+    RuleNode<AuthenticationConfiguration> authRuleMatching(URI uri, String abstractType, String abstractTypeAuthority, String purpose) {
         RuleNode<AuthenticationConfiguration> node = this.authRules;
         while (node != null) {
-            if (node.getRule().matches(uri, abstractType, abstractTypeAuthority)) return node;
+            if (node.getRule().matches(uri, abstractType, abstractTypeAuthority, purpose)) return node;
             node = node.getNext();
         }
         return null;
     }
 
-    RuleNode<SecurityFactory<SSLContext>> sslRuleMatching(URI uri, String abstractType, String abstractTypeAuthority) {
+    RuleNode<SecurityFactory<SSLContext>> sslRuleMatching(URI uri, String abstractType, String abstractTypeAuthority, String purpose) {
         RuleNode<SecurityFactory<SSLContext>> node = this.sslRules;
         while (node != null) {
-            if (node.getRule().matches(uri, abstractType, abstractTypeAuthority)) return node;
+            if (node.getRule().matches(uri, abstractType, abstractTypeAuthority, purpose)) return node;
             node = node.getNext();
         }
         return null;

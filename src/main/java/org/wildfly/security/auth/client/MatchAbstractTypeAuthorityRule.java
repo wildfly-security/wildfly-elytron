@@ -36,8 +36,8 @@ class MatchAbstractTypeAuthorityRule extends MatchRule {
         return true;
     }
 
-    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
-        return authority.equals(abstractTypeAuthority) && super.matches(uri, abstractType, abstractTypeAuthority);
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+        return authority.equals(abstractTypeAuthority) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {

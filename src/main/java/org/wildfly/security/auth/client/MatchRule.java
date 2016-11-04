@@ -21,6 +21,7 @@ package org.wildfly.security.auth.client;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.net.URI;
+import java.util.Arrays;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -35,6 +36,14 @@ public abstract class MatchRule {
     public static final MatchRule ALL = new MatchRule(null) {
         MatchRule reparent(final MatchRule newParent) {
             return this;
+        }
+
+        public boolean isPurposeMatched() {
+            return false;
+        }
+
+        String[] getMatchPurposesRaw() {
+            return null;
         }
 
         public boolean isProtocolMatched() {
@@ -101,7 +110,7 @@ public abstract class MatchRule {
             return null;
         }
 
-        public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
+        public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
             return true;
         }
 
@@ -179,19 +188,104 @@ public abstract class MatchRule {
      * @return {@code true} if the rule matches, {@code false} otherwise
      */
     public final boolean matches(URI uri) {
-        return matches(uri, null, null);
+        return matches(uri, null, null, null);
     }
 
     /**
-     * Determine if this rule matches the given URI and type.
+     * Determine if this rule matches the given URI, type, and purpose.
      *
      * @param uri the URI to test
      * @param abstractType the abstract type of the connection (may be {@code null})
      * @param abstractTypeAuthority the authority name of the abstract type (may be {@code null})
      * @return {@code true} if the rule matches, {@code false} otherwise
      */
-    public boolean matches(URI uri, final String abstractType, final String abstractTypeAuthority) {
-        return parent.matches(uri, abstractType, abstractTypeAuthority);
+    public final boolean matches(URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return matches(uri, abstractType, abstractTypeAuthority, null);
+    }
+
+    /**
+     * Determine if this rule matches the given URI, type, and purpose.
+     *
+     * @param uri the URI to test
+     * @param abstractType the abstract type of the connection (may be {@code null})
+     * @param abstractTypeAuthority the authority name of the abstract type (may be {@code null})
+     * @param purpose the authentication purpose name (may be {@code null})
+     * @return {@code true} if the rule matches, {@code false} otherwise
+     */
+    public boolean matches(URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
+        return parent.matches(uri, abstractType, abstractTypeAuthority, purpose);
+    }
+
+    // purpose
+
+    /**
+     * Determine whether this rule matches based on match purpose.
+     *
+     * @return {@code true} if the rule matches based on match purpose, {@code false} otherwise
+     */
+    public boolean isPurposeMatched() {
+        return parent.isPurposeMatched();
+    }
+
+    /**
+     * Get the purposes that this rule matches by.
+     *
+     * @return the purposes that this rule matches by, or {@code null} if none
+     */
+    public String[] getMatchPurposes() {
+        final String[] array = getMatchPurposesRaw();
+        return array == null ? null : array.length == 0 ? array : array.clone();
+    }
+
+    String[] getMatchPurposesRaw() {
+        return parent.getMatchPurposesRaw();
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given purpose name.
+     *
+     * @param purpose the purpose name
+     * @return the new rule
+     */
+    public MatchRule matchPurpose(String purpose) {
+        if (purpose == null || purpose.equals("*")) {
+            return without(MatchPurposeRule.class);
+        }
+        return new MatchPurposeRule(this, new String[] { purpose });
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given purposes name.
+     *
+     * @param purposes the purposes
+     * @return the new rule
+     */
+    public MatchRule matchPurposes(String... purposes) {
+        if (purposes == null) {
+            return without(MatchPurposeRule.class);
+        }
+        purposes = purposes.clone();
+        int validCnt = 0;
+        for (String purpose : purposes) {
+            if (purpose != null && ! purpose.isEmpty()) {
+                validCnt++;
+            }
+        }
+        if (validCnt == 0) {
+            return without(MatchPurposeRule.class);
+        }
+        if (validCnt < purposes.length) {
+            String[] valid = new String[validCnt];
+            int j = 0;
+            for (String purpose : purposes) {
+                if (purpose != null && ! purpose.isEmpty()) {
+                    valid[j++] = purpose;
+                }
+            }
+            purposes = valid;
+        }
+        if (validCnt > 1) Arrays.sort(purposes);
+        return new MatchPurposeRule(this, purposes);
     }
 
     // protocol (scheme)
