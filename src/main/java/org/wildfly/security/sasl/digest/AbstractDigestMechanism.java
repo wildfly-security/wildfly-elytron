@@ -35,7 +35,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -76,7 +75,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     public static enum FORMAT {CLIENT, SERVER};
 
-    private static final int MAX_PARSED_RESPONSE_SIZE = 13;
+
     private static int NONCE_SIZE = 36;
 
     public static final int DEFAULT_MAXBUF = 65536;
@@ -85,7 +84,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
 
     private FORMAT format;
     protected String digestURI;
-    private Charset charset = StandardCharsets.ISO_8859_1;
+    protected Charset charset = StandardCharsets.ISO_8859_1;
     protected MessageDigest digest;
 
     // selected cipher
@@ -154,26 +153,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     }
 
 
-    protected static int skipWhiteSpace(byte[] buffer, int startPoint) {
-        int i = startPoint;
-        while (i < buffer.length && isWhiteSpace(buffer[i])) {
-            i++;
-        }
-        return i;
-    }
 
-    protected static boolean isWhiteSpace(byte b) {
-        if (b == 13)   // CR
-            return true;
-        else if (b == 10) // LF
-            return true;
-        else if (b == 9) // TAB
-            return true;
-        else if (b == 32) // SPACE
-            return true;
-        else
-            return false;
-    }
 
 
     /**
@@ -201,138 +181,6 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         byte[] nonceData = new byte[NONCE_SIZE];
         random.nextBytes(nonceData);
         return ByteIterator.ofBytes(nonceData).base64Encode().drainToString().getBytes(StandardCharsets.US_ASCII);
-    }
-
-    /**
-     * Client side method to parse challenge sent by server.
-     *
-     * @param challenge
-     * @return
-     */
-    HashMap<String, byte[]> parseResponse(byte [] challenge) throws SaslException {
-
-        HashMap<String, byte[]> response = new HashMap<String, byte[]> (MAX_PARSED_RESPONSE_SIZE);
-        int i = skipWhiteSpace(challenge, 0);
-
-        StringBuilder key = new StringBuilder(10);
-        ByteStringBuilder value = new ByteStringBuilder();
-
-        Integer realmNumber = new Integer(0);
-
-        boolean insideKey = true;
-        boolean insideQuotedValue = false;
-        boolean expectSeparator = false;
-
-        byte b;
-        while (i < challenge.length) {
-            b = challenge[i];
-            // parsing keyword
-            if (insideKey) {
-                if (b == ',') {
-                    throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
-                }
-                else if (b == '=') {
-                    if (key.length() == 0) {
-                        throw log.mechKeywordCannotBeEmpty(getMechanismName()).toSaslException();
-                    }
-                    insideKey = false;
-                    i = skipWhiteSpace(challenge, i + 1);
-
-                    if (i < challenge.length) {
-                        if (challenge[i] == '"') {
-                            insideQuotedValue = true;
-                            ++i; // Skip quote
-                        }
-                    }
-                    else {
-                        throw log.mechNoValueFoundForKeyword(getMechanismName(), key.toString()).toSaslException();
-                    }
-                }
-                else if (isWhiteSpace(b)) {
-                    i = skipWhiteSpace(challenge, i + 1);
-
-                    if (i < challenge.length) {
-                        if (challenge[i] != '=') {
-                            throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
-                        }
-                    }
-                    else {
-                        throw log.mechKeywordNotFollowedByEqual(getMechanismName(), key.toString()).toSaslException();
-                    }
-                }
-                else {
-                    key.append((char)(b & 0xff));
-                    i++;
-                }
-            }
-            // parsing quoted value
-            else if (insideQuotedValue) {
-                if (b == '\\') {
-                    i++; // skip the escape char
-                    if (i < challenge.length) {
-                        value.append(challenge[i]);
-                        i++;
-                    }
-                    else {
-                        throw log.mechUnmatchedQuoteFoundForValue(getMechanismName(), value.toString()).toSaslException();
-                    }
-                }
-                else if (b == '"') {
-                    // closing quote
-                    i++;
-                    insideQuotedValue = false;
-                    expectSeparator = true;
-                }
-                else {
-                    value.append(b);
-                    i++;
-                }
-            }
-            // terminated value
-            else if (isWhiteSpace(b) || b == ',') {
-                realmNumber = addToParsedChallenge(response, key, value, realmNumber);
-                key = new StringBuilder();
-                value = new ByteStringBuilder();
-                i = skipWhiteSpace(challenge, i);
-                if (i < challenge.length && challenge[i] == ',') {
-                    expectSeparator = false;
-                    insideKey = true;
-                    i++;
-                }
-            }
-            // expect separator
-            else if (expectSeparator) {
-                String val = new String(value.toArray(), charset);
-                throw log.mechExpectingCommaOrLinearWhitespaceAfterQuoted(getMechanismName(), val).toSaslException();
-            }
-            else {
-                value.append(b);
-                i++;
-            }
-        }
-
-        if (insideQuotedValue) {
-            throw log.mechUnmatchedQuoteFoundForValue(getMechanismName(), value.toString()).toSaslException();
-        }
-
-        if (key.length() > 0) {
-            realmNumber = addToParsedChallenge(response, key, value, realmNumber);
-        }
-
-        return response;
-    }
-
-    private int addToParsedChallenge(HashMap<String, byte[]> response, StringBuilder keyBuilder, ByteStringBuilder valueBuilder, int realmNumber) {
-        String k = keyBuilder.toString();
-        byte[] v = valueBuilder.toArray();
-        if (format == FORMAT.CLIENT && "realm".equals(k)) {
-            response.put(k + ":" + String.valueOf(realmNumber), v);
-            realmNumber++;
-        }
-        else {
-            response.put(k, v);
-        }
-        return realmNumber;
     }
 
     protected boolean arrayContains(String[] array, String searched){
