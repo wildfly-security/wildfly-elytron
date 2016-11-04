@@ -905,8 +905,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5038, value = "[%s] Nonces do not match")
     AuthenticationMechanismException mechNoncesDoNotMatch(String mechName);
 
-    @Message(id = 5039, value = "[%s] Server nonce is too short")
-    AuthenticationMechanismException mechServerNonceIsTooShort(String mechName);
+    @Message(id = 5039, value = "[%s] Invalid length of nonce received")
+    AuthenticationMechanismException invalidNonceLength(String mechName);
 
     @Message(id = 5040, value = "[%s] Iteration count %d is below the minimum of %d")
     AuthenticationMechanismException mechIterationCountIsTooLow(String mechName, int iterationCount, int minimumIterationCount);
@@ -1291,6 +1291,13 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 5167, value = "Invalid OTP password format type")
     AuthenticationMechanismException mechInvalidOTPPasswordFormatType();
+
+    @Message(id = 5168, value = "[%s] Unsupported algorithm selected \"%s\"")
+    AuthenticationMechanismException mechUnsupportedAlgorithm(String mechName, String algorithm);
+
+    @Message(id = 5169, value = "[%s] Clients response token does not match expected token")
+    String mechResponseTokenMismatch(String mechName);
+
 
     /* http package */
 

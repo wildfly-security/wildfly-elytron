@@ -63,9 +63,18 @@ public class HttpConstants {
      * Header Fields
      */
 
+    public static final String ALGORITHM = "algorithm";
     public static final String CHARSET = "charset";
+    public static final String DOMAIN = "domain";
     public static final String NEGOTIATE = "Negotiate";
+    public static final String NONCE = "nonce";
+    public static final String OPAQUE = "opaque";
     public static final String REALM = "realm";
+    public static final String RESPONSE = "response";
+    public static final String STALE = "stale";
+    public static final String URI = "uri";
+    public static final String USERNAME = "username";
+
 
     /*
      * Header Names
@@ -82,6 +91,7 @@ public class HttpConstants {
 
     public static final String BASIC_NAME = "BASIC";
     public static final String CLIENT_CERT_NAME = "CLIENT-CERT";
+    public static final String DIGEST_NAME = "DIGEST";
     public static final String FORM_NAME = "FORM";
     public static final String SPNEGO_NAME = "SPNEGO";
 
@@ -101,6 +111,12 @@ public class HttpConstants {
 
     public static final String POST = "POST";
 
+    /*
+     * Algorithms
+     */
+
+    public static final String MD5 = "MD5";
+    public static final String SHA256 = "SHA-256";
 
 
 }

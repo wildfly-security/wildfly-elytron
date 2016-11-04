@@ -18,7 +18,7 @@
 package org.wildfly.security.password.impl;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
+import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;

@@ -15,12 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.wildfly.security.http.impl;
+
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
+import static org.wildfly.security.http.HttpConstants.CONFIG_CONTEXT_PATH;
 import static org.wildfly.security.http.HttpConstants.CONFIG_REALM;
+import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
+import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 
 import java.util.ArrayList;
@@ -41,6 +46,8 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMechanismFactory {
 
+    private volatile NonceManager nonceManager;
+
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
      */
@@ -50,6 +57,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         ArrayList<String> mechanismNames = new ArrayList<>();
         mechanismNames.add(BASIC_NAME);
         mechanismNames.add(CLIENT_CERT_NAME);
+        mechanismNames.add(DIGEST_NAME);
         mechanismNames.add(FORM_NAME);
         mechanismNames.add(SPNEGO_NAME);
 
@@ -70,11 +78,30 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
                 return new BasicAuthenticationMechanism(callbackHandler, (String) properties.get(CONFIG_REALM), false);
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
+            case DIGEST_NAME:
+                return new DigestAuthenticationMechanism(callbackHandler, getNonceManager(), (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH));
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:
                 return new SpnegoAuthenticationMechanism(callbackHandler);
         }
         return null;
+    }
+
+    private NonceManager getNonceManager() {
+        if (nonceManager == null) {
+            synchronized(this) {
+                if (nonceManager == null) {
+                    /*
+                     * 60 Second Nonce Validity
+                     * Single User
+                     * 20 Byte Private Key (Gives us at least enough material for SHA-256 to digest))
+                     * MD5 Digest Algorithm
+                     */
+                    nonceManager = new NonceManager(60000, true, 20, SHA256);
+                }
+            }
+        }
+        return nonceManager;
     }
 }
