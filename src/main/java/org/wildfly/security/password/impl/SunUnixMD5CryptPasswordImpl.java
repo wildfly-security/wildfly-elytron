@@ -280,4 +280,9 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
     Object writeReplace() {
         return SunUnixMD5CryptPassword.createRaw(algorithm, salt, hash, iterationCount);
     }
+
+    public SunUnixMD5CryptPasswordImpl clone() {
+        return this;
+    }
+
 }

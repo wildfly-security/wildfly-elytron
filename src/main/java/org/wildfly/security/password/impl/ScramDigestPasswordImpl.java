@@ -285,4 +285,9 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
     Object writeReplace() {
         return ScramDigestPassword.createRaw(algorithm, digest, salt, iterationCount);
     }
+
+    public ScramDigestPasswordImpl clone() {
+        return this;
+    }
+
 }

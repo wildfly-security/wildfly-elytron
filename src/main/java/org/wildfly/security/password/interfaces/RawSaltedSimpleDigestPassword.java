@@ -38,4 +38,8 @@ class RawSaltedSimpleDigestPassword extends RawPassword implements SaltedSimpleD
     public byte[] getSalt() {
         return salt.clone();
     }
+
+    public RawSaltedSimpleDigestPassword clone() {
+        return this;
+    }
 }

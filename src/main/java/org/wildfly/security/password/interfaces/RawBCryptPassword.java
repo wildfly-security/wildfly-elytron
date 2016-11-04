@@ -44,4 +44,8 @@ class RawBCryptPassword extends RawPassword implements BCryptPassword {
     public int getIterationCount() {
         return iterationCount;
     }
+
+    public RawBCryptPassword clone() {
+        return this;
+    }
 }

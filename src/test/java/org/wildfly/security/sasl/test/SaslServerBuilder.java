@@ -401,6 +401,10 @@ public class SaslServerBuilder {
         public byte[] getEncoded() {
             return new byte[0];
         }
+
+        public Password clone() {
+            return this;
+        }
     };
 
     public static class BuilderReference<T> {

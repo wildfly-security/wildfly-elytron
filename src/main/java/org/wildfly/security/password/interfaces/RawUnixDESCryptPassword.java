@@ -38,4 +38,9 @@ class RawUnixDESCryptPassword extends RawPassword implements UnixDESCryptPasswor
     public byte[] getHash() {
         return hash.clone();
     }
+
+    public RawUnixDESCryptPassword clone() {
+        return this;
+    }
+
 }

@@ -44,4 +44,9 @@ class RawUnixSHACryptPassword extends RawPassword implements UnixSHACryptPasswor
     public int getIterationCount() {
         return iterationCount;
     }
+
+    public RawUnixSHACryptPassword clone() {
+        return this;
+    }
+
 }

@@ -212,6 +212,10 @@ public class SaltedSimpleDigestPasswordTest {
             return salt;
         }
 
+        public TestPasswordImpl clone() {
+            return this;
+        }
+
     }
 
 }

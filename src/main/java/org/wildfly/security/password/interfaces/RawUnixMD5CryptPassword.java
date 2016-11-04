@@ -38,4 +38,9 @@ class RawUnixMD5CryptPassword extends RawPassword implements UnixMD5CryptPasswor
     public byte[] getHash() {
         return hash.clone();
     }
+
+    public RawUnixMD5CryptPassword clone() {
+        return this;
+    }
+
 }

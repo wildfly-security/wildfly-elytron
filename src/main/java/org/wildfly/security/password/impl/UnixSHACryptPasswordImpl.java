@@ -49,10 +49,10 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     private static final long serialVersionUID = 1414406780966627792L;
 
-    private String algorithm;
-    private byte[] salt;
-    private int iterationCount;
-    private byte[] hash;
+    private final String algorithm;
+    private final byte[] salt;
+    private final int iterationCount;
+    private final byte[] hash;
 
     UnixSHACryptPasswordImpl(UnixSHACryptPassword password) {
         this(password.getAlgorithm(), truncatedClone(password.getSalt()), password.getIterationCount(), password.getHash().clone());
@@ -420,5 +420,9 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
 
     Object writeReplace() {
         return UnixSHACryptPassword.createRaw(algorithm, salt, hash, iterationCount);
+    }
+
+    public UnixSHACryptPasswordImpl clone() {
+        return this;
     }
 }

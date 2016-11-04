@@ -589,4 +589,9 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
     Object writeReplace() {
         return BCryptPassword.createRaw(getAlgorithm(), hash, salt, iterationCount);
     }
+
+    public BCryptPasswordImpl clone() {
+        return this;
+    }
+
 }

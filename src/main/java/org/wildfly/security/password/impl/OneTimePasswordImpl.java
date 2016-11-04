@@ -102,4 +102,9 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
     Object writeReplace() {
         return OneTimePassword.createRaw(algorithm, hash, seed, sequenceNumber);
     }
+
+    public OneTimePasswordImpl clone() {
+        return this;
+    }
+
 }

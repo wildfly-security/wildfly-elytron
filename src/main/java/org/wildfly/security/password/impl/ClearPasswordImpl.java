@@ -88,4 +88,13 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
     Object writeReplace() {
         return ClearPassword.createRaw(getAlgorithm(), password);
     }
+
+    public ClearPasswordImpl clone() {
+        final char[] password = this.password;
+        if (password == null) {
+            return this;
+        }
+        return new ClearPasswordImpl(password.clone());
+    }
+
 }

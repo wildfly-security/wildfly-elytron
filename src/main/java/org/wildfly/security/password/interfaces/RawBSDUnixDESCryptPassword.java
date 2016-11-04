@@ -44,4 +44,9 @@ class RawBSDUnixDESCryptPassword extends RawPassword implements BSDUnixDESCryptP
     public byte[] getHash() {
         return hash.clone();
     }
+
+    public RawBSDUnixDESCryptPassword clone() {
+        return this;
+    }
+
 }

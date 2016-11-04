@@ -149,4 +149,9 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
     Object writeReplace() {
         return DigestPassword.createRaw(algorithm, username, realm, digest);
     }
+
+    public DigestPasswordImpl clone() {
+        return this;
+    }
+
 }
