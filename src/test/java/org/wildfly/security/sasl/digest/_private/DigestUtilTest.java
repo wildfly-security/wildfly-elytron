@@ -19,6 +19,15 @@
 package org.wildfly.security.sasl.digest._private;
 
 import static org.junit.Assert.assertEquals;
+import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.computeHMAC;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.convertToHexBytesWithLeftPadding;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.create3desSubKey;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.decodeByteOrderedInteger;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.digestResponse;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.integerByteOrdered;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.messageDigestAlgorithm;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -30,8 +39,6 @@ import org.junit.Test;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
-
-import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
 
 /**
  * Digest SASL utilities tests

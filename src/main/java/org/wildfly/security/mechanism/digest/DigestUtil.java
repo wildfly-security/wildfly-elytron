@@ -20,9 +20,20 @@ package org.wildfly.security.mechanism.digest;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 
+import javax.security.sasl.SaslException;
+
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.TwoWayPassword;
+import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -168,7 +179,7 @@ public class DigestUtil {
         return realmNumber;
     }
 
-    protected static int skipWhiteSpace(byte[] buffer, int startPoint) {
+    private static int skipWhiteSpace(byte[] buffer, int startPoint) {
         int i = startPoint;
         while (i < buffer.length && isWhiteSpace(buffer[i])) {
             i++;
@@ -176,7 +187,7 @@ public class DigestUtil {
         return i;
     }
 
-    protected static boolean isWhiteSpace(byte b) {
+    private static boolean isWhiteSpace(byte b) {
         if (b == 13)   // CR
             return true;
         else if (b == 10) // LF
@@ -187,5 +198,51 @@ public class DigestUtil {
             return true;
         else
             return false;
+    }
+
+    public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password) {
+        CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
+        latin1Encoder.reset();
+        boolean bothLatin1 = latin1Encoder.canEncode(username);
+        latin1Encoder.reset();
+        if (bothLatin1) {
+            for (char c: password) {
+                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
+            }
+        }
+
+        Charset chosenCharset = bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
+
+        ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
+        urp.append(username.getBytes(chosenCharset));
+        urp.append(':');
+        if (realm != null) {
+            urp.append(realm.getBytes((chosenCharset)));
+        } else {
+            urp.append("");
+        }
+        urp.append(':');
+        urp.append(new String(password).getBytes((chosenCharset)));
+
+        return messageDigest.digest(urp.toArray());
+    }
+
+    /**
+     * Get array of password chars from TwoWayPassword
+     *
+     * @param mechName
+     * @return
+     * @throws SaslException
+     */
+    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws AuthenticationMechanismException {
+        if (password == null) {
+            throw log.mechNoPasswordGiven(mechName);
+        }
+        try {
+            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
+            return pf.getKeySpec(pf.translate(password), ClearPasswordSpec.class).getEncodedPassword();
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+            throw log.mechCannotGetTwoWayPasswordChars(mechName, e);
+        }
     }
 }

@@ -19,6 +19,8 @@
 package org.wildfly.security.sasl.digest;
 
 import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.mechanism.digest.DigestUtil.getTwoWayPasswordChars;
+import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.HASH_algorithm;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.HMAC_algorithm;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.computeHMAC;
@@ -27,7 +29,6 @@ import static org.wildfly.security.sasl.digest._private.DigestUtil.createDesSecr
 import static org.wildfly.security.sasl.digest._private.DigestUtil.decodeByteOrderedInteger;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.integerByteOrdered;
 import static org.wildfly.security.sasl.digest._private.DigestUtil.messageDigestAlgorithm;
-import static org.wildfly.security.sasl.digest._private.DigestUtil.userRealmPasswordDigest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -52,10 +53,10 @@ import javax.security.sasl.SaslException;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.CredentialCallback;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
-import org.wildfly.security.sasl.digest._private.DigestUtil;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SaslWrapper;
@@ -495,7 +496,12 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             }
         }
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
-        char[] passwordChars = DigestUtil.getTwoWayPasswordChars(getMechanismName(), password);
+        char[] passwordChars;
+        try {
+            passwordChars = getTwoWayPasswordChars(getMechanismName(), password);
+        } catch (AuthenticationMechanismException e) {
+            throw e.toSaslException();
+        }
         try {
             password.destroy();
         } catch(DestroyFailedException e) {
