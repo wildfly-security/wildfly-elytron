@@ -26,7 +26,7 @@ import java.util.function.Function;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public interface Password extends Key {
+public interface Password extends Key, Cloneable {
 
     /**
      * Cast this password type if the type and algorithm matches.
@@ -77,4 +77,12 @@ public interface Password extends Key {
     default <P extends Password, R> R castAndApply(Class<P> passwordType, Function<P, R> function) {
         return passwordType.isInstance(this) ? function.apply(passwordType.cast(this)) : null;
     }
+
+    /**
+     * Creates and returns a copy of this {@link Password}.
+     *
+     * @return a copy of this {@link Password}.
+     */
+    Password clone();
+
 }

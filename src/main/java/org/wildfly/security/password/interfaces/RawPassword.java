@@ -41,4 +41,7 @@ abstract class RawPassword implements Password {
     public byte[] getEncoded() {
         return null;
     }
+
+    public abstract RawPassword clone();
+
 }

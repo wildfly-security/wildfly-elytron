@@ -24,4 +24,12 @@ package org.wildfly.security.password;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface OneWayPassword extends Password {
+
+    /**
+     * Creates and returns a copy of this {@link Password}.
+     *
+     * @return a copy of this {@link Password}.
+     */
+    OneWayPassword clone();
+
 }

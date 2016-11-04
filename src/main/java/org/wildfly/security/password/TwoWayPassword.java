@@ -26,4 +26,12 @@ import javax.security.auth.Destroyable;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public interface TwoWayPassword extends Password, Destroyable {
+
+    /**
+     * Creates and returns a copy of this {@link Password}.
+     *
+     * @return a copy of this {@link Password}.
+     */
+    TwoWayPassword clone();
+
 }
