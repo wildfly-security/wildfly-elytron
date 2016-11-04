@@ -54,4 +54,9 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
     public PrivateKey getPrivateKey() {
         return privateKey;
     }
+
+    public X509CertificateChainPrivateCredential clone() {
+        return this;
+    }
+
 }

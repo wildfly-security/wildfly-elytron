@@ -63,4 +63,9 @@ public final class KeyPairCredential implements AlgorithmCredential {
     public String getAlgorithm() {
         return keyPair.getPublic().getAlgorithm();
     }
+
+    public KeyPairCredential clone() {
+        return this;
+    }
+
 }

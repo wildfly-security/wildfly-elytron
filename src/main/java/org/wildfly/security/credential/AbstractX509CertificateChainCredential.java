@@ -80,4 +80,7 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
     public X509Certificate getLastCertificate() {
         return certificateChain[certificateChain.length - 1];
     }
+
+    public abstract AbstractX509CertificateChainCredential clone();
+
 }

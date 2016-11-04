@@ -35,4 +35,9 @@ public final class X509CertificateChainPublicCredential extends AbstractX509Cert
     public X509CertificateChainPublicCredential(final X509Certificate... certificateChain) {
         super(certificateChain);
     }
+
+    public X509CertificateChainPublicCredential clone() {
+        return this;
+    }
+
 }

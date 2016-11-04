@@ -45,4 +45,9 @@ public final class GSSCredentialCredential implements Credential {
     public GSSCredential getGssCredential() {
         return gssCredential;
     }
+
+    public GSSCredentialCredential clone() {
+        return this;
+    }
+
 }

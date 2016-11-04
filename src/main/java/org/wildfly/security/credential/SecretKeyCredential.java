@@ -50,4 +50,9 @@ public final class SecretKeyCredential implements AlgorithmCredential {
     public String getAlgorithm() {
         return secretKey.getAlgorithm();
     }
+
+    public SecretKeyCredential clone() {
+        return this;
+    }
+
 }
