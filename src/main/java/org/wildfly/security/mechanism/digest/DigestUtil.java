@@ -95,13 +95,14 @@ public class DigestUtil {
                 else if (isWhiteSpace(b)) {
                     i = skipWhiteSpace(challenge, i + 1);
 
-                    if (i < challenge.length) {
-                        if (challenge[i] != '=') {
+                    if (key.length() > 0) {
+                        if (i < challenge.length) {
+                            if (challenge[i] != '=') {
+                                throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
+                            }
+                        } else {
                             throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
                         }
-                    }
-                    else {
-                        throw log.mechKeywordNotFollowedByEqual(mechanismName, key.toString());
                     }
                 }
                 else {
