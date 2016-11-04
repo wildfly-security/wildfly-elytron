@@ -41,7 +41,23 @@ public abstract class MatchRule {
             return false;
         }
 
+        public boolean isTypeMatched() {
+            return false;
+        }
+
+        public boolean isTypeAuthorityMatched() {
+            return false;
+        }
+
         public String getMatchProtocol() {
+            return null;
+        }
+
+        public String getMatchAbstractType() {
+            return null;
+        }
+
+        public String getMatchAbstractTypeAuthority() {
             return null;
         }
 
@@ -85,7 +101,7 @@ public abstract class MatchRule {
             return null;
         }
 
-        public boolean matches(final URI uri) {
+        public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
             return true;
         }
 
@@ -162,8 +178,20 @@ public abstract class MatchRule {
      * @param uri the URI to test
      * @return {@code true} if the rule matches, {@code false} otherwise
      */
-    public boolean matches(URI uri) {
-        return parent.matches(uri);
+    public final boolean matches(URI uri) {
+        return matches(uri, null, null);
+    }
+
+    /**
+     * Determine if this rule matches the given URI and type.
+     *
+     * @param uri the URI to test
+     * @param abstractType the abstract type of the connection (may be {@code null})
+     * @param abstractTypeAuthority the authority name of the abstract type (may be {@code null})
+     * @return {@code true} if the rule matches, {@code false} otherwise
+     */
+    public boolean matches(URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return parent.matches(uri, abstractType, abstractTypeAuthority);
     }
 
     // protocol (scheme)
@@ -187,6 +215,42 @@ public abstract class MatchRule {
     }
 
     /**
+     * Determine whether this rule matches based on abstract type.
+     *
+     * @return {@code true} if the rule matches based on type, {@code false} otherwise
+     */
+    public boolean isTypeMatched() {
+        return parent.isTypeMatched();
+    }
+
+    /**
+     * Determine whether this rule matches based on abstract type.
+     *
+     * @return {@code true} if the rule matches based on type, {@code false} otherwise
+     */
+    public boolean isTypeAuthorityMatched() {
+        return parent.isTypeAuthorityMatched();
+    }
+
+    /**
+     * Get the abstract type that this rule matches, or {@code null} if this rule does not match by abstract type.
+     *
+     * @return the abstract type, or {@code null} if there is none
+     */
+    public String getMatchAbstractType() {
+        return parent.getMatchAbstractType();
+    }
+
+    /**
+     * Get the abstract type authority that this rule matches, or {@code null} if this rule does not match by abstract type authority.
+     *
+     * @return the abstract type, or {@code null} if there is none
+     */
+    public String getMatchAbstractTypeAuthority() {
+        return parent.getMatchAbstractTypeAuthority();
+    }
+
+    /**
      * Create a new rule which is the same as this rule, but also matches the given protocol (scheme) name.
      *
      * @param protoName the protocol name to match
@@ -197,6 +261,27 @@ public abstract class MatchRule {
             return without(MatchSchemeRule.class);
         }
         return new MatchSchemeRule(this, protoName);
+    }
+
+    /**
+     * Create a new rule which is the same as this rule, but also matches the given abstract type and type authority.
+     *
+     * @param typeName the type to match
+     * @param authorityName the type authority name to match
+     * @return the new rule
+     */
+    public final MatchRule matchAbstractType(String typeName, String authorityName) {
+        MatchRule baseRule;
+        if (typeName == null || typeName.equals("*")) {
+            baseRule = without(MatchAbstractTypeRule.class);
+        } else {
+            baseRule = new MatchAbstractTypeRule(this, typeName);
+        }
+        if (authorityName == null || authorityName.equals("*")) {
+            return baseRule.without(MatchAbstractTypeAuthorityRule.class);
+        } else {
+            return new MatchAbstractTypeAuthorityRule(baseRule, authorityName);
+        }
     }
 
     // host

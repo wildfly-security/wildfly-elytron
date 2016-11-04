@@ -34,9 +34,9 @@ class MatchUserRule extends MatchRule {
         this.userSpec = userSpec;
     }
 
-    public boolean matches(final URI uri) {
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String userInfo = URIUtil.getUserFromURI(uri);
-        return userInfo != null && userInfo.equals(userSpec) && super.matches(uri);
+        return userInfo != null && userInfo.equals(userSpec) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
     MatchRule reparent(final MatchRule newParent) {

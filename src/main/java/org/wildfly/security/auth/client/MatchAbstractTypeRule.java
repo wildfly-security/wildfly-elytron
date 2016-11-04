@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,45 +20,39 @@ package org.wildfly.security.auth.client;
 
 import java.net.URI;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-class MatchSchemeRule extends MatchRule {
+class MatchAbstractTypeRule extends MatchRule {
+    private final String type;
 
-    private final String protoName;
-
-    MatchSchemeRule(final MatchRule parent, final String protoName) {
+    MatchAbstractTypeRule(final MatchRule parent, final String type) {
         super(parent);
-        this.protoName = protoName;
+        this.type = type;
     }
 
-    public boolean isProtocolMatched() {
+    public String getMatchAbstractType() {
+        return type;
+    }
+
+    public boolean isTypeMatched() {
         return true;
     }
 
-    public String getMatchProtocol() {
-        return protoName;
-    }
-
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
-        String scheme = uri.getScheme();
-        return scheme != null && scheme.equals(protoName) && super.matches(uri, abstractType, abstractTypeAuthority);
+        return type.equals(abstractType) && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
     MatchRule reparent(final MatchRule newParent) {
-        return new MatchSchemeRule(newParent, protoName);
-    }
-
-    public int hashCode() {
-        // our prime is 3547
-        return 3547 * protoName.hashCode() + parentHashCode();
+        return new MatchAbstractTypeRule(newParent, type);
     }
 
     boolean halfEqual(final MatchRule other) {
-        return protoName.equals(other.getMatchProtocol()) && parentHalfEqual(other);
+        return type.equals(other.getMatchAbstractType()) && parentHalfEqual(other);
+    }
+
+    public int hashCode() {
+        return 5693 * type.hashCode() + parentHashCode();
     }
 
     StringBuilder asString(final StringBuilder b) {
-        return parentAsString(b).append("scheme=").append(protoName).append(',');
+        return parentAsString(b).append("abstractType=").append(type).append(',');
     }
 }

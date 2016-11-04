@@ -31,9 +31,9 @@ class MatchNoUserRule extends MatchRule {
         super(parent.without(MatchUserRule.class));
     }
 
-    public boolean matches(final URI uri) {
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         String userInfo = URIUtil.getUserFromURI(uri);
-        return userInfo == null && super.matches(uri);
+        return userInfo == null && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
     MatchRule reparent(final MatchRule newParent) {

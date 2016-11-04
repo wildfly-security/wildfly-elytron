@@ -32,8 +32,8 @@ class MatchPortRule extends MatchRule {
         this.port = port;
     }
 
-    public boolean matches(final URI uri) {
-        return uri.getPort() == port && super.matches(uri);
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
+        return uri.getPort() == port && super.matches(uri, abstractType, abstractTypeAuthority);
     }
 
     MatchRule reparent(final MatchRule newParent) {

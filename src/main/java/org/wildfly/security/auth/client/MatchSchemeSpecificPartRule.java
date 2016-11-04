@@ -32,7 +32,7 @@ class MatchSchemeSpecificPartRule extends MatchRule {
         this.name = name;
     }
 
-    public boolean matches(final URI uri) {
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority) {
         if (! uri.isOpaque()) return false;
         String scheme = uri.getScheme();
         String name;
