@@ -34,7 +34,7 @@ import org.wildfly.security.x500.X500;
 /**
  * A credential is a piece of information that can be used to verify or produce evidence.
  */
-public interface Credential {
+public interface Credential extends Cloneable {
 
     /**
      * Determine whether this credential can, generally speaking, verify the given evidence type.
@@ -136,6 +136,13 @@ public interface Credential {
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, Function<C, R> function) {
         return credentialType.isInstance(this) ? function.apply(credentialType.cast(this)) : null;
     }
+
+    /**
+     * Creates and returns a copy of this {@link Credential}.
+     *
+     * @return a copy of this {@link Credential}.
+     */
+    Credential clone();
 
     /**
      * Convert a key store entry into a credential object.
