@@ -164,7 +164,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             for (Credential credential : entry.getCredentials()) {
                 if (credentialType.isInstance(credential)) {
                     if (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) {
-                        return credentialType.cast(credential);
+                        return credentialType.cast(credential.clone());
                     }
                 }
             }
