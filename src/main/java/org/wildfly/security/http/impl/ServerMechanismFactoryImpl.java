@@ -46,7 +46,13 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMechanismFactory {
 
-    private volatile NonceManager nonceManager;
+    /*
+     * 60 Second Nonce Validity
+     * Single User
+     * 20 Byte Private Key (Gives us at least enough material for SHA-256 to digest))
+     * MD5 Digest Algorithm
+     */
+    private static NonceManager nonceManager = new NonceManager(60000, true, 20, SHA256);
 
     /**
      * @see org.wildfly.security.http.HttpServerAuthenticationMechanismFactory#getMechanismNames(java.util.Map)
@@ -79,7 +85,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
             case DIGEST_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, getNonceManager(), (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH));
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH));
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:
@@ -88,20 +94,4 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
         return null;
     }
 
-    private NonceManager getNonceManager() {
-        if (nonceManager == null) {
-            synchronized(this) {
-                if (nonceManager == null) {
-                    /*
-                     * 60 Second Nonce Validity
-                     * Single User
-                     * 20 Byte Private Key (Gives us at least enough material for SHA-256 to digest))
-                     * MD5 Digest Algorithm
-                     */
-                    nonceManager = new NonceManager(60000, true, 20, SHA256);
-                }
-            }
-        }
-        return nonceManager;
-    }
 }
