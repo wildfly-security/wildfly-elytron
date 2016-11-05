@@ -19,6 +19,7 @@
 package org.wildfly.security.key;
 
 import java.security.Key;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -51,6 +52,13 @@ abstract class RawKey {
 
     public final boolean equals(final Object obj) {
         return this == obj || obj instanceof Key && isEqual((Key) obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return (algorithm != null ? algorithm.hashCode() : 1) +
+                (format != null ? format.hashCode() : 3) +
+                Arrays.hashCode(encoded);
     }
 
     boolean isEqual(Key key) {
