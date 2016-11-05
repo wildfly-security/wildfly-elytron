@@ -21,6 +21,7 @@ package org.wildfly.security.http.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -96,8 +97,11 @@ class NonceManager {
             byteBuffer.putLong(System.currentTimeMillis());
             byteBuffer.put(digest(byteBuffer.array(), 0, PREFIX_LENGTH, salt, messageDigest));
 
-            return ByteIterator.ofBytes(byteBuffer.array()).base64Encode().drainToString();
-
+            String nonce = ByteIterator.ofBytes(byteBuffer.array()).base64Encode().drainToString();
+            if (log.isTraceEnabled()) {
+                log.tracef("New nonce generated %s, using seed %s", nonce, new String(salt, StandardCharsets.UTF_8));
+            }
+            return nonce;
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);
         }
@@ -158,10 +162,15 @@ class NonceManager {
 
             long age = System.currentTimeMillis() - ByteBuffer.wrap(nonceBytes, Integer.BYTES, Long.BYTES).getLong();
             if (age < 0 || age > validityPeriod) {
+                log.tracef("Nonce %s rejected due to age %d being less than 0 or greater than the validity period %d", nonce, age, validityPeriod);
                 return false;
             }
 
             if (Arrays2.equals(nonceBytes, PREFIX_LENGTH, digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest)) == false) {
+                if (log.isTraceEnabled()) {
+                    log.tracef("Nonce %s rejected due to failed comparison using secret key with seed %s.", nonce,
+                            new String(salt, StandardCharsets.UTF_8));
+                }
                 return false;
             }
 
@@ -174,6 +183,8 @@ class NonceManager {
                                 usedNonces.remove(nonce);
                             }
                         }, validityPeriod - age, TimeUnit.MILLISECONDS);
+                    } else {
+                        log.tracef("Nonce %s rejected as previously used.", nonce);
                     }
 
                     return used;
