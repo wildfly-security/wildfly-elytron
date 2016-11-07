@@ -672,6 +672,18 @@ public final class ElytronXmlParser {
                         rule = rule.matchLocalSecurityDomain(parseNameType(reader));
                         break;
                     }
+                    case "match-abstract-type": {
+                        if (isSet(foundBits, 8)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 8);
+                        rule = parseMatchAbstractType(rule, reader);
+                        break;
+                    }
+                    case "match-purpose": {
+                        if (isSet(foundBits, 9)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 9);
+                        rule = rule.matchPurposes(parseNamesType(reader));
+                        break;
+                    }
                     default: {
                         return rule;
                     }
@@ -681,6 +693,23 @@ public final class ElytronXmlParser {
             }
         }
         throw reader.unexpectedDocumentEnd();
+    }
+
+    private static MatchRule parseMatchAbstractType(final MatchRule rule, final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String name = null;
+        String authority = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "name": name = reader.getAttributeValue(i); break;
+                case "authority": authority = reader.getAttributeValue(i); break;
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedElement();
+        return name == null && authority == null ? rule : rule.matchAbstractType(name, authority);
     }
 
     private static boolean isSet(int var, int bit) {

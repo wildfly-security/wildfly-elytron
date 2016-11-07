@@ -120,6 +120,8 @@
             <xsd:element name="match-port" type="port-number-type" minOccurs="0"/>
             <xsd:element name="match-urn" type="name-type" minOccurs="0"/>
             <xsd:element name="match-domain" type="name-type" minOccurs="0"/>
+            <xsd:element name="match-abstract-type" type="abstract-type-type" minOccurs="0"/>
+            <xsd:element name="match-purpose" type="names-list-type" minOccurs="0"/>
         </xsd:all>
     </xsd:group>
 
@@ -208,6 +210,11 @@
 
     <xsd:complexType name="name-type">
         <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="abstract-type-type">
+        <xsd:attribute name="name" type="xsd:string" use="optional"/>
+        <xsd:attribute name="authority" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="optional-name-type">

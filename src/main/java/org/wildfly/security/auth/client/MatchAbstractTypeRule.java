@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,35 +20,39 @@ package org.wildfly.security.auth.client;
 
 import java.net.URI;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-class MatchPortRule extends MatchRule {
+class MatchAbstractTypeRule extends MatchRule {
+    private final String type;
 
-    private final int port;
-
-    MatchPortRule(final MatchRule parent, final int port) {
+    MatchAbstractTypeRule(final MatchRule parent, final String type) {
         super(parent);
-        this.port = port;
+        this.type = type;
+    }
+
+    public String getMatchAbstractType() {
+        return type;
+    }
+
+    public boolean isTypeMatched() {
+        return true;
     }
 
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return uri.getPort() == port && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return type.equals(abstractType) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {
-        return new MatchPortRule(newParent, port);
+        return new MatchAbstractTypeRule(newParent, type);
     }
 
     boolean halfEqual(final MatchRule other) {
-        return other.getMatchPort() == port && parentHalfEqual(other);
+        return type.equals(other.getMatchAbstractType()) && parentHalfEqual(other);
     }
 
     public int hashCode() {
-        return 7919 * port + parentHashCode();
+        return 5693 * type.hashCode() + parentHashCode();
     }
 
     StringBuilder asString(final StringBuilder b) {
-        return parentAsString(b).append("port=").append(port).append(',');
+        return parentAsString(b).append("abstractType=").append(type).append(',');
     }
 }

@@ -40,9 +40,9 @@ class MatchSchemeRule extends MatchRule {
         return protoName;
     }
 
-    public boolean matches(final URI uri) {
+    public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
         String scheme = uri.getScheme();
-        return scheme != null && scheme.equals(protoName) && super.matches(uri);
+        return scheme != null && scheme.equals(protoName) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {

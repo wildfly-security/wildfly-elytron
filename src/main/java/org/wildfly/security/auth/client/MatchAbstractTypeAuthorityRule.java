@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,35 +20,39 @@ package org.wildfly.security.auth.client;
 
 import java.net.URI;
 
-/**
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
- */
-class MatchPortRule extends MatchRule {
+class MatchAbstractTypeAuthorityRule extends MatchRule {
+    private final String authority;
 
-    private final int port;
-
-    MatchPortRule(final MatchRule parent, final int port) {
+    MatchAbstractTypeAuthorityRule(final MatchRule parent, final String authority) {
         super(parent);
-        this.port = port;
+        this.authority = authority;
+    }
+
+    public String getMatchAbstractTypeAuthority() {
+        return authority;
+    }
+
+    public boolean isTypeAuthorityMatched() {
+        return true;
     }
 
     public boolean matches(final URI uri, final String abstractType, final String abstractTypeAuthority, final String purpose) {
-        return uri.getPort() == port && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
+        return authority.equals(abstractTypeAuthority) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {
-        return new MatchPortRule(newParent, port);
+        return new MatchAbstractTypeAuthorityRule(newParent, authority);
     }
 
     boolean halfEqual(final MatchRule other) {
-        return other.getMatchPort() == port && parentHalfEqual(other);
+        return authority.equals(other.getMatchAbstractTypeAuthority()) && parentHalfEqual(other);
     }
 
     public int hashCode() {
-        return 7919 * port + parentHashCode();
+        return 7879 * authority.hashCode() + parentHashCode();
     }
 
     StringBuilder asString(final StringBuilder b) {
-        return parentAsString(b).append("port=").append(port).append(',');
+        return parentAsString(b).append("abstractTypeAuthority=").append(authority).append(',');
     }
 }
