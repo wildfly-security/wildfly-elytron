@@ -41,6 +41,7 @@ import javax.security.sasl.SaslServer;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
@@ -97,7 +98,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         // realms
         StringBuilder sb = new StringBuilder();
         for (String realm: this.realms) {
-            sb.append("realm=\"").append(SaslQuote.quote(realm)).append("\"").append(DELIMITER);
+            sb.append("realm=\"").append(DigestQuote.quote(realm)).append("\"").append(DELIMITER);
         }
         challenge.append(sb.toString().getBytes(getCharset()));
 
@@ -106,7 +107,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         assert nonce == null;
         nonce = generateNonce();
         challenge.append("nonce=\"");
-        challenge.append(SaslQuote.quote(nonce));
+        challenge.append(DigestQuote.quote(nonce));
         challenge.append("\"").append(DELIMITER);
 
         // qop
@@ -116,7 +117,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             for(String qop : qops){
                 if(!first) challenge.append(DELIMITER);
                 first = false;
-                challenge.append(SaslQuote.quote(qop));
+                challenge.append(DigestQuote.quote(qop));
             }
             challenge.append("\"").append(DELIMITER);
         }

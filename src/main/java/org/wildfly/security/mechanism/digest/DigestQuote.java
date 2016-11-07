@@ -16,21 +16,21 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.sasl.digest;
+package org.wildfly.security.mechanism.digest;
 
 import org.wildfly.security.util.ByteStringBuilder;
 
 /**
- * Utility class used to convert string to SASL quoted strings
+ * Utility class used to convert string to quoted strings
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  *
  */
-class SaslQuote {
+public class DigestQuote {
 
     private static final char QUOTE = '\\';
 
-    private SaslQuote() {
+    private DigestQuote() {
     }
 
     private static boolean quoteNeeded(char ch) {
@@ -49,7 +49,7 @@ class SaslQuote {
      * @param inputStr String to be quoted
      * @return
      */
-    static String quote(String inputStr) {
+    public static String quote(String inputStr) {
         int len = inputStr.length();
         StringBuilder sb = new StringBuilder(len);
         for (int i = 0; i < len; i++) {
@@ -64,7 +64,7 @@ class SaslQuote {
         return sb.toString();
     }
 
-    static byte[] quote(byte[] input) {
+    public static byte[] quote(byte[] input) {
         ByteStringBuilder bsb = new ByteStringBuilder();
         for (int i = 0; i < input.length; i++) {
             if (quoteNeeded((char)input[i])) {

@@ -43,6 +43,7 @@ import javax.security.sasl.SaslException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteStringBuilder;
 import org.wildfly.security.util.DefaultTransformationMapper;
@@ -241,13 +242,13 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // username
         digestResponse.append("username=\"");
-        digestResponse.append(SaslQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
+        digestResponse.append(DigestQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
         if(realm != null){
             digestResponse.append("realm=\"");
-            digestResponse.append(SaslQuote.quote(realm).getBytes(serverHashedURPUsingcharset));
+            digestResponse.append(DigestQuote.quote(realm).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"").append(DELIMITER);
         }
 
@@ -304,7 +305,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         if (authorizationId != null) {
             digestResponse.append(DELIMITER);
             digestResponse.append("authzid=\"");
-            digestResponse.append(SaslQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
+            digestResponse.append(DigestQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"");
         }
 

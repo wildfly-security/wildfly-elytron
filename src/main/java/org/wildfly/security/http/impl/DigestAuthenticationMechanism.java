@@ -66,6 +66,7 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.http.HttpServerResponse;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
@@ -301,7 +302,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
     private void prepareResponse(String realmName, HttpServerResponse response, boolean stale) throws HttpAuthenticationException {
         StringBuilder sb = new StringBuilder(CHALLENGE_PREFIX);
-        sb.append(REALM).append("=\"").append(realmName).append("\"");
+        sb.append(REALM).append("=\"").append(DigestQuote.quote(realmName)).append("\"");
 
         if (domain != null) {
             sb.append(", ").append(DOMAIN).append("=\"").append(domain).append("\"");
