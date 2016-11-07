@@ -32,6 +32,13 @@ public interface AlgorithmCredential extends Credential {
      */
     String getAlgorithm();
 
+    /**
+     * Creates and returns a copy of this {@link Credential}.
+     *
+     * @return a copy of this {@link Credential}.
+     */
+    AlgorithmCredential clone();
+
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
         return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) ? function.apply(credentialType.cast(this)) : null;
     }

@@ -45,4 +45,12 @@ public interface X509CertificateChainCredential extends AlgorithmCredential {
      * @return the last certificate (not {@code null})
      */
     X509Certificate getLastCertificate();
+
+    /**
+     * Creates and returns a copy of this {@link Credential}.
+     *
+     * @return a copy of this {@link Credential}.
+     */
+    X509CertificateChainCredential clone();
+
 }

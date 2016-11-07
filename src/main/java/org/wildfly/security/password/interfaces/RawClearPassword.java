@@ -70,4 +70,13 @@ class RawClearPassword extends RawPassword implements ClearPassword {
     public boolean isDestroyed() {
         return password == null || password.length == 0 || password[0] == 0;
     }
+
+    public RawClearPassword clone() {
+        final char[] password = this.password;
+        if (password == null || password.length == 0) {
+            return this;
+        }
+        return new RawClearPassword(getAlgorithm(), password);
+    }
+
 }

@@ -97,5 +97,12 @@ public final class PasswordCredential implements AlgorithmCredential {
         }
         return false;
     }
+
+    public PasswordCredential clone() {
+        final Password password = this.password;
+        final Password clone = password.clone();
+        return clone == password ? this : new PasswordCredential(clone);
+    }
+
 }
 

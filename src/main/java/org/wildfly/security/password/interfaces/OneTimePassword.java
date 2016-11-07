@@ -67,6 +67,13 @@ public interface OneTimePassword extends OneWayPassword {
     int getSequenceNumber();
 
     /**
+     * Creates and returns a copy of this {@link Password}.
+     *
+     * @return a copy of this {@link Password}.
+     */
+    OneTimePassword clone();
+
+    /**
      * Create a raw implementation of this password type.  No validation of the content is performed, and the password
      * must be "adopted" in to a {@link PasswordFactory} (via the {@link PasswordFactory#translate(Password)} method)
      * before it can be validated and used to verify guesses.

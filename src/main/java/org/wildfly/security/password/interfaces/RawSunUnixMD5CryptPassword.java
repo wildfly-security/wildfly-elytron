@@ -44,4 +44,9 @@ class RawSunUnixMD5CryptPassword extends RawPassword implements SunUnixMD5CryptP
     public int getIterationCount() {
         return iterationCount;
     }
+
+    public RawSunUnixMD5CryptPassword clone() {
+        return this;
+    }
+
 }

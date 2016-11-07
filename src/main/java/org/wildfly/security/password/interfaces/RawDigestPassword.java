@@ -44,4 +44,9 @@ class RawDigestPassword extends RawPassword implements DigestPassword {
     public byte[] getDigest() {
         return digest.clone();
     }
+
+    public RawDigestPassword clone() {
+        return this;
+    }
+
 }

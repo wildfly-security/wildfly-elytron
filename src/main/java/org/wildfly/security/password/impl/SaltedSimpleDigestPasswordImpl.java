@@ -193,4 +193,9 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
     Object writeReplace() {
         return SaltedSimpleDigestPassword.createRaw(algorithm, digest, salt);
     }
+
+    public SaltedSimpleDigestPasswordImpl clone() {
+        return this;
+    }
+
 }

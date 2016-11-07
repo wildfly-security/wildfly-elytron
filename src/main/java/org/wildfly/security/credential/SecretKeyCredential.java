@@ -19,6 +19,7 @@
 package org.wildfly.security.credential;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.key.KeyUtil;
 
 import javax.crypto.SecretKey;
 
@@ -50,4 +51,11 @@ public final class SecretKeyCredential implements AlgorithmCredential {
     public String getAlgorithm() {
         return secretKey.getAlgorithm();
     }
+
+    public SecretKeyCredential clone() {
+        final SecretKey secretKey = this.secretKey;
+        final SecretKey clone = KeyUtil.cloneKey(SecretKey.class, secretKey);
+        return clone == secretKey ? this : new SecretKeyCredential(clone);
+    }
+
 }

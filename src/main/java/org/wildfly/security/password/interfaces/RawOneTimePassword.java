@@ -44,4 +44,9 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
     public int getSequenceNumber() {
         return sequenceNumber;
     }
+
+    public RawOneTimePassword clone() {
+        return this;
+    }
+
 }

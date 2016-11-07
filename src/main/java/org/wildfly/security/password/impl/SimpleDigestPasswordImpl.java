@@ -130,4 +130,9 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
     Object writeReplace() {
         return SimpleDigestPassword.createRaw(algorithm, digest);
     }
+
+    public SimpleDigestPasswordImpl clone() {
+        return this;
+    }
+
 }

@@ -23,6 +23,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.key.KeyUtil;
 
 /**
  * A public/private key pair credential.
@@ -62,5 +63,11 @@ public final class KeyPairCredential implements AlgorithmCredential {
 
     public String getAlgorithm() {
         return keyPair.getPublic().getAlgorithm();
+    }
+
+    public KeyPairCredential clone() {
+        final PrivateKey privateKey = keyPair.getPrivate();
+        final PrivateKey clone = KeyUtil.cloneKey(PrivateKey.class, privateKey);
+        return privateKey == clone ? this : new KeyPairCredential(new KeyPair(keyPair.getPublic(), clone));
     }
 }

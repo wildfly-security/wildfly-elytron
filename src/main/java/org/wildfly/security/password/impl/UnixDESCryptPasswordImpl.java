@@ -394,4 +394,9 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     Object writeReplace() {
         return UnixDESCryptPassword.createRaw(getAlgorithm(), salt, hash);
     }
+
+    public UnixDESCryptPasswordImpl clone() {
+        return this;
+    }
+
 }

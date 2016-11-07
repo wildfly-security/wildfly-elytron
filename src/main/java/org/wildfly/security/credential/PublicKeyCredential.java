@@ -54,4 +54,9 @@ public final class PublicKeyCredential implements AlgorithmCredential {
     public String getAlgorithm() {
         return publicKey.getAlgorithm();
     }
+
+    public PublicKeyCredential clone() {
+        return this;
+    }
+
 }

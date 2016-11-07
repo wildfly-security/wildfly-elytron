@@ -46,4 +46,9 @@ public final class BearerTokenCredential implements Credential {
     public String getToken() {
         return this.token;
     }
+
+    public BearerTokenCredential clone() {
+        return this;
+    }
+
 }

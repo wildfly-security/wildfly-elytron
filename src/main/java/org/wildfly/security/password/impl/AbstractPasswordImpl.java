@@ -41,6 +41,8 @@ abstract class AbstractPasswordImpl implements Password {
 
     abstract <T extends KeySpec> boolean convertibleTo(final Class<T> keySpecType);
 
+    public abstract AbstractPasswordImpl clone();
+
     Password translate(final AlgorithmParameterSpec parameterSpec) throws InvalidKeyException, InvalidAlgorithmParameterException {
         throw new InvalidAlgorithmParameterException();
     }

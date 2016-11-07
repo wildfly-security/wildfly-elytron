@@ -234,4 +234,9 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
     Object writeReplace() {
         return UnixMD5CryptPassword.createRaw(getAlgorithm(), salt, hash);
     }
+
+    public UnixMD5CryptPasswordImpl clone() {
+        return this;
+    }
+
 }

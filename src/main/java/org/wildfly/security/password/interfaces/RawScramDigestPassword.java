@@ -44,4 +44,9 @@ class RawScramDigestPassword extends RawPassword implements ScramDigestPassword 
     public int getIterationCount() {
         return iterationCount;
     }
+
+    public RawScramDigestPassword clone() {
+        return this;
+    }
+
 }

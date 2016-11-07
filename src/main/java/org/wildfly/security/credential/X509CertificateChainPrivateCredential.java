@@ -22,6 +22,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.key.KeyUtil;
 
 /**
  * A credential containing a private key and an X.509 certificate chain.
@@ -53,5 +54,11 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
      */
     public PrivateKey getPrivateKey() {
         return privateKey;
+    }
+
+    public X509CertificateChainPrivateCredential clone() {
+        final PrivateKey privateKey = this.privateKey;
+        final PrivateKey clone = KeyUtil.cloneKey(PrivateKey.class, privateKey);
+        return privateKey == clone ? this : new X509CertificateChainPrivateCredential(clone, getCertificateChain());
     }
 }

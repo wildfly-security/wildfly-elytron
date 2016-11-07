@@ -610,4 +610,9 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
     Object writeReplace() {
         return BSDUnixDESCryptPassword.createRaw(getAlgorithm(), hash, salt, iterationCount);
     }
+
+    public BSDUnixDESCryptPasswordImpl clone() {
+        return this;
+    }
+
 }
