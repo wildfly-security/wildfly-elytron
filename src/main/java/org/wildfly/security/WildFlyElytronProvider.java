@@ -20,6 +20,7 @@ package org.wildfly.security;
 
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
+import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
 import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.password.interfaces.BCryptPassword.ALGORITHM_BCRYPT;
@@ -126,6 +127,7 @@ public class WildFlyElytronProvider extends Provider {
 
         putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, BASIC_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, CLIENT_CERT_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, FORM_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, SPNEGO_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
     }

@@ -23,7 +23,7 @@ import org.wildfly.security.auth.server.SecurityRealm;
 
 /**
  * A callback used to query a server participant for the names of realms that it is prepared to offer.  Note that the
- * SASL realm concept is not directly related to the Elytron {@linkplain SecurityRealm security realm concept}.
+ * authentication mechanism realm concept is not directly related to the Elytron {@linkplain SecurityRealm security realm concept}.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

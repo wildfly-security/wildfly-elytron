@@ -34,7 +34,7 @@ import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
 
 /**
- * A base class for HTTP mechanisms that operate on validation fo plain text usernames and passwords.
+ * A base class for HTTP mechanisms that operate on validation of plain text usernames and passwords.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */

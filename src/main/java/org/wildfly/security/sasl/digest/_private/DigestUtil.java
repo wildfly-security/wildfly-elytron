@@ -20,7 +20,6 @@ package org.wildfly.security.sasl.digest._private;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -37,11 +36,8 @@ import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.sasl.SaslException;
 
-import org.wildfly.security.password.PasswordFactory;
-import org.wildfly.security.password.TwoWayPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
 
@@ -79,33 +75,6 @@ public final class DigestUtil {
             case SaslMechanismInformation.Names.DIGEST_SHA_512: return "SHA-512";
             default: return null;
         }
-    }
-
-    public static byte[] userRealmPasswordDigest(MessageDigest messageDigest, String username, String realm, char[] password) {
-        CharsetEncoder latin1Encoder = StandardCharsets.ISO_8859_1.newEncoder();
-        latin1Encoder.reset();
-        boolean bothLatin1 = latin1Encoder.canEncode(username);
-        latin1Encoder.reset();
-        if (bothLatin1) {
-            for (char c: password) {
-                bothLatin1 = bothLatin1 && latin1Encoder.canEncode(c);
-            }
-        }
-
-        Charset chosenCharset = bothLatin1 ? StandardCharsets.ISO_8859_1 : StandardCharsets.UTF_8;
-
-        ByteStringBuilder urp = new ByteStringBuilder(); // username:realm:password
-        urp.append(username.getBytes(chosenCharset));
-        urp.append(':');
-        if (realm != null) {
-            urp.append(realm.getBytes((chosenCharset)));
-        } else {
-            urp.append("");
-        }
-        urp.append(':');
-        urp.append(new String(password).getBytes((chosenCharset)));
-
-        return messageDigest.digest(urp.toArray());
     }
 
     /**
@@ -306,25 +275,6 @@ public final class DigestUtil {
      */
     private static byte fixParityBit(byte toFix) {
         return (Integer.bitCount(toFix & 0xff) & 1) == 0 ? (byte) (toFix ^ 1) : toFix;
-    }
-
-    /**
-     * Get array of password chars from TwoWayPassword
-     *
-     * @param mechName
-     * @return
-     * @throws SaslException
-     */
-    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws SaslException {
-        if (password == null) {
-            throw log.mechNoPasswordGiven(mechName).toSaslException();
-        }
-        try {
-            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
-            return pf.getKeySpec(pf.translate(password), ClearPasswordSpec.class).getEncodedPassword();
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
-            throw log.mechCannotGetTwoWayPasswordChars(mechName, e).toSaslException();
-        }
     }
 
 }

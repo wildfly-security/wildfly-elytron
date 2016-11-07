@@ -19,14 +19,17 @@
 package org.wildfly.security.sasl.digest;
 
 import static org.wildfly.security._private.ElytronMessages.log;
-import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
+import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH_CONF;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_VALUES;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.digestResponse;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.wildfly.common.Assert;
-import org.wildfly.security.util.ByteStringBuilder;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -35,6 +38,11 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+
+import org.wildfly.common.Assert;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.digest.DigestQuote;
+import org.wildfly.security.util.ByteStringBuilder;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -90,7 +98,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         // realms
         StringBuilder sb = new StringBuilder();
         for (String realm: this.realms) {
-            sb.append("realm=\"").append(SaslQuote.quote(realm)).append("\"").append(DELIMITER);
+            sb.append("realm=\"").append(DigestQuote.quote(realm)).append("\"").append(DELIMITER);
         }
         challenge.append(sb.toString().getBytes(getCharset()));
 
@@ -99,7 +107,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
         assert nonce == null;
         nonce = generateNonce();
         challenge.append("nonce=\"");
-        challenge.append(SaslQuote.quote(nonce));
+        challenge.append(DigestQuote.quote(nonce));
         challenge.append("\"").append(DELIMITER);
 
         // qop
@@ -109,7 +117,7 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
             for(String qop : qops){
                 if(!first) challenge.append(DELIMITER);
                 first = false;
-                challenge.append(SaslQuote.quote(qop));
+                challenge.append(DigestQuote.quote(qop));
             }
             challenge.append("\"").append(DELIMITER);
         }
@@ -328,7 +336,12 @@ class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
                 }
 
                 // parse digest response
-                HashMap<String, byte[]> parsedDigestResponse = parseResponse(message);
+                HashMap<String, byte[]> parsedDigestResponse;
+                try {
+                    parsedDigestResponse = parseResponse(message, charset, false, getMechanismName());
+                } catch (AuthenticationMechanismException e) {
+                    throw e.toSaslException();
+                }
                 noteDigestResponseData(parsedDigestResponse);
 
                 // validate

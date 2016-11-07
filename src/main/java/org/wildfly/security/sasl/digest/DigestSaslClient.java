@@ -18,16 +18,20 @@
 
 package org.wildfly.security.sasl.digest;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+import static org.wildfly.security.mechanism.digest.DigestUtil.parseResponse;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.H_A1;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_AUTH_CONF;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.QOP_VALUES;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.convertToHexBytesWithLeftPadding;
+import static org.wildfly.security.sasl.digest._private.DigestUtil.digestResponse;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import org.wildfly.common.Assert;
-import org.wildfly.security.util.ByteStringBuilder;
-import org.wildfly.security.util.DefaultTransformationMapper;
-import org.wildfly.security.util.TransformationMapper;
-import org.wildfly.security.util.TransformationSpec;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -37,9 +41,14 @@ import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.wildfly.common.Assert;
+import org.wildfly.security.mechanism.AuthenticationMechanismException;
+import org.wildfly.security.mechanism.digest.DigestQuote;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
-import static org.wildfly.security.sasl.digest._private.DigestUtil.*;
-import static org.wildfly.security._private.ElytronMessages.log;
+import org.wildfly.security.util.ByteStringBuilder;
+import org.wildfly.security.util.DefaultTransformationMapper;
+import org.wildfly.security.util.TransformationMapper;
+import org.wildfly.security.util.TransformationSpec;
 
 /**
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
@@ -233,13 +242,13 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
         // username
         digestResponse.append("username=\"");
-        digestResponse.append(SaslQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
+        digestResponse.append(DigestQuote.quote(userName).getBytes(serverHashedURPUsingcharset));
         digestResponse.append("\"").append(DELIMITER);
 
         // realm
         if(realm != null){
             digestResponse.append("realm=\"");
-            digestResponse.append(SaslQuote.quote(realm).getBytes(serverHashedURPUsingcharset));
+            digestResponse.append(DigestQuote.quote(realm).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"").append(DELIMITER);
         }
 
@@ -296,7 +305,7 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
         if (authorizationId != null) {
             digestResponse.append(DELIMITER);
             digestResponse.append("authzid=\"");
-            digestResponse.append(SaslQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
+            digestResponse.append(DigestQuote.quote(authorizationId).getBytes(serverHashedURPUsingcharset));
             digestResponse.append("\"");
         }
 
@@ -340,7 +349,12 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
 
     @Override
     protected byte[] evaluateMessage(int state, final byte[] message) throws SaslException {
-        HashMap<String, byte[]> parsedChallenge = parseResponse(message);
+        HashMap<String, byte[]> parsedChallenge;
+        try {
+            parsedChallenge = parseResponse(message, charset, true, getMechanismName());
+        } catch (AuthenticationMechanismException e) {
+            throw e.toSaslException();
+        }
         switch (state) {
             case STEP_TWO:
                 noteChallengeData(parsedChallenge);
