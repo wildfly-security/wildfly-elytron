@@ -54,18 +54,18 @@ class NonceManager {
 
     private final byte[] privateKey;
 
-    private final long validityPeriod;
+    private final long validityPeriodNano;
     private final boolean singleUse;
     private final String algorithm;
 
     /**
-     * @param validityPeriod the time in ms that nonces are valid for.
+     * @param validityPeriod the time in ms that nonces are valid for in ms.
      * @param singleUse are nonces single use?
      * @param keySize the number of bytes to use in the private key of this node.
      * @param algorithm the message digest algorithm to use when creating the digest portion of the nonce.
      */
     NonceManager(long validityPeriod, boolean singleUse, int keySize, String algorithm) {
-        this.validityPeriod = validityPeriod;
+        this.validityPeriodNano = validityPeriod * 1000000;
         this.singleUse = singleUse;
         this.algorithm = algorithm;
 
@@ -94,7 +94,7 @@ class NonceManager {
 
             ByteBuffer byteBuffer = ByteBuffer.allocate(PREFIX_LENGTH + messageDigest.getDigestLength());
             byteBuffer.putInt(nonceCounter.incrementAndGet());
-            byteBuffer.putLong(System.currentTimeMillis());
+            byteBuffer.putLong(System.nanoTime());
             byteBuffer.put(digest(byteBuffer.array(), 0, PREFIX_LENGTH, salt, messageDigest));
 
             String nonce = ByteIterator.ofBytes(byteBuffer.array()).base64Encode().drainToString();
@@ -160,9 +160,9 @@ class NonceManager {
                 throw log.invalidNonceLength(HttpConstants.DIGEST_NAME);
             }
 
-            long age = System.currentTimeMillis() - ByteBuffer.wrap(nonceBytes, Integer.BYTES, Long.BYTES).getLong();
-            if (age < 0 || age > validityPeriod) {
-                log.tracef("Nonce %s rejected due to age %d being less than 0 or greater than the validity period %d", nonce, age, validityPeriod);
+            long age = System.nanoTime() - ByteBuffer.wrap(nonceBytes, Integer.BYTES, Long.BYTES).getLong();
+            if (age < 0 || age > validityPeriodNano) {
+                log.tracef("Nonce %s rejected due to age %d (ns) being less than 0 or greater than the validity period %d (ns)", nonce, age, validityPeriodNano);
                 return false;
             }
 
@@ -182,7 +182,7 @@ class NonceManager {
                             synchronized(usedNonces) {
                                 usedNonces.remove(nonce);
                             }
-                        }, validityPeriod - age, TimeUnit.MILLISECONDS);
+                        }, validityPeriodNano - age, TimeUnit.MILLISECONDS);
                     } else {
                         log.tracef("Nonce %s rejected as previously used.", nonce);
                     }
