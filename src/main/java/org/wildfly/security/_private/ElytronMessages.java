@@ -141,8 +141,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
-    @Message(id = 1006, value = "No realm name found in properties file")
-    IOException noRealmFoundInProperties();
+    @Message(id = 1006, value = "No realm name found in password property file")
+    RealmUnavailableException noRealmFoundInProperties();
 
     @LogMessage(level = Logger.Level.DEBUG)
     @Message(id = 1007, value = "JAAS authentication failed for principal %s")
