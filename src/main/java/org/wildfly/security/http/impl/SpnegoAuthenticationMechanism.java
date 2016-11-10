@@ -40,6 +40,7 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
+import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.http.HttpAuthenticationException;
@@ -89,24 +90,24 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
         if (gssContext == null) { // init GSSContext
             ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSCredentialCredential.class);
-            final GSSCredential gssCredential;
+            final GSSCredential serviceGssCredential;
 
             try {
-                log.trace("Obtaining GSSCredential from callbackHandler...");
+                log.trace("Obtaining GSSCredential for the service from callback handler...");
                 callbackHandler.handle(new Callback[] { gssCredentialCallback });
-                gssCredential = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
+                serviceGssCredential = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
             } catch (IOException | UnsupportedCallbackException e) {
                 throw log.mechCallbackHandlerFailedForUnknownReason(SPNEGO_NAME, e).toHttpAuthenticationException();
             }
 
-            if (gssCredential == null) {
-                log.trace("GSSCredential from callbackHandler is null - cannot perform SPNEGO authentication");
+            if (serviceGssCredential == null) {
+                log.trace("GSSCredential for the service from callback handler is null - cannot perform SPNEGO authentication");
                 request.noAuthenticationInProgress();
                 return;
             }
 
             try {
-                gssContext = GSSManager.getInstance().createContext(gssCredential);
+                gssContext = GSSManager.getInstance().createContext(serviceGssCredential);
 
                 if (connectionScope != null) {
                     connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
@@ -203,7 +204,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             callbackHandler.handle(new Callback[] {authorize});
 
             authorized = authorize.isAuthorized();
-            log.tracef("Authorized by callbackHandler = %b  clientName = [%s]", authorized, clientName);
+            log.tracef("Authorized by callback handler = %b  clientName = [%s]", authorized, clientName);
         } catch (GSSException e) {
             try {
                 MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
@@ -213,6 +214,24 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         } catch (IOException e) {
             throw log.mechServerSideAuthenticationFailed(SPNEGO_NAME, e).toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
+        }
+
+        if (authorized) { // credential delegation
+            if (gssContext.getCredDelegState()) {
+                try {
+                    GSSCredential credential = gssContext.getDelegCred();
+                    log.tracef("Credential delegation enabled, delegated credential = %s", credential);
+                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, new IdentityCredentialCallback(new GSSCredentialCredential(credential), true));
+                } catch (UnsupportedCallbackException ignored) {
+                    // ignored
+                } catch (AuthenticationMechanismException e) {
+                    throw e.toHttpAuthenticationException();
+                } catch (GSSException e) {
+                    throw new HttpAuthenticationException(e);
+                }
+            } else {
+                log.trace("Credential delegation not enabled");
+            }
         }
 
         try {
