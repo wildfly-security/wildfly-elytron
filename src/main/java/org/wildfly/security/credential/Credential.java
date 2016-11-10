@@ -145,6 +145,26 @@ public interface Credential extends Cloneable {
     Credential clone();
 
     /**
+     * Determine if this credential is the same kind of credential as the given credential.
+     *
+     * @param other the other credential
+     * @return {@code true} if the credentials are of the same kind, {@code false} otherwise
+     */
+    default boolean matches(Credential other) {
+        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass();
+    }
+
+    /**
+     * Determine if this credential is the same kind of credential as the given credential.
+     *
+     * @param other the other credential
+     * @return {@code true} if the credentials are of the same kind, {@code false} otherwise
+     */
+    default boolean matches(AlgorithmCredential other) {
+        return false;
+    }
+
+    /**
      * Convert a key store entry into a credential object.
      *
      * @param keyStoreEntry the key store entry to convert (must not be {@code null})

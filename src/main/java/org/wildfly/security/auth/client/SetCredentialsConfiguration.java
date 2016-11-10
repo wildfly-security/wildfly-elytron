@@ -92,12 +92,12 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
         for (Class<? extends Credential> type : types) {
             Set<String> algorithms = SaslMechanismInformation.getSupportedClientCredentialAlgorithms(mechanismName, type);
             if (algorithms.contains("*")) {
-                if (credentials.getCredentialAcquireSupport(type, null).mayBeSupported()) {
+                if (credentials.contains(type, null)) {
                     return true;
                 }
             } else {
                 for (String algorithm : algorithms) {
-                    if (credentials.getCredentialAcquireSupport(type, algorithm).mayBeSupported()) {
+                    if (credentials.contains(type, algorithm)) {
                         return true;
                     }
                 }
