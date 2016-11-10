@@ -713,6 +713,21 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3024, value = "Unsupported key encoding format [%s]")
     IllegalArgumentException publicKeyUnsupportedEncodingFormat(String format);
 
+    @Message(id = 3025, value = "Iteration count not specified for password based encryption")
+    IllegalArgumentException iterationCountNotSpecified();
+
+    @Message(id = 3026, value = "Salt not specified for password based encryption")
+    IllegalArgumentException saltNotSpecified();
+
+    @Message(id = 3027, value = "Initial key not specified for password based encryption")
+    IllegalArgumentException initialKeyNotSpecified();
+
+    @Message(id = 3028, value = "Security provider \"%s\" doesn't exist")
+    IllegalArgumentException securityProviderDoesnExist(String providerName);
+
+    @Message(id = 3029, value = "No such key algorithm \"%s\"")
+    IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
+
     /* ssl package */
 
     @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")
