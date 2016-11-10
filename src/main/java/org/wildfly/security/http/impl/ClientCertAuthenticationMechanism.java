@@ -94,9 +94,11 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
     private boolean attemptAuthentication(HttpServerRequest request, SSLSession sslSession) throws HttpAuthenticationException {
         X509Certificate[] x509Certificates;
         try {
-            x509Certificates = X500.asX509CertificateArray((Object[]) sslSession.getPeerCertificates());
+            x509Certificates = X500.asX509CertificateArray(sslSession.getPeerCertificates());
         } catch (SSLPeerUnverifiedException e) {
-            throw log.mechCallbackHandlerFailedForUnknownReason(CLIENT_CERT_NAME, e).toHttpAuthenticationException();
+            log.trace("CLIENT-CERT Peer Unverified");
+            request.noAuthenticationInProgress();
+            return true;
         }
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
