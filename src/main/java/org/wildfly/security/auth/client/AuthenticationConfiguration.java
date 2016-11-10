@@ -22,6 +22,8 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
 import java.net.URI;
+import java.security.AccessControlContext;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
@@ -57,6 +59,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
+import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -65,6 +68,7 @@ import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.ssl.CipherSuiteSelector;
@@ -611,6 +615,19 @@ public abstract class AuthenticationConfiguration {
     public AuthenticationConfiguration usePort(int port) {
         if (port < 1 || port > 65535) throw log.invalidPortNumber(port);
         return new SetPortAuthenticationConfiguration(this, port);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which forwards the authentication name
+     * and credentials from the current identity of the given security domain.
+     *
+     * @param securityDomain the security domain (must not be {@code null})
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useForwardedIdentity(SecurityDomain securityDomain) {
+        Assert.checkNotNullParam("securityDomain", securityDomain);
+        final AccessControlContext context = AccessController.getContext();
+        return new SetForwardAuthenticationConfiguration(this, securityDomain, context);
     }
 
     // Providers

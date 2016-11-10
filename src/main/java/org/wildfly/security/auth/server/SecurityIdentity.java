@@ -140,6 +140,19 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.privateCredentials = isPrivate ? old.privateCredentials.withCredential(credential) : old.privateCredentials;
     }
 
+    SecurityIdentity(final SecurityIdentity old, final IdentityCredentials credentials, final boolean isPrivate) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.peerIdentities = old.peerIdentities;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.with(credentials);
+        this.privateCredentials = isPrivate ? old.privateCredentials.with(credentials) : old.privateCredentials;
+    }
+
     SecurityDomain getSecurityDomain() {
         return securityDomain;
     }
@@ -636,6 +649,15 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     /**
+     * Convenience method to determine if this identity is anonymous.
+     *
+     * @return {@code true} if the identity is anonymous, {@code false} otherwise
+     */
+    public boolean isAnonymous() {
+        return principal instanceof AnonymousPrincipal;
+    }
+
+    /**
      * Create a new security identity which is the same as this one, but which includes the given credential as a
      * public credential.
      *
@@ -648,6 +670,18 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     /**
+     * Create a new security identity which is the same as this one, but which includes the given credentials as
+     * public credentials.
+     *
+     * @param credentials the credential set (must not be {@code null})
+     * @return the new identity
+     */
+    public SecurityIdentity withPublicCredentials(final IdentityCredentials credentials) {
+        Assert.checkNotNullParam("credentials", credentials);
+        return credentials == IdentityCredentials.NONE ? this : new SecurityIdentity(this, credentials, false);
+    }
+
+    /**
      * Create a new security identity which is the same as this one, but which includes the given credential as a
      * private credential.
      *
@@ -657,6 +691,18 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     public SecurityIdentity withPrivateCredential(Credential credential) {
         Assert.checkNotNullParam("credential", credential);
         return new SecurityIdentity(this, credential, true);
+    }
+
+    /**
+     * Create a new security identity which is the same as this one, but which includes the given credentials as
+     * private credentials.
+     *
+     * @param credentials the credential set (must not be {@code null})
+     * @return the new identity
+     */
+    public SecurityIdentity withPrivateCredentials(final IdentityCredentials credentials) {
+        Assert.checkNotNullParam("credentials", credentials);
+        return credentials == IdentityCredentials.NONE ? this : new SecurityIdentity(this, credentials, true);
     }
 
     /**
