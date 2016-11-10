@@ -59,6 +59,8 @@ public class HttpConstants {
      */
     public static final String CONFIG_POST_LOCATION = CONFIG_BASE + ".post-location";
 
+    public static final String CONFIG_GSS_MANAGER = CONFIG_BASE + ".gss-manager";
+
     /*
      * Header Fields
      */

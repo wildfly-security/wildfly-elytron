@@ -18,9 +18,11 @@
 package org.wildfly.security.http.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
 import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
+import static org.wildfly.security.http.HttpConstants.CONFIG_GSS_MANAGER;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -28,6 +30,7 @@ import static org.wildfly.security.http.HttpConstants.WWW_AUTHENTICATE;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.security.auth.callback.Callback;
@@ -66,9 +69,14 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
     private static final String GSS_CONTEXT_KEY = SpnegoAuthenticationMechanism.class.getName() + ".GSSContext";
 
     private final CallbackHandler callbackHandler;
+    private final GSSManager gssManager;
 
-    SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler) {
+    SpnegoAuthenticationMechanism(final CallbackHandler callbackHandler, final Map<String, ?> properties) {
+        checkNotNullParam("callbackHandler", callbackHandler);
+        checkNotNullParam("properties", properties);
+
         this.callbackHandler = callbackHandler;
+        this.gssManager = properties.containsKey(CONFIG_GSS_MANAGER) ? (GSSManager) properties.get(CONFIG_GSS_MANAGER) : GSSManager.getInstance();
     }
 
     @Override
@@ -108,7 +116,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             }
 
             try {
-                gssContext = GSSManager.getInstance().createContext(serviceGssCredential);
+                gssContext = gssManager.createContext(serviceGssCredential);
 
                 if (connectionScope != null) {
                     connectionScope.setAttachment(GSS_CONTEXT_KEY, gssContext);
