@@ -26,11 +26,8 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
@@ -43,11 +40,7 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.callback.Callback;
@@ -67,15 +60,12 @@ import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
-import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.ssl.CipherSuiteSelector;
-import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
-import org.wildfly.security.util.ServiceLoaderSupplier;
-import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 
 /**
  * A configuration which controls how authentication is performed.
@@ -138,37 +128,7 @@ public abstract class AuthenticationConfiguration {
             return AnonymousPrincipal.getInstance();
         }
 
-        SSLContext getSslContext() throws NoSuchAlgorithmException {
-            return SSLContext.getDefault();
-        }
-
-        void configureSslEngine(final SSLEngine sslEngine) {
-        }
-
-        void configureSslSocket(final SSLSocket sslSocket) {
-        }
-
-        ProtocolSelector getProtocolSelector() {
-            return ProtocolSelector.defaultProtocols();
-        }
-
-        CipherSuiteSelector getCipherSuiteSelector() {
-            return CipherSuiteSelector.openSslDefault();
-        }
-
-        SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
-            return SSLUtils.getDefaultX509TrustManagerSecurityFactory();
-        }
-
-        SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
-            return null;
-        }
-
         void configureKeyManager(final ConfigurationKeyManager.Builder builder) {
-        }
-
-        Supplier<Provider[]> getProviderSupplier() {
-            return Security::getProviders;
         }
 
         boolean delegatesThrough(final Class<?> clazz) {
@@ -235,38 +195,6 @@ public abstract class AuthenticationConfiguration {
 
     String getAuthorizationName() {
         return null;
-    }
-
-    SSLContext getSslContext() throws GeneralSecurityException {
-        return parent.getSslContext();
-    }
-
-    void configureSslEngine(final SSLEngine sslEngine) {
-        parent.configureSslEngine(sslEngine);
-    }
-
-    void configureSslSocket(final SSLSocket sslSocket) {
-        parent.configureSslSocket(sslSocket);
-    }
-
-    ProtocolSelector getProtocolSelector() {
-        return parent.getProtocolSelector();
-    }
-
-    CipherSuiteSelector getCipherSuiteSelector() {
-        return parent.getCipherSuiteSelector();
-    }
-
-    Supplier<Provider[]> getProviderSupplier() {
-        return parent.getProviderSupplier();
-    }
-
-    SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
-        return parent.getX509TrustManagerFactory();
-    }
-
-    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() throws GeneralSecurityException {
-        return parent.getX509KeyManagerFactory();
     }
 
     void configureKeyManager(ConfigurationKeyManager.Builder builder) throws GeneralSecurityException {
@@ -630,37 +558,6 @@ public abstract class AuthenticationConfiguration {
         return new SetForwardAuthenticationConfiguration(this, securityDomain, context);
     }
 
-    // Providers
-
-    /**
-     * Use the given security provider supplier to locate security implementations.
-     *
-     * @param providerSupplier the provider supplier
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useProviders(Supplier<Provider[]> providerSupplier) {
-        return providerSupplier == null ? useDefaultProviders() : new ProvidersAuthenticationConfiguration(this, providerSupplier);
-    }
-
-    /**
-     * Use the system default security providers to locate security implementations.
-     *
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useDefaultProviders() {
-        return without(ProvidersAuthenticationConfiguration.class);
-    }
-
-    /**
-     * Use security providers from the given class loader.
-     *
-     * @param classLoader the class loader to search for security providers
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
-        return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
-    }
-
     // SASL
 
     /**
@@ -703,30 +600,6 @@ public abstract class AuthenticationConfiguration {
      */
     public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
         return names == null || names.length == 0 ? this : new FilterSaslMechanismAuthenticationConfiguration(this, false, new HashSet<String>(Arrays.asList(names)));
-    }
-
-    // SSL
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
-     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
-     *
-     * @param sslContext the SSL context to use
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslContext(SSLContext sslContext) {
-        return sslContext == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContext);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
-     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
-     *
-     * @param sslContextFactory the SSL context factory to use
-     * @return the new configuration
-     */
-    public AuthenticationConfiguration useSslContext(SecurityFactory<SSLContext> sslContextFactory) {
-        return sslContextFactory == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContextFactory);
     }
 
     // other

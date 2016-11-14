@@ -160,10 +160,6 @@
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="0"/>
                 <xsd:element name="clear-password" type="clear-password-type" minOccurs="0"/>
                 <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
-                <xsd:choice minOccurs="0">
-                    <xsd:element name="use-system-providers" type="empty-type"/>
-                    <xsd:element name="use-module-providers" type="module-ref-type"/>
-                </xsd:choice>
             </xsd:all>
         </xsd:sequence>
     </xsd:complexType>

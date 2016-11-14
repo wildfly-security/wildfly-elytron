@@ -575,20 +575,6 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useAuthorizationName(authName));
                         break;
                     }
-                    // these two are a <choice> which is why they share a bit #; you can have only one of them
-                    case "use-system-providers": {
-                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 12);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
-                        break;
-                    }
-                    case "use-module-providers": {
-                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 12);
-                        final Module module = parseModuleRefType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader())));
-                        break;
-                    }
                     default: {
                         throw reader.unexpectedElement();
                     }
@@ -1528,7 +1514,7 @@ public final class ElytronXmlParser {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final X509Certificate[] certificateChain = X500.asX509CertificateArray((Object[]) privateKeyEntry.getCertificateChain());
+                final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
                 return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
             }
             throw xmlLog.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
