@@ -336,6 +336,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
             return this;
         }
 
+        /**
+         * Builds the {@link LegacyPropertiesSecurityRealm}.
+         * @return built {@link LegacyPropertiesSecurityRealm}
+         * @throws IOException when loading of property files fails
+         * @throws java.io.FileNotFoundException when property file does not exist
+         * @throws RealmUnavailableException when property file of users does not contain realm name specification
+         */
         public LegacyPropertiesSecurityRealm build() throws IOException {
             LegacyPropertiesSecurityRealm realm = new LegacyPropertiesSecurityRealm(this);
             realm.load(passwordsStream, groupsStream);
