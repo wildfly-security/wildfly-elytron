@@ -26,7 +26,6 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,7 +40,6 @@ import java.util.function.Supplier;
 import org.wildfly.common.Assert;
 import org.wildfly.security.ParametricPrivilegedAction;
 import org.wildfly.security.ParametricPrivilegedExceptionAction;
-import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -60,7 +58,6 @@ import org.wildfly.security.permission.PermissionVerifier;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class SecurityIdentity implements PermissionVerifier, PermissionMappable {
-    static final PeerIdentity[] NO_PEER_IDENTITIES = new PeerIdentity[0];
     private static final Permission SET_RUN_AS_PERMISSION = ElytronPermission.forName("setRunAsPrincipal");
     private static final Permission PRIVATE_CREDENTIALS_PERMISSION = ElytronPermission.forName("getPrivateCredentials");
 
@@ -69,36 +66,21 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private final AuthorizationIdentity authorizationIdentity;
     private final RealmInfo realmInfo;
     private final Map<String, RoleMapper> roleMappers;
-    private final PeerIdentity[] peerIdentities;
     private final Instant creationTime;
     private final PermissionVerifier verifier;
     private final IdentityCredentials publicCredentials;
     private final IdentityCredentials privateCredentials;
 
-    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final PeerIdentity[] peerIdentities, final IdentityCredentials publicCredentials, final IdentityCredentials privateCredentials) {
+    SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final IdentityCredentials publicCredentials, final IdentityCredentials privateCredentials) {
         this.securityDomain = securityDomain;
         this.principal = principal;
         this.realmInfo = realmInfo;
         this.authorizationIdentity = authorizationIdentity;
         this.roleMappers = roleMappers;
-        this.peerIdentities = peerIdentities;
         this.creationTime = Instant.now();
         this.verifier = securityDomain.mapPermissions(this);
         this.publicCredentials = publicCredentials;
         this.privateCredentials = privateCredentials;
-    }
-
-    SecurityIdentity(final SecurityIdentity old, final PeerIdentity[] newPeerIdentities) {
-        this.securityDomain = old.securityDomain;
-        this.principal = old.principal;
-        this.realmInfo = old.realmInfo;
-        this.authorizationIdentity = old.authorizationIdentity;
-        this.roleMappers = old.roleMappers;
-        this.peerIdentities = newPeerIdentities;
-        this.creationTime = old.creationTime;
-        this.verifier = old.verifier;
-        this.publicCredentials = old.publicCredentials;
-        this.privateCredentials = old.privateCredentials;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -107,7 +89,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = roleMappers;
-        this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
@@ -120,7 +101,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = old.roleMappers;
-        this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = verifier;
         this.publicCredentials = old.publicCredentials;
@@ -133,7 +113,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = old.roleMappers;
-        this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.withCredential(credential);
@@ -146,7 +125,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.realmInfo = old.realmInfo;
         this.authorizationIdentity = old.authorizationIdentity;
         this.roleMappers = old.roleMappers;
-        this.peerIdentities = old.peerIdentities;
         this.creationTime = old.creationTime;
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.with(credentials);
@@ -165,10 +143,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return authorizationIdentity;
     }
 
-    PeerIdentity[] getPeerIdentities() {
-        return peerIdentities;
-    }
-
     /**
      * Run an action under this identity.
      *
@@ -179,7 +153,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            PeerIdentity.runAsAll(action, peerIdentities);
+            action.run();
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -198,7 +172,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAll(action, peerIdentities);
+            return action.call();
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -216,7 +190,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAll(action, peerIdentities);
+            return action.run();
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -235,7 +209,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAll(action, peerIdentities);
+            return action.run();
         } catch (RuntimeException | PrivilegedActionException e) {
             throw e;
         } catch (Exception e) {
@@ -259,7 +233,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAll(parameter, action, peerIdentities);
+            return action.run(parameter);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -280,7 +254,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAll(parameter, action, peerIdentities);
+            return action.run(parameter);
         } catch (RuntimeException | PrivilegedActionException e) {
             throw e;
         } catch (Exception e) {
@@ -320,7 +294,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAllFunction(parameter1, parameter2, action, peerIdentities);
+            return action.apply(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -352,7 +326,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            PeerIdentity.runAsAllConsumer(parameter1, parameter2, action, peerIdentities);
+            action.accept(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -371,7 +345,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            PeerIdentity.runAsAllObjIntConsumer(parameter1, parameter2, action, peerIdentities);
+            action.accept(parameter1, parameter2);
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -389,7 +363,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         final SecurityDomain securityDomain = this.securityDomain;
         final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
         try {
-            return PeerIdentity.runAsAllSupplier(action, peerIdentities);
+            return action.get();
         } finally {
             securityDomain.setCurrentSecurityIdentity(old);
         }
@@ -570,29 +544,6 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
             throw log.runAsAuthorizationFailed(principal, AnonymousPrincipal.getInstance(), null);
         }
         return context.getAuthorizedIdentity();
-    }
-
-    /**
-     * Create a new security identity which is the same as this one, but which also establishes the given peer identity
-     * in addition to the security identity.
-     *
-     * @param peerIdentity the peer identity
-     * @return the new security identity
-     */
-    public SecurityIdentity withPeerIdentity(PeerIdentity peerIdentity) {
-        if (peerIdentity == null) return this;
-        PeerIdentity[] peerIdentities = this.peerIdentities;
-        final int length = peerIdentities.length;
-        for (int i = 0; i < length; i++) {
-            if (peerIdentities[i].isSamePeerIdentityContext(peerIdentity)) {
-                PeerIdentity[] newPeerIdentities = peerIdentities.clone();
-                newPeerIdentities[i] = peerIdentity;
-                return new SecurityIdentity(this, newPeerIdentities);
-            }
-        }
-        PeerIdentity[] newPeerIdentities = Arrays.copyOf(peerIdentities, length + 1);
-        newPeerIdentities[length] = peerIdentity;
-        return new SecurityIdentity(this, newPeerIdentities);
     }
 
     /**

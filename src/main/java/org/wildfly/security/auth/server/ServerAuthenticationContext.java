@@ -59,7 +59,6 @@ import org.wildfly.security.auth.callback.PeerPrincipalCallback;
 import org.wildfly.security.auth.callback.SecurityIdentityCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.auth.callback.SocketAddressCallback;
-import org.wildfly.security.auth.client.PeerIdentity;
 import org.wildfly.security.auth.permission.LoginPermission;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
@@ -1738,9 +1737,7 @@ public final class ServerAuthenticationContext {
             final AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
             final SecurityDomain domain = capturedIdentity.getSecurityDomain();
 
-            final PeerIdentity[] peerIdentities = capturedIdentity.getPeerIdentities();
-
-            SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), peerIdentities, capturedIdentity.getPublicCredentials(), capturedIdentity.getPrivateCredentialsPrivate())));
+            SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), capturedIdentity.getPublicCredentials(), capturedIdentity.getPrivateCredentialsPrivate())));
             authorizedIdentity = authorizedIdentity.withPublicCredentials(publicCredentials).withPrivateCredentials(privateCredentials);
             if (requireLoginPermission) {
                 if (! authorizedIdentity.implies(LoginPermission.getInstance())) {
