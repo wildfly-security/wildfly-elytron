@@ -157,6 +157,7 @@ public class KeystorePasswordStoreTest {
         csAttributes.put(KeystorePasswordStore.CREATE_STORAGE, "true");
         csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, "st_secret");
         csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, "key_secret");
+        csAttributes.put(KeystorePasswordStore.MODIFIABLE, "true");
 
         String passwordAlias1 = "db1-password1";
         String passwordAlias2 = "db1-password2";
@@ -188,6 +189,7 @@ public class KeystorePasswordStoreTest {
         csAttributes.put(KeystorePasswordStore.STORE_FILE, stores.get("TWO"));
         csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, "secret_store_TWO");
         csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, "secret_key_TWO");
+        // testing if KeystorePasswordStore.MODIFIABLE default value is "true", so not setting anything
 
         String passwordAlias1 = "alias1";
         String passwordAlias2 = "alias2";

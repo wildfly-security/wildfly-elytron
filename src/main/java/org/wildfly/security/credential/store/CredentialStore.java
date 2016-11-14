@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.credential.store;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Provider;
@@ -152,7 +154,11 @@ public class CredentialStore {
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
     public <C extends Credential> void store(String credentialAlias, C credential) throws CredentialStoreException, UnsupportedCredentialTypeException {
-        spi.store(credentialAlias, credential);
+        if (isModifiable()) {
+            spi.store(credentialAlias, credential);
+        } else {
+            throw log.nonModifiableCredentialStore("store");
+        }
     }
 
     /**
@@ -177,7 +183,11 @@ public class CredentialStore {
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
     public <C extends Credential> void remove(String credentialAlias, Class<C> credentialType) throws CredentialStoreException, UnsupportedCredentialTypeException {
-        spi.remove(credentialAlias, credentialType);
+        if (isModifiable()) {
+            spi.remove(credentialAlias, credentialType);
+        } else {
+            throw log.nonModifiableCredentialStore("remove");
+        }
     }
 
     /**
