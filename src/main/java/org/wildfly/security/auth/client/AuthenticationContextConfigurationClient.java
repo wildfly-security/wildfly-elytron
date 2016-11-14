@@ -119,8 +119,7 @@ public final class AuthenticationContextConfigurationClient {
         Assert.checkNotNullParam("uri", uri);
         Assert.checkNotNullParam("authenticationContext", authenticationContext);
         final RuleNode<AuthenticationConfiguration> node = authenticationContext.authRuleMatching(uri, abstractType, abstractTypeAuthority, purpose);
-        if (node == null) return AuthenticationConfiguration.EMPTY;
-        AuthenticationConfiguration configuration = node.getConfiguration();
+        AuthenticationConfiguration configuration = node != null ? node.getConfiguration() : AuthenticationConfiguration.EMPTY;
         final String uriHost = uri.getHost();
         if (uriHost != null && ! configuration.delegatesThrough(SetHostAuthenticationConfiguration.class)) {
             configuration = configuration.useHost(uriHost);
