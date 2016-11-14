@@ -143,6 +143,12 @@ public class LdapSecurityRealmBuilder {
         return new OtpCredentialLoaderBuilder();
     }
 
+    public X509EvidenceVerifierBuilder x509EvidenceVerifier() {
+        assertNotBuilt();
+
+        return new X509EvidenceVerifierBuilder();
+    }
+
     LdapSecurityRealmBuilder addCredentialLoader(CredentialLoader credentialLoader) {
         credentialLoaders.add(credentialLoader);
 
@@ -435,10 +441,64 @@ public class LdapSecurityRealmBuilder {
 
         public LdapSecurityRealmBuilder build() {
             assertNotBuilt();
+            built = true;
 
             OtpCredentialLoader ocl = new OtpCredentialLoader(otpAlgorithmAttribute, otpHashAttribute, otpSeedAttribute, otpSequenceAttribute);
             LdapSecurityRealmBuilder.this.addCredentialLoader(ocl);
             LdapSecurityRealmBuilder.this.addCredentialPersister(ocl);
+
+            return LdapSecurityRealmBuilder.this;
+        }
+
+        private void assertNotBuilt() {
+            if (built) {
+                throw log.builderAlreadyBuilt();
+            }
+
+            LdapSecurityRealmBuilder.this.assertNotBuilt();
+        }
+    }
+
+    public class X509EvidenceVerifierBuilder {
+
+        private boolean built = false;
+
+        private List<X509EvidenceVerifier.CertificateVerifier> certificateVerifiers = new ArrayList<>();
+
+        public X509EvidenceVerifierBuilder addSerialNumberCertificateVerifier(final String ldapAttribute) {
+            assertNotBuilt();
+            certificateVerifiers.add(new X509EvidenceVerifier.SerialNumberCertificateVerifier(ldapAttribute));
+
+            return this;
+        }
+
+        public X509EvidenceVerifierBuilder addSubjectDnCertificateVerifier(final String ldapAttribute) {
+            assertNotBuilt();
+            certificateVerifiers.add(new X509EvidenceVerifier.SubjectDnCertificateVerifier(ldapAttribute));
+
+            return this;
+        }
+
+        public X509EvidenceVerifierBuilder addDigestCertificateVerifier(final String ldapAttribute, final String algorithm) {
+            assertNotBuilt();
+            certificateVerifiers.add(new X509EvidenceVerifier.DigestCertificateVerifier(ldapAttribute, algorithm));
+
+            return this;
+        }
+
+        public X509EvidenceVerifierBuilder addEncodedCertificateVerifier(final String ldapAttribute) {
+            assertNotBuilt();
+            certificateVerifiers.add(new X509EvidenceVerifier.EncodedCertificateVerifier(ldapAttribute));
+
+            return this;
+        }
+
+        public LdapSecurityRealmBuilder build() {
+            assertNotBuilt();
+            Assert.checkNotEmptyParam("certificateVerifiers", certificateVerifiers);
+            built = true;
+
+            addEvidenceVerifier(new X509EvidenceVerifier(certificateVerifiers));
 
             return LdapSecurityRealmBuilder.this;
         }

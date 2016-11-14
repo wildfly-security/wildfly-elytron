@@ -31,7 +31,8 @@ import org.junit.runners.Suite;
         GroupMappingSuiteChild.class,
         ModifiabilitySuiteChild.class,
         PasswordSupportSuiteChild.class,
-        PasswordValidationSuiteChild.class,
+        DirectEvidenceVerificationSuiteChild.class,
+        X509EvidenceVerificationSuiteChild.class,
         PrincipalMappingSuiteChild.class,
         RoleMappingSuiteChild.class,
         KeyStoreSuiteChild.class

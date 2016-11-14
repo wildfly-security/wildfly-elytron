@@ -494,7 +494,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                             return support;
                         }
 
-                        if (support != null && support.compareTo(support) < 0) {
+                        if (support != null && support.compareTo(response) > 0) {
                             response = support;
                         }
                     }
