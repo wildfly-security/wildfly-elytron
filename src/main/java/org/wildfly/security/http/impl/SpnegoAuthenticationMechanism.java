@@ -20,6 +20,7 @@ package org.wildfly.security.http.impl;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.AUTHORIZATION;
+import static org.wildfly.security.http.HttpConstants.FORBIDDEN;
 import static org.wildfly.security.http.HttpConstants.NEGOTIATE;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 import static org.wildfly.security.http.HttpConstants.UNAUTHORIZED;
@@ -82,7 +83,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         log.tracef("Evaluating SPNEGO request: cached GSSContext = %s", gssContext);
 
         // Do we already have a cached identity? If so use it.
-        if (gssContext != null && gssContext.isEstablished() && authorizeEstablishedContext(gssContext)) {
+        if (gssContext != null && gssContext.isEstablished() && authorizeCachedGSSContext(gssContext)) {
             log.trace("Successfully authorized using cached identity");
             request.authenticationComplete();
             return;
@@ -138,32 +139,37 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
 
                 if (gssContext.isEstablished()) {
                     log.trace("GSSContext established, authorizing...");
-                    if (authorizeEstablishedContext(gssContext)) {
-                        log.trace("GSSContext established and authorized - authentication complete");
 
-                        if (responseToken != null) {
-                            request.authenticationComplete(response -> sendIntermediateChallenge(responseToken, response, true));
-                        } else {
-                            request.authenticationComplete();
+                    GSSName srcName = gssContext.getSrcName();
+                    if (srcName == null) {
+                        log.trace("Authorization failed - srcName of GSSContext (name of initiator) is null - wrong realm or kdc?");
+                        if (connectionScope != null) {
+                            connectionScope.setAttachment(GSS_CONTEXT_KEY, null); // clear cache
                         }
+                        request.noAuthenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
+                        return;
+                    }
+
+                    if (authorizeSrcName(srcName, gssContext)) {
+                        log.trace("GSSContext established and authorized - authentication complete");
+                        request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
                         return;
                     } else {
                         log.trace("Authorization of established GSSContext failed");
-                        GSSName gssName = gssContext.getSrcName();
-                        request.authenticationFailed(log.authorizationFailed(gssName == null ? null : gssName.toString(), SPNEGO_NAME));
+                        handleCallback(AuthenticationCompleteCallback.FAILED);
+                        request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), response -> sendChallenge(responseToken, response, FORBIDDEN));
                         return;
                     }
                 } else if (responseToken != null) {
-                    log.trace("Sending negotiation token to the peer");
-                    request.authenticationInProgress(response -> sendIntermediateChallenge(responseToken, response, false));
+                    log.trace("GSSContext establishing - sending negotiation token to the peer");
+                    request.authenticationInProgress(response -> sendChallenge(responseToken, response, UNAUTHORIZED));
                     return;
                 }
             } catch (GSSException e) {
                 log.trace("GSSContext message exchange failed", e);
-                try {
-                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
-                } catch (AuthenticationMechanismException | UnsupportedCallbackException ignored) {
-                }
+                handleCallback(AuthenticationCompleteCallback.FAILED);
+
+                // TODO send token REJECTED (not provided by acceptSecContext) [ELY-711][ELY-715]
                 request.authenticationFailed(log.authenticationFailed(SPNEGO_NAME), this::sendBareChallenge);
                 return;
             }
@@ -181,37 +187,41 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         response.setStatusCode(UNAUTHORIZED);
     }
 
-    private void sendIntermediateChallenge(byte[] responseToken, HttpServerResponse response, boolean complete) {
-        String responseConverted = ByteIterator.ofBytes(responseToken).base64Encode().drainToString();
-        response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX + responseConverted);
-        if (complete == false) {
-            response.setStatusCode(UNAUTHORIZED);
+    private void sendChallenge(byte[] responseToken, HttpServerResponse response, int statusCode) {
+        log.tracef("Sending intermediate challenge: %s", responseToken);
+        if (responseToken == null) {
+            response.addResponseHeader(WWW_AUTHENTICATE, NEGOTIATE);
+        } else {
+            String responseConverted = ByteIterator.ofBytes(responseToken).base64Encode().drainToString();
+            response.addResponseHeader(WWW_AUTHENTICATE, CHALLENGE_PREFIX + responseConverted);
+        }
+        if (statusCode != 0) {
+            response.setStatusCode(statusCode);
         }
     }
 
-    private boolean authorizeEstablishedContext(GSSContext gssContext) throws HttpAuthenticationException {
-        assert gssContext.isEstablished();
-
-        boolean authorized = false;
+    private boolean authorizeCachedGSSContext(GSSContext gssContext) throws HttpAuthenticationException {
         try {
             GSSName srcName = gssContext.getSrcName();
-            if (srcName == null) {
-                log.trace("Authorization failed - clientName (name of GSSContext initiator) is null - wrong realm or kdc?");
-                return false;
-            }
+            return srcName != null && authorizeSrcName(srcName, gssContext);
+        } catch (GSSException e) {
+            log.trace("GSSException while obtaining srcName of GSSContext (name of initiator)");
+            handleCallback(AuthenticationCompleteCallback.FAILED);
+            throw log.mechServerSideAuthenticationFailed(SPNEGO_NAME, e).toHttpAuthenticationException();
+        }
+    }
+
+    private boolean authorizeSrcName(GSSName srcName, GSSContext gssContext) throws HttpAuthenticationException {
+        boolean authorized = false;
+        try {
             String clientName = srcName.toString();
             AuthorizeCallback authorize = new AuthorizeCallback(clientName, clientName);
             callbackHandler.handle(new Callback[] {authorize});
 
             authorized = authorize.isAuthorized();
             log.tracef("Authorized by callback handler = %b  clientName = [%s]", authorized, clientName);
-        } catch (GSSException e) {
-            try {
-                MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, AuthenticationCompleteCallback.FAILED);
-            } catch (AuthenticationMechanismException | UnsupportedCallbackException ignored) {
-            }
-            throw log.mechServerSideAuthenticationFailed(SPNEGO_NAME, e).toHttpAuthenticationException();
         } catch (IOException e) {
+            log.trace("IOException during AuthorizeCallback handling", e);
             throw log.mechServerSideAuthenticationFailed(SPNEGO_NAME, e).toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
         }
@@ -234,14 +244,17 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
             }
         }
 
+        handleCallback(authorized ? AuthenticationCompleteCallback.SUCCEEDED : AuthenticationCompleteCallback.FAILED);
+        return authorized;
+    }
+
+    private void handleCallback(Callback callback) throws HttpAuthenticationException {
         try {
-            MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, authorized ? AuthenticationCompleteCallback.SUCCEEDED : AuthenticationCompleteCallback.FAILED);
+            MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, callback);
         } catch (AuthenticationMechanismException e) {
             throw e.toHttpAuthenticationException();
         } catch (UnsupportedCallbackException ignored) {
         }
-
-        return authorized;
     }
 
 }
