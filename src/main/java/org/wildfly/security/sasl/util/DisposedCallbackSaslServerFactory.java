@@ -50,7 +50,7 @@ public final class DisposedCallbackSaslServerFactory extends AbstractDelegatingS
         return saslServer == null ? null : new AbstractDelegatingSaslServer(saslServer) {
             public void dispose() throws SaslException {
                 try {
-                    delegate.dispose();
+                    super.dispose();
                 } finally {
                     try {
                         cbh.handle(new Callback[] { SecurityLayerDisposedCallback.getInstance() });

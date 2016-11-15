@@ -48,7 +48,7 @@ class MatchSchemeSpecificPartRule extends MatchRule {
         } else {
             name = uri.getSchemeSpecificPart();
         }
-        return name.equals(this.name);
+        return name.equals(this.name) && super.matches(uri, abstractType, abstractTypeAuthority, purpose);
     }
 
     MatchRule reparent(final MatchRule newParent) {
