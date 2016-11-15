@@ -31,6 +31,7 @@ import static org.wildfly.security.sasl.digest._private.DigestUtil.messageDigest
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Locale;
 
 import javax.crypto.Mac;
 
@@ -104,15 +105,15 @@ public class DigestUtilTest {
     public void testCreate3desSubKey() throws Exception {
         byte[] input1 = CodePointIterator.ofString("FFFFFFFFFFFFFF").hexDecode().drain();
         byte[] output1 = create3desSubKey(input1, 0);
-        assertEquals("FEFEFEFEFEFEFEFE".toLowerCase(), ByteIterator.ofBytes(output1).hexEncode().drainToString());
+        assertEquals("FEFEFEFEFEFEFEFE".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output1).hexEncode().drainToString());
 
         byte[] input2 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
         byte[] output2 = create3desSubKey(input2, 0);
-        assertEquals("D6E54919F22A929D".toLowerCase(), ByteIterator.ofBytes(output2).hexEncode().drainToString());
+        assertEquals("D6E54919F22A929D".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output2).hexEncode().drainToString());
 
         byte[] input3 = CodePointIterator.ofString("d7c920cf2564cec39c570490f7ea").hexDecode().drain();
         byte[] output3 = create3desSubKey(input3, 7);
-        assertEquals("C2CE15E04986DFD5".toLowerCase(), ByteIterator.ofBytes(output3).hexEncode().drainToString());
+        assertEquals("C2CE15E04986DFD5".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output3).hexEncode().drainToString());
     }
 
     @Test
@@ -121,26 +122,26 @@ public class DigestUtilTest {
         byte[] message = CodePointIterator.ofString("11223344").hexDecode().drain();
         byte[] kc = CodePointIterator.ofString("9fdbff3d48c87e74bd89460e2462c73a").hexDecode().drain();
         byte[] output = computeHMAC(kc, 0, mac, message, 0, message.length);
-        assertEquals("EF3E40D7B5A64C1DAE6B".toLowerCase(), ByteIterator.ofBytes(output).hexEncode().drainToString());
+        assertEquals("EF3E40D7B5A64C1DAE6B".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output).hexEncode().drainToString());
     }
 
     @Test
     public void testIntegerByteOrdered() throws Exception {
         byte[] output0 = new byte[4];
         integerByteOrdered(0x0, output0, 0, 4);
-        assertEquals("00000000".toLowerCase(), ByteIterator.ofBytes(output0).hexEncode().drainToString());
+        assertEquals("00000000".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output0).hexEncode().drainToString());
 
         byte[] output1 = new byte[4];
         integerByteOrdered(0x1, output1, 0, 4);
-        assertEquals("00000001".toLowerCase(), ByteIterator.ofBytes(output1).hexEncode().drainToString());
+        assertEquals("00000001".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output1).hexEncode().drainToString());
 
         byte[] output1234 = new byte[6];
         integerByteOrdered(0x1234, output1234, 1, 4);
-        assertEquals("000000123400".toLowerCase(), ByteIterator.ofBytes(output1234).hexEncode().drainToString());
+        assertEquals("000000123400".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(output1234).hexEncode().drainToString());
 
         byte[] outputFFFFFFFF = new byte[4];
         integerByteOrdered(0xFFFFFFFF, outputFFFFFFFF, 0, 4);
-        assertEquals("FFFFFFFF".toLowerCase(), ByteIterator.ofBytes(outputFFFFFFFF).hexEncode().drainToString());
+        assertEquals("FFFFFFFF".toLowerCase(Locale.ENGLISH), ByteIterator.ofBytes(outputFFFFFFFF).hexEncode().drainToString());
     }
 
     @Test
