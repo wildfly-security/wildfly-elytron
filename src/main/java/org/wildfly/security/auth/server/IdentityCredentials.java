@@ -363,7 +363,7 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
             Assert.checkNotNullParam("credentialType", credentialType);
             Credential credential = this.credential;
             if (credential instanceof AlgorithmCredential) {
-                return credentialType.isInstance(credential) && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm());
+                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm()));
             } else {
                 return algorithmName == null && credentialType.isInstance(credential);
             }
