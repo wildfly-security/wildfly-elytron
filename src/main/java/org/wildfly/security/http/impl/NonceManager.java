@@ -21,7 +21,6 @@ package org.wildfly.security.http.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
@@ -99,7 +98,8 @@ class NonceManager {
 
             String nonce = ByteIterator.ofBytes(byteBuffer.array()).base64Encode().drainToString();
             if (log.isTraceEnabled()) {
-                log.tracef("New nonce generated %s, using seed %s", nonce, new String(salt, StandardCharsets.UTF_8));
+                String saltString = salt == null ? "null" : ByteIterator.ofBytes(salt).hexEncode().drainToString();
+                log.tracef("New nonce generated %s, using seed %s", nonce, saltString);
             }
             return nonce;
         } catch (GeneralSecurityException e) {
@@ -168,8 +168,9 @@ class NonceManager {
 
             if (Arrays2.equals(nonceBytes, PREFIX_LENGTH, digest(nonceBytes, 0, PREFIX_LENGTH, salt, messageDigest)) == false) {
                 if (log.isTraceEnabled()) {
+                    String saltString = salt == null ? "null" : ByteIterator.ofBytes(salt).hexEncode().drainToString();
                     log.tracef("Nonce %s rejected due to failed comparison using secret key with seed %s.", nonce,
-                            new String(salt, StandardCharsets.UTF_8));
+                            saltString);
                 }
                 return false;
             }
