@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -74,7 +75,7 @@ public class SSLAuthenticationTest {
                     .build()
                 .setDefaultRealmName("KeystoreRealm")
                 .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter(s -> s.toLowerCase())
+                .setPreRealmRewriter(s -> s.toLowerCase(Locale.ENGLISH))
                 .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
                 .build();
 
