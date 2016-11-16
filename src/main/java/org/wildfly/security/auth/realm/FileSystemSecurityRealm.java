@@ -551,7 +551,6 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                         Password password = ((PasswordCredential) credential).getPassword();
                         if (password instanceof OneTimePassword) {
                             final OneTimePassword otp = (OneTimePassword) password;
-                            otp.getHash();
                             streamWriter.writeStartElement("otp");
                             streamWriter.writeAttribute("algorithm", otp.getAlgorithm());
                             streamWriter.writeAttribute("hash", ByteIterator.ofBytes(otp.getHash()).base64Encode().drainToString());
