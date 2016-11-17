@@ -385,7 +385,7 @@ public interface ElytronMessages extends BasicLogger {
     RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);
 
     @Message(id = 1080, value = "Attribute [%s] value [%s] must be in X.500 format in order to obtain RDN [%s].")
-    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn);
+    RuntimeException ldapRealmInvalidRdnForAttribute(String attributeName, String value, String rdn, @Cause Throwable cause);
 
     @Message(id = 1081, value = "Filesystem-backed realm encountered invalid OTP definition in path \"%s\" line %d for identity name \"%s\"")
     RealmUnavailableException fileSystemRealmInvalidOtpDefinition(Path path, int lineNumber, String name, @Cause Throwable cause);
