@@ -48,4 +48,10 @@ class SSLContextAuthenticationConfiguration extends AuthenticationConfiguration 
         final SSLContext context = sslContextFactory.create();
         return context == null ? SSLContext.getDefault() : context;
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("SSLContext,");
+    }
+
 }

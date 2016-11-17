@@ -46,4 +46,9 @@ public class SetSaslClientFactoryAuthenticationConfiguration extends Authenticat
         return new SetSaslClientFactoryAuthenticationConfiguration(newParent, saslClientFactorySupplier);
     }
 
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("SaslClientFactory,");
+    }
+
 }

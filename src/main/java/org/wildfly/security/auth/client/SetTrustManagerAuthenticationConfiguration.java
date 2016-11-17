@@ -74,4 +74,10 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
         }
         super.handleCallback(callbacks, index);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("TrustManager,");
+    }
+
 }

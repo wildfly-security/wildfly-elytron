@@ -196,6 +196,12 @@ public abstract class AuthenticationConfiguration {
         Function<String, IdentityCredentials> getCredentialsFunction() {
             return prompt -> IdentityCredentials.NONE;
         }
+
+        @Override
+        StringBuilder asString(StringBuilder sb) {
+            return sb;
+        }
+
     }.useAnonymous().useTrustManager(null);
 
     private final AuthenticationConfiguration parent;
@@ -851,6 +857,22 @@ public abstract class AuthenticationConfiguration {
         SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
                 getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
+    }
+
+    // String Representation
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        asString(sb);
+        sb.setLength(sb.length() - 1);
+        return sb.toString();
+    }
+
+    abstract StringBuilder asString(StringBuilder sb);
+
+    final StringBuilder parentAsString(StringBuilder sb) {
+        return parent.asString(sb);
     }
 
     // interfaces

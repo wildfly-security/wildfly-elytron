@@ -75,4 +75,10 @@ class SetPasswordCallbackHandlerAuthenticationConfiguration extends Authenticati
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetPasswordCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("PasswordCallbackHandler,");
+    }
+
 }

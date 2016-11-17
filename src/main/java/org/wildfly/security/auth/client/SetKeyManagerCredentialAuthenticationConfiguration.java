@@ -121,4 +121,10 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         }
         return issuers.toArray(new Principal[issuers.size()]);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("KeyManagerCredential,");
+    }
+
 }

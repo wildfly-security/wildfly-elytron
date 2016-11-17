@@ -113,4 +113,11 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetCredentialsConfiguration(newParent, credentialsFunction);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("Credentials,");
+    }
+
+
 }

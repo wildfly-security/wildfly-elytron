@@ -40,4 +40,10 @@ class ProvidersAuthenticationConfiguration extends AuthenticationConfiguration {
     Supplier<Provider[]> getProviderSupplier() {
         return providerSupplier;
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("Providers,");
+    }
+
 }

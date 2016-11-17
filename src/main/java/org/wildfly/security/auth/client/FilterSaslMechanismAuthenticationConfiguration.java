@@ -41,4 +41,18 @@ class FilterSaslMechanismAuthenticationConfiguration extends AuthenticationConfi
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new FilterSaslMechanismAuthenticationConfiguration(newParent, allow, names);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        parentAsString(sb);
+        sb.append("FilterSaslMechanism allow=").append(allow).append(",name=[ ");
+        if (names!=null) {
+            names.forEach(s -> sb.append(s).append(' '));
+        }
+        sb.append("],");
+
+        return sb;
+    }
+
+
 }

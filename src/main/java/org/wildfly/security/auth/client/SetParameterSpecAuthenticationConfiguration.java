@@ -56,4 +56,10 @@ class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfigur
     AuthenticationConfiguration reparent(AuthenticationConfiguration newParent) {
         return new SetParameterSpecAuthenticationConfiguration(newParent, parameterSpec);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("ParameterSpec,");
+    }
+
 }

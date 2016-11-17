@@ -34,4 +34,10 @@ class SetAuthorizationNameAuthenticationConfiguration extends AuthenticationConf
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetAuthorizationNameAuthenticationConfiguration(newParent, name);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("authorization-name=").append(name).append(',');
+    }
+
 }

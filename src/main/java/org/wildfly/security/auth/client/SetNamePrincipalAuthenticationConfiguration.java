@@ -56,4 +56,10 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetNamePrincipalAuthenticationConfiguration(newParent, principal);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("NamePrincipal=").append(principal != null ? principal.toString() : "").append(',');
+    }
+
 }

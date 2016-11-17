@@ -40,4 +40,9 @@ public class SetProtocolAuthenticationConfiguration extends AuthenticationConfig
         return new SetProtocolAuthenticationConfiguration(newParent, protocol);
     }
 
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("protocol=").append(protocol).append(',');
+    }
+
 }
