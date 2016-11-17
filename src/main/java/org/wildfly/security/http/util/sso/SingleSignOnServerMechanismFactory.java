@@ -36,6 +36,8 @@ import javax.security.auth.callback.CallbackHandler;
 import java.security.Principal;
 import java.util.Map;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 /**
  * <p>A {@link HttpServerAuthenticationMechanismFactory} which enables single sign-on to the mechanisms provided by a another
  * http mechanism factory.
@@ -84,8 +86,11 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                 if (singleSignOnSession.logout()) {
                     return;
                 }
-
-                getTargetMechanism(mechanismName, singleSignOnSession).evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
+                HttpServerAuthenticationMechanism mechanism = getTargetMechanism(mechanismName, singleSignOnSession);
+                if (mechanism == null) {
+                    throw log.httpServerAuthenticationMechanismNotFound(mechanismName);
+                }
+                mechanism.evaluateRequest(createHttpServerRequest(request, singleSignOnSession));
             }
 
             private SingleSignOnSession getSingleSignOnSession(HttpServerRequest request) {

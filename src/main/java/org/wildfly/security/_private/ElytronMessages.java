@@ -69,6 +69,7 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.credential.store.CredentialStoreException;
+import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
 import org.wildfly.security.mechanism.scram.ScramServerException;
@@ -1359,6 +1360,9 @@ public interface ElytronMessages extends BasicLogger {
     @LogMessage(level = ERROR)
     @Message(id = 6013, value = "Failed to invalidate local session")
     void errorHttpMechSsoFailedInvalidateLocalSession(@Cause  Throwable cause);
+
+    @Message(id = 6014, value = "Authentication mechanism '%s' cannot be found")
+    HttpAuthenticationException httpServerAuthenticationMechanismNotFound(String mechanismName);
 
     /* asn1 package */
 
