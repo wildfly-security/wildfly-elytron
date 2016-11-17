@@ -69,6 +69,7 @@ public class XmlConfigurationTest {
             "                <property key=\"key-one\" value=\"value-one\"/>\n" +
             "                <property key=\"key-two\" value=\"value-two\"/>\n" +
             "            </set-mechanism-properties>\n" +
+            "            <use-provider-sasl-factory/>\n" +
             "        </rule>\n" +
             "    </rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);

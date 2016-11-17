@@ -164,6 +164,10 @@
                     <xsd:element name="use-system-providers" type="empty-type"/>
                     <xsd:element name="use-module-providers" type="module-ref-type"/>
                 </xsd:choice>
+                <xsd:choice minOccurs="0">
+                    <xsd:element name="use-provider-sasl-factory" type="empty-type" />
+                    <xsd:element name="use-module-sasl-factory" type="module-ref-type" />
+                </xsd:choice>
             </xsd:all>
         </xsd:sequence>
     </xsd:complexType>
