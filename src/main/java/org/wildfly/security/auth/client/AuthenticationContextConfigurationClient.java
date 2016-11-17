@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -134,6 +136,10 @@ public final class AuthenticationContextConfigurationClient {
         if (userInfo != null && configuration.getPrincipal() == AnonymousPrincipal.getInstance()) {
             configuration = configuration.useName(userInfo);
         }
+
+        log.tracef("getAuthenticationConfiguration uri=%s, protocolDefaultPort=%d, abstractType=%s, abstractTypeAuthority=%s, purpose=%s, MatchRule=[%s], AuthenticationConfiguration=[%s]",
+                uri, protocolDefaultPort, abstractType, abstractTypeAuthority, purpose, node != null ? node.rule : null, configuration);
+
         return configuration;
     }
 
