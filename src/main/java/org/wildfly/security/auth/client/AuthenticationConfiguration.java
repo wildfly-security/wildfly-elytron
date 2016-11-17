@@ -142,6 +142,10 @@ public abstract class AuthenticationConfiguration {
             return AnonymousPrincipal.getInstance();
         }
 
+        String getAuthorizationName() {
+            return null;
+        }
+
         SSLContext getSslContext() throws NoSuchAlgorithmException {
             return SSLContext.getDefault();
         }
@@ -244,7 +248,7 @@ public abstract class AuthenticationConfiguration {
     }
 
     String getAuthorizationName() {
-        return null;
+        return parent.getAuthorizationName();
     }
 
     SSLContext getSslContext() throws GeneralSecurityException {
