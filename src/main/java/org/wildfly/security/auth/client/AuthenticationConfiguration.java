@@ -314,7 +314,9 @@ public abstract class AuthenticationConfiguration {
     }
 
     AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
-        if (clazz1.isInstance(this) || clazz2.isInstance(this)) return parent;
+        if (clazz1.isInstance(this) && clazz2.isInstance(this)) return parent;
+        if (clazz1.isInstance(this)) return parent.without(clazz2);
+        if (clazz2.isInstance(this)) return parent.without(clazz1);
         AuthenticationConfiguration newParent = parent.without(clazz1, clazz2);
         if (parent == newParent) return this;
         return reparent(newParent);
