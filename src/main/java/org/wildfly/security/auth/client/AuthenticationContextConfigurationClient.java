@@ -26,6 +26,7 @@ import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.util.Collection;
+import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
 import javax.security.auth.callback.CallbackHandler;
@@ -269,12 +270,24 @@ public final class AuthenticationContextConfigurationClient {
      *
      * @param uri the target URI (must not be {@code null})
      * @param configuration the authentication configuration (must not be {@code null})
-     * @param clientFactory the SASL client factory to delegate to (must not be {@code null})
      * @param offeredMechanisms the available mechanisms (must not be {@code null})
      * @return the SASL client, or {@code null} if no clients were available or could be configured
      */
-    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration, SaslClientFactory clientFactory, Collection<String> offeredMechanisms) throws SaslException {
-        return configuration.createSaslClient(uri, clientFactory, offeredMechanisms);
+    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration,  Collection<String> offeredMechanisms) throws SaslException {
+        return createSaslClient(uri, configuration, offeredMechanisms, UnaryOperator.identity());
+    }
+
+    /**
+     * Create a SASL client using the given URI and configuration from the given SASL client factory.
+     *
+     * @param uri the target URI (must not be {@code null})
+     * @param configuration the authentication configuration (must not be {@code null})
+     * @param offeredMechanisms the available mechanisms (must not be {@code null})
+     * @param factoryOperator A {@link UnaryOperator<SaslClientFactory>} to apply to the factory used.
+     * @return the SASL client, or {@code null} if no clients were available or could be configured
+     */
+    public SaslClient createSaslClient(URI uri, AuthenticationConfiguration configuration,  Collection<String> offeredMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
+        return configuration.createSaslClient(uri, offeredMechanisms, factoryOperator);
     }
 
     /**

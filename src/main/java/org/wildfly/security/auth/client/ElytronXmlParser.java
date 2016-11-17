@@ -75,6 +75,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
@@ -579,6 +580,7 @@ public final class ElytronXmlParser {
                     case "use-system-providers": {
                         if (isSet(foundBits, 12)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 12);
+                        parseEmptyType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
                         break;
                     }
@@ -587,6 +589,21 @@ public final class ElytronXmlParser {
                         foundBits = setBit(foundBits, 12);
                         final Module module = parseModuleRefType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader())));
+                        break;
+                    }
+                    // these two are a <choice> which is why they share a bit #; you can have only one of them
+                    case "use-provider-sasl-factory": {
+                        if (isSet(foundBits, 13)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 13);
+                        parseEmptyType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactoryFromProviders());
+                        break;
+                    }
+                    case "use-module-sasl-factory": {
+                        if (isSet(foundBits, 13)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 13);
+                        final Module module = parseModuleRefType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module.getClassLoader())));
                         break;
                     }
                     default: {
@@ -1528,7 +1545,7 @@ public final class ElytronXmlParser {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final X509Certificate[] certificateChain = X500.asX509CertificateArray((Object[]) privateKeyEntry.getCertificateChain());
+                final X509Certificate[] certificateChain = X500.asX509CertificateArray((Object[])privateKeyEntry.getCertificateChain());
                 return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
             }
             throw xmlLog.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());

@@ -38,12 +38,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -71,6 +71,10 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
+import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
+import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
+import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
@@ -81,6 +85,7 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
  * A configuration which controls how authentication is performed.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public abstract class AuthenticationConfiguration {
     // constants
@@ -90,7 +95,6 @@ public abstract class AuthenticationConfiguration {
      * remapping of any kind, and always uses an anonymous principal.
      */
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration() {
-
         void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException {
             CallbackUtil.unsupported(callbacks[index]);
         }
@@ -138,6 +142,10 @@ public abstract class AuthenticationConfiguration {
             return AnonymousPrincipal.getInstance();
         }
 
+        String getAuthorizationName() {
+            return null;
+        }
+
         SSLContext getSslContext() throws NoSuchAlgorithmException {
             return SSLContext.getDefault();
         }
@@ -171,6 +179,11 @@ public abstract class AuthenticationConfiguration {
             return Security::getProviders;
         }
 
+        @Override
+        SaslClientFactory getSaslClientFactory(Supplier<Provider[]> providers) {
+            return new SecurityProviderSaslClientFactory(providers);
+        }
+
         boolean delegatesThrough(final Class<?> clazz) {
             return false;
         }
@@ -182,6 +195,7 @@ public abstract class AuthenticationConfiguration {
 
     private final AuthenticationConfiguration parent;
     private final CallbackHandler callbackHandler = callbacks -> AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
+    private SaslClientFactory saslClientFactory = null;
 
     // constructors
 
@@ -234,7 +248,7 @@ public abstract class AuthenticationConfiguration {
     }
 
     String getAuthorizationName() {
-        return null;
+        return parent.getAuthorizationName();
     }
 
     SSLContext getSslContext() throws GeneralSecurityException {
@@ -259,6 +273,10 @@ public abstract class AuthenticationConfiguration {
 
     Supplier<Provider[]> getProviderSupplier() {
         return parent.getProviderSupplier();
+    }
+
+    SaslClientFactory getSaslClientFactory(Supplier<Provider[]> providers) {
+        return parent.getSaslClientFactory(providers);
     }
 
     SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
@@ -306,7 +324,7 @@ public abstract class AuthenticationConfiguration {
      * @param rewriter the name rewriter
      * @return the new configuration
      */
-    public AuthenticationConfiguration rewriteUser(NameRewriter rewriter) {
+    public final AuthenticationConfiguration rewriteUser(NameRewriter rewriter) {
         if (rewriter == null) {
             return this;
         }
@@ -322,7 +340,7 @@ public abstract class AuthenticationConfiguration {
      *
      * @return the new configuration
      */
-    public AuthenticationConfiguration useAnonymous() {
+    public final AuthenticationConfiguration useAnonymous() {
         return new SetAnonymousAuthenticationConfiguration(this);
     }
 
@@ -332,7 +350,7 @@ public abstract class AuthenticationConfiguration {
      * @param principal the principal to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePrincipal(NamePrincipal principal) {
+    public final AuthenticationConfiguration usePrincipal(NamePrincipal principal) {
         return new SetNamePrincipalAuthenticationConfiguration(this, principal);
     }
 
@@ -342,7 +360,7 @@ public abstract class AuthenticationConfiguration {
      * @param name the principal to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useName(String name) {
+    public final AuthenticationConfiguration useName(String name) {
         return usePrincipal(new NamePrincipal(name));
     }
 
@@ -353,7 +371,7 @@ public abstract class AuthenticationConfiguration {
      * @param name the name to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useAuthorizationName(String name) {
+    public final AuthenticationConfiguration useAuthorizationName(String name) {
         return new SetAuthorizationNameAuthenticationConfiguration(this, name);
     }
 
@@ -363,7 +381,7 @@ public abstract class AuthenticationConfiguration {
      * @param password the password to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(Password password) {
+    public final AuthenticationConfiguration usePassword(Password password) {
         return usePassword(password, null);
     }
 
@@ -373,7 +391,7 @@ public abstract class AuthenticationConfiguration {
      * @param password the password to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(char[] password) {
+    public final AuthenticationConfiguration usePassword(char[] password) {
         return usePassword(password, null);
     }
 
@@ -383,7 +401,7 @@ public abstract class AuthenticationConfiguration {
      * @param password the password to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(String password) {
+    public final AuthenticationConfiguration usePassword(String password) {
         return usePassword(password, null);
     }
 
@@ -395,7 +413,7 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given password regardless of the prompt
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
+    public final AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
         return password == null ? this : useCredentials(IdentityCredentials.NONE.withCredential(new PasswordCredential(password)), matchPredicate);
     }
 
@@ -407,7 +425,7 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given password regardless of the prompt
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(char[] password, Predicate<String> matchPredicate) {
+    public final AuthenticationConfiguration usePassword(char[] password, Predicate<String> matchPredicate) {
         return password == null ? this : usePassword(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password), matchPredicate);
     }
 
@@ -419,7 +437,7 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given password regardless of the prompt
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePassword(String password, Predicate<String> matchPredicate) {
+    public final AuthenticationConfiguration usePassword(String password, Predicate<String> matchPredicate) {
         return password == null ? this : usePassword(password.toCharArray(), matchPredicate);
     }
 
@@ -430,7 +448,7 @@ public abstract class AuthenticationConfiguration {
      * @param callbackHandler the password callback handler
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePasswordCallback(CallbackHandler callbackHandler) {
+    public final AuthenticationConfiguration usePasswordCallback(CallbackHandler callbackHandler) {
         return callbackHandler == null ? this : new SetPasswordCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
     }
 
@@ -441,7 +459,7 @@ public abstract class AuthenticationConfiguration {
      * @param callbackHandler the callback handler to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
+    public final AuthenticationConfiguration useCallbackHandler(CallbackHandler callbackHandler) {
         return callbackHandler == null ? this : new SetCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
     }
 
@@ -451,7 +469,7 @@ public abstract class AuthenticationConfiguration {
      * @param credential the GSS-API credential to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
+    public final AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
         return credential == null ? this : new SetGSSCredentialAuthenticationConfiguration(this, credential);
     }
 
@@ -462,7 +480,7 @@ public abstract class AuthenticationConfiguration {
      * @param keyStoreEntry the key store entry to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useKeyStoreCredential(KeyStore.Entry keyStoreEntry) {
+    public final AuthenticationConfiguration useKeyStoreCredential(KeyStore.Entry keyStoreEntry) {
         return keyStoreEntry == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyStoreEntry));
     }
 
@@ -474,7 +492,7 @@ public abstract class AuthenticationConfiguration {
      * @param alias the key store alias
      * @return the new configuration
      */
-    public AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias) {
+    public final AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias) {
         return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, null);
     }
 
@@ -487,7 +505,7 @@ public abstract class AuthenticationConfiguration {
      * @param protectionParameter the protection parameter to use to access the key store entry
      * @return the new configuration
      */
-    public AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias, KeyStore.ProtectionParameter protectionParameter) {
+    public final AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias, KeyStore.ProtectionParameter protectionParameter) {
         return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, protectionParameter);
     }
 
@@ -499,7 +517,7 @@ public abstract class AuthenticationConfiguration {
      * @param certificateChain the client certificate chain
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCertificateCredential(PrivateKey privateKey, X509Certificate... certificateChain) {
+    public final AuthenticationConfiguration useCertificateCredential(PrivateKey privateKey, X509Certificate... certificateChain) {
         return certificateChain == null || certificateChain.length == 0 || privateKey == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : useCertificateCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
     }
 
@@ -510,7 +528,7 @@ public abstract class AuthenticationConfiguration {
      * @param credential the credential containing the private key and certificate chain
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCertificateCredential(X509CertificateChainPrivateCredential credential) {
+    public final AuthenticationConfiguration useCertificateCredential(X509CertificateChainPrivateCredential credential) {
         return credential == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : useCertificateCredential(new FixedSecurityFactory<>(credential));
     }
 
@@ -521,7 +539,7 @@ public abstract class AuthenticationConfiguration {
      * @param credentialFactory a factory which produces the credential containing the private key and certificate chain
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCertificateCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
+    public final AuthenticationConfiguration useCertificateCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
         return credentialFactory == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : new SetCertificateCredentialAuthenticationConfiguration(this, credentialFactory);
     }
 
@@ -532,7 +550,7 @@ public abstract class AuthenticationConfiguration {
      * @param keyManager the key manager to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useKeyManagerCredential(X509KeyManager keyManager) {
+    public final AuthenticationConfiguration useKeyManagerCredential(X509KeyManager keyManager) {
         return keyManager == null ? without(SetKeyManagerCredentialAuthenticationConfiguration.class) : new SetKeyManagerCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyManager));
     }
 
@@ -543,7 +561,7 @@ public abstract class AuthenticationConfiguration {
      * @param credentials the credentials to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCredentials(IdentityCredentials credentials) {
+    public final AuthenticationConfiguration useCredentials(IdentityCredentials credentials) {
         return credentials == null ? without(SetCredentialsConfiguration.class) : new SetCredentialsConfiguration(this, () -> credentials);
     }
 
@@ -556,7 +574,7 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given credentials regardless of the prompt
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
+    public final AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
         final Function<String, IdentityCredentials> credentialsFunction = getCredentialsFunction();
         return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, p -> credentials) : new SetCredentialsConfiguration(this, p -> matchPredicate.test(p) ? credentials : credentialsFunction.apply(p));
     }
@@ -570,7 +588,7 @@ public abstract class AuthenticationConfiguration {
      * @param choice the choice to use if the given predicate evaluates to {@code true}
      * @return the new configuration
      */
-    public AuthenticationConfiguration useChoice(BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate, String choice) {
+    public final AuthenticationConfiguration useChoice(BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate, String choice) {
         return matchPredicate == null ? this : new SetChoiceAuthenticationConfiguration(this, matchPredicate, choice);
     }
 
@@ -580,7 +598,7 @@ public abstract class AuthenticationConfiguration {
      * @param parameterSpec the algorithm parameter specification to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useParameterSpec(AlgorithmParameterSpec parameterSpec) {
+    public final AuthenticationConfiguration useParameterSpec(AlgorithmParameterSpec parameterSpec) {
         return parameterSpec == null ? this : new SetParameterSpecAuthenticationConfiguration(this, parameterSpec);
     }
 
@@ -591,7 +609,7 @@ public abstract class AuthenticationConfiguration {
      * @param trustManager the trust manager to use or {@code null} if the default trust manager should be used
      * @return the new configuration
      */
-    public AuthenticationConfiguration useTrustManager(X509TrustManager trustManager) {
+    public final AuthenticationConfiguration useTrustManager(X509TrustManager trustManager) {
         return trustManager == null ? new SetTrustManagerAuthenticationConfiguration(this, SSLUtils.getDefaultX509TrustManagerSecurityFactory()) : new SetTrustManagerAuthenticationConfiguration(this, new FixedSecurityFactory<>(trustManager));
     }
 
@@ -601,7 +619,7 @@ public abstract class AuthenticationConfiguration {
      * @param hostName the host name to connect to
      * @return the new configuration
      */
-    public AuthenticationConfiguration useHost(String hostName) {
+    public final AuthenticationConfiguration useHost(String hostName) {
         if (hostName != null && hostName.isEmpty()) hostName = null;
         return new SetHostAuthenticationConfiguration(this, hostName);
     }
@@ -612,7 +630,7 @@ public abstract class AuthenticationConfiguration {
      * @param port the port to connect to
      * @return the new configuration
      */
-    public AuthenticationConfiguration usePort(int port) {
+    public final AuthenticationConfiguration usePort(int port) {
         if (port < 1 || port > 65535) throw log.invalidPortNumber(port);
         return new SetPortAuthenticationConfiguration(this, port);
     }
@@ -624,7 +642,7 @@ public abstract class AuthenticationConfiguration {
      * @param securityDomain the security domain (must not be {@code null})
      * @return the new configuration
      */
-    public AuthenticationConfiguration useForwardedIdentity(SecurityDomain securityDomain) {
+    public final AuthenticationConfiguration useForwardedIdentity(SecurityDomain securityDomain) {
         Assert.checkNotNullParam("securityDomain", securityDomain);
         final AccessControlContext context = AccessController.getContext();
         return new SetForwardAuthenticationConfiguration(this, securityDomain, context);
@@ -638,7 +656,7 @@ public abstract class AuthenticationConfiguration {
      * @param providerSupplier the provider supplier
      * @return the new configuration
      */
-    public AuthenticationConfiguration useProviders(Supplier<Provider[]> providerSupplier) {
+    public final AuthenticationConfiguration useProviders(Supplier<Provider[]> providerSupplier) {
         return providerSupplier == null ? useDefaultProviders() : new ProvidersAuthenticationConfiguration(this, providerSupplier);
     }
 
@@ -647,7 +665,7 @@ public abstract class AuthenticationConfiguration {
      *
      * @return the new configuration
      */
-    public AuthenticationConfiguration useDefaultProviders() {
+    public final AuthenticationConfiguration useDefaultProviders() {
         return without(ProvidersAuthenticationConfiguration.class);
     }
 
@@ -657,11 +675,42 @@ public abstract class AuthenticationConfiguration {
      * @param classLoader the class loader to search for security providers
      * @return the new configuration
      */
-    public AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
+    public final AuthenticationConfiguration useProvidersFromClassLoader(ClassLoader classLoader) {
         return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
     }
 
-    // SASL
+    // SASL Mechanisms
+
+    /**
+     * Use a pre-existing {@link SaslClientFactory} instead of discovery.
+     *
+     * @param saslClientFactory the pre-existing {@link SaslClientFactory} to use.
+     * @return the new configuration.
+     */
+    public final AuthenticationConfiguration useSaslClientFactory(final SaslClientFactory saslClientFactory) {
+        return useSaslClientFactory(() -> saslClientFactory);
+    }
+
+    /**
+     * Use the given sasl client factory supplier to obtain the {@link SaslClientFactory} to use.
+     *
+     * @param saslClientFactory the sasl client factory supplier to use.
+     * @return the new configuration.
+     */
+    public final AuthenticationConfiguration useSaslClientFactory(final Supplier<SaslClientFactory> saslClientFactory) {
+        return new SetSaslClientFactoryAuthenticationConfiguration(this, saslClientFactory);
+    }
+
+    /**
+     * Use provider based discovery to load available {@link SaslClientFactory} implementations.
+     *
+     * @return the new configuration.
+     */
+    public final AuthenticationConfiguration useSaslClientFactoryFromProviders() {
+        return without(SetSaslClientFactoryAuthenticationConfiguration.class);
+    }
+
+    // SASL Configuration
 
     /**
      * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
@@ -670,7 +719,7 @@ public abstract class AuthenticationConfiguration {
      * @param mechanismProperties the properties to be passed to the {@code SaslClientFactory} to create the mechanism.
      * @return the new configuration.
      */
-    public AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
+    public final AuthenticationConfiguration useMechanismProperties(Map<String, String> mechanismProperties) {
         return mechanismProperties == null || mechanismProperties.isEmpty() ? this : new SetMechanismPropertiesConfiguration(this, mechanismProperties);
     }
 
@@ -679,7 +728,7 @@ public abstract class AuthenticationConfiguration {
      *
      * @return the new configuration.
      */
-    public AuthenticationConfiguration allowAllSaslMechanisms() {
+    public final AuthenticationConfiguration allowAllSaslMechanisms() {
         return new SetAllowAllSaslMechanisms(this);
     }
 
@@ -690,7 +739,7 @@ public abstract class AuthenticationConfiguration {
      * @param names the mechanism names
      * @return the new configuration
      */
-    public AuthenticationConfiguration allowSaslMechanisms(String... names) {
+    public final AuthenticationConfiguration allowSaslMechanisms(String... names) {
         return names == null || names.length == 0 ? new FilterSaslMechanismAuthenticationConfiguration(this, true, Collections.<String>emptySet()) : new FilterSaslMechanismAuthenticationConfiguration(this, true, new HashSet<String>(Arrays.asList(names)));
     }
 
@@ -701,7 +750,7 @@ public abstract class AuthenticationConfiguration {
      * @param names the mechanism names
      * @return the new configuration
      */
-    public AuthenticationConfiguration forbidSaslMechanisms(String... names) {
+    public final AuthenticationConfiguration forbidSaslMechanisms(String... names) {
         return names == null || names.length == 0 ? this : new FilterSaslMechanismAuthenticationConfiguration(this, false, new HashSet<String>(Arrays.asList(names)));
     }
 
@@ -714,7 +763,7 @@ public abstract class AuthenticationConfiguration {
      * @param sslContext the SSL context to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useSslContext(SSLContext sslContext) {
+    public final AuthenticationConfiguration useSslContext(SSLContext sslContext) {
         return sslContext == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContext);
     }
 
@@ -725,31 +774,53 @@ public abstract class AuthenticationConfiguration {
      * @param sslContextFactory the SSL context factory to use
      * @return the new configuration
      */
-    public AuthenticationConfiguration useSslContext(SecurityFactory<SSLContext> sslContextFactory) {
+    public final AuthenticationConfiguration useSslContext(SecurityFactory<SSLContext> sslContextFactory) {
         return sslContextFactory == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContextFactory);
     }
 
     // other
 
-    public AuthenticationConfiguration useRealm(String realm) {
+    public final AuthenticationConfiguration useRealm(String realm) {
         return new SetRealmAuthenticationConfiguration(this, realm);
     }
 
     // client methods
 
-    CallbackHandler getCallbackHandler() {
+    final CallbackHandler getCallbackHandler() {
         return callbackHandler;
     }
 
-    SaslClient createSaslClient(URI uri, SaslClientFactory clientFactory, Collection<String> serverMechanisms) throws SaslException {
-        final HashMap<String, Object> properties = new HashMap<String, Object>();
-        configureSaslProperties(properties);
-        final HashSet<String> mechs = new LinkedHashSet<String>(serverMechanisms);
-        mechs.removeIf(n -> ! filterOneSaslMechanism(n));
-        if (mechs.isEmpty()) return null;
-        final String authorizationName = getAuthorizationName();
-        final CallbackHandler callbackHandler = getCallbackHandler();
-        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(), properties, callbackHandler);
+    /**
+     * Get the {@link SaslClientFactory} for this factory, either using a cached instance or creating if required.
+     * @return
+     */
+    private SaslClientFactory getSaslClientFactory() {
+        if (saslClientFactory == null) {
+            synchronized (this) {
+                if (saslClientFactory == null) {
+                    SaslClientFactory saslClientFactory = getSaslClientFactory(getProviderSupplier());
+                    final HashMap<String, Object> properties = new HashMap<String, Object>();
+                    configureSaslProperties(properties);
+                    if (properties.isEmpty() == false) {
+                        saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
+                    }
+                    String host = getHost();
+                    if (host != null) {
+                        saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
+                    }
+                    saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
+
+                    this.saslClientFactory = saslClientFactory;
+                }
+            }
+        }
+        return saslClientFactory;
+    }
+
+    final SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
+        SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
+        return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
+                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
     }
 
     // interfaces
