@@ -73,6 +73,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
+import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
@@ -131,6 +132,10 @@ public abstract class AuthenticationConfiguration {
         }
 
         String getHost() {
+            return null;
+        }
+
+        String getProtocol() {
             return null;
         }
 
@@ -221,6 +226,10 @@ public abstract class AuthenticationConfiguration {
         return parent.getHost();
     }
 
+    String getProtocol() {
+        return parent.getProtocol();
+    }
+
     int getPort() {
         return parent.getPort();
     }
@@ -305,7 +314,9 @@ public abstract class AuthenticationConfiguration {
     }
 
     AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
-        if (clazz1.isInstance(this) || clazz2.isInstance(this)) return parent;
+        if (clazz1.isInstance(this) && clazz2.isInstance(this)) return parent;
+        if (clazz1.isInstance(this)) return parent.without(clazz2);
+        if (clazz2.isInstance(this)) return parent.without(clazz1);
         AuthenticationConfiguration newParent = parent.without(clazz1, clazz2);
         if (parent == newParent) return this;
         return reparent(newParent);
@@ -620,8 +631,23 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useHost(String hostName) {
-        if (hostName != null && hostName.isEmpty()) hostName = null;
+        if (hostName == null || hostName.isEmpty()) {
+            return without(SetHostAuthenticationConfiguration.class);
+        }
         return new SetHostAuthenticationConfiguration(this, hostName);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which specifies a different protocol to be passed to the authentication mechanisms.
+     *
+     * @param protocol the protocol to pass to the authentication mechanisms.
+     * @return the new configuration
+     */
+    public final AuthenticationConfiguration useProtocol(String protocol) {
+        if (protocol == null || protocol.isEmpty()) {
+            return without(SetProtocolAuthenticationConfiguration.class);
+        }
+        return new SetProtocolAuthenticationConfiguration(this, protocol);
     }
 
     /**
@@ -807,6 +833,10 @@ public abstract class AuthenticationConfiguration {
                     String host = getHost();
                     if (host != null) {
                         saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
+                    }
+                    String protocol = getProtocol();
+                    if (protocol != null) {
+                        saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
                     }
                     saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
 
