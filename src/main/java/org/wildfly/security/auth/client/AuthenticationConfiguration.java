@@ -38,12 +38,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -71,6 +71,10 @@ import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
+import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
+import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
+import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLUtils;
@@ -81,6 +85,7 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
  * A configuration which controls how authentication is performed.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public abstract class AuthenticationConfiguration {
     // constants
@@ -90,7 +95,6 @@ public abstract class AuthenticationConfiguration {
      * remapping of any kind, and always uses an anonymous principal.
      */
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration() {
-
         void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException {
             CallbackUtil.unsupported(callbacks[index]);
         }
@@ -169,6 +173,11 @@ public abstract class AuthenticationConfiguration {
 
         Supplier<Provider[]> getProviderSupplier() {
             return Security::getProviders;
+        }
+
+        @Override
+        SaslClientFactory getSaslClientFactory(Supplier<Provider[]> providers) {
+            return new SecurityProviderSaslClientFactory(providers);
         }
 
         boolean delegatesThrough(final Class<?> clazz) {
@@ -259,6 +268,10 @@ public abstract class AuthenticationConfiguration {
 
     Supplier<Provider[]> getProviderSupplier() {
         return parent.getProviderSupplier();
+    }
+
+    SaslClientFactory getSaslClientFactory(Supplier<Provider[]> providers) {
+        return parent.getSaslClientFactory(providers);
     }
 
     SecurityFactory<X509TrustManager> getX509TrustManagerFactory() {
@@ -661,7 +674,38 @@ public abstract class AuthenticationConfiguration {
         return useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, classLoader));
     }
 
-    // SASL
+    // SASL Mechanisms
+
+    /**
+     * Use a pre-existing {@link SaslClientFactory} instead of discovery.
+     *
+     * @param saslClientFactory the pre-existing {@link SaslClientFactory} to use.
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useSaslClientFactory(final SaslClientFactory saslClientFactory) {
+        return useSaslClientFactory(() -> saslClientFactory);
+    }
+
+    /**
+     * Use the given sasl client factory supplier to obtain the {@link SaslClientFactory} to use.
+     *
+     * @param saslClientFactory the sasl client factory supplier to use.
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useSaslClientFactory(final Supplier<SaslClientFactory> saslClientFactory) {
+        return new SetSaslClientFactoryAuthenticationConfiguration(this, saslClientFactory);
+    }
+
+    /**
+     * Use provider based discovery to load available {@link SaslClientFactory} implementations.
+     *
+     * @return the new configuration.
+     */
+    public AuthenticationConfiguration useSaslClientFactoryFromProviders() {
+        return without(SetSaslClientFactoryAuthenticationConfiguration.class);
+    }
+
+    // SASL Configuration
 
     /**
      * Create a new configuration which is the same as this configuration, but which sets the properties that will be passed to
@@ -741,15 +785,31 @@ public abstract class AuthenticationConfiguration {
         return callbackHandler;
     }
 
-    SaslClient createSaslClient(URI uri, SaslClientFactory clientFactory, Collection<String> serverMechanisms) throws SaslException {
+    /**
+     * Get the {@link SaslClientFactory} for this factory, either using a cached instance or creating if required.
+     * @return
+     */
+    private SaslClientFactory getSaslClientFactory() {
+        // TODO Cache This
+        SaslClientFactory saslClientFactory = getSaslClientFactory(getProviderSupplier());
         final HashMap<String, Object> properties = new HashMap<String, Object>();
         configureSaslProperties(properties);
-        final HashSet<String> mechs = new LinkedHashSet<String>(serverMechanisms);
-        mechs.removeIf(n -> ! filterOneSaslMechanism(n));
-        if (mechs.isEmpty()) return null;
-        final String authorizationName = getAuthorizationName();
-        final CallbackHandler callbackHandler = getCallbackHandler();
-        return clientFactory.createSaslClient(mechs.toArray(new String[mechs.size()]), authorizationName, uri.getScheme(), getHost(), properties, callbackHandler);
+        if (properties.isEmpty() == false) {
+            saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
+        }
+        String host = getHost();
+        if (host != null) {
+            saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
+        }
+        saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
+
+        return saslClientFactory;
+    }
+
+    final SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
+        SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
+        return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
+                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
     }
 
     // interfaces
