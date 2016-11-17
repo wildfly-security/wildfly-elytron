@@ -33,7 +33,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("firstName"), "My First Name");
-        }, AttributeMapping.from("cn").to("firstName"));
+        }, AttributeMapping.fromAttribute("cn").to("firstName").build());
     }
 
     @Test
@@ -41,7 +41,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
-        }, AttributeMapping.from("cn"));
+        }, AttributeMapping.fromAttribute("cn").build());
     }
 
     @Test
@@ -50,23 +50,49 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
             assertEquals("Expected two attributes.", 2, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
             assertAttributeValue(attributes.get("lastName"), "My Last Name");
-        }, AttributeMapping.from("cn"), AttributeMapping.from("sn").to("lastName"));
+        }, AttributeMapping.fromAttribute("cn").build(), AttributeMapping.fromAttribute("sn").to("lastName").build());
     }
 
     @Test
     public void testAttributeFromDifferentMappings() throws Exception {
         assertAttributes("userWithAttributes", attributes -> {
-            assertEquals("Expected two attributes.", 1, attributes.size());
+            assertEquals("Expected one attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name", "My Last Name");
-        }, AttributeMapping.from("cn"), AttributeMapping.from("sn").to("CN"));
+        }, AttributeMapping.fromAttribute("cn").build(), AttributeMapping.fromAttribute("sn").to("CN").build());
     }
 
     @Test
-    public void testAttributeFromRDN() throws Exception {
+    public void testAttributeFilterRdn() throws Exception {
         assertAttributes("userWithRdnAttribute", attributes -> {
-            assertEquals("Expected two attributes.", 1, attributes.size());
-            assertAttributeValue(attributes.get("businessArea"), "Finance", "Sales");
-        }, AttributeMapping.fromFilter("ou=Finance,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea")
-         , AttributeMapping.fromFilter("ou=Sales,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea"));
+            assertEquals("Expected one attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get("businessArea"), "Finance", "cn=Manager,ou=Sales,dc=elytron,dc=wildfly,dc=org");
+        }, AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build()
+         , AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("businessArea").build());
+    }
+
+    @Test
+    public void testAttributeFilterAttribute() throws Exception {
+        assertAttributes("userWithRdnAttribute", attributes -> {
+            assertEquals("Expected one attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get("roles"), "Manager", "Manager");
+            assertEquals("Expected two roles.", 2, attributes.get("roles").size());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").to("roles").build()
+         , AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("roles").build());
+    }
+
+    @Test
+    public void testDnToSpecifiedAttribute() throws Exception {
+        assertAttributes("userWithAttributes", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get("myDn"), "uid=userWithAttributes,dc=elytron,dc=wildfly,dc=org");
+        }, AttributeMapping.fromDn().to("myDn").build());
+    }
+
+    @Test
+    public void testRecursiveRoles() throws Exception {
+        assertAttributes("jduke", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get("roles"), "R1", "R2");
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").roleRecursion(1).to("roles").build());
     }
 }
