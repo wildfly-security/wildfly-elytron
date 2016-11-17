@@ -606,6 +606,13 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module.getClassLoader())));
                         break;
                     }
+                    case "set-protocol": {
+                        if (isSet(foundBits, 14)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 14);
+                        final String protocol = parseNameType(reader);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProtocol(protocol));
+                        break;
+                    }
                     default: {
                         throw reader.unexpectedElement();
                     }
@@ -1545,7 +1552,7 @@ public final class ElytronXmlParser {
             final KeyStore.Entry entry = entrySecurityFactory.create();
             if (entry instanceof KeyStore.PrivateKeyEntry) {
                 final KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry) entry;
-                final X509Certificate[] certificateChain = X500.asX509CertificateArray((Object[])privateKeyEntry.getCertificateChain());
+                final X509Certificate[] certificateChain = X500.asX509CertificateArray(privateKeyEntry.getCertificateChain());
                 return new X509CertificateChainPrivateCredential(privateKeyEntry.getPrivateKey(), certificateChain);
             }
             throw xmlLog.invalidKeyStoreEntryType("unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());

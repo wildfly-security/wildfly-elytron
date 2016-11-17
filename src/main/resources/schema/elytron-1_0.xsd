@@ -147,6 +147,7 @@
             <xsd:all>
                 <xsd:element name="set-host" type="name-type" minOccurs="0"/>
                 <xsd:element name="set-port" type="port-number-simple-type" minOccurs="0"/>
+                <xsd:element name="set-protocol" type="name-type" minOccurs="0"/>
                 <xsd:choice minOccurs="0">
                     <xsd:element name="set-user-name" type="name-type" minOccurs="0"/>
                     <xsd:element name="set-anonymous" type="empty-type" minOccurs="0"/>
