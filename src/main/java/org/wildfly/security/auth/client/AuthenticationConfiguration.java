@@ -191,6 +191,7 @@ public abstract class AuthenticationConfiguration {
 
     private final AuthenticationConfiguration parent;
     private final CallbackHandler callbackHandler = callbacks -> AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
+    private SaslClientFactory saslClientFactory = null;
 
     // constructors
 
@@ -790,19 +791,25 @@ public abstract class AuthenticationConfiguration {
      * @return
      */
     private SaslClientFactory getSaslClientFactory() {
-        // TODO Cache This
-        SaslClientFactory saslClientFactory = getSaslClientFactory(getProviderSupplier());
-        final HashMap<String, Object> properties = new HashMap<String, Object>();
-        configureSaslProperties(properties);
-        if (properties.isEmpty() == false) {
-            saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
-        }
-        String host = getHost();
-        if (host != null) {
-            saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
-        }
-        saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
+        if (saslClientFactory == null) {
+            synchronized (this) {
+                if (saslClientFactory == null) {
+                    SaslClientFactory saslClientFactory = getSaslClientFactory(getProviderSupplier());
+                    final HashMap<String, Object> properties = new HashMap<String, Object>();
+                    configureSaslProperties(properties);
+                    if (properties.isEmpty() == false) {
+                        saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
+                    }
+                    String host = getHost();
+                    if (host != null) {
+                        saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
+                    }
+                    saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
 
+                    this.saslClientFactory = saslClientFactory;
+                }
+            }
+        }
         return saslClientFactory;
     }
 
