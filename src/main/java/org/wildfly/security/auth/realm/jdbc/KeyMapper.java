@@ -20,7 +20,7 @@ package org.wildfly.security.auth.realm.jdbc;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;

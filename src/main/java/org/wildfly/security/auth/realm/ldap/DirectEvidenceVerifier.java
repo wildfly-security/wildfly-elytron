@@ -25,7 +25,7 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.LdapContext;
 
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 

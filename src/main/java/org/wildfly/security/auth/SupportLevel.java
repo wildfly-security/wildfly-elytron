@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2015 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,9 +16,11 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.auth.server;
+package org.wildfly.security.auth;
 
 import java.util.EnumSet;
+
+import org.wildfly.common.Assert;
 
 /**
  * The different support levels.
@@ -129,5 +131,18 @@ public enum SupportLevel {
             if (this == value) return true;
         }
         return false;
+    }
+
+    /**
+     * Get the maximum support level between two candidates.
+     *
+     * @param o1 the first support level (must not be {@code null})
+     * @param o2 the second support level (must not be {@code null})
+     * @return the maximum support level (not {@code null})
+     */
+    public static SupportLevel max(SupportLevel o1, SupportLevel o2) {
+        Assert.checkNotNullParam("o1", o1);
+        Assert.checkNotNullParam("o2", o2);
+        return o1.compareTo(o2) < 0 ? o2 : o1;
     }
 }

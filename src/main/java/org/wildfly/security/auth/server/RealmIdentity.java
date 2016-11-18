@@ -24,6 +24,7 @@ import java.security.Principal;
 import java.util.function.Function;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;

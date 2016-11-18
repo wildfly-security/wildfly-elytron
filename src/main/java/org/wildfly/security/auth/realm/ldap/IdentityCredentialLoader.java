@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
 /**

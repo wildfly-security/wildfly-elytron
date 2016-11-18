@@ -39,6 +39,7 @@ import java.util.function.UnaryOperator;
 
 import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
