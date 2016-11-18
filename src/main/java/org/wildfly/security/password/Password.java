@@ -19,6 +19,7 @@
 package org.wildfly.security.password;
 
 import java.security.Key;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
 /**
@@ -76,6 +77,15 @@ public interface Password extends Key, Cloneable {
      */
     default <P extends Password, R> R castAndApply(Class<P> passwordType, Function<P, R> function) {
         return passwordType.isInstance(this) ? function.apply(passwordType.cast(this)) : null;
+    }
+
+    /**
+     * Get the applicable algorithm parameter specification for this password type.
+     *
+     * @return the algorithm parameter specification, or {@code null} if this password type does not support algorithms
+     */
+    default AlgorithmParameterSpec getParameterSpec() {
+        return null;
     }
 
     /**

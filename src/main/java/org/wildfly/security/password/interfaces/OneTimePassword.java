@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
 
 /**
  * A one-time password, used by the OTP SASL mechanism.
@@ -65,6 +66,10 @@ public interface OneTimePassword extends OneWayPassword {
      * @return the sequence number used to generate the hash
      */
     int getSequenceNumber();
+
+    default OneTimePasswordAlgorithmSpec getParameterSpec() {
+        return new OneTimePasswordAlgorithmSpec(getAlgorithm(), getSeed(), getSequenceNumber());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

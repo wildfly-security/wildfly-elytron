@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * A SCRAM-digest password, used by the SCRAM family of SASL mechanisms.
@@ -80,6 +81,10 @@ public interface ScramDigestPassword extends OneWayPassword {
      * @return the iteration count used to generate the digest
      */
     int getIterationCount();
+
+    default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
+        return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), getSalt());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

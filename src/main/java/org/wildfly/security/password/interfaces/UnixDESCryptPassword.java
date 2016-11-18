@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * The traditional UNIX DES crypt password algorithm.
@@ -46,6 +47,15 @@ public interface UnixDESCryptPassword extends OneWayPassword {
      * @return the crypt bytes
      */
     byte[] getHash();
+
+    default SaltedPasswordAlgorithmSpec getParameterSpec() {
+        final int salt = getSalt();
+        byte[] saltBytes = new byte[2];
+        // Big-endian format
+        saltBytes[0] = (byte) (salt >>> 8 & 0xff);
+        saltBytes[1] = (byte) (salt & 0xff);
+        return new SaltedPasswordAlgorithmSpec(saltBytes);
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

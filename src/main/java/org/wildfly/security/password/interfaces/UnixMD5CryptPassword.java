@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * The UNIX modular-crypt MD5 crypt algorithm.
@@ -53,6 +54,10 @@ public interface UnixMD5CryptPassword extends OneWayPassword {
      * @return the hash component
      */
     byte[] getHash();
+
+    default SaltedPasswordAlgorithmSpec getParameterSpec() {
+        return new SaltedPasswordAlgorithmSpec(getSalt());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

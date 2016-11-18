@@ -21,6 +21,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
 
 /**
  * Digest MD5 (pre-digested) password.
@@ -81,6 +82,10 @@ public interface DigestPassword extends OneWayPassword {
      * @return the digest represented by this {@link Password}
      */
     byte[] getDigest();
+
+    default DigestPasswordAlgorithmSpec getParameterSpec() {
+        return new DigestPasswordAlgorithmSpec(getUsername(), getRealm());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.
