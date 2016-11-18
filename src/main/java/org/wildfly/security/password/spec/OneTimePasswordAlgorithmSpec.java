@@ -20,6 +20,8 @@ package org.wildfly.security.password.spec;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Algorithm parameter specification for one-time password types.
@@ -50,5 +52,16 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
 
     public int getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    public boolean equals(Object other) {
+        if (! (other instanceof OneTimePasswordAlgorithmSpec)) return false;
+        if (this == other) return true;
+        OneTimePasswordAlgorithmSpec otherSpec = (OneTimePasswordAlgorithmSpec) other;
+        return sequenceNumber == otherSpec.sequenceNumber && Objects.equals(algorithm, otherSpec.algorithm) && Arrays.equals(seed, otherSpec.seed);
+    }
+
+    public int hashCode() {
+        return (sequenceNumber * 31 + Arrays.hashCode(seed)) * 31 + algorithm.hashCode();
     }
 }

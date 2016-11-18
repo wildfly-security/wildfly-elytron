@@ -20,6 +20,7 @@ package org.wildfly.security.password.spec;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 
 /**
  * A {@link AlgorithmParameterSpec} for a password represented by digesting it with a username and realm as defined by RFC2617 and
@@ -47,4 +48,14 @@ public final class DigestPasswordAlgorithmSpec implements AlgorithmParameterSpec
         return realm;
     }
 
+    public boolean equals(Object other) {
+        if (! (other instanceof DigestPasswordAlgorithmSpec)) return false;
+        if (this == other) return true;
+        DigestPasswordAlgorithmSpec otherSpec = (DigestPasswordAlgorithmSpec) other;
+        return Objects.equals(username, otherSpec.username) && Objects.equals(realm, otherSpec.realm);
+    }
+
+    public int hashCode() {
+        return Objects.hashCode(username) * 31 + Objects.hashCode(realm);
+    }
 }
