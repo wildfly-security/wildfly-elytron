@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -27,6 +28,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 
@@ -38,7 +41,7 @@ import org.wildfly.security.credential.Credential;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public abstract class IdentityCredentials implements Iterable<Credential> {
+public abstract class IdentityCredentials implements Iterable<Credential>, CredentialSource {
     IdentityCredentials() {
     }
 
@@ -52,6 +55,32 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
         return contains(credentialType, null);
     }
 
+    @Override
+    public final SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+        return contains(credentialType, algorithmName, parameterSpec) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    }
+
+    @Override
+    public final SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+        return contains(credentialType, algorithmName) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    }
+
+    @Override
+    public final SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType) {
+        return contains(credentialType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    }
+
+    /**
+     * Determine whether a credential of the given type and algorithm are present in this set.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @return {@code true} if a matching credential is contained in this set, {@code false} otherwise
+     */
+    public abstract boolean contains(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec);
+
     /**
      * Determine whether a credential of the given type and algorithm are present in this set.
      *
@@ -60,17 +89,20 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * does not support algorithm names
      * @return {@code true} if a matching credential is contained in this set, {@code false} otherwise
      */
-    public abstract boolean contains(Class<? extends Credential> credentialType, String algorithmName);
+    public final boolean contains(Class<? extends Credential> credentialType, String algorithmName) {
+        Assert.checkNotNullParam("credentialType", credentialType);
+        return contains(credentialType, algorithmName, null);
+    }
 
     /**
-     * Determine whether a credential of the type and algorithm of the given credential is present in this set.
+     * Determine whether a credential of the type, algorithm, and parameters of the given credential is present in this set.
      *
      * @param credential the credential to check against (must not be {@code null})
      * @return {@code true} if a matching credential is contained in this set, {@code false} otherwise
      */
     public final boolean containsMatching(Credential credential) {
         Assert.checkNotNullParam("credential", credential);
-        return credential instanceof AlgorithmCredential ? contains(credential.getClass(), ((AlgorithmCredential) credential).getAlgorithm()) : contains(credential.getClass());
+        return credential instanceof AlgorithmCredential ? contains(credential.getClass(), ((AlgorithmCredential) credential).getAlgorithm(), credential.getParameters(AlgorithmParameterSpec.class)) : contains(credential.getClass(), null, credential.getParameters(AlgorithmParameterSpec.class));
     }
 
     /**
@@ -80,8 +112,9 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * @param <C> the credential type
      * @return the credential, or {@code null} if no such credential exists
      */
+    @Override
     public final <C extends Credential> C getCredential(Class<C> credentialType) {
-        return getCredential(credentialType, null);
+        return getCredential(credentialType, null, null);
     }
 
     /**
@@ -91,10 +124,26 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
      * does not support algorithm names
      * @param <C> the credential type
+     * @return the credential, or {@code null} if no such credential exists
+     */
+    @Override
+    public final <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
+        return getCredential(credentialType, algorithmName, null);
+    }
+
+    /**
+     * Acquire a credential of the given type and algorithm name.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type
+     * does not support algorithm names
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @param <C> the credential type
      *
      * @return the credential, or {@code null} if no such credential exists
      */
-    public abstract <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName);
+    @Override
+    public abstract <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec);
 
     /**
      * Apply the given function to the acquired credential, if it is set and of the given type.
@@ -104,10 +153,9 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * @param <C> the credential type
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the criteria are not met
-     *
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    public final <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) throws RealmUnavailableException {
+    @Override
+    public final <C extends Credential, R> R applyToCredential(Class<C> credentialType, Function<C, R> function) {
         final Credential credential = getCredential(credentialType);
         return credential == null ? null : credential.castAndApply(credentialType, function);
     }
@@ -122,12 +170,27 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * @param <C> the credential type
      * @param <R> the return type
      * @return the result of the function, or {@code null} if the criteria are not met
-     *
-     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    public final <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) throws RealmUnavailableException {
+    @Override
+    public final <C extends Credential, R> R applyToCredential(Class<C> credentialType, String algorithmName, Function<C, R> function) {
         final Credential credential = getCredential(credentialType, algorithmName);
         return credential == null ? null : credential.castAndApply(credentialType, algorithmName, function);
+    }
+
+    /**
+     * Apply the given function to the acquired credential, if it is set and of the given type and algorithm.
+     *
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param algorithmName the algorithm name
+     * @param function the function to apply (must not be {@code null})
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the criteria are not met
+     */
+    @Override
+    public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+        final Credential credential = getCredential(credentialType, algorithmName, parameterSpec);
+        return credential == null ? null : credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
     }
 
     /**
@@ -149,20 +212,8 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
     public abstract IdentityCredentials with(IdentityCredentials other);
 
     /**
-     * Return a copy of this credential set without any credentials of the given type.  If the credential type is not
-     * found in this set, return this instance.
-     *
-     * @param credentialType the credential type to remove (must not be {@code null})
-     * @return the new credential set (not {@code null})
-     */
-    public IdentityCredentials without(Class<? extends Credential> credentialType) {
-        Assert.checkNotNullParam("credentialType", credentialType);
-        return without(credentialType::isInstance);
-    }
-
-    /**
-     * Return a copy of this credential set without any credentials with a type and algorithm name matching that of the
-     * given credential.  If the credential type and algorithm name is not found in this set, return this instance.
+     * Return a copy of this credential set without any credentials with a type, algorithm name, and parameters matching that of the
+     * given credential.  If the credential type, algorithm name, and parameters are not found in this set, return this instance.
      *
      * @param credential the credential to match against (must not be {@code null})
      * @return the new credential set (not {@code null})
@@ -173,6 +224,17 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
     }
 
     /**
+     * Return a copy of this credential set without any credentials of the given type.  If the credential type is not
+     * found in this set, return this instance.
+     *
+     * @param credentialType the credential type to remove (must not be {@code null})
+     * @return the new credential set (not {@code null})
+     */
+    public final IdentityCredentials without(Class<? extends Credential> credentialType) {
+        return without(credentialType::isInstance);
+    }
+
+    /**
      * Return a copy of this credential set without any credentials of the given type and algorithm name.  If the
      * credential type and algorithm name is not found in this set, return this instance.
      *
@@ -180,11 +242,24 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
      * @param algorithmName the algorithm name to remove, or {@code null} to match any algorithm name
      * @return the new credential set (not {@code null})
      */
-    public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName) {
+    public final IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName) {
+        return without(credentialType, algorithmName, null);
+    }
+
+    public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("credentialType", credentialType);
         if (algorithmName == null) {
-            return without(credentialType);
+            if (parameterSpec == null) {
+                return without(credentialType);
+            } else {
+                return without(cred -> credentialType.isInstance(cred) && cred.hasParameters(parameterSpec));
+            }
         } else if (AlgorithmCredential.class.isAssignableFrom(credentialType)) {
-            return without(cred -> credentialType.isInstance(cred) && algorithmName.equals(((AlgorithmCredential) cred).getAlgorithm()));
+            if (parameterSpec == null) {
+                return without(cred -> credentialType.isInstance(cred) && algorithmName.equals(((AlgorithmCredential) cred).getAlgorithm()));
+            } else {
+                return without(cred -> credentialType.isInstance(cred) && algorithmName.equals(((AlgorithmCredential) cred).getAlgorithm()) && cred.hasParameters(parameterSpec));
+            }
         } else {
             // impossible to have a credential with an algorithm that isn't an AlgorithmCredential
             return this;
@@ -233,7 +308,7 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
             return null;
         }
 
-        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName) {
+        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             return false;
         }
 
@@ -245,19 +320,19 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
             return null;
         }
 
-        public IdentityCredentials without(final Class<? extends Credential> credentialType) {
-            return this;
-        }
-
         public IdentityCredentials withoutMatching(final Credential credential) {
             return this;
         }
 
-        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName) {
+        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             return this;
         }
 
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            return null;
+        }
+
+        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
             return null;
         }
 
@@ -340,7 +415,7 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
             return size;
         }
 
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
             final Credential credential = this.credential;
             if (credential instanceof AlgorithmCredential) {
@@ -359,13 +434,13 @@ public abstract class IdentityCredentials implements Iterable<Credential> {
             }
         }
 
-        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName) {
+        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
             Credential credential = this.credential;
             if (credential instanceof AlgorithmCredential) {
-                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm()));
+                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) && (parameterSpec == null || credential.hasParameters(parameterSpec));
             } else {
-                return algorithmName == null && credentialType.isInstance(credential);
+                return algorithmName == null && credentialType.isInstance(credential) && (parameterSpec == null || credential.hasParameters(parameterSpec));
             }
         }
 
