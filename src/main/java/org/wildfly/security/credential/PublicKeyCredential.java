@@ -19,7 +19,10 @@
 package org.wildfly.security.credential;
 
 import java.security.PublicKey;
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.common.Assert;
+import org.wildfly.security.key.KeyUtil;
 
 /**
  * A public key credential.
@@ -44,6 +47,18 @@ public final class PublicKeyCredential implements AlgorithmCredential {
      */
     public PublicKey getPublicKey() {
         return publicKey;
+    }
+
+    public boolean supportsParameters(final Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        return KeyUtil.getParameters(publicKey, paramSpecClass) != null;
+    }
+
+    public <P extends AlgorithmParameterSpec> P getParameters(final Class<P> paramSpecClass) {
+        return KeyUtil.getParameters(publicKey, paramSpecClass);
+    }
+
+    public boolean hasSameParameters(final Credential other) {
+        return KeyUtil.hasParameters(publicKey, other.getParameters(AlgorithmParameterSpec.class));
     }
 
     /**

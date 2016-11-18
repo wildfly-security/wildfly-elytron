@@ -44,6 +44,9 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
         if (! getFirstCertificate().getPublicKey().getAlgorithm().equals(privateKey.getAlgorithm())) {
             throw ElytronMessages.log.mismatchedPublicPrivateKeyAlgorithms();
         }
+        if (! KeyUtil.hasSameParameters(getFirstCertificate().getPublicKey(), privateKey)) {
+            throw ElytronMessages.log.mismatchedPublicPrivateKeyParameters();
+        }
         this.privateKey = privateKey;
     }
 

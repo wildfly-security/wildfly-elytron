@@ -21,6 +21,8 @@ package org.wildfly.security.credential;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.key.KeyUtil;
@@ -49,6 +51,9 @@ public final class KeyPairCredential implements AlgorithmCredential {
         if (! publicKey.getAlgorithm().equals(privateKey.getAlgorithm())) {
             throw ElytronMessages.log.mismatchedPublicPrivateKeyAlgorithms();
         }
+        if (! KeyUtil.hasSameParameters(publicKey, privateKey)) {
+            throw ElytronMessages.log.mismatchedPublicPrivateKeyParameters();
+        }
         this.keyPair = keyPair;
     }
 
@@ -59,6 +64,18 @@ public final class KeyPairCredential implements AlgorithmCredential {
      */
     public KeyPair getKeyPair() {
         return keyPair;
+    }
+
+    public boolean supportsParameters(final Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        return KeyUtil.getParameters(keyPair.getPublic(), paramSpecClass) != null;
+    }
+
+    public <P extends AlgorithmParameterSpec> P getParameters(final Class<P> paramSpecClass) {
+        return KeyUtil.getParameters(keyPair.getPublic(), paramSpecClass);
+    }
+
+    public boolean hasSameParameters(final Credential other) {
+        return KeyUtil.hasParameters(keyPair.getPublic(), other.getParameters(AlgorithmParameterSpec.class));
     }
 
     public String getAlgorithm() {

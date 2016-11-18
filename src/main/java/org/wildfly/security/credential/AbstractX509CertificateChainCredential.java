@@ -21,6 +21,7 @@ package org.wildfly.security.credential;
 import java.security.Provider;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
@@ -28,6 +29,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
+import org.wildfly.security.key.KeyUtil;
 
 abstract class AbstractX509CertificateChainCredential implements X509CertificateChainCredential {
 
@@ -67,6 +69,18 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
 
     public String getAlgorithm() {
         return getFirstCertificate().getPublicKey().getAlgorithm();
+    }
+
+    public boolean supportsParameters(final Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        return KeyUtil.getParameters(getFirstCertificate().getPublicKey(), paramSpecClass) != null;
+    }
+
+    public <P extends AlgorithmParameterSpec> P getParameters(final Class<P> paramSpecClass) {
+        return KeyUtil.getParameters(getFirstCertificate().getPublicKey(), paramSpecClass);
+    }
+
+    public boolean hasSameParameters(final Credential other) {
+        return KeyUtil.hasParameters(getFirstCertificate().getPublicKey(), other.getParameters(AlgorithmParameterSpec.class));
     }
 
     public X509Certificate[] getCertificateChain() {
