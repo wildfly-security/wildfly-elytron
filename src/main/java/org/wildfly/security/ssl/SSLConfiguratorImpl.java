@@ -24,6 +24,7 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 
 final class SSLConfiguratorImpl implements SSLConfigurator {
@@ -68,6 +69,8 @@ final class SSLConfiguratorImpl implements SSLConfigurator {
     }
 
     void configure(SSLParameters params, String[] supportedProtocols, String[] supportedCipherSuites) {
+        Assert.checkNotNullParam("supportedProtocols", supportedProtocols);
+        Assert.checkNotNullParam("supportedCipherSuites", supportedCipherSuites);
         params.setProtocols(protocolSelector.evaluate(supportedProtocols));
         params.setCipherSuites(cipherSuiteSelector.evaluate(supportedCipherSuites));
         params.setUseCipherSuitesOrder(useCipherSuitesOrder);
