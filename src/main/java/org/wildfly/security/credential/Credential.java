@@ -89,6 +89,19 @@ public interface Credential extends Cloneable {
     }
 
     /**
+     * Cast this credential type if the type, algorithm, and parameters match.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @param <C> the credential type
+     * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
+     */
+    default <C extends Credential> C castAs(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
+        return castAndApply(credentialType, algorithmName, parameterSpec, Function.identity());
+    }
+
+    /**
      * Cast this credential type if the type and algorithm matches.
      *
      * @param credentialType the credential type class to check
@@ -109,6 +122,21 @@ public interface Credential extends Cloneable {
      */
     default <C extends Credential> C castAs(Class<C> credentialType) {
         return castAndApply(credentialType, Function.identity());
+    }
+
+    /**
+     * Cast this credential type and apply a function if the type matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @param function the function to apply
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the credential is not of the given type
+     */
+    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
+        return credentialType.isInstance(this) && algorithmName == null && (parameterSpec == null || hasParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**
@@ -199,7 +227,7 @@ public interface Credential extends Cloneable {
      * @return {@code true} if the credentials are of the same kind, {@code false} otherwise
      */
     default boolean matches(Credential other) {
-        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass();
+        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass() && hasSameParameters(other);
     }
 
     /**
