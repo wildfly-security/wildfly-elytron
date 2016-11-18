@@ -70,4 +70,10 @@ class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration {
     AuthenticationConfiguration reparent(AuthenticationConfiguration newParent) {
         return new SetChoiceAuthenticationConfiguration(newParent, matchPredicate, choice);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("choice=").append(choice).append(',');
+    }
+
 }

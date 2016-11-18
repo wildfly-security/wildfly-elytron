@@ -37,4 +37,10 @@ class SetHostAuthenticationConfiguration extends AuthenticationConfiguration {
     String getHost() {
         return hostName;
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("host=").append(hostName).append(',');
+    }
+
 }

@@ -39,4 +39,10 @@ class RewriteNameAuthenticationConfiguration extends AuthenticationConfiguration
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new RewriteNameAuthenticationConfiguration(newParent, rewriter);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("RewriteName,");
+    }
+
 }

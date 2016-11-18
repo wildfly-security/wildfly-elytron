@@ -101,4 +101,10 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetForwardAuthenticationConfiguration(newParent, sourceDomain, context);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("ForwardAuthentication,");
+    }
+
 }

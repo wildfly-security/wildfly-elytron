@@ -72,4 +72,10 @@ class SetCertificateCredentialAuthenticationConfiguration extends Authentication
         Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
         return types == null || types.contains(X509CertificateChainPrivateCredential.class) || super.filterOneSaslMechanism(mechanismName);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("CertificateCredential,");
+    }
+
 }

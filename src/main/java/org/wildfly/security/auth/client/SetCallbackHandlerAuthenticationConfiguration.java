@@ -46,4 +46,10 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("CallbackHandler,");
+    }
+
 }

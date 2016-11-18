@@ -64,4 +64,10 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetRealmAuthenticationConfiguration(newParent, realm);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("realm=").append(realm).append(',');
+    }
+
 }

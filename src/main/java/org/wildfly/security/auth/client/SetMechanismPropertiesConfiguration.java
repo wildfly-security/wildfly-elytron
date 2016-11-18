@@ -45,4 +45,15 @@ class SetMechanismPropertiesConfiguration extends AuthenticationConfiguration {
         properties.putAll(mechanismProperties);
     }
 
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        parentAsString(sb);
+        sb.append("mechanism-properties=[ ");
+        if (mechanismProperties != null) {
+            mechanismProperties.entrySet().forEach(e -> sb.append(e.getKey()).append('=').append(e.getValue()).append(' '));
+        }
+        sb.append("],");
+        return sb;
+    }
+
 }

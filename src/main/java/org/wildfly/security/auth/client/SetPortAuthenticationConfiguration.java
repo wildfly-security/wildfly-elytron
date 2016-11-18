@@ -37,4 +37,10 @@ class SetPortAuthenticationConfiguration extends AuthenticationConfiguration {
     int getPort() {
         return port;
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("port=").append(port).append(',');
+    }
+
 }

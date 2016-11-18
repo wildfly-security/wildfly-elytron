@@ -58,4 +58,10 @@ class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguratio
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetAnonymousAuthenticationConfiguration(newParent);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("AnonymousAuthentication,");
+    }
+
 }

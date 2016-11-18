@@ -38,4 +38,9 @@ class SetAllowAllSaslMechanisms extends AuthenticationConfiguration {
         return new SetAllowAllSaslMechanisms(newParent);
     }
 
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("AllowAllSaslMechanisms,");
+    }
+
 }

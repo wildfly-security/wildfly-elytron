@@ -164,4 +164,10 @@ class SetKeyStoreCredentialAuthenticationConfiguration extends AuthenticationCon
             return super.filterOneSaslMechanism(mechanismName);
         }
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("KeyStoreCredential,");
+    }
+
 }

@@ -68,4 +68,9 @@ class SetGSSCredentialAuthenticationConfiguration extends AuthenticationConfigur
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetGSSCredentialAuthenticationConfiguration(newParent, credential);
     }
+
+    @Override
+    StringBuilder asString(StringBuilder sb) {
+        return parentAsString(sb).append("GSSCredential,");
+    }
 }
