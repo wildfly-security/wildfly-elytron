@@ -448,61 +448,6 @@ public class EntityTest extends BaseTestCase {
     }
 
     @Test
-    public void testClientPrivateKeyPublicKeyMismatch() throws Exception {
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
-        assertNotNull(clientFactory);
-
-        final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                getX509KeyManager(serverKeyStore, KEYSTORE_PASSWORD), serverTrustStore);
-
-        // A certificate that does not correspond to the client's private key will be used
-        final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
-        KeyStore keyStore = loadKeyStore(wrongKeyStore);
-        final Certificate[] certificateChain = keyStore.getCertificateChain(WRONG_KEYSTORE_ALIAS);
-        keyStore = loadKeyStore(clientKeyStore);
-        CallbackHandler cbh = createClientCallbackHandler(mechanisms, (PrivateKey) keyStore.getKey(CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
-                Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class), getX509TrustManager(clientTrustStore));
-        final SaslClient saslClient = clientFactory.createSaslClient(mechanisms, null, "test", "testserver1.example.com",
-                Collections.<String, Object>emptyMap(), cbh);
-
-        byte[] message = saslServer.evaluateResponse(new byte[0]);
-        message = saslClient.evaluateChallenge(message);
-        try {
-            saslServer.evaluateResponse(message);
-            fail("Expected SaslException not thrown");
-        } catch (SaslException expected) {
-        }
-    }
-
-    @Test
-    public void testServerPrivateKeyPublicKeyMismatch() throws Exception {
-        final SaslClientFactory clientFactory = obtainSaslClientFactory(EntitySaslClientFactory.class);
-        assertNotNull(clientFactory);
-
-        // A certificate that does not correspond to the server's private key will be used
-        KeyStore keyStore = loadKeyStore(wrongKeyStore);
-        final Certificate[] certificateChain = keyStore.getCertificateChain(WRONG_KEYSTORE_ALIAS);
-        keyStore = loadKeyStore(serverKeyStore);
-        final SaslServer saslServer = createSaslServer(SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC, "testserver1.example.com",
-                serverTrustStore, (PrivateKey) keyStore.getKey(SERVER_KEYSTORE_ALIAS, KEYSTORE_PASSWORD),
-                Arrays.copyOf(certificateChain, certificateChain.length, X509Certificate[].class));
-
-        final String[] mechanisms = new String[] { SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC };
-        CallbackHandler cbh = createClientCallbackHandler(mechanisms, clientKeyStore, CLIENT_KEYSTORE_ALIAS, KEYSTORE_PASSWORD, getX509TrustManager(clientTrustStore));
-        final SaslClient saslClient = clientFactory.createSaslClient(mechanisms, null, "test", "",
-                Collections.<String, Object>emptyMap(), cbh);
-
-        byte[] message = saslServer.evaluateResponse(new byte[0]);
-        message = saslClient.evaluateChallenge(message);
-        message = saslServer.evaluateResponse(message);
-        try {
-            saslClient.evaluateChallenge(message);
-            fail("Expected SaslException not thrown");
-        } catch (SaslException expected) {
-        }
-    }
-
-    @Test
     public void testRfc3163Example() throws Exception {
         // This test uses the example from page 10 in RFC 3163 (https://tools.ietf.org/html/rfc3163#section-5)
         mockRandom(new byte[]{18, 56, -105, 88, 121, -121, 71, -104});

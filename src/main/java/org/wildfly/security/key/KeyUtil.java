@@ -33,6 +33,7 @@ import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.ECKey;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAMultiPrimePrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.AlgorithmParameterSpec;
@@ -86,6 +87,8 @@ public final class KeyUtil {
         if (key instanceof Password) {
             final AlgorithmParameterSpec parameterSpec = ((Password) key).getParameterSpec();
             return paramSpecClass.isInstance(parameterSpec) ? paramSpecClass.cast(parameterSpec) : null;
+        } else if (key instanceof RSAKey && paramSpecClass.isAssignableFrom(RSAParameterSpec.class)) {
+            return paramSpecClass.cast(new RSAParameterSpec((RSAKey) key));
         } else if (key instanceof DSAKey && paramSpecClass.isAssignableFrom(DSAParams.class)) {
             return paramSpecClass.cast(((DSAKey) key).getParams());
         } else if (key instanceof ECKey && paramSpecClass.isAssignableFrom(ECParameterSpec.class)) {
