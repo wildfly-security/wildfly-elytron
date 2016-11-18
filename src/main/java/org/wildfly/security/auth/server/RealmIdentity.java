@@ -63,7 +63,7 @@ public interface RealmIdentity {
      * @param credentialType the exact credential type (must not be {@code null})
      * @param algorithmName the algorithm name, or {@code null} if any algorithm is acceptable or the credential type does
      *  not support algorithm names
-     * @return the level of support for this credential type
+     * @return the level of support for this credential type (may not be {@code null})
      * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
     SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException;
