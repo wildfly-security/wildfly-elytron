@@ -34,8 +34,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.function.Supplier;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -115,6 +117,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
     protected byte[] unwrapHmacKeyIntegrity;
 
     protected final MessageDigest messageDigest;
+    private final Supplier<Provider[]> providers;
 
     /**
      * @param mechanismName
@@ -122,7 +125,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
      * @param serverName
      * @param callbackHandler
      */
-    public AbstractDigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers) throws SaslException {
+    public AbstractDigestMechanism(String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, FORMAT format, Charset charset, String[] ciphers, Supplier<Provider[]> providers) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
 
         secureRandomGenerator = new SecureRandom();
@@ -151,11 +154,8 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         } else {
             this.charset = StandardCharsets.ISO_8859_1;
         }
+        this.providers = providers;
     }
-
-
-
-
 
     /**
      * Get supported ciphers as comma separated list of cipher-opts by Digest MD5 spec.
@@ -498,7 +498,7 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
         char[] passwordChars;
         try {
-            passwordChars = getTwoWayPasswordChars(getMechanismName(), password);
+            passwordChars = getTwoWayPasswordChars(getMechanismName(), password, providers);
         } catch (AuthenticationMechanismException e) {
             throw e.toSaslException();
         }

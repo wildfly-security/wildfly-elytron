@@ -28,8 +28,11 @@ import static org.wildfly.security.http.HttpConstants.FORM_NAME;
 import static org.wildfly.security.http.HttpConstants.SHA256;
 import static org.wildfly.security.http.HttpConstants.SPNEGO_NAME;
 
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -45,6 +48,16 @@ import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
  */
 @MetaInfServices(value = HttpServerAuthenticationMechanismFactory.class)
 public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMechanismFactory {
+
+    private final Supplier<Provider[]> providers;
+
+    public ServerMechanismFactoryImpl() {
+        providers = Security::getProviders;
+    }
+
+    public ServerMechanismFactoryImpl(final Provider provider) {
+        providers = () -> new Provider[] { provider };
+    }
 
     /*
      * 60 Second Nonce Validity
@@ -85,7 +98,7 @@ public class ServerMechanismFactoryImpl implements HttpServerAuthenticationMecha
             case CLIENT_CERT_NAME:
                 return new ClientCertAuthenticationMechanism(callbackHandler);
             case DIGEST_NAME:
-                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH));
+                return new DigestAuthenticationMechanism(callbackHandler, nonceManager, (String) properties.get(CONFIG_REALM), (String) properties.get(CONFIG_CONTEXT_PATH), providers);
             case FORM_NAME:
                 return new FormAuthenticationMechanism(callbackHandler, properties);
             case SPNEGO_NAME:

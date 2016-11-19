@@ -21,7 +21,10 @@ package org.wildfly.security.sasl.scram;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -42,6 +45,16 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
  */
 @MetaInfServices(value = SaslServerFactory.class)
 public final class ScramSaslServerFactory implements SaslServerFactory {
+
+    private final Supplier<Provider[]> providers;
+
+    public ScramSaslServerFactory() {
+        providers = Security::getProviders;
+    }
+
+    public ScramSaslServerFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
+    }
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         final ChannelBindingCallback callback = new ChannelBindingCallback();
@@ -65,42 +78,42 @@ public final class ScramSaslServerFactory implements SaslServerFactory {
                 case SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS:
                     if (! bindingOk) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_1_PLUS.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_1:
                     if (bindingRequired) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_1.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS:
                     if (! bindingOk) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_256_PLUS.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_256:
                     if (bindingRequired) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_256.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS:
                     if (! bindingOk) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_384_PLUS.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_384:
                     if (bindingRequired) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_384.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS:
                     if (! bindingOk) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_512_PLUS.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 case SaslMechanismInformation.Names.SCRAM_SHA_512:
                     if (bindingRequired) return null;
                     return new ScramSaslServer(mechanism, protocol, serverName, cbh, ScramMechanism.SCRAM_SHA_512.createServer(
-                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                        cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                     ), callback);
                 default: {
                     return null;

@@ -42,9 +42,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
@@ -84,6 +86,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
     private static final String OPAQUE_VALUE = "00000000000000000000000000000000";
     private static final byte COLON = ':';
 
+    private final Supplier<Provider[]> providers;
     private final CallbackHandler callbackHandler;
     private final NonceManager nonceManager;
     private final String configuredRealm;
@@ -95,11 +98,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
      * @param nonceManager
      * @param configuredRealm
      */
-    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain) {
+    DigestAuthenticationMechanism(CallbackHandler callbackHandler, NonceManager nonceManager, String configuredRealm, String domain, Supplier<Provider[]> providers) {
         this.callbackHandler = callbackHandler;
         this.nonceManager = nonceManager;
         this.configuredRealm = configuredRealm;
         this.domain = domain;
+        this.providers = providers;
     }
 
     @Override
@@ -352,7 +356,7 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
             throw log.mechCallbackHandlerFailedForUnknownReason(getMechanismName(), t);
         }
         TwoWayPassword password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword().castAs(TwoWayPassword.class));
-        char[] passwordChars = getTwoWayPasswordChars(getMechanismName(), password);
+        char[] passwordChars = getTwoWayPasswordChars(getMechanismName(), password, providers);
         try {
             password.destroy();
         } catch(DestroyFailedException e) {

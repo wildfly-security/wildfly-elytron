@@ -23,11 +23,13 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -49,6 +51,7 @@ import org.wildfly.security.util.DecodeException;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramClient {
+    private final Supplier<Provider[]> providers;
     private final ScramMechanism mechanism;
     private final String authorizationId;
     private final CallbackHandler callbackHandler;
@@ -58,7 +61,7 @@ public final class ScramClient {
     private final int minimumIterationCount;
     private final int maximumIterationCount;
 
-    ScramClient(final ScramMechanism mechanism, final String authorizationId, final CallbackHandler callbackHandler, final SecureRandom secureRandom, final byte[] bindingData, final String bindingType, final int minimumIterationCount, final int maximumIterationCount) {
+    ScramClient(final ScramMechanism mechanism, final String authorizationId, final CallbackHandler callbackHandler, final SecureRandom secureRandom, final byte[] bindingData, final String bindingType, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) {
         this.mechanism = mechanism;
         this.authorizationId = authorizationId;
         this.callbackHandler = callbackHandler;
@@ -67,6 +70,7 @@ public final class ScramClient {
         this.bindingType = bindingType;
         this.minimumIterationCount = minimumIterationCount;
         this.maximumIterationCount = maximumIterationCount;
+        this.providers = providers;
     }
 
     Random getRandom() {
@@ -234,7 +238,8 @@ public final class ScramClient {
             new IteratedSaltedPasswordAlgorithmSpec(
                 initialChallenge.getIterationCount(),
                 initialChallenge.getRawSalt()
-            )
+            ),
+            providers
         );
         final byte[] saltedPassword = password.getDigest();
         if (trace) log.tracef("[C] Client salted password: %s", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());

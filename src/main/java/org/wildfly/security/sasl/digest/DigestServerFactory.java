@@ -21,7 +21,10 @@ package org.wildfly.security.sasl.digest;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -43,7 +46,14 @@ import org.wildfly.security.sasl.WildFlySasl;
 @MetaInfServices(value = SaslServerFactory.class)
 public class DigestServerFactory extends AbstractDigestFactory implements SaslServerFactory {
 
+    private final Supplier<Provider[]> providers;
+
     public DigestServerFactory() {
+        providers = Security::getProviders;
+    }
+
+    public DigestServerFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
     }
 
     /* (non-Javadoc)
@@ -80,7 +90,7 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] cipherOpts = (supportedCipherOpts == null ? null : supportedCipherOpts.split(","));
 
-        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts);
+        final DigestSaslServer server = new DigestSaslServer(realms, mechanism, protocol, serverName, cbh, charset, qops, cipherOpts, providers);
         server.init();
         return server;
     }

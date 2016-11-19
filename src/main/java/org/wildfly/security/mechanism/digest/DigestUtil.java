@@ -25,8 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 import javax.security.sasl.SaslException;
 
@@ -235,12 +237,12 @@ public class DigestUtil {
      * @return
      * @throws SaslException
      */
-    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password) throws AuthenticationMechanismException {
+    public static char[] getTwoWayPasswordChars(String mechName, TwoWayPassword password, Supplier<Provider[]> providers) throws AuthenticationMechanismException {
         if (password == null) {
             throw log.mechNoPasswordGiven(mechName);
         }
         try {
-            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm());
+            PasswordFactory pf = PasswordFactory.getInstance(password.getAlgorithm(), providers);
             return pf.getKeySpec(pf.translate(password), ClearPasswordSpec.class).getEncodedPassword();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
             throw log.mechCannotGetTwoWayPasswordChars(mechName, e);

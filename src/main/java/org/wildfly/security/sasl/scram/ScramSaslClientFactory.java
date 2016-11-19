@@ -21,7 +21,10 @@ package org.wildfly.security.sasl.scram;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -43,8 +46,15 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 @MetaInfServices(value = SaslClientFactory.class)
 public final class ScramSaslClientFactory implements SaslClientFactory {
 
+    private final Supplier<Provider[]> providers;
+
     public ScramSaslClientFactory() {
         super();
+        providers = Security::getProviders;
+    }
+
+    public ScramSaslClientFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
@@ -70,42 +80,42 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
                     case SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS:
                         if (! bindingOk) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_1_PLUS.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_1:
                         if (bindingRequired) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_1.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS:
                         if (! bindingOk) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_256_PLUS.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_256:
                         if (bindingRequired) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_256.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_384_PLUS:
                         if (! bindingOk) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_384_PLUS.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_384:
                         if (bindingRequired) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_384.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_512_PLUS:
                         if (! bindingOk) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_512_PLUS.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                     case SaslMechanismInformation.Names.SCRAM_SHA_512:
                         if (bindingRequired) break;
                         return new ScramSaslClient(mechanism, protocol, serverName, cbh, authorizationId, ScramMechanism.SCRAM_SHA_512.createClient(
-                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount
+                            authorizationId, cbh, ScramUtil.getSecureRandom(props), callback, minimumIterationCount, maximumIterationCount, providers
                         ));
                 }
             }

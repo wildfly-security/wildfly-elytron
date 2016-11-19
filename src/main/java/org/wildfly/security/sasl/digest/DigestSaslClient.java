@@ -29,9 +29,11 @@ import static org.wildfly.security.sasl.digest._private.DigestUtil.digestRespons
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -68,8 +70,8 @@ class DigestSaslClient extends AbstractDigestMechanism implements SaslClient {
     private final boolean hasInitialResponse;
     private final String[] demandedCiphers;
 
-    DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] qops, String[] ciphers) throws SaslException {
-        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers);
+    DigestSaslClient(String mechanism, String protocol, String serverName, CallbackHandler callbackHandler, String authorizationId, boolean hasInitialResponse, Charset charset, String[] qops, String[] ciphers, Supplier<Provider[]> providers) throws SaslException {
+        super(mechanism, protocol, serverName, callbackHandler, FORMAT.CLIENT, charset, ciphers, providers);
 
         this.hasInitialResponse = hasInitialResponse;
         this.authorizationId = authorizationId;

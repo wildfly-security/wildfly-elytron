@@ -27,11 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -55,6 +57,7 @@ import org.wildfly.security.util.ByteStringBuilder;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class ScramServer {
+    private final Supplier<Provider[]> providers;
     private final ScramMechanism mechanism;
     private final CallbackHandler callbackHandler;
     private final SecureRandom random;
@@ -63,7 +66,7 @@ public final class ScramServer {
     private final int minimumIterationCount;
     private final int maximumIterationCount;
 
-    ScramServer(final ScramMechanism mechanism, final CallbackHandler callbackHandler, final SecureRandom random, final byte[] bindingData, final String bindingType, final int minimumIterationCount, final int maximumIterationCount) {
+    ScramServer(final ScramMechanism mechanism, final CallbackHandler callbackHandler, final SecureRandom random, final byte[] bindingData, final String bindingType, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) {
         this.mechanism = mechanism;
         this.callbackHandler = callbackHandler;
         this.random = random;
@@ -71,6 +74,7 @@ public final class ScramServer {
         this.bindingType = bindingType;
         this.minimumIterationCount = minimumIterationCount;
         this.maximumIterationCount = maximumIterationCount;
+        this.providers = providers;
     }
 
     /**
@@ -196,7 +200,7 @@ public final class ScramServer {
         final ScramDigestPassword password = MechanismUtil.getPasswordCredential(clientMessage.getAuthenticationName(), callbackHandler, ScramDigestPassword.class, mechanism.getPasswordAlgorithm(), new IteratedSaltedPasswordAlgorithmSpec(
             max(minimumIterationCount, min(maximumIterationCount, ScramDigestPassword.DEFAULT_ITERATION_COUNT)),
             null
-        ));
+        ), providers);
 
         final byte[] saltedPasswordBytes = password.getDigest();
         final int iterationCount = password.getIterationCount();

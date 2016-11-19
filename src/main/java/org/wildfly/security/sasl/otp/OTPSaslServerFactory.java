@@ -18,7 +18,10 @@
 
 package org.wildfly.security.sasl.otp;
 
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
@@ -37,9 +40,19 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 @MetaInfServices(value = SaslServerFactory.class)
 public final class OTPSaslServerFactory implements SaslServerFactory {
 
+    private final Supplier<Provider[]> providers;
+
+    public OTPSaslServerFactory() {
+        providers = Security::getProviders;
+    }
+
+    public OTPSaslServerFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
+    }
+
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         if (SaslMechanismInformation.Names.OTP.equals(mechanism) && OTP.isMatched(props)) {
-            final OTPSaslServer server = new OTPSaslServer(mechanism, protocol, serverName, cbh);
+            final OTPSaslServer server = new OTPSaslServer(mechanism, protocol, serverName, cbh, providers);
             server.init();
             return server;
         }

@@ -22,8 +22,10 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -56,16 +58,18 @@ public final class MechanismUtil {
      * @param passwordType the password class (must not be {@code null})
      * @param passwordAlgorithm the password algorithm name (must not be {@code null})
      * @param defaultParameters the optional default parameters to use if the password must be generated (may be {@code null})
+     * @param providers the security providers to use with the {@link PasswordFactory}
      * @param <S> the password type
      * @return the password
      */
-    public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec defaultParameters) throws AuthenticationMechanismException {
+    public static <S extends Password> S getPasswordCredential(String userName, CallbackHandler callbackHandler, Class<S> passwordType, String passwordAlgorithm, AlgorithmParameterSpec defaultParameters, Supplier<Provider[]> providers) throws AuthenticationMechanismException {
         Assert.checkNotNullParam("userName", userName);
         Assert.checkNotNullParam("callbackHandler", callbackHandler);
         Assert.checkNotNullParam("passwordType", passwordType);
         Assert.checkNotNullParam("passwordAlgorithm", passwordAlgorithm);
+        Assert.checkNotNullParam("providers", providers);
         try {
-            final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm);
+            final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm, providers);
 
             CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm);
 
@@ -89,7 +93,7 @@ public final class MechanismUtil {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
                 final TwoWayPassword twoWayPassword = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword(TwoWayPassword.class));
                 if (twoWayPassword != null) {
-                    final PasswordFactory clearFactory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm());
+                    final PasswordFactory clearFactory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm(), providers);
                     final ClearPasswordSpec spec = clearFactory.getKeySpec(clearFactory.translate(twoWayPassword), ClearPasswordSpec.class);
                     if (defaultParameters != null) {
                         return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), defaultParameters)));
