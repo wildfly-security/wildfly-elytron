@@ -304,11 +304,11 @@ public final class ElytronXmlParser {
                         // no action; this is a way of explicitly specifying the default
                         break;
                     }
-                    case "use-module-providers": {
+                    case "use-service-loader-providers": {
                         if (isSet(foundBits, 4)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 4);
                         final Module module = parseModuleRefType(reader);
-                        providersSupplier = new ServiceLoaderSupplier<>(Provider.class, module.getClassLoader());
+                        providersSupplier = new ServiceLoaderSupplier<>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader());
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -584,11 +584,11 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
                         break;
                     }
-                    case "use-module-providers": {
+                    case "use-service-loader-providers": {
                         if (isSet(foundBits, 12)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 12);
                         final Module module = parseModuleRefType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module.getClassLoader())));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
                         break;
                     }
                     // these two are a <choice> which is why they share a bit #; you can have only one of them
@@ -599,11 +599,11 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactoryFromProviders());
                         break;
                     }
-                    case "use-module-sasl-factory": {
+                    case "use-service-loader-sasl-factory": {
                         if (isSet(foundBits, 13)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 13);
                         final Module module = parseModuleRefType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module.getClassLoader())));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
                         break;
                     }
                     case "set-protocol": {
@@ -1297,19 +1297,20 @@ public final class ElytronXmlParser {
                 throw reader.unexpectedAttribute(i);
             }
         }
-        if (name == null) {
-            throw missingAttribute(reader, "name");
-        }
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                final ModuleIdentifier identifier = ModuleIdentifier.create(name, slot);
-                try {
-                    return Module.getModuleFromCallerModuleLoader(identifier);
-                } catch (ModuleLoadException e) {
-                    throw xmlLog.noModuleFound(reader, e, identifier);
+                if (name != null) {
+                    final ModuleIdentifier identifier = ModuleIdentifier.create(name, slot);
+                    try {
+                        return Module.getModuleFromCallerModuleLoader(identifier);
+                    } catch (ModuleLoadException e) {
+                        throw xmlLog.noModuleFound(reader, e, identifier);
+                    }
+                } else {
+                    return null;
                 }
             } else {
                 throw reader.unexpectedContent();
