@@ -122,6 +122,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 10, value = "Identity locator field \"%s\" is not set")
     IllegalStateException locatorFieldNotSet(String fieldName);
 
+    @Message(id = 11, value = "Unable to create service for '%s.%s' ")
+    NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
+
     /* auth package */
 
     @Message(id = 1000, value = "Authentication name was already set on this context")
