@@ -40,7 +40,7 @@ public class DigestQuote {
                 ch == 127 || // DEL
 
                 // 0 <= ch <= 31 except CR, LF and TAB
-                (ch >= 0 && ch <= 31 && ch != 13 && ch != 10 && ch != 9);
+                (ch <= 31 && ch != 13 && ch != 10 && ch != 9);
     }
 
     /**
