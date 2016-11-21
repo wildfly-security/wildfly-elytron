@@ -232,7 +232,6 @@
 
     <xsd:complexType name="module-ref-type">
         <xsd:attribute name="module-name" type="xsd:string" use="optional"/>
-        <xsd:attribute name="slot" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
     <xsd:complexType name="port-number-type">
