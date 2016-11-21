@@ -29,6 +29,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
@@ -38,6 +40,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.IdentityLocator;
@@ -73,6 +76,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final String REALM_COMMENT_PREFIX = "$REALM_NAME=";
     private static final String REALM_COMMENT_SUFFIX = "$";
 
+    private final Supplier<Provider[]> providers;
     private final boolean plainText;
 
     private final String groupsAttribute;
@@ -80,8 +84,9 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private final AtomicReference<LoadedState> loadedState = new AtomicReference<>();
 
     private LegacyPropertiesSecurityRealm(Builder builder) throws IOException {
-        this.plainText = builder.plainText;
+        plainText = builder.plainText;
         groupsAttribute = builder.groupsAttribute;
+        providers = builder.providers;
     }
 
     @Override
@@ -197,7 +202,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     private PasswordFactory getPasswordFactory(final String algorithm) {
         try {
-            return PasswordFactory.getInstance(algorithm);
+            return PasswordFactory.getInstance(algorithm, providers);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
@@ -279,12 +284,25 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
     public static class Builder {
 
+        private Supplier<Provider[]> providers = Security::getProviders;
         private InputStream passwordsStream;
         private InputStream groupsStream;
         private boolean plainText;
         private String groupsAttribute = "groups";
 
         Builder() {
+        }
+
+        /**
+         * Set the supplier for {@link Provider} instanced for use bu the realm.
+         *
+         * @param providers the supplier for {@link Provider} instanced for use bu the realm.
+         * @return this {@link Builder}
+         */
+        public Builder setProviders(Supplier<Provider[]> providers) {
+            this.providers = providers;
+
+            return this;
         }
 
         /**

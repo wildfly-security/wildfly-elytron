@@ -21,7 +21,10 @@ package org.wildfly.security.auth.realm;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.UnrecoverableEntryException;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -42,6 +45,8 @@ import org.wildfly.security.evidence.Evidence;
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public class KeyStoreBackedSecurityRealm implements SecurityRealm {
+
+    private final Supplier<Provider[]> providers;
     private final KeyStore keyStore;
 
     /**
@@ -50,7 +55,18 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
      * @param keyStore the keystore to use to back this realm
      */
     public KeyStoreBackedSecurityRealm(final KeyStore keyStore) {
+        this(keyStore, Security::getProviders);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param keyStore the keystore to use to back this realm
+     * @param providers A supplier of providers for use by this realm
+     */
+    public KeyStoreBackedSecurityRealm(final KeyStore keyStore, final Supplier<Provider[]> providers) {
         this.keyStore = keyStore;
+        this.providers = providers;
     }
 
     @Override
@@ -150,7 +166,7 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
                 return false;
             }
             final Credential credential = Credential.fromKeyStoreEntry(entry);
-            if (credential != null && credential.canVerify(evidence) && credential.verify(evidence)) {
+            if (credential != null && credential.canVerify(evidence) && credential.verify(providers, evidence)) {
                 ElytronMessages.log.tracef("Evidence verification succeed for alias [%s]", name);
                 return true;
             }

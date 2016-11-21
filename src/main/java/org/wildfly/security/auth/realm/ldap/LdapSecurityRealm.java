@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm.ldap;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -82,6 +84,7 @@ import org.wildfly.security.evidence.Evidence;
  */
 class LdapSecurityRealm implements ModifiableSecurityRealm {
 
+    private final Supplier<Provider[]> providers;
     private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private final NameRewriter nameRewriter;
     private final IdentityMapping identityMapping;
@@ -93,13 +96,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
     private final ConcurrentHashMap<String, IdentitySharedExclusiveLock> realmIdentityLocks = new ConcurrentHashMap<>();
 
-    LdapSecurityRealm(final ExceptionSupplier<DirContext, NamingException> dirContextSupplier, final NameRewriter nameRewriter,
+    LdapSecurityRealm(final Supplier<Provider[]> providers, final ExceptionSupplier<DirContext, NamingException> dirContextSupplier,
+                      final NameRewriter nameRewriter,
                       final IdentityMapping identityMapping,
                       final List<CredentialLoader> credentialLoaders,
                       final List<CredentialPersister> credentialPersisters,
                       final List<EvidenceVerifier> evidenceVerifiers,
                       final int pageSize) {
 
+        this.providers = providers;
         this.dirContextSupplier = dirContextSupplier;
         this.nameRewriter = nameRewriter;
         this.identityMapping = identityMapping;
@@ -357,7 +362,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
 
-                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName);
+                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, providers);
                     if (temp != null && temp.isDefinitelySupported()) {
                         // As soon as one claims definite support we know it is supported.
                         return temp;
@@ -395,7 +400,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
                     IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                    Credential credential = icl.getCredential(credentialType, algorithmName);
+                    Credential credential = icl.getCredential(credentialType, algorithmName, providers);
                     if (credentialType.isInstance(credential)) {
                         return credentialType.cast(credential);
                     }
@@ -488,7 +493,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
                         final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                        final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName);
+                        final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName, providers);
                         if (support != null && support.isDefinitelySupported()) {
                             // As soon as one claims definite support we know it is supported.
                             return support;
@@ -526,7 +531,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
                         IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                        if (iev.verifyEvidence(evidence)) {
+                        if (iev.verifyEvidence(evidence, providers)) {
                             return true;
                         }
                     }

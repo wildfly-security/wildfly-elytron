@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
+
+import java.security.Provider;
+import java.util.function.Supplier;
+
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
@@ -36,9 +40,10 @@ interface IdentityCredentialLoader {
      *
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name, if any
+     * @param providers the providers to use when checking ability to obtain the credential
      * @return the level of support for this credential type
      */
-    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName);
+    SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName, Supplier<Provider[]> providers);
 
     /**
      * Acquire a credential of the given type.
@@ -46,7 +51,8 @@ interface IdentityCredentialLoader {
      * @param <C> the type to which should be credential casted
      * @param credentialType the credential type (must not be {@code null})
      * @param algorithmName the credential algorithm name, if any
+     * @param providers the providers to use when obtaining the credential
      * @return the credential, or {@code null} if the principal has no credential of that name or cannot be casted to that type
      */
-    <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName);
+    <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, Supplier<Provider[]> providers);
 }

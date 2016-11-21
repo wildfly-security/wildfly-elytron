@@ -32,11 +32,13 @@ import org.wildfly.security.evidence.Evidence;
 
 import javax.sql.DataSource;
 
+import java.security.Provider;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -48,14 +50,16 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 public class JdbcSecurityRealm implements SecurityRealm {
 
+    private final Supplier<Provider[]> providers;
     private final List<QueryConfiguration> queryConfiguration;
 
     public static JdbcSecurityRealmBuilder builder() {
         return new JdbcSecurityRealmBuilder();
     }
 
-    JdbcSecurityRealm(List<QueryConfiguration> queryConfiguration) {
+    JdbcSecurityRealm(List<QueryConfiguration> queryConfiguration, Supplier<Provider[]> providers) {
         this.queryConfiguration = queryConfiguration;
+        this.providers = providers;
     }
 
     @Override
@@ -112,7 +116,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
-                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
+                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, r -> keyMapper.getCredentialSupport(r, providers));
                         if (mapperSupport == SupportLevel.SUPPORTED) {
                             return SupportLevel.SUPPORTED;
                         } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
@@ -136,7 +140,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
-                        final Credential credential = executePrincipalQuery(configuration, keyMapper::map);
+                        final Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
                         if (credentialType.isInstance(credential)) {
                             return credentialType.cast(credential);
                         }
@@ -154,7 +158,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
                     if (keyMapper.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
-                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, keyMapper::getCredentialSupport);
+                        final SupportLevel mapperSupport = executePrincipalQuery(configuration, r -> keyMapper.getCredentialSupport(r, providers));
                         if (mapperSupport == SupportLevel.SUPPORTED) {
                             return SupportLevel.SUPPORTED;
                         } else if (mapperSupport == SupportLevel.POSSIBLY_SUPPORTED) {
@@ -172,10 +176,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
             Assert.checkNotNullParam("evidence", evidence);
             for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
                 for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    Credential credential = executePrincipalQuery(configuration, keyMapper::map);
+                    Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
                     if (credential != null) {
                         if (credential.canVerify(evidence)) {
-                            return credential.verify(evidence);
+                            return credential.verify(providers, evidence);
                         }
                     }
                 }
@@ -206,7 +210,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
                         do {
                             queryConfiguration.getColumnMappers(AttributeMapper.class).forEach(attributeMapper -> {
                                 try {
-                                    Object value = attributeMapper.map(resultSet);
+                                    Object value = attributeMapper.map(resultSet, providers);
 
                                     if (value != null) {
                                         attributes.addFirst(attributeMapper.getName(), value.toString());

@@ -22,7 +22,9 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.NoSuchAttributeException;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
+import java.util.function.Supplier;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
@@ -80,7 +82,7 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) {
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return SupportLevel.UNSUPPORTED;
             }
@@ -103,7 +105,7 @@ class OtpCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
@@ -119,7 +121,7 @@ class OtpCredentialLoader implements CredentialPersister {
                     return null;
                 }
 
-                PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithmAttribute.get());
+                PasswordFactory passwordFactory = PasswordFactory.getInstance((String) algorithmAttribute.get(), providers);
                 Password password = passwordFactory.generatePassword(new OneTimePasswordSpec(
                                 CodePointIterator.ofString((String) hashAttribute.get())
                                         .base64Decode(Alphabet.Base64Alphabet.STANDARD, false).drain(),
