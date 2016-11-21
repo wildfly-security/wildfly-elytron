@@ -61,6 +61,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
@@ -308,6 +309,7 @@ public class OTPTest extends BaseTestCase {
         }
     }
 
+    @Ignore("ELY-777")
     @Test
     public void testAuthenticationWithInitHexResponse() throws Exception {
         final String algorithm = ALGORITHM_OTP_MD5;
@@ -358,6 +360,7 @@ public class OTPTest extends BaseTestCase {
         }
     }
 
+    @Ignore("ELY-777")
     @Test
     public void testAuthenticationWithInitWordResponse() throws Exception {
         final String algorithm = ALGORITHM_OTP_MD5;
@@ -408,6 +411,7 @@ public class OTPTest extends BaseTestCase {
         }
     }
 
+    @Ignore("ELY-777")
     @Test
     public void testAuthenticationWithLowSequenceNumber() throws Exception {
         mockSeed("lr4321");
