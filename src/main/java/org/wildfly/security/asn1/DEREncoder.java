@@ -343,11 +343,10 @@ public class DEREncoder implements ASN1Encoder {
 
     @Override
     public void encodeObjectIdentifier(String objectIdentifier) throws ASN1Exception {
-        int len = objectIdentifier.length();
-        if (len == 0) {
+        if (objectIdentifier == null || objectIdentifier.length() == 0) {
             throw log.asnOidMustHaveAtLeast2Components();
         }
-
+        int len = objectIdentifier.length();
         int offs = 0;
         int idx = 0;
         long t = 0L;
