@@ -21,6 +21,7 @@ package org.wildfly.security.password.interfaces;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * A simple password where the generated digest also includes a salt.
@@ -97,6 +98,10 @@ public interface SaltedSimpleDigestPassword extends OneWayPassword {
      * @return the salt used to generate the digest
      */
     byte[] getSalt();
+
+    default SaltedPasswordAlgorithmSpec getParameterSpec() {
+        return new SaltedPasswordAlgorithmSpec(getSalt());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

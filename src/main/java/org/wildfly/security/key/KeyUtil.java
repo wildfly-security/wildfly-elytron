@@ -28,19 +28,29 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.security.Key;
 import java.security.PrivateKey;
 import java.security.PrivilegedAction;
+import java.security.interfaces.DSAKey;
+import java.security.interfaces.DSAParams;
 import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.ECKey;
 import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.RSAKey;
 import java.security.interfaces.RSAMultiPrimePrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.ECParameterSpec;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import javax.crypto.SecretKey;
+import javax.crypto.interfaces.DHKey;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.PBEKey;
+import javax.crypto.spec.DHParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.Destroyable;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.password.Password;
 
 /**
  * Key utility methods.
@@ -54,6 +64,101 @@ public final class KeyUtil {
      * Cache so that we only have to figure out a cloning strategy for a given class one time.
      */
     private static final KeyClonerCreator CLONER_CREATOR = new KeyClonerCreator();
+
+    /**
+     * Attempt to acquire parameters from the given key.
+     *
+     * @param key the key (must not be {@code null})
+     * @return the parameters, or {@code null} if no known parameters are available
+     */
+    public static AlgorithmParameterSpec getParameters(Key key) {
+        return getParameters(key, AlgorithmParameterSpec.class);
+    }
+
+    /**
+     * Attempt to acquire parameters of the given type from the given key.
+     *
+     * @param key the key (must not be {@code null})
+     * @param paramSpecClass the parameter specification class (must not be {@code null})
+     * @param <P> the parameter specification type
+     * @return the parameters, or {@code null} if no known parameters of the given type are available
+     */
+    public static <P extends AlgorithmParameterSpec> P getParameters(Key key, Class<P> paramSpecClass) {
+        if (key instanceof Password) {
+            final AlgorithmParameterSpec parameterSpec = ((Password) key).getParameterSpec();
+            return paramSpecClass.isInstance(parameterSpec) ? paramSpecClass.cast(parameterSpec) : null;
+        } else if (key instanceof RSAKey && paramSpecClass.isAssignableFrom(RSAParameterSpec.class)) {
+            return paramSpecClass.cast(new RSAParameterSpec((RSAKey) key));
+        } else if (key instanceof DSAKey && paramSpecClass.isAssignableFrom(DSAParams.class)) {
+            return paramSpecClass.cast(((DSAKey) key).getParams());
+        } else if (key instanceof ECKey && paramSpecClass.isAssignableFrom(ECParameterSpec.class)) {
+            return paramSpecClass.cast(((ECKey) key).getParams());
+        } else if (key instanceof DHKey && paramSpecClass.isAssignableFrom(DHParameterSpec.class)) {
+            return paramSpecClass.cast(((DHKey) key).getParams());
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Determine if the given key has parameters which match the given parameters.
+     *
+     * @param key the key (must not be {@code null})
+     * @param parameters the parameters (must not be {@code null})
+     * @return {@code true} if the parameters match, {@code false} otherwise
+     */
+    public static boolean hasParameters(final Key key, final AlgorithmParameterSpec parameters) {
+        Assert.checkNotNullParam("key", key);
+        Assert.checkNotNullParam("parameters", parameters);
+        final AlgorithmParameterSpec keyParameters = getParameters(key, AlgorithmParameterSpec.class);
+        return keyParameters != null && parametersEqual(keyParameters, parameters);
+    }
+
+    /**
+     * Attempt to determine if two algorithm parameter specifications are equal.  This method will return {@code true}
+     * if the parameters are definitely the same, or {@code false} if they are not definitely equal or equivalency cannot be determined.
+     *
+     * @param p1 the first parameter specification (must not be {@code null})
+     * @param p2 the second parameter specification (must not be {@code null})
+     * @return {@code true} if the parameters are definitely equal, {@code false} otherwise
+     */
+    public static boolean parametersEqual(final AlgorithmParameterSpec p1, final AlgorithmParameterSpec p2) {
+        Assert.checkNotNullParam("p1", p1);
+        Assert.checkNotNullParam("p2", p2);
+        if (p1 instanceof DSAParams && p2 instanceof DSAParams) {
+            final DSAParams dsa1 = (DSAParams) p1;
+            final DSAParams dsa2 = (DSAParams) p2;
+            return Objects.equals(dsa1.getG(), dsa2.getG()) && Objects.equals(dsa1.getP(), dsa2.getP()) && Objects.equals(dsa1.getQ(), dsa2.getQ());
+        } else if (p1 instanceof ECParameterSpec && p2 instanceof ECParameterSpec) {
+            final ECParameterSpec ec1 = (ECParameterSpec) p1;
+            final ECParameterSpec ec2 = (ECParameterSpec) p2;
+            return ec1.getCofactor() == ec2.getCofactor() && Objects.equals(ec1.getCurve(), ec2.getCurve())
+                && Objects.equals(ec1.getGenerator(), ec2.getGenerator()) && Objects.equals(ec1.getOrder(), ec2.getOrder());
+        } else if (p1 instanceof DHParameterSpec && p2 instanceof DHParameterSpec) {
+            final DHParameterSpec dh1 = (DHParameterSpec) p1;
+            final DHParameterSpec dh2 = (DHParameterSpec) p2;
+            return dh1.getL() == dh2.getL() && Objects.equals(dh1.getP(), dh2.getP()) && Objects.equals(dh1.getG(), dh2.getG());
+        } else {
+            // best effort
+            return p1.equals(p2);
+        }
+    }
+
+    /**
+     * Attempt to determine if the two keys have the same parameters.  This method returns {@code true} if the keys
+     * definitely have the same parameters, or {@code false} if they do not or if parameter equivalency cannot be determined.
+     *
+     * @param key1 the first key (must not be {@code null})
+     * @param key2 the second key (must not be {@code null})
+     * @return {@code true} if the parameters are definitely equal, {@code false} otherwise
+     */
+    public static boolean hasSameParameters(final Key key1, final Key key2) {
+        Assert.checkNotNullParam("key1", key1);
+        Assert.checkNotNullParam("key2", key2);
+        final AlgorithmParameterSpec param1 = getParameters(key1, AlgorithmParameterSpec.class);
+        final AlgorithmParameterSpec param2 = getParameters(key2, AlgorithmParameterSpec.class);
+        return param1 == null && param2 == null || param1 != null && param2 != null && parametersEqual(param1, param2);
+    }
 
     /**
      * Attempt to create a safe clone of the given key object.

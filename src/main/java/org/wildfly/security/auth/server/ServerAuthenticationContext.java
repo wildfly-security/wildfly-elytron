@@ -43,6 +43,7 @@ import javax.security.sasl.RealmCallback;
 import org.wildfly.common.Assert;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security._private.ElytronMessages;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.callback.AnonymousAuthorizationCallback;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;

@@ -21,6 +21,8 @@ package org.wildfly.security.credential;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
@@ -67,6 +69,25 @@ public final class PasswordCredential implements AlgorithmCredential {
 
     public String getAlgorithm() {
         return password.getAlgorithm();
+    }
+
+    public boolean supportsParameters(final Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        return paramSpecClass.isInstance(password.getParameterSpec());
+    }
+
+    public <P extends AlgorithmParameterSpec> P getParameters(final Class<P> paramSpecClass) {
+        final AlgorithmParameterSpec parameterSpec = password.getParameterSpec();
+        return paramSpecClass.isInstance(parameterSpec) ? paramSpecClass.cast(parameterSpec) : null;
+    }
+
+    public boolean hasParameters(final AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return Objects.equals(password.getParameterSpec(), parameterSpec);
+    }
+
+    public boolean hasSameParameters(final Credential other) {
+        Assert.checkNotNullParam("other", other);
+        return Objects.equals(password.getParameterSpec(), other.getParameters(AlgorithmParameterSpec.class));
     }
 
     public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {

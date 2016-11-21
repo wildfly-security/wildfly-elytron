@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * The UNIX modular-crypt SHA crypt algorithm.
@@ -68,6 +69,10 @@ public interface UnixSHACryptPassword extends OneWayPassword {
      * @return  the number of iterations to perform
      */
     int getIterationCount();
+
+    default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
+        return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), getSalt());
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * A password using the "bcrypt" Blowfish-based one-way password encryption algorithm.
@@ -77,6 +78,10 @@ public interface BCryptPassword extends OneWayPassword {
      * @return a copy of this {@link Password}.
      */
     BCryptPassword clone();
+
+    default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
+        return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), getSalt());
+    }
 
     /**
      * Create a raw implementation of this password type.  No validation of the content is performed, and the password

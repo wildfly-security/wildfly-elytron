@@ -34,7 +34,7 @@ import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**

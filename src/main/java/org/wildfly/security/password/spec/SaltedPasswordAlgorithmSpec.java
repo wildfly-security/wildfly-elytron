@@ -20,6 +20,7 @@ package org.wildfly.security.password.spec;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 
 /**
  * Algorithm parameter specification for salted hashed password types.
@@ -50,4 +51,14 @@ public final class SaltedPasswordAlgorithmSpec implements AlgorithmParameterSpec
         return salt;
     }
 
+    public boolean equals(Object other) {
+        if (! (other instanceof SaltedPasswordAlgorithmSpec)) return false;
+        if (this == other) return true;
+        SaltedPasswordAlgorithmSpec otherSpec = (SaltedPasswordAlgorithmSpec) other;
+        return Arrays.equals(salt, otherSpec.salt);
+    }
+
+    public int hashCode() {
+        return Arrays.hashCode(salt);
+    }
 }

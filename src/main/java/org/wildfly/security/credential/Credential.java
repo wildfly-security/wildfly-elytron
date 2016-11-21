@@ -22,6 +22,7 @@ import java.security.KeyStore;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -88,6 +89,19 @@ public interface Credential extends Cloneable {
     }
 
     /**
+     * Cast this credential type if the type, algorithm, and parameters match.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @param <C> the credential type
+     * @return the credential cast as the target type, or {@code null} if the credential does not match the criteria
+     */
+    default <C extends Credential> C castAs(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
+        return castAndApply(credentialType, algorithmName, parameterSpec, Function.identity());
+    }
+
+    /**
      * Cast this credential type if the type and algorithm matches.
      *
      * @param credentialType the credential type class to check
@@ -108,6 +122,21 @@ public interface Credential extends Cloneable {
      */
     default <C extends Credential> C castAs(Class<C> credentialType) {
         return castAndApply(credentialType, Function.identity());
+    }
+
+    /**
+     * Cast this credential type and apply a function if the type matches.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @param function the function to apply
+     * @param <C> the credential type
+     * @param <R> the return type
+     * @return the result of the function, or {@code null} if the credential is not of the given type
+     */
+    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
+        return credentialType.isInstance(this) && algorithmName == null && (parameterSpec == null || hasParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**
@@ -138,6 +167,53 @@ public interface Credential extends Cloneable {
     }
 
     /**
+     * Determine whether this credential instance supports the given algorithm parameter type.
+     *
+     * @param paramSpecClass the parameter specification class (must not be {@code null})
+     * @return {@code true} if the parameter type is supported, {@code false} otherwise
+     */
+    default boolean supportsParameters(Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        Assert.checkNotNullParam("paramSpecClass", paramSpecClass);
+        return false;
+    }
+
+    /**
+     * Get the algorithm parameters of the given type from this credential.
+     *
+     * @param paramSpecClass the parameter specification class (must not be {@code null})
+     * @param <P> the parameter specification type
+     * @return the parameter specification, or {@code null} if no parameters are present or available or the given type was not supported by this credential
+     */
+    default <P extends AlgorithmParameterSpec> P getParameters(Class<P> paramSpecClass) {
+        Assert.checkNotNullParam("paramSpecClass", paramSpecClass);
+        return null;
+    }
+
+    /**
+     * Determine whether this credential has the given parameters.  The default implementation returns
+     * {@code false} always.
+     *
+     * @param parameterSpec the parameters to test for (must not be {@code null})
+     * @return {@code true} if the given parameters match this credential, {@code false} otherwise
+     */
+    default boolean hasParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return false;
+    }
+
+    /**
+     * Determine whether the other credential has the same parameters as this one.
+     *
+     * @param other the other credential (must not be {@code null})
+     * @return {@code true} if the credentials have the same parameters, {@code false} otherwise
+     */
+    default boolean hasSameParameters(Credential other) {
+        Assert.checkNotNullParam("other", other);
+        final AlgorithmParameterSpec parameters = other.getParameters(AlgorithmParameterSpec.class);
+        return parameters == null ? ! supportsParameters(AlgorithmParameterSpec.class) : hasParameters(parameters);
+    }
+
+    /**
      * Creates and returns a copy of this {@link Credential}.
      *
      * @return a copy of this {@link Credential}.
@@ -151,7 +227,7 @@ public interface Credential extends Cloneable {
      * @return {@code true} if the credentials are of the same kind, {@code false} otherwise
      */
     default boolean matches(Credential other) {
-        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass();
+        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass() && hasSameParameters(other);
     }
 
     /**

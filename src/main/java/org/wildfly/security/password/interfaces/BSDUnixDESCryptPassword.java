@@ -22,6 +22,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 
 /**
  * A BSD-style DES "crypt" password.
@@ -70,6 +71,17 @@ public interface BSDUnixDESCryptPassword extends OneWayPassword {
      * @return the hash segment
      */
     byte[] getHash();
+
+    default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
+        final int salt = getSalt();
+        byte[] saltBytes = new byte[4];
+        // Big-endian format
+        saltBytes[0] = (byte) (salt >>> 24 & 0xff);
+        saltBytes[1] = (byte) (salt >>> 16 & 0xff);
+        saltBytes[2] = (byte) (salt >>> 8 & 0xff);
+        saltBytes[3] = (byte) (salt & 0xff);
+        return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), saltBytes);
+    }
 
     /**
      * Creates and returns a copy of this {@link Password}.

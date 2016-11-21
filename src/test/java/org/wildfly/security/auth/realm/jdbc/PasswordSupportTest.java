@@ -34,7 +34,7 @@ import org.junit.Test;
 import org.wildfly.security.auth.realm.jdbc.mapper.PasswordKeyMapper;
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.PasswordFactory;

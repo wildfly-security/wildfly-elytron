@@ -34,7 +34,7 @@ import javax.naming.directory.NoSuchAttributeException;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;

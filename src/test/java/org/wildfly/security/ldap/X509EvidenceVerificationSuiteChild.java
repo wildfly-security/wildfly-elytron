@@ -26,7 +26,7 @@ import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
-import org.wildfly.security.auth.server.SupportLevel;
+import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 

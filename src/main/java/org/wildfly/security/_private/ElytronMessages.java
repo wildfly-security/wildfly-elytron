@@ -538,6 +538,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
     ConfigXMLParseException duplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
 
+    @Message(id = 1131, value = "Public and private key parameters are mismatched")
+    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
