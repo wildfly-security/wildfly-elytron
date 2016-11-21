@@ -57,7 +57,7 @@ public final class MechanismUtil {
      * @param callbackHandler the callback handler (must not be {@code null})
      * @param passwordType the password class (must not be {@code null})
      * @param passwordAlgorithm the password algorithm name (must not be {@code null})
-     * @param defaultParameters the optional default parameters to use if the password must be generated (may be {@code null})
+     * @param defaultParameters the optional default parameters to match or to use if the password must be generated (may be {@code null})
      * @param providers the security providers to use with the {@link PasswordFactory}
      * @param <S> the password type
      * @return the password
@@ -71,7 +71,7 @@ public final class MechanismUtil {
         try {
             final PasswordFactory passwordFactory = PasswordFactory.getInstance(passwordAlgorithm, providers);
 
-            CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm);
+            CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, passwordAlgorithm, defaultParameters);
 
             try {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
