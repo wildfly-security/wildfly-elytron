@@ -28,7 +28,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
 import org.wildfly.security.credential.Credential;
