@@ -189,7 +189,7 @@ final class UnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements Uni
         finalDigest = digestA.digest();
 
         // The algorithm uses a fixed number of iterations
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < ITERATION_COUNT; i++) {
 
             // Start a new digest
             digestB = getMD5MessageDigest();

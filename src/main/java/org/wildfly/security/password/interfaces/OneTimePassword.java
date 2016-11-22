@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
@@ -69,6 +71,11 @@ public interface OneTimePassword extends OneWayPassword {
 
     default OneTimePasswordAlgorithmSpec getParameterSpec() {
         return new OneTimePasswordAlgorithmSpec(getAlgorithm(), getSeed(), getSequenceNumber());
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return parameterSpec.equals(getParameterSpec());
     }
 
     /**

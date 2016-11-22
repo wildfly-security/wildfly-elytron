@@ -41,7 +41,7 @@ public interface AlgorithmCredential extends Credential {
     AlgorithmCredential clone();
 
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
-        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) && (parameterSpec == null || hasParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
+        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) && (parameterSpec == null || impliesParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
     }
 
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
@@ -53,6 +53,6 @@ public interface AlgorithmCredential extends Credential {
     }
 
     default boolean matches(AlgorithmCredential other) {
-        return other != null && other.getClass() == getClass() && getAlgorithm().equals(other.getAlgorithm()) && hasSameParameters(other);
+        return other != null && other.getClass() == getClass() && getAlgorithm().equals(other.getAlgorithm()) && impliesSameParameters(other);
     }
 }

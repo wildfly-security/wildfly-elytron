@@ -20,6 +20,7 @@ package org.wildfly.security.mechanism;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -78,13 +79,16 @@ public final class MechanismUtil {
                 MechanismUtil.handleCallbacks(passwordAlgorithm, callbackHandler, credentialCallback);
                 S password = credentialCallback.applyToCredential(PasswordCredential.class, c -> c.getPassword(passwordType));
                 if (password != null) {
-                    return password;
+                    // update parameters to match requirement, if necessary
+                    return matchParameters != null ? passwordType.cast(passwordFactory.transform(password, matchParameters)) : password;
                 }
                 // fall out
             } catch (UnsupportedCallbackException e) {
                 if (e.getCallback() != credentialCallback) {
                     throw log.mechCallbackHandlerFailedForUnknownReason(passwordAlgorithm, e);
                 }
+                // fall out
+            } catch (InvalidAlgorithmParameterException | ClassCastException e) {
                 // fall out
             }
 
@@ -97,7 +101,7 @@ public final class MechanismUtil {
                     final PasswordFactory clearFactory = PasswordFactory.getInstance(twoWayPassword.getAlgorithm(), providers);
                     final ClearPasswordSpec spec = clearFactory.getKeySpec(clearFactory.translate(twoWayPassword), ClearPasswordSpec.class);
                     if (matchParameters != null) {
-                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), matchParameters)));
+                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(spec.getEncodedPassword(), generateParameters)));
                     } else {
                         return passwordType.cast(passwordFactory.generatePassword(spec));
                     }
@@ -116,7 +120,7 @@ public final class MechanismUtil {
                 final char[] password = passwordCallback.getPassword();
                 if (password != null) {
                     if (matchParameters != null) {
-                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(password, matchParameters)));
+                        return passwordType.cast(passwordFactory.generatePassword(new EncryptablePasswordSpec(password, generateParameters)));
                     } else {
                         return passwordType.cast(passwordFactory.generatePassword(new ClearPasswordSpec(password)));
                     }

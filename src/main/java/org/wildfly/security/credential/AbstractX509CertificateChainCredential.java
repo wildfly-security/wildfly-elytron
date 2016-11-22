@@ -79,7 +79,7 @@ abstract class AbstractX509CertificateChainCredential implements X509Certificate
         return KeyUtil.getParameters(getFirstCertificate().getPublicKey(), paramSpecClass);
     }
 
-    public boolean hasSameParameters(final Credential other) {
+    public boolean impliesSameParameters(final Credential other) {
         return KeyUtil.hasParameters(getFirstCertificate().getPublicKey(), other.getParameters(AlgorithmParameterSpec.class));
     }
 

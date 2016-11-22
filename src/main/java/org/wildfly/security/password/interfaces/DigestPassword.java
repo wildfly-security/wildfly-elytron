@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
@@ -85,6 +87,11 @@ public interface DigestPassword extends OneWayPassword {
 
     default DigestPasswordAlgorithmSpec getParameterSpec() {
         return new DigestPasswordAlgorithmSpec(getUsername(), getRealm());
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return parameterSpec.equals(getParameterSpec());
     }
 
     /**

@@ -162,6 +162,28 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
                 throw new InvalidKeyException(e);
             }
             return new ScramDigestPasswordImpl(algorithm, digest, updateSalt, updateIterationCount);
+        } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
+            final IteratedPasswordAlgorithmSpec updateSpec = (IteratedPasswordAlgorithmSpec) parameterSpec;
+            int updateIterationCount = updateSpec.getIterationCount();
+            if (updateIterationCount < this.iterationCount) {
+                throw new InvalidAlgorithmParameterException();
+            }
+            if (updateIterationCount == this.iterationCount) {
+                return this;
+            }
+            try {
+                addIterations(digest, getMacInstance(algorithm, digest), this.iterationCount, updateIterationCount);
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                throw new InvalidKeyException(e);
+            }
+            return new ScramDigestPasswordImpl(algorithm, digest, salt, updateIterationCount);
+        } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
+            SaltedPasswordAlgorithmSpec updateSpec = (SaltedPasswordAlgorithmSpec) parameterSpec;
+            byte[] updateSalt = updateSpec.getSalt();
+            if (updateSalt != null && ! Arrays.equals(updateSalt, salt)) {
+                throw new InvalidAlgorithmParameterException();
+            }
+            return this;
         }
         throw new InvalidAlgorithmParameterException();
     }
