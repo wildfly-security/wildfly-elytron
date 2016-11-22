@@ -18,10 +18,13 @@
 
 package org.wildfly.security.password.spec;
 
+import org.wildfly.common.Assert;
+
 public final class ClearPasswordSpec implements PasswordSpec {
     private final char[] encodedPassword;
 
     public ClearPasswordSpec(final char[] encodedPassword) {
+        Assert.checkNotNullParam("encodedPassword", encodedPassword);
         this.encodedPassword = encodedPassword;
     }
 

@@ -20,6 +20,8 @@ package org.wildfly.security.password.spec;
 
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.wildfly.common.Assert;
+
 /**
  * A password specification for clear passwords which are intended to be encrypted or hashed.
  *
@@ -36,6 +38,7 @@ public final class EncryptablePasswordSpec implements PasswordSpec {
      * @param algorithmParameterSpec the parameters of the algorithm to be used for encryption or hashing
      */
     public EncryptablePasswordSpec(final char[] password, final AlgorithmParameterSpec algorithmParameterSpec) {
+        Assert.checkNotNullParam("password", password);
         this.password = password;
         this.algorithmParameterSpec = algorithmParameterSpec;
     }

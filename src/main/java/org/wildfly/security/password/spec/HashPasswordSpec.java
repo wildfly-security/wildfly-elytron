@@ -18,10 +18,13 @@
 
 package org.wildfly.security.password.spec;
 
+import org.wildfly.common.Assert;
+
 public final class HashPasswordSpec implements PasswordSpec {
     private final byte[] digest;
 
     public HashPasswordSpec(final byte[] digest) {
+        Assert.checkNotNullParam("digest", digest);
         this.digest = digest;
     }
 

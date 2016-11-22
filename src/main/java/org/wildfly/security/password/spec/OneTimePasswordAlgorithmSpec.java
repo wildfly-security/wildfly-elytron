@@ -23,6 +23,8 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 import java.util.Objects;
 
+import org.wildfly.common.Assert;
+
 /**
  * Algorithm parameter specification for one-time password types.
  *
@@ -37,6 +39,8 @@ public final class OneTimePasswordAlgorithmSpec implements AlgorithmParameterSpe
     private final int sequenceNumber;
 
     public OneTimePasswordAlgorithmSpec(final String algorithm, final byte[] seed, final int sequenceNumber) {
+        Assert.checkNotNullParam("algorithm", algorithm);
+        Assert.checkNotNullParam("seed", seed);
         this.algorithm = algorithm;
         this.seed = seed;
         this.sequenceNumber = sequenceNumber;

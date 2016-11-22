@@ -32,7 +32,6 @@ import java.util.Arrays;
 
 import org.wildfly.security.password.interfaces.SimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.HashPasswordSpec;
 
 /**
@@ -62,11 +61,7 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
         this(algorithm, getDigestOfKS(algorithm, spec.getEncodedPassword()));
     }
 
-    SimpleDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getPassword());
-    }
-
-    private SimpleDigestPasswordImpl(final String algorithm, final char[] chars) throws InvalidKeySpecException {
+    SimpleDigestPasswordImpl(final String algorithm, final char[] chars) throws InvalidKeySpecException {
         this(algorithm, getDigestOfKS(algorithm, chars));
     }
 

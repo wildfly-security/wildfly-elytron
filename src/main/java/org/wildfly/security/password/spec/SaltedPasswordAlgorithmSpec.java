@@ -22,6 +22,8 @@ import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 
+import org.wildfly.common.Assert;
+
 /**
  * Algorithm parameter specification for salted hashed password types.
  *
@@ -39,6 +41,7 @@ public final class SaltedPasswordAlgorithmSpec implements AlgorithmParameterSpec
      * @param salt the salt bytes
      */
     public SaltedPasswordAlgorithmSpec(final byte[] salt) {
+        Assert.checkNotNullParam("salt", salt);
         this.salt = salt;
     }
 

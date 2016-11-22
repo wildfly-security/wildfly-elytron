@@ -25,7 +25,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.security.Permissions;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,8 +41,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.mechanism.scram.ScramClient;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.Password;
+import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.interfaces.ScramDigestPassword;
+import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -61,7 +65,7 @@ import org.wildfly.security.util.CodePointIterator;
 @RunWith(JMockit.class)
 public class ScramServerCompatibilityTest extends BaseTestCase {
 
-    private void mockNonceSalt(final String nonce, final String salt){
+    private void mockNonce(final String nonce) {
         Class<?> classToMock;
         try {
             classToMock = Class.forName("org.wildfly.security.mechanism.scram.ScramUtil", true, ScramClient.class.getClassLoader());
@@ -74,16 +78,6 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
                 return nonce.getBytes(StandardCharsets.UTF_8);
             }
         };
-        new MockUp<IteratedSaltedPasswordAlgorithmSpec>() {
-            @Mock
-            public int getIterationCount() {
-                return 4096;
-            }
-            @Mock
-            public byte[] getSalt() {
-                return CodePointIterator.ofString(salt).hexDecode().drain();
-            }
-        };
     }
 
     /**
@@ -91,12 +85,14 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testRfc5802example() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_1);
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                 .setUserName("user")
-                .setPassword("pencil".toCharArray())
+                .setPassword(password)
                 .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -112,17 +108,26 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         assertEquals("user", saslServer.getAuthorizationID());
     }
 
+    private static Password getPassword(final String password, final String saltString) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        final PasswordFactory passwordFactory = PasswordFactory.getInstance(ScramDigestPassword.ALGORITHM_SCRAM_SHA_1);
+        return passwordFactory.generatePassword(new EncryptablePasswordSpec(password.toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(
+            4096,
+            CodePointIterator.ofString(saltString).base64Decode().drain()
+        )));
+    }
+
     /**
      * Test rejection of bad username
      */
     @Test
     public void testBadUsername() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("baduser")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -139,12 +144,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBadPassword() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pen", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("user")
-                        .setPassword("pen".toCharArray())
+                        .setPassword(password)
                         .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -166,18 +172,19 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testAllowedAuthorizationId() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
 
-        final Map<String, String> passwordMap = new HashMap<String, String>();
-        passwordMap.put("admin", "pencil");
-        passwordMap.put("user", "pen");
+        final Map<String, Password> passwordMap = new HashMap<>();
+
+        passwordMap.put("admin", getPassword("pencil", "QSXCR+Q6sek8bf92"));
+        passwordMap.put("user", getPassword("pen", "QSXCR+Q6sek8bf92"));
 
         Permissions permissions = new Permissions();
         permissions.add(new RunAsPrincipalPermission("user"));
 
         SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
-                        .setPasswordMap(passwordMap)
+                        .setPasswordInstanceMap(passwordMap)
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .setPermissionsMap(Collections.singletonMap("admin", permissions))
                         .build();
@@ -200,12 +207,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testUnallowedAuthorizationId() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("admin")
-                        .setPassword(ClearPassword.ALGORITHM_CLEAR, new ClearPasswordSpec("pencil".toCharArray()))
+                        .setPassword(password)
                         .setProtocol("acap").setServerName("elwood.innosoft.com")
                         .build();
 
@@ -228,12 +236,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testMismatchedAuthorizationId() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .build();
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -256,12 +265,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testMismatchedAuthorizationIdBlank() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .build();
 
         byte[] message = "n,a=user,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -284,12 +294,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testDifferentNonceAttack() throws Exception {
-        mockNonceSalt("differentNonceVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("differentNonceVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .build();
 
         byte[] message = "n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
@@ -311,14 +322,14 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testStrangeCredentials() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
 
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
 
-        final Map<String, String> passwordMap = new HashMap<String, String>();
-        passwordMap.put("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "strange=admin=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4");
-        passwordMap.put("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", "strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4");
+        final Map<String, Password> passwordMap = new HashMap<>();
+        passwordMap.put("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", getPassword("\"strange=admin=password, \\\\\\u0438\\u4F60\\uD83C\\uDCA1\\u00BD\\u00B4\"", "QSXCR+Q6sek8bf92"));
+        passwordMap.put("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", getPassword("strange=password, \\\u0438\u4F60\uD83C\uDCA1\u00BD\u00B4", "QSXCR+Q6sek8bf92"));
 
         Permissions permissions = new Permissions();
         permissions.add(new RunAsPrincipalPermission("strange=admin, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301"));
@@ -326,7 +337,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setProtocol("protocol")
-                        .setPasswordMap(passwordMap)
+                        .setPasswordInstanceMap(passwordMap)
                         .setPermissionsMap(Collections.singletonMap("strange=user, \\\u0438\u4F60\uD83C\uDCA1\u0031\u2044\u0032\u0020\u0301", permissions))
                         .build();
 
@@ -345,12 +356,13 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingCorrectY() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .build();
         byte[] message = "y,,n=user,r=fyko+d2lbbFgONRv9qkxdawL".getBytes(StandardCharsets.UTF_8);
         message = saslServer.evaluateResponse(message);
@@ -369,14 +381,15 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingIncorrectY() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         Map<String, Object> props = new HashMap<>();
         props.put(WildFlySasl.CHANNEL_BINDING_REQUIRED, "true");
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .setChannelBinding("sameType", new byte[]{0x12,',', 0x00})
                         .setProperties(props)
                         .build();
@@ -396,7 +409,8 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingCorrect() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j", "4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
@@ -406,7 +420,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .setChannelBinding("same-type", new byte[]{(byte) 0x00, (byte) 0x2C, (byte) 0xFF})
                         .setProperties(props)
                         .build();
@@ -428,7 +442,8 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
      */
     @Test
     public void testBindingBadData() throws Exception {
-        mockNonceSalt("3rfcNHYJY1ZVvWVs7j","4125c247e43ab1e93c6dff76");
+        mockNonce("3rfcNHYJY1ZVvWVs7j");
+        final Password password = getPassword("pencil", "QSXCR+Q6sek8bf92");
 
         final SaslServerFactory serverFactory = obtainSaslServerFactory(ScramSaslServerFactory.class);
         assertNotNull(serverFactory);
@@ -438,7 +453,7 @@ public class ScramServerCompatibilityTest extends BaseTestCase {
         final SaslServer saslServer =
                 new SaslServerBuilder(ScramSaslServerFactory.class, SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS)
                         .setUserName("user")
-                        .setPassword("pencil".toCharArray())
+                        .setPassword(password)
                         .setChannelBinding("same-type", new byte[]{(byte)0x99,(byte)0x99})
                         .setProperties(props)
                         .build();

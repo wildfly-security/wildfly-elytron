@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.password.spec;
 
+import org.wildfly.common.Assert;
+
 /**
  * A {@link PasswordSpec} for a password represented by a hash with a salt and a iteration count or cost.
  *
@@ -29,6 +31,8 @@ public class IteratedSaltedHashPasswordSpec implements PasswordSpec {
     private final int iterationCount;
 
     public IteratedSaltedHashPasswordSpec(byte[] hash, byte[] salt, int iterationCount) {
+        Assert.checkNotNullParam("hash", hash);
+        Assert.checkNotNullParam("salt", salt);
         this.hash = hash;
         this.salt = salt;
         this.iterationCount = iterationCount;

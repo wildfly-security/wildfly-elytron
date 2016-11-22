@@ -37,7 +37,7 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.UnixMD5CryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -61,7 +61,7 @@ public class PasswordFileKeyStoreTest {
         final PasswordFactory passwordFactory = PasswordFactory.getInstance(UnixMD5CryptPassword.ALGORITHM_CRYPT_MD5);
         byte[] b = new byte[16];
         ThreadLocalRandom.current().nextBytes(b);
-        final Password password = passwordFactory.generatePassword(new EncryptablePasswordSpec("swordfish".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(16, b)));
+        final Password password = passwordFactory.generatePassword(new EncryptablePasswordSpec("swordfish".toCharArray(), new SaltedPasswordAlgorithmSpec(b)));
         KeyStore keyStore = KeyStore.getInstance("PasswordFile");
         keyStore.load(new InputStream() {
             public int read() throws IOException {

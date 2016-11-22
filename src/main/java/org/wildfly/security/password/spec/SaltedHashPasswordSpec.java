@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.password.spec;
 
+import org.wildfly.common.Assert;
+
 /**
  * A {@link PasswordSpec} for a password represented by a hash with a salt.
  *
@@ -28,6 +30,8 @@ public class SaltedHashPasswordSpec implements PasswordSpec {
     private final byte[] salt;
 
     public SaltedHashPasswordSpec(final byte[] hash, final byte[] salt) {
+        Assert.checkNotNullParam("hash", hash);
+        Assert.checkNotNullParam("salt", salt);
         this.hash = hash;
         this.salt = salt;
     }

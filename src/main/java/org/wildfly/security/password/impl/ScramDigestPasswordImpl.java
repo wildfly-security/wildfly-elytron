@@ -36,10 +36,11 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -82,31 +83,28 @@ class ScramDigestPasswordImpl extends AbstractPasswordImpl implements ScramDiges
         this(algorithm, spec.getHash().clone(), spec.getSalt().clone(), DEFAULT_ITERATION_COUNT);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException {
-        this.algorithm = algorithm;
-        this.salt = PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE);
-        this.iterationCount = DEFAULT_ITERATION_COUNT;
-        try {
-            this.digest = scramDigest(this.algorithm, getNormalizedPasswordBytes(spec.getEncodedPassword()),
-                    this.salt, this.iterationCount);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new InvalidKeySpecException(e);
-        }
+    ScramDigestPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, spec.getEncodedPassword(), PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
     }
 
-    ScramDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+    ScramDigestPasswordImpl(final String algorithm, final char[] password) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
     }
 
-    private ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this.algorithm = algorithm;
-        this.salt = spec.getSalt() == null ? PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone();
-        this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();
-        try {
-            this.digest = scramDigest(algorithm, getNormalizedPasswordBytes(password), salt, iterationCount);
-        } catch (Exception e) {
-            throw new InvalidKeySpecException(e);
-        }
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, spec.getSalt(), spec.getIterationCount());
+    }
+
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, spec.getSalt(), DEFAULT_ITERATION_COUNT);
+    }
+
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount());
+    }
+
+    ScramDigestPasswordImpl(final String algorithm, final char[] password, final byte[] salt, final int iterationCount) throws InvalidKeyException, NoSuchAlgorithmException {
+        this(algorithm, scramDigest(algorithm, getNormalizedPasswordBytes(password), salt, iterationCount), salt, iterationCount);
     }
 
     @Override

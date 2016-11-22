@@ -33,7 +33,6 @@ import java.util.Arrays;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
@@ -74,12 +73,12 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
         }
     }
 
-    SaltedSimpleDigestPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getPassword(), (SaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+        this(algorithm, spec.getSalt().clone(), password);
     }
 
-    private SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this(algorithm, spec.getSalt() == null ? PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone(), password);
+    SaltedSimpleDigestPasswordImpl(final String algorithm, final char[] password) throws InvalidKeySpecException {
+        this(algorithm, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), password);
     }
 
     private SaltedSimpleDigestPasswordImpl(final String algorithm, final byte[] salt, final char[] password)
