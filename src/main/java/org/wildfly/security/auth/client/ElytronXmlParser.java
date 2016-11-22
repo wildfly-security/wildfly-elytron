@@ -1285,25 +1285,23 @@ public final class ElytronXmlParser {
      */
     static Module parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
-        String name = null;
-        String slot = null;
+        String moduleName = null;
         for (int i = 0; i < attributeCount; i ++) {
             checkAttributeNamespace(reader, i);
-            if (reader.getAttributeLocalName(i).equals("name")) {
-                name = reader.getAttributeValue(i);
-            } else if (reader.getAttributeLocalName(i).equals("slot")) {
-                slot = reader.getAttributeValue(i);
+            if (reader.getAttributeLocalName(i).equals("module-name")) {
+                moduleName = reader.getAttributeValue(i);
             } else {
                 throw reader.unexpectedAttribute(i);
             }
         }
+
         if (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                if (name != null) {
-                    final ModuleIdentifier identifier = ModuleIdentifier.create(name, slot);
+                if (moduleName != null) {
+                    final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleName);
                     try {
                         return Module.getModuleFromCallerModuleLoader(identifier);
                     } catch (ModuleLoadException e) {
