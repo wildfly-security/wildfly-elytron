@@ -98,7 +98,7 @@
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
             <xsd:choice minOccurs="0">
                 <xsd:element name="use-system-providers" type="empty-type"/>
-                <xsd:element name="use-module-providers" type="module-ref-type"/>
+                <xsd:element name="use-service-loader-providers" type="module-ref-type"/>
             </xsd:choice>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
@@ -163,11 +163,11 @@
                 <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
                 <xsd:choice minOccurs="0">
                     <xsd:element name="use-system-providers" type="empty-type"/>
-                    <xsd:element name="use-module-providers" type="module-ref-type"/>
+                    <xsd:element name="use-service-loader-providers" type="module-ref-type"/>
                 </xsd:choice>
                 <xsd:choice minOccurs="0">
                     <xsd:element name="use-provider-sasl-factory" type="empty-type" />
-                    <xsd:element name="use-module-sasl-factory" type="module-ref-type" />
+                    <xsd:element name="use-service-loader-sasl-factory" type="module-ref-type" />
                 </xsd:choice>
             </xsd:all>
         </xsd:sequence>
@@ -231,7 +231,7 @@
     </xsd:complexType>
 
     <xsd:complexType name="module-ref-type">
-        <xsd:attribute name="module-name" type="xsd:string" use="required"/>
+        <xsd:attribute name="module-name" type="xsd:string" use="optional"/>
         <xsd:attribute name="slot" type="xsd:string" use="optional"/>
     </xsd:complexType>
 
