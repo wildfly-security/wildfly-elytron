@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -62,6 +61,9 @@ import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.source.CallbackHandlerCredentialSource;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -69,6 +71,7 @@ import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
@@ -193,8 +196,8 @@ public abstract class AuthenticationConfiguration {
             return false;
         }
 
-        Function<String, IdentityCredentials> getCredentialsFunction() {
-            return prompt -> IdentityCredentials.NONE;
+        CredentialSource getCredentialSource() {
+            return CredentialSource.NONE;
         }
 
         @Override
@@ -306,8 +309,8 @@ public abstract class AuthenticationConfiguration {
         parent.configureKeyManager(builder);
     }
 
-    Function<String, IdentityCredentials> getCredentialsFunction() {
-        return parent.getCredentialsFunction();
+    CredentialSource getCredentialSource() {
+        return parent.getCredentialSource();
     }
 
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
@@ -399,7 +402,8 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(Password password) {
-        return usePassword(password, null);
+        final CredentialSource filtered = getCredentialSource().without(PasswordCredential.class);
+        return password == null ? useCredentials(filtered) : useCredentials(filtered.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
     }
 
     /**
@@ -409,7 +413,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(char[] password) {
-        return usePassword(password, null);
+        return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password));
     }
 
     /**
@@ -419,7 +423,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(String password) {
-        return usePassword(password, null);
+        return usePassword(password == null ? null : ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password.toCharArray()));
     }
 
     /**
@@ -431,7 +435,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(Password password, Predicate<String> matchPredicate) {
-        return password == null ? this : useCredentials(IdentityCredentials.NONE.withCredential(new PasswordCredential(password)), matchPredicate);
+        return usePassword(password);
     }
 
     /**
@@ -443,7 +447,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(char[] password, Predicate<String> matchPredicate) {
-        return password == null ? this : usePassword(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password), matchPredicate);
+        return usePassword(password);
     }
 
     /**
@@ -455,18 +459,18 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration usePassword(String password, Predicate<String> matchPredicate) {
-        return password == null ? this : usePassword(password.toCharArray(), matchPredicate);
+        return usePassword(password);
     }
 
     /**
      * Create a new configuration which is the same as this configuration, but which uses the given callback handler to
-     * acquire a password with which to authenticate.
+     * acquire a password with which to authenticate, when a password-based authentication algorithm is in use.
      *
      * @param callbackHandler the password callback handler
      * @return the new configuration
      */
-    public final AuthenticationConfiguration usePasswordCallback(CallbackHandler callbackHandler) {
-        return callbackHandler == null ? this : new SetPasswordCallbackHandlerAuthenticationConfiguration(this, callbackHandler);
+    public final AuthenticationConfiguration useCredentialCallbackHandler(CallbackHandler callbackHandler) {
+        return callbackHandler == null ? this : useCredentials(new CallbackHandlerCredentialSource(callbackHandler).with(getCredentialSource()));
     }
 
     /**
@@ -487,7 +491,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
-        return credential == null ? this : new SetGSSCredentialAuthenticationConfiguration(this, credential);
+        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(new GSSCredentialCredential(credential))));
     }
 
     /**
@@ -498,7 +502,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useKeyStoreCredential(KeyStore.Entry keyStoreEntry) {
-        return keyStoreEntry == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, new FixedSecurityFactory<>(keyStoreEntry));
+        return keyStoreEntry == null ? this : useCredentials(getCredentialSource().with(new KeyStoreCredentialSource(new FixedSecurityFactory<>(keyStoreEntry))));
     }
 
     /**
@@ -510,7 +514,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias) {
-        return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, null);
+        return keyStore == null || alias == null ? this : useCredentials(getCredentialSource().with(new KeyStoreCredentialSource(keyStore, alias, null)));
     }
 
     /**
@@ -523,7 +527,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useKeyStoreCredential(KeyStore keyStore, String alias, KeyStore.ProtectionParameter protectionParameter) {
-        return keyStore == null || alias == null ? this : new SetKeyStoreCredentialAuthenticationConfiguration(this, keyStore, alias, protectionParameter);
+        return keyStore == null || alias == null ? this : useCredentials(getCredentialSource().with(new KeyStoreCredentialSource(keyStore, alias, protectionParameter)));
     }
 
     /**
@@ -535,7 +539,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useCertificateCredential(PrivateKey privateKey, X509Certificate... certificateChain) {
-        return certificateChain == null || certificateChain.length == 0 || privateKey == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : useCertificateCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
+        return certificateChain == null || certificateChain.length == 0 || privateKey == null ? this : useCertificateCredential(new X509CertificateChainPrivateCredential(privateKey, certificateChain));
     }
 
     /**
@@ -546,18 +550,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useCertificateCredential(X509CertificateChainPrivateCredential credential) {
-        return credential == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : useCertificateCredential(new FixedSecurityFactory<>(credential));
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given private key and X.509
-     * certificate chain to authenticate.
-     *
-     * @param credentialFactory a factory which produces the credential containing the private key and certificate chain
-     * @return the new configuration
-     */
-    public final AuthenticationConfiguration useCertificateCredential(SecurityFactory<X509CertificateChainPrivateCredential> credentialFactory) {
-        return credentialFactory == null ? without(SetCertificateCredentialAuthenticationConfiguration.class) : new SetCertificateCredentialAuthenticationConfiguration(this, credentialFactory);
+        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
     }
 
     /**
@@ -578,8 +571,8 @@ public abstract class AuthenticationConfiguration {
      * @param credentials the credentials to use
      * @return the new configuration
      */
-    public final AuthenticationConfiguration useCredentials(IdentityCredentials credentials) {
-        return credentials == null ? without(SetCredentialsConfiguration.class) : new SetCredentialsConfiguration(this, () -> credentials);
+    public final AuthenticationConfiguration useCredentials(CredentialSource credentials) {
+        return credentials == null ? without(SetCredentialsConfiguration.class) : new SetCredentialsConfiguration(this, credentials);
     }
 
     /**
@@ -591,9 +584,8 @@ public abstract class AuthenticationConfiguration {
      *                       {@code null} to use the given credentials regardless of the prompt
      * @return the new configuration
      */
-    public final AuthenticationConfiguration useCredentials(IdentityCredentials credentials, Predicate<String> matchPredicate) {
-        final Function<String, IdentityCredentials> credentialsFunction = getCredentialsFunction();
-        return credentials == null ? without(SetCredentialsConfiguration.class) : matchPredicate == null ? new SetCredentialsConfiguration(this, p -> credentials) : new SetCredentialsConfiguration(this, p -> matchPredicate.test(p) ? credentials : credentialsFunction.apply(p));
+    public final AuthenticationConfiguration useCredentials(CredentialSource credentials, Predicate<String> matchPredicate) {
+        return useCredentials(credentials);
     }
 
     /**

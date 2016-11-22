@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
@@ -220,6 +221,7 @@ public final class SaslMechanismInformation {
     static final Set<Class<? extends Credential>> JUST_X509 = singleton(X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> X_509_PUBLIC_OR_PRIVATE = nSet(X509CertificateChainPublicCredential.class, X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> JUST_PASSWORD = singleton(PasswordCredential.class);
+    static final Set<Class<? extends Credential>> JUST_GSS = singleton(GSSCredentialCredential.class);
 
     static final Set<Class<? extends Evidence>> JUST_PASSWORD_EVIDENCE = singleton(PasswordGuessEvidence.class);
 
@@ -279,7 +281,13 @@ public final class SaslMechanismInformation {
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
                 return X_509_PUBLIC_OR_PRIVATE;
             }
+            case Names.GSSAPI: {
+                return JUST_GSS;
+            }
             default: {
+                if (GS2.test(mechName)) {
+                    return JUST_GSS;
+                }
                 // unknown
                 return emptySet();
             }
@@ -376,7 +384,13 @@ public final class SaslMechanismInformation {
                 // TODO: look into verification process
                 return JUST_X509;
             }
+            case Names.GSSAPI: {
+                return JUST_GSS;
+            }
             default: {
+                if (GS2.test(mechName)) {
+                    return JUST_GSS;
+                }
                 // unknown
                 return emptySet();
             }
