@@ -32,12 +32,14 @@ import javax.naming.directory.DirContext;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * An {@link EvidenceVerifier} that verifies a {@link org.wildfly.security.evidence.X509PeerCertificateChainEvidence}.
@@ -212,12 +214,12 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         return new IdentityEvidenceVerifier() {
 
             @Override
-            public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+            public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName, Supplier<Provider[]> providers) throws RealmUnavailableException {
                 return evidenceType == X509PeerCertificateChainEvidence.class ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
             }
 
             @Override
-            public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+            public boolean verifyEvidence(Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException {
                 if (evidence instanceof X509PeerCertificateChainEvidence) {
                     X509Certificate certificate = ((X509PeerCertificateChainEvidence) evidence).getFirstCertificate();
 

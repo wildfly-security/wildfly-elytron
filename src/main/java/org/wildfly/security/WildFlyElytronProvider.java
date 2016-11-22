@@ -18,6 +18,7 @@
 
 package org.wildfly.security;
 
+import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.http.HttpConstants.BASIC_NAME;
 import static org.wildfly.security.http.HttpConstants.CLIENT_CERT_NAME;
 import static org.wildfly.security.http.HttpConstants.DIGEST_NAME;
@@ -57,6 +58,8 @@ import static org.wildfly.security.password.interfaces.UnixMD5CryptPassword.ALGO
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_256;
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
+import java.lang.reflect.Constructor;
+import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.Collections;
 import java.util.Iterator;
@@ -69,6 +72,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.CmdPasswordStore;
 import org.wildfly.security.credential.store.impl.ExecPasswordStore;
@@ -125,11 +129,12 @@ public class WildFlyElytronProvider extends Provider {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
 
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, BASIC_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, CLIENT_CERT_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, FORM_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, HTTP_SERVER_FACTORY_TYPE, SPNEGO_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap));
+        ExceptionSupplier<Object, Exception> supplier = toSupplier(ServerMechanismFactoryImpl.class);
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, BASIC_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, CLIENT_CERT_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, DIGEST_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, FORM_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
+        putService(new SupplierService(this, HTTP_SERVER_FACTORY_TYPE, SPNEGO_NAME, ServerMechanismFactoryImpl.class.getName(), emptyList, emptyMap, supplier));
     }
 
     private void putPasswordImplementations() {
@@ -191,8 +196,9 @@ public class WildFlyElytronProvider extends Provider {
                 continue;
             }
             final String[] names = factory.getMechanismNames(props);
+            ExceptionSupplier<Object, Exception> supplier = toSupplier(factory.getClass());
             for (String name : names) {
-                putService(new Service(this, SASL_CLIENT_FACTORY_TYPE, name, className, noAliases, noProperties));
+                putService(new SupplierService(this, SASL_CLIENT_FACTORY_TYPE, name, className, noAliases, noProperties, supplier));
             }
         } catch (ServiceConfigurationError | RuntimeException ignored) {}
         final ServiceLoader<SaslServerFactory> serverLoader = ServiceLoader.load(SaslServerFactory.class, myClassLoader);
@@ -208,10 +214,30 @@ public class WildFlyElytronProvider extends Provider {
                 continue;
             }
             final String[] names = factory.getMechanismNames(props);
+            ExceptionSupplier<Object, Exception> supplier = toSupplier(factory.getClass());
             for (String name : names) {
-                putService(new Service(this, SASL_SERVER_FACTORY_TYPE, name, className, noAliases, noProperties));
+                putService(new SupplierService(this, SASL_SERVER_FACTORY_TYPE, name, className, noAliases, noProperties, supplier));
             }
         } catch (ServiceConfigurationError | RuntimeException ignored) {}
+    }
+
+    private ExceptionSupplier<Object, Exception> toSupplier(final Class<?> clazz) {
+        Constructor[] constructors = clazz.getDeclaredConstructors();
+        Constructor<?> found = null;
+        for (Constructor current : constructors) {
+            Class[] parameterTypes = current.getParameterTypes();
+            if (parameterTypes.length == 1 && parameterTypes[0].isAssignableFrom(Provider.class)) {
+                found = current;
+                break;
+            }
+        }
+
+        if (found != null) {
+            final Constructor<?> constructor = found;
+            return () -> constructor.newInstance(WildFlyElytronProvider.this);
+        } else {
+            return clazz::newInstance;
+        }
     }
 
     private void putCredentialStoreProviderImplementations() {
@@ -221,6 +247,26 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, ExecPasswordStore.EXEC_PASSWORD_STORE, ExecPasswordStore.class.getName(), emptyList, emptyMap));
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, CmdPasswordStore.CMD_PASSWORD_STORE, CmdPasswordStore.class.getName(), emptyList, emptyMap));
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, MaskedPasswordStore.MASKED_PASSWORD_STORE, MaskedPasswordStore.class.getName(), emptyList, emptyMap));
+    }
+
+    static class SupplierService extends Service {
+
+        private final ExceptionSupplier<Object, Exception> supplier;
+
+        SupplierService(Provider provider, String type, String algorithm, String className, List<String> aliases, Map<String,String> attributes, ExceptionSupplier<Object, Exception> supplier) {
+            super(provider, type, algorithm, className, aliases, attributes);
+            this.supplier = supplier;
+        }
+
+        @Override
+        public Object newInstance(Object constructorParameter) throws NoSuchAlgorithmException {
+            try {
+                return supplier.get();
+            } catch (Exception e) {
+                throw log.noSuchAlgorithmCreateService(getType(), getAlgorithm(), e);
+            }
+        }
+
     }
 
 }

@@ -17,8 +17,10 @@
  */
 package org.wildfly.security.auth.realm.jdbc.mapper;
 
+import java.security.Provider;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.realm.jdbc.ColumnMapper;
@@ -38,7 +40,7 @@ public class AttributeMapper implements ColumnMapper {
     }
 
     @Override
-    public Object map(ResultSet resultSet) throws SQLException {
+    public Object map(ResultSet resultSet, Supplier<Provider[]> providers) throws SQLException {
         return resultSet.getString(this.index);
     }
 

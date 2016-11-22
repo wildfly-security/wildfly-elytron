@@ -26,7 +26,10 @@ import org.wildfly.security.util.CodePointIterator;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
+import java.security.Security;
 import java.security.spec.InvalidKeySpecException;
+import java.util.function.Supplier;
 
 /**
  * Provide methods for encoding and decoding of {@link PasswordSpec}.
@@ -74,7 +77,18 @@ public final class BasicPasswordSpecEncoding {
      * @return a byte array representing the encoded password or null if no encoder was capable to encode the given password
      */
     public static byte[] encode(Password password) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm());
+        return encode(password, Security::getProviders);
+    }
+
+    /**
+     * Encode the given {@link Password} to a byte array.
+     *
+     * @param password the password to encode
+     * @param providers providers to use with the underlying {@link PasswordFactory}
+     * @return a byte array representing the encoded password or null if no encoder was capable to encode the given password
+     */
+    public static byte[] encode(Password password, Supplier<Provider[]> providers) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        PasswordFactory passwordFactory = PasswordFactory.getInstance(password.getAlgorithm(), providers);
 
         if (passwordFactory.convertibleToKeySpec(password, ClearPasswordSpec.class)) {
             return encodeClearPasswordSpec(passwordFactory.getKeySpec(password, ClearPasswordSpec.class));

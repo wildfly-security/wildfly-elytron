@@ -17,6 +17,9 @@
  */
 package org.wildfly.security.auth.realm.ldap;
 
+import java.security.Provider;
+import java.util.function.Supplier;
+
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
@@ -33,18 +36,20 @@ interface IdentityEvidenceVerifier {
      *
      * @param evidenceType the evidence type (must not be {@code null})
      * @param algorithmName the algorithm name, if any
+     * @param providers the providers to use when checking the ability to verify evidence.
      * @return the level of support for this credential type
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName, Supplier<Provider[]> providers) throws RealmUnavailableException;
 
     /**
      * Verify the given evidence against the named credential.
      *
      * @param evidence the evidence to verify.
+     * @param providers the providers to use when verifying evidence.
      * @return {@code true} if the evidence is successfully verified, {@code false} otherwise.
      * @throws RealmUnavailableException if the realm is unavailable to verify credentials.
      */
-    boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException;
+    boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException;
 
 }

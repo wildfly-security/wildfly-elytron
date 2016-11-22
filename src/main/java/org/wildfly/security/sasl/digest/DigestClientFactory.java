@@ -20,7 +20,10 @@ package org.wildfly.security.sasl.digest;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
@@ -40,7 +43,14 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
 
     public static final String[] DEFAULT_CIPHERS = new String[]{ "3des", "rc4", "des", "rc4-56", "rc4-40" };
 
+    private final Supplier<Provider[]> providers;
+
     public DigestClientFactory() {
+        providers = Security::getProviders;
+    }
+
+    public DigestClientFactory(final Provider provider) {
+        providers = () -> new Provider[] { provider };
     }
 
     /* (non-Javadoc)
@@ -63,7 +73,7 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
         String supportedCipherOpts = (String)props.get(WildFlySasl.SUPPORTED_CIPHER_NAMES);
         String[] ciphers = supportedCipherOpts == null ? DEFAULT_CIPHERS : supportedCipherOpts.split(",");
 
-        final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, qops, ciphers);
+        final DigestSaslClient client = new DigestSaslClient(selectedMech, protocol, serverName, cbh, authorizationId, false, charset, qops, ciphers, providers);
         client.init();
         return client;
     }

@@ -17,8 +17,10 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
+import java.security.Provider;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
@@ -69,7 +71,7 @@ public interface KeyMapper extends ColumnMapper {
      * @param resultSet the result set
      * @return the level of support for a credential based on the given result set
      */
-    SupportLevel getCredentialSupport(ResultSet resultSet);
+    SupportLevel getCredentialSupport(ResultSet resultSet, Supplier<Provider[]> providers);
 
-    Credential map(ResultSet resultSet) throws SQLException;
+    Credential map(ResultSet resultSet, Supplier<Provider[]> providers) throws SQLException;
 }

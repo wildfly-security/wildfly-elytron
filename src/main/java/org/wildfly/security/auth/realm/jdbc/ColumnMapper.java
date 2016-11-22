@@ -17,8 +17,10 @@
  */
 package org.wildfly.security.auth.realm.jdbc;
 
+import java.security.Provider;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 /**
  * A column mapper is responsible to provide the mapping between a column in a table to some internal representation. For instance,
@@ -32,8 +34,9 @@ public interface ColumnMapper {
      * Maps the given {@link ResultSet} to some internal representation.
      *
      * @param resultSet the result set previously created based on a query
+     * @param providers the providers to use if required
      * @return the resulting object mapped from the given {@link ResultSet}
      * @throws SQLException if any error occurs when manipulating the given {@link ResultSet}
      */
-    Object map(ResultSet resultSet) throws SQLException;
+    Object map(ResultSet resultSet, Supplier<Provider[]> providers) throws SQLException;
 }

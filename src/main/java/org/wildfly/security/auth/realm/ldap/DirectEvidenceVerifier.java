@@ -19,6 +19,9 @@ package org.wildfly.security.auth.realm.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
+import java.security.Provider;
+import java.util.function.Supplier;
+
 import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
@@ -54,12 +57,12 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
     public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
             @Override
-            public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+            public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName, final Supplier<Provider[]> providers) throws RealmUnavailableException {
                 return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
             }
 
             @Override
-            public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+            public boolean verifyEvidence(Evidence evidence, final Supplier<Provider[]> providers) throws RealmUnavailableException {
                 if (evidence instanceof PasswordGuessEvidence) {
                     char[] password = ((PasswordGuessEvidence) evidence).getGuess();
 

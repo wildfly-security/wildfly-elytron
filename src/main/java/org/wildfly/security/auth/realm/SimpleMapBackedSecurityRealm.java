@@ -18,8 +18,12 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+import java.security.Provider;
+import java.security.Security;
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -47,6 +51,7 @@ import org.wildfly.security.password.Password;
  */
 public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
+    private final Supplier<Provider[]> providers;
     private final NameRewriter rewriter;
     private volatile Map<String, SimpleRealmEntry> map = Collections.emptyMap();
 
@@ -56,8 +61,18 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      * @param rewriter the name rewriter to use (cannot be {@code null})
      */
     public SimpleMapBackedSecurityRealm(final NameRewriter rewriter) {
-        Assert.checkNotNullParam("rewriter", rewriter);
-        this.rewriter = rewriter;
+        this(rewriter, Security::getProviders);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param rewriter the name rewriter to use (cannot be {@code null})
+     * @param providers a supplier of providers for use by this realm (cannot be {@code null})
+     */
+    public SimpleMapBackedSecurityRealm(final NameRewriter rewriter, final Supplier<Provider[]> providers) {
+        this.rewriter = checkNotNullParam("rewriter", rewriter);
+        this.providers = checkNotNullParam("provider", providers);
     }
 
     /**
@@ -65,6 +80,15 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
      */
     public SimpleMapBackedSecurityRealm() {
         this(NameRewriter.IDENTITY_REWRITER);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param providers a supplier of providers for use by this realm (cannot be {@code null})
+     */
+    public SimpleMapBackedSecurityRealm(final Supplier<Provider[]> providers) {
+        this(NameRewriter.IDENTITY_REWRITER, providers);
     }
 
     /**
@@ -201,7 +225,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             }
             for (Credential credential : entry.getCredentials()) {
                 if (credential.canVerify(evidence)) {
-                    return credential.verify(evidence);
+                    return credential.verify(providers, evidence);
                 }
             }
             return false;

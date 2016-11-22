@@ -21,11 +21,13 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.realm.jdbc.KeyMapper;
@@ -78,9 +80,9 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public SupportLevel getCredentialSupport(ResultSet resultSet) {
+    public SupportLevel getCredentialSupport(ResultSet resultSet, Supplier<Provider[]> providers) {
         try {
-            Credential map = map(resultSet);
+            Credential map = map(resultSet, providers);
 
             if (map != null) {
                 return SupportLevel.SUPPORTED;
@@ -215,7 +217,7 @@ public class PasswordKeyMapper implements KeyMapper {
     }
 
     @Override
-    public Credential map(ResultSet resultSet) throws SQLException {
+    public Credential map(ResultSet resultSet, Supplier<Provider[]> providers) throws SQLException {
         byte[] hash = null;
         char[] clear = null;
         byte[] salt = null;
@@ -278,7 +280,7 @@ public class PasswordKeyMapper implements KeyMapper {
 
         final PasswordFactory passwordFactory;
         try {
-            passwordFactory = PasswordFactory.getInstance(algorithmName);
+            passwordFactory = PasswordFactory.getInstance(algorithmName, providers);
         } catch (NoSuchAlgorithmException e) {
             throw log.couldNotObtainPasswordFactoryForAlgorithm(algorithmName, e);
         }

@@ -30,9 +30,13 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.ldap.LdapName;
+
+import java.security.Provider;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Builder for the security realm implementation backed by LDAP.
@@ -52,6 +56,7 @@ public class LdapSecurityRealmBuilder {
     private static final int DEFAULT_SEARCH_TIME_LIMIT = 10000;
 
     private boolean built = false;
+    private Supplier<Provider[]> providers = Security::getProviders;
     private ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
     private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
     private IdentityMapping identityMapping;
@@ -71,6 +76,19 @@ public class LdapSecurityRealmBuilder {
      */
     public static LdapSecurityRealmBuilder builder() {
         return new LdapSecurityRealmBuilder();
+    }
+
+    /**
+     * The the Provider[] supplier.
+     *
+     * @param providers the supplier of Providers to be used by the realm
+     * @return this builder
+     */
+    public LdapSecurityRealmBuilder setProviders(Supplier<Provider[]> providers) {
+        assertNotBuilt();
+        this.providers = providers;
+
+        return this;
     }
 
     /**
@@ -188,7 +206,7 @@ public class LdapSecurityRealmBuilder {
         }
 
         built = true;
-        return new LdapSecurityRealm(dirContextSupplier, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
+        return new LdapSecurityRealm(providers, dirContextSupplier, nameRewriter, identityMapping, credentialLoaders, credentialPersisters, evidenceVerifiers, pageSize);
     }
 
     private void assertNotBuilt() {

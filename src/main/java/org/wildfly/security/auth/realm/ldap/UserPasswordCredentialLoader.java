@@ -22,7 +22,9 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.auth.realm.ldap.UserPasswordPasswordUtil.parseUserPassword;
 
 import java.io.IOException;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
+import java.util.function.Supplier;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -103,8 +105,8 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm) {
-            Credential credential = getCredential(credentialType, credentialAlgorithm);
+        public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String credentialAlgorithm, final Supplier<Provider[]> providers) {
+            Credential credential = getCredential(credentialType, credentialAlgorithm, providers);
             // By this point it is either supported or it isn't - no in-between.
             if (credential != null) {
                 return SupportLevel.SUPPORTED;
@@ -113,14 +115,14 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm) throws RealmUnavailableException {
+        public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String evidenceAlgorithm, final Supplier<Provider[]> providers) throws RealmUnavailableException {
             // If we can acquire PasswordCredential and it support provided evidence, we can verify.
             if ( ! PasswordCredential.canVerifyEvidence(evidenceType, evidenceAlgorithm)) return SupportLevel.UNSUPPORTED;
-            return getCredentialAcquireSupport(PasswordCredential.class, null);
+            return getCredentialAcquireSupport(PasswordCredential.class, null, providers);
         }
 
         @Override
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String credentialAlgorithm) {
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String credentialAlgorithm, Supplier<Provider[]> providers) {
             if (credentialType != PasswordCredential.class) {
                 return null;
             }
@@ -149,10 +151,10 @@ class UserPasswordCredentialLoader implements CredentialPersister {
         }
 
         @Override
-        public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-            final PasswordCredential credential = getCredential(PasswordCredential.class, null);
+        public boolean verifyEvidence(final Evidence evidence, Supplier<Provider[]> providers) throws RealmUnavailableException {
+            final PasswordCredential credential = getCredential(PasswordCredential.class, null, providers);
             if (credential == null) return false;
-            return credential.verify(evidence);
+            return credential.verify(providers, evidence);
         }
 
         @Override

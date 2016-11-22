@@ -18,7 +18,9 @@
 
 package org.wildfly.security.mechanism.scram;
 
+import java.security.Provider;
 import java.security.SecureRandom;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 
@@ -78,7 +80,7 @@ public final class ScramMechanism {
      * @see WildFlySasl#SCRAM_MIN_ITERATION_COUNT
      * @see WildFlySasl#SCRAM_MAX_ITERATION_COUNT
      */
-    public ScramClient createClient(final String authorizationId, final CallbackHandler callbackHandler, final SecureRandom secureRandom, final ChannelBindingCallback bindingCallback, final int minimumIterationCount, final int maximumIterationCount) throws AuthenticationMechanismException {
+    public ScramClient createClient(final String authorizationId, final CallbackHandler callbackHandler, final SecureRandom secureRandom, final ChannelBindingCallback bindingCallback, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) throws AuthenticationMechanismException {
         final byte[] bindingData;
         final String bindingType;
         if (bindingCallback != null) {
@@ -89,10 +91,10 @@ public final class ScramMechanism {
             bindingData = null;
             bindingType = null;
         }
-        return new ScramClient(this, authorizationId, callbackHandler, secureRandom, bindingData, bindingType, minimumIterationCount, maximumIterationCount);
+        return new ScramClient(this, authorizationId, callbackHandler, secureRandom, bindingData, bindingType, minimumIterationCount, maximumIterationCount, providers);
     }
 
-    public ScramServer createServer(final CallbackHandler callbackHandler, final SecureRandom random, final ChannelBindingCallback bindingCallback, final int minimumIterationCount, final int maximumIterationCount) throws AuthenticationMechanismException {
+    public ScramServer createServer(final CallbackHandler callbackHandler, final SecureRandom random, final ChannelBindingCallback bindingCallback, final int minimumIterationCount, final int maximumIterationCount, final Supplier<Provider[]> providers) throws AuthenticationMechanismException {
         final byte[] bindingData;
         final String bindingType;
         if (bindingCallback != null) {
@@ -103,7 +105,7 @@ public final class ScramMechanism {
             bindingData = null;
             bindingType = null;
         }
-        return new ScramServer(this, callbackHandler, random, bindingData, bindingType, minimumIterationCount, maximumIterationCount);
+        return new ScramServer(this, callbackHandler, random, bindingData, bindingType, minimumIterationCount, maximumIterationCount, providers);
     }
 
     public int getHashSize() {

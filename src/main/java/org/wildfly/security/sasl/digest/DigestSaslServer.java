@@ -28,8 +28,10 @@ import static org.wildfly.security.sasl.digest._private.DigestUtil.digestRespons
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -50,8 +52,8 @@ import org.wildfly.security.util.ByteStringBuilder;
  */
 class DigestSaslServer extends AbstractDigestMechanism implements SaslServer {
 
-    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers) throws SaslException {
-        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers);
+    DigestSaslServer(String[] realms, String mechanismName, String protocol, String serverName, CallbackHandler callbackHandler, Charset charset, String[] qops, String[] ciphers, Supplier<Provider[]> providers) throws SaslException {
+        super(mechanismName, protocol, serverName, callbackHandler, FORMAT.SERVER, charset, ciphers, providers);
         this.realms = realms;
         this.supportedCiphers = getSupportedCiphers(ciphers);
         this.qops = qops;

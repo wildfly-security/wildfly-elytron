@@ -37,9 +37,11 @@ import static org.wildfly.security.sasl.otp.OTPUtil.validateUserName;
 
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.AuthorizeCallback;
@@ -68,6 +70,8 @@ final class OTPSaslServer extends AbstractSaslServer {
     private static final int ST_CHALLENGE = 1;
     private static final int ST_PROCESS_RESPONSE = 2;
 
+    private final Supplier<Provider[]> providers;
+
     private String previousAlgorithm;
     private String previousSeed;
     private int previousSequenceNumber;
@@ -76,8 +80,9 @@ final class OTPSaslServer extends AbstractSaslServer {
     private String userName;
     private String authorizationID;
 
-    OTPSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler) {
+    OTPSaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Supplier<Provider[]> providers) {
         super(mechanismName, protocol, serverName, callbackHandler);
+        this.providers = providers;
     }
 
     public void init() {
@@ -250,7 +255,7 @@ final class OTPSaslServer extends AbstractSaslServer {
 
     private void updateCredential(final String newAlgorithm, final OneTimePasswordSpec newPasswordSpec) throws SaslException {
         try {
-            final PasswordFactory passwordFactory = PasswordFactory.getInstance(newAlgorithm);
+            final PasswordFactory passwordFactory = PasswordFactory.getInstance(newAlgorithm, providers);
             final OneTimePassword newPassword = (OneTimePassword) passwordFactory.generatePassword(newPasswordSpec);
             final CredentialUpdateCallback credentialUpdateCallback = new CredentialUpdateCallback(new PasswordCredential(newPassword));
             handleCallbacks(exclusiveNameCallback, credentialUpdateCallback);
