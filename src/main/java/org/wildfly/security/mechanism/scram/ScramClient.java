@@ -230,17 +230,18 @@ public final class ScramClient {
         encoded.append(',').append('r').append('=').append(initialResponse.getRawNonce()).append(initialChallenge.getRawServerNonce());
         // no extensions
 
+        final IteratedSaltedPasswordAlgorithmSpec parameters = new IteratedSaltedPasswordAlgorithmSpec(
+            initialChallenge.getIterationCount(),
+            initialChallenge.getRawSalt()
+        );
         ScramDigestPassword password = MechanismUtil.getPasswordCredential(
             initialResponse.getAuthenticationName(),
             callbackHandler,
             ScramDigestPassword.class,
             mechanism.getPasswordAlgorithm(),
-            new IteratedSaltedPasswordAlgorithmSpec(
-                initialChallenge.getIterationCount(),
-                initialChallenge.getRawSalt()
-            ),
-            providers
-        );
+            parameters,
+            parameters,
+            providers);
         final byte[] saltedPassword = password.getDigest();
         if (trace) log.tracef("[C] Client salted password: %s", ByteIterator.ofBytes(saltedPassword).hexEncode().drainToString());
 

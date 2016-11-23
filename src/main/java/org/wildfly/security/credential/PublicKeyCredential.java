@@ -57,7 +57,7 @@ public final class PublicKeyCredential implements AlgorithmCredential {
         return KeyUtil.getParameters(publicKey, paramSpecClass);
     }
 
-    public boolean hasSameParameters(final Credential other) {
+    public boolean impliesSameParameters(final Credential other) {
         return KeyUtil.hasParameters(publicKey, other.getParameters(AlgorithmParameterSpec.class));
     }
 

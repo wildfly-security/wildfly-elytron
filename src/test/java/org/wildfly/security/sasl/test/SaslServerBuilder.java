@@ -158,6 +158,18 @@ public class SaslServerBuilder {
         return this;
     }
 
+    public SaslServerBuilder setPasswordInstanceMap(final Map<String, Password> passwordMap) {
+        Assert.assertNotNull(passwordMap);
+        this.passwordMap = new HashMap<String, SimpleRealmEntry>(passwordMap.size());
+        passwordMap.forEach((userName, password) -> {
+            if (password == null) {
+                password = NULL_PASSWORD;
+            }
+            this.passwordMap.put(userName, new SimpleRealmEntry(Collections.singletonList(new PasswordCredential(password))));
+        });
+        return this;
+    }
+
     public SaslServerBuilder setPasswordMap(final Map<String, String> passwordMap) throws Exception {
         Assert.assertNotNull(passwordMap);
         this.passwordMap = new HashMap<String, SimpleRealmEntry>(passwordMap.size());

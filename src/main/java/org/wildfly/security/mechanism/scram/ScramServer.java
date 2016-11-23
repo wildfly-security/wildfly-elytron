@@ -48,7 +48,7 @@ import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
-import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.sasl.util.StringPrep;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.ByteStringBuilder;
@@ -197,10 +197,10 @@ public final class ScramServer {
             throw log.mechCallbackHandlerDoesNotSupportUserName(mechanism.toString(), e);
         }
 
-        final ScramDigestPassword password = MechanismUtil.getPasswordCredential(clientMessage.getAuthenticationName(), callbackHandler, ScramDigestPassword.class, mechanism.getPasswordAlgorithm(), new IteratedSaltedPasswordAlgorithmSpec(
-            max(minimumIterationCount, min(maximumIterationCount, ScramDigestPassword.DEFAULT_ITERATION_COUNT)),
-            null
-        ), providers);
+        final IteratedPasswordAlgorithmSpec generateParameters = new IteratedPasswordAlgorithmSpec(
+            max(minimumIterationCount, min(maximumIterationCount, ScramDigestPassword.DEFAULT_ITERATION_COUNT))
+        );
+        final ScramDigestPassword password = MechanismUtil.getPasswordCredential(clientMessage.getAuthenticationName(), callbackHandler, ScramDigestPassword.class, mechanism.getPasswordAlgorithm(), null, generateParameters, providers);
 
         final byte[] saltedPasswordBytes = password.getDigest();
         final int iterationCount = password.getIterationCount();

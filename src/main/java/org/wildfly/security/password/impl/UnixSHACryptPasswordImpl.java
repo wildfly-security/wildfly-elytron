@@ -33,10 +33,11 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.UnixSHACryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -70,6 +71,10 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
         this.hash = hash;
     }
 
+    UnixSHACryptPasswordImpl(final String algorithm, final char[] passwordChars) throws NoSuchAlgorithmException {
+        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), DEFAULT_ITERATION_COUNT, passwordChars);
+    }
+
     UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedHashPasswordSpec spec) {
         this(algorithm, truncatedClone(spec.getSalt()), min(999_999_999, max(1_000, spec.getIterationCount())), spec.getHash().clone());
     }
@@ -79,22 +84,22 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final ClearPasswordSpec spec) throws NoSuchAlgorithmException {
-        this.algorithm = algorithm;
-        this.salt = PasswordUtil.generateRandomSalt(SALT_SIZE);
-        this.iterationCount = DEFAULT_ITERATION_COUNT;
-        this.hash = doEncode(algorithm, getNormalizedPasswordBytes(spec.getEncodedPassword()), this.salt, this.iterationCount);
-    }
-
-    UnixSHACryptPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, (IteratedSaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec(), spec.getPassword());
+        this(algorithm, spec.getEncodedPassword());
     }
 
     UnixSHACryptPasswordImpl(final String algorithm, final IteratedSaltedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
-        this(algorithm, parameterSpec.getSalt() ==  null ? PasswordUtil.generateRandomSalt(SALT_SIZE) : truncatedClone(parameterSpec.getSalt()),
-                min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
+        this(algorithm, truncatedClone(parameterSpec.getSalt()), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
     }
 
-    private UnixSHACryptPasswordImpl(final String algorithm, final byte[] clonedSalt, final int adjustedIterationCount, final char[] password) throws NoSuchAlgorithmException {
+    UnixSHACryptPasswordImpl(final String algorithm, final SaltedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
+        this(algorithm, truncatedClone(parameterSpec.getSalt()), DEFAULT_ITERATION_COUNT, password);
+    }
+
+    UnixSHACryptPasswordImpl(final String algorithm, final IteratedPasswordAlgorithmSpec parameterSpec, final char[] password) throws NoSuchAlgorithmException {
+        this(algorithm, PasswordUtil.generateRandomSalt(SALT_SIZE), min(999_999_999, max(1_000, parameterSpec.getIterationCount())), password);
+    }
+
+    UnixSHACryptPasswordImpl(final String algorithm, final byte[] clonedSalt, final int adjustedIterationCount, final char[] password) throws NoSuchAlgorithmException {
         this(algorithm, clonedSalt, adjustedIterationCount, doEncode(algorithm, getNormalizedPasswordBytes(password), clonedSalt, adjustedIterationCount));
     }
 

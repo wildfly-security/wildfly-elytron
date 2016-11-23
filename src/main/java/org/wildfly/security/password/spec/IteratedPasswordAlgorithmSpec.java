@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014 Red Hat, Inc., and individual contributors
+ * Copyright 2016 Red Hat, Inc., and individual contributors
  * as indicated by the @author tags.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,34 +20,27 @@ package org.wildfly.security.password.spec;
 
 import java.io.Serializable;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
-
-import org.wildfly.common.Assert;
 
 /**
- * Algorithm parameter specification for common hashed password types.
+ * Algorithm parameter specification for password types with an iteration count.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class IteratedSaltedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
+public final class IteratedPasswordAlgorithmSpec implements AlgorithmParameterSpec, Serializable {
 
     // This could extend SaltedPasswordAlgorithmSpec but final classes makes type detection safer.
 
     private static final long serialVersionUID = -13504632816489169L;
 
     private final int iterationCount;
-    private final byte[] salt;
 
     /**
      * Construct a new instance.
      *
      * @param iterationCount the iteration count
-     * @param salt the salt bytes
      */
-    public IteratedSaltedPasswordAlgorithmSpec(final int iterationCount, final byte[] salt) {
-        Assert.checkNotNullParam("salt", salt);
+    public IteratedPasswordAlgorithmSpec(final int iterationCount) {
         this.iterationCount = iterationCount;
-        this.salt = salt;
     }
 
     /**
@@ -59,23 +52,14 @@ public final class IteratedSaltedPasswordAlgorithmSpec implements AlgorithmParam
         return iterationCount;
     }
 
-    /**
-     * Get the salt bytes.
-     *
-     * @return the salt bytes
-     */
-    public byte[] getSalt() {
-        return salt;
-    }
-
     public boolean equals(Object other) {
-        if (! (other instanceof IteratedSaltedPasswordAlgorithmSpec)) return false;
+        if (! (other instanceof IteratedPasswordAlgorithmSpec)) return false;
         if (this == other) return true;
-        IteratedSaltedPasswordAlgorithmSpec otherSpec = (IteratedSaltedPasswordAlgorithmSpec) other;
-        return iterationCount == otherSpec.iterationCount && Arrays.equals(salt, otherSpec.salt);
+        IteratedPasswordAlgorithmSpec otherSpec = (IteratedPasswordAlgorithmSpec) other;
+        return iterationCount == otherSpec.iterationCount;
     }
 
     public int hashCode() {
-        return iterationCount * 31 + Arrays.hashCode(salt);
+        return iterationCount * 71;
     }
 }

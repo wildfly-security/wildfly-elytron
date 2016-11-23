@@ -29,11 +29,12 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.util.ModularCrypt;
 import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -49,9 +50,9 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
 
     private static final long serialVersionUID = - 4400030650839115036L;
 
-    private byte[] hash;
-    private byte[] salt;
-    private int iterationCount;
+    private final byte[] hash;
+    private final byte[] salt;
+    private final int iterationCount;
 
     BCryptPasswordImpl(final byte[] hash, final byte[] salt, final int iterationCount) {
         this.hash = hash;
@@ -77,13 +78,27 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
         this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(clearPasswordSpec.getEncodedPassword()));
     }
 
-    BCryptPasswordImpl(final EncryptablePasswordSpec encryptableSpec) throws InvalidKeySpecException {
-        this(encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) encryptableSpec.getAlgorithmParameterSpec());
+    BCryptPasswordImpl(final char[] password) throws InvalidKeySpecException {
+        this.salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        this.iterationCount = DEFAULT_ITERATION_COUNT;
+        this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
     }
 
-    private BCryptPasswordImpl(final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
-        this.salt = spec.getSalt() == null ? PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE) : spec.getSalt().clone();
-        this.iterationCount = spec.getIterationCount() == 0 ? DEFAULT_ITERATION_COUNT : spec.getIterationCount();
+    BCryptPasswordImpl(final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+        this.salt = spec.getSalt().clone();
+        this.iterationCount = spec.getIterationCount();
+        this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
+    }
+
+    BCryptPasswordImpl(final char[] password, final SaltedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+        this.salt = spec.getSalt().clone();
+        this.iterationCount = DEFAULT_ITERATION_COUNT;
+        this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
+    }
+
+    BCryptPasswordImpl(final char[] password, final IteratedPasswordAlgorithmSpec spec) throws InvalidKeySpecException {
+        this.salt = PasswordUtil.generateRandomSalt(BCRYPT_SALT_SIZE);
+        this.iterationCount = spec.getIterationCount();
         this.hash = bcrypt(this.iterationCount, this.salt, getNormalizedPasswordBytes(password));
     }
 

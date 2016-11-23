@@ -80,12 +80,12 @@ public final class PasswordCredential implements AlgorithmCredential {
         return paramSpecClass.isInstance(parameterSpec) ? paramSpecClass.cast(parameterSpec) : null;
     }
 
-    public boolean hasParameters(final AlgorithmParameterSpec parameterSpec) {
+    public boolean impliesParameters(final AlgorithmParameterSpec parameterSpec) {
         Assert.checkNotNullParam("parameterSpec", parameterSpec);
-        return Objects.equals(password.getParameterSpec(), parameterSpec);
+        return password.impliesParameters(parameterSpec);
     }
 
-    public boolean hasSameParameters(final Credential other) {
+    public boolean impliesSameParameters(final Credential other) {
         Assert.checkNotNullParam("other", other);
         return Objects.equals(password.getParameterSpec(), other.getParameters(AlgorithmParameterSpec.class));
     }

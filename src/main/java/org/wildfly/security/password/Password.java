@@ -22,6 +22,8 @@ import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
+import org.wildfly.common.Assert;
+
 /**
  * A password key.
  *
@@ -86,6 +88,17 @@ public interface Password extends Key, Cloneable {
      */
     default AlgorithmParameterSpec getParameterSpec() {
         return null;
+    }
+
+    /**
+     * Determine if this password is matched by the given parameter specification.
+     *
+     * @param parameterSpec the parameter specification (must not be {@code null})
+     * @return {@code true} if the password is matched by the parameters, {@code false} otherwise
+     */
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return false;
     }
 
     /**

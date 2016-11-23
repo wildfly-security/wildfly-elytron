@@ -24,7 +24,6 @@ import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
-import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.KeySpec;
@@ -33,9 +32,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -46,49 +44,51 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
     private final short salt;
     private final byte[] hash;
 
-    UnixDESCryptPasswordImpl(final SaltedHashPasswordSpec spec) throws InvalidKeySpecException {
-        salt = ByteBuffer.wrap(spec.getSalt()).getShort();
-        final byte[] hash = spec.getHash();
-        if (hash == null || hash.length != 8) {
-            throw log.invalidKeySpecDesCryptPasswordHashMustBeBytes(8); // TODO
-        }
-        this.hash = hash.clone();
-    }
-
-    UnixDESCryptPasswordImpl(final ClearPasswordSpec spec) throws InvalidKeySpecException {
-        this.salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
-        this.hash = generateHash(this.salt, spec.getEncodedPassword().clone());
-    }
-
-    UnixDESCryptPasswordImpl(final EncryptablePasswordSpec spec) throws InvalidParameterSpecException {
-        AlgorithmParameterSpec parameterSpec = spec.getAlgorithmParameterSpec();
-        short salt;
-        if (parameterSpec == null) {
-            salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
-        } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
-            final byte[] saltBytes = ((IteratedSaltedPasswordAlgorithmSpec) parameterSpec).getSalt();
-            if (saltBytes != null) {
-                if (saltBytes.length != 2) {
-                    throw log.invalidParameterSpecSaltMustBeBytesBits(2, 12);
-                }
-                salt = (short) ((saltBytes[0] & 0x0f) << 8 | saltBytes[1] & 0xff);
-            } else {
-                salt = (short) (ThreadLocalRandom.current().nextInt() & 0xfff);
-            }
-        } else {
-            throw log.invalidParameterSpecUnsupportedParameterSpec();
-        }
+    UnixDESCryptPasswordImpl(final short salt, final byte[] hash) throws InvalidKeyException {
         this.salt = salt;
-        this.hash = generateHash(salt, spec.getPassword());
-    }
-
-    UnixDESCryptPasswordImpl(final UnixDESCryptPassword password) throws InvalidKeyException {
-        salt = password.getSalt();
-        final byte[] hash = password.getHash();
         if (hash == null || hash.length != 8) {
             throw log.invalidKeyDesCryptPasswordHashMustBeBytes(8);
         }
         this.hash = hash;
+    }
+
+    UnixDESCryptPasswordImpl(final byte[] saltBytes, final byte[] hash) throws InvalidParameterSpecException, InvalidKeyException {
+        this(saltFromBytes(saltBytes), hash);
+    }
+
+    UnixDESCryptPasswordImpl(final byte[] saltBytes, final char[] passwordChars) throws InvalidParameterSpecException, InvalidKeyException {
+        this(saltFromBytes(saltBytes), passwordChars);
+    }
+
+    UnixDESCryptPasswordImpl(final SaltedHashPasswordSpec spec) throws InvalidKeySpecException, InvalidParameterSpecException, InvalidKeyException {
+        this(spec.getSalt(), spec.getHash().clone());
+    }
+
+    UnixDESCryptPasswordImpl(final ClearPasswordSpec spec) throws InvalidKeySpecException, InvalidKeyException {
+        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), spec.getEncodedPassword());
+    }
+
+    UnixDESCryptPasswordImpl(final char[] passwordChars) throws InvalidKeyException {
+        this((short) (ThreadLocalRandom.current().nextInt() & 0xfff), passwordChars);
+    }
+
+    UnixDESCryptPasswordImpl(final char[] passwordChars, SaltedPasswordAlgorithmSpec algorithmSpec) throws InvalidParameterSpecException, InvalidKeyException {
+        this(algorithmSpec.getSalt(), passwordChars);
+    }
+
+    UnixDESCryptPasswordImpl(final UnixDESCryptPassword password) throws InvalidKeyException {
+        this(password.getSalt(), password.getHash());
+    }
+
+    UnixDESCryptPasswordImpl(final short salt, final char[] passwordChars) throws InvalidKeyException {
+        this(salt, generateHash(salt, passwordChars));
+    }
+
+    private static short saltFromBytes(final byte[] saltBytes) throws InvalidParameterSpecException {
+        if (saltBytes.length != 2) {
+            throw log.invalidParameterSpecSaltMustBeBytesBits(2, 12);
+        }
+        return (short) ((saltBytes[0] & 0x0f) << 8 | saltBytes[1] & 0xff);
     }
 
     <S extends KeySpec> S getKeySpec(final Class<S> keySpecType) throws InvalidKeySpecException {

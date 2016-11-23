@@ -242,7 +242,7 @@ public final class CredentialCallback implements ExtendedCallback, Serializable 
         Assert.checkNotNullParam("credential", credential);
         return credentialType.isInstance(credential)
             && (algorithm == null || credential instanceof AlgorithmCredential && algorithm.equals(((AlgorithmCredential) credential).getAlgorithm()))
-            && (parameterSpec == null || credential.hasParameters(parameterSpec));
+            && (parameterSpec == null || credential.impliesParameters(parameterSpec));
     }
 
     /**

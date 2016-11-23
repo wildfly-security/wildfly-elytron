@@ -72,7 +72,7 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
             return null;
         }
         if (credentialType.isInstance(credential)
-            && (parameterSpec == null || credential.hasParameters(parameterSpec))
+            && (parameterSpec == null || credential.impliesParameters(parameterSpec))
             && (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm()))) {
             return credential;
         } else {

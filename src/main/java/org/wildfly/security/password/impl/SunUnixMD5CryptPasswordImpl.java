@@ -31,10 +31,11 @@ import java.security.spec.KeySpec;
 import java.util.Arrays;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.PasswordUtil;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
-import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -128,12 +129,20 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
         this.hash = sunMD5Crypt(algorithm, getNormalizedPasswordBytes(spec.getEncodedPassword()), salt, iterationCount);
     }
 
-    SunUnixMD5CryptPasswordImpl(final String algorithm, final EncryptablePasswordSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, spec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) spec.getAlgorithmParameterSpec());
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password) throws NoSuchAlgorithmException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), DEFAULT_ITERATION_COUNT);
     }
 
-    private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
-        this(algorithm, password, spec.getSalt() == null ? PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE) : spec.getSalt().clone(), spec.getIterationCount());
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedSaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
+        this(algorithm, password, spec.getSalt().clone(), spec.getIterationCount());
+    }
+
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final SaltedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
+        this(algorithm, password, spec.getSalt().clone(), DEFAULT_ITERATION_COUNT);
+    }
+
+    SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final IteratedPasswordAlgorithmSpec spec) throws NoSuchAlgorithmException {
+        this(algorithm, password, PasswordUtil.generateRandomSalt(DEFAULT_SALT_SIZE), spec.getIterationCount());
     }
 
     private SunUnixMD5CryptPasswordImpl(final String algorithm, final char[] password, final byte[] clonedSalt, final int iterationCount)

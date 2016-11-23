@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.security.AccessControlContext;
 import java.security.Principal;
 import java.security.PrivilegedAction;
+import java.security.spec.AlgorithmParameterSpec;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
@@ -65,8 +66,9 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
                 final CredentialCallback credentialCallback = (CredentialCallback) callback;
                 final Class<? extends Credential> credentialType = credentialCallback.getCredentialType();
                 final String algorithm = credentialCallback.getAlgorithm();
+                final AlgorithmParameterSpec parameterSpec = credentialCallback.getParameterSpec();
                 final IdentityCredentials privateCredentials = getPrivateCredentials(identity, context);
-                final Credential credential = privateCredentials.getCredential(credentialType, algorithm);
+                final Credential credential = privateCredentials.getCredential(credentialType, algorithm, parameterSpec);
                 if (credential != null) {
                     credentialCallback.setCredential(credential);
                 }

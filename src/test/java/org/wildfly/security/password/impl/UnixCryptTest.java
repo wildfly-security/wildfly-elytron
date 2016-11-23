@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.UnixDESCryptPassword;
 import org.wildfly.security.password.spec.EncryptablePasswordSpec;
-import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.util.ModularCrypt;
 
 /**
@@ -38,7 +38,7 @@ public class UnixCryptTest {
     @Test
     public void testBasicString() throws InvalidKeySpecException, InvalidKeyException {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
-        final Password password = spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(0, null)));
+        final Password password = spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), null));
         assertTrue(spi.engineVerify("crypt-des", password, "test".toCharArray()));
         assertFalse(spi.engineVerify("crypt-des", password, "test_".toCharArray()));
         assertFalse(spi.engineVerify("crypt-des", password, "test_foo_bar".toCharArray()));
@@ -52,7 +52,7 @@ public class UnixCryptTest {
         salt[0] = (byte) (spec.getSalt() >> 8);
         salt[1] = (byte) (spec.getSalt() >> 0);
         assertEquals("ABwOg1D2JDxIQ", ModularCrypt.encodeAsString(spec));
-        final UnixDESCryptPassword p2 = (UnixDESCryptPassword) spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new IteratedSaltedPasswordAlgorithmSpec(0, salt)));
+        final UnixDESCryptPassword p2 = (UnixDESCryptPassword) spi.engineGeneratePassword("crypt-des", new EncryptablePasswordSpec("test".toCharArray(), new SaltedPasswordAlgorithmSpec(salt)));
         assertEquals("Salts unmatched", spec.getSalt(), p2.getSalt());
         assertEquals("ABwOg1D2JDxIQ", ModularCrypt.encodeAsString(p2));
     }

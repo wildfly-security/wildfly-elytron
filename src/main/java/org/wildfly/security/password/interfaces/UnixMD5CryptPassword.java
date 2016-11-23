@@ -18,10 +18,15 @@
 
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
@@ -42,6 +47,11 @@ public interface UnixMD5CryptPassword extends OneWayPassword {
     int SALT_SIZE = 8;
 
     /**
+     * The fixed iteration count.
+     */
+    int ITERATION_COUNT = 1000;
+
+    /**
      * Get the salt component of this password.
      *
      * @return the salt component
@@ -57,6 +67,22 @@ public interface UnixMD5CryptPassword extends OneWayPassword {
 
     default SaltedPasswordAlgorithmSpec getParameterSpec() {
         return new SaltedPasswordAlgorithmSpec(getSalt());
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+            final IteratedSaltedPasswordAlgorithmSpec spec = (IteratedSaltedPasswordAlgorithmSpec) parameterSpec;
+            // iteration count has to match exactly since it's not flexible for this algorithm
+            return ITERATION_COUNT == spec.getIterationCount() && Arrays.equals(getSalt(), spec.getSalt());
+        } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
+            return Arrays.equals(getSalt(), ((SaltedPasswordAlgorithmSpec) parameterSpec).getSalt());
+        } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
+            // iteration count has to match exactly since it's not flexible for this algorithm
+            return ITERATION_COUNT == ((IteratedPasswordAlgorithmSpec) parameterSpec).getIterationCount();
+        } else {
+            return false;
+        }
     }
 
     /**

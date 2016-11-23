@@ -23,7 +23,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 
@@ -56,7 +55,7 @@ public class BSDUnixDESCryptTest {
         final PasswordFactorySpiImpl spi = new PasswordFactorySpiImpl();
 
         // Create a BSDUnixDESCryptPasswordSpec with an invalid hash
-        IteratedSaltedHashPasswordSpec invalidSpec = new IteratedSaltedHashPasswordSpec(new byte[4], ByteBuffer.allocate(4).putInt(10).array(), 100);
+        IteratedSaltedHashPasswordSpec invalidSpec = new IteratedSaltedHashPasswordSpec(new byte[4], new byte[] { 0, 0, 10 }, 100);
 
         // An InvalidKeySpecException should be thrown when creating a BSDUnixDESCryptPassword using the invalid spec
         exception.expect(InvalidKeySpecException.class);

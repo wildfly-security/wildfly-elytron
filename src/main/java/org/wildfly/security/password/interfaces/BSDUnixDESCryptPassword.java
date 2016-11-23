@@ -18,11 +18,16 @@
 
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * A BSD-style DES "crypt" password.
@@ -81,6 +86,20 @@ public interface BSDUnixDESCryptPassword extends OneWayPassword {
         saltBytes[2] = (byte) (salt >>> 8 & 0xff);
         saltBytes[3] = (byte) (salt & 0xff);
         return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), saltBytes);
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+            final IteratedSaltedPasswordAlgorithmSpec spec = (IteratedSaltedPasswordAlgorithmSpec) parameterSpec;
+            return getIterationCount() <= spec.getIterationCount() && Arrays.equals(getParameterSpec().getSalt(), spec.getSalt());
+        } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
+            return Arrays.equals(getParameterSpec().getSalt(), ((SaltedPasswordAlgorithmSpec) parameterSpec).getSalt());
+        } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
+            return getIterationCount() <= ((IteratedPasswordAlgorithmSpec) parameterSpec).getIterationCount();
+        } else {
+            return false;
+        }
     }
 
     /**

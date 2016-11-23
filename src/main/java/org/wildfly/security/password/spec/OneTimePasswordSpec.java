@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.password.spec;
 
+import org.wildfly.common.Assert;
+
 /**
  * A {@link PasswordSpec} for a one-time password.
  *
@@ -29,6 +31,8 @@ public final class OneTimePasswordSpec implements PasswordSpec {
     private final int sequenceNumber;
 
     public OneTimePasswordSpec(final byte[] hash, final byte[] seed, final int sequenceNumber) {
+        Assert.checkNotNullParam("hash", hash);
+        Assert.checkNotNullParam("seed", seed);
         this.hash = hash;
         this.seed = seed;
         this.sequenceNumber = sequenceNumber;

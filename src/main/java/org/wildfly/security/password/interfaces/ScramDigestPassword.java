@@ -18,11 +18,16 @@
 
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * A SCRAM-digest password, used by the SCRAM family of SASL mechanisms.
@@ -84,6 +89,20 @@ public interface ScramDigestPassword extends OneWayPassword {
 
     default IteratedSaltedPasswordAlgorithmSpec getParameterSpec() {
         return new IteratedSaltedPasswordAlgorithmSpec(getIterationCount(), getSalt());
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+            final IteratedSaltedPasswordAlgorithmSpec spec = (IteratedSaltedPasswordAlgorithmSpec) parameterSpec;
+            return getIterationCount() <= spec.getIterationCount() && Arrays.equals(getSalt(), spec.getSalt());
+        } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
+            return Arrays.equals(getSalt(), ((SaltedPasswordAlgorithmSpec) parameterSpec).getSalt());
+        } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
+            return getIterationCount() <= ((IteratedPasswordAlgorithmSpec) parameterSpec).getIterationCount();
+        } else {
+            return false;
+        }
     }
 
     /**

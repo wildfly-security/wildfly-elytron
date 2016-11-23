@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.interfaces;
 
+import java.security.spec.AlgorithmParameterSpec;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.OneWayPassword;
 import org.wildfly.security.password.Password;
@@ -55,6 +57,11 @@ public interface UnixDESCryptPassword extends OneWayPassword {
         saltBytes[0] = (byte) (salt >>> 8 & 0xff);
         saltBytes[1] = (byte) (salt & 0xff);
         return new SaltedPasswordAlgorithmSpec(saltBytes);
+    }
+
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return parameterSpec.equals(getParameterSpec());
     }
 
     /**
