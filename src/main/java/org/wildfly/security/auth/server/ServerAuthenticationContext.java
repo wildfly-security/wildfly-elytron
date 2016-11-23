@@ -1835,7 +1835,7 @@ public final class ServerAuthenticationContext {
         @Override
         boolean isSamePrincipal(final Principal principal) {
             String name = capturedIdentity.getSecurityDomain().getPrincipalDecoder().getName(principal);
-            return isSameName(name);
+            return name != null ? isSameName(name) : false;
         }
 
         @Override
@@ -2036,7 +2036,7 @@ public final class ServerAuthenticationContext {
         @Override
         boolean isSamePrincipal(final Principal principal) {
             String name = authorizedIdentity.getSecurityDomain().getPrincipalDecoder().getName(principal);
-            return isSameName(name);
+            return name != null ? isSameName(name) : false;
         }
 
         RealmInfo getRealmInfo() {

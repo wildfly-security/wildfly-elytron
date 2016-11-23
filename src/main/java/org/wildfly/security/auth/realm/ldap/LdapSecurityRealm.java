@@ -347,7 +347,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             if (!exists()) {
-                return null;
+                return SupportLevel.UNSUPPORTED;
             }
 
             if (LdapSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) == SupportLevel.UNSUPPORTED) {
