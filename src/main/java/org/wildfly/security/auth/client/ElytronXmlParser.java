@@ -1029,7 +1029,6 @@ public final class ElytronXmlParser {
         final CredentialStoreReference credentialStoreReference;
         String store = null;
         String alias = null;
-        String type = null;
         String clearText = null;
         for (int i = 0; i < attributeCount; i ++) {
             final String attributeNamespace = reader.getAttributeNamespace(i);
@@ -1050,11 +1049,6 @@ public final class ElytronXmlParser {
                     alias = reader.getAttributeValue(i);
                     break;
                 }
-                case "type": {
-                    if (type != null) throw reader.unexpectedAttribute(i);
-                    type = reader.getAttributeValue(i);
-                    break;
-                }
                 case "clear-text": {
                     if (clearText != null) throw reader.unexpectedAttribute(i);
                     clearText = reader.getAttributeValue(i);
@@ -1073,7 +1067,7 @@ public final class ElytronXmlParser {
             if (alias == null) {
                 throw missingAttribute(reader, "alias");
             }
-            credentialStoreReference = new CredentialStoreReference(store, alias, type);
+            credentialStoreReference = new CredentialStoreReference(store, alias);
         }
         if (reader.hasNext()) {
             final int tag = reader.nextTag();

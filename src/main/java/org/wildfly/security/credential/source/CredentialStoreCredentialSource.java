@@ -48,19 +48,6 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
      * Construct a new instance.
      *
      * @param credentialStoreFactory factory to create credential store
-     * @param alias alias withing {@link CredentialStore}
-     */
-    public CredentialStoreCredentialSource(final SecurityFactory<CredentialStore> credentialStoreFactory, final String alias) {
-        Assert.checkNotNullParam("credentialStoreFactory", credentialStoreFactory);
-        Assert.checkNotNullParam("alias", alias);
-        this.credentialStoreFactory = credentialStoreFactory;
-        credentialStoreReference = new CredentialStoreReference(null, alias);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param credentialStoreFactory factory to create credential store
      * @param credentialStoreReference {@link CredentialStoreReference} to reference entry in the {@link CredentialStore}
      */
     public CredentialStoreCredentialSource(final SecurityFactory<CredentialStore> credentialStoreFactory, final CredentialStoreReference credentialStoreReference) {
@@ -81,10 +68,10 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
     }
 
     public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         try {
             createAndInitCredentialStore();
-            Class<? extends Credential> crType = credentialType != null ? credentialType : credentialStoreReference.getType();
-            return credentialStore.exists(credentialStoreReference.getAlias(), crType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
+            return credentialStore.exists(credentialStoreReference.getAlias(), credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
         } catch (CredentialStoreException e) {
             throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
@@ -93,18 +80,17 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
     }
 
     public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         final C credential;
-        final Class<C> crType;
         try {
             createAndInitCredentialStore();
-            crType = credentialType != null ? credentialType : (Class<C>) credentialStoreReference.getType();
-            credential = credentialStore.retrieve(credentialStoreReference.getAlias(), crType);
+            credential = credentialStore.retrieve(credentialStoreReference.getAlias(), credentialType);
         } catch (CredentialStoreException e) {
             throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
             return null;
         }
-        if (crType.isInstance(credential)
+        if (credentialType.isInstance(credential)
             && (parameterSpec == null || credential.impliesParameters(parameterSpec))
             && (algorithmName == null || credential instanceof AlgorithmCredential && algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm()))) {
             return credential;

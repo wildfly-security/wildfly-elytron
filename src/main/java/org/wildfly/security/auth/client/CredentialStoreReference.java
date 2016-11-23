@@ -18,7 +18,6 @@
 package org.wildfly.security.auth.client;
 
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
 
 /**
  * Credential reference holder.
@@ -29,19 +28,8 @@ import org.wildfly.security.credential.PasswordCredential;
 public final class CredentialStoreReference {
     private final String store;
     private final String alias;
-    private final Class<? extends Credential> type;
     private final char[] clearText;
 
-    /**
-     * Creates credential store reference instance using following set of params.
-     *
-     * @param store the name of store to obtain the credential
-     * @param alias the alias of {@link Credential} withing the (credential) store
-     * @param typeName the credential type of wanted {@link Credential}
-     */
-    public CredentialStoreReference(String store, String alias, String typeName) {
-        this(store, alias, typeName, null, null);
-    }
 
     /**
      * Creates credential store reference instance using following set of params.
@@ -50,18 +38,7 @@ public final class CredentialStoreReference {
      * @param alias the alias of {@link Credential} withing the (credential) store
      */
     public CredentialStoreReference(String store, String alias) {
-        this(store, alias, null, null, null);
-    }
-
-    /**
-     * Creates credential store reference instance using following set of params.
-     *
-     * @param store the name of store to obtain the credential
-     * @param alias the alias of {@link Credential} withing the (credential) store
-     * @param type the credential type of wanted {@link Credential}
-     */
-    public CredentialStoreReference(String store, String alias, Class<? extends Credential> type) {
-        this(store, alias, null, type, null);
+        this(store, alias, null);
     }
 
     /**
@@ -69,17 +46,12 @@ public final class CredentialStoreReference {
      * @param clearText password in clear text form
      */
     public CredentialStoreReference(char[] clearText) {
-        this(null, null, null, null, clearText.clone());
+        this(null, null, clearText.clone());
     }
 
-    private CredentialStoreReference(String store, String alias, String typeName, Class<? extends Credential> type, char[] clearText) {
+    private CredentialStoreReference(String store, String alias, char[] clearText) {
         this.store = store;
         this.alias = alias;
-        if (type != null) {
-            this.type = type;
-        } else {
-            this.type = getCredentialType(typeName);
-        }
         this.clearText = clearText;
     }
 
@@ -100,35 +72,11 @@ public final class CredentialStoreReference {
     }
 
     /**
-     * Gets the credential type
-     * @return credential type
-     */
-    public Class<? extends Credential> getType() {
-        return type;
-    }
-
-    /**
      * Gets the password in clear text form
      * @return password
      */
     public char[] getClearText() {
         return clearText;
-    }
-
-    private static <C extends Credential> Class<C> getCredentialType(String typeName) {
-        if (typeName != null && !typeName.isEmpty()) {
-            // TODO Elytron -> ELY-590: Add support for loading custom credential types from providers
-            Class<? extends Credential> credentialClass = null;
-            try {
-                credentialClass = (Class<? extends Credential>) Credential.class.getClassLoader().loadClass(typeName);
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-
-            }
-            return (Class<C>)credentialClass;
-        }
-        // default
-        return (Class<C>) PasswordCredential.class;
     }
 
 }

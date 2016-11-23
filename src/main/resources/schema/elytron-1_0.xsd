@@ -284,7 +284,6 @@
         </xsd:sequence>
         <xsd:attribute name="store" type="xsd:string"/>
         <xsd:attribute name="alias" type="xsd:string"/>
-        <xsd:attribute name="type" type="xsd:string"/>
         <xsd:attribute name="clear-text" type="xsd:string"/>
     </xsd:complexType>
 
