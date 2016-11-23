@@ -822,23 +822,7 @@ public abstract class AuthenticationConfiguration {
         if (saslClientFactory == null) {
             synchronized (this) {
                 if (saslClientFactory == null) {
-                    SaslClientFactory saslClientFactory = getSaslClientFactory(getProviderSupplier());
-                    final HashMap<String, Object> properties = new HashMap<String, Object>();
-                    configureSaslProperties(properties);
-                    if (properties.isEmpty() == false) {
-                        saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
-                    }
-                    String host = getHost();
-                    if (host != null) {
-                        saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
-                    }
-                    String protocol = getProtocol();
-                    if (protocol != null) {
-                        saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
-                    }
-                    saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
-
-                    this.saslClientFactory = saslClientFactory;
+                    saslClientFactory = getSaslClientFactory(getProviderSupplier());
                 }
             }
         }
@@ -847,6 +831,22 @@ public abstract class AuthenticationConfiguration {
 
     final SaslClient createSaslClient(URI uri, Collection<String> serverMechanisms, UnaryOperator<SaslClientFactory> factoryOperator) throws SaslException {
         SaslClientFactory saslClientFactory = factoryOperator.apply(getSaslClientFactory());
+
+        final HashMap<String, Object> properties = new HashMap<String, Object>();
+        configureSaslProperties(properties);
+        if (properties.isEmpty() == false) {
+            saslClientFactory = new PropertiesSaslClientFactory(saslClientFactory, properties);
+        }
+        String host = getHost();
+        if (host != null) {
+            saslClientFactory = new ServerNameSaslClientFactory(saslClientFactory, host);
+        }
+        String protocol = getProtocol();
+        if (protocol != null) {
+            saslClientFactory = new ProtocolSaslClientFactory(saslClientFactory, protocol);
+        }
+        saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
+
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
                 getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
     }
