@@ -17,12 +17,14 @@
  */
 package org.wildfly.security.auth.realm.jdbc.mapper;
 
+import static org.wildfly.common.Assert.checkMinimumParameter;
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.security.Provider;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Supplier;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.auth.realm.jdbc.ColumnMapper;
 
 /**
@@ -32,11 +34,17 @@ public class AttributeMapper implements ColumnMapper {
 
     private final int index;
     private final String name;
+    private final Type type;
 
     public AttributeMapper(int index, String name) {
-        Assert.checkMinimumParameter("index", 1, index);
+        this(index, name, Type.OTHER);
+    }
+
+    public AttributeMapper(int index, String name, Type type) {
+        checkMinimumParameter("index", 1, index);
         this.index = index;
-        this.name = name;
+        this.name = checkNotNullParam("name", name);
+        this.type = checkNotNullParam("type", type);
     }
 
     @Override
@@ -46,5 +54,15 @@ public class AttributeMapper implements ColumnMapper {
 
     public String getName() {
         return this.name;
+    }
+
+    public boolean isOfType(Type other) {
+        return this.type.equals(other);
+    }
+
+    public enum Type {
+        PRINCIPAL_NAME,
+        IDENTIFIER,
+        OTHER
     }
 }

@@ -104,7 +104,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
 
         @Override
-        public Principal getRealmIdentityPrincipal() {
+        public Principal getRealmIdentityPrincipal() throws RealmUnavailableException {
             return authenticationIdentity.getRealmIdentityPrincipal();
         }
 
