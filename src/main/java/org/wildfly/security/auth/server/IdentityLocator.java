@@ -24,6 +24,7 @@ import java.security.Principal;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.RealmIdentity.Key;
 import org.wildfly.security.evidence.Evidence;
 
 /**
@@ -32,13 +33,13 @@ import org.wildfly.security.evidence.Evidence;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class IdentityLocator {
+    private final Key key;
     private final String name;
-    private final Principal principal;
     private final Evidence evidence;
 
-    IdentityLocator(final String name, final Principal principal, final Evidence evidence) {
+    IdentityLocator(final Key key, final String name, final Evidence evidence) {
+        this.key = key;
         this.name = name;
-        this.principal = principal;
         this.evidence = evidence;
     }
 
@@ -49,6 +50,27 @@ public final class IdentityLocator {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Get the identity key.
+     *
+     * @return the identity key (not {@code null})
+     * @throws IllegalStateException if the key field is not set
+     */
+    public Key getKey() {
+        final Key key = this.key;
+        if (key == null) throw log.locatorFieldNotSet("key");
+        return key;
+    }
+
+    /**
+     * Determine whether a key is set.
+     *
+     * @return {@code true} if a key is set, {@code false} otherwise
+     */
+    public boolean hasKey() {
+        return key != null;
     }
 
     /**
@@ -73,27 +95,6 @@ public final class IdentityLocator {
     }
 
     /**
-     * Get the identity principal.
-     *
-     * @return the identity principal (not {@code null})
-     * @throws IllegalStateException if the principal field is not set
-     */
-    public Principal getPrincipal() {
-        final Principal principal = this.principal;
-        if (principal == null) throw log.locatorFieldNotSet("principal");
-        return principal;
-    }
-
-    /**
-     * Determine whether a principal is set.
-     *
-     * @return {@code true} if a principal is set, {@code false} otherwise
-     */
-    public boolean hasPrincipal() {
-        return principal != null;
-    }
-
-    /**
      * Get the identity evidence.
      *
      * @return the identity evidence (not {@code null})
@@ -115,6 +116,17 @@ public final class IdentityLocator {
     }
 
     /**
+     * Shortcut method to construct an identity locator from just a key.
+     *
+     * @param key the key (must not be {@code null})
+     * @return the identity locator (not {@code null})
+     */
+    public static IdentityLocator fromKey(Key key) {
+        Assert.checkNotNullParam("key", key);
+        return new IdentityLocator(key, null, null);
+    }
+
+    /**
      * Shortcut method to construct an identity locator from just a name.
      *
      * @param name the name (must not be {@code null})
@@ -122,12 +134,11 @@ public final class IdentityLocator {
      */
     public static IdentityLocator fromName(String name) {
         Assert.checkNotNullParam("name", name);
-        return new IdentityLocator(name, null, null);
+        return new IdentityLocator(null, name, null);
     }
 
     /**
-     * Shortcut method to construct an identity locator from just an evidence instance.  The principal will be
-     * populated from the evidence, if it has one.  The name will be populated from the principal if it is an
+     * Shortcut method to construct an identity locator from just an evidence instance. The name will be populated from the principal if it is an
      * instance of {@code NamePrincipal}.
      *
      * @param evidence the evidence (must not be {@code null})
@@ -136,27 +147,15 @@ public final class IdentityLocator {
     public static IdentityLocator fromEvidence(Evidence evidence) {
         Assert.checkNotNullParam("evidence", evidence);
         final Principal principal = evidence.getPrincipal();
-        return new IdentityLocator(principal instanceof NamePrincipal ? principal.getName() : null, principal, evidence);
-    }
-
-    /**
-     * Shortcut method to construct an identity locator from just a principal instance.  The name will be populated from
-     * the principal if it is an instance of {@code NamePrincipal}.
-     *
-     * @param principal the principal (must not be {@code null})
-     * @return the identity locator (not {@code null})
-     */
-    public static IdentityLocator fromPrincipal(Principal principal) {
-        Assert.checkNotNullParam("principal", principal);
-        return new IdentityLocator(principal instanceof NamePrincipal ? principal.getName() : null, principal, null);
+        return new IdentityLocator(null, principal instanceof NamePrincipal ? principal.getName() : null, evidence);
     }
 
     /**
      * A class for building {@link IdentityLocator} instances.
      */
     public static class Builder {
+        private Key key;
         private String name;
-        private Principal principal;
         private Evidence evidence;
 
         /**
@@ -176,12 +175,12 @@ public final class IdentityLocator {
         }
 
         /**
-         * Set the identity principal.
+         * Set the identity key.
          *
-         * @param principal the identity principal
+         * @param key the identity name
          */
-        public Builder setPrincipal(final Principal principal) {
-            this.principal = principal;
+        public Builder setKey(final Key key) {
+            this.key = key;
             return this;
         }
 
@@ -201,7 +200,7 @@ public final class IdentityLocator {
          * @return {@code true} if empty, {@code false} otherwise
          */
         public boolean isEmpty() {
-            return name == null && principal == null && evidence == null;
+            return key == null && name == null && evidence == null;
         }
 
         /**
@@ -210,7 +209,7 @@ public final class IdentityLocator {
          * @return the new locator (not {@code null})
          */
         public IdentityLocator build() {
-            return new IdentityLocator(name, principal, evidence);
+            return new IdentityLocator(key, name, evidence);
         }
     }
 }

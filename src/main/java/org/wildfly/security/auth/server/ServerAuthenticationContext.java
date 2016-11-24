@@ -1008,7 +1008,6 @@ public final class ServerAuthenticationContext {
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         final IdentityLocator.Builder locatorBuilder = IdentityLocator.builder();
         locatorBuilder.setName(finalName);
-        locatorBuilder.setPrincipal(principal);
         locatorBuilder.setEvidence(evidence);
         final RealmIdentity realmIdentity;
         if (exclusive) {
