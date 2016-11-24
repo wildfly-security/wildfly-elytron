@@ -96,10 +96,7 @@
             <xsd:element name="cipher-suite" type="ssl-cipher-selector-type" minOccurs="0"/>
             <xsd:element name="protocol" type="names-list-type" minOccurs="0"/>
             <xsd:element name="provider-name" type="name-type" minOccurs="0"/>
-            <xsd:choice minOccurs="0">
-                <xsd:element name="use-system-providers" type="empty-type"/>
-                <xsd:element name="use-service-loader-providers" type="module-ref-type"/>
-            </xsd:choice>
+            <xsd:element ref="abstract-providers" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
@@ -148,10 +145,7 @@
                 <xsd:element name="set-host" type="name-type" minOccurs="0"/>
                 <xsd:element name="set-port" type="port-number-simple-type" minOccurs="0"/>
                 <xsd:element name="set-protocol" type="name-type" minOccurs="0"/>
-                <xsd:choice minOccurs="0">
-                    <xsd:element name="set-user-name" type="name-type" minOccurs="0"/>
-                    <xsd:element name="set-anonymous" type="empty-type" minOccurs="0"/>
-                </xsd:choice>
+                <xsd:element ref="abstract-user-spec"/>
                 <xsd:element name="set-mechanism-realm" type="optional-name-type" minOccurs="0"/>
                 <xsd:element name="rewrite-user-name-regex" type="regex-substitution-type" minOccurs="0"/>
                 <xsd:element name="allow-all-sasl-mechanisms" type="empty-type" minOccurs="0"/>
@@ -161,17 +155,23 @@
                 <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="0"/>
                 <xsd:element name="clear-password" type="clear-password-type" minOccurs="0"/>
                 <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
-                <xsd:choice minOccurs="0">
-                    <xsd:element name="use-system-providers" type="empty-type"/>
-                    <xsd:element name="use-service-loader-providers" type="module-ref-type"/>
-                </xsd:choice>
-                <xsd:choice minOccurs="0">
-                    <xsd:element name="use-provider-sasl-factory" type="empty-type" />
-                    <xsd:element name="use-service-loader-sasl-factory" type="module-ref-type" />
-                </xsd:choice>
+                <xsd:element ref="abstract-providers" minOccurs="0"/>
+                <xsd:element ref="abstract-sasl-factories" minOccurs="0"/>
             </xsd:all>
         </xsd:sequence>
     </xsd:complexType>
+
+    <xsd:element name="abstract-user-spec" abstract="true"/>
+    <xsd:element name="set-user-name" substitutionGroup="abstract-user-spec" type="name-type" />
+    <xsd:element name="set-anonymous" substitutionGroup="abstract-user-spec" type="empty-type" />
+
+    <xsd:element name="abstract-providers" abstract="true"/>
+    <xsd:element name="use-system-providers" substitutionGroup="abstract-providers" type="empty-type"/>
+    <xsd:element name="use-service-loader-providers" substitutionGroup="abstract-providers" type="module-ref-type"/>
+
+    <xsd:element name="abstract-sasl-factories" abstract="true"/>
+    <xsd:element name="use-provider-sasl-factory" substitutionGroup="abstract-sasl-factories" type="empty-type" />
+    <xsd:element name="use-service-loader-sasl-factory" substitutionGroup="abstract-sasl-factories" type="module-ref-type" />
 
     <xsd:complexType name="key-stores-type">
         <xsd:sequence minOccurs="0" maxOccurs="unbounded">
