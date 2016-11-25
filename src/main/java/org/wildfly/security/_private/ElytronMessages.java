@@ -145,7 +145,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
-    @Message(id = 1006, value = "No realm name found in password property file")
+    @Message(id = 1006, value = "No realm name found in users property file - file must contain \"#$REALM_NAME=RealmName$\" line")
     RealmUnavailableException noRealmFoundInProperties();
 
     @LogMessage(level = Logger.Level.DEBUG)
@@ -187,8 +187,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
     RealmUnavailableException unableToObtainExclusiveAccess();
-
-    // 1019
 
     @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
     RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
@@ -543,6 +541,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1131, value = "Public and private key parameters are mismatched")
     IllegalArgumentException mismatchedPublicPrivateKeyParameters();
+
+    @Message(id = 1132, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
+    RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
+
 
     /* keystore package */
 

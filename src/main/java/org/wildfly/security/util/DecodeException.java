@@ -19,7 +19,7 @@
 package org.wildfly.security.util;
 
 /**
- * An exception which indicates that base 64 decoding has failed due to invalid or truncated input.
+ * An exception which indicates that Base64/hex decoding has failed due to invalid or truncated input.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

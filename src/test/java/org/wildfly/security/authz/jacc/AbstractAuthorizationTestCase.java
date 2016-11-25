@@ -61,7 +61,7 @@ public abstract class AbstractAuthorizationTestCase {
 
         try {
             realm = LegacyPropertiesSecurityRealm.builder()
-                    .setPasswordsStream(getClass().getResourceAsStream("clear.properties"))
+                    .setUsersStream(getClass().getResourceAsStream("clear.properties"))
                     .setPlainText(true)
                     .build();
         } catch (IOException e) {

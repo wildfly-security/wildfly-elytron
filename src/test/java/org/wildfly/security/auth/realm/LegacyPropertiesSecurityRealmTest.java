@@ -67,7 +67,7 @@ public class LegacyPropertiesSecurityRealmTest {
         Security.addProvider(provider);
 
         specialCharsRealm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(LegacyPropertiesSecurityRealmTest.class.getResourceAsStream("specialchars.properties"))
+                .setUsersStream(LegacyPropertiesSecurityRealmTest.class.getResourceAsStream("specialchars.properties"))
                 .setPlainText(true)
                 .build();
     }
@@ -85,7 +85,7 @@ public class LegacyPropertiesSecurityRealmTest {
     @Test
     public void testDefaultFile() throws IOException {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(this.getClass().getResourceAsStream("empty.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream("empty.properties"))
                 .build();
 
         assertNotNull("SecurityRealm", realm);
@@ -97,7 +97,7 @@ public class LegacyPropertiesSecurityRealmTest {
     @Test
     public void testPlainFile() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(this.getClass().getResourceAsStream("clear.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream("clear.properties"))
                 .setPlainText(true)
                 .build();
 
@@ -148,7 +148,7 @@ public class LegacyPropertiesSecurityRealmTest {
     @Test
     public void testHashedFile() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(this.getClass().getResourceAsStream("users.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream("users.properties"))
                 .build();
 
         PasswordGuessEvidence goodGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_CLEAR.toCharArray());
@@ -194,7 +194,7 @@ public class LegacyPropertiesSecurityRealmTest {
     @Test
     public void testPlainFileSpecialChars() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(this.getClass().getResourceAsStream("clear-special.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream("clear-special.properties"))
                 .setPlainText(true)
                 .build();
 
@@ -376,7 +376,7 @@ public class LegacyPropertiesSecurityRealmTest {
     @Test
     public void testHashedFile_colonAsDelimiter() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setPasswordsStream(this.getClass().getResourceAsStream("colondelimiter.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream("colondelimiter.properties"))
                 .build();
 
         checkVerifyIdentity(realm, "elytron", ELYTRON_PASSWORD_CLEAR);
