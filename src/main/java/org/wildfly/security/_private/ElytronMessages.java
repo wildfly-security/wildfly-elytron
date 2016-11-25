@@ -48,6 +48,7 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.login.LoginException;
 import javax.security.jacc.PolicyContextException;
 import javax.xml.namespace.QName;
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamReader;
 
 import org.jboss.logging.BasicLogger;
@@ -131,7 +132,7 @@ public interface ElytronMessages extends BasicLogger {
     IllegalStateException nameAlreadySet();
 
     @Message(id = 1001, value = "No module found for identifier \"%s\"")
-    ConfigXMLParseException noModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
+    ConfigXMLParseException xmlNoModuleFound(@Param XMLStreamReader reader, @Cause ModuleLoadException e, ModuleIdentifier id);
 
     @Message(id = 1002, value = "Invalid port number \"%s\" specified for attribute \"%s\" of element \"%s\"; expected a numerical value between 1 and 65535 (inclusive)")
     ConfigXMLParseException xmlInvalidPortNumber(@Param XMLStreamReader reader, String attributeValue, String attributeName, QName elementName);
@@ -187,8 +188,6 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1019, value = "Unable to obtain exclusive access to backing identity")
     RealmUnavailableException unableToObtainExclusiveAccess();
-
-    // 1019
 
     @Message(id = 1020, value = "Filesystem-backed realm failed to update identity \"%s\"")
     RealmUnavailableException fileSystemUpdatedFailed(String name, @Cause Throwable cause);
@@ -535,14 +534,31 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1128, value = "Jwt-based token not configured with a public key. Ignoring signature verification.")
     void tokenRealmJwtWarnNoPublicKeyIgnoringSignatureCheck();
 
-    @Message(id = 1129, value = "Unknown SSL context specified")
-    IllegalArgumentException unknownSslContextSpecified();
+    @Message(id = 1129, value = "Unknown SSL context \"%s\" specified")
+    ConfigXMLParseException xmlUnknownSslContextSpecified(@Param Location location, String name);
 
     @Message(id = 1130, value = "Duplicate SSL context name \"%s\"")
-    ConfigXMLParseException duplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
+    ConfigXMLParseException xmlDuplicateSslContextName(String name, @Param ConfigurationXMLStreamReader reader);
 
-    @Message(id = 1131, value = "Public and private key parameters are mismatched")
-    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
+    // 1131 "Public and private key parameters are mismatched" -> moved to credentials package
+
+    @Message(id = 1132, value = "Unknown authentication configuration \"%s\" specified")
+    ConfigXMLParseException xmlUnknownAuthenticationConfigurationSpecified(@Param Location location, String name);
+
+    @Message(id = 1133, value = "Failed to create credential")
+    ConfigXMLParseException xmlFailedToCreateCredential(@Param Location location, @Cause Throwable cause);
+
+    @Message(id = 1134, value = "Duplicate authentication configuration name \"%s\"")
+    ConfigXMLParseException xmlDuplicateAuthenticationConfigurationName(String name, @Param ConfigurationXMLStreamReader reader);
+
+    @Message(id = 1135, value = "Failed to load keystore data")
+    ConfigXMLParseException xmlFailedToLoadKeyStoreData(@Param Location location, @Cause Throwable cause);
+
+    @Message(id = 1136, value = "Failed to create keystore")
+    ConfigXMLParseException xmlFailedToCreateKeyStore(@Param Location location, @Cause Throwable cause);
+
+    @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
+    ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
 
     /* keystore package */
 
@@ -574,10 +590,9 @@ public interface ElytronMessages extends BasicLogger {
     IOException unableToCreateKeyStore(@Cause Exception cause);
 
     @Message(id = 2010, value = "Unknown key store specified")
-    IllegalArgumentException unknownKeyStoreSpecified();
+    ConfigXMLParseException xmlUnknownKeyStoreSpecified(@Param Location location);
 
-    @Message(id = 2011, value = "Failed to load keystore data")
-    KeyStoreException failedToLoadKeyStoreData(@Cause Throwable cause);
+    // id = 2011 "Failed to load keystore data"
 
     // id = 2012 KeyStoreException "Secret keys not supported"
 
@@ -1569,6 +1584,11 @@ public interface ElytronMessages extends BasicLogger {
         + "the Java SE API specification for the Policy.getPermissions() methods for more information.  Instead, use "
         + "the Policy.implies() method for authorization checking.")
     void getPermissionsNotSupported();
+
+    /* credential package */
+
+    @Message(id = 9000, value = "Public and private key parameters are mismatched")
+    IllegalArgumentException mismatchedPublicPrivateKeyParameters();
 
     /* credential.store. package */
 
