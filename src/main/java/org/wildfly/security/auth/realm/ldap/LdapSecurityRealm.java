@@ -295,18 +295,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
         DirContext dirContext = obtainContext();
-        for (EvidenceVerifier verifier : evidenceVerifiers) {
-            SupportLevel support = verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName);
-            if (support.isDefinitelySupported()) {
-                // One claiming it is definitely supported is enough!
-                return support;
+        try {
+            for (EvidenceVerifier verifier : evidenceVerifiers) {
+                SupportLevel support = verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName);
+                if (support.isDefinitelySupported()) {
+                    // One claiming it is definitely supported is enough!
+                    return support;
+                }
+                if (response.compareTo(support) < 0) {
+                    response = support;
+                }
             }
-            if (response.compareTo(support) < 0) {
-                response = support;
-            }
+        } finally {
+            closeContext(dirContext);
         }
-        closeContext(dirContext);
-
         return response;
     }
 
@@ -358,23 +360,25 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             SupportLevel support = SupportLevel.UNSUPPORTED;
 
             DirContext dirContext = obtainContext();
-            for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
-                    IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
+            try {
+                for (CredentialLoader loader : credentialLoaders) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                        IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
 
-                    SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, providers);
-                    if (temp != null && temp.isDefinitelySupported()) {
-                        // As soon as one claims definite support we know it is supported.
-                        return temp;
-                    }
+                        SupportLevel temp = icl.getCredentialAcquireSupport(credentialType, algorithmName, providers);
+                        if (temp != null && temp.isDefinitelySupported()) {
+                            // As soon as one claims definite support we know it is supported.
+                            return temp;
+                        }
 
-                    if (temp != null && support.compareTo(temp) < 0) {
-                        support = temp;
+                        if (temp != null && support.compareTo(temp) < 0) {
+                            support = temp;
+                        }
                     }
                 }
+            } finally {
+                closeContext(dirContext);
             }
-            closeContext(dirContext);
-
             return support;
         }
 
@@ -396,18 +400,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             DirContext dirContext = obtainContext();
-            for (CredentialLoader loader : credentialLoaders) {
-                if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
-                    IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
+            try {
+                for (CredentialLoader loader : credentialLoaders) {
+                    if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
+                        IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
 
-                    Credential credential = icl.getCredential(credentialType, algorithmName, providers);
-                    if (credentialType.isInstance(credential)) {
-                        return credentialType.cast(credential);
+                        Credential credential = icl.getCredential(credentialType, algorithmName, providers);
+                        if (credentialType.isInstance(credential)) {
+                            return credentialType.cast(credential);
+                        }
                     }
                 }
+            } finally {
+                closeContext(dirContext);
             }
-            closeContext(dirContext);
-
             return null;
         }
 
@@ -420,44 +426,47 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
 
             DirContext dirContext = obtainContext();
+            try {
 
-            // verify support
-            for (Credential credential : credentials) {
-                final Class<? extends Credential> credentialType = credential.getClass();
-                final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
-                boolean supported = false;
-                for (CredentialPersister persister : credentialPersisters) {
-                    IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
-                    if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
-                        supported = true;
+                // verify support
+                for (Credential credential : credentials) {
+                    final Class<? extends Credential> credentialType = credential.getClass();
+                    final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    boolean supported = false;
+                    for (CredentialPersister persister : credentialPersisters) {
+                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                            supported = true;
+                        }
+                    }
+                    if (!supported) {
+                        throw log.ldapRealmsPersisterNotSupported();
                     }
                 }
-                if (! supported) {
-                    throw log.ldapRealmsPersisterNotSupported();
-                }
-            }
 
-            // clear
-            for (CredentialPersister persister : credentialPersisters) {
-                IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
-                icp.clearCredentials();
-            }
-
-            // set
-            for (Credential credential : credentials) {
-                final Class<? extends Credential> credentialType = credential.getClass();
-                final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                // clear
                 for (CredentialPersister persister : credentialPersisters) {
                     IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
-                    if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
-                        icp.persistCredential(credential);
-                        // next credential
-                        break;
+                    icp.clearCredentials();
+                }
+
+                // set
+                for (Credential credential : credentials) {
+                    final Class<? extends Credential> credentialType = credential.getClass();
+                    final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
+                    for (CredentialPersister persister : credentialPersisters) {
+                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
+                            icp.persistCredential(credential);
+                            // next credential
+                            break;
+                        }
                     }
                 }
-            }
 
-            closeContext(dirContext);
+            } finally {
+                closeContext(dirContext);
+            }
         }
 
         @Override
