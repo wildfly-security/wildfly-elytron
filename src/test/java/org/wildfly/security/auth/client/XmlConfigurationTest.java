@@ -18,15 +18,11 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
 
 import org.junit.Test;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -53,14 +49,11 @@ public class XmlConfigurationTest {
         final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +
             "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
-            "    <rules>\n" +
-            "        <rule>\n" +
-            "            <match-host name=\"test1\"/>\n" +
+            "    <authentication-configurations>\n" +
+            "        <configuration name=\"set-host-to-localhost\">\n" +
             "            <set-host name=\"localhost\"/>\n" +
-            "        </rule>\n" +
-            "        <rule>\n" +
-            "            <match-host name=\"test2\"/>\n" +
-            "            <match-userinfo name=\"fred\"/>\n" +
+            "        </configuration>\n" +
+            "        <configuration name=\"setup-sasl\">\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-protocol name=\"HTTP\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
@@ -71,38 +64,19 @@ public class XmlConfigurationTest {
             "                <property key=\"key-two\" value=\"value-two\"/>\n" +
             "            </set-mechanism-properties>\n" +
             "            <use-provider-sasl-factory/>\n" +
+            "        </configuration>\n" +
+            "    </authentication-configurations>\n" +
+            "    <authentication-rules>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test1\"/>\n" +
             "        </rule>\n" +
-            "    </rules>\n" +
+            "        <rule use-configuration=\"setup-sasl\">\n" +
+            "            <match-host name=\"test2\"/>\n" +
+            "            <match-userinfo name=\"fred\"/>\n" +
+            "        </rule>\n" +
+            "    </authentication-rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
         factory.create();
-    }
-
-    @Test
-    public void testWrongRuleOrder() throws Exception {
-        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "\n" +
-            "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
-            "    <rules>\n" +
-            "        <rule>\n" +
-            "            <set-host name=\"localhost\"/>\n" +
-            "            <match-host name=\"test1\"/>\n" +
-            "        </rule>\n" +
-            "        <rule>\n" +
-            "            <match-host name=\"test2\"/>\n" +
-            "            <set-host name=\"localhost\"/>\n" +
-            "            <match-userinfo name=\"fred\"/>\n" +
-            "            <set-user-name name=\"jane\"/>\n" +
-            "        </rule>\n" +
-            "    </rules>\n" +
-            "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
-        try {
-            final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
-            factory.create();
-        } catch (XMLStreamException e) {
-            assertEquals(e.getLocation().getLineNumber(), 7);
-            return;
-        }
-        fail("Expected exception");
     }
 }
