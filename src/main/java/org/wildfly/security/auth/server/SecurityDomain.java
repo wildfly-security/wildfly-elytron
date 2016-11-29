@@ -163,7 +163,7 @@ public final class SecurityDomain {
             throw log.invalidName();
         }
 
-        String realmName = mapRealmName(preRealmName, null, null);
+        String realmName = mapRealmName(new NamePrincipal(preRealmName), null);
         RealmInfo realmInfo = getRealmInfo(realmName);
         SecurityRealm securityRealm = realmInfo.getSecurityRealm();
         assert securityRealm != null;
@@ -400,8 +400,8 @@ public final class SecurityDomain {
         return preRealmRewriter;
     }
 
-    String mapRealmName(final String name, final Principal principal, final Evidence evidence) {
-        String realm = realmMapper.getRealmMapping(name, principal, evidence);
+    String mapRealmName(final Principal principal, final Evidence evidence) {
+        String realm = realmMapper.getRealmMapping(principal, evidence);
         return realm != null ? realm : defaultRealmName;
     }
 

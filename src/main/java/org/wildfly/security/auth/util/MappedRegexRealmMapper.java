@@ -57,8 +57,8 @@ public class MappedRegexRealmMapper extends SimpleRegexRealmMapper {
         this.realmNameMap = realmNameMap;
     }
 
-    public String getRealmMapping(final String name, final Principal principal, final Evidence evidence) {
-        final String mappedRealmPart = super.getRealmMapping(name, principal, evidence);
+    public String getRealmMapping(final Principal principal, final Evidence evidence) {
+        final String mappedRealmPart = super.getRealmMapping(principal, evidence);
         if (mappedRealmPart == null) return null;
         return realmNameMap.get(mappedRealmPart);
     }
