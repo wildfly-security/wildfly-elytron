@@ -146,7 +146,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1005, value = "Realm map does not contain mapping for default realm '%s'")
     IllegalArgumentException realmMapDoesNotContainDefault(String defaultRealm);
 
-    @Message(id = 1006, value = "No realm name found in password property file")
+    @Message(id = 1006, value = "No realm name found in users property file - file must contain \"#$REALM_NAME=RealmName$\" line")
     RealmUnavailableException noRealmFoundInProperties();
 
     @LogMessage(level = Logger.Level.DEBUG)
@@ -559,6 +559,10 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
     ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
+
+    @Message(id = 1132, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
+    RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
+
 
     /* keystore package */
 

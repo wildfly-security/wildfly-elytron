@@ -63,6 +63,7 @@ import org.wildfly.security.password.spec.EncryptablePasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.util.ByteIterator;
 import org.wildfly.security.util.CodePointIterator;
+import org.wildfly.security.util.DecodeException;
 
 /**
  * A {@link SecurityRealm} implementation that makes use of the legacy properties files.
@@ -172,9 +173,12 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     passwordSpec = new ClearPasswordSpec(accountEntry.getPasswordRepresentation().toCharArray());
                 } else {
                     passwordFactory = getPasswordFactory(ALGORITHM_DIGEST_MD5);
-
-                    byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
-                    passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
+                    try {
+                        byte[] hashed = ByteIterator.ofBytes(accountEntry.getPasswordRepresentation().getBytes(StandardCharsets.UTF_8)).hexDecode().drain();
+                        passwordSpec = new DigestPasswordSpec(accountEntry.getName(), loadedState.getRealmName(), hashed);
+                    } catch (DecodeException e) {
+                        throw log.decodingHashedPasswordFromPropertiesRealmFailed(e);
+                    }
                 }
                 try {
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
@@ -219,7 +223,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         return PasswordGuessEvidence.class.isAssignableFrom(evidenceType) ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
-    public void load(InputStream passwordsStream, InputStream groupsStream) throws IOException {
+    public void load(InputStream usersStream, InputStream groupsStream) throws IOException {
         Map<String, AccountEntry> accounts = new HashMap<>();
         Properties groups = new Properties();
         if (groupsStream != null) {
@@ -230,7 +234,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         String realmName = null;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(passwordsStream, StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(usersStream, StandardCharsets.UTF_8))) {
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
                 final String trimmed = currentLine.trim();
@@ -285,7 +289,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     public static class Builder {
 
         private Supplier<Provider[]> providers = Security::getProviders;
-        private InputStream passwordsStream;
+        private InputStream usersStream;
         private InputStream groupsStream;
         private boolean plainText;
         private String groupsAttribute = "groups";
@@ -306,13 +310,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         /**
-         * Set the {@link InputStream} to use to load the passwords.
+         * Set the {@link InputStream} to use to load the users.
          *
-         * @param passwordsStream the {@link InputStream} to use to load the passwords.
+         * @param usersStream the {@link InputStream} to use to load the users.
          * @return this {@link Builder}
          */
-        public Builder setPasswordsStream(InputStream passwordsStream) {
-            this.passwordsStream = passwordsStream;
+        public Builder setUsersStream(InputStream usersStream) {
+            this.usersStream = usersStream;
 
             return this;
         }
@@ -343,9 +347,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         /**
-         * Set if the file format is for plain text passwords.
+         * Set format of users property file - if the passwords are stored in plain text.
+         * Otherwise is HEX( MD5( username ":" realm ":" password ) ) expected.
          *
-         * @param plainText is the file format plain text for the passwords.
+         * @param plainText if the passwords are stored in plain text.
          * @return this {@link Builder}
          */
         public Builder setPlainText(boolean plainText) {
@@ -363,7 +368,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          */
         public LegacyPropertiesSecurityRealm build() throws IOException {
             LegacyPropertiesSecurityRealm realm = new LegacyPropertiesSecurityRealm(this);
-            realm.load(passwordsStream, groupsStream);
+            realm.load(usersStream, groupsStream);
 
             return realm;
         }
