@@ -560,7 +560,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1137, value = "Invalid key store entry type for alias \"%s\" (expected %s, got %s)")
     ConfigXMLParseException xmlInvalidKeyStoreEntryType(@Param Location location, String alias, Class<?> expectedClass, Class<?> actualClass);
 
-    @Message(id = 1132, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
+    @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
     RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
 
 
