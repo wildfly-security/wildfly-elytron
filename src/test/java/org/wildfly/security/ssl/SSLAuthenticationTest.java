@@ -75,7 +75,7 @@ public class SSLAuthenticationTest {
                     .build()
                 .setDefaultRealmName("KeystoreRealm")
                 .setPrincipalDecoder(new X500AttributePrincipalDecoder("2.5.4.3", 1))
-                .setPreRealmRewriter(s -> s.toLowerCase(Locale.ENGLISH))
+                .setPreRealmRewriter((String s) -> s.toLowerCase(Locale.ENGLISH))
                 .setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.ALL)
                 .build();
 

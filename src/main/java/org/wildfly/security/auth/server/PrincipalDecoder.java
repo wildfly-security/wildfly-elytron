@@ -20,8 +20,11 @@ package org.wildfly.security.auth.server;
 
 import java.security.Principal;
 import java.util.StringJoiner;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.NamePrincipal;
 
 /**
  * A decoder for extracting a simple name from a principal.
@@ -29,7 +32,7 @@ import org.wildfly.common.Assert;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 @FunctionalInterface
-public interface PrincipalDecoder {
+public interface PrincipalDecoder extends Function<Principal, String> {
 
     /**
      * Get the name from a principal.  If this decoder cannot understand the given principal type or contents,
@@ -39,6 +42,22 @@ public interface PrincipalDecoder {
      * @return the name, or {@code null} if this decoder does not understand the principal
      */
     String getName(Principal principal);
+
+    default String apply(Principal principal) {
+        return getName(principal);
+    }
+
+    /**
+     * Get this principal decoder as a principal rewriter that produces a {@link NamePrincipal} if the decode succeeds.
+     *
+     * @return the rewriter (not {@code null})
+     */
+    default UnaryOperator<Principal> asPrincipalRewriter() {
+        return principal -> {
+            String result = PrincipalDecoder.this.getName(principal);
+            return result == null ? principal : new NamePrincipal(result);
+        };
+    }
 
     /**
      * Add a name rewriter to this principal decoder.  If the name is decoded, it will then be rewritten with the

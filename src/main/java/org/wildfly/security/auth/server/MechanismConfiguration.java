@@ -23,6 +23,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static org.wildfly.common.Assert.checkNotNullParam;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
@@ -41,14 +43,14 @@ import org.wildfly.security.credential.Credential;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public final class MechanismConfiguration {
-    private final NameRewriter preRealmRewriter;
-    private final NameRewriter postRealmRewriter;
-    private final NameRewriter finalRewriter;
+    private final Function<Principal, Principal> preRealmRewriter;
+    private final Function<Principal, Principal> postRealmRewriter;
+    private final Function<Principal, Principal> finalRewriter;
     private final RealmMapper realmMapper;
     private final Map<String, MechanismRealmConfiguration> mechanismRealms;
     private final SecurityFactory<Credential> serverCredentialFactory;
 
-    MechanismConfiguration(final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final SecurityFactory<Credential> serverCredentialFactory) {
+    MechanismConfiguration(final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper, final Collection<MechanismRealmConfiguration> mechanismRealms, final SecurityFactory<Credential> serverCredentialFactory) {
         checkNotNullParam("mechanismRealms", mechanismRealms);
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
@@ -82,7 +84,7 @@ public final class MechanismConfiguration {
      *
      * @return the pre-realm rewriter for this mechanism realm, or {@code null} to use the default
      */
-    public NameRewriter getPreRealmRewriter() {
+    public Function<Principal, Principal> getPreRealmRewriter() {
         return preRealmRewriter;
     }
 
@@ -91,7 +93,7 @@ public final class MechanismConfiguration {
      *
      * @return the post-realm rewriter for this mechanism realm, or {@code null} to use the default
      */
-    public NameRewriter getPostRealmRewriter() {
+    public Function<Principal, Principal> getPostRealmRewriter() {
         return postRealmRewriter;
     }
 
@@ -100,7 +102,7 @@ public final class MechanismConfiguration {
      *
      * @return the final rewriter for this mechanism realm, or {@code null} to use the default
      */
-    public NameRewriter getFinalRewriter() {
+    public Function<Principal, Principal> getFinalRewriter() {
         return finalRewriter;
     }
 
@@ -156,9 +158,9 @@ public final class MechanismConfiguration {
     public static final class Builder {
         private static final MechanismRealmConfiguration[] NO_REALM_CONFIGS = new MechanismRealmConfiguration[0];
 
-        private NameRewriter preRealmRewriter;
-        private NameRewriter postRealmRewriter;
-        private NameRewriter finalRewriter;
+        private Function<Principal, Principal> preRealmRewriter = Function.identity();
+        private Function<Principal, Principal> postRealmRewriter = Function.identity();
+        private Function<Principal, Principal> finalRewriter = Function.identity();
         private RealmMapper realmMapper;
         private List<MechanismRealmConfiguration> mechanismRealms;
         private SecurityFactory<Credential> serverCredentialFactory;
@@ -169,17 +171,20 @@ public final class MechanismConfiguration {
         Builder() {
         }
 
-        public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {
+        public Builder setPreRealmRewriter(final Function<Principal, Principal> preRealmRewriter) {
+            checkNotNullParam("preRealmRewriter", preRealmRewriter);
             this.preRealmRewriter = preRealmRewriter;
             return this;
         }
 
-        public Builder setPostRealmRewriter(final NameRewriter postRealmRewriter) {
+        public Builder setPostRealmRewriter(final Function<Principal, Principal> postRealmRewriter) {
+            checkNotNullParam("postRealmRewriter", postRealmRewriter);
             this.postRealmRewriter = postRealmRewriter;
             return this;
         }
 
-        public Builder setFinalRewriter(final NameRewriter finalRewriter) {
+        public Builder setFinalRewriter(final Function<Principal, Principal> finalRewriter) {
+            checkNotNullParam("finalRewriter", finalRewriter);
             this.finalRewriter = finalRewriter;
             return this;
         }
@@ -242,5 +247,5 @@ public final class MechanismConfiguration {
     /**
      * An empty mechanism configuration..
      */
-    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(null, null, null, null, emptyList(), null);
+    public static final MechanismConfiguration EMPTY = new MechanismConfiguration(Function.identity(), Function.identity(), Function.identity(), null, emptyList(), null);
 }
