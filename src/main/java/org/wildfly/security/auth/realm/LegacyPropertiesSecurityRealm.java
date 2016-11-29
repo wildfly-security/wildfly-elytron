@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security.auth.server.IdentityLocator;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -90,12 +91,13 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
+    public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
+        if (! (principal instanceof NamePrincipal)) {
+            return RealmIdentity.NON_EXISTENT;
+        }
         final LoadedState loadedState = this.loadedState.get();
 
-        if (! locator.hasName()) return RealmIdentity.NON_EXISTENT;
-
-        final AccountEntry accountEntry = loadedState.getAccounts().get(locator.getName());
+        final AccountEntry accountEntry = loadedState.getAccounts().get(principal.getName());
 
         return new RealmIdentity() {
 

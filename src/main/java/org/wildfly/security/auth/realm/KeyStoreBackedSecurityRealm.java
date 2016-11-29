@@ -21,6 +21,7 @@ package org.wildfly.security.auth.realm;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
 import java.security.UnrecoverableEntryException;
@@ -28,7 +29,7 @@ import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.server.IdentityLocator;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -70,11 +71,8 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        if (! locator.hasName()) {
-            return RealmIdentity.NON_EXISTENT;
-        }
-        return new KeyStoreRealmIdentity(locator.getName());
+    public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
+        return principal instanceof NamePrincipal ? new KeyStoreRealmIdentity(principal.getName()) : RealmIdentity.NON_EXISTENT;
     }
 
     @Override

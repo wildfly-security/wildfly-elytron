@@ -41,7 +41,6 @@ import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.CallbackUtil;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
@@ -84,11 +83,8 @@ public class JaasSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        if (! locator.hasName()) {
-            return RealmIdentity.NON_EXISTENT;
-        }
-        return new JaasRealmIdentity(new NamePrincipal(locator.getName()));
+    public RealmIdentity getRealmIdentity(final Principal principal) {
+        return principal instanceof NamePrincipal ? new JaasRealmIdentity(principal) : RealmIdentity.NON_EXISTENT;
     }
 
     @Override

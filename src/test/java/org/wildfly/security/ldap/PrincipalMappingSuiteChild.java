@@ -22,8 +22,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -45,10 +45,10 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("plainUser"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("plainUser"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(IdentityLocator.fromName("nobody"));
+        identity = realm.getRealmIdentity(new NamePrincipal("nobody"));
         assertFalse("Exists", identity.exists());
     }
 
@@ -61,10 +61,10 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("uid=plainUser,dc=elytron,dc=wildfly,dc=org"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("uid=plainUser,dc=elytron,dc=wildfly,dc=org"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(IdentityLocator.fromName("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
+        identity = realm.getRealmIdentity(new NamePrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
         assertFalse("Exists", identity.exists());
     }
 
@@ -78,10 +78,10 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("PlainUser"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("PlainUser"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(IdentityLocator.fromName("nobody"));
+        identity = realm.getRealmIdentity(new NamePrincipal("nobody"));
         assertFalse("Exists", identity.exists());
     }
 
@@ -95,10 +95,10 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("PlainUser"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("PlainUser"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(IdentityLocator.fromName("nobody"));
+        identity = realm.getRealmIdentity(new NamePrincipal("nobody"));
         assertFalse("Exists", identity.exists());
     }
 
@@ -111,7 +111,7 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("uid=plainUser,dc=elytron,dc=wildfly,dc=org"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("uid=plainUser,dc=elytron,dc=wildfly,dc=org"));
         assertTrue("Exists", identity.exists());
     }
 
@@ -125,10 +125,10 @@ public class PrincipalMappingSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName("uid=PlainUser,dc=elytron,dc=wildfly,dc=org"));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal("uid=PlainUser,dc=elytron,dc=wildfly,dc=org"));
         assertTrue("Exists", identity.exists());
 
-        identity = realm.getRealmIdentity(IdentityLocator.fromName("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
+        identity = realm.getRealmIdentity(new NamePrincipal("uid=nobody,dc=elytron,dc=wildfly,dc=org"));
         assertFalse("Exists", identity.exists());
     }
 

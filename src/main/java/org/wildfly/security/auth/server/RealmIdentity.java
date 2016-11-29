@@ -45,9 +45,9 @@ public interface RealmIdentity {
 
     /**
      * Get the decoded principal for this realm identity, if any.  This method <em>may</em> return the principal object
-     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(IdentityLocator)}, but
+     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(Principal)}, but
      * is not required to do so.  Any existent realm identity (i.e. any identity which returns {@code true} on invocation
-     * of {@link #exists()}) which was not provided with a name or principal <em>must</em> return a non-{@code null}
+     * of {@link #exists()}) which was not provided with a principal <em>must</em> return a non-{@code null}
      * principal (which should have been decoded from the evidence provided to the {@code getRealmIdentity} method).
      *
      * @return the decoded principal for this realm identity, or {@code null} if no special decoding is in use

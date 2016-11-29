@@ -21,7 +21,6 @@ package org.wildfly.security.auth.realm.token;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -67,11 +66,8 @@ public final class TokenSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(IdentityLocator identityLocator) throws RealmUnavailableException {
-        if (identityLocator.hasEvidence()) {
-            return new TokenRealmIdentity(identityLocator.getEvidence());
-        }
-        return RealmIdentity.NON_EXISTENT;
+    public RealmIdentity getRealmIdentity(final Evidence evidence) {
+        return new TokenRealmIdentity(evidence);
     }
 
     @Override

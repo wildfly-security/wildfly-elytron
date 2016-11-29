@@ -39,10 +39,10 @@ import javax.security.sasl.SaslServerFactory;
 
 import org.junit.Assert;
 import org.wildfly.security.auth.permission.LoginPermission;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.FileSystemSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleMapBackedSecurityRealm;
 import org.wildfly.security.auth.realm.SimpleRealmEntry;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.MechanismConfiguration;
 import org.wildfly.security.auth.server.MechanismConfigurationSelector;
 import org.wildfly.security.auth.server.MechanismRealmConfiguration;
@@ -351,7 +351,7 @@ public class SaslServerBuilder {
                 domainBuilder.addRealm(name, securityRealm).build();
             });
 
-            ModifiableRealmIdentity realmIdentity = mainRealm.getRealmIdentityForUpdate(IdentityLocator.fromName(username));
+            ModifiableRealmIdentity realmIdentity = mainRealm.getRealmIdentityForUpdate(new NamePrincipal(username));
             realmIdentity.create();
             realmIdentity.setCredentials(Collections.singletonList(new PasswordCredential(password)));
             realmIdentity.dispose();

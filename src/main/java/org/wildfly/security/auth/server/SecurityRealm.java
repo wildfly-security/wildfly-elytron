@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
+
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
@@ -34,14 +36,29 @@ import org.wildfly.security.evidence.Evidence;
 public interface SecurityRealm {
 
     /**
+     * Get a handle for to the identity for the given principal in the context of this security realm. Any
+     * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
+     * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
+     *
+     * @param principal the principal which identifies the identity within the realm (must not be {@code null})
+     * @return the {@link RealmIdentity} for the provided principal (not {@code null})
+     */
+    default RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
+        return RealmIdentity.NON_EXISTENT;
+    }
+
+    /**
      * Get a handle for to the identity for the given locator in the context of this security realm. Any
      * validation / name mapping is an implementation detail for the realm.  The identity may or may not exist.  The
      * returned handle <em>must</em> be cleaned up by a call to {@link RealmIdentity#dispose()}.
      *
-     * @param locator the information to use to locate the {@link RealmIdentity} handle (must not be {@code null})
-     * @return the {@link RealmIdentity} for the provided information (not {@code null})
+     * @param evidence an evidence instance which identifies the identity within the realm (must not be {@code null})
+     * @return the {@link RealmIdentity} for the provided evidence (not {@code null})
      */
-    RealmIdentity getRealmIdentity(IdentityLocator locator) throws RealmUnavailableException;
+    default RealmIdentity getRealmIdentity(Evidence evidence) throws RealmUnavailableException {
+        final Principal principal = evidence.getPrincipal();
+        return principal == null ? RealmIdentity.NON_EXISTENT : getRealmIdentity(principal);
+    }
 
     /**
      * Determine whether a credential of the given type and algorithm is definitely obtainable, possibly obtainable (for]
@@ -98,7 +115,11 @@ public interface SecurityRealm {
      * An empty security realm.
      */
     SecurityRealm EMPTY_REALM = new SecurityRealm() {
-        public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
+        public RealmIdentity getRealmIdentity(final Principal principal) throws RealmUnavailableException {
+            return RealmIdentity.NON_EXISTENT;
+        }
+
+        public RealmIdentity getRealmIdentity(final Evidence evidence) throws RealmUnavailableException {
             return RealmIdentity.NON_EXISTENT;
         }
 

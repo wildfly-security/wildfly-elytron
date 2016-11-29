@@ -33,7 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
-import org.wildfly.security.auth.server.IdentityLocator;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -109,7 +109,7 @@ public class LegacyPropertiesSecurityRealmTest {
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.SUPPORTED, realm.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
 
-        RealmIdentity elytronIdentity = realm.getRealmIdentity(IdentityLocator.fromName("elytron"));
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
         assertEquals("ClearPassword", SupportLevel.SUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.SUPPORTED, elytronIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
@@ -129,7 +129,7 @@ public class LegacyPropertiesSecurityRealmTest {
 
         elytronIdentity.dispose();
 
-        RealmIdentity badIdentity = realm.getRealmIdentity(IdentityLocator.fromName("noone"));
+        RealmIdentity badIdentity = realm.getRealmIdentity(new NamePrincipal("noone"));
         assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, badIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
         assertEquals("DigestPassword", SupportLevel.UNSUPPORTED, badIdentity.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.UNSUPPORTED, badIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
@@ -159,7 +159,7 @@ public class LegacyPropertiesSecurityRealmTest {
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, realm.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.SUPPORTED, realm.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
 
-        RealmIdentity elytronIdentity = realm.getRealmIdentity(IdentityLocator.fromName("elytron"));
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
         assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
         assertEquals("DigestPassword", SupportLevel.SUPPORTED, elytronIdentity.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.SUPPORTED, elytronIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
@@ -177,7 +177,7 @@ public class LegacyPropertiesSecurityRealmTest {
 
         elytronIdentity.dispose();
 
-        RealmIdentity badIdentity = realm.getRealmIdentity(IdentityLocator.fromName("noone"));
+        RealmIdentity badIdentity = realm.getRealmIdentity(new NamePrincipal("noone"));
         assertEquals("ClearPassword", SupportLevel.UNSUPPORTED, badIdentity.getCredentialAcquireSupport(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR));
         assertEquals("DigestPassword", SupportLevel.UNSUPPORTED, badIdentity.getCredentialAcquireSupport(PasswordCredential.class, DigestPassword.ALGORITHM_DIGEST_MD5));
         assertEquals("Verify", SupportLevel.UNSUPPORTED, badIdentity.getEvidenceVerifySupport(PasswordGuessEvidence.class, null));
@@ -213,7 +213,7 @@ public class LegacyPropertiesSecurityRealmTest {
     }
 
     private void testClear(SecurityRealm realm, String username, String password) throws Exception {
-        RealmIdentity identity = realm.getRealmIdentity(IdentityLocator.fromName(username));
+        RealmIdentity identity = realm.getRealmIdentity(new NamePrincipal(username));
         assertTrue("Exists", identity.exists());
         ClearPassword elytronClear = identity.getCredential(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR).getPassword(ClearPassword.class);
         assertEquals(password, new String(elytronClear.getPassword()));
@@ -389,7 +389,7 @@ public class LegacyPropertiesSecurityRealmTest {
 
     private void checkVerifyIdentity(SecurityRealm realm, String username, String goodPassword,
             String wrongPassword) throws RealmUnavailableException {
-        RealmIdentity elytronIdentity = realm.getRealmIdentity(IdentityLocator.fromName(username));
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal(username));
         assertTrue(elytronIdentity.exists());
         PasswordGuessEvidence goodPasswordEvidence = new PasswordGuessEvidence(goodPassword.toCharArray());
         PasswordGuessEvidence wrongPasswordEvidence = new PasswordGuessEvidence(wrongPassword.toCharArray());
@@ -400,7 +400,7 @@ public class LegacyPropertiesSecurityRealmTest {
 
     private void checkVerifyIdentityFail(SecurityRealm realm, String username, String password)
             throws RealmUnavailableException {
-        RealmIdentity elytronIdentity = realm.getRealmIdentity(IdentityLocator.fromName(username));
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal(username));
         PasswordGuessEvidence passwordEvidence = new PasswordGuessEvidence(password.toCharArray());
         assertFalse(elytronIdentity.verifyEvidence(passwordEvidence));
         elytronIdentity.dispose();

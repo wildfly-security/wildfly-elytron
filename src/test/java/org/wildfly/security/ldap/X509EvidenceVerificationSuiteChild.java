@@ -22,8 +22,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
@@ -57,7 +57,7 @@ public class X509EvidenceVerificationSuiteChild {
                     .build()
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(IdentityLocator.fromName("scarab"));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new NamePrincipal("scarab"));
 
         SupportLevel credentialSupport = realmIdentity.getEvidenceVerifySupport(X509PeerCertificateChainEvidence.class, null);
         assertEquals("Identity verification level support", SupportLevel.POSSIBLY_SUPPORTED, credentialSupport);

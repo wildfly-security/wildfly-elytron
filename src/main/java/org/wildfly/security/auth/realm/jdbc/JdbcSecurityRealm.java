@@ -18,8 +18,8 @@
 package org.wildfly.security.auth.realm.jdbc;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.realm.jdbc.mapper.AttributeMapper;
-import org.wildfly.security.auth.server.IdentityLocator;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
@@ -32,6 +32,7 @@ import org.wildfly.security.evidence.Evidence;
 
 import javax.sql.DataSource;
 
+import java.security.Principal;
 import java.security.Provider;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -63,11 +64,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        if (! locator.hasName()) {
+    public RealmIdentity getRealmIdentity(final Principal principal) {
+        if (! (principal instanceof NamePrincipal)) {
             return RealmIdentity.NON_EXISTENT;
         }
-        return new JdbcRealmIdentity(locator.getName());
+        return new JdbcRealmIdentity(principal.getName());
     }
 
     @Override
