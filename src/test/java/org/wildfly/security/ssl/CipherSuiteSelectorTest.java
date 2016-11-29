@@ -74,8 +74,35 @@ public class CipherSuiteSelectorTest {
         CipherSuiteSelector selector = CipherSuiteSelector.fromString("COMPLEMENTOFDEFAULT");
         List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
 
-        assertThat(selectedSuites, hasItems("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
+        assertThat(selectedSuites, hasItem("TLS_DH_anon_WITH_AES_128_CBC_SHA256"));
         assertThat("Suites with encryption without authentication should be selected", selectedSuites.size() == 1);
+    }
+
+    @Test
+    public void testSingleSuiteUsingStandardName() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA");
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}));
+
+        assertThat(selectedSuites, hasItem("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"));
+        assertThat("The only suite should be selected", selectedSuites.size() == 1);
+    }
+
+    @Test
+    public void testSingleSuiteUsingOpensslName() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("ECDHE-RSA-AES128-SHA");
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"}));
+
+        assertThat(selectedSuites, hasItem("SSL_ECDHE_RSA_WITH_AES_128_CBC_SHA"));
+        assertThat("The only suite should be selected", selectedSuites.size() == 1);
+    }
+
+    @Test
+    public void testSingleTlsSuiteUsingSslPrefixName() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA");
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(new String[] {"TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"}));
+
+        assertThat(selectedSuites, hasItem("TLS_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"));
+        assertThat("The only suite should be selected", selectedSuites.size() == 1);
     }
 
     @Test
@@ -172,6 +199,14 @@ public class CipherSuiteSelectorTest {
     @Test(expected = IllegalArgumentException.class)
     public void testMinusBetweenRsaAes() {
         CipherSuiteSelector.fromString("RSA-AES");
+    }
+
+    @Test
+    public void testNotRsaAfterRsa() {
+        CipherSuiteSelector selector = CipherSuiteSelector.fromString("RSA !RSA");
+        List<String> selectedSuites = Arrays.asList(selector.evaluate(SUPPORTED_SUITES));
+
+        assertThat("No suites should be selected", selectedSuites.isEmpty());
     }
 
     @Test
