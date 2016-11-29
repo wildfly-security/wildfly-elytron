@@ -310,6 +310,10 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
             this.lock = lock;
         }
 
+        public Principal getRealmIdentityPrincipal() {
+            return new NamePrincipal(name);
+        }
+
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             List<Credential> credentials = loadCredentials();

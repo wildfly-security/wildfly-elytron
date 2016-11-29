@@ -143,6 +143,10 @@ public class JaasSecurityRealm implements SecurityRealm {
             this.principal = principal;
         }
 
+        public Principal getRealmIdentityPrincipal() {
+            return principal;
+        }
+
         @Override
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             return JaasSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName);

@@ -104,6 +104,10 @@ public class KeyStoreBackedSecurityRealm implements SecurityRealm {
             this.name = name;
         }
 
+        public Principal getRealmIdentityPrincipal() {
+            return new NamePrincipal(name);
+        }
+
         @Override
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             final KeyStore.Entry entry = getEntry(name);

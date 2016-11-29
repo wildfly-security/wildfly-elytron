@@ -101,6 +101,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
         return new RealmIdentity() {
 
+            public Principal getRealmIdentityPrincipal() {
+                return principal;
+            }
+
             @Override
             public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
                 return accountEntry != null ? LegacyPropertiesSecurityRealm.this.getCredentialAcquireSupport(credentialType, algorithmName) : SupportLevel.UNSUPPORTED;
