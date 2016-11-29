@@ -21,8 +21,6 @@ import java.util.Locale;
 
 import org.wildfly.common.Assert;
 
-import java.util.Locale;
-
 /**
  * Definition of a mapping from LDAP to an Elytron attribute.
  *

@@ -184,6 +184,7 @@ public class ModifiabilitySuiteChild {
         while(iterator.hasNext()){
             ModifiableRealmIdentity identity = iterator.next();
             Assert.assertTrue(identity.exists());
+            System.out.println(identity.getAuthorizationIdentity().getAttributes().getFirst("userName"));
             identity.dispose();
             count++;
         }
