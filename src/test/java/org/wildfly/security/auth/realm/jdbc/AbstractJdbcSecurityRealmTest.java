@@ -39,7 +39,7 @@ public abstract class AbstractJdbcSecurityRealmTest {
         ) {
             statement.executeUpdate("DROP TABLE IF EXISTS role_mapping_table");
             statement.executeUpdate("DROP TABLE IF EXISTS user_table");
-            statement.executeUpdate("CREATE TABLE user_table (name VARCHAR(100), password VARCHAR(50), firstName VARCHAR(50), lastName VARCHAR(50), email VARCHAR(50), PRIMARY KEY(name))");
+            statement.executeUpdate("CREATE TABLE user_table (id INT, name VARCHAR(100) UNIQUE, password VARCHAR(50), firstName VARCHAR(50), lastName VARCHAR(50), email VARCHAR(50), PRIMARY KEY (id))");
         }
     }
 
@@ -67,12 +67,12 @@ public abstract class AbstractJdbcSecurityRealmTest {
         }
     }
 
-    protected void insertUser(String userName, String password, String firstName, String lastName, String email) throws SQLException {
+    protected void insertUser(int id, String userName, String password, String firstName, String lastName, String email) throws SQLException {
         try (
                 Connection connection = getDataSource().getConnection();
                 Statement statement = connection.createStatement();
         ) {
-            statement.executeUpdate("INSERT INTO user_table (name, password, firstName, lastName, email) VALUES ('" + userName + "','" + password + "','" + firstName + "','" + lastName + "','" + email + "')");
+            statement.executeUpdate("INSERT INTO user_table (id, name, password, firstName, lastName, email) VALUES (" + id + ", '" + userName + "','" + password + "','" + firstName + "','" + lastName + "','" + email + "')");
         }
     }
 

@@ -39,20 +39,38 @@ import org.wildfly.security.evidence.Evidence;
  * {@code RealmIdentity} does not confirm the existence of the identity.  The {@link #exists()} method must be used
  * for that purpose.
  *
+ * Ideally, a {@code RealmIdentity} must hold a {@link Key} that uniquely identify an identity in a {@code SecurityRealm}.
+ *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
 public interface RealmIdentity {
 
     /**
+     * <p>Get the key associated with this instance, previously assigned by the {@link SecurityRealm} from where this instance was obtained.
+     *
+     * @return the realm identity key (may not be {@code null})
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
+     */
+    default Key getKey() throws RealmUnavailableException {
+        if (exists()) {
+            Principal principal = getRealmIdentityPrincipal();
+            return principal != null ? new RealmIdentityStringKey(principal.getName()) : Key.EMPTY;
+        } else {
+            throw log.userDoesNotExist();
+        }
+    }
+
+    /**
      * Get the decoded principal for this realm identity, if any.  This method <em>may</em> return the principal object
      * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(IdentityLocator)}, but
      * is not required to do so.  Any existent realm identity (i.e. any identity which returns {@code true} on invocation
-     * of {@link #exists()}) which was not provided with a name or principal <em>must</em> return a non-{@code null}
-     * principal (which should have been decoded from the evidence provided to the {@code getRealmIdentity} method).
+     * of {@link #exists()}) which was not provided with a name <em>must</em> return a non-{@code null}
+     * principal (which should have been decoded from the key or the evidence provided to the {@code getRealmIdentity} method).
      *
      * @return the decoded principal for this realm identity, or {@code null} if no special decoding is in use
+     * @throws RealmUnavailableException if the realm is not able to handle requests for any reason
      */
-    default Principal getRealmIdentityPrincipal() {
+    default Principal getRealmIdentityPrincipal() throws RealmUnavailableException {
         return null;
     }
 
@@ -266,4 +284,28 @@ public interface RealmIdentity {
             return false;
         }
     };
+
+    /**
+     * Represents a key that is specific to the realm and used to uniquely identify a {@link RealmIdentity} instance.
+     */
+    interface Key {
+
+        Key EMPTY = (Key) () -> null;
+
+        /**
+         * Returns the value of this key.
+         *
+         * @return the value of this key
+         */
+        Object getValue();
+
+        /**
+         * Returns the {@link String} representation for this key.
+         *
+         * @return the {@link String} representation for this key.
+         */
+        default String asString() {
+            return Assert.checkNotNullParam("value", getValue()).toString();
+        }
+    }
 }

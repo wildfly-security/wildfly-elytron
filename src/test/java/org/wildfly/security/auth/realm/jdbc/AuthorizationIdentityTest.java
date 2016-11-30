@@ -37,7 +37,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
     @Test
     public void testInvalidIdentity() throws Exception {
         createUserTable();
-        insertUser("plainUser", "plainPassword", "John", "Smith", "jsmith@elytron.org");
+        insertUser(1, "plainUser", "plainPassword", "John", "Smith", "jsmith@elytron.org");
 
         PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
             .setDefaultAlgorithm(ClearPassword.ALGORITHM_CLEAR)
@@ -60,7 +60,7 @@ public class AuthorizationIdentityTest extends AbstractJdbcSecurityRealmTest {
     @Test
     public void testValidIdentity() throws Exception {
         createUserTable();
-        insertUser("plainUser", "plainPassword", "John", "Smith", "jsmith@elytron.org");
+        insertUser(1, "plainUser", "plainPassword", "John", "Smith", "jsmith@elytron.org");
 
         PasswordKeyMapper passwordKeyMapper = PasswordKeyMapper.builder()
             .setDefaultAlgorithm(ClearPassword.ALGORITHM_CLEAR)
