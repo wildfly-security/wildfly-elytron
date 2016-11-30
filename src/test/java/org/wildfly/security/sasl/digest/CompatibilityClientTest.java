@@ -35,12 +35,17 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
+import org.wildfly.security.auth.client.CredentialStoreReference;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.KeystorePasswordStoreBuilder;
+import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
@@ -59,7 +64,9 @@ import mockit.integration.junit4.JMockit;
 @RunWith(JMockit.class)
 public class CompatibilityClientTest extends BaseTestCase {
 
+    /** mechanism name */
     protected static final String DIGEST = "DIGEST-MD5";
+    /** QoP property name */
     protected static final String QOP_PROPERTY = "javax.security.sasl.qop";
 
     private SaslClient client;
@@ -73,15 +80,59 @@ public class CompatibilityClientTest extends BaseTestCase {
         };
     }
 
+    private static String CS_FILE_NAME = "target/" + CompatibilityClientTest.class.getSimpleName() + ".cs";
+
+    /**
+     * Setup method to create required KeystorePassword for later use by tests.
+     * @throws Exception if something goes wrong
+     */
+    @BeforeClass
+    public static void setupCredentialStore() throws Exception {
+        // setup credential store that need to be complete before a test starts
+        KeystorePasswordStoreBuilder.get().setKeyStoreFile(CS_FILE_NAME)
+                .setKeyStorePassword("secret_store_1", "secret_key_1")
+                .addSecret("chris_pwd_alias", "secret")
+                .build();
+    }
+
     /**
      * Test communication by first example in RFC 2831 [page 18]
+     * classic version
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testRfc2831example1() throws Exception {
+    public void testRfc2831example1Classic() throws Exception {
+        testRfc2831example1(false);
+    }
+
+    /**
+     * Test communication by first example in RFC 2831 [page 18] using Credential Store
+     * {@code CredentialStore} version
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testRfc2831example1CredentialStore() throws Exception {
+        testRfc2831example1(true);
+    }
+
+
+    /**
+     * Test communication by first example in RFC 2831 [page 18]
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    private void testRfc2831example1(boolean useCredentialStore) throws Exception {
         mockNonce("OA6MHXh6VqTrRk");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, null, "imap", "elwood.innosoft.com", Collections.<String, Object>emptyMap(), clientCallback);
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testRfc2831example1", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
+        SaslClient client = Sasl.createSaslClient(new String[]{DIGEST}, null, "imap", "elwood.innosoft.com", clientProps, clientCallback);
         assertNotNull(client);
         assertFalse(client.isComplete());
 
@@ -100,13 +151,41 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test communication by second example in RFC 2831 [page 18]
+     * classic version
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testRfc2831example2() throws Exception {
+    public void testRfc2831example2Classic() throws Exception {
+        testRfc2831example2(false);
+    }
+
+    /**
+     * Test communication by second example in RFC 2831 [page 18]
+     * {@code CredentialStore} version
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testRfc2831example2CredentialStore() throws Exception {
+        testRfc2831example2(true);
+    }
+
+    /**
+     * Test communication by second example in RFC 2831 [page 18]
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    private void testRfc2831example2(boolean useCredentialStore) throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        client = Sasl.createSaslClient(new String[] { DIGEST }, null, "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testRfc2831example2", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
+        client = Sasl.createSaslClient(new String[] { DIGEST }, null, "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
@@ -122,16 +201,43 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test with authorization ID (authzid) - authorized
+     * classic version
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testAuthorizedAuthorizationIdClassic() throws Exception {
+        testAuthorizedAuthorizationId(false);
+    }
 
     /**
      * Test with authorization ID (authzid) - authorized
+     * {@code CredentialStore} version
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testAuthorizedAuthorizationId() throws Exception {
+    public void testAuthorizedAuthorizationIdCredentialStore() throws Exception {
+        testAuthorizedAuthorizationId(true);
+    }
+
+    /**
+     * Test with authorization ID (authzid) - authorized
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    private void testAuthorizedAuthorizationId(boolean useCredentialStore) throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", Collections.<String, Object> emptyMap(), clientCallback);
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testAuthorizedAuthorizationId", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
+        client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
 
@@ -147,17 +253,43 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test with authentication plus integrity protection (qop=auth-int)
+     * classic version
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testQopAuthIntClassic() throws Exception {
+        testQopAuthInt(false);
+    }
 
     /**
      * Test with authentication plus integrity protection (qop=auth-int)
+     * {@code CredentialStore} version
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testQopAuthInt() throws Exception {
+    public void testQopAuthIntCredentialStore() throws Exception {
+        testQopAuthInt(true);
+    }
+
+    /**
+     * Test with authentication plus integrity protection (qop=auth-int)
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    private void testQopAuthInt(boolean useCredentialStore) throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-int");
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testAuthorizedAuthorizationId", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
@@ -205,13 +337,14 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=default=3des)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopAuthConf() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
@@ -257,17 +390,43 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     }
 
+    /**
+     * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
+     * classic version
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testQopAuthConfRc4Classic() throws Exception {
+        testQopAuthConfRc4(false);
+    }
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
+     * {@code CredentialStore} version
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testQopAuthConfRc4() throws Exception {
+    public void testQopAuthConfRc4CredentialStore() throws Exception {
+        testQopAuthConfRc4(true);
+    }
+
+    /**
+     * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4)
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    private void testQopAuthConfRc4(boolean useCredentialStore) throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testQopAuthConfRc4", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
@@ -315,13 +474,14 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=des)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopAuthConfDes() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
@@ -370,13 +530,14 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-56)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopAuthConfRc456() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
@@ -425,14 +586,39 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
+     * @throws Exception if something goes wrong
      */
     @Test
-    public void testQopAuthConfRc440() throws Exception {
+    public void testQopAuthConfRc440Classic() throws Exception {
+        testQopAuthConfRc440(false);
+    }
+
+    /**
+     * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
+     * @throws Exception if something goes wrong
+     */
+    @Test
+    public void testQopAuthConfRc440CredentialStore() throws Exception {
+        testQopAuthConfRc440(true);
+    }
+
+    /**
+     * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=rc4-40)
+     * @param useCredentialStore set to true to use CredentialStore
+     * @throws Exception if something goes wrong
+     */
+    public void testQopAuthConfRc440(boolean useCredentialStore) throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
-        CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        CallbackHandler clientCallback;
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
+        if (useCredentialStore) {
+            CredentialStoreReference csr = new CredentialStoreReference("testQopAuthConfRc4", "chris_pwd_alias");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+        } else {
+            clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
+        }
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
         assertFalse(client.isComplete());
@@ -480,13 +666,14 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with authentication plus integrity and confidentiality protection (qop=auth-conf, cipher=unknown)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopAuthConfUnknown() throws Exception {
         mockNonce("OA9BSuZWMSpW8m");
 
         CallbackHandler clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         client = Sasl.createSaslClient(new String[] { DIGEST }, "chris", "acap", "elwood.innosoft.com", clientProps, clientCallback);
         assertFalse(client.hasInitialResponse());
@@ -504,6 +691,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * More realms from server (realm="other-realm",realm="elwood.innosoft.com",realm="next-realm" -> elwood.innosoft.com)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testMoreRealmsFromServer() throws Exception {
@@ -528,6 +716,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * No realms from server
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testNoRealmsFromServer() throws Exception {
@@ -552,6 +741,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * No server nonce
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testNoServerNonce() throws Exception {
@@ -572,6 +762,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Blank nonce from server (connection with naughty server)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testBlankServerNonce() throws Exception {
@@ -596,6 +787,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test successful authentication with Unicode chars (UTF-8 encoding)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testUtf8Charset() throws Exception {
@@ -620,6 +812,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test successful authentication with escaped realms delimiters
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testMoreRealmsWithEscapedDelimiters() throws Exception {
@@ -644,6 +837,7 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test with wrong step three rspauth
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testWrongStepThreeRspauth() throws Exception {
@@ -670,12 +864,13 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test QOP selection by client (Server allow auth, auth-int, client want 1.auth-conf, 2.auth-int, 3.auth)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopSelection1() throws Exception {
         mockNonce("+7HQhcJThEsqZ3gor1hThC5on8hQ3DRP2esrw+km");
 
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf,auth-int,auth");
 
         CallbackHandler clientCallback = createClientCallbackHandler("user", "password".toCharArray(), null);
@@ -697,12 +892,13 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test QOP selection by client (Server allow auth-int, auth, client want 1.auth-conf, 2.auth, 3.auth-int)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopSelection2() throws Exception {
         mockNonce("a7YfTdcWo4L0OeurbYrT9G+01rZiNe6LSWuCSo73");
 
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf,auth,auth-int");
 
         CallbackHandler clientCallback = createClientCallbackHandler("user", "password".toCharArray(), null);
@@ -724,11 +920,12 @@ public class CompatibilityClientTest extends BaseTestCase {
 
     /**
      * Test unsuccessful QOP selection by client (no common QOP)
+     * @throws Exception if something goes wrong
      */
     @Test
     public void testQopSelectionFail() throws Exception {
 
-        Map<String, Object> clientProps = new HashMap<String, Object>();
+        Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
 
         CallbackHandler clientCallback = createClientCallbackHandler("user", "password".toCharArray(), null);
@@ -756,4 +953,33 @@ public class CompatibilityClientTest extends BaseTestCase {
 
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
     }
+
+    private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, CredentialStoreReference csr, String storeFileName, String storePassword, String keyPassword)
+            throws Exception {
+        final HashMap<String, String> csAttributes = new HashMap<>();
+        csAttributes.put(KeystorePasswordStore.NAME, csr.getStore());
+        csAttributes.put(KeystorePasswordStore.STORE_FILE, storeFileName);
+        csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, storePassword);
+        csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, keyPassword);
+        final AuthenticationContext context = AuthenticationContext.empty()
+                .with(
+                        MatchRule.ALL,
+                        AuthenticationConfiguration.EMPTY
+                                .useName(username)
+                                .useCredentialStoreReference(() -> {
+                                    CredentialStore cs = null;
+                                    try {
+                                        cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
+                                        cs.initialize(csAttributes);
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    return cs;
+                                }, csr)
+                                .useRealm(realm)
+                                .allowSaslMechanisms(SaslMechanismInformation.Names.DIGEST_MD5)
+                );
+        return ClientUtils.getCallbackHandler(new URI("doesnot://matter"), context);
+    }
+
 }

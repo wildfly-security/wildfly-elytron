@@ -21,9 +21,12 @@ package org.wildfly.security.credential.source;
 import java.io.IOException;
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.client.CredentialStoreReference;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.store.CredentialStore;
@@ -34,28 +37,38 @@ import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
  * A credential source which is backed by an entry in a credential store.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>
  */
 public final class CredentialStoreCredentialSource implements CredentialSource {
-    private final CredentialStore credentialStore;
-    private final String alias;
+    private final ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreFactory;
+    private final CredentialStoreReference credentialStoreReference;
+    private volatile CredentialStore credentialStore = null;
 
     /**
      * Construct a new instance.
      *
-     * @param credentialStore the credential store (must not be {@code null})
-     * @param alias the entry alias name (must not be {@code null})
+     * @param credentialStoreFactory factory to create credential store
+     * @param credentialStoreReference {@link CredentialStoreReference} to reference entry in the {@link CredentialStore}
      */
-    public CredentialStoreCredentialSource(final CredentialStore credentialStore, final String alias) {
-        Assert.checkNotNullParam("credentialStore", credentialStore);
-        Assert.checkNotNullParam("alias", alias);
-        this.credentialStore = credentialStore;
-        this.alias = alias;
+    public CredentialStoreCredentialSource(final ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreFactory, final CredentialStoreReference credentialStoreReference) {
+        Assert.checkNotNullParam("credentialStoreFactory", credentialStoreFactory);
+        Assert.checkNotNullParam("credentialStoreReference", credentialStoreReference);
+        this.credentialStoreFactory = credentialStoreFactory;
+        this.credentialStoreReference = credentialStoreReference;
+    }
+
+    private void createAndInitCredentialStore() throws ConfigXMLParseException {
+        if (credentialStore == null) {
+            credentialStore = credentialStoreFactory.get();
+        }
     }
 
     public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         try {
-            return credentialStore.exists(alias, credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
-        } catch (CredentialStoreException e) {
+            createAndInitCredentialStore();
+            return credentialStore.exists(credentialStoreReference.getAlias(), credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
+        } catch (CredentialStoreException | ConfigXMLParseException e) {
             throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
             return SupportLevel.UNSUPPORTED;
@@ -63,10 +76,12 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
     }
 
     public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
+        Assert.checkNotNullParam("credentialType", credentialType);
         final C credential;
         try {
-            credential = credentialStore.retrieve(alias, credentialType);
-        } catch (CredentialStoreException e) {
+            createAndInitCredentialStore();
+            credential = credentialStore.retrieve(credentialStoreReference.getAlias(), credentialType);
+        } catch (CredentialStoreException | ConfigXMLParseException e) {
             throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
             return null;

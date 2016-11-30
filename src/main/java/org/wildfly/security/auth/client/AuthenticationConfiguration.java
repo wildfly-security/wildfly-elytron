@@ -58,7 +58,9 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
+import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.credential.GSSCredentialCredential;
@@ -71,7 +73,9 @@ import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
+import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
+import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
@@ -551,6 +555,21 @@ public abstract class AuthenticationConfiguration {
      */
     public final AuthenticationConfiguration useCertificateCredential(X509CertificateChainPrivateCredential credential) {
         return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but it has {@link CredentialStoreReference}
+     * attached for referencing {@link org.wildfly.security.credential.store.CredentialStore} alias with given type.
+     * For more see {@link CredentialStoreReference}.
+     *
+     * @see CredentialStoreReference
+     * @param credentialStoreReference of {@link CredentialStoreReference}
+     * @return the new configuration
+     */
+    public AuthenticationConfiguration useCredentialStoreReference(ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreFactory, CredentialStoreReference credentialStoreReference) {
+        Assert.checkNotNullParam("credentialStoreReference", credentialStoreReference);
+        CredentialStoreCredentialSource csCredentialSource = new CredentialStoreCredentialSource(credentialStoreFactory, credentialStoreReference);
+        return useCredentials(getCredentialSource().with(csCredentialSource));
     }
 
     /**
