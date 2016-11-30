@@ -299,6 +299,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
         private static final String BASE64_FORMAT = "base64";
         private static final String MCF_FORMAT = "crypt";
+        private static final String X509_FORMAT = "X.509";
 
         private final String name;
         private final Path path;
@@ -749,7 +750,7 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
         private void parseCertificate(final List<Credential> credentials, final XMLStreamReader streamReader) throws RealmUnavailableException, XMLStreamException {
             parseCredential(streamReader, (algorithm, format, text) -> {
                 if (algorithm == null) algorithm = "X.509";
-                if (format == null) format = "X.509";
+                if (format == null) format = X509_FORMAT;
                 try {
                     final CertificateFactory certificateFactory = CertificateFactory.getInstance(algorithm);
                     credentials.add(new X509CertificateChainPublicCredential((X509Certificate) certificateFactory.generateCertificate(
@@ -765,7 +766,9 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
                 if (algorithm == null) {
                     throw ElytronMessages.log.fileSystemRealmMissingAttribute("algorithm", path, streamReader.getLocation().getLineNumber(), name);
                 }
-                if (! format.equals("pkcs8")) {
+                if (format == null) {
+                    format = X509_FORMAT;
+                } else if (!X509_FORMAT.equals(format)) {
                     throw ElytronMessages.log.fileSystemRealmUnsupportedKeyFormat(format, path, streamReader.getLocation().getLineNumber(), name);
                 }
                 try {
