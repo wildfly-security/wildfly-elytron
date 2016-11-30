@@ -55,20 +55,20 @@ public class XmlConfigurationTest {
         final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +
             "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+            "    <credential-stores>\n" +
+            "        <credential-store name=\"store1\" type=\"" + KeystorePasswordStore.KEY_STORE_PASSWORD_STORE + "\">\n" +
+            "            <attributes>\n" +
+            "                <attribute name=\"attr1\" value=\"value1\"/>\n" +
+            "                <attribute name=\"attr2\" value=\"value2\"/>\n" +
+            "                <attribute name=\"attr3\" value=\"value3\"/>\n" +
+            "            </attributes>\n" +
+            "        </credential-store>\n" +
+            "    </credential-stores>\n" +
             "    <authentication-configurations>\n" +
             "        <configuration name=\"set-host-to-localhost\">\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "        </configuration>\n" +
             "        <configuration name=\"setup-sasl\">\n" +
-            "        <credential-stores>\n" +
-            "            <credential-store name=\"store1\" type=\"" + KeystorePasswordStore.KEY_STORE_PASSWORD_STORE + "\">\n" +
-            "                <attributes>\n" +
-            "                    <attribute name=\"attr1\" value=\"value1\"/>\n" +
-            "                    <attribute name=\"attr2\" value=\"value2\"/>\n" +
-            "                    <attribute name=\"attr3\" value=\"value3\"/>\n" +
-            "                </attributes>\n" +
-            "            </credential-store>\n" +
-            "        </credential-stores>\n" +
             "            <set-host name=\"localhost\"/>\n" +
             "            <set-protocol name=\"HTTP\"/>\n" +
             "            <set-user-name name=\"jane\"/>\n" +
@@ -97,8 +97,8 @@ public class XmlConfigurationTest {
     }
 
     @Test
-    public void testRuleWithUndefinedCredentialStore() throws Exception {
-        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+    public void testConfigurationWithUndefinedCredentialStore() throws Exception {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "\n" +
                 "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
                 "    <credential-stores>\n" +
@@ -110,22 +110,37 @@ public class XmlConfigurationTest {
                 "            </attributes>\n" +
                 "        </credential-store>\n" +
                 "    </credential-stores>\n" +
-                "    <rules>\n" +
-                "        <rule>\n" +
+                "    <authentication-configurations>\n" +
+                "        <configuration name=\"setup-sasl\">\n" +
+                "            <set-host name=\"localhost\"/>\n" +
+                "            <set-protocol name=\"HTTP\"/>\n" +
+                "            <set-user-name name=\"jane\"/>\n" +
+                "            <allow-all-sasl-mechanisms />\n" +
+                "            <set-mechanism-realm name=\"mainRealm\"/>\n" +
+                "            <set-mechanism-properties>\n" +
+                "                <property key=\"key-one\" value=\"value-one\"/>\n" +
+                "                <property key=\"key-two\" value=\"value-two\"/>\n" +
+                "            </set-mechanism-properties>\n" +
+                "            <use-provider-sasl-factory/>\n" +
+                "            <credential-store-reference store=\"store1\" alias=\"jane\"/>\n" +
+                "        </configuration>\n" +
+                "    </authentication-configurations>\n" +
+                "    <authentication-rules>\n" +
+                "        <rule use-configuration=\"setup-sasl\">\n" +
                 "            <match-host name=\"test2\"/>\n" +
                 "            <match-userinfo name=\"fred\"/>\n" +
-                "            <set-host name=\"localhost\"/>\n" +
-                "            <set-user-name name=\"jane\"/>\n" +
-                "            <credential-store-reference store=\"store\" alias=\"jane\"/>\n" +
                 "        </rule>\n" +
-                "    </rules>\n" +
-                "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
+                "    </authentication-rules>\n" +
+                "</authentication-client>\n";
+
+        int failureLineNumber = xml.substring(0, xml.indexOf("store1")).split("\n").length;
+        final byte[] xmlBytes = xml.getBytes(StandardCharsets.UTF_8);
         try {
             final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
             factory.create();
 
         } catch (XMLStreamException e) {
-            assertEquals("Issue reported at wrong location.", e.getLocation().getLineNumber(), 19);
+            assertEquals("Issue reported at wrong location.", e.getLocation().getLineNumber(), failureLineNumber);
             return;
         }
         fail("Expected exception");
@@ -205,6 +220,7 @@ public class XmlConfigurationTest {
                 "                <attribute name=\"1attr3\" value=\"1value3\"/>\n" +
                 "            </attributes>\n" +
                 "        </credential-store>\n" +
+                "        <credential-store name=\"not_a_test\" type=\"dummyType3\" provider=\"provider2\"/>\n" +
                 "        <credential-store name=\"test\" type=\"\">\n" +
                 "            <attributes>\n" +
                 "                <attribute name=\"2attr1\" value=\"2value1\"/>\n" +

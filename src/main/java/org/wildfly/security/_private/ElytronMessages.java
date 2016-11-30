@@ -563,6 +563,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1138, value = "Decoding hashed password from users property file failed - should not be set as plain-text property file?")
     RealmUnavailableException decodingHashedPasswordFromPropertiesRealmFailed(@Cause Exception e);
 
+    @Message(id = 1139, value = "Failed to create credential store")
+    ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
     /* keystore package */
 
@@ -1642,8 +1644,7 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9515, value = "Credential store name \"%s\" not defined")
     ConfigXMLParseException credentialStoreNameNotDefined(@Param XMLStreamReader reader, String storeName);
 
-    @Message(id = 9516, value = "Duplicate credential store name = \"%s\"")
-    IllegalArgumentException duplicateCredentialStore(String storeName);
+    // id = 9516 deleted free to use next time
 
     @Message(id = 9517, value = "Cannot perform operation '%s': Credential store is set non modifiable")
     CredentialStoreException nonModifiableCredentialStore(String operation);

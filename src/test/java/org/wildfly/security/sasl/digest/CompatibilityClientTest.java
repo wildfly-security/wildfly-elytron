@@ -44,7 +44,6 @@ import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.CredentialStoreReference;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.CredentialStoreException;
 import org.wildfly.security.credential.store.KeystorePasswordStoreBuilder;
 import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -968,10 +967,11 @@ public class CompatibilityClientTest extends BaseTestCase {
                         AuthenticationConfiguration.EMPTY
                                 .useName(username)
                                 .useCredentialStoreReference(() -> {
-                                    CredentialStore cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
+                                    CredentialStore cs = null;
                                     try {
+                                        cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
                                         cs.initialize(csAttributes);
-                                    } catch (CredentialStoreException e) {
+                                    } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
                                     return cs;

@@ -58,7 +58,9 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
+import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.credential.GSSCredentialCredential;
@@ -564,7 +566,7 @@ public abstract class AuthenticationConfiguration {
      * @param credentialStoreReference of {@link CredentialStoreReference}
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCredentialStoreReference(SecurityFactory<CredentialStore> credentialStoreFactory, CredentialStoreReference credentialStoreReference) {
+    public AuthenticationConfiguration useCredentialStoreReference(ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreFactory, CredentialStoreReference credentialStoreReference) {
         Assert.checkNotNullParam("credentialStoreReference", credentialStoreReference);
         CredentialStoreCredentialSource csCredentialSource = new CredentialStoreCredentialSource(credentialStoreFactory, credentialStoreReference);
         return useCredentials(getCredentialSource().with(csCredentialSource));
