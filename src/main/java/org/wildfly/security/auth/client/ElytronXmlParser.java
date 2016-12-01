@@ -97,7 +97,7 @@ public final class ElytronXmlParser {
     // authentication client document
 
     /**
-     * Parse a Elytron authentication client configuration from a resource in the given class loader.
+     * Parse an Elytron authentication client configuration from a configuration discovered using the default wildfly-client-config discovery rules.
      *
      * @return the authentication context factory
      * @throws ConfigXMLParseException if the resource failed to be parsed
@@ -108,6 +108,20 @@ public final class ElytronXmlParser {
             return parseAuthenticationClientConfiguration(streamReader);
         } else {
             return new FixedSecurityFactory<>(AuthenticationContext.EMPTY);
+        }
+    }
+
+    /**
+     * Parse an Elytron authentication client configuration from a resource located at a specified {@link URI}.
+     *
+     * @param uri the {@link URI} of the configuration.
+     * @return the authentication context factory
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    public static SecurityFactory<AuthenticationContext> parseAuthenticationClientConfiguration(URI uri) throws ConfigXMLParseException {
+        final ClientConfiguration clientConfiguration = ClientConfiguration.getInstance(uri);
+        try (final ConfigurationXMLStreamReader streamReader = clientConfiguration.readConfiguration(Collections.singleton(NS_ELYTRON_1_0))) {
+            return parseAuthenticationClientConfiguration(streamReader);
         }
     }
 
