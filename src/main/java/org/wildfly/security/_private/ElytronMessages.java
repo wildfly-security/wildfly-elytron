@@ -126,6 +126,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 11, value = "Unable to create service for '%s.%s' ")
     NoSuchAlgorithmException noSuchAlgorithmCreateService(String serviceType, String algorithm, @Cause Throwable cause);
 
+    @Message(id = 12, value = "Unable to load OIDs database from properties file")
+    IllegalStateException unableToLoadOidsFromPropertiesFile(@Cause Throwable cause);
+
     /* auth package */
 
     @Message(id = 1000, value = "Authentication name was already set on this context")
