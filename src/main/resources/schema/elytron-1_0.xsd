@@ -205,14 +205,50 @@
             <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
-            <xsd:element name="key-store-credential" type="key-store-ref-type" minOccurs="0"/>
-            <xsd:element name="clear-password" type="clear-password-type" minOccurs="0"/>
-            <xsd:element name="credential-store-reference" type="credential-store-reference-type" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="credentials" type="credentials-type" minOccurs="0"/>
             <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
             <xsd:element ref="abstract-providers" minOccurs="0"/>
             <xsd:element ref="abstract-sasl-factories" minOccurs="0"/>
         </xsd:all>
         <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="credentials-type">
+        <xsd:choice minOccurs="0" maxOccurs="unbounded">
+            <xsd:element name="key-store-reference" type="key-store-ref-type"/>
+            <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
+            <xsd:element name="clear-password" type="clear-password-type"/>
+            <xsd:element name="hashed-password" type="hashed-password-type"/>
+            <xsd:element name="crypt-password" type="crypt-password-type"/>
+            <xsd:element name="key-pair" type="key-pair-type"/>
+            <xsd:element name="certificate" type="certificate-type"/>
+            <xsd:element name="public-key-pem" type="xsd:string"/>
+        </xsd:choice>
+    </xsd:complexType>
+
+    <xsd:complexType name="hashed-password-type">
+        <xsd:attribute name="algorithm" type="xsd:string" use="required"/>
+        <xsd:attribute name="hash" type="xsd:base64Binary" use="required"/>
+        <xsd:attribute name="salt" type="xsd:base64Binary" use="optional"/>
+        <xsd:attribute name="iteration-count" type="xsd:positiveInteger" use="optional"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="crypt-password-type">
+        <xsd:attribute name="crypt" type="xsd:string" use="required"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="key-pair-type">
+        <xsd:all>
+            <xsd:element name="public-key-pem" type="xsd:string"/>
+            <xsd:element name="private-key-pem" type="xsd:string"/>
+        </xsd:all>
+    </xsd:complexType>
+
+    <xsd:complexType name="certificate-type">
+        <xsd:all>
+            <xsd:element name="private-key-pem" type="xsd:string"/>
+            <xsd:element name="pem" type="xsd:string"/>
+        </xsd:all>
     </xsd:complexType>
 
     <xsd:complexType name="authentication-rules-type">

@@ -17,12 +17,14 @@
  */
 package org.wildfly.security.credential.store;
 
+import java.security.GeneralSecurityException;
+
 /**
  * An exception indicating that operation with {@link CredentialStore} has failed.
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class CredentialStoreException extends Exception {
+public class CredentialStoreException extends GeneralSecurityException {
 
 
     private static final long serialVersionUID = 5868419578268270577L;

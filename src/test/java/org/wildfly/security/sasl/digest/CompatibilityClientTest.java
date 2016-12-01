@@ -41,7 +41,6 @@ import org.junit.runner.RunWith;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
-import org.wildfly.security.auth.client.CredentialStoreReference;
 import org.wildfly.security.auth.client.MatchRule;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.KeystorePasswordStoreBuilder;
@@ -127,8 +126,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testRfc2831example1", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testRfc2831example1", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -180,8 +178,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testRfc2831example2", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testRfc2831example2", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -232,8 +229,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         CallbackHandler clientCallback;
         Map<String, Object> clientProps = new HashMap<>();
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testAuthorizedAuthorizationId", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testAuthorizedAuthorizationId", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -285,8 +281,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-int");
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testAuthorizedAuthorizationId", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testAuthorizedAuthorizationId", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -422,8 +417,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testQopAuthConfRc4", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testQopAuthConfRc4", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -614,8 +608,7 @@ public class CompatibilityClientTest extends BaseTestCase {
         Map<String, Object> clientProps = new HashMap<>();
         clientProps.put(QOP_PROPERTY, "auth-conf");
         if (useCredentialStore) {
-            CredentialStoreReference csr = new CredentialStoreReference("testQopAuthConfRc4", "chris_pwd_alias");
-            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, csr, CS_FILE_NAME, "secret_store_1", "secret_key_1");
+            clientCallback = createCredentialStoreBasedClientCallbackHandler("chris", null, "testQopAuthConfRc4", "chris_pwd_alias", CS_FILE_NAME, "secret_store_1", "secret_key_1");
         } else {
             clientCallback = createClientCallbackHandler("chris", "secret".toCharArray(), null);
         }
@@ -954,28 +947,26 @@ public class CompatibilityClientTest extends BaseTestCase {
         return ClientUtils.getCallbackHandler(new URI("doesnot://matter?"), context);
     }
 
-    private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, CredentialStoreReference csr, String storeFileName, String storePassword, String keyPassword)
+    private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, String storeName, String alias, String storeFileName, String storePassword, String keyPassword)
             throws Exception {
         final HashMap<String, String> csAttributes = new HashMap<>();
-        csAttributes.put(KeystorePasswordStore.NAME, csr.getStore());
+        csAttributes.put(KeystorePasswordStore.NAME, storeName);
         csAttributes.put(KeystorePasswordStore.STORE_FILE, storeFileName);
         csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, storePassword);
         csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, keyPassword);
+        final CredentialStore cs;
+        try {
+            cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
+            cs.initialize(csAttributes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         final AuthenticationContext context = AuthenticationContext.empty()
                 .with(
                         MatchRule.ALL,
                         AuthenticationConfiguration.EMPTY
                                 .useName(username)
-                                .useCredentialStoreReference(() -> {
-                                    CredentialStore cs = null;
-                                    try {
-                                        cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
-                                        cs.initialize(csAttributes);
-                                    } catch (Exception e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                    return cs;
-                                }, csr)
+                                .useCredentialStoreEntry(cs, alias)
                                 .useRealm(realm)
                                 .allowSaslMechanisms(SaslMechanismInformation.Names.DIGEST_MD5)
                 );

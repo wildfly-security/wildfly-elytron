@@ -566,6 +566,15 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1139, value = "Failed to create credential store")
     ConfigXMLParseException xmlFailedToCreateCredentialStore(@Param Location location, @Cause Throwable cause);
 
+    @Message(id = 1140, value = "Wrong PEM content type; expected %s, actually was %s")
+    ConfigXMLParseException xmlWrongPemType(@Param ConfigurationXMLStreamReader reader, Class<?> expected, Class<?> actual);
+
+    @Message(id = 1141, value = "No PEM content found")
+    ConfigXMLParseException xmlNoPemContent(@Param ConfigurationXMLStreamReader reader);
+
+    @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
+    ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
@@ -1642,7 +1651,7 @@ public interface ElytronMessages extends BasicLogger {
     ConfigXMLParseException duplicateCredentialStoreName(@Param XMLStreamReader reader, String storeName);
 
     @Message(id = 9515, value = "Credential store name \"%s\" not defined")
-    ConfigXMLParseException credentialStoreNameNotDefined(@Param XMLStreamReader reader, String storeName);
+    ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
 
     // id = 9516 deleted free to use next time
 

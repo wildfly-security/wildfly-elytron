@@ -38,6 +38,11 @@ import org.wildfly.security.x500.X500;
 public interface Credential extends Cloneable {
 
     /**
+     * An array with no credentials.
+     */
+    Credential[] NO_CREDENTIALS = new Credential[0];
+
+    /**
      * Determine whether this credential can, generally speaking, verify the given evidence type.
      *
      * @param evidenceClass the evidence type (must not be {@code null})
