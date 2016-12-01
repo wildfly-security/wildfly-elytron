@@ -164,7 +164,7 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
  *             </li>
  *             <li>
  *                 Secondly, the evidence is socialized to each <em>realm</em> in turn, to see if a realm can recognize
- *                 and {@linkplain SecurityRealm#getRealmIdentity(IdentityLocator) locate} an identity based on
+ *                 and {@linkplain SecurityRealm#getRealmIdentity(Principal) locate} an identity based on
  *                 the evidence.  If so, the <em>realm identity</em> is {@linkplain RealmIdentity#getRealmIdentityPrincipal() queried}
  *                 for an authentication principal, which is then decoded and established as described above.  Once this
  *                 is done successfully, the evidence verification procedure described below commences.
@@ -1006,19 +1006,15 @@ public final class ServerAuthenticationContext {
                 name, preRealmName, realmName, postRealmName, finalName);
 
         final SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        final IdentityLocator.Builder locatorBuilder = IdentityLocator.builder();
-        locatorBuilder.setName(finalName);
-        locatorBuilder.setPrincipal(principal);
-        locatorBuilder.setEvidence(evidence);
         final RealmIdentity realmIdentity;
         if (exclusive) {
             if (securityRealm instanceof ModifiableSecurityRealm) {
-                realmIdentity = ((ModifiableSecurityRealm) securityRealm).getRealmIdentityForUpdate(locatorBuilder.build());
+                realmIdentity = ((ModifiableSecurityRealm) securityRealm).getRealmIdentityForUpdate(new NamePrincipal(finalName));
             } else {
                 throw log.unableToObtainExclusiveAccess();
             }
         } else {
-            realmIdentity = securityRealm.getRealmIdentity(locatorBuilder.build());
+            realmIdentity = securityRealm.getRealmIdentity(new NamePrincipal(finalName));
         }
         return new NameAssignedState(capturedIdentity, realmInfo, realmIdentity, principal, mechanismConfiguration, mechanismRealmConfiguration, privateCredentials, publicCredentials);
     }
@@ -1499,9 +1495,8 @@ public final class ServerAuthenticationContext {
             final Collection<RealmInfo> realmInfos = domain.getRealmInfos();
             RealmIdentity realmIdentity = null;
             RealmInfo realmInfo = null;
-            final IdentityLocator locator = IdentityLocator.fromEvidence(evidence);
             for (RealmInfo info : realmInfos) {
-                realmIdentity = info.getSecurityRealm().getRealmIdentity(locator);
+                realmIdentity = info.getSecurityRealm().getRealmIdentity(evidence);
                 if (realmIdentity.exists()) {
                     realmInfo = info;
                     break;

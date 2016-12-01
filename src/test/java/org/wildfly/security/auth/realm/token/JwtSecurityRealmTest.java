@@ -42,7 +42,6 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 
 import static org.junit.Assert.*;
-import static org.wildfly.security.auth.server.IdentityLocator.fromEvidence;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -65,7 +64,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(publicKeyPem.toArray()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(createJwt(keyPair, 10, 0))));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(createJwt(keyPair, 10, 0)));
 
         assertNotNull(realmIdentity);
         assertTrue(realmIdentity.exists());
@@ -84,7 +83,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                 .validator(JwtValidator.builder().build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(createJwt(keyPair, 10, 0))));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(createJwt(keyPair, 10, 0)));
 
         assertNotNull(realmIdentity);
         assertTrue(realmIdentity.exists());
@@ -103,7 +102,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(createJwt(keyPair))));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(createJwt(keyPair)));
 
         assertNotNull(realmIdentity);
         assertTrue(realmIdentity.exists());
@@ -124,7 +123,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(anotherKeyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(evidence));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
 
         assertNotNull(realmIdentity);
         assertFalse(realmIdentity.exists());
@@ -143,7 +142,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(evidence));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
 
         assertNotNull(realmIdentity);
         assertFalse(realmIdentity.exists());
@@ -162,7 +161,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(evidence));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
 
         assertNotNull(realmIdentity);
         assertFalse(realmIdentity.exists());
@@ -181,7 +180,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(evidence));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
 
         assertNotNull(realmIdentity);
         assertFalse(realmIdentity.exists());
@@ -200,7 +199,7 @@ public class JwtSecurityRealmTest extends BaseTestCase {
                         .publicKey(keyPair.getPublic()).build())
                 .build();
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(evidence));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(evidence);
 
         assertNotNull(realmIdentity);
         assertFalse(realmIdentity.exists());

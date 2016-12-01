@@ -19,6 +19,8 @@
 package org.wildfly.security.auth.realm;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+
+import java.security.Principal;
 import java.security.Provider;
 import java.security.Security;
 import java.util.Collections;
@@ -27,7 +29,7 @@ import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
-import org.wildfly.security.auth.server.IdentityLocator;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.auth.server.RealmIdentity;
@@ -129,11 +131,11 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
     }
 
     @Override
-    public RealmIdentity getRealmIdentity(final IdentityLocator locator) throws RealmUnavailableException {
-        if (! locator.hasName()) {
+    public RealmIdentity getRealmIdentity(final Principal principal) {
+        if (! (principal instanceof NamePrincipal)) {
             return RealmIdentity.NON_EXISTENT;
         }
-        String name = rewriter.rewriteName(locator.getName());
+        String name = rewriter.rewriteName(principal.getName());
         if (name == null) {
             throw ElytronMessages.log.invalidName();
         }
@@ -158,6 +160,10 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
 
         SimpleMapRealmIdentity(final String name) {
             this.name = name;
+        }
+
+        public Principal getRealmIdentityPrincipal() {
+            return new NamePrincipal(name);
         }
 
         @Override

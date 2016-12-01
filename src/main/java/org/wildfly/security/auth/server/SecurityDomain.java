@@ -41,6 +41,7 @@ import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
@@ -180,7 +181,7 @@ public final class SecurityDomain {
         log.tracef("Name mapping: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
                 name, preRealmName, realmName, postRealmName, realmRewrittenName);
 
-        return securityRealm.getRealmIdentity(IdentityLocator.fromName(realmRewrittenName));
+        return securityRealm.getRealmIdentity(new NamePrincipal(realmRewrittenName));
     }
 
     /**

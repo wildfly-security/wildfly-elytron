@@ -45,7 +45,6 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import static org.junit.Assert.*;
-import static org.wildfly.security.auth.server.IdentityLocator.fromEvidence;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -69,7 +68,7 @@ public class OAuth2TokenSecurityRealmTest {
         tokenBuilder.add("active", true);
         tokenBuilder.add("username", "elytron@jboss.org");
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
 
         assertTrue(realmIdentity.exists());
 
@@ -95,7 +94,7 @@ public class OAuth2TokenSecurityRealmTest {
         tokenBuilder.add("active", true);
         tokenBuilder.add("user-defined-claim", "elytron@jboss.org");
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
 
         assertTrue(realmIdentity.exists());
 
@@ -119,7 +118,7 @@ public class OAuth2TokenSecurityRealmTest {
 
         tokenBuilder.add("active", false);
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
 
         assertFalse(realmIdentity.exists());
         assertNull(realmIdentity.getRealmIdentityPrincipal());
@@ -153,7 +152,7 @@ public class OAuth2TokenSecurityRealmTest {
         tokenBuilder.add("attribute6", jsonArray.build());
         tokenBuilder.add("attribute7", Json.createObjectBuilder().add("objField1", "value1").add("objectField2", "value2"));
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
         AuthorizationIdentity authorizationIdentity = realmIdentity.getAuthorizationIdentity();
         Attributes attributes = authorizationIdentity.getAttributes();
 
@@ -186,7 +185,7 @@ public class OAuth2TokenSecurityRealmTest {
 
         tokenBuilder.add("active", true);
 
-        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(fromEvidence(new BearerTokenEvidence(tokenBuilder.build().toString())));
+        RealmIdentity realmIdentity = securityRealm.getRealmIdentity(new BearerTokenEvidence(tokenBuilder.build().toString()));
 
         assertFalse(realmIdentity.exists());
     }
