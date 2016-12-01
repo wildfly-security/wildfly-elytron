@@ -39,6 +39,7 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 import org.wildfly.security.password.spec.HashPasswordSpec;
+import org.wildfly.security.password.spec.IteratedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.PasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
@@ -294,7 +295,11 @@ public class PasswordKeyMapper implements KeyMapper {
                     passwordSpec = new SaltedHashPasswordSpec(hash, salt);
                 }
             } else {
-                passwordSpec = new HashPasswordSpec(hash);
+                if (iterationCount > 0) {
+                    passwordSpec = new IteratedHashPasswordSpec(hash, iterationCount);
+                } else {
+                    passwordSpec = new HashPasswordSpec(hash);
+                }
             }
         } else if (clear != null) {
             passwordSpec = new ClearPasswordSpec(clear);
