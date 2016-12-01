@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.realm.ldap;
 
+import java.util.Locale;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -85,7 +87,7 @@ public class AttributeMapping {
         Assert.checkNotNullParam("ldapName", ldapName);
         this.searchDn = searchDn;
         this.filter = filter;
-        this.ldapName = ldapName.toUpperCase();
+        this.ldapName = ldapName.toUpperCase(Locale.ROOT);
     }
 
     public AttributeMapping asRdn(String rdn) {
