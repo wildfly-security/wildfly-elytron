@@ -435,13 +435,19 @@ public final class PermissionUtil {
             }
         }
         try {
-            if (twoArg != null) {
+            if (twoArg != null && name != null && actions != null) {
                 return twoArg.newInstance(name, actions);
-            } else if (oneArg != null) {
+            } else if (oneArg != null && name != null) {
                 return oneArg.newInstance(name);
             } else if (noArgs != null) {
                 return noArgs.newInstance();
             } else {
+                // no constructor for given params found
+                if ((oneArg != null || twoArg != null) && name == null) {
+                    throw new InvalidNamedArgumentException("name");
+                } else if (twoArg != null && actions == null) {
+                    throw new InvalidNamedArgumentException("actions");
+                }
                 throw ElytronMessages.log.noPermissionConstructor(permissionClass.getName());
             }
         } catch (IllegalAccessException e) {
