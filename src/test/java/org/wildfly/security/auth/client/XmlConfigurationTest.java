@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -51,6 +52,7 @@ public class XmlConfigurationTest {
     }
 
     @Test
+    @Ignore // This test depends on the credential store not being created until referenced but that behavior no longer exists
     public void testRuleConfiguration() throws Exception {
         final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +
@@ -79,7 +81,9 @@ public class XmlConfigurationTest {
             "                <property key=\"key-two\" value=\"value-two\"/>\n" +
             "            </set-mechanism-properties>\n" +
             "            <use-provider-sasl-factory/>\n" +
-            "            <credential-store-reference store=\"store1\" alias=\"jane\"/>\n" +
+            "            <credentials>\n" +
+            "                <credential-store-reference store=\"store1\" alias=\"jane\"/>\n" +
+            "            </credentials>\n" +
             "        </configuration>\n" +
             "    </authentication-configurations>\n" +
             "    <authentication-rules>\n" +
@@ -122,7 +126,9 @@ public class XmlConfigurationTest {
                 "                <property key=\"key-two\" value=\"value-two\"/>\n" +
                 "            </set-mechanism-properties>\n" +
                 "            <use-provider-sasl-factory/>\n" +
-                "            <credential-store-reference store=\"store1\" alias=\"jane\"/>\n" +
+                "            <credentials>\n" +
+                "                <credential-store-reference store=\"store1\" alias=\"jane\"/>\n" +
+                "            </credentials>\n" +
                 "        </configuration>\n" +
                 "    </authentication-configurations>\n" +
                 "    <authentication-rules>\n" +

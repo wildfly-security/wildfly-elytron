@@ -29,7 +29,6 @@ import org.wildfly.client.config.XMLLocation;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.CredentialStoreException;
 
 /**
  * Factory which can create instance of {@link CredentialStore} from supplied information.
@@ -65,33 +64,10 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
      * @param name of the {@code CredentialStore}
      * @param type of the {@code CredentialStore}
      * @param attributes to initialize the {@code CredentialStore}
-     * @param provider to load the instance from
-     */
-    CredentialStoreFactory(String name, String type, final Map<String, String> attributes, final Provider provider, XMLLocation location) {
-        this(name, type, attributes, provider,  null, location);
-    }
-
-    /**
-     * Creates a factory using parameters.
-     *
-     * @param name of the {@code CredentialStore}
-     * @param type of the {@code CredentialStore}
-     * @param attributes to initialize the {@code CredentialStore}
      * @param providerName to load the instance from
      */
     CredentialStoreFactory(String name, String type, Map<String, String> attributes, String providerName, XMLLocation location) {
         this(name, type, attributes, null, providerName, location);
-    }
-
-    /**
-     * Creates a factory using parameters and default provider.
-     *
-     * @param name of the {@code CredentialStore}
-     * @param type of the {@code CredentialStore}
-     * @param attributes to initialize the {@code CredentialStore}
-     */
-    CredentialStoreFactory(String name, String type, Map<String, String> attributes, XMLLocation location) {
-        this(name, type, attributes, null,  null, location);
     }
 
     /**
@@ -110,7 +86,7 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
                 credentialStore = CredentialStore.getInstance(type);
             }
             credentialStore.initialize(attributes);
-        } catch (GeneralSecurityException | CredentialStoreException e) {
+        } catch (GeneralSecurityException e) {
             throw xmlLog.xmlFailedToCreateCredentialStore(location, e);
         }
         return credentialStore;

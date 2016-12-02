@@ -33,10 +33,15 @@ import java.net.Authenticator;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.Provider;
+import java.security.PublicKey;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +51,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
@@ -67,10 +73,17 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.KeyPairCredential;
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.PublicKeyCredential;
 import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
+import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
+import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
@@ -78,10 +91,19 @@ import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
+import org.wildfly.security.password.spec.HashPasswordSpec;
+import org.wildfly.security.password.spec.IteratedHashPasswordSpec;
+import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
+import org.wildfly.security.password.spec.PasswordSpec;
+import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
+import org.wildfly.security.password.util.ModularCrypt;
+import org.wildfly.security.pem.Pem;
+import org.wildfly.security.pem.PemEntry;
 import org.wildfly.security.sasl.util.ServiceLoaderSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.wildfly.security.ssl.ProtocolSelector;
 import org.wildfly.security.ssl.SSLContextBuilder;
+import org.wildfly.security.util.CodePointIterator;
 import org.wildfly.security.util.ServiceLoaderSupplier;
 import org.wildfly.security.x500.X500;
 
@@ -557,72 +579,55 @@ public final class ElytronXmlParser {
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.forbidSaslMechanisms(names));
                         break;
                     }
-                    case "key-store-credential": {
+                    case "credentials": {
                         if (isSet(foundBits, 9)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 9);
-                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> factory = parseKeyStoreRefType(reader, keyStoresMap);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useKeyStoreCredential(factory.get()));
-                        break;
-                    }
-                    case "clear-password": {
-                        if (isSet(foundBits, 10)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 10);
-                        final char[] password = parseClearPassword(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.usePassword(password));
+                        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource = parseCredentialsType(reader, keyStoresMap, credentialStoresMap);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useCredentials(credentialSource.get()));
                         break;
                     }
                     case "set-authorization-name": {
-                        if (isSet(foundBits, 11)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 11);
+                        if (isSet(foundBits, 10)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 10);
                         final String authName = parseNameType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useAuthorizationName(authName));
                         break;
                     }
                     // these two are a <choice> which is why they share a bit #; you can have only one of them
                     case "use-system-providers": {
-                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 12);
+                        if (isSet(foundBits, 11)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 11);
                         parseEmptyType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
                         break;
                     }
                     case "use-service-loader-providers": {
-                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 12);
+                        if (isSet(foundBits, 11)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 11);
                         final Module module = parseModuleRefType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
                         break;
                     }
                     // these two are a <choice> which is why they share a bit #; you can have only one of them
                     case "use-provider-sasl-factory": {
-                        if (isSet(foundBits, 13)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 13);
+                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 12);
                         parseEmptyType(reader);
                         configuration = andThenOp(configuration, AuthenticationConfiguration::useSaslClientFactoryFromProviders);
                         break;
                     }
                     case "use-service-loader-sasl-factory": {
-                        if (isSet(foundBits, 13)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 13);
+                        if (isSet(foundBits, 12)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 12);
                         final Module module = parseModuleRefType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
                         break;
                     }
                     case "set-protocol": {
-                        if (isSet(foundBits, 14)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 14);
+                        if (isSet(foundBits, 13)) throw reader.unexpectedElement();
+                        foundBits = setBit(foundBits, 13);
                         final String protocol = parseNameType(reader);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProtocol(protocol));
-                        break;
-                    }
-                    case "credential-store-reference": {
-                        if (isSet(foundBits, 15)) throw reader.unexpectedElement();
-                        foundBits = setBit(foundBits, 15);
-                        CredentialStoreReference credentialStoreReference = parseCredentialStoreRefType(reader,
-                                credentialStoresMap);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useCredentialStoreReference(
-                                credentialStoresMap.get(credentialStoreReference.getStore()),
-                                credentialStoreReference));
                         break;
                     }
                     default: {
@@ -760,6 +765,248 @@ public final class ElytronXmlParser {
 
     private static <T, E extends Exception> ExceptionUnaryOperator<T, E> andThenOp(ExceptionUnaryOperator<T, E> first, ExceptionUnaryOperator<T, E> second) {
         return t -> second.apply(first.apply(t));
+    }
+
+    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
+        ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> function = parent -> CredentialSource.NONE;
+        requireNoAttributes(reader);
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "key-store-reference": {
+                        final ExceptionSupplier<KeyStore.Entry, ConfigXMLParseException> supplier = parseKeyStoreRefType(reader, keyStoresMap);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(new KeyStoreCredentialSource(new FixedSecurityFactory<KeyStore.Entry>(supplier.get()))));
+                        break;
+                    }
+                    case "credential-store-reference": {
+                        final ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier = parseCredentialStoreRefType(reader, credentialStoresMap);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(supplier.get()));
+                        break;
+                    }
+                    case "clear-password": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, parseClearPassword(reader))))));
+                        break;
+                    }
+                    case "hashed-password": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(parseHashedPassword(reader)))));
+                        break;
+                    }
+                    case "crypt-password": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(parseCryptPassword(reader)))));
+                        break;
+                    }
+                    case "key-pair": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(parseKeyPair(reader)))));
+                        break;
+                    }
+                    case "certificate": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(parseCertificateType(reader))));
+                        break;
+                    }
+                    case "public-key-pem": {
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PublicKeyCredential(parsePem(reader, PublicKey.class)))));
+                        break;
+                    }
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
+                }
+            } else if (tag == END_ELEMENT) {
+                final ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> finalFunction = function;
+                return () -> finalFunction.apply(null);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static Password parseHashedPassword(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String algorithm = null;
+        String hash = null;
+        String salt = null;
+        int iterationCount = -1;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "algorithm": {
+                    algorithm = reader.getAttributeValue(i);
+                    break;
+                }
+                case "hash": {
+                    hash = reader.getAttributeValue(i);
+                    break;
+                }
+                case "salt": {
+                    salt = reader.getAttributeValue(i);
+                    break;
+                }
+                case "iteration-count": {
+                    iterationCount = reader.getIntAttributeValue(i);
+                    if (iterationCount < 1) {
+                        throw xmlLog.xmlInvalidIterationCount(reader, iterationCount);
+                    }
+                    break;
+                }
+                default: {
+                    throw reader.unexpectedAttribute(i);
+                }
+            }
+        }
+        if (algorithm == null) throw reader.missingRequiredAttribute("", "algorithm");
+        if (hash == null) throw reader.missingRequiredAttribute("", "hash");
+        byte[] hashBytes = CodePointIterator.ofString(hash).base64Decode().drain();
+        final PasswordSpec passwordSpec;
+        if (salt != null) {
+            byte[] saltBytes = CodePointIterator.ofString(salt).base64Decode().drain();
+            if (iterationCount != -1) {
+                passwordSpec = new IteratedSaltedHashPasswordSpec(hashBytes, saltBytes, iterationCount);
+            } else {
+                passwordSpec = new SaltedHashPasswordSpec(hashBytes, saltBytes);
+            }
+        } else {
+            if (iterationCount != -1) {
+                passwordSpec = new IteratedHashPasswordSpec(hashBytes, iterationCount);
+            } else {
+                passwordSpec = new HashPasswordSpec(hashBytes);
+            }
+        }
+        try {
+            final PasswordFactory instance = PasswordFactory.getInstance(algorithm);
+            return instance.generatePassword(passwordSpec);
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), e);
+        }
+    }
+
+    private static Password parseCryptPassword(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        final String crypt = requireSingleAttribute(reader, "crypt");
+        final Password password;
+        try {
+            password = ModularCrypt.decode(crypt);
+        } catch (InvalidKeySpecException e) {
+            throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), e);
+        }
+        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
+        return password;
+    }
+
+    private static KeyPair parseKeyPair(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        PrivateKey privateKey = null;
+        PublicKey publicKey = null;
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "private-key-pem": {
+                        if (privateKey != null) throw reader.unexpectedElement();
+                        privateKey = parsePem(reader, PrivateKey.class);
+                        break;
+                    }
+                    case "public-key-pem": {
+                        if (publicKey != null) throw reader.unexpectedElement();
+                        publicKey = parsePem(reader, PublicKey.class);
+                        break;
+                    }
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
+                }
+            } else if (tag == END_ELEMENT) {
+                if (privateKey == null) throw reader.missingRequiredElement(NS_ELYTRON_1_0, "private-key-pem");
+                if (publicKey == null) throw reader.missingRequiredElement(NS_ELYTRON_1_0, "public-key-pem");
+                return new KeyPair(publicKey, privateKey);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static X509CertificateChainPrivateCredential parseCertificateType(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        PrivateKey privateKey = null;
+        X509Certificate[] certificates = null;
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "private-key-pem": {
+                        if (privateKey != null) throw reader.unexpectedElement();
+                        privateKey = parsePem(reader, PrivateKey.class);
+                        break;
+                    }
+                    case "pem": {
+                        if (certificates != null) throw reader.unexpectedElement();
+                        certificates = parseMultiPem(reader, X509Certificate.class, X509Certificate[]::new);
+                        break;
+                    }
+                    default: {
+                        throw reader.unexpectedElement();
+                    }
+                }
+            } else if (tag == END_ELEMENT) {
+                if (privateKey == null) throw reader.missingRequiredElement(NS_ELYTRON_1_0, "private-key-pem");
+                if (certificates == null) throw reader.missingRequiredElement(NS_ELYTRON_1_0, "pem");
+                return new X509CertificateChainPrivateCredential(privateKey, certificates);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    private static <P> P[] parseMultiPem(final ConfigurationXMLStreamReader reader, final Class<P> pemType, final IntFunction<P[]> ctor) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        if (reader.hasNext()) {
+            final int next = reader.next();
+            if (reader.hasText()) {
+                final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()).skip(Character::isWhitespace));
+                if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+                if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
+                final ArrayList<P> arrayList = new ArrayList<>();
+                while (pemContent.hasNext()) {
+                    final PemEntry<?> pemEntry = pemContent.next();
+                    final P pem = pemEntry.tryCast(pemType);
+                    if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
+                    arrayList.add(pem);
+                }
+                if (arrayList.isEmpty()) throw xmlLog.xmlNoPemContent(reader);
+                return arrayList.toArray(ctor.apply(arrayList.size()));
+            } else {
+                throw reader.unexpectedContent();
+            }
+        } else {
+            throw reader.unexpectedDocumentEnd();
+        }
+    }
+
+    private static <P> P parsePem(final ConfigurationXMLStreamReader reader, final Class<P> pemType) throws ConfigXMLParseException {
+        requireNoAttributes(reader);
+        if (reader.hasNext()) {
+            final int next = reader.next();
+            if (reader.hasText()) {
+                final Iterator<PemEntry<?>> pemContent = Pem.parsePemContent(CodePointIterator.ofString(reader.getElementText()).skip(Character::isWhitespace));
+                if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+                if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
+                if (! pemContent.hasNext()) throw xmlLog.xmlNoPemContent(reader);
+                final PemEntry<?> pemEntry = pemContent.next();
+                final P pem = pemEntry.tryCast(pemType);
+                if (pem == null) throw xmlLog.xmlWrongPemType(reader, pemType, pemEntry.getEntry().getClass());
+                return pem;
+            } else {
+                throw reader.unexpectedContent();
+            }
+        } else {
+            throw reader.unexpectedDocumentEnd();
+        }
     }
 
     /**
@@ -1028,32 +1275,17 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    /**
-     * Parse an XML element of type {@code credential-store-reference-type} from an XML reader.
-     *
-     * @param reader the XML stream reader
-     * @param credentialStoresNames set of Credential Store names already defined used for checking of duplicates
-     * @return {@link CredentialStoreReference} corresponding to given XML configuration element
-     * @throws ConfigXMLParseException if the resource failed to be parsed
-     */
-    public static CredentialStoreReference parseCredentialStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresNames) throws ConfigXMLParseException {
+    static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialStoreRefType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
-        final CredentialStoreReference credentialStoreReference;
-        String store = null;
+        String storeName = null;
         String alias = null;
         String clearText = null;
         for (int i = 0; i < attributeCount; i ++) {
-            final String attributeNamespace = reader.getAttributeNamespace(i);
-            if (attributeNamespace != null && ! attributeNamespace.isEmpty()) {
-                throw reader.unexpectedAttribute(i);
-            }
+            checkAttributeNamespace(reader, i);
             switch (reader.getAttributeLocalName(i)) {
                 case "store": {
-                    if (store != null) throw reader.unexpectedAttribute(i);
-                    store = reader.getAttributeValue(i);
-                    if (credentialStoresNames != null && !credentialStoresNames.containsKey(store)) {
-                        throw xmlLog.credentialStoreNameNotDefined(reader, store);
-                    }
+                    if (storeName != null) throw reader.unexpectedAttribute(i);
+                    storeName = reader.getAttributeValue(i);
                     break;
                 }
                 case "alias": {
@@ -1070,28 +1302,20 @@ public final class ElytronXmlParser {
                     throw reader.unexpectedAttribute(i);
             }
         }
-        if (store == null) {
-            if (clearText == null) {
-                throw missingAttribute(reader, "clear-text");
+        if (! reader.hasNext()) throw reader.unexpectedDocumentEnd();
+        if (reader.nextTag() != END_ELEMENT) throw reader.unexpectedContent();
+        return createCredentialStoreSupplier(reader.getLocation(), storeName, alias, clearText, credentialStoresMap);
+    }
+
+    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> createCredentialStoreSupplier(final XMLLocation location, final String storeName, final String alias, final String clearText, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) {
+        return () -> {
+            final ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier = credentialStoresMap.get(storeName);
+            if (supplier == null) {
+                throw xmlLog.xmlCredentialStoreNameNotDefined(location, storeName);
             }
-            credentialStoreReference = new CredentialStoreReference(clearText.toCharArray());
-        } else {
-            if (alias == null) {
-                throw missingAttribute(reader, "alias");
-            }
-            credentialStoreReference = new CredentialStoreReference(store, alias);
-        }
-        if (reader.hasNext()) {
-            final int tag = reader.nextTag();
-            if (tag == START_ELEMENT) {
-                throw reader.unexpectedElement();
-            } else if (tag == END_ELEMENT) {
-                return credentialStoreReference;
-            } else {
-                throw reader.unexpectedContent();
-            }
-        }
-        throw reader.unexpectedDocumentEnd();
+            final CredentialStore credentialStore = supplier.get();
+            return new CredentialStoreCredentialSource(credentialStore, alias);
+        };
     }
 
     /**
@@ -1137,6 +1361,7 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     public static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
+        final XMLLocation location = reader.getLocation();
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String type = null;
@@ -1189,7 +1414,7 @@ public final class ElytronXmlParser {
                 }
             } else if (tag == END_ELEMENT) {
                 if (!credentialStoresMap.containsKey(name)) {
-                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, reader.getLocation());
+                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location);
                     credentialStoresMap.put(name, credentialStoreSecurityFactory);
                 } else {
                     throw xmlLog.duplicateCredentialStoreName(reader, name);

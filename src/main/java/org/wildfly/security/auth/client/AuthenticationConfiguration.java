@@ -58,9 +58,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.ietf.jgss.GSSCredential;
-import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.common.Assert;
-import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.credential.GSSCredentialCredential;
@@ -558,17 +556,17 @@ public abstract class AuthenticationConfiguration {
     }
 
     /**
-     * Create a new configuration which is the same as this configuration, but it has {@link CredentialStoreReference}
-     * attached for referencing {@link org.wildfly.security.credential.store.CredentialStore} alias with given type.
-     * For more see {@link CredentialStoreReference}.
+     * Create a new configuration which is the same as this configuration, but uses credentials found at the given
+     * alias and credential store.
      *
-     * @see CredentialStoreReference
-     * @param credentialStoreReference of {@link CredentialStoreReference}
+     * @param credentialStore the credential store (must not be {@code null})
+     * @param alias the alias within the store (must not be {@code null})
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCredentialStoreReference(ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreFactory, CredentialStoreReference credentialStoreReference) {
-        Assert.checkNotNullParam("credentialStoreReference", credentialStoreReference);
-        CredentialStoreCredentialSource csCredentialSource = new CredentialStoreCredentialSource(credentialStoreFactory, credentialStoreReference);
+    public AuthenticationConfiguration useCredentialStoreEntry(CredentialStore credentialStore, String alias) {
+        Assert.checkNotNullParam("credentialStore", credentialStore);
+        Assert.checkNotNullParam("alias", alias);
+        CredentialStoreCredentialSource csCredentialSource = new CredentialStoreCredentialSource(credentialStore, alias);
         return useCredentials(getCredentialSource().with(csCredentialSource));
     }
 
