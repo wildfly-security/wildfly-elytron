@@ -786,27 +786,33 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "clear-password": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, parseClearPassword(reader))))));
+                        char[] password = parseClearPassword(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password)))));
                         break;
                     }
                     case "hashed-password": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(parseHashedPassword(reader)))));
+                        Password password = parseHashedPassword(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
                         break;
                     }
                     case "crypt-password": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(parseCryptPassword(reader)))));
+                        Password password = parseCryptPassword(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
                         break;
                     }
                     case "key-pair": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(parseKeyPair(reader)))));
+                        KeyPair keyPair = parseKeyPair(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new KeyPairCredential(keyPair))));
                         break;
                     }
                     case "certificate": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(parseCertificateType(reader))));
+                        X509CertificateChainPrivateCredential credential = parseCertificateType(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(credential)));
                         break;
                     }
                     case "public-key-pem": {
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PublicKeyCredential(parsePem(reader, PublicKey.class)))));
+                        PublicKey publicKey = parsePem(reader, PublicKey.class);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PublicKeyCredential(publicKey))));
                         break;
                     }
                     default: {
