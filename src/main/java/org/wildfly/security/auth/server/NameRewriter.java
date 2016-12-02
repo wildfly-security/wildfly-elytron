@@ -18,7 +18,11 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
+import java.util.function.UnaryOperator;
+
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.NamePrincipal;
 
 /**
  * A name rewriter.  Name rewriters transform names from one form to another for various purposes, including (but
@@ -49,6 +53,15 @@ public interface NameRewriter {
      * @return the rewritten name, or {@code null} if the name is invalid
      */
     String rewriteName(String original);
+
+    /**
+     * Get this name rewriter as a principal rewriter that applies only to {@link NamePrincipal} instances.
+     *
+     * @return the principal rewriter (not {@code null})
+     */
+    default UnaryOperator<Principal> asPrincipalRewriter() {
+        return principal -> principal instanceof NamePrincipal ? new NamePrincipal(NameRewriter.this.rewriteName(principal.getName())) : principal;
+    }
 
     /**
      * Create a name rewriter which chains the given name rewriters; the name will be rewritten through the given rewriters

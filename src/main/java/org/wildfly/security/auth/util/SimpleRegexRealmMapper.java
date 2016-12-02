@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.wildfly.common.Assert;
+import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.RealmMapper;
 import org.wildfly.security.evidence.Evidence;
 
@@ -67,12 +68,14 @@ public class SimpleRegexRealmMapper implements RealmMapper {
         this.delegate = delegate;
     }
 
-    public String getRealmMapping(final String name, final Principal principal, final Evidence evidence) {
-        if (name == null) {
+    public String getRealmMapping(final Principal principal, final Evidence evidence) {
+        if (principal instanceof NamePrincipal) {
+            String name = principal.getName();
+            final Matcher matcher = realmNamePattern.matcher(name);
+            assert matcher.groupCount() >= 1;
+            return matcher.matches() ? matcher.group(1) : delegate.getRealmMapping(principal, evidence);
+        } else {
             return null;
         }
-        final Matcher matcher = realmNamePattern.matcher(name);
-        assert matcher.groupCount() >= 1;
-        return matcher.matches() ? matcher.group(1) : delegate.getRealmMapping(name, principal, evidence);
     }
 }

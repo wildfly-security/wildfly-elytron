@@ -18,6 +18,9 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
+import java.util.function.Function;
+
 import org.wildfly.common.Assert;
 
 /**
@@ -27,9 +30,9 @@ import org.wildfly.common.Assert;
  */
 public final class MechanismRealmConfiguration {
     private final String realmName;
-    private final NameRewriter preRealmRewriter;
-    private final NameRewriter postRealmRewriter;
-    private final NameRewriter finalRewriter;
+    private final Function<Principal, Principal> preRealmRewriter;
+    private final Function<Principal, Principal> postRealmRewriter;
+    private final Function<Principal, Principal> finalRewriter;
     private final RealmMapper realmMapper;
 
     /**
@@ -41,7 +44,7 @@ public final class MechanismRealmConfiguration {
      * @param finalRewriter the final rewriter to apply (may not be {@code null})
      * @param realmMapper the realm mapper to use
      */
-    MechanismRealmConfiguration(final String realmName, final NameRewriter preRealmRewriter, final NameRewriter postRealmRewriter, final NameRewriter finalRewriter, final RealmMapper realmMapper) {
+    MechanismRealmConfiguration(final String realmName, final Function<Principal, Principal> preRealmRewriter, final Function<Principal, Principal> postRealmRewriter, final Function<Principal, Principal> finalRewriter, final RealmMapper realmMapper) {
         this.realmName = realmName;
         this.preRealmRewriter = preRealmRewriter;
         this.postRealmRewriter = postRealmRewriter;
@@ -63,7 +66,7 @@ public final class MechanismRealmConfiguration {
      *
      * @return the pre-realm rewriter for this mechanism realm (not {@code null})
      */
-    public NameRewriter getPreRealmRewriter() {
+    public Function<Principal, Principal> getPreRealmRewriter() {
         return preRealmRewriter;
     }
 
@@ -72,7 +75,7 @@ public final class MechanismRealmConfiguration {
      *
      * @return the post-realm rewriter for this mechanism realm (not {@code null})
      */
-    public NameRewriter getPostRealmRewriter() {
+    public Function<Principal, Principal> getPostRealmRewriter() {
         return postRealmRewriter;
     }
 
@@ -81,7 +84,7 @@ public final class MechanismRealmConfiguration {
      *
      * @return the final rewriter for this mechanism realm (not {@code null})
      */
-    public NameRewriter getFinalRewriter() {
+    public Function<Principal, Principal> getFinalRewriter() {
         return finalRewriter;
     }
 
@@ -97,7 +100,7 @@ public final class MechanismRealmConfiguration {
     /**
      * A realm configuration for no particular realm, which does no additional rewriting.
      */
-    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", null, null, null, null);
+    public static final MechanismRealmConfiguration NO_REALM = new MechanismRealmConfiguration("none", Function.identity(), Function.identity(), Function.identity(), null);
 
     /**
      * Obtain a new {@link Builder} capable of building a {@link MechanismRealmConfiguration}.
@@ -110,9 +113,9 @@ public final class MechanismRealmConfiguration {
 
     public static final class Builder {
         private String realmName;
-        private NameRewriter preRealmRewriter;
-        private NameRewriter postRealmRewriter;
-        private NameRewriter finalRewriter;
+        private Function<Principal, Principal> preRealmRewriter = Function.identity();
+        private Function<Principal, Principal> postRealmRewriter = Function.identity();
+        private Function<Principal, Principal> finalRewriter = Function.identity();
         private RealmMapper realmMapper;
 
         /**
@@ -127,19 +130,22 @@ public final class MechanismRealmConfiguration {
             return this;
         }
 
-        public Builder setPreRealmRewriter(final NameRewriter preRealmRewriter) {
+        public Builder setPreRealmRewriter(final Function<Principal, Principal> preRealmRewriter) {
+            Assert.checkNotNullParam("preRealmRewriter", preRealmRewriter);
             this.preRealmRewriter = preRealmRewriter;
 
             return this;
         }
 
-        public Builder setPostRealmRewriter(final NameRewriter postRealmRewriter) {
+        public Builder setPostRealmRewriter(final Function<Principal, Principal> postRealmRewriter) {
+            Assert.checkNotNullParam("postRealmRewriter", postRealmRewriter);
             this.postRealmRewriter = postRealmRewriter;
 
             return this;
         }
 
-        public Builder setFinalRewriter(final NameRewriter finalRewriter) {
+        public Builder setFinalRewriter(final Function<Principal, Principal> finalRewriter) {
+            Assert.checkNotNullParam("finalRewriter", finalRewriter);
             this.finalRewriter = finalRewriter;
 
             return this;

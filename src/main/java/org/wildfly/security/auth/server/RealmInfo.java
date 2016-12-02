@@ -17,6 +17,9 @@
  */
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
+import java.util.function.Function;
+
 import org.wildfly.security.authz.RoleDecoder;
 import org.wildfly.security.authz.RoleMapper;
 
@@ -30,14 +33,14 @@ class RealmInfo {
     private final SecurityRealm securityRealm;
     private final String name;
     private final RoleMapper roleMapper;
-    private final NameRewriter nameRewriter;
+    private final Function<Principal, Principal> principalRewriter;
     private final RoleDecoder roleDecoder;
 
     RealmInfo(final SecurityDomain.RealmBuilder realmBuilder) {
         this.name = realmBuilder.getName();
         this.securityRealm = realmBuilder.getRealm();
         this.roleMapper = realmBuilder.getRoleMapper();
-        this.nameRewriter = realmBuilder.getNameRewriter();
+        this.principalRewriter = realmBuilder.getPrincipalRewriter();
         this.roleDecoder = realmBuilder.getRoleDecoder();
     }
 
@@ -45,7 +48,7 @@ class RealmInfo {
         this.securityRealm = SecurityRealm.EMPTY_REALM;
         this.name = "default";
         this.roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
-        this.nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        this.principalRewriter = Function.identity();
         this.roleDecoder = RoleDecoder.DEFAULT;
     }
 
@@ -61,8 +64,8 @@ class RealmInfo {
         return this.roleMapper;
     }
 
-    NameRewriter getNameRewriter() {
-        return nameRewriter;
+    Function<Principal, Principal> getPrincipalRewriter() {
+        return principalRewriter;
     }
 
     RoleDecoder getRoleDecoder() {

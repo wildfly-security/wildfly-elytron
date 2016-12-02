@@ -65,12 +65,11 @@ public final class SecurityDomain {
 
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
-    private final NameRewriter preRealmRewriter;
+    private final Function<Principal, Principal> preRealmPrincipalRewriter;
     private final RealmMapper realmMapper;
-    private final NameRewriter postRealmRewriter;
+    private final Function<Principal, Principal> postRealmPrincipalRewriter;
     private final ThreadLocal<SecurityIdentity> currentSecurityIdentity;
     private final RoleMapper roleMapper;
-    private final PrincipalDecoder principalDecoder;
     private final SecurityIdentity anonymousIdentity;
     private final PermissionMapper permissionMapper;
     private final Map<String, RoleMapper> categoryRoleMappers;
@@ -80,12 +79,11 @@ public final class SecurityDomain {
     SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
         this.defaultRealmName = builder.defaultRealmName;
-        this.preRealmRewriter = builder.preRealmRewriter;
+        this.preRealmPrincipalRewriter = builder.principalDecoder.andThen(builder.preRealmRewriter);
         this.realmMapper = builder.realmMapper;
         this.roleMapper = builder.roleMapper;
         this.permissionMapper = builder.permissionMapper;
-        this.postRealmRewriter = builder.postRealmRewriter;
-        this.principalDecoder = builder.principalDecoder;
+        this.postRealmPrincipalRewriter = builder.postRealmRewriter;
         this.securityIdentityTransformer = builder.securityIdentityTransformer;
         this.trustedSecurityDomain = builder.trustedSecurityDomain;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
@@ -158,30 +156,7 @@ public final class SecurityDomain {
      */
     public RealmIdentity mapName(String name) throws RealmUnavailableException {
         Assert.checkNotNullParam("name", name);
-        String preRealmName = this.preRealmRewriter.rewriteName(name);
-        if (preRealmName == null) {
-            throw log.invalidName();
-        }
-
-        String realmName = mapRealmName(preRealmName, null, null);
-        RealmInfo realmInfo = getRealmInfo(realmName);
-        SecurityRealm securityRealm = realmInfo.getSecurityRealm();
-        assert securityRealm != null;
-
-        String postRealmName = this.postRealmRewriter.rewriteName(preRealmName);
-        if (postRealmName == null) {
-            throw log.invalidName();
-        }
-
-        String realmRewrittenName = realmInfo.getNameRewriter().rewriteName(postRealmName);
-        if (realmRewrittenName == null) {
-            throw log.invalidName();
-        }
-
-        log.tracef("Name mapping: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
-                name, preRealmName, realmName, postRealmName, realmRewrittenName);
-
-        return securityRealm.getRealmIdentity(new NamePrincipal(realmRewrittenName));
+        return mapPrincipal(new NamePrincipal(name));
     }
 
     /**
@@ -194,11 +169,30 @@ public final class SecurityDomain {
      */
     public RealmIdentity mapPrincipal(Principal principal) throws RealmUnavailableException, IllegalArgumentException {
         Assert.checkNotNullParam("principal", principal);
-        final String name = principalDecoder.getName(principal);
-        if (name == null) {
-            throw log.unrecognizedPrincipalType(principal);
+        Principal preRealmPrincipal = preRealmPrincipalRewriter.apply(principal);
+        if (preRealmPrincipal == null) {
+            throw log.invalidName();
         }
-        return mapName(name);
+
+        String realmName = mapRealmName(preRealmPrincipal, null);
+        RealmInfo realmInfo = getRealmInfo(realmName);
+        SecurityRealm securityRealm = realmInfo.getSecurityRealm();
+        assert securityRealm != null;
+
+        Principal postRealmPrincipal = postRealmPrincipalRewriter.apply(preRealmPrincipal);
+        if (postRealmPrincipal == null) {
+            throw log.invalidName();
+        }
+
+        Principal realmRewrittenPrincipal = realmInfo.getPrincipalRewriter().apply(postRealmPrincipal);
+        if (realmRewrittenPrincipal == null) {
+            throw log.invalidName();
+        }
+
+        log.tracef("Principal mapping: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
+                principal, preRealmPrincipal, realmName, postRealmPrincipal, realmRewrittenPrincipal);
+
+        return securityRealm.getRealmIdentity(realmRewrittenPrincipal);
     }
 
     SecurityRealm getRealm(final String realmName) {
@@ -396,12 +390,12 @@ public final class SecurityDomain {
         }
     }
 
-    NameRewriter getPreRealmRewriter() {
-        return preRealmRewriter;
+    Function<Principal, Principal> getPreRealmRewriter() {
+        return preRealmPrincipalRewriter;
     }
 
-    String mapRealmName(final String name, final Principal principal, final Evidence evidence) {
-        String realm = realmMapper.getRealmMapping(name, principal, evidence);
+    String mapRealmName(final Principal principal, final Evidence evidence) {
+        String realm = realmMapper.getRealmMapping(principal, evidence);
         return realm != null ? realm : defaultRealmName;
     }
 
@@ -413,16 +407,12 @@ public final class SecurityDomain {
         return realmMapper;
     }
 
-    NameRewriter getPostRealmRewriter() {
-        return postRealmRewriter;
+    Function<Principal, Principal> getPostRealmRewriter() {
+        return postRealmPrincipalRewriter;
     }
 
     RoleMapper getRoleMapper() {
         return roleMapper;
-    }
-
-    PrincipalDecoder getPrincipalDecoder() {
-        return principalDecoder;
     }
 
     Map<String, RoleMapper> getCategoryRoleMappers() {
@@ -446,13 +436,13 @@ public final class SecurityDomain {
         private boolean built = false;
 
         private final HashMap<String, RealmBuilder> realms = new HashMap<>();
-        private NameRewriter preRealmRewriter = NameRewriter.IDENTITY_REWRITER;
-        private NameRewriter postRealmRewriter = NameRewriter.IDENTITY_REWRITER;
+        private Function<Principal, Principal> preRealmRewriter = Function.identity();
+        private Function<Principal, Principal> principalDecoder = Function.identity();
+        private Function<Principal, Principal> postRealmRewriter = Function.identity();
         private String defaultRealmName;
         private RealmMapper realmMapper = RealmMapper.DEFAULT_REALM_MAPPER;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
         private PermissionMapper permissionMapper = PermissionMapper.EMPTY_PERMISSION_MAPPER;
-        private PrincipalDecoder principalDecoder = PrincipalDecoder.DEFAULT;
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
         private UnaryOperator<SecurityIdentity> securityIdentityTransformer = UnaryOperator.identity();
         private Predicate<SecurityDomain> trustedSecurityDomain = domain -> false;
@@ -467,10 +457,19 @@ public final class SecurityDomain {
          * @return this builder
          */
         public Builder setPreRealmRewriter(NameRewriter rewriter) {
+            return setPreRealmRewriter(rewriter.asPrincipalRewriter());
+        }
+
+        /**
+         * Sets a pre-realm name rewriter, which rewrites the authentication name before a realm is selected.
+         *
+         * @param rewriter the name rewriter (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setPreRealmRewriter(final Function<Principal, Principal> rewriter) {
             Assert.checkNotNullParam("rewriter", rewriter);
             assertNotBuilt();
             this.preRealmRewriter = rewriter;
-
             return this;
         }
 
@@ -481,6 +480,16 @@ public final class SecurityDomain {
          * @return this builder
          */
         public Builder setPostRealmRewriter(NameRewriter rewriter) {
+            return setPostRealmRewriter(rewriter.asPrincipalRewriter());
+        }
+
+        /**
+         * Sets a post-realm name rewriter, which rewrites the authentication name after a realm is selected.
+         *
+         * @param rewriter the name rewriter (must not be {@code null})
+         * @return this builder
+         */
+        public Builder setPostRealmRewriter(Function<Principal, Principal> rewriter) {
             Assert.checkNotNullParam("rewriter", rewriter);
             assertNotBuilt();
             this.postRealmRewriter = rewriter;
@@ -540,7 +549,7 @@ public final class SecurityDomain {
         public Builder setPrincipalDecoder(PrincipalDecoder principalDecoder) {
             Assert.checkNotNullParam("principalDecoder", principalDecoder);
             assertNotBuilt();
-            this.principalDecoder = principalDecoder;
+            this.principalDecoder = principalDecoder.asPrincipalRewriter();
             return this;
         }
 
@@ -674,7 +683,7 @@ public final class SecurityDomain {
         private final String name;
         private final SecurityRealm realm;
         private RoleMapper roleMapper = RoleMapper.IDENTITY_ROLE_MAPPER;
-        private NameRewriter nameRewriter = NameRewriter.IDENTITY_REWRITER;
+        private Function<Principal, Principal> principalRewriter = Function.identity();
         private RoleDecoder roleDecoder = RoleDecoder.DEFAULT;
         private boolean built = false;
 
@@ -729,21 +738,26 @@ public final class SecurityDomain {
          *
          * @return the name rewriter (not {@code null})
          */
-        public NameRewriter getNameRewriter() {
-            return nameRewriter;
+        public Function<Principal, Principal> getPrincipalRewriter() {
+            return principalRewriter;
         }
 
         /**
          * Set the name rewriter.
          *
-         * @param nameRewriter the name rewriter (may not be {@code null})
+         * @param principalRewriter the name rewriter (may not be {@code null})
          */
-        public RealmBuilder setNameRewriter(final NameRewriter nameRewriter) {
-            Assert.checkNotNullParam("nameRewriter", nameRewriter);
+        public RealmBuilder setPrincipalRewriter(final Function<Principal, Principal> principalRewriter) {
+            Assert.checkNotNullParam("principalRewriter", principalRewriter);
             assertNotBuilt();
-            this.nameRewriter = nameRewriter;
+            this.principalRewriter = principalRewriter;
 
             return this;
+        }
+
+        @Deprecated
+        public RealmBuilder setNameRewriter(final NameRewriter nameRewriter) {
+            return setPrincipalRewriter(nameRewriter.asPrincipalRewriter());
         }
 
         /**
