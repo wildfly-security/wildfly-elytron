@@ -205,7 +205,7 @@
             <xsd:element name="allow-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="forbid-sasl-mechanisms" type="names-list-type" minOccurs="0"/>
             <xsd:element name="set-mechanism-properties" type="properties-type" minOccurs="0"/>
-            <xsd:element name="credentials" type="credentials-type" minOccurs="0"/>
+            <xsd:element name="credentials" type="client-credentials-type" minOccurs="0"/>
             <xsd:element name="set-authorization-name" type="name-type" minOccurs="0"/>
             <xsd:element ref="abstract-providers" minOccurs="0"/>
             <xsd:element ref="abstract-sasl-factories" minOccurs="0"/>
@@ -213,7 +213,7 @@
         <xsd:attribute name="name" type="xsd:string" use="required"/>
     </xsd:complexType>
 
-    <xsd:complexType name="credentials-type">
+    <xsd:complexType name="client-credentials-type">
         <xsd:choice minOccurs="0" maxOccurs="unbounded">
             <xsd:element name="key-store-reference" type="key-store-ref-type"/>
             <xsd:element name="credential-store-reference" type="credential-store-reference-type"/>
