@@ -38,6 +38,7 @@ import java.security.interfaces.RSAMultiPrimePrivateCrtKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECParameterSpec;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
@@ -46,11 +47,19 @@ import javax.crypto.interfaces.DHKey;
 import javax.crypto.interfaces.DHPrivateKey;
 import javax.crypto.interfaces.PBEKey;
 import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.Destroyable;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.password.Password;
+import org.wildfly.security.password.spec.DigestPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.SaltedPasswordAlgorithmSpec;
 
 /**
  * Key utility methods.
@@ -95,6 +104,10 @@ public final class KeyUtil {
             return paramSpecClass.cast(((ECKey) key).getParams());
         } else if (key instanceof DHKey && paramSpecClass.isAssignableFrom(DHParameterSpec.class)) {
             return paramSpecClass.cast(((DHKey) key).getParams());
+        } else if (key instanceof PBEKey && paramSpecClass.isAssignableFrom(PBEParameterSpec.class)) {
+            final PBEKey pbeKey = (PBEKey) key;
+            // TODO: we miss the IV here
+            return paramSpecClass.cast(new PBEParameterSpec(pbeKey.getSalt(), pbeKey.getIterationCount()));
         } else {
             return null;
         }
@@ -138,9 +151,60 @@ public final class KeyUtil {
             final DHParameterSpec dh1 = (DHParameterSpec) p1;
             final DHParameterSpec dh2 = (DHParameterSpec) p2;
             return dh1.getL() == dh2.getL() && Objects.equals(dh1.getP(), dh2.getP()) && Objects.equals(dh1.getG(), dh2.getG());
+        } else if (p1 instanceof PBEParameterSpec && p2 instanceof PBEParameterSpec) {
+            final PBEParameterSpec pbe1 = (PBEParameterSpec) p1;
+            final PBEParameterSpec pbe2 = (PBEParameterSpec) p2;
+            final AlgorithmParameterSpec param1 = pbe1.getParameterSpec();
+            final AlgorithmParameterSpec param2 = pbe2.getParameterSpec();
+            return pbe1.getIterationCount() == pbe2.getIterationCount() && Arrays.equals(pbe1.getSalt(), pbe2.getSalt()) && (param1 == null ? param2 == null : param2 != null && parametersEqual(param1, param2));
+        } else if (p1 instanceof IvParameterSpec && p2 instanceof IvParameterSpec) {
+            final IvParameterSpec iv1 = (IvParameterSpec) p1;
+            final IvParameterSpec iv2 = (IvParameterSpec) p2;
+            return Arrays.equals(iv1.getIV(), iv2.getIV());
         } else {
             // best effort
             return p1.equals(p2);
+        }
+    }
+
+    /**
+     * Attempt to get a stable hash code for the given parameter specification.  If a stable hash code cannot be acquired,
+     * the hash code of the class is returned, which results in correct (if non-optimal) behavior.  If the parameter
+     * is {@code null}, a hash code of zero is returned.
+     *
+     * @param param the parameter specification
+     * @return the hash code
+     */
+    public static int parametersHashCode(final AlgorithmParameterSpec param) {
+        if (param == null) {
+            return 0;
+        } else if (param instanceof DSAParams) {
+            final DSAParams dsaParams = (DSAParams) param;
+            return Objects.hash(dsaParams.getG(), dsaParams.getP(), dsaParams.getQ());
+        } else if (param instanceof ECParameterSpec) {
+            final ECParameterSpec ecSpec = (ECParameterSpec) param;
+            return ecSpec.getCofactor() * 31 + Objects.hash(ecSpec.getCurve(), ecSpec.getGenerator(), ecSpec.getOrder());
+        } else if (param instanceof DHParameterSpec) {
+            final DHParameterSpec dhSpec = (DHParameterSpec) param;
+            return dhSpec.getL() * 31 + Objects.hash(dhSpec.getP(), dhSpec.getG());
+        } else if (param instanceof PBEParameterSpec) {
+            final PBEParameterSpec pbeSpec = (PBEParameterSpec) param;
+            final AlgorithmParameterSpec parameterSpec = pbeSpec.getParameterSpec();
+            return (pbeSpec.getIterationCount() * 31 + Arrays.hashCode(pbeSpec.getSalt())) * 31 + parametersHashCode(parameterSpec);
+        } else if (param instanceof IvParameterSpec) {
+            return Arrays.hashCode(((IvParameterSpec) param).getIV());
+        } else if (param instanceof RSAParameterSpec
+                || param instanceof IteratedSaltedPasswordAlgorithmSpec
+                || param instanceof IteratedPasswordAlgorithmSpec
+                || param instanceof SaltedPasswordAlgorithmSpec
+                || param instanceof DigestPasswordAlgorithmSpec
+                || param instanceof MaskedPasswordAlgorithmSpec
+                || param instanceof OneTimePasswordAlgorithmSpec
+        ) {
+            // our types all have proper hash codes
+            return param.hashCode();
+        } else {
+            return param.getClass().hashCode();
         }
     }
 

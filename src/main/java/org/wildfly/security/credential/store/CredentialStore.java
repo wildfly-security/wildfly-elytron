@@ -23,10 +23,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 import java.util.Set;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.source.CredentialSource;
 
 /**
  * This class represents credential store functionality.
@@ -108,10 +111,22 @@ public class CredentialStore {
      * This procedure should set {@link CredentialStoreSpi#initialized} after successful initialization.
      *
      * @param attributes attributes to used to pass information to Credential Store service
+     * @param protectionParameter the protection parameter to use when accessing the store
+     * @throws CredentialStoreException if initialization fails due to any reason
+     */
+    public void initialize(Map<String, String> attributes, ProtectionParameter protectionParameter) throws CredentialStoreException {
+        spi.initialize(attributes, protectionParameter);
+    }
+
+    /**
+     * Initialize Credential Store service with given attributes.
+     * This procedure should set {@link CredentialStoreSpi#initialized} after successful initialization.
+     *
+     * @param attributes attributes to used to pass information to Credential Store service
      * @throws CredentialStoreException if initialization fails due to any reason
      */
     public void initialize(Map<String, String> attributes) throws CredentialStoreException {
-        spi.initialize(attributes);
+        initialize(attributes, null);
     }
 
     /**
@@ -154,8 +169,23 @@ public class CredentialStore {
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
     public <C extends Credential> void store(String credentialAlias, C credential) throws CredentialStoreException, UnsupportedCredentialTypeException {
+        store(credentialAlias, credential, null);
+    }
+
+    /**
+     * Store credential to the store under the given alias. If given alias already contains specific credential type type the credential
+     * replaces older one. <em>Note:</em> {@link CredentialStoreSpi} supports storing of multiple entries (credential types) per alias.
+     * Each must be of different credential type.
+     * @param credentialAlias to store the credential to the store
+     * @param credential instance of {@link Credential} to store
+     * @param protectionParameter the protection parameter to use, or {@code null} for none
+     * @param <C> the class of type to which should be credential casted
+     * @throws CredentialStoreException when the credential cannot be stored
+     * @throws UnsupportedCredentialTypeException when the credentialType is not supported
+     */
+    public <C extends Credential> void store(String credentialAlias, C credential, ProtectionParameter protectionParameter) throws CredentialStoreException, UnsupportedCredentialTypeException {
         if (isModifiable()) {
-            spi.store(credentialAlias, credential);
+            spi.store(credentialAlias, credential, protectionParameter);
         } else {
             throw log.nonModifiableCredentialStore("store");
         }
@@ -171,20 +201,89 @@ public class CredentialStore {
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
     public <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType) throws CredentialStoreException, UnsupportedCredentialTypeException {
-        return spi.retrieve(credentialAlias, credentialType);
+        return retrieve(credentialAlias, credentialType, null, null, null);
     }
 
     /**
-     * Remove the credentialType with from given alias from the store.
-     * @param credentialAlias alias to remove
-     * @param credentialType - credential type to be removed from under the credentialAlias from the store
-     * @param <C> the type of credential which will be removed
-     * @throws CredentialStoreException - if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be removed
-     * @throws UnsupportedCredentialTypeException when the credentialType is not supported
+     * Retrieve credential stored in the store under the key and of the credential type.
+     *
+     * @param credentialAlias to find the credential in the store
+     * @param credentialType credential type to retrieve from under the credentialAlias from the store
+     * @param credentialAlgorithm the credential algorithm to match, or {@code null} to match any
+     * @param <C> the class of type to which should be credential casted
+     * @return instance of {@link Credential} stored in the store
+     * @throws CredentialStoreException if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be retrieved
      */
-    public <C extends Credential> void remove(String credentialAlias, Class<C> credentialType) throws CredentialStoreException, UnsupportedCredentialTypeException {
+    public <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType, String credentialAlgorithm) throws CredentialStoreException {
+        return retrieve(credentialAlias, credentialType, credentialAlgorithm, null, null);
+    }
+
+    /**
+     * Retrieve credential stored in the store under the key and of the credential type.
+     *
+     * @param credentialAlias to find the credential in the store
+     * @param credentialType credential type to retrieve from under the credentialAlias from the store
+     * @param credentialAlgorithm the credential algorithm to match, or {@code null} to match any
+     * @param parameterSpec the parameter specification to match, or {@code null} to match any
+     * @param <C> the class of type to which should be credential casted
+     * @return instance of {@link Credential} stored in the store
+     * @throws CredentialStoreException if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be retrieved
+     */
+    public <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec) throws CredentialStoreException {
+        return retrieve(credentialAlias, credentialType, credentialAlgorithm, parameterSpec, null);
+    }
+
+    /**
+     * Retrieve credential stored in the store under the key and of the credential type.
+     *
+     * @param credentialAlias to find the credential in the store
+     * @param credentialType credential type to retrieve from under the credentialAlias from the store
+     * @param credentialAlgorithm the credential algorithm to match, or {@code null} to match any
+     * @param parameterSpec the parameter specification to match, or {@code null} to match any
+     * @param protectionParameter the protection parameter to use, or {@code null} to use none
+     * @param <C> the class of type to which should be credential casted
+     * @return instance of {@link Credential} stored in the store
+     * @throws CredentialStoreException if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be retrieved
+     */
+    public <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec, ProtectionParameter protectionParameter) throws CredentialStoreException {
+        return spi.retrieve(credentialAlias, credentialType, credentialAlgorithm, parameterSpec, protectionParameter);
+    }
+
+    /**
+     * Remove the credentialType with from given alias matching the given criteria from the store.
+     *
+     * @param credentialAlias alias to remove credential(s) from
+     * @param credentialType credential type to match (must not be {@code null})
+     * @throws CredentialStoreException if credential removal fails
+     */
+    public void remove(String credentialAlias, Class<? extends Credential> credentialType) throws CredentialStoreException {
+        remove(credentialAlias, credentialType, null, null);
+    }
+
+    /**
+     * Remove the credentialType with from given alias matching the given criteria from the store.
+     *
+     * @param credentialAlias alias to remove credential(s) from
+     * @param credentialType credential type to match (must not be {@code null})
+     * @param credentialAlgorithm the algorithm name to match, or {@code null} to match any
+     * @throws CredentialStoreException if credential removal fails
+     */
+    public void remove(String credentialAlias, Class<? extends Credential> credentialType, String credentialAlgorithm) throws CredentialStoreException {
+        remove(credentialAlias, credentialType, credentialAlgorithm, null);
+    }
+
+    /**
+     * Remove the credentialType with from given alias matching the given criteria from the store.
+     *
+     * @param credentialAlias alias to remove credential(s) from
+     * @param credentialType credential type to match (must not be {@code null})
+     * @param credentialAlgorithm the algorithm name to match, or {@code null} to match any
+     * @param parameterSpec the parameters to match, or {@code null} to match any
+     * @throws CredentialStoreException if credential removal fails
+     */
+    public void remove(String credentialAlias, Class<? extends Credential> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec) throws CredentialStoreException {
         if (isModifiable()) {
-            spi.remove(credentialAlias, credentialType);
+            spi.remove(credentialAlias, credentialType, credentialAlgorithm, parameterSpec);
         } else {
             throw log.nonModifiableCredentialStore("remove");
         }
@@ -216,4 +315,36 @@ public class CredentialStore {
     public String getType() {
         return type;
     }
+
+    /**
+     * The protection parameter to use when accessing a credential store or entry.
+     */
+    public interface ProtectionParameter {
+    }
+
+    /**
+     * A protection parameter which uses a credential source to acquire a credential to use.
+     */
+    public static final class CredentialSourceProtectionParameter implements ProtectionParameter {
+        private final CredentialSource credentialSource;
+
+        /**
+         * Construct a new instance.
+         *
+         * @param credentialSource the credential source to use (must not be {@code null})
+         */
+        public CredentialSourceProtectionParameter(final CredentialSource credentialSource) {
+            Assert.checkNotNullParam("credentialSource", credentialSource);
+            this.credentialSource = credentialSource;
+        }
+
+        /**
+         * Get the credential source.
+         *
+         * @return the credential source (not {@code null})
+         */
+        public CredentialSource getCredentialSource() {
+            return credentialSource;
+        }
+   }
 }

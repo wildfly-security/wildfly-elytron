@@ -28,7 +28,9 @@ import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.XMLLocation;
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
+import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 
 /**
  * Factory which can create instance of {@link CredentialStore} from supplied information.
@@ -43,12 +45,13 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
     private final Map<String, String> attributes;
     private final Provider provider;
     private final XMLLocation location;
+    private final ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource;
 
-    private CredentialStoreFactory(String name, String type, final Map<String, String> attributes, final Provider provider, String providerName, XMLLocation location) {
+    private CredentialStoreFactory(String name, String type, final Map<String, String> attributes, final Provider provider, String providerName, XMLLocation location, ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier) {
         Assert.checkNotNullParam("name", name);
         Assert.checkNotNullParam("attributes", attributes);
         this.name = name;
-        this.type = type;
+        this.type = type == null ? KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE : type;
         this.attributes = attributes;
         if (provider != null) {
             this.provider = provider;
@@ -56,6 +59,7 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
             this.provider = Security.getProvider(providerName);
         }
         this.location = location;
+        this.credentialSource = supplier == null ? null : supplier;
     }
 
     /**
@@ -66,8 +70,8 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
      * @param attributes to initialize the {@code CredentialStore}
      * @param providerName to load the instance from
      */
-    CredentialStoreFactory(String name, String type, Map<String, String> attributes, String providerName, XMLLocation location) {
-        this(name, type, attributes, null, providerName, location);
+    CredentialStoreFactory(String name, String type, Map<String, String> attributes, String providerName, XMLLocation location, ExceptionSupplier<CredentialSource, ConfigXMLParseException> supplier) {
+        this(name, type, attributes, null, providerName, location, supplier);
     }
 
     /**
@@ -85,7 +89,7 @@ final class CredentialStoreFactory implements ExceptionSupplier<CredentialStore,
             } else {
                 credentialStore = CredentialStore.getInstance(type);
             }
-            credentialStore.initialize(attributes);
+            credentialStore.initialize(attributes, credentialSource == null ? null : new CredentialStore.CredentialSourceProtectionParameter(credentialSource.get()));
         } catch (GeneralSecurityException e) {
             throw xmlLog.xmlFailedToCreateCredentialStore(location, e);
         }

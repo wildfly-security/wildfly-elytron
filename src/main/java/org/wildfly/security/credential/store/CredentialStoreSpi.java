@@ -17,19 +17,11 @@
  */
 package org.wildfly.security.credential.store;
 
-import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
 
-import org.wildfly.common.Assert;
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.PasswordCredential;
-import org.wildfly.security.credential.store.impl.CmdPasswordStore;
-import org.wildfly.security.credential.store.impl.ExecPasswordStore;
-import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
-import org.wildfly.security.password.interfaces.ClearPassword;
-import org.wildfly.security.password.spec.ClearPasswordSpec;
 
 /**
  * SPI for credential store provider to implement.
@@ -39,15 +31,9 @@ import org.wildfly.security.password.spec.ClearPasswordSpec;
 public abstract class CredentialStoreSpi {
 
     /**
-     * Field indicating successful initialization ({@link #initialize(Map)}. Each subclass should set this field.
+     * Field indicating successful initialization ({@link #initialize(Map, CredentialStore.ProtectionParameter)}. Each subclass should set this field.
      */
     protected boolean initialized = false;
-
-    /**
-     * Custom CS providers will use this to denote type of provider to be loaded.
-     * Syntax: {@code {PROVIDER@myCSProviderType}}
-     */
-    public static final String CUSTOM_PROVIDER = "PROVIDER";
 
     /**
      * Construct a new instance of this SPI.
@@ -60,9 +46,10 @@ public abstract class CredentialStoreSpi {
      * successful initialization.
      *
      * @param attributes attributes to used to pass information to credential store service
+     * @param protectionParameter the store-wide protection parameter to apply, or {@code null} for none
      * @throws CredentialStoreException if initialization fails due to any reason
      */
-    public abstract void initialize(Map<String, String> attributes) throws CredentialStoreException;
+    public abstract void initialize(Map<String, String> attributes, CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException;
 
     /**
      * Checks whether underlying credential store service is initialized.
@@ -81,51 +68,58 @@ public abstract class CredentialStoreSpi {
     public abstract boolean isModifiable();
 
     /**
-     * Check whether credential store service has an entry associated with the given credential alias of specified credential type.
+     * Check whether credential store service has an entry associated with the given credential alias of specified
+     * credential type.  The default implementation simply attempts to retrieve the credential without a protection
+     * parameter, and returns {@code true} if any credential was returned.  Credential stores which use a protection
+     * parameter should override this method.
+     *
      * @param credentialAlias key to check existence
-     * @param credentialType to check existence in the credential store
-     * @param <C> the class of type to which should be credential casted
+     * @param credentialType to class of credential to look for
      * @return {@code true} in case key exist in store otherwise {@code false}
      * @throws CredentialStoreException when there is a problem with credential store
-     * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
-    public abstract <C extends Credential> boolean exists(String credentialAlias, Class<C> credentialType)
-            throws CredentialStoreException, UnsupportedCredentialTypeException;
+    public boolean exists(String credentialAlias, Class<? extends Credential> credentialType) throws CredentialStoreException {
+        return retrieve(credentialAlias, credentialType, null, null, null) != null;
+    }
 
     /**
      * Store credential to the credential store service under the given alias. If given alias already contains specific credential type type the credential
      * replaces older one. <em>Note:</em> {@link CredentialStoreSpi} supports storing of multiple entries (credential types) per alias.
-     * Each must be of different credential type.
+     * Each must be of different credential type, or differing algorithm, or differing parameters.
+     *
      * @param credentialAlias to store the credential to the store
      * @param credential instance of {@link Credential} to store
-     * @throws CredentialStoreException when the credential cannot be stored.
+     * @param protectionParameter the protection parameter to apply to the entry, or {@code null} for none
+     * @throws CredentialStoreException when the credential cannot be stored
      * @throws UnsupportedCredentialTypeException when the credentialType is not supported
      */
-    public abstract  <C extends Credential> void store(String credentialAlias, C credential)
+    public abstract void store(String credentialAlias, Credential credential, CredentialStore.ProtectionParameter protectionParameter)
             throws CredentialStoreException, UnsupportedCredentialTypeException;
 
     /**
-     * Retrieve credential stored in the store under the key and of the credential type
+     * Retrieve the credential stored in the store under the given alias, matching the given criteria.
+     *
      * @param credentialAlias to find the credential in the store
-     * @param credentialType - credential type to retrieve from under the credentialAlias from the store
-     * @param <C> the class of type to which should be credential casted
-     * @return instance of {@link Credential} stored in the store
-     * @throws CredentialStoreException - if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be retrieved
-     * @throws UnsupportedCredentialTypeException when the credentialType is not supported
+     * @param credentialType the credential type class (must not be {@code null})
+     * @param credentialAlgorithm the credential algorithm to match, or {@code null} to match any algorithm
+     * @param parameterSpec the parameter specification to match, or {@code null} to match any parameters
+     * @param protectionParameter the protection parameter to use to access the entry, or {@code null} for none
+     * @param <C> the credential type
+     * @return instance of {@link Credential} stored in the store, or {@code null} if the credential is not found
+     * @throws CredentialStoreException if the credential cannot be retrieved due to an error
      */
-    public abstract <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType)
-            throws CredentialStoreException, UnsupportedCredentialTypeException;
+    public abstract <C extends Credential> C retrieve(String credentialAlias, Class<C> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec, CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException;
 
     /**
      * Remove the credentialType with from given alias from the credential store service.
+     *
      * @param credentialAlias alias to remove
-     * @param credentialType - credential type to be removed from under the credentialAlias from the credential store service
-     * @param <C> the type of credential which will be removed
-     * @throws CredentialStoreException - if credentialAlias credentialType combination doesn't exist or credentialAlias cannot be removed
-     * @throws UnsupportedCredentialTypeException when the credentialType is not supported
+     * @param credentialType the credential type class to match (must not be {@code null})
+     * @param credentialAlgorithm the credential algorithm to match, or {@code null} to match all algorithms
+     * @param parameterSpec the credential parameters to match, or {@code null} to match all parameters
+     * @throws CredentialStoreException if the credential cannot be removed due to an error
      */
-    public abstract <C extends Credential> void remove(String credentialAlias, Class<C> credentialType)
-            throws CredentialStoreException, UnsupportedCredentialTypeException;
+    public abstract void remove(String credentialAlias, Class<? extends Credential> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec) throws CredentialStoreException;
 
     /**
      * Returns credential aliases stored in this store as {@code Set<String>}.
@@ -139,64 +133,4 @@ public abstract class CredentialStoreSpi {
     public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
         throw new UnsupportedOperationException();
     }
-
-    /**
-     * Resolves master password based on {@code commandSpec} using {@code attributes}
-     * If this method is not able to detect provider based on {@code commandSpec} it simply wraps {@code commandSpec} as
-     * password and generates {@link PasswordCredential} based on {@link ClearPasswordSpec}.
-     * @param commandSpec password command specification
-     * @param credentialType type of credential returned
-     * @param attributes to use while resolving credential (can be {@code null})
-     * @param <C> the type of credential which will be returned
-     * @return resolved credential of {@code credentialType}
-     * @throws CredentialStoreException if anything goes wrong
-     */
-    protected <C extends Credential> C resolveMasterCredential(String commandSpec, Class<C> credentialType, Map<String, String> attributes)
-            throws CredentialStoreException {
-        Assert.assertNotNull(commandSpec);
-        Assert.assertNotNull(credentialType);
-        final SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(CredentialStorePermission.LOAD_EXTERNAL_STORE_PASSWORD);
-        }
-        String trimmedCommandSpec = commandSpec.trim();
-        if (trimmedCommandSpec.startsWith("{" + ExecPasswordStore.SUPPORTED_CMD_TYPE)) {
-            try {
-                CredentialStore cs = CredentialStore.getInstance(ExecPasswordStore.EXEC_PASSWORD_STORE);
-                return cs.retrieve(commandSpec, credentialType);
-            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
-                throw new CredentialStoreException(e);
-            }
-        } else if (trimmedCommandSpec.startsWith("{" + CmdPasswordStore.SUPPORTED_CMD_TYPE)) {
-            try {
-                CredentialStore cs = CredentialStore.getInstance(CmdPasswordStore.CMD_PASSWORD_STORE);
-                return cs.retrieve(commandSpec, credentialType);
-            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
-                throw new CredentialStoreException(e);
-            }
-        } else if (trimmedCommandSpec.startsWith(MaskedPasswordStore.PASS_MASK_PREFIX)) {
-            try {
-                CredentialStore cs = CredentialStore.getInstance(MaskedPasswordStore.MASKED_PASSWORD_STORE);
-                cs.initialize(attributes);
-                return cs.retrieve(commandSpec, credentialType);
-            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
-                throw new CredentialStoreException(e);
-            }
-        } else if (trimmedCommandSpec.startsWith("{" + CUSTOM_PROVIDER)) {
-            try {
-                StringTokenizer tokenizer = new StringTokenizer(commandSpec, "{}");
-                String providerSpec = tokenizer.nextToken();
-                StringTokenizer providerTokenizer = new StringTokenizer(providerSpec, "@");
-                String providerType = providerTokenizer.nextToken();
-                CredentialStore execCS = CredentialStore.getInstance(providerType);
-                execCS.initialize(attributes);
-                return execCS.retrieve(commandSpec, credentialType);
-            } catch (NoSuchAlgorithmException | UnsupportedCredentialTypeException e) {
-                throw new CredentialStoreException(e);
-            }
-        } else {
-            return credentialType.cast(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, commandSpec.toCharArray())));
-        }
-    }
-
 }

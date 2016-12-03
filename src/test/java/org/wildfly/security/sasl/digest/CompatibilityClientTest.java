@@ -42,9 +42,12 @@ import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.ClientUtils;
 import org.wildfly.security.auth.client.MatchRule;
+import org.wildfly.security.auth.server.IdentityCredentials;
+import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.KeystorePasswordStoreBuilder;
-import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
+import org.wildfly.security.credential.store.CredentialStoreBuilder;
+import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.test.BaseTestCase;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.ByteIterator;
@@ -88,9 +91,9 @@ public class CompatibilityClientTest extends BaseTestCase {
     @BeforeClass
     public static void setupCredentialStore() throws Exception {
         // setup credential store that need to be complete before a test starts
-        KeystorePasswordStoreBuilder.get().setKeyStoreFile(CS_FILE_NAME)
-                .setKeyStorePassword("secret_store_1", "secret_key_1")
-                .addSecret("chris_pwd_alias", "secret")
+        CredentialStoreBuilder.get().setKeyStoreFile(CS_FILE_NAME)
+                .setKeyStorePassword("secret_store_1")
+                .addPassword("chris_pwd_alias", "secret")
                 .build();
     }
 
@@ -950,14 +953,14 @@ public class CompatibilityClientTest extends BaseTestCase {
     private CallbackHandler createCredentialStoreBasedClientCallbackHandler(String username, String realm, String storeName, String alias, String storeFileName, String storePassword, String keyPassword)
             throws Exception {
         final HashMap<String, String> csAttributes = new HashMap<>();
-        csAttributes.put(KeystorePasswordStore.NAME, storeName);
-        csAttributes.put(KeystorePasswordStore.STORE_FILE, storeFileName);
-        csAttributes.put(KeystorePasswordStore.STORE_PASSWORD, storePassword);
-        csAttributes.put(KeystorePasswordStore.KEY_PASSWORD, keyPassword);
+        csAttributes.put("location", storeFileName);
+        csAttributes.put("keyStoreType", "JCEKS");
         final CredentialStore cs;
         try {
-            cs = CredentialStore.getInstance(KeystorePasswordStore.KEY_STORE_PASSWORD_STORE);
-            cs.initialize(csAttributes);
+            cs = CredentialStore.getInstance(KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE);
+            cs.initialize(csAttributes, new CredentialStore.CredentialSourceProtectionParameter(
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, storePassword.toCharArray())))
+            ));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

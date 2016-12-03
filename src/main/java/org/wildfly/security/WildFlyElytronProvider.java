@@ -74,6 +74,8 @@ import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPasswor
 import static org.wildfly.security.password.interfaces.SaltedSimpleDigestPassword.ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_1;
 import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_256;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_384;
+import static org.wildfly.security.password.interfaces.ScramDigestPassword.ALGORITHM_SCRAM_SHA_512;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD2;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_MD5;
 import static org.wildfly.security.password.interfaces.SimpleDigestPassword.ALGORITHM_SIMPLE_DIGEST_SHA_1;
@@ -88,6 +90,7 @@ import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGO
 import static org.wildfly.security.password.interfaces.UnixSHACryptPassword.ALGORITHM_CRYPT_SHA_512;
 
 import java.lang.reflect.Constructor;
+import java.security.AlgorithmParameters;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.util.Collections;
@@ -103,15 +106,19 @@ import javax.security.sasl.SaslServerFactory;
 import org.kohsuke.MetaInfServices;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.credential.store.CredentialStore;
-import org.wildfly.security.credential.store.impl.CmdPasswordStore;
-import org.wildfly.security.credential.store.impl.ExecPasswordStore;
-import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
-import org.wildfly.security.credential.store.impl.MaskedPasswordStore;
+import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
+import org.wildfly.security.credential.store.impl.MapCredentialStore;
+import org.wildfly.security.credential.store.impl.VaultCredentialStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
+import org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl;
+import org.wildfly.security.password.impl.IteratedSaltedPasswordAlgorithmParametersSpiImpl;
+import org.wildfly.security.password.impl.MaskedPasswordAlgorithmParametersSpiImpl;
+import org.wildfly.security.password.impl.OneTimePasswordAlgorithmParametersSpiImpl;
 import org.wildfly.security.password.impl.PasswordFactorySpiImpl;
+import org.wildfly.security.password.impl.SaltedPasswordAlgorithmParametersSpiImpl;
 import org.wildfly.security.sasl.WildFlySasl;
 
 
@@ -134,6 +141,8 @@ public class WildFlyElytronProvider extends Provider {
 
     private static final String PASSWORD_FACTORY_TYPE = PasswordFactory.class.getSimpleName();
 
+    private static final String ALG_PARAMS_TYPE = AlgorithmParameters.class.getSimpleName();
+
     /**
      * Default constructor for this security provider.
      */
@@ -145,6 +154,68 @@ public class WildFlyElytronProvider extends Provider {
         putPasswordImplementations();
         putSaslMechanismImplementations();
         putCredentialStoreProviderImplementations();
+        putAlgorithmParametersImplementations();
+    }
+
+    private void putAlgorithmParametersImplementations() {
+        final List<String> emptyList = Collections.emptyList();
+        final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_CRYPT_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SUN_CRYPT_MD5, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SUN_CRYPT_MD5_BARE_SALT, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_CRYPT_SHA_256, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_CRYPT_SHA_512, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_MD5, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_256, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_DIGEST_SHA_512, DigestPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_1, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_256, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_384, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_PASSWORD_SALT_DIGEST_SHA_512, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_1, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_256, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_384, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SALT_PASSWORD_DIGEST_SHA_512, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_CRYPT_DES, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_BSD_CRYPT_DES, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_BCRYPT, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SCRAM_SHA_1, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SCRAM_SHA_256, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SCRAM_SHA_384, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SCRAM_SHA_512, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_MD5, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_OTP_SHA1, OneTimePasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_DES, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_DES_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_3DES, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_MD5_3DES_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_DES_EDE, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_DES_EDE_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC2_40, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC2_40_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC2_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC2_128_CBC_PKCS5, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC4_40, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC4_40_ECB, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC4_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_SHA1_RC4_128_ECB, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA1_AES_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA224_AES_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA384_AES_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA512_AES_128, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA1_AES_256, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA224_AES_256, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA384_AES_256, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_HMAC_SHA512_AES_256, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_PBKDF_HMAC_SHA1, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_PBKDF_HMAC_SHA224, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_PBKDF_HMAC_SHA256, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_PBKDF_HMAC_SHA384, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_MASKED_PBKDF_HMAC_SHA512, MaskedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
     }
 
     private void putKeyStoreImplementations() {
@@ -201,6 +272,8 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_BCRYPT, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_256, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_384, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_SCRAM_SHA_512, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_MD5, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_OTP_SHA1, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, PASSWORD_FACTORY_TYPE, ALGORITHM_MASKED_MD5_DES, PasswordFactorySpiImpl.class.getName(), emptyList, emptyMap));
@@ -280,10 +353,10 @@ public class WildFlyElytronProvider extends Provider {
     }
 
     private ExceptionSupplier<Object, Exception> toSupplier(final Class<?> clazz) {
-        Constructor[] constructors = clazz.getDeclaredConstructors();
+        Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         Constructor<?> found = null;
-        for (Constructor current : constructors) {
-            Class[] parameterTypes = current.getParameterTypes();
+        for (Constructor<?> current : constructors) {
+            Class<?>[] parameterTypes = current.getParameterTypes();
             if (parameterTypes.length == 1 && parameterTypes[0].isAssignableFrom(Provider.class)) {
                 found = current;
                 break;
@@ -301,10 +374,9 @@ public class WildFlyElytronProvider extends Provider {
     private void putCredentialStoreProviderImplementations() {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, KeystorePasswordStore.KEY_STORE_PASSWORD_STORE, KeystorePasswordStore.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, ExecPasswordStore.EXEC_PASSWORD_STORE, ExecPasswordStore.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, CmdPasswordStore.CMD_PASSWORD_STORE, CmdPasswordStore.class.getName(), emptyList, emptyMap));
-        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, MaskedPasswordStore.MASKED_PASSWORD_STORE, MaskedPasswordStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE, KeyStoreCredentialStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, VaultCredentialStore.VAULT_CREDENTIAL_STORE, VaultCredentialStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, MapCredentialStore.MAP_CREDENTIAL_STORE, MapCredentialStore.class.getName(), emptyList, emptyMap));
     }
 
     static class SupplierService extends Service {
