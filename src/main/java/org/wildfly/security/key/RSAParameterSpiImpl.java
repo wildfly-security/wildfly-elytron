@@ -16,38 +16,36 @@
  * limitations under the License.
  */
 
-package org.wildfly.security.password.impl;
+package org.wildfly.security.key;
 
 import java.security.AlgorithmParametersSpi;
 
 import org.wildfly.security.asn1.ASN1Decoder;
 import org.wildfly.security.asn1.ASN1Encoder;
-import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.util.AbstractAlgorithmParametersSpiImpl;
 
 /**
- * An implementation of the {@link AlgorithmParametersSpi} SPI, in order to support encoding and decoding of
- * password algorithm parameters.
+ * An implementation of the {@link AlgorithmParametersSpi} SPI for RSA keys, because the JDK does not have one.
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class IteratedPasswordAlgorithmParametersSpiImpl extends AbstractAlgorithmParametersSpiImpl<IteratedPasswordAlgorithmSpec> {
+public final class RSAParameterSpiImpl extends AbstractAlgorithmParametersSpiImpl<RSAParameterSpec> {
 
     /**
      * Construct a new instance.
      */
-    public IteratedPasswordAlgorithmParametersSpiImpl() {
+    public RSAParameterSpiImpl() {
     }
 
-    protected Class<IteratedPasswordAlgorithmSpec> getParameterType() {
-        return IteratedPasswordAlgorithmSpec.class;
+    protected Class<RSAParameterSpec> getParameterType() {
+        return RSAParameterSpec.class;
     }
 
-    protected void engineEncode(final ASN1Encoder encoder, final IteratedPasswordAlgorithmSpec parameterSpec) {
-        encoder.encodeInteger(parameterSpec.getIterationCount());
+    protected void engineEncode(final ASN1Encoder encoder, final RSAParameterSpec parameterSpec) {
+        encoder.encodeInteger(parameterSpec.getModulus());
     }
 
-    protected IteratedPasswordAlgorithmSpec engineDecode(final ASN1Decoder decoder) {
-        return new IteratedPasswordAlgorithmSpec(decoder.decodeInteger().intValue());
+    protected RSAParameterSpec engineDecode(final ASN1Decoder decoder) {
+        return new RSAParameterSpec(decoder.decodeInteger());
     }
 }

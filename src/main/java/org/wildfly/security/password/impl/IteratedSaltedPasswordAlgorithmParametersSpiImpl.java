@@ -20,9 +20,10 @@ package org.wildfly.security.password.impl;
 
 import java.security.AlgorithmParametersSpi;
 
-import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.asn1.ASN1Decoder;
+import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.util.AbstractAlgorithmParametersSpiImpl;
 
 /**
  * An implementation of the {@link AlgorithmParametersSpi} SPI, in order to support encoding and decoding of
@@ -42,14 +43,14 @@ public final class IteratedSaltedPasswordAlgorithmParametersSpiImpl extends Abst
         return IteratedSaltedPasswordAlgorithmSpec.class;
     }
 
-    protected void engineEncode(final DEREncoder encoder, final IteratedSaltedPasswordAlgorithmSpec parameterSpec) {
+    protected void engineEncode(final ASN1Encoder encoder, final IteratedSaltedPasswordAlgorithmSpec parameterSpec) {
         encoder.startSequence();
         encoder.encodeInteger(parameterSpec.getIterationCount());
         encoder.encodeOctetString(parameterSpec.getSalt());
         encoder.endSequence();
     }
 
-    protected IteratedSaltedPasswordAlgorithmSpec engineDecode(final DERDecoder decoder) {
+    protected IteratedSaltedPasswordAlgorithmSpec engineDecode(final ASN1Decoder decoder) {
         decoder.startSequence();
         final int iterationCount = decoder.decodeInteger().intValue();
         final byte[] salt = decoder.decodeOctetString();

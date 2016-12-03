@@ -111,6 +111,7 @@ import org.wildfly.security.credential.store.impl.MapCredentialStore;
 import org.wildfly.security.credential.store.impl.VaultCredentialStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
+import org.wildfly.security.key.RSAParameterSpiImpl;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl;
@@ -160,6 +161,8 @@ public class WildFlyElytronProvider extends Provider {
     private void putAlgorithmParametersImplementations() {
         final List<String> emptyList = Collections.emptyList();
         final Map<String, String> emptyMap = Collections.emptyMap();
+
+        putService(new Service(this, ALG_PARAMS_TYPE, "RSA", RSAParameterSpiImpl.class.getName(), emptyList, emptyMap));
 
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_CRYPT_MD5, SaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));
         putService(new Service(this, ALG_PARAMS_TYPE, ALGORITHM_SUN_CRYPT_MD5, IteratedSaltedPasswordAlgorithmParametersSpiImpl.class.getName(), emptyList, emptyMap));

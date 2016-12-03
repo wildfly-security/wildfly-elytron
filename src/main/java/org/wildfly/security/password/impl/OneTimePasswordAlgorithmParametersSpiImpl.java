@@ -20,9 +20,10 @@ package org.wildfly.security.password.impl;
 
 import java.security.AlgorithmParametersSpi;
 
-import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.asn1.ASN1Decoder;
+import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.password.spec.OneTimePasswordAlgorithmSpec;
+import org.wildfly.security.util.AbstractAlgorithmParametersSpiImpl;
 
 /**
  * An implementation of the {@link AlgorithmParametersSpi} SPI, in order to support encoding and decoding of
@@ -42,7 +43,7 @@ public final class OneTimePasswordAlgorithmParametersSpiImpl extends AbstractAlg
         return OneTimePasswordAlgorithmSpec.class;
     }
 
-    protected void engineEncode(final DEREncoder encoder, final OneTimePasswordAlgorithmSpec parameterSpec) {
+    protected void engineEncode(final ASN1Encoder encoder, final OneTimePasswordAlgorithmSpec parameterSpec) {
         encoder.startSequence();
         encoder.encodeOctetString(parameterSpec.getAlgorithm());
         encoder.encodeOctetString(parameterSpec.getSeed());
@@ -50,7 +51,7 @@ public final class OneTimePasswordAlgorithmParametersSpiImpl extends AbstractAlg
         encoder.endSequence();
     }
 
-    protected OneTimePasswordAlgorithmSpec engineDecode(final DERDecoder decoder) {
+    protected OneTimePasswordAlgorithmSpec engineDecode(final ASN1Decoder decoder) {
         decoder.startSequence();
         final String algorithm = decoder.decodeOctetStringAsString();
         final byte[] seed = decoder.decodeOctetString();

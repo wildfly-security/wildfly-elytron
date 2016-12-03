@@ -20,9 +20,10 @@ package org.wildfly.security.password.impl;
 
 import java.security.AlgorithmParametersSpi;
 
-import org.wildfly.security.asn1.DERDecoder;
-import org.wildfly.security.asn1.DEREncoder;
+import org.wildfly.security.asn1.ASN1Decoder;
+import org.wildfly.security.asn1.ASN1Encoder;
 import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
+import org.wildfly.security.util.AbstractAlgorithmParametersSpiImpl;
 
 /**
  * An implementation of the {@link AlgorithmParametersSpi} SPI, in order to support encoding and decoding of
@@ -42,7 +43,7 @@ public final class MaskedPasswordAlgorithmParametersSpiImpl extends AbstractAlgo
         return MaskedPasswordAlgorithmSpec.class;
     }
 
-    protected void engineEncode(final DEREncoder encoder, final MaskedPasswordAlgorithmSpec parameterSpec) {
+    protected void engineEncode(final ASN1Encoder encoder, final MaskedPasswordAlgorithmSpec parameterSpec) {
         encoder.startSequence();
         encoder.encodeOctetString(new String(parameterSpec.getInitialKeyMaterial()));
         encoder.encodeInteger(parameterSpec.getIterationCount());
@@ -50,7 +51,7 @@ public final class MaskedPasswordAlgorithmParametersSpiImpl extends AbstractAlgo
         encoder.endSequence();
     }
 
-    protected MaskedPasswordAlgorithmSpec engineDecode(final DERDecoder decoder) {
+    protected MaskedPasswordAlgorithmSpec engineDecode(final ASN1Decoder decoder) {
         decoder.startSequence();
         final char[] initialKeyMaterial = decoder.decodeOctetStringAsString().toCharArray();
         final int iterationCount = decoder.decodeInteger().intValue();
