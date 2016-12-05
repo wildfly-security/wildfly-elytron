@@ -141,7 +141,7 @@ public interface Credential extends Cloneable {
      * @return the result of the function, or {@code null} if the credential is not of the given type
      */
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
-        return credentialType.isInstance(this) && algorithmName == null && (parameterSpec == null || impliesParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
+        return credentialType.isInstance(this) && algorithmName == null && parameterSpec == null ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**
@@ -172,53 +172,6 @@ public interface Credential extends Cloneable {
     }
 
     /**
-     * Determine whether this credential instance supports the given algorithm parameter type.
-     *
-     * @param paramSpecClass the parameter specification class (must not be {@code null})
-     * @return {@code true} if the parameter type is supported, {@code false} otherwise
-     */
-    default boolean supportsParameters(Class<? extends AlgorithmParameterSpec> paramSpecClass) {
-        Assert.checkNotNullParam("paramSpecClass", paramSpecClass);
-        return false;
-    }
-
-    /**
-     * Get the algorithm parameters of the given type from this credential.
-     *
-     * @param paramSpecClass the parameter specification class (must not be {@code null})
-     * @param <P> the parameter specification type
-     * @return the parameter specification, or {@code null} if no parameters are present or available or the given type was not supported by this credential
-     */
-    default <P extends AlgorithmParameterSpec> P getParameters(Class<P> paramSpecClass) {
-        Assert.checkNotNullParam("paramSpecClass", paramSpecClass);
-        return null;
-    }
-
-    /**
-     * Determine whether this credential implies the given parameters.  The default implementation returns
-     * {@code false} always.
-     *
-     * @param parameterSpec the parameters to test for (must not be {@code null})
-     * @return {@code true} if the given parameters match this credential, {@code false} otherwise
-     */
-    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
-        Assert.checkNotNullParam("parameterSpec", parameterSpec);
-        return false;
-    }
-
-    /**
-     * Determine whether the other credential's parameters are implied by this one.
-     *
-     * @param other the other credential (must not be {@code null})
-     * @return {@code true} if the credentials have matching parameters, {@code false} otherwise
-     */
-    default boolean impliesSameParameters(Credential other) {
-        Assert.checkNotNullParam("other", other);
-        final AlgorithmParameterSpec parameters = other.getParameters(AlgorithmParameterSpec.class);
-        return parameters == null ? ! supportsParameters(AlgorithmParameterSpec.class) : impliesParameters(parameters);
-    }
-
-    /**
      * Creates and returns a copy of this {@link Credential}.
      *
      * @return a copy of this {@link Credential}.
@@ -232,7 +185,7 @@ public interface Credential extends Cloneable {
      * @return {@code true} if the credentials are of the same kind, {@code false} otherwise
      */
     default boolean matches(Credential other) {
-        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass() && impliesSameParameters(other);
+        return other instanceof AlgorithmCredential ? matches((AlgorithmCredential) other) : other != null && getClass() == other.getClass();
     }
 
     /**

@@ -102,7 +102,12 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      */
     public final boolean containsMatching(Credential credential) {
         Assert.checkNotNullParam("credential", credential);
-        return credential instanceof AlgorithmCredential ? contains(credential.getClass(), ((AlgorithmCredential) credential).getAlgorithm(), credential.getParameters(AlgorithmParameterSpec.class)) : contains(credential.getClass(), null, credential.getParameters(AlgorithmParameterSpec.class));
+        if (credential instanceof AlgorithmCredential) {
+            final AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
+            return contains(credential.getClass(), algorithmCredential.getAlgorithm(), algorithmCredential.getParameters());
+        } else {
+            return contains(credential.getClass(), null, null);
+        }
     }
 
     /**
@@ -252,13 +257,14 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
             if (parameterSpec == null) {
                 return without(credentialType);
             } else {
-                return without(cred -> credentialType.isInstance(cred) && cred.impliesParameters(parameterSpec));
+                return without(credentialType::isInstance);
             }
         } else if (AlgorithmCredential.class.isAssignableFrom(credentialType)) {
+            Class<? extends AlgorithmCredential> algorithmCredentialType = credentialType.asSubclass(AlgorithmCredential.class);
             if (parameterSpec == null) {
-                return without(cred -> credentialType.isInstance(cred) && algorithmName.equals(((AlgorithmCredential) cred).getAlgorithm()));
+                return without(AlgorithmCredential.class, cred -> algorithmCredentialType.isInstance(cred) && algorithmName.equals(cred.getAlgorithm()));
             } else {
-                return without(cred -> credentialType.isInstance(cred) && algorithmName.equals(((AlgorithmCredential) cred).getAlgorithm()) && cred.impliesParameters(parameterSpec));
+                return without(AlgorithmCredential.class, cred -> algorithmCredentialType.isInstance(cred) && algorithmName.equals(cred.getAlgorithm()) && cred.impliesParameters(parameterSpec));
             }
         } else {
             // impossible to have a credential with an algorithm that isn't an AlgorithmCredential
@@ -274,6 +280,19 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      * @return the new credential set (not {@code null})
      */
     public abstract IdentityCredentials without(Predicate<? super Credential> predicate);
+
+    /**
+     * Return a copy of this credential set without any credentials of the given type that match the predicate.  If no credentials match
+     * the predicate, return this instance.
+     *
+     * @param credentialType the credential type class
+     * @param predicate the predicate to test (must not be {@code null})
+     * @param <C> the credential type
+     * @return the new credential set (not {@code null})
+     */
+    public final <C extends Credential> IdentityCredentials without(Class<C> credentialType, Predicate<? super C> predicate) {
+        return without(c -> credentialType.isInstance(c) && predicate.test(credentialType.cast(c)));
+    }
 
     /**
      * Iterate over this identity credential set.
@@ -418,11 +437,11 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
             final Credential credential = this.credential;
-            if (parameterSpec != null && ! credential.impliesParameters(parameterSpec)) {
-                return next.getCredential(credentialType, algorithmName);
-            }
             if (credential instanceof AlgorithmCredential) {
                 AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
+                if (parameterSpec != null && ! algorithmCredential.impliesParameters(parameterSpec)) {
+                    return next.getCredential(credentialType, algorithmName);
+                }
                 if (credentialType.isInstance(algorithmCredential) && (algorithmName == null || algorithmName.equals(algorithmCredential.getAlgorithm()))) {
                     return credentialType.cast(algorithmCredential);
                 } else {
@@ -441,9 +460,10 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
             Assert.checkNotNullParam("credentialType", credentialType);
             Credential credential = this.credential;
             if (credential instanceof AlgorithmCredential) {
-                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(((AlgorithmCredential) credential).getAlgorithm())) && (parameterSpec == null || credential.impliesParameters(parameterSpec));
+                final AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
+                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(algorithmCredential.getAlgorithm())) && (parameterSpec == null || algorithmCredential.impliesParameters(parameterSpec));
             } else {
-                return algorithmName == null && credentialType.isInstance(credential) && (parameterSpec == null || credential.impliesParameters(parameterSpec));
+                return algorithmName == null && parameterSpec == null && credentialType.isInstance(credential);
             }
         }
 

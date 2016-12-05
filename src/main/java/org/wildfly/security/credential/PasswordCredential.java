@@ -85,9 +85,9 @@ public final class PasswordCredential implements AlgorithmCredential {
         return password.impliesParameters(parameterSpec);
     }
 
-    public boolean impliesSameParameters(final Credential other) {
+    public boolean impliesSameParameters(final AlgorithmCredential other) {
         Assert.checkNotNullParam("other", other);
-        return Objects.equals(password.getParameterSpec(), other.getParameters(AlgorithmParameterSpec.class));
+        return Objects.equals(password.getParameterSpec(), other.getParameters());
     }
 
     public boolean canVerify(final Class<? extends Evidence> evidenceClass, final String algorithmName) {
