@@ -129,6 +129,7 @@ public class CredentialStoreBuilder {
         for (Data item : data) {
             storeImpl.store(item.getAlias(), item.getCredential(), item.getProtectionParameter());
         }
+        storeImpl.flush();
     }
 
 }

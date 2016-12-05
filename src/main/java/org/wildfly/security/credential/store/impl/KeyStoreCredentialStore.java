@@ -330,7 +330,6 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     // unlikely but possible
                     keyStore.deleteEntry(oldAlias);
                 }
-                flush();
             }
         } catch (KeyStoreException | NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException | CertificateException e) {
             throw log.cannotWriteCredentialToStore(e);
@@ -645,7 +644,6 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 }
             }
             // done!
-            flush();
         } catch (KeyStoreException e) {
             throw log.cannotRemoveCredentialFromStore(e);
         }
@@ -692,23 +690,26 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
         }
     }
 
-    private void flush() throws CredentialStoreException {
-        if (location != null) try {
-            final char[] storePassword = getStorePassword(protectionParameter);
-            try (AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
-                try {
-                    keyStore.store(os, storePassword);
-                } catch (Throwable t) {
+    public void flush() throws CredentialStoreException {
+        try (Hold hold = lockForWrite()) {
+            final Path location = this.location;
+            if (location != null) try {
+                final char[] storePassword = getStorePassword(protectionParameter);
+                try (AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
                     try {
-                        os.cancel();
-                    } catch (IOException e) {
-                        e.addSuppressed(t);
-                        throw e;
+                        keyStore.store(os, storePassword);
+                    } catch (Throwable t) {
+                        try {
+                            os.cancel();
+                        } catch (IOException e) {
+                            e.addSuppressed(t);
+                            throw e;
+                        }
                     }
                 }
+            } catch (IOException e) {
+                throw log.cannotFlushCredentialStore(e);
             }
-        } catch (IOException e) {
-            throw log.cannotFlushCredentialStore(e);
         }
     }
 

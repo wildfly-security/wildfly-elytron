@@ -161,6 +161,7 @@ public class KeystorePasswordStoreTest {
         cs.store(passwordAlias1, createCredentialFromPassword(password1));
         cs.store(passwordAlias2, createCredentialFromPassword(password2));
         cs.store(passwordAlias3, createCredentialFromPassword(password3));
+        cs.flush();
 
         Assert.assertArrayEquals(password2, getPasswordFromCredential(cs.retrieve(passwordAlias2, PasswordCredential.class)));
         Assert.assertArrayEquals(password1, getPasswordFromCredential(cs.retrieve(passwordAlias1, PasswordCredential.class)));
