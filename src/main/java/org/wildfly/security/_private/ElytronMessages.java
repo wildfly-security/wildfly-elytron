@@ -21,7 +21,6 @@ package org.wildfly.security._private;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InvalidObjectException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
@@ -465,11 +464,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1105, value = "OAuth2-based realm failed to introspect token")
     RealmUnavailableException tokenRealmOAuth2TokenIntrospectionFailed(@Cause Throwable cause);
 
-    @Message(id = 1106, value = "OAuth2-based realm requires a SSLContext when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException tokenRealmOAuth2SSLContextNotSpecified(URL tokenIntrospectionUrl);
-
-    @Message(id = 1107, value = "OAuth2-based realm requires a HostnameVerifier when the token introspection endpoint [%s] is using SSL/TLS.")
-    IllegalStateException tokenRealmOAuth2HostnameVerifierNotSpecified(URL tokenIntrospectionUrl);
+    @Message(id = 1106, value = "Could not obtain SSLContext")
+    IllegalStateException failedToObtainSSLContext(@Cause Throwable cause);
 
     @Message(id = 1108, value = "Ldap-backed realm identity search failed")
     RuntimeException ldapRealmIdentitySearchFailed(@Cause Throwable cause);
@@ -577,6 +573,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1142, value = "Invalid iteration count %d (must be at least 1)")
     ConfigXMLParseException xmlInvalidIterationCount(@Param ConfigurationXMLStreamReader reader, int wrongCount);
+
+    @Message(id = 1143, value = "Invalid URL [%s]")
+    ConfigXMLParseException xmlInvalidUrl(String url);
 
     /* keystore package */
 

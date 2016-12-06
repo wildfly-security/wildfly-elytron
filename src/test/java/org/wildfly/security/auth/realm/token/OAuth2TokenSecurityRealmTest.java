@@ -190,24 +190,13 @@ public class OAuth2TokenSecurityRealmTest {
         assertFalse(realmIdentity.exists());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void failMissingSSLContext() throws Exception {
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
+        TokenSecurityRealm.builder()
                 .validator(OAuth2IntrospectValidator.builder()
                     .clientId("wildfly-elytron")
                     .clientSecret("dont_tell_me")
                     .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect")).build())
-                .build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void failMissingHostnameverifier() throws Exception {
-        TokenSecurityRealm securityRealm = TokenSecurityRealm.builder()
-                .validator(OAuth2IntrospectValidator.builder()
-                    .clientId("wildfly-elytron")
-                    .clientSecret("dont_tell_me")
-                    .tokenIntrospectionUrl(new URL("https://as.test.org/oauth2/token/introspect"))
-                    .useSslContext(SSLContext.getDefault()).build())
                 .build();
     }
 
