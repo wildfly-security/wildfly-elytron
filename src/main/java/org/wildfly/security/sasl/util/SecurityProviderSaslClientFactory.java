@@ -18,8 +18,10 @@
 
 package org.wildfly.security.sasl.util;
 
+import java.security.AccessController;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivilegedAction;
 import java.security.Provider;
 import java.security.Provider.Service;
 import java.security.Security;
@@ -61,7 +63,12 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
      * Construct a new instance.  The currently installed system providers are used.
      */
     public SecurityProviderSaslClientFactory() {
-        this(Security::getProviders);
+        this(AccessController.doPrivileged(new PrivilegedAction<Supplier<Provider[]>>() {
+            @Override
+            public Supplier<Provider[]> run() {
+                return Security::getProviders;
+            }
+        }));
     }
 
     @Override
@@ -78,6 +85,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
 
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final ArrayList<Pair> clientFactoryList = new ArrayList<>();
+
         for (Provider currentProvider : providerSupplier.get()) {
             Set<Service> services = currentProvider.getServices();
             if (services != null) {
@@ -114,6 +122,7 @@ public final class SecurityProviderSaslClientFactory implements SaslClientFactor
     public String[] getMechanismNames(final Map<String, ?> props) {
         final BiPredicate<String, Provider> mechFilter = SaslFactories.getProviderFilterPredicate(props);
         final Set<String> names = new LinkedHashSet<>();
+
         for (Provider currentProvider : providerSupplier.get()) {
             Set<Service> services = currentProvider.getServices();
             if (services != null) {
