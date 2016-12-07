@@ -563,7 +563,7 @@ public abstract class AuthenticationConfiguration {
      * @param alias the alias within the store (must not be {@code null})
      * @return the new configuration
      */
-    public AuthenticationConfiguration useCredentialStoreEntry(CredentialStore credentialStore, String alias) {
+    public final AuthenticationConfiguration useCredentialStoreEntry(CredentialStore credentialStore, String alias) {
         Assert.checkNotNullParam("credentialStore", credentialStore);
         Assert.checkNotNullParam("alias", alias);
         CredentialStoreCredentialSource csCredentialSource = new CredentialStoreCredentialSource(credentialStore, alias);
