@@ -75,4 +75,33 @@ uid: userWithRdnAttribute
 userPassword:: cGxhaW5QYXNzd29yZA==
 # Password plainPassword
 
+# Recursive roles
+dn: uid=jduke,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: person
+objectclass: inetOrgPerson
+uid: jduke
+cn: Java Duke
+sn: Duke
+userPassword: Password1
 
+dn: cn=R1,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: R1
+member: uid=jduke,dc=elytron,dc=wildfly,dc=org
+description: the R1 group
+
+dn: cn=R2,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: R2
+member: cn=R1,dc=elytron,dc=wildfly,dc=org
+description: the R2 group
+
+dn: cn=R3,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: R3
+member: cn=R2,dc=elytron,dc=wildfly,dc=org
+description: the R3 group

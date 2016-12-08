@@ -27,6 +27,7 @@ import javax.naming.NameClassPair;
 import javax.naming.NameParser;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.ReferralException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
@@ -135,6 +136,15 @@ class DelegatingLdapContext implements LdapContext {
                 delegating.close();
             }
         };
+    }
+
+    public DelegatingLdapContext wrapReferralContextObtaining(ReferralException e) throws NamingException {
+        if (socketFactory != null) ThreadLocalSSLSocketFactory.set(socketFactory);
+        try {
+            return new DelegatingLdapContext((DirContext) e.getReferralContext(), socketFactory);
+        } finally {
+            if (socketFactory != null) ThreadLocalSSLSocketFactory.unset();
+        }
     }
 
     // LdapContext specific

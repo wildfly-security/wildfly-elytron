@@ -67,12 +67,12 @@ public class ModifiabilitySuiteChild {
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                 .setRdnIdentifier("uid")
-                .map(AttributeMapping.from("uid").to("userName"), // mapping ldap attributes to elytron attributes
-                     AttributeMapping.from("cn").to("firstName"),
-                     AttributeMapping.from("sn").to("lastName"),
-                     AttributeMapping.from("description").to("description"),
-                     AttributeMapping.from("telephoneNumber").to("phones"),
-                     AttributeMapping.fromFilter("ou=Finance,dc=elytron,dc=wildfly,dc=org", "(&(objectClass=groupOfNames)(member={0}))", "CN").asRdn("OU").to("businessArea"))
+                .map(AttributeMapping.fromAttribute("uid").to("userName").build(), // mapping ldap attributes to elytron attributes
+                     AttributeMapping.fromAttribute("cn").to("firstName").build(),
+                     AttributeMapping.fromAttribute("sn").to("lastName").build(),
+                     AttributeMapping.fromAttribute("description").to("description").build(),
+                     AttributeMapping.fromAttribute("telephoneNumber").to("phones").build(),
+                     AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build())
                 .setNewIdentityParent(new LdapName("dc=elytron,dc=wildfly,dc=org"))
                 .setNewIdentityAttributes(attributes)
                 .setIteratorFilter("(uid=*)")
@@ -184,6 +184,7 @@ public class ModifiabilitySuiteChild {
         while(iterator.hasNext()){
             ModifiableRealmIdentity identity = iterator.next();
             Assert.assertTrue(identity.exists());
+            System.out.println(identity.getAuthorizationIdentity().getAttributes().getFirst("userName"));
             identity.dispose();
             count++;
         }

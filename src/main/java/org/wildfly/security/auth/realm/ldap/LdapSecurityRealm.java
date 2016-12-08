@@ -26,10 +26,11 @@ import java.security.Provider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -43,8 +44,10 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javax.naming.InvalidNameException;
+import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
+import javax.naming.ReferralException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.DirContext;
@@ -168,105 +171,41 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             throw log.ldapRealmNotConfiguredToSupportIteratingOverIdentities();
         }
 
+        final DirContext dirContext;
+        final Stream<SearchResult> resultStream;
+        final LdapSearch ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, pageSize, identityMapping.iteratorFilter);
+        ldapSearch.setReturningAttributes(identityMapping.rdnIdentifier);
+        try {
+            dirContext = dirContextSupplier.get();
+            resultStream = ldapSearch.search(dirContext);
+        } catch (NamingException e) {
+            throw log.ldapRealmIdentitySearchFailed(e);
+        }
+        Iterator<SearchResult> iterator = resultStream.iterator();
+
         return new CloseableIterator<ModifiableRealmIdentity>() {
-
-            private List<ModifiableRealmIdentity> list = new LinkedList<>();
-            private byte[] cookie = null;
-            private boolean end = false;
-
-            private void loadNextPage(LdapContext context) throws NamingException, IOException {
-                context.setRequestControls(new Control[]{
-                        new PagedResultsControl(pageSize, cookie, Control.CRITICAL)
-                });
-
-                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter, createSearchControls(identityMapping.rdnIdentifier));
-                try {
-                    while (result.hasMore()) {
-                        SearchResult entry = result.next();
-                        String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                        list.add(getRealmIdentityForUpdate(new NamePrincipal(name)));
-                    }
-                } finally {
-                    result.close();
-                }
-
-                Control[] controls = context.getResponseControls();
-                if (controls != null) {
-                    for (int k = 0; k < controls.length; k++) {
-                        if (controls[k] instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl control = (PagedResultsResponseControl) controls[k];
-                            cookie = control.getCookie();
-                            if (cookie == null) end = true;
-                            return;
-                        }
-                    }
-                }
-                throw log.ldapRealmPagedControlNotProvidedByLdapContext();
-            }
-
-            private void loadCompleteResult(DirContext context) throws NamingException {
-                end = true;
-                NamingEnumeration<SearchResult> result = context.search(identityMapping.searchDn, identityMapping.iteratorFilter, createSearchControls(identityMapping.rdnIdentifier));
-                try {
-                    while (result.hasMore()) {
-                        SearchResult entry = result.next();
-                        String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                        list.add(getRealmIdentityForUpdate(new NamePrincipal(name)));
-                    }
-                } finally {
-                    result.close();
-                }
-            }
-
-            private void loadNextPageOrCompleteResult() {
-                log.debug("Iterating over identities");
-                DirContext context = null;
-                list.clear();
-
-                try {
-                    context = dirContextSupplier.get();
-                } catch (NamingException e) {
-                    throw log.ldapRealmIdentitySearchFailed(e);
-                }
-                try {
-
-                    if (context instanceof LdapContext) {
-                        try {
-                            loadNextPage((LdapContext) context);
-                            return; // page loaded successfully
-                        } catch (NamingException | IOException e) {
-                            log.debug("Iterating with pagination failed", e);
-                        } finally {
-                            ((LdapContext) context).setRequestControls(null);
-                        }
-                    }
-
-                    log.debug("Iterating without pagination");
-                    loadCompleteResult(context);
-                } catch (NamingException e) {
-                    throw log.ldapRealmIdentitySearchFailed(e);
-                } finally {
-                    closeContext(context);
-                }
-            }
 
             @Override
             public boolean hasNext() {
-                return ! list.isEmpty() || ! end;
+                return iterator.hasNext();
             }
 
             @Override
             public ModifiableRealmIdentity next() {
-                if (list.isEmpty()) {
-                    if (end) {
-                        throw new NoSuchElementException();
-                    } else {
-                        loadNextPageOrCompleteResult();
-                    }
+                SearchResult entry = iterator.next();
+                // because referrals support cannot be identity obtained by DN
+                try {
+                    String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
+                    return getRealmIdentityForUpdate(new NamePrincipal(name));
+                } catch (NamingException e) {
+                    throw log.ldapRealmIdentitySearchFailed(e);
                 }
-                ModifiableRealmIdentity identity = list.get(0);
-                list.remove(0);
-                return identity;
+            }
+
+            @Override
+            public void close() throws IOException {
+                resultStream.close();
+                closeContext(dirContext);
             }
         };
     }
@@ -311,16 +250,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             closeContext(dirContext);
         }
         return response;
-    }
-
-    private SearchControls createSearchControls(String... returningAttributes) {
-        SearchControls searchControls = new SearchControls();
-
-        searchControls.setSearchScope(identityMapping.searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE);
-        searchControls.setTimeLimit(identityMapping.searchTimeLimit);
-        searchControls.setReturningAttributes(returningAttributes);
-
-        return searchControls;
     }
 
     private IdentitySharedExclusiveLock getRealmIdentityLockForName(final String name) {
@@ -587,8 +516,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                     log.tracef("Getting identity [%s] by DN skipped - DN not in search-dn [%s]", name, identityMapping.searchDn);
                     return null;
                 }
-                ldapName.remove(rdnPosition); // TODO consider OBJECT_SCOPE instead
-                return new LdapSearch(ldapName.toString(), identityMapping.filterName, rdnIdentifier.getValue().toString());
+                return new LdapSearch(ldapName.toString(), SearchControls.OBJECT_SCOPE, 0, identityMapping.filterName, rdnIdentifier.getValue().toString());
+
             } catch (InvalidNameException e) {
                 log.tracef(e, "Getting identity [%s] by DN failed - will continue by name", name);
             }
@@ -607,11 +536,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             try {
                 LdapSearch ldapSearch = searchIdentityByDn();
                 if (ldapSearch == null) { // not found by DN, search by name
-                    ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.filterName, name);
+                    ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, 0, identityMapping.filterName, name);
                 }
 
                 ldapSearch.setReturningAttributes(
                         identityMapping.attributes.stream()
+                                .filter(mapping -> !mapping.isFiltered())
                                 .map(AttributeMapping::getLdapName)
                                 .toArray(String[]::new));
 
@@ -656,124 +586,91 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             }
         }
 
-        private Map<String, Collection<String>> extractFilteredAttributes(SearchResult result, DirContext context) {
-            String principalDn = result.getNameInNamespace();
-
-            return extractAttributes(attribute -> attribute.getFilter() != null, attribute -> {
-                Collection<String> values = new ArrayList<>();
-
-                String searchDn = attribute.getSearchDn();
-
-                if (searchDn == null) {
-                    searchDn = identityMapping.searchDn;
+        private String valueFromDn(AttributeMapping mapping, final String dn) {
+            String valueRdn = mapping.getRdn();
+            try {
+                for (Rdn rdn : new LdapName(dn).getRdns()) {
+                    if (rdn.getType().equalsIgnoreCase(valueRdn)) {
+                        return rdn.getValue().toString();
+                    }
                 }
+            } catch (Exception cause) {
+                throw log.ldapRealmInvalidRdnForAttribute(mapping.getName(), dn, valueRdn, cause);
+            }
+            return null;
+        }
 
-                LdapSearch search = new LdapSearch(searchDn, attribute.getFilter(), principalDn);
-
-                search.setReturningAttributes(attribute.getLdapName());
-
-                try (
-                    Stream<SearchResult> searchResult = search.search(context)
-                ) {
-                    searchResult.forEach(entry -> {
-                        String valueRdn = attribute.getRdn();
-
-                        if (valueRdn != null) {
-                            String entryDn = entry.getNameInNamespace();
-
-                            try {
-                                for (Rdn rdn : new LdapName(entryDn).getRdns()) {
-                                    if (rdn.getType().equalsIgnoreCase(valueRdn)) {
-                                        values.add(rdn.getValue().toString());
-                                        break;
-                                    }
-                                }
-                            } catch (Exception cause) {
-                                throw log.ldapRealmInvalidRdnForAttribute(attribute.getName(), entryDn, valueRdn);
-                            }
-                        } else {
-                            Attributes entryAttributes = entry.getAttributes();
-                            javax.naming.directory.Attribute ldapAttribute = entryAttributes.get(attribute.getLdapName());
-                            NamingEnumeration<?> attributeValues = null;
-
-                            try {
-                                if (ldapAttribute != null) {
-                                    attributeValues = ldapAttribute.getAll();
-
-                                    while (attributeValues.hasMore()) {
-                                        values.add(attributeValues.next().toString());
-                                    }
-                                }
-                            } catch (Exception cause) {
-                                throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
-                            } finally {
-                                if (attributeValues != null) {
-                                    try {
-                                        attributeValues.close();
-                                    } catch (NamingException ignore) {
-                                    }
-                                }
-                            }
+        private void valuesFromAttribute(SearchResult entry, AttributeMapping mapping, Collection<String> identityAttributeValues) throws NamingException {
+            if (mapping.getLdapName() == null) {
+                String value = entry.getNameInNamespace();
+                if (mapping.getRdn() != null) {
+                    value = valueFromDn(mapping, value);
+                }
+                identityAttributeValues.add(value);
+            } else {
+                Attributes entryAttributes = entry.getAttributes();
+                javax.naming.directory.Attribute ldapAttribute = entryAttributes.get(mapping.getLdapName());
+                if (ldapAttribute == null) return;
+                NamingEnumeration<?> attributesEnum = null;
+                try {
+                    attributesEnum = ldapAttribute.getAll();
+                    Stream<String> values = Collections.list(attributesEnum).stream().map(Object::toString);
+                    if (mapping.getRdn() != null) {
+                        values = values.map(val -> valueFromDn(mapping, val)).filter(val -> val != null);
+                    }
+                    values.forEach(identityAttributeValues::add);
+                } finally {
+                    if (attributesEnum != null) {
+                        try {
+                            attributesEnum.close();
+                        } catch (NamingException ignore) {
                         }
-                    });
-                } catch (Exception cause) {
-                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
+                    }
                 }
+            }
+        }
 
-                return values;
+        private Map<String, Collection<String>> extractFilteredAttributes(SearchResult identityEntry, DirContext context) {
+            return extractAttributes(AttributeMapping::isFiltered, mapping -> {
+                Collection<String> identityAttributeValues = new ArrayList<>();
+                extractFilteredAttributesRecursion(identityEntry, mapping, context, 0, identityAttributeValues);
+                return identityAttributeValues;
             });
         }
 
-        private Map<String, Collection<String>> extractSingleAttributes(SearchResult searchResult) {
-            return extractAttributes(attribute -> attribute.getFilter() == null, attribute -> {
-                Attributes returnedAttributes = searchResult.getAttributes();
-                NamingEnumeration<? extends javax.naming.directory.Attribute> attributesEnum = returnedAttributes.getAll();
-                Collection<String> values = new ArrayList<>();
+        private void extractFilteredAttributesRecursion(SearchResult referencedEntry, AttributeMapping mapping, DirContext context, int depth, Collection<String> identityAttributeValues) {
+            String referencedDn = referencedEntry.getNameInNamespace();
+            String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
+            LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), referencedDn);
+            search.setReturningAttributes(mapping.getLdapName());
 
-                try {
-                    while (attributesEnum.hasMore()) {
-                        javax.naming.directory.Attribute ldapAttribute = attributesEnum.next();
-
-                        if (!ldapAttribute.getID().equalsIgnoreCase(attribute.getLdapName())) {
-                            continue;
-                        }
-
-                        NamingEnumeration<?> attributeValues = ldapAttribute.getAll();
-
-                        try {
-                            while (attributeValues.hasMore()) {
-                                String value = attributeValues.next().toString();
-                                String valueRdn = attribute.getRdn();
-
-                                if (valueRdn != null) {
-                                    try {
-                                        for (Rdn rdn : new LdapName(value).getRdns()) {
-                                            if (rdn.getType().equalsIgnoreCase(valueRdn)) {
-                                                value = rdn.getValue().toString();
-                                                break;
-                                            }
-                                        }
-                                    } catch (Exception cause) {
-                                        throw log.ldapRealmInvalidRdnForAttribute(attribute.getName(), value, valueRdn);
-                                    }
-                                }
-
-                                values.add(value);
-                            }
-                        } finally {
-                            if (attributeValues != null) {
-                                try {
-                                    attributeValues.close();
-                                } catch (NamingException ignore) {
-                                }
-                            }
-                        }
+            try (Stream<SearchResult> entries = search.search(context)) {
+                entries.forEach(entry -> {
+                    try {
+                        valuesFromAttribute(entry, mapping, identityAttributeValues);
+                    } catch (Exception cause) {
+                        throw ElytronMessages.log.ldapRealmFailedObtainAttributes(referencedDn, cause);
                     }
-                } catch (NamingException cause) {
-                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(searchResult.getNameInNamespace(), cause);
-                }
+                    if (mapping.getRecursiveDepth() > depth) {
+                        extractFilteredAttributesRecursion(entry, mapping, context, depth+1, identityAttributeValues);
+                    }
+                });
+            } catch (Exception cause) {
+                throw ElytronMessages.log.ldapRealmFailedObtainAttributes(referencedDn, cause);
+            }
+        }
 
-                return values;
+        private Map<String, Collection<String>> extractSingleAttributes(SearchResult identityEntry) {
+            String principalDn = identityEntry.getNameInNamespace();
+
+            return extractAttributes(mapping -> !mapping.isFiltered(), mapping -> {
+                Collection<String> identityAttributeValues = new ArrayList<>();
+                try {
+                    valuesFromAttribute(identityEntry, mapping, identityAttributeValues);
+                } catch (Exception cause) {
+                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
+                }
+                return identityAttributeValues;
             });
         }
 
@@ -938,62 +835,129 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
                 return this.attributes;
             }
         }
+    }
 
-        private class LdapSearch {
+    private class LdapSearch {
 
-            private final String[] filterArgs;
-            private final String searchDn;
-            private final String filter;
-            private String[] returningAttributes;
+        private final String searchDn;
+        private final int searchScope;
+        private final int pageSize;
+        private final String filter;
+        private final String[] filterArgs;
+        private String[] returningAttributes;
+        private DirContext context;
+        private NamingEnumeration<SearchResult> result;
+        private byte[] cookie = null;
 
-            public LdapSearch(String searchDn, String filter, String... filterArgs) {
-                this.searchDn = searchDn;
-                this.filter = filter;
-                this.filterArgs = filterArgs;
-            }
+        public LdapSearch(String searchDn, boolean searchRecursive, int pageSize, String filter, String... filterArgs) {
+            this(searchDn, searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE, pageSize, filter, filterArgs);
+        }
 
-            public Stream<SearchResult> search(DirContext context) throws RealmUnavailableException {
-                log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]", this.filter, this.searchDn, this.filterArgs, this.returningAttributes);
+        public LdapSearch(String searchDn, int searchScope, int pageSize, String filter, String... filterArgs) {
+            this.searchDn = searchDn;
+            this.searchScope = searchScope;
+            this.pageSize = pageSize;
+            this.filter = filter;
+            this.filterArgs = filterArgs;
+        }
 
-                try {
-                    NamingEnumeration<SearchResult> result = context.search(searchDn, filter, filterArgs,
-                            createSearchControls(this.returningAttributes));
+        public Stream<SearchResult> search(DirContext ctx) throws RealmUnavailableException {
+            log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]", this.filter, this.searchDn, this.filterArgs, this.returningAttributes);
+            context = ctx;
+            try {
+                result = searchWithPagination();
+                return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
+                    @Override
+                    public boolean tryAdvance(Consumer<? super SearchResult> action) {
+                        try {
+                            while (true) {
+                                try {
+                                    if ( ! result.hasMore()) { // end of page
+                                        if ( ! (pageSize != 0 && context instanceof LdapContext) ) {
+                                            log.trace("Identity iterating - pagination not supported - end of list");
+                                            return false;
+                                        }
+                                        Control[] controls = ((LdapContext) context).getResponseControls();
+                                        if (controls != null) {
+                                            for (Control control : controls) {
+                                                if (control instanceof PagedResultsResponseControl) {
+                                                    cookie = ((PagedResultsResponseControl) control).getCookie();
+                                                    if (cookie == null) {
+                                                        log.trace("Identity iterating - no more pages - end of list");
+                                                        return false; // no more pages
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        result.close();
 
-                    return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
-                        @Override
-                        public boolean tryAdvance(Consumer<? super SearchResult> action) {
-                            try {
-                                if (!result.hasMore()) {
-                                    return false;
+                                        result = searchWithPagination();
+                                        if ( ! result.hasMore()) {
+                                            log.trace("Identity iterating - even after page loading no results - end of list");
+                                            return false;
+                                        }
+                                    }
+                                    SearchResult entry = result.next();
+                                    log.debugf("Found entry [%s].", entry.getNameInNamespace());
+                                    action.accept(entry);
+                                    return true;
+                                } catch (ReferralException e) {
+                                    log.debug("Next referral following in identity iterating...");
+                                    context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
+                                    result = searchWithPagination();
                                 }
-
-                                SearchResult entry = result.next();
-
-                                log.debugf("Found entry [%s].", entry.getNameInNamespace());
-
-                                action.accept(entry);
-
-                                return true;
-                            } catch (NamingException e) {
-                                throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, Arrays.toString(filterArgs), e);
                             }
-                        }
-                    }, false).onClose(() -> {
-                        if (result != null) {
+                        } catch (NamingException | IOException e) {
                             try {
                                 result.close();
-                            } catch (NamingException ignore) {
+                            } catch (NamingException ex) {
+                                log.trace(ex);
                             }
+                            throw log.ldapRealmErrorWhileConsumingResultsFromSearch(searchDn, filter, Arrays.toString(filterArgs), e);
                         }
-                    });
-                } catch (Exception e) {
-                    throw log.ldapRealmIdentitySearchFailed(e);
-                }
+                    }
+                }, false).onClose(() -> {
+                    if (result != null) {
+                        try {
+                            result.close();
+                        } catch (NamingException e) {
+                            log.trace(e);
+                        }
+                    }
+                });
+            } catch (NameNotFoundException e) {
+                log.trace(e);
+                return Stream.empty();
+            } catch (Exception e) {
+                throw log.ldapRealmIdentitySearchFailed(e);
             }
+        }
 
-            public void setReturningAttributes(String... returningAttributes) {
-                this.returningAttributes = returningAttributes;
+        private NamingEnumeration<SearchResult> searchWithPagination() throws NamingException, IOException {
+            Control[] controlsBackup = null;
+            if (pageSize != 0 && context instanceof LdapContext) {
+                controlsBackup = ((LdapContext)context).getRequestControls();
+                ((LdapContext)context).setRequestControls(new Control[]{
+                        new PagedResultsControl(pageSize, cookie, Control.CRITICAL)
+                });
             }
+            NamingEnumeration<SearchResult> results = context.search(searchDn, filter, filterArgs, createSearchControls(searchScope, returningAttributes));
+            if (pageSize != 0 && context instanceof LdapContext) {
+                ((LdapContext)context).setRequestControls(controlsBackup);
+            }
+            return results;
+        }
+
+        public void setReturningAttributes(String... returningAttributes) {
+            this.returningAttributes = returningAttributes;
+        }
+
+        private SearchControls createSearchControls(int searchScope, String... returningAttributes) {
+            SearchControls searchControls = new SearchControls();
+            searchControls.setSearchScope(searchScope);
+            searchControls.setTimeLimit(identityMapping.searchTimeLimit);
+            searchControls.setReturningAttributes(returningAttributes);
+            return searchControls;
         }
     }
 
@@ -1004,9 +968,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
 
         private final String searchDn;
         private final boolean searchRecursive;
+        public final int searchTimeLimit;
         private final String rdnIdentifier;
         private final List<AttributeMapping> attributes;
-        public final int searchTimeLimit;
         private final LdapName newIdentityParent;
         private final Attributes newIdentityAttributes;
         private final String filterName;
