@@ -69,10 +69,10 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
         try {
             final CredentialStore credentialStore = credentialStoreFactory.create();
             return credentialStore.exists(alias, credentialType) ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
-        } catch (GeneralSecurityException e) {
-            throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
             return SupportLevel.UNSUPPORTED;
+        } catch (GeneralSecurityException e) {
+            throw ElytronMessages.log.unableToReadCredential(e);
         }
     }
 
@@ -83,10 +83,10 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
             final CredentialStore credentialStore = credentialStoreFactory.create();
             credential = credentialStore.retrieve(alias, credentialType);
             return credential.castAs(credentialType, algorithmName, parameterSpec);
-        } catch (GeneralSecurityException e) {
-            throw ElytronMessages.log.unableToReadCredential(e);
         } catch (UnsupportedCredentialTypeException e) {
             return null;
+        } catch (GeneralSecurityException e) {
+            throw ElytronMessages.log.unableToReadCredential(e);
         }
     }
 }

@@ -22,7 +22,7 @@ package org.wildfly.security.credential.store;
  *
  * @author <a href="mailto:pskopek@redhat.com">Peter Skopek</a>.
  */
-public class UnsupportedCredentialTypeException extends Exception {
+public class UnsupportedCredentialTypeException extends CredentialStoreException {
 
 
     private static final long serialVersionUID = 8933668244130206312L;

@@ -97,6 +97,7 @@
 
         <xsd:all minOccurs="1" maxOccurs="1">
             <xsd:element name="attributes" type="attributes-type"/>
+            <xsd:element name="protection-parameter-credentials" type="client-credentials-type"/>
         </xsd:all>
 
         <xsd:attribute name="name" type="xsd:string" use="required" />

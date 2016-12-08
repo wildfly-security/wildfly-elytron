@@ -38,7 +38,6 @@ public class CredentialStorePermission extends AbstractNameSetOnlyPermission<Cre
 
     private static final StringEnumeration names = StringEnumeration.of(
         "loadCredentialStore",
-        "loadExternalStorePassword",
         "retrieveCredential",
         "modifyCredentialStore"
     );
@@ -50,17 +49,13 @@ public class CredentialStorePermission extends AbstractNameSetOnlyPermission<Cre
      */
     public static final CredentialStorePermission LOAD_CREDENTIAL_STORE = mapping.getItemById(0);
     /**
-     * Load external store password permission.
-     */
-    public static final CredentialStorePermission LOAD_EXTERNAL_STORE_PASSWORD = mapping.getItemById(1);
-    /**
      * Retrieve credential (password) permission (from credential store).
      */
-    public static final CredentialStorePermission RETRIEVE_CREDENTIAL = mapping.getItemById(2);
+    public static final CredentialStorePermission RETRIEVE_CREDENTIAL = mapping.getItemById(1);
     /**
      * Store or delete credential (password) permission (from credential store).
      */
-    public static final CredentialStorePermission MODIFY_CREDENTIAL_STORE = mapping.getItemById(3);
+    public static final CredentialStorePermission MODIFY_CREDENTIAL_STORE = mapping.getItemById(2);
 
     private static final CredentialStorePermission allPermission = new CredentialStorePermission("*");
 

@@ -46,6 +46,7 @@ import org.wildfly.security.password.interfaces.BCryptPassword;
 import org.wildfly.security.password.interfaces.BSDUnixDESCryptPassword;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.interfaces.DigestPassword;
+import org.wildfly.security.password.interfaces.MaskedPassword;
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.interfaces.ScramDigestPassword;
 import org.wildfly.security.password.interfaces.SunUnixMD5CryptPassword;
@@ -59,6 +60,8 @@ import org.wildfly.security.password.spec.DigestPasswordSpec;
 import org.wildfly.security.password.spec.IteratedPasswordAlgorithmSpec;
 import org.wildfly.security.password.spec.IteratedSaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.IteratedSaltedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.MaskedPasswordAlgorithmSpec;
+import org.wildfly.security.password.spec.MaskedPasswordSpec;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
 import org.wildfly.security.password.spec.SaltedHashPasswordSpec;
 import org.wildfly.security.password.spec.HashPasswordSpec;
@@ -450,6 +453,31 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 }
                 break;
             }
+            default: {
+                if (MaskedPassword.isMaskedAlgorithm(algorithm)) {
+                    if (keySpec instanceof MaskedPasswordSpec) {
+                        return new MaskedPasswordImpl(algorithm, (MaskedPasswordSpec) keySpec);
+                    } else if (keySpec instanceof EncryptablePasswordSpec) {
+                        final EncryptablePasswordSpec encryptableSpec = (EncryptablePasswordSpec) keySpec;
+                        final AlgorithmParameterSpec parameterSpec = encryptableSpec.getAlgorithmParameterSpec();
+                        if (parameterSpec == null) {
+                            return new MaskedPasswordImpl(algorithm, encryptableSpec.getPassword());
+                        } else if (parameterSpec instanceof MaskedPasswordAlgorithmSpec) {
+                            return new MaskedPasswordImpl(algorithm, encryptableSpec.getPassword(), (MaskedPasswordAlgorithmSpec) parameterSpec);
+                        } else if (parameterSpec instanceof IteratedSaltedPasswordAlgorithmSpec) {
+                            return new MaskedPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedSaltedPasswordAlgorithmSpec) parameterSpec);
+                        } else if (parameterSpec instanceof SaltedPasswordAlgorithmSpec) {
+                            return new MaskedPasswordImpl(algorithm, encryptableSpec.getPassword(), (SaltedPasswordAlgorithmSpec) parameterSpec);
+                        } else if (parameterSpec instanceof IteratedPasswordAlgorithmSpec) {
+                            return new MaskedPasswordImpl(algorithm, encryptableSpec.getPassword(), (IteratedPasswordAlgorithmSpec) parameterSpec);
+                        }
+                    } else if (keySpec instanceof ClearPasswordSpec) {
+                        return new MaskedPasswordImpl(algorithm, (ClearPasswordSpec) keySpec);
+                    }
+                    break;
+                }
+                break;
+            }
         }
         throw log.invalidKeySpecUnknownAlgorithmOrIncompatiblePasswordSpec();
     }
@@ -538,7 +566,7 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                 return (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm()));
             }
             default: {
-                return false;
+                return MaskedPassword.isMaskedAlgorithm(algorithm) && password instanceof MaskedPassword && algorithm.equals(password.getAlgorithm());
             }
         }
     }
@@ -674,6 +702,20 @@ public final class PasswordFactorySpiImpl extends PasswordFactorySpi {
                     return password;
                 } else if (password instanceof OneTimePassword && algorithm.equals(password.getAlgorithm())) {
                     return new OneTimePasswordImpl((OneTimePassword) password);
+                }
+                break;
+            }
+            default: {
+                if (MaskedPassword.isMaskedAlgorithm(algorithm)) {
+                    if (password instanceof MaskedPasswordImpl && algorithm.equals(password.getAlgorithm())) {
+                        return password;
+                    } else if (password instanceof MaskedPassword && algorithm.equals(password.getAlgorithm())) {
+                        try {
+                            return new MaskedPasswordImpl((MaskedPassword) password);
+                        } catch (InvalidKeySpecException e) {
+                            throw new InvalidKeyException(e);
+                        }
+                    }
                 }
                 break;
             }

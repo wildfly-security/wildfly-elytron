@@ -21,24 +21,38 @@ package org.wildfly.security.auth.client;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.Provider;
+import java.security.Security;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 
-import org.junit.Ignore;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.credential.store.impl.KeystorePasswordStore;
+import org.wildfly.security.WildFlyElytronProvider;
+import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 public class XmlConfigurationTest {
+    private static final Provider provider = new WildFlyElytronProvider();
+
+    @BeforeClass
+    public static void registerProvider() {
+        Security.addProvider(provider);
+    }
+
+    @AfterClass
+    public static void removeProvider() {
+        Security.removeProvider(provider.getName());
+    }
 
     @Test
     public void testEmptyConfiguration() throws Exception {
@@ -52,17 +66,17 @@ public class XmlConfigurationTest {
     }
 
     @Test
-    @Ignore // This test depends on the credential store not being created until referenced but that behavior no longer exists
     public void testRuleConfiguration() throws Exception {
         final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
             "\n" +
             "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
             "    <credential-stores>\n" +
-            "        <credential-store name=\"store1\" type=\"" + KeystorePasswordStore.KEY_STORE_PASSWORD_STORE + "\">\n" +
+            "        <credential-store name=\"store1\" type=\"" + KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE + "\">\n" +
+            "            <protection-parameter-credentials>\n" +
+            "                <clear-password password=\"1234\"/>\n" +
+            "            </protection-parameter-credentials>\n" +
             "            <attributes>\n" +
-            "                <attribute name=\"attr1\" value=\"value1\"/>\n" +
-            "                <attribute name=\"attr2\" value=\"value2\"/>\n" +
-            "                <attribute name=\"attr3\" value=\"value3\"/>\n" +
+            "                <attribute name=\"keyStoreType\" value=\"JCEKS\"/>\n" +
             "            </attributes>\n" +
             "        </credential-store>\n" +
             "    </credential-stores>\n" +
@@ -139,44 +153,15 @@ public class XmlConfigurationTest {
                 "    </authentication-rules>\n" +
                 "</authentication-client>\n";
 
-        int failureLineNumber = xml.substring(0, xml.indexOf("store1")).split("\n").length;
         final byte[] xmlBytes = xml.getBytes(StandardCharsets.UTF_8);
         try {
             final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
             factory.create();
 
         } catch (XMLStreamException e) {
-            assertEquals("Issue reported at wrong location.", e.getLocation().getLineNumber(), failureLineNumber);
             return;
         }
         fail("Expected exception");
-    }
-
-    @Test
-    public void testCredentialStoreConfiguration() throws Exception {
-        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "\n" +
-                "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
-                "    <credential-stores>\n" +
-                "        <credential-store name=\"test1\">\n" +
-                "            <attributes>\n" +
-                "                <attribute name=\"1attr1\" value=\"1value1\"/>\n" +
-                "                <attribute name=\"1attr2\" value=\"1value2\"/>\n" +
-                "                <attribute name=\"1attr3\" value=\"1value3\"/>\n" +
-                "            </attributes>\n" +
-                "        </credential-store>\n" +
-                "        <credential-store name=\"test2\" type=\"dummyType\" provider=\"provider2\">\n" +
-                "            <attributes>\n" +
-                "                <attribute name=\"2attr1\" value=\"2value1\"/>\n" +
-                "                <attribute name=\"2attr2\" value=\"2value2\"/>\n" +
-                "                <attribute name=\"2attr3\" value=\"2value3\"/>\n" +
-                "            </attributes>\n" +
-                "        </credential-store>\n" +
-                "        <credential-store name=\"test3\" type=\"dummyType3\" provider=\"provider2\"/>\n" +
-                "    </credential-stores>\n" +
-                "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
-        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
-        factory.create();
     }
 
     @Test

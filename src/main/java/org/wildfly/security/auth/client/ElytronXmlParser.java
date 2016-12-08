@@ -271,7 +271,7 @@ public final class ElytronXmlParser {
                     case "credential-stores": {
                         if (isSet(foundBits, 6)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 5);
-                        parseCredentialStoresType(reader, credentialStoresMap);
+                        parseCredentialStoresType(reader, keyStoresMap, credentialStoresMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -279,6 +279,13 @@ public final class ElytronXmlParser {
             } else if (tag == END_ELEMENT) {
                 if (netAuthenticator) {
                     Authenticator.setDefault(new ElytronAuthenticator());
+                }
+                // validate key and credential stores...
+                for (ExceptionSupplier<KeyStore, ConfigXMLParseException> supplier : keyStoresMap.values()) {
+                    supplier.get();
+                }
+                for (ExceptionSupplier<CredentialStore, ConfigXMLParseException> supplier : credentialStoresMap.values()) {
+                    supplier.get();
                 }
                 final RuleNode<AuthenticationConfiguration> authNode = authFactory.get();
                 final RuleNode<SecurityFactory<SSLContext>> sslNode = sslFactory.get();
@@ -1328,10 +1335,10 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code credential-stores-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @param credentialStoresMap the map of  credential stores to use
-     * @throws ConfigXMLParseException if the resource failed to be parsed
+     * @param keyStoresMap the key stores map
+     * @param credentialStoresMap the map of  credential stores to use  @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseCredentialStoresType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
+    private static void parseCredentialStoresType(ConfigurationXMLStreamReader reader, Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -1345,7 +1352,7 @@ public final class ElytronXmlParser {
                 }
                 switch (reader.getLocalName()) {
                     case "credential-store": {
-                        parseCredentialStoreType(reader, credentialStoresMap);
+                        parseCredentialStoreType(reader, keyStoresMap, credentialStoresMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -1363,10 +1370,10 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code key-store-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @param credentialStoresMap the map of  credential stores to fill
-     * @throws ConfigXMLParseException if the resource failed to be parsed
+     * @param keyStoresMap the key stores map
+     * @param credentialStoresMap the map of  credential stores to fill  @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
+    private static void parseCredentialStoreType(ConfigurationXMLStreamReader reader, Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
         final XMLLocation location = reader.getLocation();
         final int attributeCount = reader.getAttributeCount();
         String name = null;
@@ -1403,6 +1410,7 @@ public final class ElytronXmlParser {
 
         final Map<String, String> attributesMap = new HashMap<>();
         int attributesSectionCount = 0;
+        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSourceSupplier = null;
         while (reader.hasNext()) {
             final int tag = reader.nextTag();
             if (tag == START_ELEMENT) {
@@ -1412,15 +1420,20 @@ public final class ElytronXmlParser {
                 }
                 switch (reader.getLocalName()) {
                     case "attributes": {
-                        if (++attributesSectionCount > 1) throw reader.unexpectedContent();
+                        if (++attributesSectionCount > 2) throw reader.unexpectedContent();
                         parseAttributesType(reader, attributesMap);
+                        break;
+                    }
+                    case "protection-parameter-credentials": {
+                        if (++attributesSectionCount > 2) throw reader.unexpectedContent();
+                        credentialSourceSupplier = parseCredentialsType(reader, keyStoresMap, credentialStoresMap);
                         break;
                     }
                     default: throw reader.unexpectedElement();
                 }
             } else if (tag == END_ELEMENT) {
                 if (!credentialStoresMap.containsKey(name)) {
-                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location);
+                    ExceptionSupplier<CredentialStore, ConfigXMLParseException> credentialStoreSecurityFactory = new CredentialStoreFactory(name, type, attributesMap, provider, location, credentialSourceSupplier);
                     credentialStoresMap.put(name, credentialStoreSecurityFactory);
                 } else {
                     throw xmlLog.duplicateCredentialStoreName(reader, name);
@@ -1442,7 +1455,7 @@ public final class ElytronXmlParser {
      * @param attributesMap the map to put attributes to.
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseAttributesType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
+    private static void parseAttributesType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount > 0) {
             throw reader.unexpectedAttribute(0);
@@ -1477,7 +1490,7 @@ public final class ElytronXmlParser {
      * @param attributesMap the map to put attributes to.
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
-    public static void parseAttributeType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
+    private static void parseAttributeType(ConfigurationXMLStreamReader reader, final Map<String, String> attributesMap) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String name = null;
         String value = null;

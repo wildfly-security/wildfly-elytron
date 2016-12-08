@@ -20,11 +20,13 @@ package org.wildfly.security._private;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.InvalidObjectException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Permission;
@@ -69,7 +71,10 @@ import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
+import org.wildfly.security.credential.Credential;
+import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.CredentialStoreException;
+import org.wildfly.security.credential.store.UnsupportedCredentialTypeException;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramServerErrorCode;
@@ -767,6 +772,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 3029, value = "No such key algorithm \"%s\"")
     IllegalArgumentException noSuchKeyAlgorithm(String algorithmName, @Cause GeneralSecurityException cause);
+
+    @Message(id = 3030, value = "I/O operation failed: closed")
+    IOException closed();
 
     /* ssl package */
 
@@ -1563,41 +1571,56 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 8029, value = "Could not obtain key spec encoding identifier.")
     IllegalArgumentException couldNotObtainKeySpecEncodingIdentifier();
 
+    @Message(id = 8030, value = "Failed to encode parameter specification")
+    InvalidParameterSpecException failedToEncode(@Cause Throwable cause);
+
+    @Message(id = 8031, value = "Failed to decode parameter specification")
+    IOException failedToDecode(@Cause Throwable cause);
+
+    @Message(id = 8032, value = "Invalid parameter specification type (expected %s, got %s)")
+    InvalidParameterSpecException invalidParameterSpec(Class<?> expected, Class<?> actual);
+
+    @Message(id = 8033, value = "Invalid format given (expected %s, got %s)")
+    IOException invalidFormat(String expected, String actual);
+
+    @Message(id = 8034, value = "Algorithm parameters instance not initialized")
+    IllegalStateException algorithmParametersNotInitialized();
+
     /* authz package */
 
     @LogMessage(level = ERROR)
-    @Message(id = 8030, value = "Failed to check permissions for protection domain [%s] and permission [%s].")
+    @Message(id = 8500, value = "Failed to check permissions for protection domain [%s] and permission [%s].")
     void authzFailedToCheckPermission(ProtectionDomain domain, Permission permission, @Cause Throwable cause);
 
-    @Message(id = 8031, value = "Invalid state [%s] for operation.")
+    @Message(id = 8501, value = "Invalid state [%s] for operation.")
     UnsupportedOperationException authzInvalidStateForOperation(String actualState);
 
-    @Message(id = 8032, value = "Can't link policy configuration [%s] to itself.")
+    @Message(id = 8502, value = "Can't link policy configuration [%s] to itself.")
     IllegalArgumentException authzLinkSamePolicyConfiguration(String contextID);
 
-    @Message(id = 8033, value = "ContextID not set. Check if the context id was set using PolicyContext.setContextID.")
+    @Message(id = 8503, value = "ContextID not set. Check if the context id was set using PolicyContext.setContextID.")
     IllegalStateException authzContextIdentifierNotSet();
 
-    @Message(id = 8034, value = "Invalid policy context identifier [%s].")
+    @Message(id = 8504, value = "Invalid policy context identifier [%s].")
     IllegalArgumentException authzInvalidPolicyContextIdentifier(String contextID);
 
-    @Message(id = 8035, value = "Could not obtain PolicyConfiguration for contextID [%s].")
+    @Message(id = 8505, value = "Could not obtain PolicyConfiguration for contextID [%s].")
     PolicyContextException authzUnableToObtainPolicyConfiguration(String contextId, @Cause Throwable cause);
 
-    @Message(id = 8036, value = "Policy configuration with contextID [%s] is not in service state.")
+    @Message(id = 8506, value = "Policy configuration with contextID [%s] is not in service state.")
     IllegalStateException authzPolicyConfigurationNotInService(String contextID);
 
     @LogMessage(level = ERROR)
-    @Message(id = 8037, value = "Could not obtain dynamic permissions.")
+    @Message(id = 8507, value = "Could not obtain dynamic permissions.")
     void authzFailedGetDynamicPermissions(@Cause Throwable cause);
 
     @LogMessage(level = DEBUG)
-    @Message(id = 8038, value = "Could not obtain authorized identity.")
+    @Message(id = 8508, value = "Could not obtain authorized identity.")
     void authzCouldNotObtainSecurityIdentity(@Cause Throwable cause);
 
     @Once
     @LogMessage(level = WARN)
-    @Message(id = 8039, value = "Calling any of the Policy.getPermissions() methods is not supported; please see the "
+    @Message(id = 8509, value = "Calling any of the Policy.getPermissions() methods is not supported; please see the "
         + "Java Authorization Contract for Containers (JACC) specification (section \"1.4 Requirements\", item 1) and "
         + "the Java SE API specification for the Policy.getPermissions() methods for more information.  Instead, use "
         + "the Policy.implies() method for authorization checking.")
@@ -1644,8 +1667,8 @@ public interface ElytronMessages extends BasicLogger {
     CredentialStoreException cacheForExternalCommandsNotSupported();
 
     @LogMessage
-    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to '%s'")
-    void warnWrongBase64EncodedString(String base64);
+    @Message(id = 9512, value = "Wrong Base64 encoded string used. Falling back to compatibility string")
+    void warnWrongBase64EncodedString();
 
     @Message(id = 9513, value = "Duplicate attribute (\"%s\") found in configuration.")
     ConfigXMLParseException duplicateAttributeFound(@Param XMLStreamReader reader, String attribute);
@@ -1656,10 +1679,49 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9515, value = "Credential store name \"%s\" not defined")
     ConfigXMLParseException xmlCredentialStoreNameNotDefined(@Param Location location, String storeName);
 
-    // id = 9516 deleted free to use next time
+    @Message(id = 9516, value = "Cannot acquire a credential from the credential store")
+    CredentialStoreException cannotAcquireCredentialFromStore(@Cause Throwable cause);
 
     @Message(id = 9517, value = "Cannot perform operation '%s': Credential store is set non modifiable")
     CredentialStoreException nonModifiableCredentialStore(String operation);
+
+    @Message(id = 9518, value = "Credential store command interrupted")
+    InterruptedIOException credentialCommandInterrupted();
+
+    @Message(id = 9519, value = "Invalid protection parameter given: %s")
+    CredentialStoreException invalidProtectionParameter(CredentialStore.ProtectionParameter protectionParameter);
+
+    @Message(id = 9520, value = "Cannot write credential to store")
+    CredentialStoreException cannotWriteCredentialToStore(@Cause Throwable cause);
+
+    @Message(id = 9521, value = "Unsupported credential type %s")
+    UnsupportedCredentialTypeException unsupportedCredentialType(Class<?> type);
+
+    @Message(id = 9522, value = "Invalid credential store keystore entry %s: expected %s")
+    CredentialStoreException invalidCredentialStoreEntryType(Class<? extends KeyStore.Entry> entryType, Class<? extends KeyStore.Entry> expectedType);
+
+    @Message(id = 9523, value = "Unable to read credential %s from store")
+    CredentialStoreException unableToReadCredentialTypeFromStore(Class<? extends Credential> credentialType);
+
+    @Message(id = 9524, value = "Unable to remove credential from store")
+    CredentialStoreException cannotRemoveCredentialFromStore(@Cause Throwable cause);
+
+    @Message(id = 9525, value = "Unable to flush credential store to storage")
+    CredentialStoreException cannotFlushCredentialStore(@Cause Throwable cause);
+
+    @Message(id = 9526, value = "Unable to initialize credential store")
+    CredentialStoreException cannotInitializeCredentialStore(@Cause Throwable cause);
+
+    @Message(id = 9527, value = "Ignored unrecognized key store entry \"%s\"")
+    @LogMessage(level = DEBUG)
+    void logIgnoredUnrecognizedKeyStoreEntry(String alias);
+
+    @Message(id = 9528, value = "Failed to read a credential entry from the key store")
+    @LogMessage(level = WARN)
+    void logFailedToReadKeyFromKeyStore(@Cause Throwable cause);
+
+    @Message(id = 9529, value = "This credential store type requires a store-wide protection parameter")
+    CredentialStoreException protectionParameterRequired();
 
     /* X.500 exceptions */
 

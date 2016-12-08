@@ -268,6 +268,31 @@ public abstract class Alphabet {
                 }
             }
         };
+
+        /**
+         * The standard <a href="http://tools.ietf.org/html/rfc4648">RFC 4648</a> base-32 alphabet mapped to lowercase.
+         */
+        public static final Base32Alphabet LOWERCASE = new Base32Alphabet(false) {
+            public int encode(final int val) {
+                if (val <= 25) {
+                    return 'a' + val;
+                } else {
+                    assert val < 32;
+                    return '2' + val - 26;
+                }
+            }
+
+            public int decode(final int codePoint) {
+                if ('a' <= codePoint && codePoint <= 'z') {
+                    return codePoint - 'a';
+                } else if ('2' <= codePoint && codePoint <= '7') {
+                    return codePoint - '2' + 26;
+                } else {
+                    return -1;
+                }
+            }
+        };
+
     }
     /**
      * The alphabet used by PicketBox project base 64 encoding.
