@@ -20,6 +20,7 @@ package org.wildfly.security.keystore;
 
 import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
+import org.wildfly.security.EmptyProvider;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
@@ -102,7 +103,7 @@ public class LdapKeyStore extends KeyStore {
                     filterAlias, filterCertificate, filterIterate, createPath, createRdn, createAttributes, aliasAttribute,
                     certificateAttribute, certificateType, certificateChainAttribute, certificateChainEncoding,
                     keyAttribute, keyType);
-            return new LdapKeyStore(spi, null, null);
+            return new LdapKeyStore(spi, EmptyProvider.getInstance(), "LdapRealm");
         }
 
         /**
