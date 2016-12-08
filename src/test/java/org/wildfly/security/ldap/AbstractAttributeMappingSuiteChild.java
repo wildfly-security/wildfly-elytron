@@ -31,16 +31,22 @@ import org.wildfly.security.auth.server.ServerAuthenticationContext;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.permission.PermissionVerifier;
 
+import java.util.Arrays;
+
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public abstract class AbstractAttributeMappingSuiteChild {
 
-    protected void assertAttributeValue(Attributes.Entry lastName, String... expectedValues) {
-        assertNotNull("Attribute [" + lastName.getKey() + "] not found.", lastName);
+    protected void assertAttributeValue(Attributes.Entry values, String... expectedValues) {
+        assertNotNull("Attribute values are null.", values);
 
         for (String expectedValue : expectedValues) {
-            assertTrue("Value [" + expectedValue + "] for attribute [" + lastName.getKey() + "] not found.", lastName.contains(expectedValue));
+            assertTrue("Value [" + expectedValue + "] for attribute [" + values.getKey() + "] not found in " + Arrays.toString(values.toArray()), values.contains(expectedValue));
+        }
+
+        for (Object value : values.toArray()) {
+            assertTrue("Value [" + value + "] for attribute [" + values.getKey() + "] was not expected", Arrays.asList(expectedValues).contains(value));
         }
     }
 
