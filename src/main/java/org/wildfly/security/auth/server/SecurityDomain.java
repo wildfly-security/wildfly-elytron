@@ -35,10 +35,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import org.jboss.threads.JBossThreadFactory;
 import org.wildfly.common.Assert;
+import org.wildfly.common.function.ExceptionBiFunction;
+import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -62,6 +65,8 @@ public final class SecurityDomain {
 
     static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
     static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
+    static final ElytronPermission GET_IDENTITY = ElytronPermission.forName("getIdentity");
+    static final ElytronPermission GET_IDENTITY_FOR_UPDATE = ElytronPermission.forName("getIdentityForUpdate");
 
     private final Map<String, RealmInfo> realmMap;
     private final String defaultRealmName;
@@ -147,27 +152,87 @@ public final class SecurityDomain {
     }
 
     /**
-     * Map the provided name to a {@link RealmIdentity}.
+     * Look up a {@link RealmIdentity} by name by wrapping the name in a {@link NamePrincipal} and calling {@link #getIdentity(Principal)}.
+     * The returned identity must be {@linkplain RealmIdentity#dispose() disposed}.
      *
-     * @param name the name to map
-     * @return the identity for the name
+     * @param name the name to map (must not be {@code null})
+     * @return the identity for the name (not {@code null}, may be non-existent)
      * @throws RealmUnavailableException if the realm is not able to perform the mapping
      * @throws IllegalArgumentException if the name is not valid
+     * @throws SecurityException if the caller is not authorized to perform the operation
      */
-    public RealmIdentity mapName(String name) throws RealmUnavailableException {
+    public RealmIdentity getIdentity(String name) throws RealmUnavailableException {
         Assert.checkNotNullParam("name", name);
-        return mapPrincipal(new NamePrincipal(name));
+        return getIdentity(new NamePrincipal(name));
     }
 
     /**
-     * Map the provided principal to a {@link RealmIdentity}.
+     * Look up a {@link RealmIdentity} by principal.
+     * The returned identity must be {@linkplain RealmIdentity#dispose() disposed}.
      *
-     * @param principal the principal to map
-     * @return the identity for the name
+     * @param principal the principal to map (must not be {@code null})
+     * @return the identity for the name (not {@code null}, may be non-existent)
      * @throws IllegalArgumentException if the principal could not be successfully decoded to a name
      * @throws RealmUnavailableException if the realm is not able to perform the mapping
+     * @throws SecurityException if the caller is not authorized to perform the operation
      */
-    public RealmIdentity mapPrincipal(Principal principal) throws RealmUnavailableException, IllegalArgumentException {
+    public RealmIdentity getIdentity(Principal principal) throws RealmUnavailableException, IllegalArgumentException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_IDENTITY);
+        }
+        return getIdentityPrivileged(principal, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT);
+    }
+
+    /**
+     * Look up a {@link ModifiableRealmIdentity} by principal.
+     * The returned identity must be {@linkplain RealmIdentity#dispose() disposed}.
+     *
+     * @param principal the principal to map (must not be {@code null})
+     * @return the identity for the name (not {@code null}, may be non-existent)
+     * @throws IllegalArgumentException if the principal could not be successfully decoded to a name
+     * @throws RealmUnavailableException if the realm is not able to perform the mapping
+     * @throws SecurityException if the caller is not authorized to perform the operation
+     */
+    public ModifiableRealmIdentity getIdentityForUpdate(Principal principal) throws RealmUnavailableException, IllegalArgumentException {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_IDENTITY_FOR_UPDATE);
+        }
+        return getIdentityPrivileged(principal, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT);
+    }
+
+    /**
+     * Get a function which can be used to look up principals without a security manager permission check.
+     * All returned identities must be {@linkplain RealmIdentity#dispose() disposed}.
+     *
+     * @return the lookup function (not {@code null})
+     * @throws SecurityException if the caller is not authorized to perform the operation
+     */
+    public ExceptionFunction<Principal, RealmIdentity, RealmUnavailableException> getIdentityLookupFunction() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_IDENTITY);
+        }
+        return p -> getIdentityPrivileged(p, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT);
+    }
+
+    /**
+     * Get a function which can be used to look up principals for update without a security manager permission check.
+     * All returned identities must be {@linkplain RealmIdentity#dispose() disposed}.
+     *
+     * @return the lookup function (not {@code null})
+     * @throws SecurityException if the caller is not authorized to perform the operation
+     */
+    public ExceptionFunction<Principal, ModifiableRealmIdentity, RealmUnavailableException> getIdentityLookupForUpdateFunction() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_IDENTITY_FOR_UPDATE);
+        }
+        return p -> getIdentityPrivileged(p, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT);
+    }
+
+    <I, R extends SecurityRealm> I getIdentityPrivileged(Principal principal, Class<R> realmType, ExceptionBiFunction<R, Principal, I, RealmUnavailableException> fn, Supplier<I> nonExistent) throws RealmUnavailableException {
         Assert.checkNotNullParam("principal", principal);
         Principal preRealmPrincipal = preRealmPrincipalRewriter.apply(principal);
         if (preRealmPrincipal == null) {
@@ -192,7 +257,11 @@ public final class SecurityDomain {
         log.tracef("Principal mapping: [%s], pre-realm rewritten: [%s], realm name: [%s], post realm rewritten: [%s], realm rewritten: [%s]",
                 principal, preRealmPrincipal, realmName, postRealmPrincipal, realmRewrittenPrincipal);
 
-        return securityRealm.getRealmIdentity(realmRewrittenPrincipal);
+        if (realmType.isInstance(securityRealm)) {
+            return fn.apply(realmType.cast(securityRealm), realmRewrittenPrincipal);
+        } else {
+            return nonExistent.get();
+        }
     }
 
     SecurityRealm getRealm(final String realmName) {

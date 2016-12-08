@@ -31,6 +31,8 @@ import org.wildfly.security.util.StringMapping;
  *     <li>{@code setRunAsPrincipal}</li>
  *     <li>{@code createServerAuthenticationContext}</li>
  *     <li>{@code getPrivateCredentials}</li>
+ *     <li>{@code getIdentity}</li>
+ *     <li>{@code getIdentityForUpdate}</li>
  * </ul>
  * The {@code actions} are not used and should be empty or {@code null}.
  *
@@ -46,7 +48,9 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
         "createSecurityDomain",
         "setRunAsPrincipal",
         "createServerAuthenticationContext",
-        "getPrivateCredentials"
+        "getPrivateCredentials",
+        "getIdentity",
+        "getIdentityForUpdate"
     );
 
     static final StringMapping<ElytronPermission> mapping = new StringMapping<>(strings, ElytronPermission::new);
