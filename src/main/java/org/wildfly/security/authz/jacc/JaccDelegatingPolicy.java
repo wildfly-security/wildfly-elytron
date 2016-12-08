@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.authz.jacc;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 import org.wildfly.security.authz.Roles;
@@ -57,7 +58,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  */
 public class JaccDelegatingPolicy extends Policy {
 
-    public static final PrivilegedAction<Policy> GET_POLICY_ACTION = Policy::getPolicy;
+    private static final PrivilegedAction<Policy> GET_POLICY_ACTION = Policy::getPolicy;
     private static final String ANY_AUTHENTICATED_USER_ROLE = "**";
 
     private final Policy delegate;
@@ -69,11 +70,6 @@ public class JaccDelegatingPolicy extends Policy {
      */
     public JaccDelegatingPolicy() {
         this(WildFlySecurityManager.isChecking() ? doPrivileged(GET_POLICY_ACTION) : Policy.getPolicy());
-        this.supportedPermissionTypes.add(WebResourcePermission.class);
-        this.supportedPermissionTypes.add(WebRoleRefPermission.class);
-        this.supportedPermissionTypes.add(WebUserDataPermission.class);
-        this.supportedPermissionTypes.add(EJBMethodPermission.class);
-        this.supportedPermissionTypes.add(EJBRoleRefPermission.class);
     }
 
     /**
@@ -82,7 +78,12 @@ public class JaccDelegatingPolicy extends Policy {
      * @param delegate the policy that will be used to delegate method calls
      */
     public JaccDelegatingPolicy(Policy delegate) {
-        this.delegate = delegate;
+        this.delegate = Assert.checkNotNullParam("delegate", delegate);
+        this.supportedPermissionTypes.add(WebResourcePermission.class);
+        this.supportedPermissionTypes.add(WebRoleRefPermission.class);
+        this.supportedPermissionTypes.add(WebUserDataPermission.class);
+        this.supportedPermissionTypes.add(EJBMethodPermission.class);
+        this.supportedPermissionTypes.add(EJBRoleRefPermission.class);
     }
 
     @Override
