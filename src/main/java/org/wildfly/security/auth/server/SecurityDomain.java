@@ -181,7 +181,7 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(GET_IDENTITY);
         }
-        return getIdentityPrivileged(principal, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT);
+        return getIdentityPrivileged(principal, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT, () -> RealmIdentity.ANONYMOUS);
     }
 
     /**
@@ -199,7 +199,7 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(GET_IDENTITY_FOR_UPDATE);
         }
-        return getIdentityPrivileged(principal, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT);
+        return getIdentityPrivileged(principal, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT, () -> ModifiableRealmIdentity.NON_EXISTENT);
     }
 
     /**
@@ -214,7 +214,7 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(GET_IDENTITY);
         }
-        return p -> getIdentityPrivileged(p, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT);
+        return p -> getIdentityPrivileged(p, SecurityRealm.class, SecurityRealm::getRealmIdentity, () -> RealmIdentity.NON_EXISTENT, () -> RealmIdentity.ANONYMOUS);
     }
 
     /**
@@ -229,11 +229,14 @@ public final class SecurityDomain {
         if (sm != null) {
             sm.checkPermission(GET_IDENTITY_FOR_UPDATE);
         }
-        return p -> getIdentityPrivileged(p, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT);
+        return p -> getIdentityPrivileged(p, ModifiableSecurityRealm.class, ModifiableSecurityRealm::getRealmIdentityForUpdate, () -> ModifiableRealmIdentity.NON_EXISTENT, () -> ModifiableRealmIdentity.NON_EXISTENT);
     }
 
-    <I, R extends SecurityRealm> I getIdentityPrivileged(Principal principal, Class<R> realmType, ExceptionBiFunction<R, Principal, I, RealmUnavailableException> fn, Supplier<I> nonExistent) throws RealmUnavailableException {
+    <I, R extends SecurityRealm> I getIdentityPrivileged(Principal principal, Class<R> realmType, ExceptionBiFunction<R, Principal, I, RealmUnavailableException> fn, Supplier<I> nonExistent, Supplier<I> anonymous) throws RealmUnavailableException {
         Assert.checkNotNullParam("principal", principal);
+        if (principal instanceof AnonymousPrincipal) {
+            return anonymous.get();
+        }
         Principal preRealmPrincipal = preRealmPrincipalRewriter.apply(principal);
         if (preRealmPrincipal == null) {
             throw log.invalidName();
