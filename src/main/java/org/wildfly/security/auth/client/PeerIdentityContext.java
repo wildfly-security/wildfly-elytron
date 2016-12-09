@@ -99,7 +99,7 @@ public abstract class PeerIdentityContext {
         }
     }
 
-    void setPeerIdentity(PeerIdentity newIdentity) {
+    protected void setPeerIdentity(PeerIdentity newIdentity) {
         assert newIdentity == null || newIdentity.getPeerIdentityContext() == this;
         if (newIdentity == null) {
             currentIdentity.remove();
