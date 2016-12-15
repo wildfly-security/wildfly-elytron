@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.TwoWayPassword;
@@ -56,6 +57,8 @@ public interface ClearPassword extends TwoWayPassword {
      * @return the raw password implementation
      */
     static ClearPassword createRaw(String algorithm, char[] password) {
-        return new RawClearPassword(algorithm, password);
+        checkNotNullParam("algorithm", algorithm);
+        checkNotNullParam("password", password);
+        return new RawClearPassword(algorithm, password.clone());
     }
 }
