@@ -148,7 +148,6 @@ public class KeystorePasswordStoreTest {
      * @throws UnsupportedCredentialTypeException
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-820")
     public void testRecreatingKSTest()
         throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
 
@@ -238,7 +237,7 @@ public class KeystorePasswordStoreTest {
      * @throws UnsupportedCredentialTypeException
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/WFLY-7742")
+    @Ignore("https://issues.jboss.org/browse/ELY-836")
     public void testCaseInsensitiveAlias()
         throws NoSuchAlgorithmException, CredentialStoreException, UnsupportedCredentialTypeException {
         HashMap<String, String> csAttributes = new HashMap<>();
