@@ -137,9 +137,6 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
         }
         synchronized (data) {
             data.put(credentialAlias, encoded);
-            if (location != null) {
-                flush();
-            }
         }
     }
 
@@ -184,22 +181,24 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
         }
         synchronized (data) {
             data.remove(credentialAlias);
-            if (location != null) {
-                flush();
-            }
         }
     }
 
-    private void flush() throws CredentialStoreException {
-        try (final AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
-            try (final VaultObjectOutputStream oos = new VaultObjectOutputStream(os)) {
-                oos.writeObject(new VaultData(data));
-            } catch (Throwable t) {
-                os.cancel();
-                throw t;
+    public void flush() throws CredentialStoreException {
+        synchronized (data) {
+            final File location = this.location;
+            if (location != null) {
+                try (final AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
+                    try (final VaultObjectOutputStream oos = new VaultObjectOutputStream(os)) {
+                        oos.writeObject(new VaultData(data));
+                    } catch (Throwable t) {
+                        os.cancel();
+                        throw t;
+                    }
+                } catch (IOException e) {
+                    throw log.cannotWriteCredentialToStore(e);
+                }
             }
-        } catch (IOException e) {
-            throw log.cannotWriteCredentialToStore(e);
         }
     }
 }

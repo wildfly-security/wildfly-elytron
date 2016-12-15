@@ -122,6 +122,15 @@ public abstract class CredentialStoreSpi {
     public abstract void remove(String credentialAlias, Class<? extends Credential> credentialType, String credentialAlgorithm, AlgorithmParameterSpec parameterSpec) throws CredentialStoreException;
 
     /**
+     * Flush the credential store contents to storage.  If the credential store does not support or require explicit
+     * flushing, this method should do nothing and simply return.
+     *
+     * @throws CredentialStoreException if the flush fails for some reason.
+     */
+    public void flush() throws CredentialStoreException {
+    }
+
+    /**
      * Returns credential aliases stored in this store as {@code Set<String>}.
      *
      * It is not mandatory to override this method (throws {@link UnsupportedOperationException} by default).

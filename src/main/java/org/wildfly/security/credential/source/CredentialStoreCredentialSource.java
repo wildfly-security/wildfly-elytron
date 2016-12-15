@@ -78,11 +78,8 @@ public final class CredentialStoreCredentialSource implements CredentialSource {
 
     public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) throws IOException {
         Assert.checkNotNullParam("credentialType", credentialType);
-        final C credential;
         try {
-            final CredentialStore credentialStore = credentialStoreFactory.create();
-            credential = credentialStore.retrieve(alias, credentialType);
-            return credential.castAs(credentialType, algorithmName, parameterSpec);
+            return credentialStoreFactory.create().retrieve(alias, credentialType, algorithmName, parameterSpec);
         } catch (UnsupportedCredentialTypeException e) {
             return null;
         } catch (GeneralSecurityException e) {

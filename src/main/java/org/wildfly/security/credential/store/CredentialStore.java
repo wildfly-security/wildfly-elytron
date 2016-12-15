@@ -301,6 +301,20 @@ public class CredentialStore {
     }
 
     /**
+     * Flush the contents of this credential store to storage.  This method may be a no-op on credential stores
+     * without backing storage or which do not buffer changes.
+     *
+     * @throws CredentialStoreException if flushing the store fails for some reason
+     */
+    public void flush() throws CredentialStoreException {
+        if (isModifiable()) {
+            spi.flush();
+        } else {
+            throw log.nonModifiableCredentialStore("flush");
+        }
+    }
+
+    /**
      * Returns {@link Provider} which provides {@link CredentialStoreSpi} for this instance.
      * @return {@link Provider} of this {@link CredentialStoreSpi}
      */
