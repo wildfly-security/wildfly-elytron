@@ -61,8 +61,7 @@ public class OAuth2Client {
 
         assertTrue(credentialCallback.isCredentialTypeSupported(BearerTokenCredential.class));
 
-        BearerTokenCredential credential = credentialCallback.getCredential(BearerTokenCredential.class);
-        final String token = credential.getToken();
+        final String token = credentialCallback.applyToCredential(BearerTokenCredential.class, BearerTokenCredential::getToken);
 
         if (token == null) {
             throw ElytronMessages.log.mechNoTokenGiven(this.mechanismName);

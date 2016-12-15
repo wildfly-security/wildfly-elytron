@@ -224,6 +224,8 @@
             <xsd:element name="key-pair" type="key-pair-type"/>
             <xsd:element name="certificate" type="certificate-type"/>
             <xsd:element name="public-key-pem" type="xsd:string"/>
+            <xsd:element name="bearer-token" type="bearer-token-type"/>
+            <xsd:element name="oauth2-bearer-token" type="oauth2-bearer-token-type"/>
         </xsd:choice>
     </xsd:complexType>
 
@@ -322,6 +324,22 @@
         <xsd:attribute name="store" type="xsd:string"/>
         <xsd:attribute name="alias" type="xsd:string"/>
         <xsd:attribute name="clear-text" type="xsd:string"/>
+    </xsd:complexType>
+
+    <xsd:complexType name="bearer-token-type">
+        <xsd:attribute name="value" type="xsd:string" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="oauth2-bearer-token-type">
+        <xsd:choice minOccurs="1">
+            <xsd:element name="resource-owner-credentials" type="resource-owner-credentials-type" minOccurs="0" maxOccurs="1"/>
+        </xsd:choice>
+        <xsd:attribute name="token-endpoint-uri" type="xsd:anyURI" use="required" />
+    </xsd:complexType>
+
+    <xsd:complexType name="resource-owner-credentials-type">
+        <xsd:attribute name="name" type="xsd:string" use="required" />
+        <xsd:attribute name="password" type="xsd:string" use="required" />
     </xsd:complexType>
 
     <!-- Common types -->

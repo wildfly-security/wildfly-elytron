@@ -30,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -68,6 +69,7 @@ import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.client.config.XMLLocation;
+import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionBiFunction;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.common.function.ExceptionUnaryOperator;
@@ -77,6 +79,7 @@ import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
 import org.wildfly.security.auth.util.ElytronAuthenticator;
 import org.wildfly.security.auth.util.RegexNameRewriter;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.KeyPairCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.PublicKeyCredential;
@@ -84,6 +87,7 @@ import org.wildfly.security.credential.X509CertificateChainPrivateCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
 import org.wildfly.security.credential.source.KeyStoreCredentialSource;
+import org.wildfly.security.credential.source.OAuth2CredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.keystore.PasswordEntry;
 import org.wildfly.security.keystore.WrappingPasswordKeyStore;
@@ -216,7 +220,6 @@ public final class ElytronXmlParser {
      * @throws ConfigXMLParseException if the resource failed to be parsed
      */
     static SecurityFactory<AuthenticationContext> parseAuthenticationClientType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
-        SecurityFactory<AuthenticationContext> futureContext = null;
         requireNoAttributes(reader);
         ExceptionSupplier<RuleNode<AuthenticationConfiguration>, ConfigXMLParseException> authFactory = () -> null;
         ExceptionSupplier<RuleNode<SecurityFactory<SSLContext>>, ConfigXMLParseException> sslFactory = () -> null;
@@ -793,8 +796,8 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "clear-password": {
-                        char[] password = parseClearPassword(reader);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, password)))));
+                        Password password = parseClearPassword(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
                         break;
                     }
                     case "hashed-password": {
@@ -820,6 +823,16 @@ public final class ElytronXmlParser {
                     case "public-key-pem": {
                         PublicKey publicKey = parsePem(reader, PublicKey.class);
                         function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PublicKeyCredential(publicKey))));
+                        break;
+                    }
+                    case "bearer-token": {
+                        BearerTokenCredential bearerToken = parseBearerTokenType(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(bearerToken)));
+                        break;
+                    }
+                    case "oauth2-bearer-token": {
+                        CredentialSource credentialStore = parseOAuth2BearerTokenType(reader);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(credentialStore));
                         break;
                     }
                     default: {
@@ -1139,7 +1152,7 @@ public final class ElytronXmlParser {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
-                        final char[] clearPassword = parseClearPassword(reader);
+                        final char[] clearPassword = parseClearPassword(reader).getPassword();
                         passwordFactory = () -> clearPassword;
                         break;
                     }
@@ -1245,7 +1258,7 @@ public final class ElytronXmlParser {
                     }
                     case "key-store-clear-password": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
-                        keyStoreCredential = () -> new PasswordEntry(ClearPassword.createRaw("clear", parseClearPassword(reader)));
+                        keyStoreCredential = () -> new PasswordEntry(parseClearPassword(reader));
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -1846,7 +1859,7 @@ public final class ElytronXmlParser {
      * @return the clear password characters
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
-    static char[] parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static ClearPassword parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         char[] password = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1865,7 +1878,12 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                return password;
+                try {
+                    PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
+                    return Assert.assertNotNull(factory.generatePassword(new ClearPasswordSpec(password)).castAs(ClearPassword.class));
+                } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                    throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), cause);
+                }
             } else {
                 throw reader.unexpectedContent();
             }
@@ -1939,6 +1957,107 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
+    /**
+     * Parse an XML element of type {@code bearer-token-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static BearerTokenCredential parseBearerTokenType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        String value = requireSingleAttribute(reader, "value");
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return new BearerTokenCredential(value);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code oauth2-bearer-token-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static CredentialSource parseOAuth2BearerTokenType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+        URI tokenEndpointUri = requireSingleURIAttribute(reader, "token-endpoint-uri");
+        OAuth2CredentialSource.Builder builder;
+        try {
+            builder = OAuth2CredentialSource.builder(tokenEndpointUri.toURL());
+        } catch (MalformedURLException e) {
+            throw xmlLog.xmlInvalidUrl(tokenEndpointUri.toString());
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                checkElementNamespace(reader);
+                switch (reader.getLocalName()) {
+                    case "resource-owner-credentials": {
+                        builder = parseOAuth2ResourceOwnerCredentials(reader, builder);
+                        break;
+                    }
+                    default: throw reader.unexpectedElement();
+                }
+            } else if (tag == END_ELEMENT) {
+                return builder.build();
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
+    /**
+     * Parse an XML element of type {@code oauth2-bearer-token-type} from an XML reader.
+     *
+     * @param reader the XML stream reader
+     * @param builder the builder
+     * @throws ConfigXMLParseException if the resource failed to be parsed
+     */
+    static OAuth2CredentialSource.Builder parseOAuth2ResourceOwnerCredentials(ConfigurationXMLStreamReader reader, OAuth2CredentialSource.Builder builder) throws ConfigXMLParseException {
+        final int attributeCount = reader.getAttributeCount();
+        String userName = null;
+        String password = null;
+        for (int i = 0; i < attributeCount; i ++) {
+            checkAttributeNamespace(reader, i);
+            switch (reader.getAttributeLocalName(i)) {
+                case "name": {
+                    if (userName != null) throw reader.unexpectedAttribute(i);
+                    userName = reader.getAttributeValue(i);
+                    break;
+                }
+                case "password": {
+                    if (password != null) throw reader.unexpectedAttribute(i);
+                    password = reader.getAttributeValue(i);
+                    break;
+                }
+                default: throw reader.unexpectedAttribute(i);
+            }
+        }
+        if (userName == null) {
+            throw missingAttribute(reader, "name");
+        }
+        if (password == null) {
+            throw missingAttribute(reader, "password");
+        }
+        while (reader.hasNext()) {
+            final int tag = reader.nextTag();
+            if (tag == START_ELEMENT) {
+                throw reader.unexpectedElement();
+            } else if (tag == END_ELEMENT) {
+                return builder.useResourceOwnerPassword(userName, password);
+            } else {
+                throw reader.unexpectedContent();
+            }
+        }
+        throw reader.unexpectedDocumentEnd();
+    }
+
     // util
 
     private static void checkElementNamespace(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
@@ -1962,6 +2081,14 @@ public final class ElytronXmlParser {
     }
 
     private static String requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+        return requireSingleAttribute(reader, attributeName, (ExceptionSupplier<String, ConfigXMLParseException>) () -> reader.getAttributeValue(0));
+    }
+
+    private static URI requireSingleURIAttribute(final ConfigurationXMLStreamReader reader, final String attributeName) throws ConfigXMLParseException {
+        return requireSingleAttribute(reader, attributeName, () -> reader.getURIAttributeValue(0));
+    }
+
+    private static <A> A requireSingleAttribute(final ConfigurationXMLStreamReader reader, final String attributeName, ExceptionSupplier<A, ConfigXMLParseException> attributeFunction) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         if (attributeCount < 1) {
             throw reader.missingRequiredAttribute("", attributeName);
@@ -1973,7 +2100,7 @@ public final class ElytronXmlParser {
         if (attributeCount > 1) {
             throw reader.unexpectedAttribute(1);
         }
-        return reader.getAttributeValue(0);
+        return attributeFunction.get();
     }
 
     private static ConfigXMLParseException missingAttribute(final ConfigurationXMLStreamReader reader, final String name) {

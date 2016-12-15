@@ -69,6 +69,7 @@ import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.NameRewriter;
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.credential.source.CredentialStoreCredentialSource;
@@ -823,6 +824,16 @@ public abstract class AuthenticationConfiguration {
 
     public final AuthenticationConfiguration useRealm(String realm) {
         return new SetRealmAuthenticationConfiguration(this, realm);
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which uses the given {@link BearerTokenCredential} to authenticate.
+     *
+     * @param credential the bearer token credential to use
+     * @return the new configuration
+     */
+    public final AuthenticationConfiguration useBearerTokenCredential(BearerTokenCredential credential) {
+        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
     }
 
     // client methods

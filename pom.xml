@@ -74,6 +74,7 @@
         <version.hsqldb>2.3.1</version.hsqldb>
         <version.org.glassfish.javax.json>1.0.4</version.org.glassfish.javax.json>
         <version.com.nimbusds.nimbus-jose-jwt>4.13.1</version.com.nimbusds.nimbus-jose-jwt>
+        <version.com.squareup.okhttp3.mockwebserver>3.4.1</version.com.squareup.okhttp3.mockwebserver>
         <version.org.wildfly.checkstyle-config>1.0.5.Final</version.org.wildfly.checkstyle-config>
         <version.org.wildfly.client.config>1.0.0.Beta1</version.org.wildfly.client.config>
         <version.org.wildfly.common>1.2.0.Beta1</version.org.wildfly.common>
@@ -441,6 +442,14 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>${version.com.nimbusds.nimbus-jose-jwt}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mock Web Server -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>${version.com.squareup.okhttp3.mockwebserver}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

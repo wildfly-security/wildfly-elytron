@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2016 Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags.
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<configuration>
+    <authentication-client xmlns="urn:elytron:1.0">
+        <net-authenticator/>
+        <authentication-rules>
+            <rule use-configuration="test1.org">
+                <match-host name="test1.org"/>
+            </rule>
+            <rule use-configuration="test2.org">
+                <match-host name="test2.org"/>
+            </rule>
+            <rule use-configuration="test3.org">
+                <match-host name="test3.org"/>
+            </rule>
+            <rule use-configuration="test4.org">
+                <match-host name="test4.org"/>
+            </rule>
+            <rule use-configuration="test5.org">
+                <match-host name="test5.org"/>
+            </rule>
+            <rule use-configuration="test6">
+                <match-host name="test6.org"/>
+            </rule>
+            <rule use-configuration="authorization-server-a">
+                <match-protocol name="http"/>
+                <match-host name="localhost"/>
+                <match-port number="50831"/>
+            </rule>
+            <rule use-configuration="authorization-server-b">
+                <match-protocol name="http"/>
+                <match-host name="127.0.0.1"/>
+                <match-port number="50831"/>
+            </rule>
+        </authentication-rules>
+        <authentication-configurations>
+            <configuration name="test1.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <resource-owner-credentials name="jdoe" password="dont_tell_me"/>
+                    </oauth2-bearer-token>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="test2.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token"/>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="test3.org">
+                <credentials>
+                    <bearer-token value="invalid_token"/>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="test4.org">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://127.0.0.1:50831/token"/>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="test5.org">
+                <credentials>
+                    <bearer-token value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiaXNzIjoiYXV0aC5zZXJ2ZXIiLCJhdWQiOiJmb3JfbWUiLCJleHAiOjE3NjA5OTE2MzUsInByZWZlcnJlZF91c2VybmFtZSI6Impkb2UifQ.SoPW41_mOFnKXdkwVG63agWQ2k09dEnEtTBztnxHN64"/>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="test6">
+                <credentials>
+                    <oauth2-bearer-token token-endpoint-uri="http://localhost:50831/token">
+                        <resource-owner-credentials name="alice" password="bad_password"/>
+                    </oauth2-bearer-token>
+                </credentials>
+                <allow-sasl-mechanisms names="OAUTHBEARER"/>
+            </configuration>
+            <configuration name="authorization-server-a">
+                <set-user-name name="elytron-client"/>
+                <credentials>
+                    <clear-password password="dont_tell_me"/>
+                </credentials>
+            </configuration>
+            <configuration name="authorization-server-b">
+                <set-user-name name="elytron-client"/>
+                <credentials>
+                    <clear-password password="bad_secret"/>
+                </credentials>
+            </configuration>
+        </authentication-configurations>
+    </authentication-client>
+</configuration>
