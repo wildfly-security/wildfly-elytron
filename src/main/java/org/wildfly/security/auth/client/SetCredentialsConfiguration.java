@@ -119,6 +119,11 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
         return super.filterOneSaslMechanism(mechanismName);
     }
 
+    @Override
+    CredentialSource getCredentialSource() {
+        return credentialSource;
+    }
+
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetCredentialsConfiguration(newParent, credentialSource);
     }
