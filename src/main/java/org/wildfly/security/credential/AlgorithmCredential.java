@@ -21,6 +21,8 @@ package org.wildfly.security.credential;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.function.Function;
 
+import org.wildfly.common.Assert;
+
 /**
  * A credential which has an associated algorithm name.
  */
@@ -32,6 +34,71 @@ public interface AlgorithmCredential extends Credential {
      * @return the algorithm name
      */
     String getAlgorithm();
+
+    /**
+     * Get the default algorithm parameters of the any type from this credential.
+     *
+     * @return the parameter specification, or {@code null} if no parameters are present or available or the given type
+     * was not supported by this credential
+     */
+    default AlgorithmParameterSpec getParameters() {
+        return getParameters(AlgorithmParameterSpec.class);
+    }
+
+    /**
+     * Get the algorithm parameters of the given type from this credential.
+     *
+     * @param paramSpecClass the parameter specification class (must not be {@code null})
+     * @return the parameter specification, or {@code null} if no parameters are present or available or the given type
+     * was not supported by this credential
+     */
+    default <P extends AlgorithmParameterSpec> P getParameters(Class<P> paramSpecClass) {
+        Assert.checkNotNullParam("paramSpecClass", paramSpecClass);
+        return null;
+    }
+
+    /**
+     * Determine whether this credential instance supports any algorithm parameter type.
+     *
+     * @return {@code true} if parameters are supported, {@code false} otherwise
+     */
+    default boolean supportsParameters() {
+        return supportsParameters(AlgorithmParameterSpec.class);
+    }
+
+    /**
+     * Determine whether this credential instance supports the given algorithm parameter type.
+     *
+     * @param paramSpecClass the parameter specification class (must not be {@code null})
+     * @return {@code true} if the parameter type is supported, {@code false} otherwise
+     */
+    default boolean supportsParameters(Class<? extends AlgorithmParameterSpec> paramSpecClass) {
+        return false;
+    }
+
+    /**
+     * Determine whether this credential implies the given parameters.  The default implementation returns
+     * {@code false} always.
+     *
+     * @param parameterSpec the parameters to test for (must not be {@code null})
+     * @return {@code true} if the given parameters match this credential, {@code false} otherwise
+     */
+    default boolean impliesParameters(AlgorithmParameterSpec parameterSpec) {
+        Assert.checkNotNullParam("parameterSpec", parameterSpec);
+        return false;
+    }
+
+    /**
+     * Determine whether the other credential's parameters are implied by this one.
+     *
+     * @param other the other credential (must not be {@code null})
+     * @return {@code true} if the credentials have matching parameters, {@code false} otherwise
+     */
+    default boolean impliesSameParameters(AlgorithmCredential other) {
+        Assert.checkNotNullParam("other", other);
+        final AlgorithmParameterSpec parameters = other.getParameters();
+        return parameters == null ? ! supportsParameters() : impliesParameters(parameters);
+    }
 
     /**
      * Creates and returns a copy of this {@link Credential}.

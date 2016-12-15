@@ -162,7 +162,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             // first, attempt to encode the credential into a keystore entry
             final Class<? extends Credential> credentialClass = credential.getClass();
             final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
-            final AlgorithmParameterSpec parameterSpec = credential.getParameters(AlgorithmParameterSpec.class);
+            final AlgorithmParameterSpec parameterSpec = credential.castAndApply(AlgorithmCredential.class, AlgorithmCredential::getParameters);
             final KeyStore.Entry entry;
             if (credentialClass == SecretKeyCredential.class) {
                 entry = new KeyStore.SecretKeyEntry(credential.castAndApply(SecretKeyCredential.class, SecretKeyCredential::getSecretKey));
@@ -763,14 +763,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                             final AlgorithmParameters algorithmParameters = AlgorithmParameters.getInstance(algName);
                             algorithmParameters.init(encodedParameters);
                             final AlgorithmParameterSpec parameterSpec = algorithmParameters.getParameterSpec(AlgorithmParameterSpec.class);
-                            if (credentialType == null) {
-                                log.logIgnoredUnrecognizedKeyStoreEntry(ksAlias);
-                            } else {
-                                final TopEntry topEntry = cache.computeIfAbsent(alias, TopEntry::new);
-                                final MidEntry midEntry = topEntry.getMap().computeIfAbsent(credentialType, k -> new MidEntry(topEntry, k));
-                                final BottomEntry bottomEntry = midEntry.getMap().computeIfAbsent(algName, k -> new BottomEntry(midEntry, k));
-                                bottomEntry.getMap().put(new ParamKey(parameterSpec), ksAlias);
-                            }
+                            final TopEntry topEntry = cache.computeIfAbsent(alias, TopEntry::new);
+                            final MidEntry midEntry = topEntry.getMap().computeIfAbsent(credentialType, k -> new MidEntry(topEntry, k));
+                            final BottomEntry bottomEntry = midEntry.getMap().computeIfAbsent(algName, k -> new BottomEntry(midEntry, k));
+                            bottomEntry.getMap().put(new ParamKey(parameterSpec), ksAlias);
                         } else {
                             // algorithm but no parameters
                             final TopEntry topEntry = cache.computeIfAbsent(alias, TopEntry::new);
