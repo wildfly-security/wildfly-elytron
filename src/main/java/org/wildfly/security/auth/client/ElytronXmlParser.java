@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static javax.xml.stream.XMLStreamConstants.COMMENT;
 import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
@@ -508,6 +509,7 @@ public final class ElytronXmlParser {
             throw xmlLog.xmlDuplicateAuthenticationConfigurationName(name, reader);
         }
         ExceptionUnaryOperator<AuthenticationConfiguration, ConfigXMLParseException> configuration = ignored -> AuthenticationConfiguration.EMPTY;
+        DeferredSupplier<Provider[]> providerSupplier = new DeferredSupplier<>(Security::getProviders);
         int foundBits = 0;
         if (! reader.hasNext()) {
             throw reader.unexpectedDocumentEnd();
@@ -592,7 +594,7 @@ public final class ElytronXmlParser {
                     case "credentials": {
                         if (isSet(foundBits, 9)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 9);
-                        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource = parseCredentialsType(reader, keyStoresMap, credentialStoresMap);
+                        ExceptionSupplier<CredentialSource, ConfigXMLParseException> credentialSource = parseCredentialsType(reader, keyStoresMap, credentialStoresMap, providerSupplier);
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useCredentials(credentialSource.get()));
                         break;
                     }
@@ -608,14 +610,16 @@ public final class ElytronXmlParser {
                         if (isSet(foundBits, 11)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 11);
                         parseEmptyType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(Security::getProviders));
+                        providerSupplier.setSupplier(Security::getProviders);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(providerSupplier));
                         break;
                     }
                     case "use-service-loader-providers": {
                         if (isSet(foundBits, 11)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 11);
                         final Module module = parseModuleRefType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(new ServiceLoaderSupplier<Provider>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
+                        providerSupplier.setSupplier(new ServiceLoaderSupplier<Provider>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader()));
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(providerSupplier));
                         break;
                     }
                     // these two are a <choice> which is why they share a bit #; you can have only one of them
@@ -777,7 +781,7 @@ public final class ElytronXmlParser {
         return t -> second.apply(first.apply(t));
     }
 
-    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap) throws ConfigXMLParseException {
+    private static ExceptionSupplier<CredentialSource, ConfigXMLParseException> parseCredentialsType(final ConfigurationXMLStreamReader reader, final Map<String, ExceptionSupplier<KeyStore, ConfigXMLParseException>> keyStoresMap, final Map<String, ExceptionSupplier<CredentialStore, ConfigXMLParseException>> credentialStoresMap, Supplier<Provider[]> providers) throws ConfigXMLParseException {
         ExceptionUnaryOperator<CredentialSource, ConfigXMLParseException> function = parent -> CredentialSource.NONE;
         requireNoAttributes(reader);
         while (reader.hasNext()) {
@@ -796,13 +800,13 @@ public final class ElytronXmlParser {
                         break;
                     }
                     case "clear-password": {
-                        Password password = parseClearPassword(reader);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
+                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseClearPassword(reader, providers);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
                         break;
                     }
                     case "hashed-password": {
-                        Password password = parseHashedPassword(reader);
-                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
+                        ExceptionSupplier<Password, ConfigXMLParseException> password = parseHashedPassword(reader, providers);
+                        function = andThenOp(function, credentialSource -> credentialSource.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password.get()))));
                         break;
                     }
                     case "crypt-password": {
@@ -849,7 +853,7 @@ public final class ElytronXmlParser {
         throw reader.unexpectedDocumentEnd();
     }
 
-    private static Password parseHashedPassword(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    private static ExceptionSupplier<Password, ConfigXMLParseException> parseHashedPassword(final ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String algorithm = null;
         String hash = null;
@@ -900,12 +904,17 @@ public final class ElytronXmlParser {
                 passwordSpec = new HashPasswordSpec(hashBytes);
             }
         }
-        try {
-            final PasswordFactory instance = PasswordFactory.getInstance(algorithm);
-            return instance.generatePassword(passwordSpec);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), e);
-        }
+
+        final XMLLocation location = reader.getLocation();
+        final String finalAlgorithm = algorithm;
+        return () -> {
+            try {
+                final PasswordFactory instance = PasswordFactory.getInstance(finalAlgorithm, providers);
+                return instance.generatePassword(passwordSpec);
+            } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+                throw xmlLog.xmlFailedToCreateCredential(location, e);
+            }
+        };
     }
 
     private static Password parseCryptPassword(final ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
@@ -1152,7 +1161,7 @@ public final class ElytronXmlParser {
                             throw reader.unexpectedElement();
                         }
                         gotCredential = true;
-                        final char[] clearPassword = parseClearPassword(reader).getPassword();
+                        final char[] clearPassword = ((ClearPassword) parseClearPassword(reader, Security::getProviders).get()).getPassword();
                         passwordFactory = () -> clearPassword;
                         break;
                     }
@@ -1258,7 +1267,7 @@ public final class ElytronXmlParser {
                     }
                     case "key-store-clear-password": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
-                        keyStoreCredential = () -> new PasswordEntry(parseClearPassword(reader));
+                        keyStoreCredential = () -> new PasswordEntry(parseClearPassword(reader, Security::getProviders).get());
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -1439,7 +1448,7 @@ public final class ElytronXmlParser {
                     }
                     case "protection-parameter-credentials": {
                         if (++attributesSectionCount > 2) throw reader.unexpectedContent();
-                        credentialSourceSupplier = parseCredentialsType(reader, keyStoresMap, credentialStoresMap);
+                        credentialSourceSupplier = parseCredentialsType(reader, keyStoresMap, credentialStoresMap, Security::getProviders);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -1859,7 +1868,7 @@ public final class ElytronXmlParser {
      * @return the clear password characters
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
-    static ClearPassword parseClearPassword(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static ExceptionSupplier<Password, ConfigXMLParseException> parseClearPassword(ConfigurationXMLStreamReader reader, Supplier<Provider[]> providers) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         char[] password = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1878,12 +1887,16 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                try {
-                    PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
-                    return Assert.assertNotNull(factory.generatePassword(new ClearPasswordSpec(password)).castAs(ClearPassword.class));
-                } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
-                    throw xmlLog.xmlFailedToCreateCredential(reader.getLocation(), cause);
-                }
+                final XMLLocation location = reader.getLocation();
+                final char[] finalPassword = password;
+                return () -> {
+                    try {
+                        PasswordFactory factory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR, providers);
+                        return Assert.assertNotNull(factory.generatePassword(new ClearPasswordSpec(finalPassword)).castAs(ClearPassword.class));
+                    } catch (InvalidKeySpecException | NoSuchAlgorithmException cause) {
+                        throw xmlLog.xmlFailedToCreateCredential(location, cause);
+                    }
+                };
             } else {
                 throw reader.unexpectedContent();
             }
@@ -2232,5 +2245,27 @@ public final class ElytronXmlParser {
             }
             throw xmlLog.xmlInvalidKeyStoreEntryType(location, "unknown", KeyStore.PrivateKeyEntry.class, entry.getClass());
         }
+    }
+
+    static final class DeferredSupplier<T>  implements Supplier<T> {
+
+        private volatile Supplier<T> supplier;
+        private T value;
+
+        DeferredSupplier(Supplier<T> supplier) {
+            checkNotNullParam("supplier", supplier);
+            this.supplier = supplier;
+        }
+
+        void setSupplier(Supplier<T> supplier) {
+            checkNotNullParam("supplier", supplier);
+            this.supplier = supplier;
+        }
+
+        @Override
+        public T get() {
+            return supplier.get();
+        }
+
     }
 }
