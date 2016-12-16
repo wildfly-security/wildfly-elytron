@@ -51,7 +51,7 @@ public final class AtomicFileOutputStream extends OutputStream {
 
     public AtomicFileOutputStream(final Path path) throws IOException {
         final Path parent = path.getParent();
-        if (parent.getNameCount() != 0 && ! Files.exists(parent)) {
+        if (parent != null && parent.getNameCount() != 0 && ! Files.exists(parent)) {
             Files.createDirectories(parent);
         }
         current = new OpenState(Files.newOutputStream(path.resolveSibling(path.getFileName() + ".new"), CREATE, TRUNCATE_EXISTING), path);

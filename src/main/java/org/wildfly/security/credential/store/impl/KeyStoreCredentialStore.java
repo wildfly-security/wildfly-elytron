@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Matcher;
@@ -150,6 +151,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             final String locationName = attributes.get("location");
             this.location = locationName == null ? null : Paths.get(locationName);
             load(attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType()));
+            initialized = true;
         }
     }
 
@@ -711,6 +713,20 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 throw log.cannotFlushCredentialStore(e);
             }
         }
+    }
+
+    /**
+     * Returns credential aliases stored in this store as {@code Set<String>}.
+     * <p>
+     * It is not mandatory to override this method (throws {@link UnsupportedOperationException} by default).
+     *
+     * @return {@code Set<String>} of all keys stored in this store
+     * @throws UnsupportedOperationException when this method is not supported by the underlying credential store
+     * @throws CredentialStoreException      if there is any problem with internal store
+     */
+    @Override
+    public Set<String> getAliases() throws UnsupportedOperationException, CredentialStoreException {
+        return cache.keySet();
     }
 
     private Hold lockForRead() {
