@@ -74,13 +74,7 @@ public class OAuth2IntrospectValidator implements TokenValidator {
         this.clientSecret = Assert.checkNotNullParam("clientSecret", configuration.clientSecret);
 
         if (tokenIntrospectionUrl.getProtocol().equalsIgnoreCase("https")) {
-            if (configuration.sslContext == null) {
-                throw log.tokenRealmOAuth2SSLContextNotSpecified(tokenIntrospectionUrl);
-            }
-
-            if (configuration.hostnameVerifier == null) {
-                throw log.tokenRealmOAuth2HostnameVerifierNotSpecified(tokenIntrospectionUrl);
-            }
+            Assert.checkNotNullParam("sslContext", configuration.sslContext);
         }
 
         this.sslContext = configuration.sslContext;
@@ -175,16 +169,6 @@ public class OAuth2IntrospectValidator implements TokenValidator {
 
         boolean isHttps = url.getProtocol().equalsIgnoreCase("https");
 
-        if (isHttps) {
-            if (sslContext == null) {
-                throw log.tokenRealmOAuth2SSLContextNotSpecified(url);
-            }
-
-            if (hostnameVerifier == null) {
-                throw log.tokenRealmOAuth2HostnameVerifierNotSpecified(url);
-            }
-        }
-
         try {
             log.debugf("Opening connection to token introspection endpoint [%s]", url);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -193,7 +177,10 @@ public class OAuth2IntrospectValidator implements TokenValidator {
                 HttpsURLConnection https = (HttpsURLConnection) connection;
 
                 https.setSSLSocketFactory(sslContext.getSocketFactory());
-                https.setHostnameVerifier(hostnameVerifier);
+
+                if (hostnameVerifier != null) {
+                    https.setHostnameVerifier(hostnameVerifier);
+                }
             }
 
             return connection;
