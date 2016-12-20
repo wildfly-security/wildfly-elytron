@@ -101,7 +101,7 @@ public class OAuth2CredentialSource implements CredentialSource {
 
     @Override
     public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) throws IOException {
-        if (credentialType.isAssignableFrom(credentialType)) {
+        if (BearerTokenCredential.class.isAssignableFrom(credentialType)) {
             try {
                 HttpURLConnection connection = null;
 
