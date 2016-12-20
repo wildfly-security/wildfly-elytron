@@ -32,6 +32,7 @@ import org.wildfly.security.credential.GSSCredentialCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
+import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.evidence.PasswordGuessEvidence;
 import org.wildfly.security.password.OneWayPassword;
@@ -224,6 +225,8 @@ public final class SaslMechanismInformation {
     static final Set<Class<? extends Credential>> JUST_GSS = singleton(GSSCredentialCredential.class);
 
     static final Set<Class<? extends Evidence>> JUST_PASSWORD_EVIDENCE = singleton(PasswordGuessEvidence.class);
+
+    static final Set<Class<? extends Evidence>> JUST_BEARER_TOKEN_EVIDENCE = singleton(BearerTokenEvidence.class);
 
     // algorithm name sets
 
@@ -613,6 +616,9 @@ public final class SaslMechanismInformation {
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
                 // TODO: look into verification process
                 return emptySet();
+            }
+            case Names.OAUTHBEARER: {
+                return JUST_BEARER_TOKEN_EVIDENCE;
             }
             default:
                 return emptySet();
