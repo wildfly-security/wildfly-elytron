@@ -28,16 +28,29 @@ import org.wildfly.common.Assert;
  */
 public class AttributeMapping {
 
+    public static final String DEFAULT_FILTERED_NAME = "filtered";
+    public static final String DEFAULT_DN_NAME = "dn";
+
     private final String ldapName;
     private final String searchDn;
     private final boolean recursiveSearch;
     private final String filter;
+    private final String reference;
     private final String name;
     private final String rdn;
-    private final int recursiveDepth;
+    private final int roleRecursionDepth;
 
     String getLdapName() {
         return ldapName;
+    }
+
+    /**
+     * Get name of LDAP attribute to obtain from identity entry
+     * @return LDAP attribute to obtain from identity entry
+     */
+    String getIdentityLdapName() {
+        if (filter != null) return null;
+        return reference != null ? reference : ldapName;
     }
 
     String getName() {
@@ -60,39 +73,34 @@ public class AttributeMapping {
         return rdn;
     }
 
-    int getRecursiveDepth() {
-        return recursiveDepth;
+    String getReference() {
+        return reference;
     }
 
-    boolean isFiltered() {
-        return filter != null;
+    int getRoleRecursionDepth() {
+        return roleRecursionDepth;
     }
 
-    /**
-     * <p>Create an attribute mapping based on the given attribute in LDAP.
-     * Attribute of the identity LDAP entry will be used as identity attribute value.
-     *
-     * @param ldapName the name of the attribute in LDAP from where values are obtained
-     * @return this builder
-     */
-    public static Builder fromAttribute(String ldapName) {
-        Assert.checkNotNullParam("ldapName", ldapName);
-        Builder builder = new Builder();
-        builder.ldapName = ldapName.toUpperCase(Locale.ROOT);
-        builder.name = builder.ldapName;
-        return builder;
+    boolean isFilteredOrReference() {
+        return filter != null || reference != null;
     }
 
     /**
-     * <p>Create an attribute mapping based on DN in LDAP.
-     * The DN of LDAP entry of the identity will be used as identity attribute value.
+     * Determine which context should be used to search filtered/referenced entry.
+     * Has effect if the identity is behind referral, on different server.
+     */
+    boolean searchInIdentityContext() {
+        return reference != null;
+    }
+
+    /**
+     * <p>Create an attribute mapping using LDAP entry of identity itself.
      *
      * @return this builder
      */
-    public static Builder fromDn() {
+    public static Builder fromIdentity() {
         Builder builder = new Builder();
         builder.ldapName = null;
-        builder.name = "dn";
         return builder;
     }
 
@@ -105,31 +113,25 @@ public class AttributeMapping {
      * a value of a <em>member</em> attribute.
      *
      * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
-     * @param ldapName the name of the attribute in LDAP from where the values are obtained
      * @return this builder
      */
-    public static Builder fromFilter(String filter, String ldapName) {
+    public static Builder fromFilter(String filter) {
         Assert.checkNotNullParam("filter", filter);
-        Assert.checkNotNullParam("ldapName", ldapName);
         Builder builder = new Builder();
         builder.filter = filter;
-        builder.ldapName = ldapName.toUpperCase(Locale.ROOT);
-        builder.name = builder.ldapName;
         return builder;
     }
 
     /**
-     * <p>The behavior is exactly the same as {@link #fromFilter(String, String)}, except that instead
-     * of attribute value is DN of found entries used. As the search DN is used search DN from identity mapping.
+     * <p>Create an attribute mapping using LDAP entry referenced by attribute of identity entry.
      *
-     * @param filter the filter that is going to be used to search for entries and obtain values for this attribute
+     * @param reference the name of LDAP attribute containing DN of LDAP entry, from which should be value loaded.
      * @return this builder
      */
-    public static Builder fromFilterDn(String filter) {
-        Assert.checkNotNullParam("filter", filter);
+    public static Builder fromReference(String reference) {
+        Assert.checkNotNullParam("reference", reference);
         Builder builder = new Builder();
-        builder.filter = filter;
-        builder.name = "dn";
+        builder.reference = reference;
         return builder;
     }
 
@@ -139,13 +141,14 @@ public class AttributeMapping {
         private String searchDn;
         private boolean recursiveSearch = true;
         private String filter;
+        private String reference;
         private String name;
         private String rdn;
-        private int recursiveDepth;
+        private int roleRecursionDepth;
 
         /**
          * Set type of RDN, whose value will be used as identity attribute value.
-         * Use in case the attribute value is in DN form or when DN of entry is used.
+         * Use in case the attribute value is in DN form or when DN of entry is used
          *
          * @param rdn the name of type of RDN
          * @return this builder
@@ -153,6 +156,18 @@ public class AttributeMapping {
         public Builder extractRdn(String rdn) {
             Assert.checkNotNullParam("rdn", rdn);
             this.rdn = rdn;
+            return this;
+        }
+
+        /**
+         * Set name of the attribute in LDAP from where the values are obtained.
+         *
+         * @param ldapName the name of the attribute in LDAP from where the values are obtained
+         * @return this builder
+         */
+        public Builder from(String ldapName) {
+            Assert.checkNotNullParam("ldapName", ldapName);
+            this.ldapName = ldapName.toUpperCase(Locale.ROOT);
             return this;
         }
 
@@ -175,45 +190,51 @@ public class AttributeMapping {
          * @return this builder
          */
         public Builder searchDn(String searchDn) {
+            Assert.checkNotNullParam("searchDn", searchDn);
+            Assert.checkNotNullParam("filter", filter);
             this.searchDn = searchDn;
             return this;
         }
 
         /**
-         * Set whether LDAP search for attribute entries should be recursive
+         * Set whether LDAP search for attribute entries should be recursive. Enabled by default.
          * @param recursiveSearch whether the LDAP search should be recursive
          * @return this builder
          */
         public Builder searchRecursively(boolean recursiveSearch) {
+            Assert.checkNotNullParam("filter", filter);
             this.recursiveSearch = recursiveSearch;
             return this;
         }
 
         /**
          * Set recursive search of filtered attribute (for recursive roles assignment and similar)
-         * @param recursiveDepth maximum depth of recursion, 0 by default (direct only)
+         * @param roleRecursionDepth maximum depth of recursion, 0 by default (no recursion)
          * @return this builder
          */
-        public Builder roleRecursion(int recursiveDepth) {
-            Assert.checkMinimumParameter("recursiveDepth", 0, recursiveDepth);
-            Assert.checkNotNullParam("filter", filter);
-            this.recursiveDepth = recursiveDepth;
+        public Builder roleRecursion(int roleRecursionDepth) {
+            Assert.checkMinimumParameter("roleRecursionDepth", 0, roleRecursionDepth);
+            this.roleRecursionDepth = roleRecursionDepth;
             return this;
         }
 
         public AttributeMapping build() {
-            return new AttributeMapping(searchDn, recursiveSearch, filter, ldapName, name, rdn, recursiveDepth);
+            if (name == null) {
+                name = ldapName != null ? ldapName : (filter != null ? DEFAULT_FILTERED_NAME : DEFAULT_DN_NAME);
+            }
+            return new AttributeMapping(searchDn, recursiveSearch, filter, reference, ldapName, name, rdn, roleRecursionDepth);
         }
     }
 
-    AttributeMapping(String searchDn, boolean recursiveSearch, String filter, String ldapName, String name, String rdn, int recursiveDepth) {
+    AttributeMapping(String searchDn, boolean recursiveSearch, String filter,  String reference, String ldapName, String name, String rdn, int roleRecursionDepth) {
         this.searchDn = searchDn;
         this.recursiveSearch = recursiveSearch;
         this.filter = filter;
+        this.reference = reference;
         this.ldapName = ldapName;
         this.name = name;
         this.rdn = rdn;
-        this.recursiveDepth = recursiveDepth;
+        this.roleRecursionDepth = roleRecursionDepth;
     }
 
 }

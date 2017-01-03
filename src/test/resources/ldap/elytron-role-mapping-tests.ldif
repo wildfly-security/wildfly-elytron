@@ -5,6 +5,7 @@ objectClass: top
 objectClass: groupOfNames
 cn: RoleFromBaseDN
 member: uid=userWithRoles,dc=elytron,dc=wildfly,dc=org
+description: RoleFromBaseDNDescription
 
 dn: ou=Roles,dc=elytron,dc=wildfly,dc=org
 objectclass: top
