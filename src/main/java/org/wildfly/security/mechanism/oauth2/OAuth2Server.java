@@ -18,21 +18,23 @@
 
 package org.wildfly.security.mechanism.oauth2;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
+import java.util.Map;
+import java.util.NoSuchElementException;
+
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
+import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.AuthorizeCallback;
+
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
 import org.wildfly.security.evidence.BearerTokenEvidence;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.MechanismUtil;
 import org.wildfly.security.util.ByteIterator;
-
-import javax.json.Json;
-import javax.json.JsonObjectBuilder;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
-import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * An OAuth2 Sasl Server based on RFC-7628.
@@ -120,7 +122,17 @@ public class OAuth2Server {
 
             // successful verification, token is supposed to be valid and just respond with an empty message
             if (evidenceVerifyCallback.isVerified()) {
-                return new byte[0];
+                AuthorizeCallback authorizeCallback = new AuthorizeCallback(null, null);
+
+                try {
+                    MechanismUtil.handleCallbacks(this.mechanismName, this.callbackHandler, authorizeCallback);
+                } catch (UnsupportedCallbackException e) {
+                    throw log.mechAuthorizationUnsupported(this.mechanismName, e);
+                }
+
+                if (authorizeCallback.isAuthorized()) {
+                    return new byte[0];
+                }
             }
 
             return createErrorMessage();
