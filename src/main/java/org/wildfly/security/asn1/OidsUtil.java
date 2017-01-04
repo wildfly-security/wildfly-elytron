@@ -21,6 +21,7 @@ package org.wildfly.security.asn1;
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -49,9 +50,9 @@ public class OidsUtil {
             attributeNameToOidTable.put(category, new HashMap<>());
             oidToAttributeNameTable.put(category, new HashMap<>());
         }
-        try {
+        try (InputStream stream = OidsUtil.class.getResourceAsStream("oids.properties")) {
             Properties props = new Properties();
-            props.load(OidsUtil.class.getResourceAsStream("oids.properties"));
+            props.load(stream);
             for (String propName : props.stringPropertyNames()) {
                 int delimiter = propName.indexOf('.');
                 if (delimiter < 0) throw new IllegalStateException();
