@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -749,8 +750,8 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             throw log.cannotInitializeCredentialStore(e);
         }
         final Enumeration<String> enumeration;
-        if (location != null && Files.exists(location)) try {
-            keyStore.load(Files.newInputStream(location), getStorePassword(protectionParameter));
+        if (location != null && Files.exists(location)) try (InputStream fileStream = Files.newInputStream(location)) {
+            keyStore.load(fileStream, getStorePassword(protectionParameter));
             enumeration = keyStore.aliases();
         } catch (GeneralSecurityException | IOException e) {
             throw log.cannotInitializeCredentialStore(e);
