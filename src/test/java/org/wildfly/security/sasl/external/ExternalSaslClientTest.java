@@ -58,7 +58,7 @@ public class ExternalSaslClientTest extends BaseTestCase {
     private static final String[] MECHANISMS_WITHOUT_EXTERNAL = new String[] { "DIGEST-MD5", "TEST" };
 
     @Test
-    @Ignore("ELY-799")
+    @Ignore("ELY-788")
     public void testMechanismNames() throws Exception {
         SaslClientFactory factory = obtainSaslClientFactory(ExternalSaslClientFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);
