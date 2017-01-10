@@ -39,13 +39,10 @@ import org.wildfly.security.evidence.PasswordGuessEvidence;
  */
 class DirectEvidenceVerifier implements EvidenceVerifier {
 
-    private static final DirectEvidenceVerifier INSTANCE = new DirectEvidenceVerifier();
+    private final boolean allowBlankPassword;
 
-    private DirectEvidenceVerifier() {
-    }
-
-    static DirectEvidenceVerifier getInstance() {
-        return INSTANCE;
+    DirectEvidenceVerifier(boolean allowBlankPassword) {
+        this.allowBlankPassword = allowBlankPassword;
     }
 
     @Override
@@ -65,8 +62,11 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
             public boolean verifyEvidence(Evidence evidence, final Supplier<Provider[]> providers) throws RealmUnavailableException {
                 if (evidence instanceof PasswordGuessEvidence) {
                     char[] password = ((PasswordGuessEvidence) evidence).getGuess();
-
                     try {
+                        if ( ! allowBlankPassword && password.length == 0) {
+                            log.debugf("Credential direct evidence verification does not allow blank password.");
+                            return false;
+                        }
                         LdapContext userContext = ((LdapContext) dirContext).newInstance(null);
                         userContext.addToEnvironment(InitialDirContext.SECURITY_PRINCIPAL, distinguishedName);
                         userContext.addToEnvironment(InitialDirContext.SECURITY_CREDENTIALS, password);
