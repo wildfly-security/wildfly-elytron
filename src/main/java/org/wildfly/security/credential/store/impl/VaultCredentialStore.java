@@ -90,10 +90,10 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
             final File locationFile = new File(location, "VAULT.dat");
             if (locationFile.exists()) {
                 // try and load it
-                VaultData data;
+                SecurityVaultData data;
                 try (final FileInputStream is = new FileInputStream(locationFile)) {
                     try (final VaultObjectInputStream ois = new VaultObjectInputStream(is)) {
-                        data = (VaultData) ois.readObject();
+                        data = (SecurityVaultData) ois.readObject();
                     }
                 } catch (ClassNotFoundException | IOException e) {
                     throw log.cannotAcquireCredentialFromStore(e);
@@ -190,7 +190,7 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
             if (location != null) {
                 try (final AtomicFileOutputStream os = new AtomicFileOutputStream(location)) {
                     try (final VaultObjectOutputStream oos = new VaultObjectOutputStream(os)) {
-                        oos.writeObject(new VaultData(data));
+                        oos.writeObject(new SecurityVaultData(data));
                     } catch (Throwable t) {
                         os.cancel();
                         throw t;

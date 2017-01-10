@@ -32,18 +32,18 @@ import org.wildfly.security._private.ElytronMessages;
  * Compatibility class for PicketBox VAULT.dat files, which consist of a single serialized instance of
  * {@link #PICKETBOX_CLASS_NAME}.
  */
-final class VaultData implements Serializable {
-    private static final long serialVersionUID = -1L;
+final class SecurityVaultData implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     static final String PICKETBOX_CLASS_NAME = "org.picketbox.plugins.vault.SecurityVaultData";
 
     private transient Map<String, byte[]> vaultData;
 
-    VaultData(final Map<String, byte[]> vaultData) {
+    SecurityVaultData(final Map<String, byte[]> vaultData) {
         this.vaultData = vaultData;
     }
 
-    VaultData() {
+    SecurityVaultData() {
     }
 
     Map<String, byte[]> getVaultData() {
