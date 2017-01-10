@@ -69,7 +69,7 @@ public class ExternalSaslServerTest extends BaseTestCase {
     };
 
     @Test
-    @Ignore("ELY-799,ELY-788")
+    @Ignore("ELY-788")
     public void testMechanismNames() throws Exception {
         SaslServerFactory factory = obtainSaslServerFactory(ExternalSaslServerFactory.class);
         assertNotNull("SaslServerFactory not registered", factory);

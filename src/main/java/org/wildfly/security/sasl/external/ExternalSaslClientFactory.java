@@ -68,6 +68,9 @@ public final class ExternalSaslClientFactory implements SaslClientFactory {
         if ("true".equals(props.get(Sasl.POLICY_NODICTIONARY))) {
             return WildFlySasl.NO_NAMES;
         }
+        if ("true".equals(props.get(Sasl.POLICY_PASS_CREDENTIALS))) {
+            return WildFlySasl.NO_NAMES;
+        }
         return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
     }
 }
