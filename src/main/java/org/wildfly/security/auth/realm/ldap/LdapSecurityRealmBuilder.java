@@ -186,9 +186,13 @@ public class LdapSecurityRealmBuilder {
     }
 
     public LdapSecurityRealmBuilder addDirectEvidenceVerification() {
+        return addDirectEvidenceVerification(false);
+    }
+
+    public LdapSecurityRealmBuilder addDirectEvidenceVerification(boolean allowBlankPassword) {
         assertNotBuilt();
 
-        return addEvidenceVerifier(DirectEvidenceVerifier.getInstance());
+        return addEvidenceVerifier(new DirectEvidenceVerifier(allowBlankPassword));
     }
 
     /**
