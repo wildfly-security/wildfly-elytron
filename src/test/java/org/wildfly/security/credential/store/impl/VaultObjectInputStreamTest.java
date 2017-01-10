@@ -19,25 +19,20 @@
 package org.wildfly.security.credential.store.impl;
 
 import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
-import java.io.ObjectStreamConstants;
-import java.io.OutputStream;
 
-final class VaultObjectOutputStream extends ObjectOutputStream {
+import org.junit.Test;
 
-    VaultObjectOutputStream(final OutputStream out) throws IOException {
-        super(out);
-    }
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.Assert.assertThat;
 
-    protected void writeClassDescriptor(final ObjectStreamClass desc) throws IOException {
-        if (desc.forClass() == SecurityVaultData.class) {
-            writeUTF(SecurityVaultData.PICKETBOX_CLASS_NAME);
-            writeLong(-1L);
-            writeByte(ObjectStreamConstants.SC_SERIALIZABLE | ObjectStreamConstants.SC_WRITE_METHOD);
-            writeShort(0); // no fields
-        } else {
-            super.writeClassDescriptor(desc);
+public class VaultObjectInputStreamTest {
+
+    @Test
+    public void shouldSupportPicketboxSerializedVaultData() throws IOException, ClassNotFoundException {
+        try (VaultObjectInputStream in = new VaultObjectInputStream(
+                VaultObjectInputStreamTest.class.getResourceAsStream("/picketbox-vault.dat"))) {
+            assertThat(in.readObject(), instanceOf(SecurityVaultData.class));
         }
     }
+
 }

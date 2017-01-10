@@ -32,7 +32,7 @@ final class VaultObjectInputStream extends ObjectInputStream {
     protected Class<?> resolveClass(final ObjectStreamClass desc) throws IOException, ClassNotFoundException {
         final String name = desc.getName();
         switch (name) {
-            case VaultData.PICKETBOX_CLASS_NAME: return VaultData.class;
+            case SecurityVaultData.PICKETBOX_CLASS_NAME: return SecurityVaultData.class;
             default: return super.resolveClass(desc);
         }
     }
