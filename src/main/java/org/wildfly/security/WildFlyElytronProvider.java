@@ -108,6 +108,7 @@ import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
 import org.wildfly.security.credential.store.impl.MapCredentialStore;
+import org.wildfly.security.credential.store.impl.PasswordBasedEncryptionCredentialStore;
 import org.wildfly.security.credential.store.impl.VaultCredentialStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
@@ -380,6 +381,7 @@ public class WildFlyElytronProvider extends Provider {
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, KeyStoreCredentialStore.KEY_STORE_CREDENTIAL_STORE, KeyStoreCredentialStore.class.getName(), emptyList, emptyMap));
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, VaultCredentialStore.VAULT_CREDENTIAL_STORE, VaultCredentialStore.class.getName(), emptyList, emptyMap));
         putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, MapCredentialStore.MAP_CREDENTIAL_STORE, MapCredentialStore.class.getName(), emptyList, emptyMap));
+        putService(new Service(this, CredentialStore.CREDENTIAL_STORE_TYPE, PasswordBasedEncryptionCredentialStore.PBE_CREDENTIAL_STORE, PasswordBasedEncryptionCredentialStore.class.getName(), emptyList, emptyMap));
     }
 
     static class SupplierService extends Service {

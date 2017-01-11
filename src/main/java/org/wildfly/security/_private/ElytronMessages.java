@@ -1642,7 +1642,7 @@ public interface ElytronMessages extends BasicLogger {
     CredentialStoreException credentialAliasNotFoundNotFound(String credentialAlias, String name);
 
     @Message(id = 9504, value = "Cannot write storage file '%s' for the store '%s'")
-    CredentialStoreException cannotWriteStorageFie(String fileName, String name);
+    CredentialStoreException cannotWriteStorageFile(String fileName, String name);
 
     @Message(id = 9505, value = "Following configuration attributes are not supported by KeystorePasswordStore named '%s' : '%s'")
     CredentialStoreException unsupportedPasswordStorageConfigurationAttributes(String vaultName, String attributes);
@@ -1721,6 +1721,9 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 9529, value = "This credential store type requires a store-wide protection parameter")
     CredentialStoreException protectionParameterRequired();
+
+    @Message(id = 9530, value = "Credential store \"%s\" is missing attribute \"%s\"")
+    CredentialStoreException attributeIsMandatory(String storeName, String attributeName);
 
     /* X.500 exceptions */
 

@@ -331,4 +331,33 @@ public abstract class Alphabet {
         }
     };
 
+    /**
+     * Static method to map string name to certain {@link Alphabet}
+     * @param name of the Alphabet
+     * @return the Alphabet or {@code null} when name is not matched
+     */
+    public static Alphabet mapToAlphabet(String name) {
+        if (name == null) return null;
+        if (name.equalsIgnoreCase("base64")
+                || name.equalsIgnoreCase("standard")
+                || name.equalsIgnoreCase("base64standard"))
+            return Base64Alphabet.STANDARD;
+        else if (name.equalsIgnoreCase("picketbox-compatibility")
+                || name.equalsIgnoreCase("base64picketbox-compatibility"))
+            return Base64Alphabet.PICKETBOX_COMPATIBILITY;
+        else if (name.equalsIgnoreCase("bcrypt"))
+            return Base64Alphabet.BCRYPT;
+        else if (name.equalsIgnoreCase("modcrypt"))
+            return Base64Alphabet.MOD_CRYPT;
+        else if (name.equalsIgnoreCase("modcrypt-le"))
+            return Base64Alphabet.MOD_CRYPT_LE;
+        else if (name.equalsIgnoreCase("base32")
+                || name.equalsIgnoreCase("base32standard"))
+            return Base32Alphabet.STANDARD;
+        else if (name.equalsIgnoreCase("base32lowercase"))
+            return Base32Alphabet.LOWERCASE;
+        else
+            return null;
+    }
+
 }
