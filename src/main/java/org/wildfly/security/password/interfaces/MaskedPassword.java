@@ -59,6 +59,8 @@ public interface MaskedPassword extends TwoWayPassword {
     String ALGORITHM_MASKED_HMAC_SHA256_AES_256 = "masked-HMAC-SHA256-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA384_AES_256 = "masked-HMAC-SHA384-AES-256";
     String ALGORITHM_MASKED_HMAC_SHA512_AES_256 = "masked-HMAC-SHA512-AES-256";
+
+    /* DEPRECATED - unusable, need to be kept for compatibility */
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA1 = "masked-PBKDF-HMAC-SHA1";
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA224 = "masked-PBKDF-HMAC-SHA224";
     String ALGORITHM_MASKED_PBKDF_HMAC_SHA256 = "masked-PBKDF-HMAC-SHA256";
@@ -109,11 +111,6 @@ public interface MaskedPassword extends TwoWayPassword {
             case ALGORITHM_MASKED_HMAC_SHA256_AES_256: return "PBEWithHmacSHA256AndAES_256";
             case ALGORITHM_MASKED_HMAC_SHA384_AES_256: return "PBEWithHmacSHA384AndAES_256";
             case ALGORITHM_MASKED_HMAC_SHA512_AES_256: return "PBEWithHmacSHA512AndAES_256";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA1: return "PBKDF2WithHmacSHA1";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA224: return "PBKDF2WithHmacSHA224";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA256: return "PBKDF2WithHmacSHA256";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA384: return "PBKDF2WithHmacSHA384";
-            case ALGORITHM_MASKED_PBKDF_HMAC_SHA512: return "PBKDF2WithHmacSHA512";
             default: return null;
         }
     }
