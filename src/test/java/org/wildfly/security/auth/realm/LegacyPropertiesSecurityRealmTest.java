@@ -147,8 +147,22 @@ public class LegacyPropertiesSecurityRealmTest {
      */
     @Test
     public void testHashedFile() throws Exception {
+        performHashedFileTest("users.properties", null);
+    }
+
+    /**
+     * Test that the realm can handle the properties file where the passwords are stored pre-hashed but without the realm specified in the properties file.
+     */
+    @Test
+    public void testHashedFile_NoRealm() throws Exception {
+        performHashedFileTest("users-no-realm.properties", "ManagementRealm");
+    }
+
+
+    private void performHashedFileTest(final String fileName, final String defaultRealm) throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
-                .setUsersStream(this.getClass().getResourceAsStream("users.properties"))
+                .setUsersStream(this.getClass().getResourceAsStream(fileName))
+                .setDefaultRealm(defaultRealm)
                 .build();
 
         PasswordGuessEvidence goodGuess = new PasswordGuessEvidence(ELYTRON_PASSWORD_CLEAR.toCharArray());

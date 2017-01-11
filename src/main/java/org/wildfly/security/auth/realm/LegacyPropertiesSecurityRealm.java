@@ -79,6 +79,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     private static final String REALM_COMMENT_SUFFIX = "$";
 
     private final Supplier<Provider[]> providers;
+    private final String defaultRealm;
     private final boolean plainText;
 
     private final String groupsAttribute;
@@ -89,6 +90,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         plainText = builder.plainText;
         groupsAttribute = builder.groupsAttribute;
         providers = builder.providers;
+        defaultRealm = builder.defaultRealm;
     }
 
     @Override
@@ -278,7 +280,11 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         if (realmName == null) {
-            throw log.noRealmFoundInProperties();
+            if (defaultRealm != null) {
+                realmName = defaultRealm;
+            } else {
+                throw log.noRealmFoundInProperties();
+            }
         }
 
         loadedState.set(new LoadedState(accounts, realmName, System.currentTimeMillis()));
@@ -297,6 +303,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         private Supplier<Provider[]> providers = Security::getProviders;
         private InputStream usersStream;
         private InputStream groupsStream;
+        private String defaultRealm = null;
         private boolean plainText;
         private String groupsAttribute = "groups";
 
@@ -348,6 +355,19 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
          */
         public Builder setGroupsAttribute(final String groupsAttribute) {
             this.groupsAttribute = groupsAttribute;
+
+            return this;
+        }
+
+
+        /**
+         * Set the default realm name to use if no realm name is discovered in the properties file.
+         *
+         * @param defaultRealm the default realm name if one is not discovered in the properties file.
+         * @return this {@link Builder}
+         */
+        public Builder setDefaultRealm(String defaultRealm) {
+            this.defaultRealm = defaultRealm;
 
             return this;
         }
