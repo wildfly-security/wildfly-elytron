@@ -175,7 +175,9 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
 
             final byte[] encrypted = cipher.doFinal(CodePointIterator.ofChars(chars).asUtf8().drain());
 
-            final byte[] iv = cipher.getIV();
+            // To keep this implementation compatible with PicketBox, do not prepend the IV to the masked bytes, make
+            // the result the same as in PicketBox implementation
+            final byte[] iv = MaskedPassword.ALGORITHM_MASKED_MD5_DES.equals(algorithm) ? null : cipher.getIV();
 
             if (iv == null) {
                 return encrypted;
@@ -199,7 +201,10 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
             final Cipher cipher = Cipher.getInstance(pbeName);
             final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
 
-            final int blockSize = cipher.getBlockSize();
+            // PicketBox used MD5 with DES algorithm and did not use this way of preserving the IV, but as it uses this
+            // algorithms in PBES1 mode (RFC2898) the IV is derived from the secret key anyhow so it is not necessary to
+            // prepend it to the masked bytes
+            final int blockSize = MaskedPassword.ALGORITHM_MASKED_MD5_DES.equals(algorithm) ? 0 : cipher.getBlockSize();
             final AlgorithmParameterSpec parameterSpec;
             if (blockSize == 0) {
                 parameterSpec = null;
