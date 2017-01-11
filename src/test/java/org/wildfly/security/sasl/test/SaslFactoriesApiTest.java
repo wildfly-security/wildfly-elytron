@@ -40,7 +40,6 @@ import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -57,7 +56,6 @@ public class SaslFactoriesApiTest extends BaseTestCase {
      * parameter can be null and that the method returns not-{@code null} object.
      */
     @Test
-    @Ignore("ELY-788")
     public void testSaslClientFactoryGetMechanismNamesNotNull() {
         Collections.list(Sasl.getSaslClientFactories()).forEach(cf -> {
             assertNotNull(cf.getMechanismNames(null));
@@ -81,7 +79,6 @@ public class SaslFactoriesApiTest extends BaseTestCase {
      * thrown during the call are correct states.
      */
     @Test
-    @Ignore("ELY-788")
     public void testCreateSaslClientNullParams() {
         Collections.list(Sasl.getSaslClientFactories()).forEach(cf -> {
             Arrays.stream(cf.getMechanismNames(emptyMap())).forEach(mech -> {
@@ -90,7 +87,7 @@ public class SaslFactoriesApiTest extends BaseTestCase {
                     if (sc != null) {
                         sc.dispose();
                     }
-                } catch (SaslException e) {
+                } catch (SaslException | IllegalArgumentException e) {
                     // OK - a correct error state
                 }
             });
@@ -102,7 +99,6 @@ public class SaslFactoriesApiTest extends BaseTestCase {
      * parameter can be null and that the method returns not-{@code null} object.
      */
     @Test
-    @Ignore("ELY-788")
     public void testSaslServerFactoryGetMechanismNamesNotNull() {
         Collections.list(Sasl.getSaslServerFactories()).forEach(sf -> {
             assertNotNull(sf.getMechanismNames(null));
@@ -126,7 +122,6 @@ public class SaslFactoriesApiTest extends BaseTestCase {
      * during the call are correct states.
      */
     @Test
-    @Ignore("ELY-788")
     public void testCreateSaslServerNullParams() {
         Collections.list(Sasl.getSaslServerFactories()).forEach(sf -> {
             Arrays.stream(sf.getMechanismNames(emptyMap())).forEach(mech -> {
@@ -135,7 +130,7 @@ public class SaslFactoriesApiTest extends BaseTestCase {
                     if (ss != null) {
                         ss.dispose();
                     }
-                } catch (SaslException e) {
+                } catch (SaslException | IllegalArgumentException e) {
                     // OK - a correct error state
                 }
             });

@@ -23,6 +23,7 @@ import static org.wildfly.security.sasl.entity.Entity.*;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Signature;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -47,11 +48,11 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
         super();
     }
 
-    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         String name;
         Signature signature;
         boolean mutual;
-        final boolean serverAuth = Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
+        final boolean serverAuth = props != null && Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
         out: {
             for (String mechanism : mechanisms) {
                 mutual = false;
@@ -97,7 +98,7 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
             return null;
         }
 
-        final Object rngNameValue = props.get(WildFlySasl.SECURE_RNG);
+        final Object rngNameValue = props == null ? null : props.get(WildFlySasl.SECURE_RNG);
         final String rngName = rngNameValue instanceof String ? (String) rngNameValue : null;
         SecureRandom secureRandom = null;
         if (rngName != null) {
@@ -107,12 +108,13 @@ public final class EntitySaslClientFactory implements SaslClientFactory {
             }
         }
 
-        final EntitySaslClient client = new EntitySaslClient(name, mutual, signature, secureRandom, protocol, serverName, cbh, authorizationId, props);
+        final EntitySaslClient client = new EntitySaslClient(name, mutual, signature, secureRandom, protocol, serverName, cbh, authorizationId);
         client.init();
         return client;
     }
 
-    public String[] getMechanismNames(final Map<String, ?> props) {
+    public String[] getMechanismNames(Map<String, ?> props) {
+        if (props == null) props = Collections.emptyMap();
         if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(Sasl.SERVER_AUTH))) {
             return new String[] {
                 SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC,

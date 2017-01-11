@@ -22,6 +22,7 @@ import static org.wildfly.security.sasl.otp.OTPUtil.*;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -30,6 +31,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util.CodePointIterator;
@@ -42,7 +44,9 @@ import org.wildfly.security.util.CodePointIterator;
 @MetaInfServices(value = SaslClientFactory.class)
 public final class OTPSaslClientFactory implements SaslClientFactory {
 
-    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
         if (OTP.isMatched(props)) {
             for (String mechanism : mechanisms) {
                 if (SaslMechanismInformation.Names.OTP.equals(mechanism)) {

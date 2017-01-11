@@ -32,7 +32,6 @@ import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -73,7 +72,7 @@ final class EntitySaslServer extends AbstractSaslServer {
     private String authorizationID;
     private byte[] randomB;
 
-    EntitySaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final Map<String, ?> props, final boolean mutual, final Signature signature, final SecureRandom secureRandom) {
+    EntitySaslServer(final String mechanismName, final String protocol, final String serverName, final CallbackHandler callbackHandler, final boolean mutual, final Signature signature, final SecureRandom secureRandom) {
         super(mechanismName, protocol, serverName, callbackHandler);
         this.signature = signature;
         this.secureRandom = secureRandom;

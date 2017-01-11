@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.external;
 
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -49,7 +50,8 @@ public final class ExternalSaslClientFactory implements SaslClientFactory {
         return null;
     }
 
-    public String[] getMechanismNames(final Map<String, ?> props) {
+    public String[] getMechanismNames(Map<String, ?> props) {
+        if (props == null) props = Collections.emptyMap();
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }

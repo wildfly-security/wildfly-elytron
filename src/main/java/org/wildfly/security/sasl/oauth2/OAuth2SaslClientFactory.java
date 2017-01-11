@@ -49,6 +49,10 @@ public final class OAuth2SaslClientFactory implements SaslClientFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
+        if (props == null) {
+            return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
+        }
+
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
             return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
         }

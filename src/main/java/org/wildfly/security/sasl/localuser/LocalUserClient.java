@@ -55,7 +55,9 @@ public final class LocalUserClient extends AbstractSaslClient {
     LocalUserClient(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler, final String authorizationId) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler, authorizationId, true);
 
-        if (props.containsKey(QUIET_AUTH)) {
+        if (props == null) {
+            quietAuth = false;
+        } else if (props.containsKey(QUIET_AUTH)) {
             quietAuth = Boolean.parseBoolean((String) props.get(QUIET_AUTH));
         } else if (props.containsKey(LEGACY_QUIET_AUTH)) {
             quietAuth = Boolean.parseBoolean((String) props.get(LEGACY_QUIET_AUTH));

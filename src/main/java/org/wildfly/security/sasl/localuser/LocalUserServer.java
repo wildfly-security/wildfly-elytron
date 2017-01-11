@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 
@@ -69,8 +70,9 @@ public final class LocalUserServer extends AbstractSaslServer implements SaslSer
     private final String defaultUser;
     private final boolean useSecureRandom;
 
-    LocalUserServer(final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler callbackHandler) {
+    LocalUserServer(final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler callbackHandler) {
         super(LocalUserSaslFactory.JBOSS_LOCAL_USER, protocol, serverName, callbackHandler);
+        if (props == null) props = Collections.emptyMap();
         String value;
         if (props.containsKey(LOCAL_USER_CHALLENGE_PATH)) {
             basePath = new File(props.get(LOCAL_USER_CHALLENGE_PATH).toString()).getAbsoluteFile();

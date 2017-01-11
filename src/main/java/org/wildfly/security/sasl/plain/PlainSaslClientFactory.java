@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.plain;
 
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -26,6 +27,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 
@@ -37,7 +39,9 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 @MetaInfServices(SaslClientFactory.class)
 public final class PlainSaslClientFactory implements SaslClientFactory {
 
-    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
         if (PlainSasl.isMatched(props)) for (String mechanism : mechanisms) {
             if (SaslMechanismInformation.Names.PLAIN.equals(mechanism)) {
                 return new PlainSaslClient(authorizationId, cbh);

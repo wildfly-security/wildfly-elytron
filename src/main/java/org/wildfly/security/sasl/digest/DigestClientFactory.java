@@ -22,6 +22,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -32,6 +33,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.sasl.WildFlySasl;
 
 /**
@@ -59,6 +61,8 @@ public class DigestClientFactory extends AbstractDigestFactory implements SaslCl
     @Override
     public SaslClient createSaslClient(String[] mechanisms, String authorizationId, String protocol, String serverName,
             Map<String, ?> props, CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
 
         if (! matches(props)) return null;
         String selectedMech = select(mechanisms);

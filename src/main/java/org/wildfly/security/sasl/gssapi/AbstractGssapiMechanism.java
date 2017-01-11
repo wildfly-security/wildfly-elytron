@@ -18,6 +18,7 @@
 
 package org.wildfly.security.sasl.gssapi;
 
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -28,10 +29,13 @@ import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.MessageProp;
 import org.ietf.jgss.Oid;
+import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslWrapper;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * Base class for the SaslServer and SaslClient implementations implementing the GSSAPI mechanism as defined by RFC 4752
@@ -68,9 +72,11 @@ abstract class AbstractGssapiMechanism extends AbstractSaslParticipant {
     protected final QOP[] orderedQops;
     protected QOP selectedQop;
 
-    protected AbstractGssapiMechanism(String mechanismName, String protocol, String serverName, final Map<String, ?> props,
+    protected AbstractGssapiMechanism(String mechanismName, String protocol, String serverName, Map<String, ?> props,
             final CallbackHandler callbackHandler, final ElytronMessages log) throws SaslException {
         super(mechanismName, protocol, serverName, callbackHandler);
+        Assert.checkNotNullParam("callbackHandler", callbackHandler);
+        if (props == null) props = Collections.emptyMap();
 
         this.log = log;
 

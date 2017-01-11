@@ -40,6 +40,7 @@ abstract class AbstractDigestFactory {
 
     @SuppressWarnings("RedundantIfStatement")
     boolean matches(final Map<String, ?> props) {
+        if (props == null) return true;
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
             return true;
         }

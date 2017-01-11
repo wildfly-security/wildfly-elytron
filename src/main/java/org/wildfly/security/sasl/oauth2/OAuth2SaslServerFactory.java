@@ -49,16 +49,17 @@ public final class OAuth2SaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(Map<String, ?> props) {
+        if (props == null) {
+            return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
+        }
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
             return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
         }
-
         if ("true".equals(props.get(Sasl.POLICY_NOPLAINTEXT))
                 || "true".equals(props.get(Sasl.POLICY_NOACTIVE))
                 || "true".equals(props.get(Sasl.POLICY_NODICTIONARY))) {
             return new String[] {};
         }
-
         return new String[] {SaslMechanismInformation.Names.OAUTHBEARER};
     }
 }
