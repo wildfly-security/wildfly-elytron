@@ -22,19 +22,17 @@ import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
-import java.security.InvalidAlgorithmParameterException;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 
@@ -64,25 +62,38 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
     private final char[] initialKeyMaterial;
     private final int iterationCount;
     private final byte[] salt;
+    private final byte[] initializationVector;
     private final byte[] maskedPasswordBytes;
 
-    private MaskedPasswordImpl(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] maskedPasswordBytes, final boolean validated) throws InvalidKeySpecException {
+    private MaskedPasswordImpl(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] initializationVector, final byte[] maskedPasswordBytes) throws InvalidKeySpecException {
         Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
-        // perform an unmask to validate parameters
-        if (! validated) unmask(algorithm, initialKeyMaterial, iterationCount, salt, maskedPasswordBytes);
         this.algorithm = algorithm;
         this.initialKeyMaterial = initialKeyMaterial;
         this.iterationCount = iterationCount;
         this.salt = salt;
+        this.initializationVector = initializationVector;
         this.maskedPasswordBytes = maskedPasswordBytes;
+        unmask(); // perform an unmask to validate parameters
     }
 
     private MaskedPasswordImpl(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final char[] chars) throws InvalidKeySpecException {
-        this(algorithm, initialKeyMaterial, iterationCount, salt, mask(algorithm, initialKeyMaterial, iterationCount, salt, chars), true);
+        Assert.checkMinimumParameter("iterationCount", 1, iterationCount);
+        this.algorithm = algorithm;
+        this.initialKeyMaterial = initialKeyMaterial;
+        this.iterationCount = iterationCount;
+        this.salt = salt;
+
+        try {
+            Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, null);
+            this.maskedPasswordBytes = cipher.doFinal(CodePointIterator.ofChars(chars).asUtf8().drain());
+            this.initializationVector = cipher.getIV();
+        } catch (GeneralSecurityException e) {
+            throw new InvalidKeySpecException(e);
+        }
     }
 
     MaskedPasswordImpl(final String algorithm, final MaskedPasswordSpec passwordSpec) throws InvalidKeySpecException {
-        this(algorithm, passwordSpec.getInitialKeyMaterial().clone(), passwordSpec.getIterationCount(), passwordSpec.getSalt().clone(), passwordSpec.getMaskedPasswordBytes().clone(), false);
+        this(algorithm, passwordSpec.getInitialKeyMaterial().clone(), passwordSpec.getIterationCount(), passwordSpec.getSalt().clone(), passwordSpec.getInitializationVector() == null ? null : passwordSpec.getInitializationVector().clone(), passwordSpec.getMaskedPasswordBytes().clone());
     }
 
     MaskedPasswordImpl(final String algorithm, final char[] clearPassword) throws InvalidKeySpecException {
@@ -110,7 +121,7 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
     }
 
     MaskedPasswordImpl(final MaskedPassword password) throws InvalidKeySpecException {
-        this(password.getAlgorithm(), password.getInitialKeyMaterial().clone(), password.getIterationCount(), password.getSalt().clone(), password.getMaskedPasswordBytes().clone(), false);
+        this(password.getAlgorithm(), password.getInitialKeyMaterial().clone(), password.getIterationCount(), password.getSalt().clone(), password.getInitializationVector() == null ? null : password.getInitializationVector().clone(), password.getMaskedPasswordBytes().clone());
     }
 
     public String getAlgorithm() {
@@ -129,6 +140,10 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         return salt.clone();
     }
 
+    public byte[] getInitializationVector() {
+        return initializationVector == null ? null : initializationVector.clone();
+    }
+
     public byte[] getMaskedPasswordBytes() {
         return maskedPasswordBytes.clone();
     }
@@ -137,7 +152,7 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         if (keySpecType.isAssignableFrom(MaskedPasswordSpec.class)) {
             return keySpecType.cast(new MaskedPasswordSpec(initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone()));
         } else if (keySpecType.isAssignableFrom(ClearPasswordSpec.class)) {
-            return keySpecType.cast(new ClearPasswordSpec(unmask(algorithm, initialKeyMaterial, iterationCount, salt, maskedPasswordBytes)));
+            return keySpecType.cast(new ClearPasswordSpec(unmask()));
         } else {
             throw new InvalidKeySpecException();
         }
@@ -145,7 +160,7 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
 
     boolean verify(final char[] guess) throws InvalidKeyException {
         try {
-            return Arrays.equals(guess, unmask(algorithm, initialKeyMaterial, iterationCount, salt, maskedPasswordBytes));
+            return Arrays.equals(guess, unmask());
         } catch (InvalidKeySpecException e) {
             throw new InvalidKeyException(e);
         }
@@ -159,46 +174,36 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         return this;
     }
 
-    private static byte[] mask(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final char[] chars) throws InvalidKeySpecException {
-        final Cipher cipher = getCipher(algorithm, initialKeyMaterial, iterationCount, salt, Cipher.ENCRYPT_MODE);
+    private char[] unmask() throws InvalidKeySpecException {
         try {
-            return cipher.doFinal(CodePointIterator.ofChars(chars).asUtf8().drain());
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
+            final Cipher cipher = getCipher(Cipher.DECRYPT_MODE, initializationVector);
+            return ByteIterator.ofBytes(cipher.doFinal(maskedPasswordBytes)).asUtf8String().drainToString().toCharArray();
+        } catch (GeneralSecurityException e) {
             throw new InvalidKeySpecException(e);
         }
     }
 
-    private static char[] unmask(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] bytes) throws InvalidKeySpecException {
-        final Cipher cipher = getCipher(algorithm, initialKeyMaterial, iterationCount, salt, Cipher.DECRYPT_MODE);
-        try {
-            return ByteIterator.ofBytes(cipher.doFinal(bytes)).asUtf8String().drainToString().toCharArray();
-        } catch (IllegalBlockSizeException | BadPaddingException e) {
-            throw new InvalidKeySpecException(e);
-        }
-    }
+    private Cipher getCipher(int cipherMode, byte[] initializationVector) throws GeneralSecurityException {
+        final String pbeName = MaskedPassword.getPBEName(algorithm);
+        Assert.assertNotNull(pbeName);
 
-    private static Cipher getCipher(final String algorithm, final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final int mode) throws InvalidKeySpecException  {
-        try {
-            // Create the factories first to fail fast
-            final String pbeName = MaskedPassword.getPBEName(algorithm);
-            Assert.assertNotNull(pbeName);
-            final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
-            final Cipher cipher = Cipher.getInstance(pbeName);
+        final SecretKeyFactory factory = SecretKeyFactory.getInstance(pbeName);
+        final Cipher cipher = Cipher.getInstance(pbeName);
 
-            // Create the PBE secret key
-            final PBEParameterSpec cipherSpec = new PBEParameterSpec(salt, iterationCount);
-            final PBEKeySpec keySpec = new PBEKeySpec(initialKeyMaterial);
-            final SecretKey cipherKey = factory.generateSecret(keySpec);
+        final AlgorithmParameterSpec parameterSpec = initializationVector == null ?
+                null : new IvParameterSpec(initializationVector);
 
-            cipher.init(mode, cipherKey, cipherSpec);
-            return cipher;
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
-            throw new InvalidKeySpecException(e);
-        }
+        // Create the PBE secret key
+        final PBEParameterSpec cipherSpec = new PBEParameterSpec(salt, iterationCount, parameterSpec);
+        final PBEKeySpec keySpec = new PBEKeySpec(initialKeyMaterial);
+        final SecretKey cipherKey = factory.generateSecret(keySpec);
+
+        cipher.init(cipherMode, cipherKey, cipherSpec);
+        return cipher;
     }
 
     public int hashCode() {
-        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes)), iterationCount), algorithm.hashCode());
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes)), iterationCount), Arrays.hashCode(initializationVector)), algorithm.hashCode());
     }
 
     public boolean equals(final Object obj) {
@@ -206,7 +211,7 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
             return false;
         }
         MaskedPasswordImpl other = (MaskedPasswordImpl) obj;
-        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && algorithm.equals(other.algorithm);
+        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && Arrays.equals(initializationVector, other.initializationVector) && algorithm.equals(other.algorithm);
     }
 
     Object writeReplace() {

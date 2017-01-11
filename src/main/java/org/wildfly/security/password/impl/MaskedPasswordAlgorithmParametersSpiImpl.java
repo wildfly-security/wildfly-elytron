@@ -48,6 +48,9 @@ public final class MaskedPasswordAlgorithmParametersSpiImpl extends AbstractAlgo
         encoder.encodeOctetString(new String(parameterSpec.getInitialKeyMaterial()));
         encoder.encodeInteger(parameterSpec.getIterationCount());
         encoder.encodeOctetString(parameterSpec.getSalt());
+        if (parameterSpec.getInitializationVector() != null) {
+            encoder.encodeOctetString(parameterSpec.getInitializationVector());
+        }
         encoder.endSequence();
     }
 
@@ -56,7 +59,8 @@ public final class MaskedPasswordAlgorithmParametersSpiImpl extends AbstractAlgo
         final char[] initialKeyMaterial = decoder.decodeOctetStringAsString().toCharArray();
         final int iterationCount = decoder.decodeInteger().intValue();
         final byte[] salt = decoder.decodeOctetString();
+        final byte[] initializationVector = decoder.hasNextElement() ? decoder.decodeOctetString() : null;
         decoder.endSequence();
-        return new MaskedPasswordAlgorithmSpec(initialKeyMaterial, iterationCount, salt);
+        return new MaskedPasswordAlgorithmSpec(initialKeyMaterial, iterationCount, salt, initializationVector);
     }
 }

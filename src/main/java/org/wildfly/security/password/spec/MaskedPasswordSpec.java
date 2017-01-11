@@ -34,6 +34,7 @@ public final class MaskedPasswordSpec implements PasswordSpec {
     private final int iterationCount;
     private final byte[] salt;
     private final byte[] maskedPasswordBytes;
+    private final byte[] initializationVector;
 
     /**
      * Construct a new instance.
@@ -51,6 +52,27 @@ public final class MaskedPasswordSpec implements PasswordSpec {
         this.iterationCount = iterationCount;
         this.salt = salt;
         this.maskedPasswordBytes = maskedPasswordBytes;
+        this.initializationVector = null;
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param initialKeyMaterial the initial key material (must not be {@code null})
+     * @param iterationCount the iteration count
+     * @param salt the salt bytes (must not be {@code null})
+     * @param maskedPasswordBytes the masked password bytes (must not be {@code null})
+     * @param initializationVector the initialization vector (can be {@code null})
+     */
+    public MaskedPasswordSpec(final char[] initialKeyMaterial, final int iterationCount, final byte[] salt, final byte[] maskedPasswordBytes, final byte[] initializationVector) {
+        Assert.checkNotNullParam("initialKeyMaterial", initialKeyMaterial);
+        Assert.checkNotNullParam("salt", salt);
+        Assert.checkNotNullParam("maskedPasswordBytes", maskedPasswordBytes);
+        this.initialKeyMaterial = initialKeyMaterial;
+        this.iterationCount = iterationCount;
+        this.salt = salt;
+        this.maskedPasswordBytes = maskedPasswordBytes;
+        this.initializationVector = initializationVector;
     }
 
     /**
@@ -87,6 +109,15 @@ public final class MaskedPasswordSpec implements PasswordSpec {
      */
     public byte[] getMaskedPasswordBytes() {
         return maskedPasswordBytes;
+    }
+
+    /**
+     * Get the initialization vector.
+     *
+     * @return the initialization vector (can be {@code null})
+     */
+    public byte[] getInitializationVector() {
+        return initializationVector;
     }
 
     @Override
