@@ -44,17 +44,14 @@ import org.wildfly.security.evidence.Evidence;
 public interface RealmIdentity {
 
     /**
-     * Get the decoded principal for this realm identity, if any.  This method <em>may</em> return the principal object
-     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(Principal)}, but
+     * Get the principal that canonically identifies the identity within the realm. This method <em>may</em> return the principal object
+     * which was passed in as a parameter to {@link SecurityRealm#getRealmIdentity(Principal)} (a.k.a. domain principal), but
      * is not required to do so.  Any existent realm identity (i.e. any identity which returns {@code true} on invocation
-     * of {@link #exists()}) which was not provided with a principal <em>must</em> return a non-{@code null}
-     * principal (which should have been decoded from the evidence provided to the {@code getRealmIdentity} method).
+     * of {@link #exists()}) <em>must</em> return a non-{@code null} principal.
      *
-     * @return the decoded principal for this realm identity, or {@code null} if no special decoding is in use
+     * @return the principal for this realm identity (may not be {@code null})
      */
-    default Principal getRealmIdentityPrincipal() {
-        return null;
-    }
+    Principal getRealmIdentityPrincipal();
 
     /**
      * Determine whether a given credential type is definitely obtainable, possibly obtainable, or definitely not
@@ -242,6 +239,11 @@ public interface RealmIdentity {
      * An identity for a non-existent user.
      */
     RealmIdentity NON_EXISTENT = new RealmIdentity() {
+        @Override
+        public Principal getRealmIdentityPrincipal() {
+            return null;
+        }
+
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;

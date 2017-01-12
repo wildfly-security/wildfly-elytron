@@ -35,7 +35,8 @@ import org.junit.runners.Suite;
         X509EvidenceVerificationSuiteChild.class,
         PrincipalMappingSuiteChild.class,
         RoleMappingSuiteChild.class,
-        KeyStoreSuiteChild.class
+        KeyStoreSuiteChild.class,
+        LdapSecurityRealmIdentityCacheSuiteChild.class
 })
 public class LdapTestSuite {
     @ClassRule

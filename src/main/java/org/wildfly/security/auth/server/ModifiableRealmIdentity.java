@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.server;
 
+import java.security.Principal;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -77,6 +78,11 @@ public interface ModifiableRealmIdentity extends RealmIdentity {
      * A modifiable identity for a non-existent user who cannot be created.
      */
     ModifiableRealmIdentity NON_EXISTENT = new ModifiableRealmIdentity() {
+        @Override
+        public Principal getRealmIdentityPrincipal() {
+            return null;
+        }
+
         public SupportLevel getCredentialAcquireSupport(final Class<? extends Credential> credentialType, final String algorithmName) throws RealmUnavailableException {
             Assert.checkNotNullParam("credentialType", credentialType);
             return SupportLevel.UNSUPPORTED;

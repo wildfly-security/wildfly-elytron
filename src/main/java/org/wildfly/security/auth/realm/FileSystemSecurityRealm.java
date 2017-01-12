@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -95,7 +96,7 @@ import org.wildfly.security.util.CodePointIterator;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
+public final class FileSystemSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
     static final String ELYTRON_1_0 = "urn:elytron:1.0";
 
@@ -163,6 +164,11 @@ public final class FileSystemSecurityRealm implements ModifiableSecurityRealm {
 
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final Principal principal) {
         return principal instanceof NamePrincipal ? getRealmIdentity(principal.getName(), true) : ModifiableRealmIdentity.NON_EXISTENT;
+    }
+
+    @Override
+    public void registerIdentityChangeListener(Consumer<Principal> listener) {
+        // no need to register the listener given that changes to identities are done through the realm
     }
 
     private ModifiableRealmIdentity getRealmIdentity(final String name, final boolean exclusive) {
