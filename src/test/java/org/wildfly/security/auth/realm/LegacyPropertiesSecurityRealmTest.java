@@ -206,6 +206,25 @@ public class LegacyPropertiesSecurityRealmTest {
     }
 
     @Test
+    public void testGroups() throws Exception {
+        SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
+                .setUsersStream(this.getClass().getResourceAsStream("users.properties"))
+                .setGroupsStream(this.getClass().getResourceAsStream("groups.properties"))
+                .setGroupsAttribute("groups")
+                .build();
+
+        RealmIdentity elytronIdentity = realm.getRealmIdentity(new NamePrincipal("elytron"));
+        assertTrue(elytronIdentity.getAuthorizationIdentity().getAttributes().get("groups").contains("role1"));
+        assertTrue(elytronIdentity.getAuthorizationIdentity().getAttributes().get("groups").contains("role2"));
+        elytronIdentity.dispose();
+
+        RealmIdentity rolemanIdentity = realm.getRealmIdentity(new NamePrincipal("roleman"));
+        assertTrue(rolemanIdentity.getAuthorizationIdentity().getAttributes().get("groups").contains("role3"));
+        assertTrue(rolemanIdentity.getAuthorizationIdentity().getAttributes().get("groups").contains("role4"));
+        rolemanIdentity.dispose();
+    }
+
+    @Test
     public void testPlainFileSpecialChars() throws Exception {
         SecurityRealm realm = LegacyPropertiesSecurityRealm.builder()
                 .setUsersStream(this.getClass().getResourceAsStream("clear-special.properties"))
