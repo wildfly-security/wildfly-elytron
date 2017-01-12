@@ -34,7 +34,15 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
         assertAttributes("userWithMemberOfRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
-        }, AttributeMapping.fromAttribute("memberOf").extractRdn("CN").to(RoleDecoder.KEY_ROLES).build());
+        }, AttributeMapping.fromIdentity().from("memberOf").extractRdn("CN").to(RoleDecoder.KEY_ROLES).build());
+    }
+
+    @Test
+    public void testRoleMappingWithMemberOfAttribute() throws Exception {
+        assertAttributes("userWithMemberOfRoles", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDNDescription");
+        }, AttributeMapping.fromReference("memberOf").from("description").to(RoleDecoder.KEY_ROLES).build());
     }
 
     @Test
@@ -42,7 +50,7 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromRolesOu");
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").searchDn("ou=Roles,dc=elytron,dc=wildfly,dc=org").to(RoleDecoder.KEY_ROLES).build()) ;
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("CN").searchDn("ou=Roles,dc=elytron,dc=wildfly,dc=org").to(RoleDecoder.KEY_ROLES).build()) ;
     }
 
     @Test
@@ -50,7 +58,7 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromRolesOu", "RoleFromBaseDN");
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES).build());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("CN").to(RoleDecoder.KEY_ROLES).build());
     }
 
     @Test
@@ -58,6 +66,6 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
         assertAttributes("userWithRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "CN").to(RoleDecoder.KEY_ROLES).searchRecursively(false).build());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("CN").to(RoleDecoder.KEY_ROLES).searchRecursively(false).build());
     }
 }

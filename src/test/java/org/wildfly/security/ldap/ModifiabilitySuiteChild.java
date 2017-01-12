@@ -67,12 +67,12 @@ public class ModifiabilitySuiteChild {
             .identityMapping()
                 .setSearchDn("dc=elytron,dc=wildfly,dc=org")
                 .setRdnIdentifier("uid")
-                .map(AttributeMapping.fromAttribute("uid").to("userName").build(), // mapping ldap attributes to elytron attributes
-                     AttributeMapping.fromAttribute("cn").to("firstName").build(),
-                     AttributeMapping.fromAttribute("sn").to("lastName").build(),
-                     AttributeMapping.fromAttribute("description").to("description").build(),
-                     AttributeMapping.fromAttribute("telephoneNumber").to("phones").build(),
-                     AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build())
+                .map(AttributeMapping.fromIdentity().from("uid").to("userName").build(), // mapping ldap attributes to elytron attributes
+                     AttributeMapping.fromIdentity().from("cn").to("firstName").build(),
+                     AttributeMapping.fromIdentity().from("sn").to("lastName").build(),
+                     AttributeMapping.fromIdentity().from("description").to("description").build(),
+                     AttributeMapping.fromIdentity().from("telephoneNumber").to("phones").build(),
+                     AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build())
                 .setNewIdentityParent(new LdapName("dc=elytron,dc=wildfly,dc=org"))
                 .setNewIdentityAttributes(attributes)
                 .setIteratorFilter("(uid=*)")

@@ -33,7 +33,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("firstName"), "My First Name");
-        }, AttributeMapping.fromAttribute("cn").to("firstName").build());
+        }, AttributeMapping.fromIdentity().from("cn").to("firstName").build());
     }
 
     @Test
@@ -41,7 +41,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
-        }, AttributeMapping.fromAttribute("cn").build());
+        }, AttributeMapping.fromIdentity().from("cn").build());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
             assertEquals("Expected two attributes.", 2, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name");
             assertAttributeValue(attributes.get("lastName"), "My Last Name");
-        }, AttributeMapping.fromAttribute("cn").build(), AttributeMapping.fromAttribute("sn").to("lastName").build());
+        }, AttributeMapping.fromIdentity().from("cn").build(), AttributeMapping.fromIdentity().from("sn").to("lastName").build());
     }
 
     @Test
@@ -58,7 +58,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected one attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("CN"), "My First Name", "My Last Name");
-        }, AttributeMapping.fromAttribute("cn").build(), AttributeMapping.fromAttribute("sn").to("CN").build());
+        }, AttributeMapping.fromIdentity().from("cn").build(), AttributeMapping.fromIdentity().from("sn").to("CN").build());
     }
 
     @Test
@@ -66,8 +66,8 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithRdnAttribute", attributes -> {
             assertEquals("Expected one attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("businessArea"), "Finance", "cn=Manager,ou=Sales,dc=elytron,dc=wildfly,dc=org");
-        }, AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build()
-         , AttributeMapping.fromFilterDn("(&(objectClass=groupOfNames)(member={0}))").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("businessArea").build());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").extractRdn("OU").to("businessArea").build()
+         , AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("businessArea").build());
     }
 
     @Test
@@ -76,8 +76,8 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
             assertEquals("Expected one attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("roles"), "Manager", "Manager");
             assertEquals("Expected two roles.", 2, attributes.get("roles").size());
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").to("roles").build()
-         , AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("roles").build());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").searchDn("ou=Finance,dc=elytron,dc=wildfly,dc=org").to("roles").build()
+         , AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").searchDn("ou=Sales,dc=elytron,dc=wildfly,dc=org").to("roles").build());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("userWithAttributes", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("myDn"), "uid=userWithAttributes,dc=elytron,dc=wildfly,dc=org");
-        }, AttributeMapping.fromDn().to("myDn").build());
+        }, AttributeMapping.fromIdentity().to("myDn").build());
     }
 
     @Test
@@ -93,6 +93,6 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
         assertAttributes("jduke", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get("roles"), "R1", "R2");
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={0}))", "cn").roleRecursion(1).to("roles").build());
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(1).to("roles").build());
     }
 }
