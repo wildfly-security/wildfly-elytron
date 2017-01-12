@@ -32,7 +32,6 @@ import java.security.SignatureException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -75,7 +74,7 @@ final class EntitySaslClient extends AbstractSaslClient {
     private URL clientCertUrl;
 
     EntitySaslClient(final String mechanismName, final boolean mutual, final Signature signature, final SecureRandom secureRandom, final String protocol,
-            final String serverName, final CallbackHandler callbackHandler, final String authorizationId, final Map<String, ?> props) {
+            final String serverName, final CallbackHandler callbackHandler, final String authorizationId) {
         super(mechanismName, protocol, serverName, callbackHandler, authorizationId, false);
         this.signature = signature;
         this.secureRandom = secureRandom;

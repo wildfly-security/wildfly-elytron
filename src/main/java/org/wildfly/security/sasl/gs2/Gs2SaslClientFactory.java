@@ -22,6 +22,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.sasl.gs2.Gs2.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import javax.security.auth.callback.Callback;
@@ -34,6 +35,7 @@ import javax.security.sasl.SaslException;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 
@@ -64,7 +66,10 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
     }
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol,
-            final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+            final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
+
         GSSManager gssManager = this.gssManager;
         final String[] supportedMechanisms;
         try {
@@ -120,7 +125,7 @@ public final class Gs2SaslClientFactory implements SaslClientFactory {
         } catch (GSSException e) {
             return WildFlySasl.NO_NAMES;
         }
-        if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return Gs2Util.getPlusMechanisms(names);
         } else {
             return names;

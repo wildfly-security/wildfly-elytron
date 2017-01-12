@@ -18,6 +18,8 @@
 
 package org.wildfly.security.sasl.util;
 
+import org.wildfly.common.Assert;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.util.Map;
@@ -94,6 +96,7 @@ public abstract class AbstractSaslParticipant implements SaslWrapper {
      * @throws UnsupportedCallbackException if a callback isn't supported
      */
     protected void tryHandleCallbacks(Callback... callbacks) throws SaslException, UnsupportedCallbackException {
+        Assert.checkNotNullParam("callbackHandler", callbackHandler);
         try {
             callbackHandler.handle(callbacks);
         } catch (SaslException | UnsupportedCallbackException e) {

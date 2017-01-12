@@ -45,6 +45,9 @@ public final class ExternalSaslServerFactory implements SaslServerFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
+        if (props == null) {
+            return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
+        }
         if ("true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL))) {
             return Arrays2.of(SaslMechanismInformation.Names.EXTERNAL);
         }

@@ -23,6 +23,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -35,6 +36,7 @@ import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.callback.AvailableRealmsCallback;
 import org.wildfly.security.sasl.WildFlySasl;
@@ -65,6 +67,8 @@ public class DigestServerFactory extends AbstractDigestFactory implements SaslSe
         if (! matches(props) || ! matchesMech(mechanism)) {
             return null;
         }
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
 
         String[] realms = null;
         final AvailableRealmsCallback availableRealmsCallback = new AvailableRealmsCallback();

@@ -43,10 +43,10 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 @MetaInfServices(value = SaslServerFactory.class)
 public final class EntitySaslServerFactory implements SaslServerFactory {
 
-    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+    public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
         Signature signature;
         boolean mutual = false;
-        final boolean serverAuth = Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
+        final boolean serverAuth = props != null && Boolean.parseBoolean(String.valueOf(props.get(Sasl.SERVER_AUTH)));
         switch (mechanism) {
             case SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
                 mutual = true;
@@ -85,7 +85,7 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
                 return null;
             }
         }
-        final Object rngNameValue = props.get(WildFlySasl.SECURE_RNG);
+        final Object rngNameValue = props == null ? null : props.get(WildFlySasl.SECURE_RNG);
         final String rngName = rngNameValue instanceof String ? (String) rngNameValue : null;
         SecureRandom secureRandom = null;
         if (rngName != null) {
@@ -94,13 +94,13 @@ public final class EntitySaslServerFactory implements SaslServerFactory {
             } catch (NoSuchAlgorithmException ignored) {
             }
         }
-        final EntitySaslServer server = new EntitySaslServer(mechanism, protocol, serverName, cbh, props, mutual, signature, secureRandom);
+        final EntitySaslServer server = new EntitySaslServer(mechanism, protocol, serverName, cbh, mutual, signature, secureRandom);
         server.init();
         return server;
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(Sasl.SERVER_AUTH))) {
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(Sasl.SERVER_AUTH))) {
             return new String[] {
                 SaslMechanismInformation.Names.IEC_ISO_9798_M_RSA_SHA1_ENC,
                 SaslMechanismInformation.Names.IEC_ISO_9798_M_DSA_SHA1,

@@ -23,6 +23,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.IOException;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -34,6 +35,7 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.mechanism.AuthenticationMechanismException;
 import org.wildfly.security.mechanism.scram.ScramMechanism;
@@ -57,7 +59,9 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
         providers = () -> new Provider[] { provider };
     }
 
-    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+    public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
+        if (props == null) props = Collections.emptyMap();
         final ChannelBindingCallback callback = new ChannelBindingCallback();
         try {
             cbh.handle(new Callback[] { callback });
@@ -126,7 +130,7 @@ public final class ScramSaslClientFactory implements SaslClientFactory {
     }
 
     public String[] getMechanismNames(final Map<String, ?> props) {
-        if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return new String[] {
                 SaslMechanismInformation.Names.SCRAM_SHA_1_PLUS,
                 SaslMechanismInformation.Names.SCRAM_SHA_256_PLUS,

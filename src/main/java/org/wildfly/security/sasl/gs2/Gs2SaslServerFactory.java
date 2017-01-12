@@ -34,6 +34,7 @@ import javax.security.sasl.SaslServerFactory;
 import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.kohsuke.MetaInfServices;
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.callback.ChannelBindingCallback;
 import org.wildfly.security.sasl.WildFlySasl;
 
@@ -64,6 +65,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
 
     public SaslServer createSaslServer(final String mechanism, final String protocol, final String serverName, final Map<String, ?> props,
             final CallbackHandler cbh) throws SaslException {
+        Assert.checkNotNullParam("cbh", cbh);
         GSSManager gssManager = this.gssManager;
         final String[] supportedMechs;
         try {
@@ -87,7 +89,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         final String bindingType = channelBindingCallback.getBindingType();
         final byte[] bindingData = channelBindingCallback.getBindingData();
         boolean bindingOk = (bindingType != null) && (bindingData != null);
-        boolean bindingRequired = "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
+        boolean bindingRequired = props != null && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED));
         if (mechanism.endsWith(PLUS_SUFFIX)) {
             if (! bindingOk) return null;
             plus = true;
@@ -105,7 +107,7 @@ public final class Gs2SaslServerFactory implements SaslServerFactory {
         } catch (GSSException e) {
             return WildFlySasl.NO_NAMES;
         }
-        if (!"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
+        if (props != null && !"true".equals(props.get(WildFlySasl.MECHANISM_QUERY_ALL)) && "true".equals(props.get(WildFlySasl.CHANNEL_BINDING_REQUIRED))) {
             return Gs2Util.getPlusMechanisms(names);
         } else {
             return names;
