@@ -62,7 +62,7 @@ public abstract class AbstractAlgorithmParametersSpiImpl<P extends AlgorithmPara
      */
     protected final void engineInit(final AlgorithmParameterSpec paramSpec) throws InvalidParameterSpecException {
         final Class<P> parameterType = getParameterType();
-        if (parameterType.isInstance(parameterSpec)) try {
+        if (parameterType.isInstance(paramSpec)) try {
             ByteStringBuilder b = new ByteStringBuilder();
             DEREncoder encoder = new DEREncoder(b);
             final P cast = parameterType.cast(paramSpec);
