@@ -125,10 +125,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName) throws RealmUnavailableException {
-                if (accountEntry == null) {
-                    return null;
-                }
-                if (! PasswordCredential.class.isAssignableFrom(credentialType)) {
+                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || ! PasswordCredential.class.isAssignableFrom(credentialType)) {
                     return null;
                 }
                 boolean clear;
@@ -168,7 +165,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
 
             @Override
             public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
-                if (accountEntry == null || evidence instanceof PasswordGuessEvidence == false) {
+                if (accountEntry == null || accountEntry.getPasswordRepresentation() == null || !(evidence instanceof PasswordGuessEvidence)) {
                     return false;
                 }
                 final char[] guess = ((PasswordGuessEvidence) evidence).getGuess();
@@ -234,6 +231,7 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
     public void load(InputStream usersStream, InputStream groupsStream) throws IOException {
         Map<String, AccountEntry> accounts = new HashMap<>();
         Properties groups = new Properties();
+
         if (groupsStream != null) {
             try (InputStreamReader is = new InputStreamReader(groupsStream, StandardCharsets.UTF_8);) {
                 groups.load(is);
@@ -241,51 +239,57 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
         }
 
         String realmName = null;
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(usersStream, StandardCharsets.UTF_8))) {
-            String currentLine;
-            while ((currentLine = reader.readLine()) != null) {
-                final String trimmed = currentLine.trim();
-                if (trimmed.startsWith(COMMENT_PREFIX1) && trimmed.contains(REALM_COMMENT_PREFIX)) {
-                    // this is the line that contains the realm name.
-                    int start = trimmed.indexOf(REALM_COMMENT_PREFIX) + REALM_COMMENT_PREFIX.length();
-                    int end = trimmed.indexOf(REALM_COMMENT_SUFFIX, start);
-                    if (end > -1) {
-                        realmName = trimmed.substring(start, end);
-                    }
-                } else {
-                    if ( ! (trimmed.startsWith(COMMENT_PREFIX1) || trimmed.startsWith(COMMENT_PREFIX2)) ) {
-                        String username = null;
-                        StringBuilder builder = new StringBuilder();
-
-                        CodePointIterator it = CodePointIterator.ofString(trimmed);
-                        while (it.hasNext()) {
-                            int cp = it.next();
-                            if (cp == '\\' && it.hasNext()) { // escape
-                                builder.appendCodePoint(it.next());
-                            } else if (username == null && (cp == '=' || cp == ':')) { // username-password delimiter
-                                username = builder.toString().trim();
-                                builder = new StringBuilder();
-                            } else {
-                                builder.appendCodePoint(cp);
-                            }
+        if (usersStream != null) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(usersStream, StandardCharsets.UTF_8))) {
+                String currentLine;
+                while ((currentLine = reader.readLine()) != null) {
+                    final String trimmed = currentLine.trim();
+                    if (trimmed.startsWith(COMMENT_PREFIX1) && trimmed.contains(REALM_COMMENT_PREFIX)) {
+                        // this is the line that contains the realm name.
+                        int start = trimmed.indexOf(REALM_COMMENT_PREFIX) + REALM_COMMENT_PREFIX.length();
+                        int end = trimmed.indexOf(REALM_COMMENT_SUFFIX, start);
+                        if (end > -1) {
+                            realmName = trimmed.substring(start, end);
                         }
-                        if (username != null) { // end of line and delimiter was read
-                            String password = builder.toString().trim();
-                            accounts.put(username, new AccountEntry(username, password, groups.getProperty(username)));
+                    } else {
+                        if ( ! (trimmed.startsWith(COMMENT_PREFIX1) || trimmed.startsWith(COMMENT_PREFIX2)) ) {
+                            String username = null;
+                            StringBuilder builder = new StringBuilder();
+
+                            CodePointIterator it = CodePointIterator.ofString(trimmed);
+                            while (it.hasNext()) {
+                                int cp = it.next();
+                                if (cp == '\\' && it.hasNext()) { // escape
+                                    builder.appendCodePoint(it.next());
+                                } else if (username == null && (cp == '=' || cp == ':')) { // username-password delimiter
+                                    username = builder.toString().trim();
+                                    builder = new StringBuilder();
+                                } else {
+                                    builder.appendCodePoint(cp);
+                                }
+                            }
+                            if (username != null) { // end of line and delimiter was read
+                                String password = builder.toString().trim();
+                                accounts.put(username, new AccountEntry(username, password, groups.getProperty(username)));
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (realmName == null) {
-            if (defaultRealm != null) {
-                realmName = defaultRealm;
-            } else {
-                throw log.noRealmFoundInProperties();
+            if (realmName == null) {
+                if (defaultRealm != null) {
+                    realmName = defaultRealm;
+                } else {
+                    throw log.noRealmFoundInProperties();
+                }
             }
         }
+
+        // users, which are in groups file only
+        groups.stringPropertyNames().stream().filter(username -> ! accounts.containsKey(username)).forEach(username -> {
+            accounts.put(username, new AccountEntry(username, null, groups.getProperty(username)));
+        });
 
         loadedState.set(new LoadedState(accounts, realmName, System.currentTimeMillis()));
     }
