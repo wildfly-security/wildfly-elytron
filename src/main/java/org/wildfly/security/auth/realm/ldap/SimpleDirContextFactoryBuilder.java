@@ -18,6 +18,10 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
+import org.wildfly.security.credential.PasswordCredential;
+import org.wildfly.security.credential.source.CredentialSource;
+import org.wildfly.security.password.interfaces.ClearPassword;
+
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import javax.naming.NamingException;
@@ -25,6 +29,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import javax.net.SocketFactory;
+import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -53,6 +58,7 @@ public class SimpleDirContextFactoryBuilder {
     private String securityAuthentication = "simple";
     private String securityPrincipal = null;
     private String securityCredential = null;
+    private CredentialSource credentialSource = null;
     private SocketFactory socketFactory = null;
     private Properties connectionProperties;
     private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
@@ -124,6 +130,7 @@ public class SimpleDirContextFactoryBuilder {
 
     /**
      * Set the authentication credential.
+     * Alternative to {@link #setCredentialSource(CredentialSource)}.
      *
      * @param securityCredential the credential
      * @return this builder
@@ -131,6 +138,20 @@ public class SimpleDirContextFactoryBuilder {
     public SimpleDirContextFactoryBuilder setSecurityCredential(final String securityCredential) {
         assertNotBuilt();
         this.securityCredential = securityCredential;
+
+        return this;
+    }
+
+    /**
+     * Set the authentication credential source.
+     * Alternative to {@link #setSecurityCredential(String)}.
+     *
+     * @param credentialSource the credential source
+     * @return this builder
+     */
+    public SimpleDirContextFactoryBuilder setCredentialSource(final CredentialSource credentialSource) {
+        assertNotBuilt();
+        this.credentialSource = credentialSource;
 
         return this;
     }
@@ -219,7 +240,28 @@ public class SimpleDirContextFactoryBuilder {
 
         @Override
         public DirContext obtainDirContext(ReferralMode mode) throws NamingException {
-            return createDirContext(securityPrincipal, securityCredential.toCharArray(), mode);
+            char[] charPassword = null;
+            if (securityCredential != null) {
+                charPassword = securityCredential.toCharArray();
+            } else if (credentialSource != null) {
+                ClearPassword password = null;
+                try {
+                    PasswordCredential credential = credentialSource.getCredential(PasswordCredential.class);
+                    if (credential == null) throw log.couldNotObtainCredential();
+                    password = credential.getPassword(ClearPassword.class);
+                    if (password == null) throw log.couldNotObtainCredential();
+                    charPassword = password.getPassword();
+                } catch (Exception e) {
+                    throw log.couldNotObtainCredentialWithCause(e);
+                } finally {
+                    try {
+                        if (password != null) password.destroy();
+                    } catch (DestroyFailedException e) {
+                        log.credentialDestroyingFailed(e);
+                    }
+                }
+            }
+            return createDirContext(securityPrincipal, charPassword, mode);
         }
 
         @Override
@@ -249,13 +291,13 @@ public class SimpleDirContextFactoryBuilder {
         }
 
         private DirContext createDirContext(String securityPrincipal, char[] securityCredential, ReferralMode mode) throws NamingException {
-            Hashtable<String, String> env = new Hashtable<>();
+            Hashtable<String, Object> env = new Hashtable<>();
 
             env.put(InitialDirContext.INITIAL_CONTEXT_FACTORY, initialContextFactory);
             env.put(InitialDirContext.PROVIDER_URL, providerUrl);
             env.put(InitialDirContext.SECURITY_AUTHENTICATION, securityAuthentication);
-            env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
-            env.put(InitialDirContext.SECURITY_CREDENTIALS, String.valueOf(securityCredential));
+            if (securityPrincipal != null) env.put(InitialDirContext.SECURITY_PRINCIPAL, securityPrincipal);
+            if (securityCredential != null) env.put(InitialDirContext.SECURITY_CREDENTIALS, securityCredential);
             env.put(InitialDirContext.REFERRAL, mode == null ? ReferralMode.IGNORE.getValue() : mode.getValue());
             if (socketFactory != null) env.put(SOCKET_FACTORY, ThreadLocalSSLSocketFactory.class.getName());
             env.put(CONNECT_TIMEOUT, Integer.toString(connectTimeout));
