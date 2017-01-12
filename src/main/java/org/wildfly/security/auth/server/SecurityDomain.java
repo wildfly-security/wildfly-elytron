@@ -45,6 +45,7 @@ import org.wildfly.common.function.ExceptionFunction;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.principal.RealmNestedPrincipal;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
@@ -236,6 +237,15 @@ public final class SecurityDomain {
         Assert.checkNotNullParam("principal", principal);
         if (principal instanceof AnonymousPrincipal) {
             return anonymous.get();
+        }
+        if (principal instanceof RealmNestedPrincipal) {
+            final RealmNestedPrincipal realmNestedPrincipal = (RealmNestedPrincipal) principal;
+            final SecurityRealm securityRealm = getRealmInfo(realmNestedPrincipal.getRealmName()).getSecurityRealm();
+            if (realmType.isInstance(securityRealm)) {
+                return fn.apply(realmType.cast(securityRealm), realmNestedPrincipal.getNestedPrincipal());
+            } else {
+                return nonExistent.get();
+            }
         }
         Principal preRealmPrincipal = preRealmPrincipalRewriter.apply(principal);
         if (preRealmPrincipal == null) {
