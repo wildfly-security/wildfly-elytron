@@ -43,6 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.naming.Binding;
 import javax.naming.InvalidNameException;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
@@ -54,6 +55,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.event.EventContext;
+import javax.naming.event.NamespaceChangeListener;
+import javax.naming.event.NamingEvent;
+import javax.naming.event.NamingExceptionEvent;
+import javax.naming.event.ObjectChangeListener;
 import javax.naming.ldap.Control;
 import javax.naming.ldap.LdapContext;
 import javax.naming.ldap.LdapName;
@@ -65,6 +71,7 @@ import org.wildfly.common.Assert;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock;
 import org.wildfly.security.auth.realm.IdentitySharedExclusiveLock.IdentityLock;
 import org.wildfly.security.auth.server.CloseableIterator;
@@ -86,7 +93,7 @@ import org.wildfly.security.evidence.Evidence;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-class LdapSecurityRealm implements ModifiableSecurityRealm {
+class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRealm {
 
     private final Supplier<Provider[]> providers;
     private final ExceptionSupplier<DirContext, NamingException> dirContextSupplier;
@@ -127,6 +134,22 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
     @Override
     public ModifiableRealmIdentity getRealmIdentityForUpdate(final Principal principal) {
         return getRealmIdentity(principal, true);
+    }
+
+    @Override
+    public void registerIdentityChangeListener(Consumer<Principal> listener) {
+        DirContext dirContext = null;
+        try {
+            dirContext = obtainContext();
+            EventContext eventContext = (EventContext) dirContext.lookup("");
+            eventContext.addNamingListener("", EventContext.SUBTREE_SCOPE, new ServerNotificationListener(listener));
+        } catch (Exception cause) {
+            throw log.ldapRealmFailedRegisterListener(cause);
+        } finally {
+            if (dirContext != null) {
+                closeContext(dirContext);
+            }
+        }
     }
 
     private ModifiableRealmIdentity getRealmIdentity(final Principal principal, final boolean exclusive) {
@@ -987,6 +1010,55 @@ class LdapSecurityRealm implements ModifiableSecurityRealm {
             this.newIdentityAttributes = newIdentityAttributes;
             this.filterName = filterName;
             this.iteratorFilter = iteratorFilter;
+        }
+    }
+
+    private class ServerNotificationListener implements ObjectChangeListener, NamespaceChangeListener {
+
+        private final Consumer<Principal> listener;
+
+        ServerNotificationListener(Consumer<Principal> listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void objectAdded(NamingEvent evt) {
+
+        }
+
+        @Override
+        public void objectRemoved(NamingEvent evt) {
+            invokeCacheUpdateListener(evt);
+        }
+
+        @Override
+        public void objectRenamed(NamingEvent evt) {
+            invokeCacheUpdateListener(evt);
+        }
+
+        @Override
+        public void objectChanged(NamingEvent evt) {
+            invokeCacheUpdateListener(evt);
+        }
+
+        @Override
+        public void namingExceptionThrown(NamingExceptionEvent evt) {
+
+        }
+
+        private void invokeCacheUpdateListener(NamingEvent evt) {
+            Binding oldBinding = evt.getOldBinding();
+            LdapName ldapName;
+            try {
+                ldapName = new LdapName(oldBinding.getName());
+            } catch (InvalidNameException e) {
+                throw log.ldapInvalidLdapName(oldBinding.getName(), e);
+            }
+            ldapName.getRdns().stream()
+                    .filter(rdn -> rdn.getType().equals(identityMapping.rdnIdentifier))
+                    .map(rdn -> new NamePrincipal(rdn.getValue().toString()))
+                    .findFirst()
+                    .ifPresent(listener::accept);
         }
     }
 }

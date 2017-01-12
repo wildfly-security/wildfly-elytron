@@ -67,7 +67,9 @@ import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.asn1.ASN1Exception;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
 import org.wildfly.security.auth.permission.RunAsPrincipalPermission;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.server.RealmUnavailableException;
+import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.authz.AuthorizationCheckException;
 import org.wildfly.security.authz.AuthorizationFailureException;
 import org.wildfly.security.credential.Credential;
@@ -581,6 +583,18 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 1143, value = "Invalid URL [%s]")
     ConfigXMLParseException xmlInvalidUrl(String url);
+
+    @Message(id = 1144, value = "Realm failed to obtain identity from cache")
+    RuntimeException realmCacheFailedObtainIdentityFromCache(@Cause Throwable cause);
+
+    @Message(id = 1145, value = "Security realm [%s] must implement [%s]")
+    IllegalArgumentException realmCacheUnexpectedType(SecurityRealm realm, Class<? extends CacheableSecurityRealm> expectedType);
+
+    @Message(id = 1146, value = "Ldap realm failed to register notification listener")
+    IllegalStateException ldapRealmFailedRegisterListener(@Cause  Throwable cause);
+
+    @Message(id = 1147, value = "Invalid LDAP name [%s]")
+    RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
 
     /* keystore package */
 
