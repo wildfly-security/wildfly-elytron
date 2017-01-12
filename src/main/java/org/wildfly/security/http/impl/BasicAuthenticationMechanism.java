@@ -148,13 +148,17 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                     passwordChars.get(password);
                     try {
                         String username = usernameChars.toString();
+                        log.tracef("Request => %s", request.getRequestURI());
                         if (authenticate(mechanismRealm, username, passwordChars.array())) {
+                            log.tracef("User %s authenticated successfully!", username);
                             if (authorize(username)) {
+                                log.debugf("User %s authorization succeeded!", username);
                                 succeed();
 
                                 request.authenticationComplete();
                                 return;
                             } else {
+                                log.debugf("User %s authorization failed.", username);
                                 fail();
 
                                 request.authenticationFailed(log.authorizationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));
@@ -162,6 +166,7 @@ class BasicAuthenticationMechanism extends UsernamePasswordAuthenticationMechani
                             }
 
                         } else {
+                            log.debugf("User %s authorization failed.", username);
                             fail();
 
                             request.authenticationFailed(log.authenticationFailed(username, BASIC_NAME), response -> prepareResponse(displayRealmName, response));

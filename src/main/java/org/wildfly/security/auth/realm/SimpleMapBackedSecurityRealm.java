@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import org.wildfly.common.Assert;
-import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -42,6 +41,8 @@ import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.evidence.Evidence;
 import org.wildfly.security.password.Password;
+
+import static org.wildfly.security._private.ElytronMessages.log;
 
 /**
  * Simple map-backed security realm.  Uses an in-memory copy-on-write map methodology to map user names to
@@ -137,7 +138,7 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
         }
         String name = rewriter.rewriteName(principal.getName());
         if (name == null) {
-            throw ElytronMessages.log.invalidName();
+            throw log.invalidName();
         }
         return new SimpleMapRealmIdentity(name);
     }
@@ -229,6 +230,9 @@ public class SimpleMapBackedSecurityRealm implements SecurityRealm {
             if (entry == null) {
                 return false;
             }
+
+            log.tracef("Trying to authenticate %s using SimpleMapBackedSecurityRealm.", name);
+
             for (Credential credential : entry.getCredentials()) {
                 if (credential.canVerify(evidence)) {
                     return credential.verify(providers, evidence);

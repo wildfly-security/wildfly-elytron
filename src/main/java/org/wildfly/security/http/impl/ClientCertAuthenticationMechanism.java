@@ -104,6 +104,9 @@ public class ClientCertAuthenticationMechanism implements HttpServerAuthenticati
             return true;
         }
         X509PeerCertificateChainEvidence evidence = new X509PeerCertificateChainEvidence(x509Certificates);
+
+        log.tracef("Using ClientCertAuthenticationMechanism to authenticate the following certificates: [%s]", x509Certificates);
+
         EvidenceVerifyCallback callback = new EvidenceVerifyCallback(evidence);
         try {
             MechanismUtil.handleCallbacks(CLIENT_CERT_NAME, callbackHandler, callback);

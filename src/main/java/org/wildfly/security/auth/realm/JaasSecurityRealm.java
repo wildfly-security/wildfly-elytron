@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.realm;
 
+import static org.wildfly.security._private.ElytronMessages.log;
+
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -177,6 +179,9 @@ public class JaasSecurityRealm implements SecurityRealm {
                 final CallbackHandler callbackHandler = createCallbackHandler(principal, (PasswordGuessEvidence) evidence);
                 final Subject subject = new Subject();
                 final LoginContext context  = createLoginContext(loginConfiguration, subject, callbackHandler);
+
+                log.tracef("Trying to authenticate subject %s using LoginContext %s using JaasSecurityRealm",
+                        principal, context);
 
                 try {
                     context.login();

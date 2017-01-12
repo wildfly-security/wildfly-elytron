@@ -186,6 +186,10 @@ public class LegacyPropertiesSecurityRealm implements SecurityRealm {
                     }
                 }
                 try {
+
+                    log.tracef("Attempting to authenticate account %s using LegacyPropertiesSecurityRealm.",
+                        accountEntry.getName());
+
                     actualPassword = passwordFactory.generatePassword(passwordSpec);
 
                     return passwordFactory.verify(actualPassword, guess);

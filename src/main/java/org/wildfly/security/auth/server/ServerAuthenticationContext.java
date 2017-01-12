@@ -1716,6 +1716,11 @@ public final class ServerAuthenticationContext {
 
             SecurityIdentity authorizedIdentity = Assert.assertNotNull(domain.transform(new SecurityIdentity(domain, authenticationPrincipal, realmInfo, authorizationIdentity, domain.getCategoryRoleMappers(), capturedIdentity.getPublicCredentials(), capturedIdentity.getPrivateCredentialsPrivate())));
             authorizedIdentity = authorizedIdentity.withPublicCredentials(publicCredentials).withPrivateCredentials(privateCredentials);
+            if (log.isTraceEnabled()) {
+                log.tracef("Authorizing principal %s.", authenticationPrincipal.getName());
+                log.tracef("Authorizing against the following attributes: %s => %s",
+                        authorizationIdentity.getAttributes().keySet(), authorizationIdentity.getAttributes().values());
+            }
             if (requireLoginPermission) {
                 if (! authorizedIdentity.implies(LoginPermission.getInstance())) {
                     SecurityRealm.safeHandleRealmEvent(realmInfo.getSecurityRealm(), new RealmIdentityFailedAuthorizationEvent(authorizedIdentity.getAuthorizationIdentity(), authorizedIdentity.getPrincipal(), authenticationPrincipal));

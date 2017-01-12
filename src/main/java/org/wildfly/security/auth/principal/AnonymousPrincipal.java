@@ -81,6 +81,15 @@ public final class AnonymousPrincipal implements Principal, Serializable {
         return 3;
     }
 
+    /**
+     * Get a representation of the principal name (always "anonymous").
+     *
+     * @return the string representation of the principal name (always "anonymous")
+     */
+    public String toString() {
+        return "anonymous";
+    }
+
     Object writeReplace() {
         return INSTANCE;
     }
