@@ -156,6 +156,15 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     if (authorizeSrcName(srcName, gssContext)) {
                         log.trace("GSSContext established and authorized - authentication complete");
                         request.authenticationComplete(response -> sendChallenge(responseToken, response, 0));
+
+                        GSSCredential gssCredential = gssContext.getDelegCred();
+                        if (gssCredential != null) {
+                            log.trace("Associating delegated GSSCredential with identity.");
+                            handleCallback(new IdentityCredentialCallback(new GSSCredentialCredential(gssCredential), true));
+                        } else {
+                            log.trace("No GSSCredential delegated from client.");
+                        }
+
                         return;
                     } else {
                         log.trace("Authorization of established GSSContext failed");
@@ -206,7 +215,17 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
     private boolean authorizeCachedGSSContext(GSSContext gssContext) throws HttpAuthenticationException {
         try {
             GSSName srcName = gssContext.getSrcName();
-            return srcName != null && authorizeSrcName(srcName, gssContext);
+            boolean authorized = srcName != null && authorizeSrcName(srcName, gssContext);
+            if (authorized) {
+                GSSCredential gssCredential = gssContext.getDelegCred();
+                if (gssCredential != null) {
+                    log.trace("Associating delegated GSSCredential with identity.");
+                    handleCallback(new IdentityCredentialCallback(new GSSCredentialCredential(gssCredential), true));
+                } else {
+                    log.trace("No GSSCredential delegated from client.");
+                }
+            }
+            return authorized;
         } catch (GSSException e) {
             log.trace("GSSException while obtaining srcName of GSSContext (name of initiator)");
             handleCallback(AuthenticationCompleteCallback.FAILED);
