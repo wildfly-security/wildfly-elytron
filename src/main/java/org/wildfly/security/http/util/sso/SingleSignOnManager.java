@@ -17,33 +17,25 @@
  */
 package org.wildfly.security.http.util.sso;
 
-import org.wildfly.security.cache.IdentityCache;
+import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
- * Represents a single sign-on session.
- *
- * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
- * @see SingleSignOnSessionFactory
+ * Manages the persistence of a {@link SingleSignOn} entry.
+ * @author Paul Ferraro
  */
-public interface SingleSignOnSession extends IdentityCache, AutoCloseable {
+public interface SingleSignOnManager {
+    /**
+     * Creates a single sign-on entry using the specified mechanism and security identity
+     * @param mechanismName an authentication mechanism name
+     * @param identity a security identity of the authenticated user
+     * @return a single sign-on entry
+     */
+    SingleSignOn create(String mechanismName, SecurityIdentity identity);
 
     /**
-     * The identifier associated with this session.
-     *
-     * @return identifier associated with this session
+     * Locates the single sign-on entry with the specified identifier, or null if none exists.
+     * @param id a single sign-on entry identifier
+     * @return a single sign-on entry, or null if none was found
      */
-    String getId();
-
-    /**
-     * Performs a local logout where only the local session is invalidated.
-     *
-     * @return {@code true} if local session was invalidated. Otherwise, {@code false}
-     */
-    boolean logout();
-
-    /**
-     * Closes any resources associated with this single sign-on session.
-     */
-    @Override
-    void close();
+    SingleSignOn find(String id);
 }

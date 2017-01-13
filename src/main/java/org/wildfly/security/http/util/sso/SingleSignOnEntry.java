@@ -17,33 +17,32 @@
  */
 package org.wildfly.security.http.util.sso;
 
-import org.wildfly.security.cache.IdentityCache;
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
+
+import org.wildfly.security.cache.CachedIdentity;
 
 /**
- * Represents a single sign-on session.
- *
- * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
- * @see SingleSignOnSessionFactory
+ * @author Paul Ferraro
  */
-public interface SingleSignOnSession extends IdentityCache, AutoCloseable {
+public interface SingleSignOnEntry {
 
     /**
-     * The identifier associated with this session.
-     *
-     * @return identifier associated with this session
+     * Returns the {@link CachedIdentity} associated with this single sign-on entry.
+     * @return a cached identity
      */
-    String getId();
+    CachedIdentity getCachedIdentity();
 
     /**
-     * Performs a local logout where only the local session is invalidated.
-     *
-     * @return {@code true} if local session was invalidated. Otherwise, {@code false}
+     * Reassociates the specified {@link CachedIdentity} with this single sign-on entry.
+     * @param cachedIdentity a cached identity
      */
-    boolean logout();
+    void setCachedIdentity(CachedIdentity cachedIdentity);
 
     /**
-     * Closes any resources associated with this single sign-on session.
+     * Returns the participants associated with this single sign-on entry.
+     * @return a mapping of application to tuple containing a session identifier and request URI.
      */
-    @Override
-    void close();
+    ConcurrentMap<String, Map.Entry<String, URI>> getParticipants();
 }

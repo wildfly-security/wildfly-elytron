@@ -21,9 +21,10 @@ package org.wildfly.security.http.util.sso;
 import org.wildfly.security.http.HttpServerRequest;
 
 /**
- * A factory of {@link SingleSignOnSession} instances that also provides methods for managing sessions.
+ * A factory for creating {@link SingleSignOnSession} instances.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ * @author Paul Ferraro
  */
 public interface SingleSignOnSessionFactory {
 
@@ -34,22 +35,14 @@ public interface SingleSignOnSessionFactory {
      * @param request the current request
      * @return a {@link SingleSignOnSession} instance associated with the specified identifier and request, or {@code null} if there is no session with the given identifier
      */
-    SingleSignOnSession findById(String id, HttpServerRequest request);
+    SingleSignOnSession find(String id, HttpServerRequest request);
 
     /**
-     * Creates a new {@link SingleSignOnSession} with the specified identifier and request.
+     * Creates a new {@link SingleSignOnSession} for the specified request and authentication mechanism.
      *
-     * @param id the identifier to lookup the session
      * @param request the current request
+     * @param mechanismName the name of the authentication mechanism
      * @return a {@link SingleSignOnSession} instance associated with the specified identifier and request
      */
     SingleSignOnSession create(HttpServerRequest request, String mechanismName);
-
-    /**
-     * Performs a single logout for a single sign-on session associated with the specified identifier. When calling this method, all local sessions
-     * associated with the specified session will be invalidated.
-     *
-     * @param id the identifier associated with a single sign-on session
-     */
-    void logout(String id);
 }

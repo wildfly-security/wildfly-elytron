@@ -46,6 +46,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  * a storage (eg.: using a shared or distributable cache/map) for these sessions and related data.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ * @author Paul Ferraro
  */
 public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticationMechanismFactory {
 
@@ -81,9 +82,10 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
             @Override
             public void evaluateRequest(HttpServerRequest request) throws HttpAuthenticationException {
+                @SuppressWarnings("resource")
                 SingleSignOnSession singleSignOnSession = getSingleSignOnSession(request);
-
                 if (singleSignOnSession.logout()) {
+                    singleSignOnSession.close();
                     return;
                 }
                 HttpServerAuthenticationMechanism mechanism = getTargetMechanism(mechanismName, singleSignOnSession);
@@ -95,23 +97,14 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
 
             private SingleSignOnSession getSingleSignOnSession(HttpServerRequest request) {
                 HttpServerCookie cookie = getCookie(request);
+                String signOnSessionId = (cookie != null) ? cookie.getValue() : null;
+                SingleSignOnSession singleSignOnSession = (signOnSessionId != null) ? singleSignOnSessionFactory.find(signOnSessionId, request) : null;
 
-                if (cookie == null) {
-                    return singleSignOnSessionFactory.create(request, mechanismName);
-                }
-
-                String signOnSessionId = cookie.getValue();
-                SingleSignOnSession singleSignOnSession = singleSignOnSessionFactory.findById(signOnSessionId, request);
-
-                if (singleSignOnSession == null) {
-                    return singleSignOnSessionFactory.create(request, mechanismName);
-                }
-
-                return singleSignOnSession;
+                return (singleSignOnSession == null) ? singleSignOnSessionFactory.create(request, mechanismName) : singleSignOnSession;
             }
 
-            private HttpServerAuthenticationMechanism getTargetMechanism(String mechanismName, IdentityCache identityCache) throws HttpAuthenticationException {
-                return delegate.createAuthenticationMechanism(mechanismName, properties, createCallbackHandler(callbackHandler, mechanismName, identityCache));
+            private HttpServerAuthenticationMechanism getTargetMechanism(String mechanismName, SingleSignOnSession singleSignOnSession) throws HttpAuthenticationException {
+                return delegate.createAuthenticationMechanism(mechanismName, properties, createCallbackHandler(callbackHandler, mechanismName, singleSignOnSession));
             }
 
             private HttpServerRequest createHttpServerRequest(final HttpServerRequest request, SingleSignOnSession singleSignOnSession) {
@@ -119,9 +112,13 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                     @Override
                     public void noAuthenticationInProgress(HttpServerMechanismsResponder responder) {
                         request.noAuthenticationInProgress(response -> {
-                            clearCookie(request, response, singleSignOnSession);
-                            if (responder != null) {
-                                responder.sendResponse(response);
+                            try {
+                                clearCookie(request, response, singleSignOnSession);
+                                if (responder != null) {
+                                    responder.sendResponse(response);
+                                }
+                            } finally {
+                                singleSignOnSession.close();
                             }
                         });
                     }
@@ -129,9 +126,13 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                     @Override
                     public void authenticationInProgress(HttpServerMechanismsResponder responder) {
                         request.authenticationInProgress(response -> {
-                            clearCookie(request, response, singleSignOnSession);
-                            if (responder != null) {
-                                responder.sendResponse(response);
+                            try {
+                                clearCookie(request, response, singleSignOnSession);
+                                if (responder != null) {
+                                    responder.sendResponse(response);
+                                }
+                            } finally {
+                                singleSignOnSession.close();
                             }
                         });
                     }
@@ -139,18 +140,21 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                     @Override
                     public void authenticationComplete(HttpServerMechanismsResponder responder) {
                         request.authenticationComplete(response -> {
-                            String id = singleSignOnSession.getId();
+                            try {
+                                String id = singleSignOnSession.getId();
+                                if (id != null) {
+                                    HttpServerCookie cookie = getCookie(request);
 
-                            if (id != null) {
-                                HttpServerCookie cookie = getCookie(request);
-
-                                if (cookie == null) {
-                                    response.setResponseCookie(createCookie(id, -1));
+                                    if (cookie == null) {
+                                        response.setResponseCookie(createCookie(id, -1));
+                                    }
                                 }
-                            }
 
-                            if (responder != null) {
-                                responder.sendResponse(response);
+                                if (responder != null) {
+                                    responder.sendResponse(response);
+                                }
+                            } finally {
+                                singleSignOnSession.close();
                             }
                         });
                     }
@@ -158,11 +162,24 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                     @Override
                     public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
                         request.authenticationFailed(message, response -> {
-                            clearCookie(request, response, singleSignOnSession);
-                            if (responder != null) {
-                                responder.sendResponse(response);
+                            try {
+                                clearCookie(request, response, singleSignOnSession);
+                                if (responder != null) {
+                                    responder.sendResponse(response);
+                                }
+                            } finally {
+                                singleSignOnSession.close();
                             }
                         });
+                    }
+
+                    @Override
+                    public void badRequest(HttpAuthenticationException failure, HttpServerMechanismsResponder responder) {
+                        try {
+                            request.badRequest(failure, responder);
+                        } finally {
+                            singleSignOnSession.close();
+                        }
                     }
                 };
 
@@ -226,9 +243,9 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
         };
     }
 
-    private CallbackHandler createCallbackHandler(CallbackHandler callbackHandler, String mechanismName, IdentityCache identityCache) {
+    private CallbackHandler createCallbackHandler(CallbackHandler callbackHandler, String mechanismName, SingleSignOnSession singleSignOnSession) {
         return callbacks -> {
-            CachedIdentity cachedIdentity = identityCache.get();
+            CachedIdentity cachedIdentity = singleSignOnSession.get();
             if (cachedIdentity == null || mechanismName.equals(cachedIdentity.getMechanismName())) {
                 for (int i = 0; i < callbacks.length; i++) {
                     Callback current = callbacks[i];
@@ -239,7 +256,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                         }
                         Principal principal = delegate.getAuthorizationPrincipal();
                         if (principal != null) {
-                            callbacks[i] = new CachedIdentityAuthorizeCallback(principal, identityCache) {
+                            callbacks[i] = new CachedIdentityAuthorizeCallback(principal, singleSignOnSession) {
                                 @Override
                                 public void setAuthorized(SecurityIdentity securityIdentity) {
                                     super.setAuthorized(securityIdentity);
@@ -247,7 +264,7 @@ public class SingleSignOnServerMechanismFactory implements HttpServerAuthenticat
                                 }
                             };
                         } else {
-                            callbacks[i] = new CachedIdentityAuthorizeCallback(identityCache, delegate.isLocalCache()) {
+                            callbacks[i] = new CachedIdentityAuthorizeCallback(singleSignOnSession, delegate.isLocalCache()) {
                                 @Override
                                 public void setAuthorized(SecurityIdentity securityIdentity) {
                                     super.setAuthorized(securityIdentity);

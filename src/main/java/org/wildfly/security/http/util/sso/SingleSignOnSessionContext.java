@@ -17,33 +17,17 @@
  */
 package org.wildfly.security.http.util.sso;
 
-import org.wildfly.security.cache.IdentityCache;
+import java.net.HttpURLConnection;
 
 /**
- * Represents a single sign-on session.
- *
- * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
- * @see SingleSignOnSessionFactory
+ * Operation context for a {@link SingleSignOnSession}.
+ * @author Paul Ferraro
  */
-public interface SingleSignOnSession extends IdentityCache, AutoCloseable {
+public interface SingleSignOnSessionContext {
+    SingleSignOnManager getSingleSignOnManagerManager();
 
-    /**
-     * The identifier associated with this session.
-     *
-     * @return identifier associated with this session
-     */
-    String getId();
+    String createLogoutParameter(String sessionId);
+    String verifyLogoutParameter(String logoutRequest);
 
-    /**
-     * Performs a local logout where only the local session is invalidated.
-     *
-     * @return {@code true} if local session was invalidated. Otherwise, {@code false}
-     */
-    boolean logout();
-
-    /**
-     * Closes any resources associated with this single sign-on session.
-     */
-    @Override
-    void close();
+    void configureLogoutConnection(HttpURLConnection connection);
 }

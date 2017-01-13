@@ -17,33 +17,17 @@
  */
 package org.wildfly.security.http.util.sso;
 
-import org.wildfly.security.cache.IdentityCache;
+import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
- * Represents a single sign-on session.
- *
- * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
- * @see SingleSignOnSessionFactory
+ * Default factory for creating single sign-on identifiers.
+ * @author Paul Ferraro
  */
-public interface SingleSignOnSession extends IdentityCache, AutoCloseable {
+public class DefaultSingleSignOnSessionIdentifierFactory implements Supplier<String> {
 
-    /**
-     * The identifier associated with this session.
-     *
-     * @return identifier associated with this session
-     */
-    String getId();
-
-    /**
-     * Performs a local logout where only the local session is invalidated.
-     *
-     * @return {@code true} if local session was invalidated. Otherwise, {@code false}
-     */
-    boolean logout();
-
-    /**
-     * Closes any resources associated with this single sign-on session.
-     */
     @Override
-    void close();
+    public String get() {
+        return UUID.randomUUID().toString();
+    }
 }

@@ -22,6 +22,7 @@ import org.wildfly.security.auth.server.SecurityIdentity;
 
 import java.io.Serializable;
 import java.security.Principal;
+import java.util.function.Supplier;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 
@@ -29,6 +30,7 @@ import static org.wildfly.common.Assert.checkNotNullParam;
  * Represents a cached identity, managed by an {@link IdentityCache}.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ * @author Paul Ferraro
  * @see IdentityCache
  */
 public final class CachedIdentity implements Serializable {
@@ -40,20 +42,28 @@ public final class CachedIdentity implements Serializable {
     private final transient SecurityIdentity securityIdentity;
 
     /**
-     * Creates a new instance based on the given <code>id</code> and <code>securityIdentity</code>.
+     * Creates a new instance based on the given <code>mechanismName</code> and <code>securityIdentity</code>.
      *
-     * @param id the value that identifies this instance in the cache
      * @param mechanismName the name of the authentication mechanism used to authenticate/authorize the identity
      * @param securityIdentity the identity to cache
      */
     public CachedIdentity(String mechanismName, SecurityIdentity securityIdentity) {
-        checkNotNullParam("mechanismName", mechanismName);
-        checkNotNullParam("securityIdentity", securityIdentity);
-        Principal principal = securityIdentity.getPrincipal();
-        checkNotNullParam("principal", principal);
-        checkNotNullParam("name", principal.getName());
-        this.mechanismName = mechanismName;
-        this.name = principal.getName();
+        this(mechanismName, securityIdentity, () -> checkNotNullParam("securityIdentity", securityIdentity).getPrincipal());
+    }
+
+    /**
+     * Creates a new instance based on the given <code>mechanismName</code> and <code>principal</code>.
+     *
+     * @param mechanismName the name of the authentication mechanism used to authenticate/authorize the identity
+     * @param principal the principal of this cached identity
+     */
+    public CachedIdentity(String mechanismName, Principal principal) {
+        this(mechanismName, null, () -> principal);
+    }
+
+    private CachedIdentity(String mechanismName, SecurityIdentity securityIdentity, Supplier<Principal> principalSupplier) {
+        this.mechanismName = checkNotNullParam("mechanismName", mechanismName);
+        this.name = checkNotNullParam("name", checkNotNullParam("principal", principalSupplier.get()).getName());
         this.securityIdentity = securityIdentity;
     }
 
@@ -63,7 +73,7 @@ public final class CachedIdentity implements Serializable {
      * @return the name of the authentication mechanism used to authenticate/authorize the identity
      */
     public String getMechanismName() {
-        return mechanismName;
+        return this.mechanismName;
     }
 
     /**
