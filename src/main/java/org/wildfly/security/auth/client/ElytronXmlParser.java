@@ -63,9 +63,6 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.SecretKeySpec;
 import javax.net.ssl.SSLContext;
 
-import org.jboss.modules.Module;
-import org.jboss.modules.ModuleIdentifier;
-import org.jboss.modules.ModuleLoadException;
 import org.wildfly.client.config.ClientConfiguration;
 import org.wildfly.client.config.ConfigXMLParseException;
 import org.wildfly.client.config.ConfigurationXMLStreamReader;
@@ -406,8 +403,9 @@ public final class ElytronXmlParser {
                     case "use-service-loader-providers": {
                         if (isSet(foundBits, 4)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 4);
-                        final Module module = parseModuleRefType(reader);
-                        providersSupplier = new ServiceLoaderSupplier<>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader());
+                        final String moduleName = parseModuleRefType(reader);
+                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
+                        providersSupplier = new ServiceLoaderSupplier<>(Provider.class, classLoader);
                         break;
                     }
                     default: throw reader.unexpectedElement();
@@ -617,8 +615,9 @@ public final class ElytronXmlParser {
                     case "use-service-loader-providers": {
                         if (isSet(foundBits, 11)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 11);
-                        final Module module = parseModuleRefType(reader);
-                        providerSupplier.setSupplier(new ServiceLoaderSupplier<Provider>(Provider.class, module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader()));
+                        final String moduleName = parseModuleRefType(reader);
+                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
+                        providerSupplier.setSupplier(new ServiceLoaderSupplier<>(Provider.class, classLoader));
                         configuration = andThenOp(configuration, parentConfig -> parentConfig.useProviders(providerSupplier));
                         break;
                     }
@@ -633,8 +632,9 @@ public final class ElytronXmlParser {
                     case "use-service-loader-sasl-factory": {
                         if (isSet(foundBits, 12)) throw reader.unexpectedElement();
                         foundBits = setBit(foundBits, 12);
-                        final Module module = parseModuleRefType(reader);
-                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(module != null ? module.getClassLoader() : ElytronXmlParser.class.getClassLoader())));
+                        final String moduleName = parseModuleRefType(reader);
+                        final ClassLoader classLoader = (moduleName == null) ? ElytronXmlParser.class.getClassLoader() : ModuleLoader.getClassLoaderFromModule(reader, moduleName);
+                        configuration = andThenOp(configuration, parentConfig -> parentConfig.useSaslClientFactory(new ServiceLoaderSaslClientFactory(classLoader)));
                         break;
                     }
                     case "set-protocol": {
@@ -1824,10 +1824,10 @@ public final class ElytronXmlParser {
      * Parse an XML element of type {@code module-ref-type} from an XML reader.
      *
      * @param reader the XML stream reader
-     * @return the corresponding module
+     * @return the corresponding module name
      * @throws ConfigXMLParseException if the resource failed to be parsed or the module is not found
      */
-    static Module parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
+    static String parseModuleRefType(ConfigurationXMLStreamReader reader) throws ConfigXMLParseException {
         final int attributeCount = reader.getAttributeCount();
         String moduleName = null;
         for (int i = 0; i < attributeCount; i ++) {
@@ -1844,22 +1844,14 @@ public final class ElytronXmlParser {
             if (tag == START_ELEMENT) {
                 throw reader.unexpectedElement();
             } else if (tag == END_ELEMENT) {
-                if (moduleName != null) {
-                    final ModuleIdentifier identifier = ModuleIdentifier.fromString(moduleName);
-                    try {
-                        return Module.getModuleFromCallerModuleLoader(identifier);
-                    } catch (ModuleLoadException e) {
-                        throw xmlLog.xmlNoModuleFound(reader, e, identifier);
-                    }
-                } else {
-                    return null;
-                }
+                return moduleName;
             } else {
                 throw reader.unexpectedContent();
             }
         }
         throw reader.unexpectedDocumentEnd();
     }
+
 
     /**
      * Parse an XML element of type {@code clear-password-type} from an XML reader.
