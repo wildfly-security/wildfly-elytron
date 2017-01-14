@@ -18,14 +18,17 @@
 
 package org.wildfly.security.credential;
 
+import javax.security.auth.kerberos.KerberosTicket;
+
 import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
 
 /**
- * A credential for holding a {@code GSSCredential}.
+ * A credential for holding a {@code GSSCredential} and optionally an associated {@link KerberosTicket}.
  */
 public final class GSSCredentialCredential implements Credential {
     private final GSSCredential gssCredential;
+    private final KerberosTicket kerberosTicket;
 
     /**
      * Construct a new instance.
@@ -33,8 +36,19 @@ public final class GSSCredentialCredential implements Credential {
      * @param gssCredential the GSS credential (may not be {@code null})
      */
     public GSSCredentialCredential(final GSSCredential gssCredential) {
+        this(gssCredential, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param gssCredential the GSS credential (may not be {@code null})
+     * @param kerberosTicket the associated Kerberos ticket which may be {@code null}.
+     */
+    public GSSCredentialCredential(final GSSCredential gssCredential, final KerberosTicket kerberosTicket) {
         Assert.checkNotNullParam("gssCredential", gssCredential);
         this.gssCredential = gssCredential;
+        this.kerberosTicket = kerberosTicket;
     }
 
     /**
@@ -44,6 +58,15 @@ public final class GSSCredentialCredential implements Credential {
      */
     public GSSCredential getGssCredential() {
         return gssCredential;
+    }
+
+    /**
+     * Get the associated kerberos ticket.
+     *
+     * @return the associated kerberos ticker or {@code null} if one is not associated.
+     */
+    public KerberosTicket getKerberosTicket() {
+        return kerberosTicket;
     }
 
     public GSSCredentialCredential clone() {

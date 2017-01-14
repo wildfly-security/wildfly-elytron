@@ -787,6 +787,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 3030, value = "I/O operation failed: closed")
     IOException closed();
 
+    @Message(id = 3031, value = "Too many KerberosTicket instances in private credentials")
+    GeneralSecurityException tooManyKerberosTicketsFound();
+
     /* ssl package */
 
     @Message(id = 4001, value = "No algorithm found matching TLS/SSL protocol selection criteria")
