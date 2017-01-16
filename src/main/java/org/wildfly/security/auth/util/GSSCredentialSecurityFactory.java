@@ -116,6 +116,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         private String principal;
         private File keyTab;
         private boolean isServer;
+        private boolean obtainKerberosTicket;
         private int minimumRemainingLifetime;
         private int requestLifetime;
         private boolean debug;
@@ -145,6 +146,19 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         public Builder setIsServer(final boolean isServer) {
             assertNotBuilt();
             this.isServer = isServer;
+
+            return this;
+        }
+
+        /**
+         * Set if the KerberosTicket should also be obtained and associated with the Credential/
+         *
+         * @param obtainKerberosTicket if the KerberosTicket should also be obtained and associated with the Credential/
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setObtainKerberosTicket(final boolean obtainKerberosTicket) {
+            assertNotBuilt();
+            this.obtainKerberosTicket = obtainKerberosTicket;
 
             return this;
         }
@@ -234,11 +248,16 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
                 lc.login();
                 log.tracef("Logging in using LoginContext and subject [%s] succeed", subject);
 
-                Set<KerberosTicket> kerberosTickets = doPrivileged((PrivilegedAction<Set<KerberosTicket>>) () -> subject.getPrivateCredentials(KerberosTicket.class));
-                if (kerberosTickets.size() > 1) {
-                    throw log.tooManyKerberosTicketsFound();
+                final KerberosTicket kerberosTicket;
+                if (obtainKerberosTicket) {
+                    Set<KerberosTicket> kerberosTickets = doPrivileged((PrivilegedAction<Set<KerberosTicket>>) () -> subject.getPrivateCredentials(KerberosTicket.class));
+                    if (kerberosTickets.size() > 1) {
+                        throw log.tooManyKerberosTicketsFound();
+                    }
+                    kerberosTicket = kerberosTickets.size() == 1 ? kerberosTickets.iterator().next() : null;
+                } else {
+                    kerberosTicket = null;
                 }
-                final KerberosTicket kerberosTicket = kerberosTickets.size() == 1 ? kerberosTickets.iterator().next() : null;
 
                 final GSSManager manager = GSSManager.getInstance();
                 return Subject.doAs(subject, new PrivilegedExceptionAction<GSSCredentialCredential>() {
@@ -280,12 +299,13 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
             final AppConfigurationEntry ace;
             if (IS_IBM) {
                 options.put("noAddress", "true");
-                options.put("credsType", isServer ? "acceptor" : "initiator");
+                options.put("credsType", (isServer && !obtainKerberosTicket) ? "acceptor" : "initiator");
                 options.put("useKeytab", keyTab.toURI().toURL().toString());
             } else {
                 options.put("storeKey", "true");
                 options.put("useKeyTab", "true");
                 options.put("keyTab", keyTab.getAbsolutePath());
+                options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
             }
 
             log.tracef("Created LoginContext configuration: %s", options.toString());
