@@ -190,6 +190,12 @@ class DigestAuthenticationMechanism implements HttpServerAuthenticationMechanism
 
         final String selectedRealm = selectRealm(request);
 
+        if (username.length() == 0) {
+            fail();
+            request.authenticationFailed(log.authenticationFailed(getMechanismName()), httpResponse -> prepareResponse(selectedRealm, httpResponse, false));
+            return;
+        }
+
         byte[] hA1 = getH_A1(messageDigest, username, messageRealm, mechanismRealm);
 
         if (hA1 == null) {
