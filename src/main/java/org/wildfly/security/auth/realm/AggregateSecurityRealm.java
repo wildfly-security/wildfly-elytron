@@ -154,7 +154,7 @@ public final class AggregateSecurityRealm implements SecurityRealm {
         }
 
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            return authorizationIdentity.exists() ? authorizationIdentity.getAuthorizationIdentity() : AuthorizationIdentity.EMPTY;
+            return authorizationIdentity.getAuthorizationIdentity();
         }
 
         public void dispose() {

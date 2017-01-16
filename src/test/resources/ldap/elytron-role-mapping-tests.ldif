@@ -134,3 +134,4 @@ objectclass: top
 objectclass: organizationalRole
 cn: RN3
 description: RN2
+description: hybridUser
