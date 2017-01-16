@@ -68,4 +68,29 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
         }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("CN").to(RoleDecoder.KEY_ROLES).searchRecursively(false).build());
     }
+
+    @Test
+    public void testRecursiveRoles() throws Exception {
+        assertAttributes("jduke", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "R1", "R2");
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(1).to(RoleDecoder.KEY_ROLES).build());
+    }
+
+
+    @Test
+    public void testRecursiveRolesCycle() throws Exception {
+        assertAttributes("jduke", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "R1", "R2","R3");
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(10).to(RoleDecoder.KEY_ROLES).build());
+    }
+
+    @Test
+    public void testRecursiveRolesByName() throws Exception {
+        assertAttributes("falith", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RN1", "RN2");
+        }, AttributeMapping.fromFilter("description={0}").from("cn").roleRecursionName("cn").roleRecursion(1).to(RoleDecoder.KEY_ROLES).build());
+    }
 }

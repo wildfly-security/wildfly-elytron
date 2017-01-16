@@ -106,3 +106,31 @@ objectclass: groupOfNames
 cn: R3
 member: cn=R2,dc=elytron,dc=wildfly,dc=org
 description: the R3 group
+
+# Recursive roles by name
+dn: uid=falith,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: person
+objectclass: inetOrgPerson
+uid: falith
+cn: Falith
+sn: Fall
+userPassword: Password2
+
+dn: cn=RN1,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: organizationalRole
+cn: RN1
+description: falith
+
+dn: cn=RN2,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: organizationalRole
+cn: RN2
+description: RN1
+
+dn: cn=RN3,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: organizationalRole
+cn: RN3
+description: RN2
