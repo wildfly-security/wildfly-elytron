@@ -62,13 +62,21 @@ public class CachingSecurityRealm implements SecurityRealm {
 
     @Override
     public RealmIdentity getRealmIdentity(Principal principal) throws RealmUnavailableException {
-        return cache.computeIfAbsent(principal, principal1 -> {
-            try {
-                return getCacheableRealm().getRealmIdentity(principal1);
-            } catch (RealmUnavailableException cause) {
-                throw ElytronMessages.log.realmCacheFailedObtainIdentityFromCache(cause);
-            }
-        });
+        RealmIdentity cached = cache.get(principal);
+
+        if (cached != null) {
+            return cached;
+        }
+
+        RealmIdentity identity = getCacheableRealm().getRealmIdentity(principal);
+
+        if (!identity.exists()) {
+            return identity;
+        }
+
+        cache.put(principal, identity);
+
+        return identity;
     }
 
     @Override
