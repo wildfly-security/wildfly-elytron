@@ -49,7 +49,7 @@ import org.ietf.jgss.GSSName;
 import org.wildfly.security.auth.callback.AuthenticationCompleteCallback;
 import org.wildfly.security.auth.callback.IdentityCredentialCallback;
 import org.wildfly.security.auth.callback.ServerCredentialCallback;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.http.HttpAuthenticationException;
 import org.wildfly.security.http.HttpScope;
 import org.wildfly.security.http.HttpServerAuthenticationMechanism;
@@ -98,14 +98,14 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
         }
 
         if (gssContext == null) { // init GSSContext
-            ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSCredentialCredential.class);
+            ServerCredentialCallback gssCredentialCallback = new ServerCredentialCallback(GSSKerberosCredential.class);
             final GSSCredential serviceGssCredential;
 
             try {
                 log.trace("Obtaining GSSCredential for the service from callback handler...");
                 callbackHandler.handle(new Callback[] { gssCredentialCallback });
-                serviceGssCredential = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
-                kerberosTicket = gssCredentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getKerberosTicket);
+                serviceGssCredential = gssCredentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getGssCredential);
+                kerberosTicket = gssCredentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getKerberosTicket);
             } catch (IOException | UnsupportedCallbackException e) {
                 throw log.mechCallbackHandlerFailedForUnknownReason(SPNEGO_NAME, e).toHttpAuthenticationException();
             }
@@ -168,7 +168,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                     final GSSCredential gssCredential = gssContext.getCredDelegState() ? gssContext.getDelegCred() : null;
                     if (gssCredential != null) {
                         log.trace("Associating delegated GSSCredential with identity.");
-                        handleCallback(new IdentityCredentialCallback(new GSSCredentialCredential(gssCredential), true));
+                        handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
                     } else {
                         log.trace("No GSSCredential delegated from client.");
                     }
@@ -245,7 +245,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 GSSCredential gssCredential = gssContext.getDelegCred();
                 if (gssCredential != null) {
                     log.trace("Associating delegated GSSCredential with identity.");
-                    handleCallback(new IdentityCredentialCallback(new GSSCredentialCredential(gssCredential), true));
+                    handleCallback(new IdentityCredentialCallback(new GSSKerberosCredential(gssCredential), true));
                 } else {
                     log.trace("No GSSCredential delegated from client.");
                 }
@@ -278,7 +278,7 @@ public class SpnegoAuthenticationMechanism implements HttpServerAuthenticationMe
                 try {
                     GSSCredential credential = gssContext.getDelegCred();
                     log.tracef("Credential delegation enabled, delegated credential = %s", credential);
-                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, new IdentityCredentialCallback(new GSSCredentialCredential(credential), true));
+                    MechanismUtil.handleCallbacks(SPNEGO_NAME, callbackHandler, new IdentityCredentialCallback(new GSSKerberosCredential(credential), true));
                 } catch (UnsupportedCallbackException ignored) {
                     // ignored
                 } catch (AuthenticationMechanismException e) {

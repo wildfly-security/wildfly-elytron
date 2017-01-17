@@ -26,7 +26,7 @@ import org.wildfly.common.Assert;
 /**
  * A credential for holding a {@code GSSCredential} and optionally an associated {@link KerberosTicket}.
  */
-public final class GSSCredentialCredential implements Credential {
+public final class GSSKerberosCredential implements Credential {
     private final GSSCredential gssCredential;
     private final KerberosTicket kerberosTicket;
 
@@ -35,7 +35,7 @@ public final class GSSCredentialCredential implements Credential {
      *
      * @param gssCredential the GSS credential (may not be {@code null})
      */
-    public GSSCredentialCredential(final GSSCredential gssCredential) {
+    public GSSKerberosCredential(final GSSCredential gssCredential) {
         this(gssCredential, null);
     }
 
@@ -45,7 +45,7 @@ public final class GSSCredentialCredential implements Credential {
      * @param gssCredential the GSS credential (may not be {@code null})
      * @param kerberosTicket the associated Kerberos ticket which may be {@code null}.
      */
-    public GSSCredentialCredential(final GSSCredential gssCredential, final KerberosTicket kerberosTicket) {
+    public GSSKerberosCredential(final GSSCredential gssCredential, final KerberosTicket kerberosTicket) {
         Assert.checkNotNullParam("gssCredential", gssCredential);
         this.gssCredential = gssCredential;
         this.kerberosTicket = kerberosTicket;
@@ -69,7 +69,7 @@ public final class GSSCredentialCredential implements Credential {
         return kerberosTicket;
     }
 
-    public GSSCredentialCredential clone() {
+    public GSSKerberosCredential clone() {
         return this;
     }
 
