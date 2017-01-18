@@ -26,13 +26,11 @@ import javax.net.ssl.SSLContext;
 import java.net.HttpURLConnection;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.Key;
+import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
-import java.security.cert.Certificate;
 import java.util.Base64;
 import java.util.function.Consumer;
 
@@ -50,47 +48,38 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
     private static final String DEFAULT_SIGNATURE_ALGORITHM = "SHA512withRSA";
 
     private final SingleSignOnManager manager;
-    private final Certificate certificate;
-    private final PrivateKey privateKey;
+    private final KeyPair keyPair;
     private final Consumer<HttpsURLConnection> logoutConnectionConfigurator;
 
     @Deprecated
     public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, SSLContext sslContext) {
-        this(manager, keyStore, keyAlias, keyPassword, connection -> {
+        this(manager, getKeyPair(keyStore, keyAlias, keyPassword), connection -> {
             if (sslContext != null) {
                 connection.setSSLSocketFactory(sslContext.getSocketFactory());
             }
         });
     }
 
-    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword) {
-        this(manager, keyStore, keyAlias, keyPassword, connection -> {});
+    private static KeyPair getKeyPair(KeyStore store, String alias, String password) {
+        try {
+            if (!store.entryInstanceOf(alias, KeyStore.PrivateKeyEntry.class)) {
+                throw log.httpMechSsoRSAPrivateKeyExpected(alias);
+            }
+            KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) store.getEntry(alias, (password != null) ? new KeyStore.PasswordProtection(password.toCharArray()) : null);
+            return new KeyPair(entry.getCertificate().getPublicKey(), entry.getPrivateKey());
+        } catch (GeneralSecurityException e) {
+            throw log.httpMechSsoFailedObtainKeyFromKeyStore(alias, e);
+        }
     }
 
-    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, Consumer<HttpsURLConnection> logoutConnectionConfigurator) {
+    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyPair keyPair) {
+        this(manager, keyPair, connection -> {});
+    }
+
+    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyPair keyPair, Consumer<HttpsURLConnection> logoutConnectionConfigurator) {
         this.manager = checkNotNullParam("manager", manager);
+        this.keyPair = checkNotNullParam("keyPair", keyPair);
         this.logoutConnectionConfigurator = checkNotNullParam("logoutConnectionConfigurator", logoutConnectionConfigurator);
-        checkNotNullParam("keyStore", keyStore);
-        checkNotNullParam("keyAlias", keyAlias);
-        checkNotNullParam("keyPassword", keyPassword);
-
-        try {
-            Key key = keyStore.getKey(keyAlias, keyPassword.toCharArray());
-
-            if (!(key instanceof PrivateKey && "RSA".equals(key.getAlgorithm()))) {
-                throw log.httpMechSsoRSAPrivateKeyExpected(keyAlias);
-            }
-
-            this.privateKey = (PrivateKey) key;
-
-            this.certificate = keyStore.getCertificate(keyAlias);
-        } catch (GeneralSecurityException cause) {
-            throw log.httpMechSsoFailedObtainKeyFromKeyStore(keyAlias, cause);
-        }
-
-        if (this.certificate == null) {
-            throw log.httpMechSsoCertificateExpected(keyAlias);
-        }
     }
 
     @Override
@@ -120,7 +109,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
         try {
             Signature signature = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM);
 
-            signature.initSign(this.privateKey);
+            signature.initSign(this.keyPair.getPrivate());
 
             Base64.Encoder urlEncoder = Base64.getUrlEncoder();
 
@@ -140,7 +129,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
             String localSessionId = ByteIterator.ofBytes(parts[0].getBytes()).asUtf8String().drainToString();
             Signature signature = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM);
 
-            signature.initVerify(this.certificate);
+            signature.initVerify(this.keyPair.getPublic());
             signature.update(localSessionId.getBytes());
 
             Base64.Decoder urlDecoder = Base64.getUrlDecoder();
