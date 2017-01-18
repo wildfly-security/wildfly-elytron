@@ -21,7 +21,6 @@ package org.wildfly.security.http.util.sso;
 import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.util.ByteIterator;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import java.net.HttpURLConnection;
@@ -35,6 +34,7 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.util.Base64;
+import java.util.function.Consumer;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -48,20 +48,28 @@ import static org.wildfly.security._private.ElytronMessages.log;
 public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFactory, SingleSignOnSessionContext {
 
     private static final String DEFAULT_SIGNATURE_ALGORITHM = "SHA512withRSA";
-    private static final HostnameVerifier DEFAULT_HOSTNAME_VERIFIER = (s, sslSession) -> true;
 
     private final SingleSignOnManager manager;
-    private final SSLContext sslContext;
-    private final HostnameVerifier hostnameVerifier;
     private final Certificate certificate;
     private final PrivateKey privateKey;
+    private final Consumer<HttpsURLConnection> logoutConnectionConfigurator;
 
+    @Deprecated
     public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, SSLContext sslContext) {
-        this(manager, keyStore, keyAlias, keyPassword, sslContext, DEFAULT_HOSTNAME_VERIFIER);
+        this(manager, keyStore, keyAlias, keyPassword, connection -> {
+            if (sslContext != null) {
+                connection.setSSLSocketFactory(sslContext.getSocketFactory());
+            }
+        });
     }
 
-    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, SSLContext sslContext, HostnameVerifier hostnameVerifier) {
+    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword) {
+        this(manager, keyStore, keyAlias, keyPassword, connection -> {});
+    }
+
+    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, Consumer<HttpsURLConnection> logoutConnectionConfigurator) {
         this.manager = checkNotNullParam("manager", manager);
+        this.logoutConnectionConfigurator = checkNotNullParam("logoutConnectionConfigurator", logoutConnectionConfigurator);
         checkNotNullParam("keyStore", keyStore);
         checkNotNullParam("keyAlias", keyAlias);
         checkNotNullParam("keyPassword", keyPassword);
@@ -83,9 +91,6 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
         if (this.certificate == null) {
             throw log.httpMechSsoCertificateExpected(keyAlias);
         }
-
-        this.sslContext = sslContext;
-        this.hostnameVerifier = hostnameVerifier;
     }
 
     @Override
@@ -155,9 +160,8 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
     @Override
     public void configureLogoutConnection(HttpURLConnection connection) {
         if (connection.getURL().getProtocol().equalsIgnoreCase("https")) {
-            HttpsURLConnection https = (HttpsURLConnection) connection;
-            https.setSSLSocketFactory(this.sslContext.getSocketFactory());
-            https.setHostnameVerifier(this.hostnameVerifier);
+            HttpsURLConnection secureConnection = (HttpsURLConnection) connection;
+            this.logoutConnectionConfigurator.accept(secureConnection);
         }
     }
 }
