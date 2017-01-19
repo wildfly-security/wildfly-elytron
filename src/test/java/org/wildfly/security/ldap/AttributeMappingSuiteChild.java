@@ -87,12 +87,4 @@ public class AttributeMappingSuiteChild extends AbstractAttributeMappingSuiteChi
             assertAttributeValue(attributes.get("myDn"), "uid=userWithAttributes,dc=elytron,dc=wildfly,dc=org");
         }, AttributeMapping.fromIdentity().to("myDn").build());
     }
-
-    @Test
-    public void testRecursiveRoles() throws Exception {
-        assertAttributes("jduke", attributes -> {
-            assertEquals("Expected a single attribute.", 1, attributes.size());
-            assertAttributeValue(attributes.get("roles"), "R1", "R2");
-        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(1).to("roles").build());
-    }
 }

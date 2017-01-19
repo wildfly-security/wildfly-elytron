@@ -383,7 +383,7 @@ public interface ElytronMessages extends BasicLogger {
     void warnInvalidAliasForMissingMechanismDatabaseEntry(String value, String name);
 
     @Message(id = 1078, value = "Ldap-backed realm failed to obtain identity \"%s\" from server")
-    RuntimeException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
+    RealmUnavailableException ldapRealmFailedObtainIdentityFromServer(String identity, @Cause Throwable cause);
 
     @Message(id = 1079, value = "Ldap-backed realm failed to obtain attributes for entry [%s]")
     RuntimeException ldapRealmFailedObtainAttributes(String dn, @Cause Throwable cause);

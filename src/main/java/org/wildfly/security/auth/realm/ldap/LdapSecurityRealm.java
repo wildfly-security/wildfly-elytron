@@ -364,7 +364,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try {
                 for (CredentialLoader loader : credentialLoaders) {
                     if (loader.getCredentialAcquireSupport(credentialType, algorithmName).mayBeSupported()) {
-                        IdentityCredentialLoader icl = loader.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        IdentityCredentialLoader icl = loader.forIdentity(dirContext, identity.getDistinguishedName());
 
                         Credential credential = icl.getCredential(credentialType, algorithmName, providers);
                         if (credentialType.isInstance(credential)) {
@@ -395,7 +395,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
                     boolean supported = false;
                     for (CredentialPersister persister : credentialPersisters) {
-                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, identity.getDistinguishedName());
                         if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
                             supported = true;
                         }
@@ -407,7 +407,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 // clear
                 for (CredentialPersister persister : credentialPersisters) {
-                    IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
+                    IdentityCredentialPersister icp = persister.forIdentity(dirContext, identity.getDistinguishedName());
                     icp.clearCredentials();
                 }
 
@@ -416,7 +416,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     final Class<? extends Credential> credentialType = credential.getClass();
                     final String algorithmName = credential instanceof AlgorithmCredential ? ((AlgorithmCredential) credential).getAlgorithm() : null;
                     for (CredentialPersister persister : credentialPersisters) {
-                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        IdentityCredentialPersister icp = persister.forIdentity(dirContext, identity.getDistinguishedName());
                         if (icp.getCredentialPersistSupport(credentialType, algorithmName)) {
                             icp.persistCredential(credential);
                             // next credential
@@ -442,10 +442,62 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
-            if (!exists()) {
-                return AuthorizationIdentity.EMPTY;
+            return AuthorizationIdentity.basicIdentity(getAttributes());
+        }
+
+        @Override
+        public org.wildfly.security.authz.Attributes getAttributes() throws RealmUnavailableException {
+            if (identity == null) {
+                identity = getIdentity();
             }
-            return AuthorizationIdentity.basicIdentity(this.identity.attributes);
+            DirContext context = null;
+            try {
+                context = dirContextSupplier.get();
+                DirContext identityContext = context;
+                Optional<SearchResult> optionalResult = Optional.empty();
+
+                if (identity != null && identity.distinguishedName != null) {
+                    LdapSearch search = new LdapSearch(identity.distinguishedName);
+                    search.setReturningAttributes(
+                            identityMapping.attributes.stream()
+                                    .map(AttributeMapping::getIdentityLdapName)
+                                    .filter(Objects::nonNull)
+                                    .toArray(String[]::new));
+
+                    try (Stream<SearchResult> results = search.search(context)) {
+                        optionalResult = results.findFirst();
+                    }
+                    identityContext = search.getContext(); // context where was the identity found
+                }
+
+                // now we have identity entry or it does not exists in LDAP
+                SearchResult result = optionalResult.orElse(null);
+                MapAttributes attributes = new MapAttributes();
+
+                attributes.addAll(extractSimpleAttributes(result));
+                attributes.addAll(extractFilteredAttributes(result, context, identityContext));
+
+                if (log.isDebugEnabled()) {
+                    log.debugf("Obtaining authorization identity attributes for principal [%s]:", name);
+
+                    if (attributes.isEmpty()) {
+                        log.debugf("Identity [%s] does not have any attributes.", name);
+                    } else {
+                        log.debugf("Identity [%s] attributes are:", name);
+                        attributes.keySet().forEach(key -> {
+                            org.wildfly.security.authz.Attributes.Entry values = attributes.get(key);
+                            values.forEach(value -> log.debugf("    Attribute [%s] value [%s].", key, value));
+                        });
+                    }
+                }
+
+                return attributes.asReadOnly();
+
+            } catch (NamingException e) {
+                throw log.ldapRealmFailedObtainIdentityFromServer(name, e);
+            } finally {
+                closeContext(context);
+            }
         }
 
         @Override
@@ -461,7 +513,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try {
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
-                        final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        final IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, identity.getDistinguishedName());
 
                         final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName, providers);
                         if (support != null && support.isDefinitelySupported()) {
@@ -499,7 +551,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try {
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
                     if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
-                        IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, this.identity.getDistinguishedName());
+                        IdentityEvidenceVerifier iev = verifier.forIdentity(dirContext, identity.getDistinguishedName());
 
                         if (iev.verifyEvidence(evidence, providers)) {
                             return true;
@@ -514,20 +566,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         @Override
         public boolean exists() throws RealmUnavailableException {
-            if (this.identity == null) {
-                this.identity = getIdentity();
+            if (identity == null) {
+                identity = getIdentity();
             }
 
-            boolean exists = this.identity != null;
+            boolean exists = identity != null;
 
             if (!exists) {
-                log.debugf("Principal [%s] does not exists.", this.name);
+                log.debugf("Principal [%s] does not exists.", name);
             }
 
             return exists;
         }
 
-        private LdapSearch searchIdentityByDn() {
+        private LdapSearch createLdapSearchByDn() {
             if ( ! name.regionMatches(true, 0, identityMapping.rdnIdentifier, 0, identityMapping.rdnIdentifier.length())) {
                 return null;
             } // equal sign not checked here as whitespaces can be between yet
@@ -559,60 +611,33 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         private LdapIdentity getIdentity() throws RealmUnavailableException {
-            log.debugf("Trying to create identity for principal [%s].", this.name);
+            log.debugf("Trying to create identity for principal [%s].", name);
             DirContext context;
 
             try {
                 context = dirContextSupplier.get();
             } catch (NamingException e) {
-                throw log.ldapRealmFailedObtainIdentityFromServer(this.name, e);
+                throw log.ldapRealmFailedObtainIdentityFromServer(name, e);
             }
             try {
-                LdapSearch ldapSearch = searchIdentityByDn();
-                if (ldapSearch == null) { // not found by DN, search by name
+                LdapSearch ldapSearch = createLdapSearchByDn();
+                if (ldapSearch == null) { // name is not a valid DN, search by name
                     ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, 0, identityMapping.filterName, name);
                 }
 
-                ldapSearch.setReturningAttributes(
-                        identityMapping.attributes.stream()
-                                .map(AttributeMapping::getIdentityLdapName)
-                                .filter(Objects::nonNull)
-                                .toArray(String[]::new));
+                ldapSearch.setReturningAttributes(); // no attributes needed
 
-                final LdapSearch search = ldapSearch;
                 try (
                     Stream<LdapIdentity> identityStream = ldapSearch.search(context)
-                            .map(result -> {
-                                MapAttributes identityAttributes = new MapAttributes();
-
-                                identityAttributes.addAll(extractSimpleAttributes(result));
-                                identityAttributes.addAll(extractFilteredAttributes(result, context, search.getContext()));
-
-                                return new LdapIdentity(result.getNameInNamespace(), identityAttributes.asReadOnly());
-                            })
+                            .map(result -> new LdapIdentity(result.getNameInNamespace()))
                 ) {
-                    Optional<LdapIdentity> optional = identityStream.findFirst();
-
-                    if (optional.isPresent()) {
-                        LdapIdentity identity = optional.get();
-
-                        if (log.isDebugEnabled()) {
-                            log.debugf("Successfully created identity for principal [%s].", this.name);
-
-                            if (identity.attributes.isEmpty()) {
-                                log.debugf("Identity [%s] does not have any attributes.", this.name);
-                            } else {
-                                log.debugf("Identity [%s] attributes are:", this.name);
-                                identity.attributes.keySet().forEach(key -> {
-                                    org.wildfly.security.authz.Attributes.Entry values = identity.attributes.get(key);
-                                    values.forEach(value -> log.debugf("    Attribute [%s] value [%s].", key, value));
-                                });
-                            }
-                        }
-                        return identity;
+                    LdapIdentity identity = identityStream.findFirst().orElse(null);
+                    if (identity != null) {
+                        log.debugf("Identity for principal [%s] found at [%s].", name, identity.getDistinguishedName());
+                    } else {
+                        log.debugf("Identity for principal [%s] not found.", name);
                     }
-
-                    return null;
+                    return identity;
                 }
             } finally {
                 closeContext(context);
@@ -680,41 +705,31 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         private void extractFilteredAttributesRecursion(SearchResult entry, AttributeMapping mapping, DirContext context, DirContext identityContext, int depth, Collection<String> identityAttributeValues) {
-            String referencedDn = entry.getNameInNamespace();
-            String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
+            final String entryDn = entry != null ? entry.getNameInNamespace() : null;
+            final String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
 
-            if (mapping.getReference() != null) {
-                NamingEnumeration<?> attributesEnum = null;
-                try {
-                    Attribute attribute = entry.getAttributes().get(mapping.getReference());
-                    if (attribute == null) return;
-                    attributesEnum = attribute.getAll();
-                    Stream<String> values = Collections.list(attributesEnum).stream().map(Object::toString);
-                    values.forEach(value -> {
-                        LdapSearch search = new LdapSearch(value);
-                        extractFilteredAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
+            if (mapping.getReference() != null && entry != null) { // reference
+                forEachAttributeValue(entry, mapping.getReference(), value -> {
+                    LdapSearch search = new LdapSearch(value);
+                    extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
+                });
+            } else if (mapping.getReference() == null) { // filter
+                if (depth == 0) { // roles of identity
+                    LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), name, entryDn);
+                    extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
+                } else if (entry != null) { // roles of role
+                    forEachAttributeValue(entry, mapping.getRoleRecursionName(), roleName -> {
+                        LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), roleName, entryDn);
+                        extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
                     });
-
-                } catch (NamingException cause) {
-                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(referencedDn, cause);
-                } finally {
-                    if (attributesEnum != null) {
-                        try {
-                            attributesEnum.close();
-                        } catch (NamingException ignore) {
-                        }
-                    }
                 }
-            } else {
-                LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), this.name, referencedDn);
-                extractFilteredAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
             }
         }
 
-        private void extractFilteredAttributesFromSearch(LdapSearch search, SearchResult referencedEntry, AttributeMapping mapping, DirContext context, DirContext identityContext, int depth, Collection<String> identityAttributeValues) {
-            String referencedDn = referencedEntry.getNameInNamespace();
+        private void extractFilteredReferencedAttributesFromSearch(LdapSearch search, SearchResult referencedEntry, AttributeMapping mapping, DirContext context, DirContext identityContext, int depth, Collection<String> identityAttributeValues) {
+            String referencedDn = referencedEntry != null ? referencedEntry.getNameInNamespace() : null;
 
-            search.setReturningAttributes(mapping.getLdapName(), mapping.getReference());
+            search.setReturningAttributes(mapping.getLdapName(), mapping.getReference(), mapping.getRoleRecursionName());
 
             try (Stream<SearchResult> entries = search.search(mapping.searchInIdentityContext() ? identityContext : context)) {
                 entries.forEach(entry -> {
@@ -734,14 +749,13 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         private Map<String, Collection<String>> extractSimpleAttributes(SearchResult identityEntry) {
-            String principalDn = identityEntry.getNameInNamespace();
-
+            if (identityEntry == null) return Collections.emptyMap();
             return extractAttributes(mapping -> !mapping.isFilteredOrReference(), mapping -> {
                 Collection<String> identityAttributeValues = new ArrayList<>();
                 try {
                     valuesFromAttribute(identityEntry, mapping, identityAttributeValues);
                 } catch (Exception cause) {
-                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(principalDn, cause);
+                    throw ElytronMessages.log.ldapRealmFailedObtainAttributes(identityEntry.getNameInNamespace(), cause);
                 }
                 return identityAttributeValues;
             });
@@ -755,6 +769,26 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                         merged.addAll(values2);
                         return merged;
                     }));
+        }
+
+        private void forEachAttributeValue(SearchResult entry, String attrId, Consumer<String> action) {
+            NamingEnumeration<?> attributesEnum = null;
+            try {
+                Attribute attribute = entry.getAttributes().get(attrId);
+                if (attribute == null) return;
+                attributesEnum = attribute.getAll();
+                Collections.list(attributesEnum).stream().map(Object::toString).forEach(action);
+            } catch (NamingException e) {
+                throw ElytronMessages.log.ldapRealmFailedObtainAttributes(entry.getNameInNamespace(), e);
+            } finally {
+                if (attributesEnum != null) {
+                    try {
+                        attributesEnum.close();
+                    } catch (NamingException e) {
+                        log.trace(e);
+                    }
+                }
+            }
         }
 
         @Override
@@ -811,7 +845,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         @Override public void setAttributes(org.wildfly.security.authz.Attributes attributes) throws RealmUnavailableException {
-            log.debugf("Trying to set attributes for principal [%s].", this.name);
+            log.debugf("Trying to set attributes for principal [%s].", name);
 
             if (identity == null) {
                 identity = getIdentity();
@@ -825,7 +859,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             try {
                 context = dirContextSupplier.get();
             } catch (Exception e) {
-                throw log.ldapRealmAttributesSettingFailed(this.name, e);
+                throw log.ldapRealmAttributesSettingFailed(name, e);
             }
             try {
                 List<ModificationItem> modItems = new LinkedList<>();
@@ -835,13 +869,13 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 for(AttributeMapping mapping : identityMapping.attributes) {
                     if (mapping.getFilter() != null || mapping.getReference() != null || mapping.getRdn() != null) { // read-only mapping
                         if (attributes.size(mapping.getName()) != 0) {
-                            log.ldapRealmDoesNotSupportSettingFilteredAttribute(mapping.getName(), this.name);
+                            log.ldapRealmDoesNotSupportSettingFilteredAttribute(mapping.getName(), name);
                         }
                     } else if (identityMapping.rdnIdentifier.equalsIgnoreCase(mapping.getLdapName())) { // entry rename
                         if (attributes.size(mapping.getName()) == 1) {
                             renameTo = attributes.get(mapping.getName(), 0);
                         } else {
-                            throw log.ldapRealmRequiresExactlyOneRdnAttribute(mapping.getName(), this.name);
+                            throw log.ldapRealmRequiresExactlyOneRdnAttribute(mapping.getName(), name);
                         }
                     } else { // standard ldap attributes
                         if (attributes.size(mapping.getName()) == 0) {
@@ -857,7 +891,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 for(org.wildfly.security.authz.Attributes.Entry entry : attributes.entries()) {
                     if (identityMapping.attributes.stream().filter(mp -> mp.getName().equals(entry.getKey())).count() == 0) {
-                        throw log.ldapRealmCannotSetAttributeWithoutMapping(entry.getKey(), this.name);
+                        throw log.ldapRealmCannotSetAttributeWithoutMapping(entry.getKey(), name);
                     }
                 }
 
@@ -871,39 +905,22 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
 
             } catch (Exception e) {
-                throw log.ldapRealmAttributesSettingFailed(this.name, e);
+                throw log.ldapRealmAttributesSettingFailed(name, e);
             } finally {
                 closeContext(context);
             }
         }
 
-        @Override
-        public org.wildfly.security.authz.Attributes getAttributes() throws RealmUnavailableException {
-            if (identity == null) {
-                identity = getIdentity();
-            }
-            if (identity == null) {
-                throw log.noSuchIdentity();
-            }
-            return identity.getAttributes().asReadOnly();
-        }
-
         private class LdapIdentity {
 
             private final String distinguishedName;
-            private final org.wildfly.security.authz.Attributes attributes;
 
-            LdapIdentity(String distinguishedName, org.wildfly.security.authz.Attributes attributes) {
+            LdapIdentity(String distinguishedName) {
                 this.distinguishedName = distinguishedName;
-                this.attributes = attributes;
             }
 
             String getDistinguishedName() {
                 return this.distinguishedName;
-            }
-
-            org.wildfly.security.authz.Attributes getAttributes() {
-                return this.attributes;
             }
         }
     }
@@ -920,7 +937,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         private String[] returningAttributes;
         private DirContext context;
         private NamingEnumeration<SearchResult> result;
-        private byte[] cookie = null;
+        private byte[] cookie;
 
         public LdapSearch(String searchDn, boolean searchRecursive, int pageSize, String filter, String... filterArgs) {
             this(searchDn, searchRecursive ? SearchControls.SUBTREE_SCOPE : SearchControls.ONELEVEL_SCOPE, pageSize, filter, filterArgs);
@@ -943,8 +960,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         public Stream<SearchResult> search(DirContext ctx) throws RealmUnavailableException {
-            log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]", this.filter, this.searchDn, this.filterArgs, this.returningAttributes);
+            log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]", filter, searchDn, filterArgs, returningAttributes);
             context = ctx;
+            cookie = null;
             try {
                 result = searchWithPagination();
                 return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
@@ -1022,7 +1040,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                         new PagedResultsControl(pageSize, cookie, Control.CRITICAL)
                 });
             }
-            NamingEnumeration<SearchResult> results = context.search(searchDn, filter, filterArgs, createSearchControls(searchScope, returningAttributes));
+            NamingEnumeration<SearchResult> results = context.search(new LdapName(searchDn), filter, filterArgs, createSearchControls(searchScope, returningAttributes));
             if (pageSize != 0 && context instanceof LdapContext) {
                 ((LdapContext)context).setRequestControls(controlsBackup);
             }

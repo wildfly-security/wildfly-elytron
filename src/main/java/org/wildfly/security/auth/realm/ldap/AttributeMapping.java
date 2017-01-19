@@ -21,6 +21,8 @@ import java.util.Locale;
 
 import org.wildfly.common.Assert;
 
+import javax.naming.directory.DirContext;
+
 /**
  * Definition of a mapping from LDAP to an Elytron attribute.
  *
@@ -30,6 +32,7 @@ public class AttributeMapping {
 
     public static final String DEFAULT_FILTERED_NAME = "filtered";
     public static final String DEFAULT_DN_NAME = "dn";
+    public static final String DEFAULT_ROLE_RECURSION_ATTRIBUTE = "CN";
 
     private final String ldapName;
     private final String searchDn;
@@ -39,6 +42,7 @@ public class AttributeMapping {
     private final String name;
     private final String rdn;
     private final int roleRecursionDepth;
+    private final String roleRecursionName;
 
     String getLdapName() {
         return ldapName;
@@ -81,13 +85,19 @@ public class AttributeMapping {
         return roleRecursionDepth;
     }
 
+    String getRoleRecursionName() {
+        return roleRecursionName;
+    }
+
     boolean isFilteredOrReference() {
         return filter != null || reference != null;
     }
 
     /**
      * Determine which context should be used to search filtered/referenced entry.
-     * Has effect if the identity is behind referral, on different server.
+     * Has effect if the identity is behind referral, in different context.
+     * If {@code true}, attribute will be searched in context, where was the identity found.
+     * {@link DirContext} of the LdapRealm will be used otherwise.
      */
     boolean searchInIdentityContext() {
         return reference != null;
@@ -145,6 +155,7 @@ public class AttributeMapping {
         private String name;
         private String rdn;
         private int roleRecursionDepth;
+        private String roleRecursionName;
 
         /**
          * Set type of RDN, whose value will be used as identity attribute value.
@@ -168,6 +179,23 @@ public class AttributeMapping {
         public Builder from(String ldapName) {
             Assert.checkNotNullParam("ldapName", ldapName);
             this.ldapName = ldapName.toUpperCase(Locale.ROOT);
+            return this;
+        }
+
+        /**
+         * Set name of the attribute in LDAP from where are {0} in role recursion obtained.
+         * Wildcard {0} is in filter replaced by user name usually. When role recursion is used,
+         * roles of roles are searched using the same filter, but {0} is replaced by
+         * role name - obtained from role entry attribute specified by this method.
+         *
+         * If not specified, attribute specified in {@link #from(String)} is used.
+         *
+         * @param roleRecursionName the name of the attribute in LDAP which will replace {0} in filter while role recursion
+         * @return this builder
+         */
+        public Builder roleRecursionName(String roleRecursionName) {
+            Assert.checkNotNullParam("roleRecursionName", roleRecursionName);
+            this.roleRecursionName = roleRecursionName.toUpperCase(Locale.ROOT);
             return this;
         }
 
@@ -222,11 +250,14 @@ public class AttributeMapping {
             if (name == null) {
                 name = ldapName != null ? ldapName : (filter != null ? DEFAULT_FILTERED_NAME : DEFAULT_DN_NAME);
             }
-            return new AttributeMapping(searchDn, recursiveSearch, filter, reference, ldapName, name, rdn, roleRecursionDepth);
+            if (roleRecursionName == null) {
+                roleRecursionName = ldapName != null ? ldapName : DEFAULT_ROLE_RECURSION_ATTRIBUTE;
+            }
+            return new AttributeMapping(searchDn, recursiveSearch, filter, reference, ldapName, name, rdn, roleRecursionDepth, roleRecursionName);
         }
     }
 
-    AttributeMapping(String searchDn, boolean recursiveSearch, String filter,  String reference, String ldapName, String name, String rdn, int roleRecursionDepth) {
+    AttributeMapping(String searchDn, boolean recursiveSearch, String filter,  String reference, String ldapName, String name, String rdn, int roleRecursionDepth, String roleRecursionName) {
         this.searchDn = searchDn;
         this.recursiveSearch = recursiveSearch;
         this.filter = filter;
@@ -235,6 +266,7 @@ public class AttributeMapping {
         this.name = name;
         this.rdn = rdn;
         this.roleRecursionDepth = roleRecursionDepth;
+        this.roleRecursionName = roleRecursionName;
     }
 
 }

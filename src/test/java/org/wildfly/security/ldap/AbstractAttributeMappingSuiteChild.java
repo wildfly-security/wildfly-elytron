@@ -67,12 +67,17 @@ public abstract class AbstractAttributeMappingSuiteChild {
                                         .setRdnIdentifier("uid")
                                         .map(expectedAttributes)
                                         .build()
-                                        .build()).build();
+                                .build()
+                ).build();
 
         builder.setPermissionMapper((permissionMappable, roles) -> PermissionVerifier.from(new LoginPermission()));
 
         SecurityDomain securityDomain = builder.build();
 
+        assertAttributes(securityDomain, principalName, handler);
+    }
+
+    protected void assertAttributes(SecurityDomain securityDomain, String principalName, AssertResultHandler handler) throws RealmUnavailableException {
         ServerAuthenticationContext serverAuthenticationContext = securityDomain.createNewAuthenticationContext();
 
         serverAuthenticationContext.setAuthenticationName(principalName);
@@ -83,10 +88,6 @@ public abstract class AbstractAttributeMappingSuiteChild {
 
         SecurityIdentity securityIdentity = serverAuthenticationContext.getAuthorizedIdentity();
         Attributes attributes = securityIdentity.getAttributes();
-
-        if (expectedAttributes.length == 0) {
-            assertTrue("No attributes expected.", attributes.isEmpty());
-        }
 
         assertFalse("No attributes found for principal [" + principalName + "].", attributes.isEmpty());
 
