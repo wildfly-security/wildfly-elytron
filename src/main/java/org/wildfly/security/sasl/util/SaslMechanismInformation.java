@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.wildfly.security.credential.Credential;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.X509CertificateChainPublicCredential;
 import org.wildfly.security.evidence.AlgorithmEvidence;
@@ -222,7 +222,7 @@ public final class SaslMechanismInformation {
     static final Set<Class<? extends Credential>> JUST_X509 = singleton(X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> X_509_PUBLIC_OR_PRIVATE = nSet(X509CertificateChainPublicCredential.class, X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> JUST_PASSWORD = singleton(PasswordCredential.class);
-    static final Set<Class<? extends Credential>> JUST_GSS = singleton(GSSCredentialCredential.class);
+    static final Set<Class<? extends Credential>> JUST_GSS = singleton(GSSKerberosCredential.class);
 
     static final Set<Class<? extends Evidence>> JUST_PASSWORD_EVIDENCE = singleton(PasswordGuessEvidence.class);
 

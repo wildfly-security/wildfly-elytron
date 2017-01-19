@@ -25,7 +25,7 @@ import org.ietf.jgss.GSSCredential;
 import org.junit.Test;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.util.GSSCredentialSecurityFactory;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 
 /**
  * Testing of obtaining a {@link GSSCredential} from the {@link GSSSecurityFactorySuiteChild}.
@@ -36,7 +36,7 @@ public class GSSSecurityFactorySuiteChild {
 
     @Test
     public void testCreate() throws Exception {
-        SecurityFactory<GSSCredentialCredential> factory = GSSCredentialSecurityFactory.builder()
+        SecurityFactory<GSSKerberosCredential> factory = GSSCredentialSecurityFactory.builder()
                 .setPrincipal("sasl/test_server_1@WILDFLY.ORG")
                 .addMechanismOid(GSSCredentialSecurityFactory.KERBEROS_V5)
                 .addMechanismOid(GSSCredentialSecurityFactory.SPNEGO)
@@ -45,7 +45,7 @@ public class GSSSecurityFactorySuiteChild {
                 .setDebug(true)
                 .build();
 
-        GSSCredentialCredential credentialCredential = factory.create();
+        GSSKerberosCredential credentialCredential = factory.create();
         assertNotNull("credentialCredential", credentialCredential);
         GSSCredential credential = credentialCredential.getGssCredential();
         assertNotNull("credential", credential);

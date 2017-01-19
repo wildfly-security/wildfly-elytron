@@ -38,7 +38,7 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.Assert;
 import org.wildfly.security.asn1.DERDecoder;
 import org.wildfly.security.auth.callback.CredentialCallback;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.util.AbstractSaslClient;
 import org.wildfly.security.sasl.util.StringPrep;
@@ -87,11 +87,11 @@ final class Gs2SaslClient extends AbstractSaslClient {
 
         // Attempt to obtain a credential
         GSSCredential credential = null;
-        CredentialCallback credentialCallback = new CredentialCallback(GSSCredentialCredential.class);
+        CredentialCallback credentialCallback = new CredentialCallback(GSSKerberosCredential.class);
 
         try {
             tryHandleCallbacks(credentialCallback);
-            credential = credentialCallback.applyToCredential(GSSCredentialCredential.class, GSSCredentialCredential::getGssCredential);
+            credential = credentialCallback.applyToCredential(GSSKerberosCredential.class, GSSKerberosCredential::getGssCredential);
         } catch (UnsupportedCallbackException e) {
             log.trace("Unable to obtain GSSCredential, ignored (act as the default initiator principal instead)", e);
         }

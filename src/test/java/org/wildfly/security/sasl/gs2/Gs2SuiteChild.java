@@ -74,7 +74,7 @@ import org.wildfly.security.auth.realm.ldap.LdapSecurityRealmBuilder;
 import org.wildfly.security.auth.realm.ldap.SimpleDirContextFactoryBuilder;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.util.RegexNameRewriter;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.sasl.WildFlySasl;
 import org.wildfly.security.sasl.gssapi.GssapiTestSuite;
 import org.wildfly.security.sasl.test.BaseTestCase;
@@ -520,7 +520,7 @@ public class Gs2SuiteChild extends BaseTestCase {
             builder.setChannelBinding(bindingType, bindingData);
         }
         if (credential != null) {
-            builder.setCredential(new GSSCredentialCredential(credential));
+            builder.setCredential(new GSSKerberosCredential(credential));
         }
         try {
             return Subject.doAs(serverSubject, new PrivilegedExceptionAction<SaslServer>() {

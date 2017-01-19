@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.auth.util;
 
+import static java.security.AccessController.doPrivileged;
 import static javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag.REQUIRED;
 import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -24,6 +25,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
 import java.io.File;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.Set;
 
 import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosPrincipal;
+import javax.security.auth.kerberos.KerberosTicket;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
@@ -47,14 +50,14 @@ import org.ietf.jgss.Oid;
 import org.wildfly.common.function.ExceptionSupplier;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.FastUnsupportedCallbackException;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 
 /**
  * A {@link SecurityFactory} implementation for obtaining a {@link GSSCredential}.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  */
-public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCredentialCredential> {
+public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSKerberosCredential> {
 
     private static final boolean IS_IBM = System.getProperty("java.vendor").contains("IBM");
     private static final String KRB5LoginModule = "com.sun.security.auth.module.Krb5LoginModule";
@@ -73,29 +76,30 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
     }
 
     private final int minimumRemainingLifetime;
-    private final ExceptionSupplier<GSSCredential, GeneralSecurityException> rawSupplier;
+    private final ExceptionSupplier<GSSKerberosCredential, GeneralSecurityException> rawSupplier;
 
-    private volatile GSSCredential cachedCredential;
+    private volatile GSSKerberosCredential cachedCredential;
 
-    GSSCredentialSecurityFactory(final int minimumRemainingLifetime, final ExceptionSupplier<GSSCredential, GeneralSecurityException> rawSupplier) {
+    GSSCredentialSecurityFactory(final int minimumRemainingLifetime, final ExceptionSupplier<GSSKerberosCredential, GeneralSecurityException> rawSupplier) {
         this.minimumRemainingLifetime = minimumRemainingLifetime;
         this.rawSupplier = rawSupplier;
     }
 
     @Override
-    public GSSCredentialCredential create() throws GeneralSecurityException {
-        GSSCredential currentCredential = cachedCredential;
+    public GSSKerberosCredential create() throws GeneralSecurityException {
+        GSSKerberosCredential currentCredentialCredential = cachedCredential;
+        GSSCredential currentCredential = currentCredentialCredential != null ? currentCredentialCredential.getGssCredential() : null;
         try {
             if (currentCredential != null && currentCredential.getRemainingLifetime() >= minimumRemainingLifetime) {
                 log.tracef("Used cached GSSCredential [%s]", currentCredential);
-                return new GSSCredentialCredential(currentCredential);
+                return currentCredentialCredential;
             }
             log.tracef("No valid cached credential, obtaining new one...");
-            currentCredential = rawSupplier.get();
-            log.tracef("Obtained GSSCredential [%s]", currentCredential);
-            this.cachedCredential = currentCredential;
+            currentCredentialCredential = rawSupplier.get();
+            log.tracef("Obtained GSSCredentialCredential [%s]", currentCredentialCredential);
+            this.cachedCredential = currentCredentialCredential;
 
-            return new GSSCredentialCredential(currentCredential);
+            return currentCredentialCredential;
         } catch (GSSException e) {
             throw new GeneralSecurityException(e);
         }
@@ -112,6 +116,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         private String principal;
         private File keyTab;
         private boolean isServer;
+        private boolean obtainKerberosTicket;
         private int minimumRemainingLifetime;
         private int requestLifetime;
         private boolean debug;
@@ -141,6 +146,19 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         public Builder setIsServer(final boolean isServer) {
             assertNotBuilt();
             this.isServer = isServer;
+
+            return this;
+        }
+
+        /**
+         * Set if the KerberosTicket should also be obtained and associated with the Credential/
+         *
+         * @param obtainKerberosTicket if the KerberosTicket should also be obtained and associated with the Credential/
+         * @return {@code this} to allow chaining.
+         */
+        public Builder setObtainKerberosTicket(final boolean obtainKerberosTicket) {
+            assertNotBuilt();
+            this.obtainKerberosTicket = obtainKerberosTicket;
 
             return this;
         }
@@ -211,7 +229,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
             return this;
         }
 
-        public SecurityFactory<GSSCredentialCredential> build() throws IOException {
+        public SecurityFactory<GSSKerberosCredential> build() throws IOException {
             assertNotBuilt();
             final Configuration configuration = createConfiguration();
 
@@ -219,7 +237,7 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
             return new GSSCredentialSecurityFactory(minimumRemainingLifetime > 0 ? minimumRemainingLifetime : 0, () -> createGSSCredential(configuration));
         }
 
-        private GSSCredential createGSSCredential(Configuration configuration) throws GeneralSecurityException {
+        private GSSKerberosCredential createGSSCredential(Configuration configuration) throws GeneralSecurityException {
             final Subject subject = new Subject();
 
             try {
@@ -230,11 +248,22 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
                 lc.login();
                 log.tracef("Logging in using LoginContext and subject [%s] succeed", subject);
 
+                final KerberosTicket kerberosTicket;
+                if (obtainKerberosTicket) {
+                    Set<KerberosTicket> kerberosTickets = doPrivileged((PrivilegedAction<Set<KerberosTicket>>) () -> subject.getPrivateCredentials(KerberosTicket.class));
+                    if (kerberosTickets.size() > 1) {
+                        throw log.tooManyKerberosTicketsFound();
+                    }
+                    kerberosTicket = kerberosTickets.size() == 1 ? kerberosTickets.iterator().next() : null;
+                } else {
+                    kerberosTicket = null;
+                }
+
                 final GSSManager manager = GSSManager.getInstance();
-                return Subject.doAs(subject, new PrivilegedExceptionAction<GSSCredential>() {
+                return Subject.doAs(subject, new PrivilegedExceptionAction<GSSKerberosCredential>() {
 
                     @Override
-                    public GSSCredential run() throws Exception {
+                    public GSSKerberosCredential run() throws Exception {
                         Set<KerberosPrincipal> principals = subject.getPrincipals(KerberosPrincipal.class);
                         if (principals.size() < 1) {
                             throw log.noKerberosPrincipalsFound();
@@ -245,8 +274,8 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
                         log.tracef("Creating GSSName for Principal '%s'" , principal);
                         GSSName name = manager.createName(principal.getName(), GSSName.NT_USER_NAME, KERBEROS_V5);
 
-                        return manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
-                                isServer ? GSSCredential.ACCEPT_ONLY : GSSCredential.INITIATE_ONLY);
+                        return new GSSKerberosCredential(manager.createCredential(name, requestLifetime, mechanismOids.toArray(new Oid[mechanismOids.size()]),
+                                isServer ? GSSCredential.ACCEPT_ONLY : GSSCredential.INITIATE_ONLY), kerberosTicket);
                     }
                 });
 
@@ -270,13 +299,13 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
             final AppConfigurationEntry ace;
             if (IS_IBM) {
                 options.put("noAddress", "true");
-                options.put("credsType", isServer ? "acceptor" : "initiator");
+                options.put("credsType", (isServer && !obtainKerberosTicket) ? "acceptor" : "initiator");
                 options.put("useKeytab", keyTab.toURI().toURL().toString());
             } else {
                 options.put("storeKey", "true");
                 options.put("useKeyTab", "true");
                 options.put("keyTab", keyTab.getAbsolutePath());
-                options.put("isInitiator", isServer ? "false" : "true");
+                options.put("isInitiator", (isServer && !obtainKerberosTicket) ? "false" : "true");
             }
 
             log.tracef("Created LoginContext configuration: %s", options.toString());
@@ -303,4 +332,5 @@ public final class GSSCredentialSecurityFactory implements SecurityFactory<GSSCr
         }
 
     }
+
 }

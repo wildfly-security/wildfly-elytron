@@ -61,7 +61,7 @@ import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
-import org.wildfly.security.credential.GSSCredentialCredential;
+import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.credential.source.CallbackHandlerCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.auth.callback.CallbackUtil;
@@ -494,7 +494,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
-        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(new GSSCredentialCredential(credential))));
+        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(new GSSKerberosCredential(credential))));
     }
 
     /**
