@@ -19,10 +19,10 @@ package org.wildfly.security.auth.realm.jdbc;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.realm.CacheableSecurityRealm;
 import org.wildfly.security.auth.realm.jdbc.mapper.AttributeMapper;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
-import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
@@ -38,7 +38,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -49,7 +51,7 @@ import static org.wildfly.security._private.ElytronMessages.log;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class JdbcSecurityRealm implements SecurityRealm {
+public class JdbcSecurityRealm implements CacheableSecurityRealm {
 
     private final Supplier<Provider[]> providers;
     private final List<QueryConfiguration> queryConfiguration;
@@ -99,6 +101,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
             }
         }
         return support;
+    }
+
+    @Override
+    public void registerIdentityChangeListener(Consumer<Principal> listener) {
+        // no notifications from this realm about changes on the underlying storage
     }
 
     private class JdbcRealmIdentity implements RealmIdentity {
@@ -180,13 +187,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
         public boolean verifyEvidence(final Evidence evidence) throws RealmUnavailableException {
             Assert.checkNotNullParam("evidence", evidence);
 
-            for (QueryConfiguration configuration : JdbcSecurityRealm.this.queryConfiguration) {
-                for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
-                    Credential credential = executePrincipalQuery(configuration, r -> keyMapper.map(r, providers));
-                    if (credential != null) {
-                        if (credential.canVerify(evidence)) {
-                            return credential.verify(providers, evidence);
-                        }
+            if (exists()) {
+                for (Credential credential : this.identity.credentials) {
+                    if (credential.canVerify(evidence)) {
+                        return credential.verify(evidence);
                     }
                 }
             }
@@ -209,7 +213,7 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
         private JdbcIdentity getIdentity() {
             if (this.identity == null) {
-                JdbcSecurityRealm.this.queryConfiguration.stream().map(queryConfiguration -> executePrincipalQuery(queryConfiguration, resultSet -> {
+                this.identity = JdbcSecurityRealm.this.queryConfiguration.stream().map(queryConfiguration -> executePrincipalQuery(queryConfiguration, resultSet -> {
                     if (resultSet.next()) {
                         MapAttributes attributes = new MapAttributes();
 
@@ -232,6 +236,10 @@ public class JdbcSecurityRealm implements SecurityRealm {
 
                     return null;
                 })).collect(Collectors.reducing((lAttribute, rAttribute) -> {
+                    if (rAttribute == null) {
+                        return lAttribute;
+                    }
+
                     MapAttributes attributes = new MapAttributes(lAttribute);
 
                     for (Attributes.Entry rEntry : rAttribute.entries()) {
@@ -239,7 +247,17 @@ public class JdbcSecurityRealm implements SecurityRealm {
                     }
 
                     return attributes;
-                })).ifPresent(attributes -> this.identity = new JdbcIdentity(attributes));
+                })).map(attributes -> {
+                    List<Credential> credentials = new ArrayList<>();
+
+                    for (QueryConfiguration configuration : queryConfiguration) {
+                        for (KeyMapper keyMapper : configuration.getColumnMappers(KeyMapper.class)) {
+                            credentials.add(executePrincipalQuery(configuration, r -> keyMapper.map(r, providers)));
+                        }
+                    }
+
+                    return new JdbcIdentity(attributes, credentials);
+                }).orElse(null);
             }
 
             return this.identity;
@@ -280,9 +298,11 @@ public class JdbcSecurityRealm implements SecurityRealm {
         private class JdbcIdentity {
 
             private final Attributes attributes;
+            private List<Credential> credentials = new ArrayList<>();
 
-            JdbcIdentity(Attributes attributes) {
+            JdbcIdentity(Attributes attributes, List<Credential> credentials) {
                 this.attributes = attributes;
+                this.credentials = credentials;
             }
         }
     }
