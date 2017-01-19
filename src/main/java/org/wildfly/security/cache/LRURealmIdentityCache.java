@@ -39,14 +39,14 @@ import org.wildfly.security.auth.server.RealmIdentity;
 public final class LRURealmIdentityCache implements RealmIdentityCache {
 
     /**
-     * The load factor. Th
+     * The load factor.
      */
     private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * Holds the cached identitys where the key is the domain principal, the one used to lookup the identity
      */
-    private final Map<Principal, RealmIdentity> identityCache;
+    private final Map<Principal, CacheEntry> identityCache;
 
     /**
      * Holds a mapping between a realm principal and domain principals
@@ -55,15 +55,34 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
 
     private final AtomicBoolean writing = new AtomicBoolean(false);
 
+    private final long maxAge;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param maxEntries the maximum number of entries to keep in the cache
+     */
     public LRURealmIdentityCache(int maxEntries) {
+        this(maxEntries, -1);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param maxEntries the maximum number of entries to keep in the cache
+     * @param maxAge the time in milliseconds that an entry can stay in the cache. If {@code -1}, entries never expire
+     */
+    public LRURealmIdentityCache(int maxEntries, long maxAge) {
         checkMinimumParameter("maxEntries", 1, maxEntries);
-        identityCache = new LinkedHashMap<Principal, RealmIdentity>(16, DEFAULT_LOAD_FACTOR, true) {
+        checkMinimumParameter("maxAge", -1, maxAge);
+        identityCache = new LinkedHashMap<Principal, CacheEntry>(16, DEFAULT_LOAD_FACTOR, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry eldest) {
                 return identityCache.size()  > maxEntries;
             }
         };
         domainPrincipalMap = new HashMap<>(16);
+        this.maxAge = maxAge;
     }
 
     @Override
@@ -73,7 +92,7 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
                 return;
             }
 
-            RealmIdentity realmIdentity = identityCache.computeIfAbsent(key, principal -> {
+            CacheEntry entry = identityCache.computeIfAbsent(key, principal -> {
                 domainPrincipalMap.computeIfAbsent(newValue.getRealmIdentityPrincipal(), principal1 -> {
                     Set<Principal> principals = new HashSet<>();
 
@@ -81,11 +100,11 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
 
                     return principals;
                 });
-                return newValue;
+                return new CacheEntry(key, newValue, maxAge);
             });
 
-            if (realmIdentity != null) {
-                domainPrincipalMap.get(realmIdentity.getRealmIdentityPrincipal()).add(key);
+            if (entry != null) {
+                domainPrincipalMap.get(entry.value().getRealmIdentityPrincipal()).add(key);
             }
         } finally {
             writing.lazySet(false);
@@ -98,16 +117,16 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
             return null;
         }
 
-        RealmIdentity cached = identityCache.get(key);
+        CacheEntry cached = identityCache.get(key);
 
         if (cached != null) {
-            return cached;
+            return removeIfExpired(cached);
         }
 
         Set<Principal> domainPrincipal = domainPrincipalMap.get(key);
 
         if (domainPrincipal != null) {
-            return identityCache.get(domainPrincipal.iterator().next());
+            return removeIfExpired(identityCache.get(domainPrincipal.iterator().next()));
         }
 
         return null;
@@ -121,7 +140,7 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
             }
 
             if (identityCache.containsKey(key)) {
-                domainPrincipalMap.remove(identityCache.remove(key).getRealmIdentityPrincipal()).forEach(identityCache::remove);
+                domainPrincipalMap.remove(identityCache.remove(key).value().getRealmIdentityPrincipal()).forEach(identityCache::remove);
             } else if (domainPrincipalMap.containsKey(key)) {
                 domainPrincipalMap.remove(key).forEach(identityCache::remove);
             }
@@ -139,6 +158,19 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
         } finally {
             writing.lazySet(false);
         }
+    }
+
+    private RealmIdentity removeIfExpired(CacheEntry cached) {
+        if (cached == null) {
+            return null;
+        }
+
+        if (cached.isExpired()) {
+            remove(cached.key());
+            return null;
+        }
+
+        return cached.value();
     }
 
     private boolean parkForWriteAndCheckInterrupt() {
@@ -159,5 +191,34 @@ public final class LRURealmIdentityCache implements RealmIdentityCache {
             }
         }
         return false;
+    }
+
+    private static final class CacheEntry {
+
+        final Principal key;
+        final RealmIdentity value;
+        final long expiration;
+
+        CacheEntry(Principal key, RealmIdentity value, long maxAge) {
+            this.key = key;
+            this.value = value;
+            if(maxAge == -1) {
+                expiration = -1;
+            } else {
+                expiration = System.currentTimeMillis() + maxAge;
+            }
+        }
+
+        Principal key() {
+            return key;
+        }
+
+        RealmIdentity value() {
+            return value;
+        }
+
+        boolean isExpired() {
+            return expiration != -1 ? System.currentTimeMillis() > expiration : false;
+        }
     }
 }

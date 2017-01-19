@@ -100,6 +100,26 @@ public class SecurityRealmIdentityCacheTest {
         assertEquals(10, realmHitCount.get());
     }
 
+    @Test
+    public void testMaxAge() throws Exception {
+        SecurityDomain securityDomain = SecurityDomain.builder().setDefaultRealmName("default").addRealm("default", createSecurityRealm(createRealmIdentityLRUCache(2000))).build()
+                .setPermissionMapper((permissionMappable, roles) -> LoginPermission.getInstance())
+                .build();
+
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+
+        assertEquals(1, realmHitCount.get());
+
+        Thread.sleep(3000);
+
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+        assertAuthenticationAndAuthorization("joe", securityDomain);
+        assertEquals(2, realmHitCount.get());
+    }
+
     private SecurityRealm createSecurityRealm(RealmIdentityCache cache) {
         SimpleMapBackedSecurityRealm realm = new SimpleMapBackedSecurityRealm();
         Map<String, SimpleRealmEntry> users = new HashMap<>();
@@ -185,7 +205,11 @@ public class SecurityRealmIdentityCacheTest {
         assertEquals(username, securityIdentity.getPrincipal().getName());
     }
 
+    private RealmIdentityCache createRealmIdentityLRUCache(int maxAge) {
+        return new LRURealmIdentityCache(1, maxAge);
+    }
+
     private RealmIdentityCache createRealmIdentityLRUCache() {
-        return new LRURealmIdentityCache(1);
+        return createRealmIdentityLRUCache(-1);
     }
 }
