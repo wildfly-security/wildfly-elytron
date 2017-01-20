@@ -22,7 +22,9 @@ import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.evidence.Evidence;
 
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import java.util.Collection;
 
 /**
  * An individual evidence verifier to associate with an LDAP {@link SecurityRealm}, multiple verifiers
@@ -50,9 +52,22 @@ interface EvidenceVerifier {
      * be suitable for use with the supplied {@code distinguishedName}
      *
      * @param dirContext the {@link DirContext} to use to connect to LDAP.
-     * @param distinguishedName the distinguished name of the identity.
+     * @param distinguishedName the distinguished name of the identity entry.
+     * @param attributes the identity attributes requested by {@link #addRequiredIdentityAttributes(Collection)}.
      * @return An {@link IdentityEvidenceVerifier} for the specified identity identified by their distinguished name.
      */
-    IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName) throws RealmUnavailableException;
+    IdentityEvidenceVerifier forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes) throws RealmUnavailableException;
 
+    /**
+     * Construct set of LDAP attributes, which should be loaded as part of the identity from identity entry.
+     * @param attributes output collection of attributes names, into which should be added
+     */
+    default void addRequiredIdentityAttributes(Collection<String> attributes) {}
+
+    /**
+     * Construct set of LDAP attributes, which should be loaded as binary data.
+     * Should be subset of {@link #addRequiredIdentityAttributes(Collection<String>)} output.
+     * @param attributes output collection of attributes names, into which should be added
+     */
+    default void addBinaryIdentityAttributes(Collection<String> attributes) {}
 }

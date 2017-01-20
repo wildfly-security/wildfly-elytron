@@ -36,9 +36,8 @@ import java.security.Provider;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -47,8 +46,6 @@ import java.util.function.Supplier;
  * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 class X509EvidenceVerifier implements EvidenceVerifier {
-
-    private final String ENV_BINARY_ATTRIBUTES = "java.naming.ldap.attributes.binary";
 
     private final List<CertificateVerifier> certificateVerifiers;
 
@@ -64,13 +61,13 @@ class X509EvidenceVerifier implements EvidenceVerifier {
          * Construct set of LDAP attributes, which should be loaded to be able to {@link #verifyCertificate}.
          * @param requiredAttributes output set of attribute names
          */
-        default void addRequiredLdapAttributes(Set<String> requiredAttributes) {}
+        default void addRequiredLdapAttributes(Collection<String> requiredAttributes) {}
 
         /**
          * Construct set of LDAP attributes, which should be loaded as binary data.
          * @param binaryAttributes output set of attribute names
          */
-        default void addBinaryLdapAttributes(Set<String> binaryAttributes) {}
+        default void addBinaryLdapAttributes(Collection<String> binaryAttributes) {}
 
         /**
          * Verify X509 certificate of user using identity information from LDAP
@@ -91,7 +88,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         }
 
         @Override
-        public void addRequiredLdapAttributes(Set<String> requiredAttributes) {
+        public void addRequiredLdapAttributes(Collection<String> requiredAttributes) {
             requiredAttributes.add(ldapAttribute);
         }
 
@@ -118,7 +115,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         }
 
         @Override
-        public void addRequiredLdapAttributes(Set<String> requiredAttributes) {
+        public void addRequiredLdapAttributes(Collection<String> requiredAttributes) {
             requiredAttributes.add(ldapAttribute);
         }
 
@@ -146,7 +143,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         }
 
         @Override
-        public void addRequiredLdapAttributes(Set<String> requiredAttributes) {
+        public void addRequiredLdapAttributes(Collection<String> requiredAttributes) {
             requiredAttributes.add(ldapAttribute);
         }
 
@@ -178,12 +175,12 @@ class X509EvidenceVerifier implements EvidenceVerifier {
         }
 
         @Override
-        public void addRequiredLdapAttributes(Set<String> requiredAttributes) {
+        public void addRequiredLdapAttributes(Collection<String> requiredAttributes) {
             requiredAttributes.add(ldapAttribute);
         }
 
         @Override
-        public void addBinaryLdapAttributes(Set<String> binaryAttributes) {
+        public void addBinaryLdapAttributes(Collection<String> binaryAttributes) {
             binaryAttributes.add(ldapAttribute);
         }
 
@@ -210,7 +207,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName) throws RealmUnavailableException {
+    public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName, Attributes attributes) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
 
             @Override
@@ -223,30 +220,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
                 if (evidence instanceof X509PeerCertificateChainEvidence) {
                     X509Certificate certificate = ((X509PeerCertificateChainEvidence) evidence).getFirstCertificate();
 
-                    Set<String> requiredAttributes = new HashSet<>();
-                    Set<String> binaryAttributes = new HashSet<>();
-                    for (CertificateVerifier certificateVerifier : certificateVerifiers) {
-                        certificateVerifier.addRequiredLdapAttributes(requiredAttributes);
-                        certificateVerifier.addBinaryLdapAttributes(binaryAttributes);
-                    }
                     try {
-                        Object binaryAttributesBackup = null;
-                        if (binaryAttributes.size() != 0) { // set attributes which should be returned in binary form
-                            binaryAttributesBackup = context.getEnvironment().get(ENV_BINARY_ATTRIBUTES);
-                            context.addToEnvironment(ENV_BINARY_ATTRIBUTES, String.join(" ", binaryAttributes));
-                        }
-
-                        String[] requestedAttributes = requiredAttributes.toArray(new String[requiredAttributes.size()]);
-                        Attributes attributes = context.getAttributes(distinguishedName, requestedAttributes);
-
-                        if (binaryAttributes.size() != 0) { // revert environment change
-                            if (binaryAttributesBackup == null) {
-                                context.removeFromEnvironment(ENV_BINARY_ATTRIBUTES);
-                            } else {
-                                context.addToEnvironment(ENV_BINARY_ATTRIBUTES, binaryAttributesBackup);
-                            }
-                        }
-
                         for (CertificateVerifier certificateVerifier : certificateVerifiers) {
                             if ( ! certificateVerifier.verifyCertificate(certificate, attributes)) {
                                 ElytronMessages.log.tracef("X509 client certificate rejected by %s of X509EvidenceVerifier", certificateVerifier);
@@ -262,5 +236,19 @@ class X509EvidenceVerifier implements EvidenceVerifier {
                 return false;
             }
         };
+    }
+
+    @Override
+    public void addRequiredIdentityAttributes(Collection<String> attributes) {
+        for (CertificateVerifier verifier : certificateVerifiers) {
+            verifier.addRequiredLdapAttributes(attributes);
+        }
+    }
+
+    @Override
+    public void addBinaryIdentityAttributes(Collection<String> attributes) {
+        for (CertificateVerifier verifier : certificateVerifiers) {
+            verifier.addBinaryLdapAttributes(attributes);
+        }
     }
 }

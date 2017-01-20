@@ -24,6 +24,7 @@ import static org.wildfly.security.auth.realm.ldap.UserPasswordPasswordUtil.pars
 import java.io.IOException;
 import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import javax.naming.NamingException;
@@ -73,8 +74,13 @@ class UserPasswordCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public IdentityCredentialPersister forIdentity(DirContext dirContext, String distinguishedName) {
-        return new ForIdentityLoader(dirContext, distinguishedName);
+    public IdentityCredentialPersister forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes) {
+        return new ForIdentityLoader(dirContext, distinguishedName, attributes);
+    }
+
+    @Override
+    public void addRequiredIdentityAttributes(Collection<String> attributes) {
+        attributes.add(userPasswordAttributeName);
     }
 
     EvidenceVerifier toEvidenceVerifier() {
@@ -88,8 +94,13 @@ class UserPasswordCredentialLoader implements CredentialPersister {
             }
 
             @Override
-            public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName) throws RealmUnavailableException {
-                return new ForIdentityLoader(context, distinguishedName);
+            public IdentityEvidenceVerifier forIdentity(DirContext context, String distinguishedName, Attributes attributes) throws RealmUnavailableException {
+                return new ForIdentityLoader(context, distinguishedName, attributes);
+            }
+
+            @Override
+            public void addRequiredIdentityAttributes(Collection<String> attributes) {
+                attributes.add(userPasswordAttributeName);
             }
         };
     }
@@ -98,10 +109,12 @@ class UserPasswordCredentialLoader implements CredentialPersister {
 
         private final DirContext context;
         private final String distinguishedName;
+        private final Attributes attributes;
 
-        public ForIdentityLoader(DirContext context, String distinguishedName) {
+        public ForIdentityLoader(DirContext context, String distinguishedName, Attributes attributes) {
             this.context = context;
             this.distinguishedName = distinguishedName;
+            this.attributes = attributes;
         }
 
         @Override
@@ -127,7 +140,6 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 return null;
             }
             try {
-                Attributes attributes = context.getAttributes(distinguishedName, new String[] { userPasswordAttributeName });
                 Attribute attribute = attributes.get(userPasswordAttributeName);
                 if (attribute != null) {
                     final int size = attribute.size();
@@ -173,7 +185,7 @@ class UserPasswordCredentialLoader implements CredentialPersister {
                 Attributes attributes = new BasicAttributes();
                 attributes.put(userPasswordAttributeName, composedPassword);
 
-                context.modifyAttributes(distinguishedName, DirContext.ADD_ATTRIBUTE, attributes);
+                context.modifyAttributes(distinguishedName, DirContext.REPLACE_ATTRIBUTE, attributes);
 
             } catch (NamingException | IOException e) {
                 throw log.ldapRealmCredentialPersistingFailed(credential.toString(), distinguishedName, e);

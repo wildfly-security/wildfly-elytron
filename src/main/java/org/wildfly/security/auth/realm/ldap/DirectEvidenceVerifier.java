@@ -23,6 +23,7 @@ import java.security.Provider;
 import java.util.function.Supplier;
 
 import javax.naming.NamingException;
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.LdapContext;
@@ -51,7 +52,7 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName) throws RealmUnavailableException {
+    public IdentityEvidenceVerifier forIdentity(final DirContext dirContext, final String distinguishedName, Attributes attributes) throws RealmUnavailableException {
         return new IdentityEvidenceVerifier() {
             @Override
             public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName, final Supplier<Provider[]> providers) throws RealmUnavailableException {
@@ -85,5 +86,4 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
 
         };
     }
-
 }

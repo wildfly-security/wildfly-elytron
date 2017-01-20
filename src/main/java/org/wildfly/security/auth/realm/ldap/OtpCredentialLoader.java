@@ -24,6 +24,7 @@ import javax.naming.directory.NoSuchAttributeException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import static org.wildfly.security._private.ElytronMessages.log;
@@ -67,18 +68,28 @@ class OtpCredentialLoader implements CredentialPersister {
     }
 
     @Override
-    public ForIdentityLoader forIdentity(DirContext context, String distinguishedName) {
-        return new ForIdentityLoader(context, distinguishedName);
+    public ForIdentityLoader forIdentity(DirContext context, String distinguishedName, Attributes attributes) {
+        return new ForIdentityLoader(context, distinguishedName, attributes);
+    }
+
+    @Override
+    public void addRequiredIdentityAttributes(Collection<String> attributes) {
+        attributes.add(algorithmAttributeName);
+        attributes.add(hashAttributeName);
+        attributes.add(seedAttributeName);
+        attributes.add(sequenceAttributeName);
     }
 
     private class ForIdentityLoader implements IdentityCredentialPersister {
 
         private final DirContext context;
         private final String distinguishedName;
+        private final Attributes attributes;
 
-        public ForIdentityLoader(DirContext context, String distinguishedName) {
+        public ForIdentityLoader(DirContext context, String distinguishedName, Attributes attributes) {
             this.context = context;
             this.distinguishedName = distinguishedName;
+            this.attributes = attributes;
         }
 
         @Override
@@ -86,20 +97,13 @@ class OtpCredentialLoader implements CredentialPersister {
             if (credentialType != PasswordCredential.class) {
                 return SupportLevel.UNSUPPORTED;
             }
-            try {
-                Attributes attributes = context.getAttributes(distinguishedName,
-                        new String[] { algorithmAttributeName, hashAttributeName, seedAttributeName, sequenceAttributeName });
-                Attribute algorithmAttribute = attributes.get(algorithmAttributeName);
-                Attribute hashAttribute = attributes.get(hashAttributeName);
-                Attribute seedAttribute = attributes.get(seedAttributeName);
-                Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
+            Attribute algorithmAttribute = attributes.get(algorithmAttributeName);
+            Attribute hashAttribute = attributes.get(hashAttributeName);
+            Attribute seedAttribute = attributes.get(seedAttributeName);
+            Attribute sequenceAttribute = attributes.get(sequenceAttributeName);
 
-                if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null && (algorithmName == null || algorithmAttribute.contains(algorithmName))) {
-                    return SupportLevel.SUPPORTED;
-                }
-
-            } catch (NamingException e) {
-                if (log.isTraceEnabled()) log.trace("Getting otp credential " + credentialType.getName() + " failed. dn=" + distinguishedName, e);
+            if (algorithmAttribute != null && hashAttribute != null && seedAttribute != null && sequenceAttribute != null && (algorithmName == null || algorithmAttribute.contains(algorithmName))) {
+                return SupportLevel.SUPPORTED;
             }
             return SupportLevel.UNSUPPORTED;
         }
@@ -110,8 +114,6 @@ class OtpCredentialLoader implements CredentialPersister {
                 return null;
             }
             try {
-                Attributes attributes = context.getAttributes(distinguishedName,
-                        new String[] { algorithmAttributeName, hashAttributeName, seedAttributeName, sequenceAttributeName });
                 Attribute algorithmAttribute = attributes.get(algorithmAttributeName);
                 Attribute hashAttribute = attributes.get(hashAttributeName);
                 Attribute seedAttribute = attributes.get(seedAttributeName);

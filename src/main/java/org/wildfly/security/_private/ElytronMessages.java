@@ -864,8 +864,8 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4024, value = "Invalid client mode, expected %s, got %s")
     IllegalArgumentException invalidClientMode(boolean expectedMode, boolean givenMode);
 
-    @Message(id = 4025, value = "DirContext tries to connect without SSLSocketFactory thread local setting")
-    IllegalStateException sslSocketFactoryThreadLocalNotSet();
+    @Message(id = 4025, value = "DirContext tries to connect without ThreadLocalSSLSocketFactory thread local setting")
+    IllegalStateException threadLocalSslSocketFactoryThreadLocalNotSet();
 
     @Message(id = 4026, value = "Could not create trust manager [%s]")
     IllegalStateException sslErrorCreatingTrustManager(String name, @Cause Throwable cause);

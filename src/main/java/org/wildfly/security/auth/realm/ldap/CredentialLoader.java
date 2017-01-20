@@ -22,7 +22,9 @@ import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.Credential;
 
+import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
+import java.util.Collection;
 
 /**
  * Within LDAP credentials could be stored in different ways, splitting out a CredentialLoader allows different strategies to be
@@ -59,8 +61,21 @@ interface CredentialLoader {
      *
      * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param distinguishedName the distinguished name of the identity.
+     * @param attributes the identity attributes requested by {@link #addRequiredIdentityAttributes(Collection)}
      * @return An {@link IdentityCredentialLoader} for the specified identity identified by their distinguished name.
      */
-    IdentityCredentialLoader forIdentity(DirContext dirContext, String distinguishedName) throws RealmUnavailableException;
+    IdentityCredentialLoader forIdentity(DirContext dirContext, String distinguishedName, Attributes attributes) throws RealmUnavailableException;
 
+    /**
+     * Construct set of LDAP attributes, which should be loaded as part of the identity from identity entry.
+     * @param attributes output collection of attributes names, into which should be added
+     */
+    default void addRequiredIdentityAttributes(Collection<String> attributes) {}
+
+    /**
+     * Construct set of LDAP attributes, which should be loaded as binary data.
+     * Should be subset of {@link #addRequiredIdentityAttributes(Collection<String>)} output.
+     * @param attributes output collection of attributes names, into which should be added
+     */
+    default void addBinaryIdentityAttributes(Collection<String> attributes) {}
 }

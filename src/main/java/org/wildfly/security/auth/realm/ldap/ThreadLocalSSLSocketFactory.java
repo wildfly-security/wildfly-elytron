@@ -43,7 +43,7 @@ public class ThreadLocalSSLSocketFactory extends SocketFactory {
     public static SocketFactory getDefault() {
         SocketFactory socketFactory = threadLocal.get();
         if (socketFactory == null) {
-            throw log.sslSocketFactoryThreadLocalNotSet();
+            throw log.threadLocalSslSocketFactoryThreadLocalNotSet();
         }
         return socketFactory;
     }
