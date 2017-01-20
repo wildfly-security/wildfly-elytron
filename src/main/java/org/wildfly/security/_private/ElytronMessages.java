@@ -1406,15 +1406,6 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 6008, value = "Failed to logout participant [%s]")
     void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause  Throwable cause);
 
-    @Message(id = 6009, value = "Alias [%s] must reference a RSA Private Key")
-    IllegalArgumentException httpMechSsoRSAPrivateKeyExpected(String keyAlias);
-
-    @Message(id = 6010, value = "Failed to obtain key [%s] from key store")
-    IllegalArgumentException httpMechSsoFailedObtainKeyFromKeyStore(String keyAlias, @Cause Throwable cause);
-
-    @Message(id = 6011, value = "Alias [%s] must reference a certificate")
-    IllegalArgumentException httpMechSsoCertificateExpected(String keyAlias);
-
     @Message(id = 6012, value = "Invalid logout message received for local session [%s]")
     IllegalStateException httpMechSsoInvalidLogoutMessage(String localSessionId);
 

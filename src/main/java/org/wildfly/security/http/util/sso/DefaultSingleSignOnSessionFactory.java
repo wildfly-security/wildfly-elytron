@@ -22,12 +22,9 @@ import org.wildfly.security.http.HttpServerRequest;
 import org.wildfly.security.util.ByteIterator;
 
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import java.net.HttpURLConnection;
-import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
-import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
@@ -50,27 +47,6 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
     private final SingleSignOnManager manager;
     private final KeyPair keyPair;
     private final Consumer<HttpsURLConnection> logoutConnectionConfigurator;
-
-    @Deprecated
-    public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyStore keyStore, String keyAlias, String keyPassword, SSLContext sslContext) {
-        this(manager, getKeyPair(keyStore, keyAlias, keyPassword), connection -> {
-            if (sslContext != null) {
-                connection.setSSLSocketFactory(sslContext.getSocketFactory());
-            }
-        });
-    }
-
-    private static KeyPair getKeyPair(KeyStore store, String alias, String password) {
-        try {
-            if (!store.entryInstanceOf(alias, KeyStore.PrivateKeyEntry.class)) {
-                throw log.httpMechSsoRSAPrivateKeyExpected(alias);
-            }
-            KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) store.getEntry(alias, (password != null) ? new KeyStore.PasswordProtection(password.toCharArray()) : null);
-            return new KeyPair(entry.getCertificate().getPublicKey(), entry.getPrivateKey());
-        } catch (GeneralSecurityException e) {
-            throw log.httpMechSsoFailedObtainKeyFromKeyStore(alias, e);
-        }
-    }
 
     public DefaultSingleSignOnSessionFactory(SingleSignOnManager manager, KeyPair keyPair) {
         this(manager, keyPair, connection -> {});
