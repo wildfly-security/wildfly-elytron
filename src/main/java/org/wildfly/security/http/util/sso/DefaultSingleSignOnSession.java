@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -107,55 +108,66 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
             scope.registerForNotification(notification -> {
                 HttpScope sessionScope = notification.getScope(Scope.SESSION);
-                boolean invalidating = sessionScope.getAttachment(SESSION_INVALIDATING_ATTRIBUTE) != null;
 
+                Collection<Map.Entry<String, URI>> logoutTargets = Collections.emptyList();
                 try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
                     if (target != null) {
                         Map.Entry<String, URI> localParticipant = target.removeParticipant(applicationId);
                         if (localParticipant != null) {
                             log.debugf("Removed local session [%s] from SSO [%s]", localParticipant.getKey(), target.getId());
                         }
+                        if (sessionScope.getAttachment(SESSION_INVALIDATING_ATTRIBUTE) == null) {
+                            Collection<Map.Entry<String, URI>> participants = target.getParticipants();
+                            if (participants.isEmpty()) {
+                                log.debugf("Destroying SSO [%s]. SSO is not associated with participants", target.getId());
+                                target.invalidate();
+                            } else if (notification.isOfType(INVALIDATED)) {
+                                logoutTargets = participants;
+                            }
+                        }
+                    }
+                }
 
-                        Collection<Map.Entry<String, URI>> participants = target.getParticipants();
-                        if (participants.isEmpty()) {
-                            log.debugf("Destroying SSO [%s]. SSO is not associated with participants", target.getId());
-                            target.invalidate();
-                        } else {
-                            if (notification.isOfType(INVALIDATED) && !invalidating) {
-                                // If session was invalidated, logout remote participants
-                                participants.forEach(participant -> {
-                                    String remoteSessionId = participant.getKey();
-                                    URI remoteURI = participant.getValue();
-                                    try {
-                                        URL participantUrl = remoteURI.toURL();
-                                        HttpURLConnection connection = (HttpURLConnection) participantUrl.openConnection();
-                                        this.context.configureLogoutConnection(connection);
+                if (!logoutTargets.isEmpty()) {
+                    logoutTargets.forEach(participant -> {
+                        String remoteSessionId = participant.getKey();
+                        URI remoteURI = participant.getValue();
+                        try {
+                            URL participantUrl = remoteURI.toURL();
+                            HttpURLConnection connection = (HttpURLConnection) participantUrl.openConnection();
+                            this.context.configureLogoutConnection(connection);
 
-                                        connection.setRequestMethod("POST");
-                                        connection.setDoOutput(true);
-                                        connection.setAllowUserInteraction(false);
-                                        connection.setConnectTimeout(10000);
-                                        connection.setReadTimeout(10000);
-                                        connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                            connection.setRequestMethod("POST");
+                            connection.setDoOutput(true);
+                            connection.setAllowUserInteraction(false);
+                            connection.setConnectTimeout(10000);
+                            connection.setReadTimeout(10000);
+                            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 
-                                        StringBuilder parameterBuilder = new StringBuilder();
+                            StringBuilder parameterBuilder = new StringBuilder();
 
-                                        parameterBuilder.append(LOGOUT_REQUEST_PARAMETER).append("=").append(this.context.createLogoutParameter(remoteSessionId));
+                            parameterBuilder.append(LOGOUT_REQUEST_PARAMETER).append("=").append(this.context.createLogoutParameter(remoteSessionId));
 
-                                        connection.setRequestProperty("Content-Length", Integer.toString(parameterBuilder.length()));
+                            connection.setRequestProperty("Content-Length", Integer.toString(parameterBuilder.length()));
 
-                                        try (
-                                            OutputStream outputStream = connection.getOutputStream();
-                                            DataOutputStream wr = new DataOutputStream(outputStream);
-                                        ) {
-                                            wr.writeBytes(parameterBuilder.toString());
-                                        }
+                            try (
+                                OutputStream outputStream = connection.getOutputStream();
+                                DataOutputStream wr = new DataOutputStream(outputStream);
+                            ) {
+                                wr.writeBytes(parameterBuilder.toString());
+                            }
 
-                                        connection.getInputStream().close();
-                                    } catch (Exception cause) {
-                                        log.warnHttpMechSsoFailedLogoutParticipant(remoteURI.toString(), cause);
-                                    }
-                                });
+                            connection.getInputStream().close();
+                        } catch (Exception cause) {
+                            log.warnHttpMechSsoFailedLogoutParticipant(remoteURI.toString(), cause);
+                        }
+                    });
+
+                    try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
+                        if (target != null) {
+                            // If all logout requests were successful, then there should be no participants, and we can invalidate the SSO
+                            if (target.getParticipants().isEmpty()) {
+                                log.debugf("Destroying SSO [%s]. SSO is no longer associated with any participants", target.getId());
                                 target.invalidate();
                             }
                         }
