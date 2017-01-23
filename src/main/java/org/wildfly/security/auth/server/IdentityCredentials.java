@@ -443,7 +443,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
                     return next.getCredential(credentialType, algorithmName);
                 }
                 if (credentialType.isInstance(algorithmCredential) && (algorithmName == null || algorithmName.equals(algorithmCredential.getAlgorithm()))) {
-                    return credentialType.cast(algorithmCredential);
+                    return credentialType.cast(algorithmCredential.clone());
                 } else {
                     return next.getCredential(credentialType, algorithmName);
                 }
