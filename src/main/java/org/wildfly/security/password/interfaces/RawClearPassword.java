@@ -76,7 +76,7 @@ class RawClearPassword extends RawPassword implements ClearPassword {
         if (password == null || password.length == 0) {
             return this;
         }
-        return new RawClearPassword(getAlgorithm(), password);
+        return new RawClearPassword(getAlgorithm(), password.clone());
     }
 
 }
