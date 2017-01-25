@@ -83,6 +83,7 @@ import org.wildfly.security.credential.source.KeyStoreCredentialSource;
 import org.wildfly.security.credential.store.CredentialStore;
 import org.wildfly.security.password.Password;
 import org.wildfly.security.password.interfaces.ClearPassword;
+import org.wildfly.security.sasl.localuser.LocalUserSaslFactory;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
@@ -143,7 +144,8 @@ public abstract class AuthenticationConfiguration {
         }
 
         boolean saslSupportedByConfiguration(final String mechanismName) {
-            return false;
+            // always supported by default
+            return mechanismName.equals(LocalUserSaslFactory.JBOSS_LOCAL_USER);
         }
 
         boolean saslAllowedByConfiguration(final String mechanismName) {
