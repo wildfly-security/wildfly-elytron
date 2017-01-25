@@ -37,20 +37,8 @@ final class Util {
      * @return the result of the multiply-XOR operation
      */
     static int hashiply(int accumulatedHash, int prime, int nextHash) {
-        assert isPrime(prime);
         long r1 = (long) accumulatedHash * prime;
         long r3 = (long) ((int) r1 ^ (int) (r1 >>> 32)) + nextHash;
         return (int) r3 ^ (int) (r3 >>> 32);
-    }
-
-    // this is just for assertions-enabled testing
-    private static boolean isPrime(int num) {
-        int s = (int) Math.sqrt(num); // generally less than 200 or so, making this fairly quick
-        for (int i = 3; i < s; i += 2) {
-            if (Integer.remainderUnsigned(num, i) != 0) {
-                return false;
-            }
-        }
-        return true;
     }
 }
