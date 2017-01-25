@@ -19,23 +19,23 @@
 package org.wildfly.security.auth.client;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
-import org.wildfly.security.auth.client.AuthenticationConfiguration.UserSetting;
-import org.wildfly.security.auth.client.AuthenticationConfiguration.CredentialSetting;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfiguration implements UserSetting, CredentialSetting {
+class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
 
     private final CallbackHandler callbackHandler;
 
     SetCallbackHandlerAuthenticationConfiguration(final AuthenticationConfiguration parent, final CallbackHandler callbackHandler) {
-        super(parent.without(UserSetting.class, CredentialSetting.class));
+        super(parent.without(HandlesCallbacks.class));
         this.callbackHandler = callbackHandler;
     }
 
@@ -45,6 +45,14 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(callbackHandler, other.getCallbackHandler()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 1487, Objects.hashCode(callbackHandler));
     }
 
     @Override

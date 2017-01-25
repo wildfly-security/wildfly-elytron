@@ -23,30 +23,42 @@ package org.wildfly.security.auth.client;
 
 import java.io.IOException;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.auth.callback.ParameterCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfiguration {
-    private final AlgorithmParameterSpec parameterSpec;
+class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
+    private final List<AlgorithmParameterSpec> parameterSpecs;
 
     SetParameterSpecAuthenticationConfiguration(final AuthenticationConfiguration parent, final AlgorithmParameterSpec parameterSpec) {
+        this(parent, Collections.singletonList(parameterSpec));
+    }
+
+    SetParameterSpecAuthenticationConfiguration(final AuthenticationConfiguration parent, final List<AlgorithmParameterSpec> parameterSpecs) {
         super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
-        this.parameterSpec = parameterSpec;
+        this.parameterSpecs = parameterSpecs;
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
         Callback callback = callbacks[index];
         if (callback instanceof ParameterCallback) {
             ParameterCallback parameterCallback = (ParameterCallback) callback;
-            if ((parameterCallback.getParameterSpec() == null) && parameterCallback.isParameterSupported(parameterSpec)) {
-                parameterCallback.setParameterSpec(parameterSpec);
-                return;
+            if (parameterCallback.getParameterSpec() == null) {
+                for (AlgorithmParameterSpec parameterSpec : parameterSpecs) {
+                    if (parameterCallback.isParameterSupported(parameterSpec)) {
+                        parameterCallback.setParameterSpec(parameterSpec);
+                        return;
+                    }
+                }
             }
         }
         super.handleCallback(callbacks, index);
@@ -54,7 +66,19 @@ class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfigur
 
     @Override
     AuthenticationConfiguration reparent(AuthenticationConfiguration newParent) {
-        return new SetParameterSpecAuthenticationConfiguration(newParent, parameterSpec);
+        return new SetParameterSpecAuthenticationConfiguration(newParent, parameterSpecs);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(parameterSpecs, other.getParameterSpecs());
+    }
+
+    List<AlgorithmParameterSpec> getParameterSpecs() {
+        return parameterSpecs;
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 7817, parameterSpecs.hashCode());
     }
 
     @Override

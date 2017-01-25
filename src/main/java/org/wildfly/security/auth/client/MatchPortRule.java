@@ -45,7 +45,7 @@ class MatchPortRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 7919 * port + parentHashCode();
+        return Util.hashiply(parentHashCode(), 7919, port);
     }
 
     StringBuilder asString(final StringBuilder b) {

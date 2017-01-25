@@ -30,12 +30,13 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.auth.callback.EvidenceVerifyCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 import org.wildfly.security.evidence.X509PeerCertificateChainEvidence;
 
 /**
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
 
     private final SecurityFactory<X509TrustManager> trustManagerFactory;
 
@@ -73,6 +74,14 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
             }
         }
         super.handleCallback(callbacks, index);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return trustManagerFactory.equals(other.getX509TrustManagerFactory()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 8527, trustManagerFactory.hashCode());
     }
 
     @Override

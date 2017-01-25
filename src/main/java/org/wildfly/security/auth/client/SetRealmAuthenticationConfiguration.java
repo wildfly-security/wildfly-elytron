@@ -25,10 +25,12 @@ import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.sasl.RealmCallback;
 import javax.security.sasl.RealmChoiceCallback;
 
+import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
+
 /**
  * @author <a href="mailto:kkhan@redhat.com">Kabir Khan</a>
  */
-class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
+class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
 
     private final String realm;
 
@@ -65,9 +67,20 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration {
         return new SetRealmAuthenticationConfiguration(newParent, realm);
     }
 
+    String getMechanismRealm() {
+        return realm;
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return realm.equals(other.getMechanismRealm()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 28493, realm.hashCode());
+    }
+
     @Override
     StringBuilder asString(StringBuilder sb) {
         return parentAsString(sb).append("realm=").append(realm).append(',');
     }
-
 }

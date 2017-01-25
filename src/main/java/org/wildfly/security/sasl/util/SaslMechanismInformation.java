@@ -27,6 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.wildfly.security.credential.BearerTokenCredential;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -223,6 +224,7 @@ public final class SaslMechanismInformation {
     static final Set<Class<? extends Credential>> X_509_PUBLIC_OR_PRIVATE = nSet(X509CertificateChainPublicCredential.class, X509CertificateChainPrivateCredential.class);
     static final Set<Class<? extends Credential>> JUST_PASSWORD = singleton(PasswordCredential.class);
     static final Set<Class<? extends Credential>> JUST_GSS = singleton(GSSKerberosCredential.class);
+    static final Set<Class<? extends Credential>> JUST_BEARER_TOKEN = singleton(BearerTokenCredential.class);
 
     static final Set<Class<? extends Evidence>> JUST_PASSWORD_EVIDENCE = singleton(PasswordGuessEvidence.class);
 
@@ -283,6 +285,9 @@ public final class SaslMechanismInformation {
             case Names.IEC_ISO_9798_M_RSA_SHA1_ENC:
             case Names.IEC_ISO_9798_U_RSA_SHA1_ENC: {
                 return X_509_PUBLIC_OR_PRIVATE;
+            }
+            case Names.OAUTHBEARER: {
+                return JUST_BEARER_TOKEN;
             }
             case Names.GSSAPI: {
                 return JUST_GSS;

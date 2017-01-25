@@ -22,45 +22,33 @@
 package org.wildfly.security.auth.client;
 
 import java.io.IOException;
-import java.util.function.BiPredicate;
+import java.util.Objects;
+import java.util.function.Predicate;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.ChoiceCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmChoiceCallback;
+
+import org.wildfly.security.auth.client.AuthenticationConfiguration.HandlesCallbacks;
 
 /**
  * @author <a href="mailto:kkhan@redhat.com">Kabir Khan</a>
  * @author <a href="mailto:fjuma@redhat.com">Farah Juma</a>
  */
-class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration {
-    private final BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate;
-    private final String choice;
+class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration implements HandlesCallbacks {
+    private final Predicate<ChoiceCallback> operation;
 
-    SetChoiceAuthenticationConfiguration(final AuthenticationConfiguration parent, final BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate,
-                                         final String choice) {
-        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class), true);
-        this.matchPredicate = matchPredicate;
-        this.choice = choice;
+    SetChoiceAuthenticationConfiguration(final AuthenticationConfiguration parent, final Predicate<ChoiceCallback> operation) {
+        super(parent.without(SetCallbackHandlerAuthenticationConfiguration.class));
+        this.operation = operation;
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
         Callback callback = callbacks[index];
-        if (callback instanceof ChoiceCallback) {
-            ChoiceCallback choiceCallback = (ChoiceCallback) callback;
-            if (matchPredicate.test(choiceCallback.getClass(), choiceCallback.getPrompt())) {
-                //TODO handle multiple selections etc.
-                if (choice == null) {
-                    choiceCallback.setSelectedIndex(choiceCallback.getDefaultChoice());
-                    return;
-                } else {
-                    String[] choices = choiceCallback.getChoices();
-                    for (int i = 0; i < choices.length; i++) {
-                        if (choice.equals(choices[i])) {
-                            choiceCallback.setSelectedIndex(i);
-                            return;
-                        }
-                    }
-                }
+        if (callback instanceof ChoiceCallback && ! (callback instanceof RealmChoiceCallback)) {
+            if (operation.test((ChoiceCallback) callback)) {
+                return;
             }
         }
         super.handleCallback(callbacks, index);
@@ -68,12 +56,23 @@ class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration {
 
     @Override
     AuthenticationConfiguration reparent(AuthenticationConfiguration newParent) {
-        return new SetChoiceAuthenticationConfiguration(newParent, matchPredicate, choice);
+        return new SetChoiceAuthenticationConfiguration(newParent, operation);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(operation, other.getChoiceOperation()) && other.parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 22817, Objects.hashCode(operation));
+    }
+
+    Predicate<ChoiceCallback> getChoiceOperation() {
+        return operation;
     }
 
     @Override
     StringBuilder asString(StringBuilder sb) {
-        return parentAsString(sb).append("choice=").append(choice).append(',');
+        return parentAsString(sb).append("choice=").append(operation).append(',');
     }
-
 }

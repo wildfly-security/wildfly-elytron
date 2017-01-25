@@ -51,7 +51,7 @@ class MatchSchemeRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 3547
-        return 3547 * protoName.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 3547, protoName.hashCode());
     }
 
     boolean halfEqual(final MatchRule other) {

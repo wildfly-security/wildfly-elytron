@@ -64,7 +64,7 @@ class MatchHostRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 2011
-        return 2011 * hostSpec.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 2011, hostSpec.hashCode());
     }
 
     boolean halfEqual(final MatchRule other) {

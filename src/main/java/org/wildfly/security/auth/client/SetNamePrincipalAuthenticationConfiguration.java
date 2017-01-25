@@ -36,7 +36,7 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
     private final NamePrincipal principal;
 
     SetNamePrincipalAuthenticationConfiguration(final AuthenticationConfiguration parent, final NamePrincipal principal) {
-        super(parent.without(UserSetting.class));
+        super(parent.without(UserSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.principal = principal;
     }
 
@@ -55,6 +55,14 @@ class SetNamePrincipalAuthenticationConfiguration extends AuthenticationConfigur
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetNamePrincipalAuthenticationConfiguration(newParent, principal);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return principal.equals(getPrincipal()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 10979, principal.hashCode());
     }
 
     @Override

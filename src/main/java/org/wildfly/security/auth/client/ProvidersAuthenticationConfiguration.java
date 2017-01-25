@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.client;
 
 import java.security.Provider;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -39,6 +40,14 @@ class ProvidersAuthenticationConfiguration extends AuthenticationConfiguration {
 
     Supplier<Provider[]> getProviderSupplier() {
         return providerSupplier;
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(providerSupplier, other.getProviderSupplier()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 99251, Objects.hashCode(providerSupplier));
     }
 
     @Override

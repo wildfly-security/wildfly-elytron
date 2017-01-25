@@ -60,7 +60,7 @@ class MatchSchemeSpecificPartRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 2143 * name.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 2143, name.hashCode());
     }
 
     StringBuilder asString(final StringBuilder b) {

@@ -38,6 +38,14 @@ class SetPortAuthenticationConfiguration extends AuthenticationConfiguration {
         return port;
     }
 
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return port == other.getPort() && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 13597, port);
+    }
+
     @Override
     StringBuilder asString(StringBuilder sb) {
         return parentAsString(sb).append("port=").append(port).append(',');

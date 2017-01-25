@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import java.util.Objects;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -36,6 +38,14 @@ class SetHostAuthenticationConfiguration extends AuthenticationConfiguration {
 
     String getHost() {
         return hostName;
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(hostName, getHost()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 1553, hostName.hashCode());
     }
 
     @Override

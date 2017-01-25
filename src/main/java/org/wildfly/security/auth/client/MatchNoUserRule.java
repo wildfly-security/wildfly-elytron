@@ -45,7 +45,7 @@ class MatchNoUserRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 3121 + parentHashCode();
+        return Util.hashiply(parentHashCode(), 3121,0);
     }
 
     StringBuilder asString(final StringBuilder b) {

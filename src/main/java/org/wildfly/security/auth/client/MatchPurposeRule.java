@@ -50,7 +50,7 @@ class MatchPurposeRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 6733 * Arrays.hashCode(purposes) + parentHashCode();
+        return Util.hashiply(parentHashCode(), 6733, Arrays.hashCode(purposes));
     }
 
     StringBuilder asString(final StringBuilder b) {

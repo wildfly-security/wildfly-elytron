@@ -58,7 +58,7 @@ class MatchPathRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 3923
-        return 3923 * pathSpec.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 3923, pathSpec.hashCode());
     }
 
     private boolean prefixes(String pathSpec) {

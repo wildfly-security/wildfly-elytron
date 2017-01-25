@@ -40,6 +40,14 @@ public class SetProtocolAuthenticationConfiguration extends AuthenticationConfig
         return new SetProtocolAuthenticationConfiguration(newParent, protocol);
     }
 
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return protocol.equals(other.getProtocol()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 10391, protocol.hashCode());
+    }
+
     @Override
     StringBuilder asString(StringBuilder sb) {
         return parentAsString(sb).append("protocol=").append(protocol).append(',');

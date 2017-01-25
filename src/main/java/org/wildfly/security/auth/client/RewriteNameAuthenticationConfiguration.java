@@ -18,22 +18,22 @@
 
 package org.wildfly.security.auth.client;
 
-import org.wildfly.security.auth.server.NameRewriter;
+import java.util.function.Function;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
 class RewriteNameAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private final NameRewriter rewriter;
+    private final Function<String, String> rewriter;
 
-    RewriteNameAuthenticationConfiguration(final AuthenticationConfiguration parent, final NameRewriter rewriter) {
-        super(parent, true);
+    RewriteNameAuthenticationConfiguration(final AuthenticationConfiguration parent, final Function<String, String> rewriter) {
+        super(parent);
         this.rewriter = rewriter;
     }
 
     String doRewriteUser(final String original) {
-        return rewriter.rewriteName(super.doRewriteUser(original));
+        return rewriter.apply(super.doRewriteUser(original));
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
@@ -45,4 +45,15 @@ class RewriteNameAuthenticationConfiguration extends AuthenticationConfiguration
         return parentAsString(sb).append("RewriteName,");
     }
 
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return rewriter.equals(other.getNameRewriter()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 47287, rewriter.hashCode());
+    }
+
+    Function<String, String> getNameRewriter() {
+        return rewriter;
+    }
 }

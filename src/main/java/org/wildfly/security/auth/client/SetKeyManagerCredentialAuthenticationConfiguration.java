@@ -29,6 +29,7 @@ import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.net.ssl.X509KeyManager;
 import javax.security.auth.callback.Callback;
@@ -51,7 +52,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
     private final SecurityFactory<X509KeyManager> keyManagerFactory;
 
     SetKeyManagerCredentialAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityFactory<X509KeyManager> keyManagerFactory) {
-        super(parent.without(CredentialSetting.class));
+        super(parent.without(CredentialSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.keyManagerFactory = keyManagerFactory;
     }
 
@@ -59,7 +60,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         return new SetKeyManagerCredentialAuthenticationConfiguration(newParent, keyManagerFactory);
     }
 
-    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() throws GeneralSecurityException {
+    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
         return keyManagerFactory;
     }
 
@@ -100,7 +101,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
         super.handleCallback(callbacks, index);
     }
 
-    boolean filterOneSaslMechanism(final String mechanismName) {
+    boolean saslSupportedByConfiguration(final String mechanismName) {
         // just add entity methods; don't try and narrow down the algorithm type
         return SaslMechanismInformation.IEC_ISO_9798.test(mechanismName) || super.filterOneSaslMechanism(mechanismName);
     }
@@ -120,6 +121,14 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
             }
         }
         return issuers.toArray(new Principal[issuers.size()]);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(keyManagerFactory, other.getX509KeyManagerFactory()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 5309, Objects.hashCode(keyManagerFactory));
     }
 
     @Override
