@@ -56,7 +56,7 @@ class MatchUserRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 3323 * userSpec.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 3323, userSpec.hashCode());
     }
 
     StringBuilder asString(final StringBuilder b) {

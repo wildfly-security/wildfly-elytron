@@ -33,13 +33,17 @@ import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -53,6 +57,8 @@ import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.ChoiceCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.sasl.RealmCallback;
+import javax.security.sasl.RealmChoiceCallback;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
@@ -80,6 +86,7 @@ import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.sasl.util.FilterMechanismSaslClientFactory;
 import org.wildfly.security.sasl.util.PropertiesSaslClientFactory;
 import org.wildfly.security.sasl.util.ProtocolSaslClientFactory;
+import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.sasl.util.SecurityProviderSaslClientFactory;
 import org.wildfly.security.sasl.util.ServerNameSaslClientFactory;
 import org.wildfly.security.ssl.CipherSuiteSelector;
@@ -103,6 +110,25 @@ public abstract class AuthenticationConfiguration {
      */
     public static final AuthenticationConfiguration EMPTY = new AuthenticationConfiguration() {
         void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException {
+            // always choose the default realm suggestion, or else choose "no realm"
+            if (callbacks[index] instanceof RealmCallback) {
+                final RealmCallback realmCallback = (RealmCallback) callbacks[index];
+                if (realmCallback.getText() != null) {
+                    return;
+                }
+                final String defaultText = realmCallback.getDefaultText();
+                if (defaultText != null) {
+                    realmCallback.setText(defaultText);
+                }
+                return;
+            } else if (callbacks[index] instanceof RealmChoiceCallback) {
+                final RealmChoiceCallback realmChoiceCallback = (RealmChoiceCallback) callbacks[index];
+                final int[] selectedIndexes = realmChoiceCallback.getSelectedIndexes();
+                if (selectedIndexes == null || selectedIndexes.length == 0) {
+                    realmChoiceCallback.setSelectedIndex(realmChoiceCallback.getDefaultChoice());
+                }
+                return;
+            }
             CallbackUtil.unsupported(callbacks[index]);
         }
 
@@ -116,9 +142,12 @@ public abstract class AuthenticationConfiguration {
         void configureSaslProperties(final Map<String, Object> properties) {
         }
 
-        boolean filterOneSaslMechanism(final String mechanismName) {
-            // nobody found a way to support this mechanism
+        boolean saslSupportedByConfiguration(final String mechanismName) {
             return false;
+        }
+
+        boolean saslAllowedByConfiguration(final String mechanismName) {
+            return true;
         }
 
         String doRewriteUser(final String original) {
@@ -134,6 +163,10 @@ public abstract class AuthenticationConfiguration {
         }
 
         AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
+            return this;
+        }
+
+        AuthenticationConfiguration without(final Class<?> clazz1, final Class<?> clazz2, final Class<?> clazz3) {
             return this;
         }
 
@@ -208,11 +241,61 @@ public abstract class AuthenticationConfiguration {
             return sb;
         }
 
-    }.useAnonymous().useTrustManager(null);
+        Function<String, String> getNameRewriter() {
+            return Function.identity();
+        }
+
+        Set<String> getAllowedSaslMechanisms() {
+            // this is just for comparison; it doesn't really mean that none are allowed
+            return Collections.emptySet();
+        }
+
+        Set<String> getDeniedSaslMechanisms() {
+            // this is just for comparison; it doesn't really mean that none are denied
+            return Collections.emptySet();
+        }
+
+        Predicate<ChoiceCallback> getChoiceOperation() {
+            return c -> false;
+        }
+
+        SecurityDomain getForwardSecurityDomain() {
+            return null;
+        }
+
+        AccessControlContext getForwardAccessControlContext() {
+            return null;
+        }
+
+        Map<String, String> getMechanismProperties() {
+            return null;
+        }
+
+        List<AlgorithmParameterSpec> getParameterSpecs() {
+            return Collections.emptyList();
+        }
+
+        String getMechanismRealm() {
+            return null;
+        }
+
+        Supplier<SaslClientFactory> getSaslClientFactorySupplier() {
+            return null;
+        }
+
+        boolean halfEqual(AuthenticationConfiguration other) {
+            return true;
+        }
+
+        int calcHashCode() {
+            return System.identityHashCode(this);
+        }
+    }.useAnonymous().useTrustManager(null).forbidSaslMechanisms(SaslMechanismInformation.Names.EXTERNAL);
 
     private final AuthenticationConfiguration parent;
     private final CallbackHandler callbackHandler = callbacks -> AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
     private SaslClientFactory saslClientFactory = null;
+    private int hashCode;
 
     // constructors
 
@@ -221,7 +304,7 @@ public abstract class AuthenticationConfiguration {
     }
 
     AuthenticationConfiguration(final AuthenticationConfiguration parent) {
-        this(parent, false);
+        this.parent = parent.without(getClass());
     }
 
     AuthenticationConfiguration(final AuthenticationConfiguration parent, final boolean allowMultiple) {
@@ -260,8 +343,30 @@ public abstract class AuthenticationConfiguration {
         parent.configureSaslProperties(properties);
     }
 
-    boolean filterOneSaslMechanism(String mechanismName) {
-        return parent.filterOneSaslMechanism(mechanismName);
+    /**
+     * Determine if this SASL mechanism is supported by this configuration (not policy).  Implementations must
+     * combine using boolean-OR operations.
+     *
+     * @param mechanismName the mech name (must not be {@code null})
+     * @return {@code true} if supported, {@code false} otherwise
+     */
+    boolean saslSupportedByConfiguration(String mechanismName) {
+        return parent.saslSupportedByConfiguration(mechanismName);
+    }
+
+    /**
+     * Determine if this SASL mechanism is allowed by this configuration's policy.  Implementations must combine
+     * using boolean-AND operations.
+     *
+     * @param mechanismName the mech name (must not be {@code null})
+     * @return {@code true} if allowed, {@code false} otherwise
+     */
+    boolean saslAllowedByConfiguration(String mechanismName) {
+        return parent.saslAllowedByConfiguration(mechanismName);
+    }
+
+    final boolean filterOneSaslMechanism(String mechanismName) {
+        return saslSupportedByConfiguration(mechanismName) && saslAllowedByConfiguration(mechanismName);
     }
 
     String doRewriteUser(String original) {
@@ -304,7 +409,7 @@ public abstract class AuthenticationConfiguration {
         return parent.getX509TrustManagerFactory();
     }
 
-    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() throws GeneralSecurityException {
+    SecurityFactory<X509KeyManager> getX509KeyManagerFactory() {
         return parent.getX509KeyManagerFactory();
     }
 
@@ -319,17 +424,22 @@ public abstract class AuthenticationConfiguration {
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
 
     AuthenticationConfiguration without(Class<?> clazz) {
-        if (clazz.isInstance(this)) return parent;
         AuthenticationConfiguration newParent = parent.without(clazz);
+        if (clazz.isInstance(this)) return newParent;
         if (parent == newParent) return this;
         return reparent(newParent);
     }
 
     AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2) {
-        if (clazz1.isInstance(this) && clazz2.isInstance(this)) return parent;
-        if (clazz1.isInstance(this)) return parent.without(clazz2);
-        if (clazz2.isInstance(this)) return parent.without(clazz1);
         AuthenticationConfiguration newParent = parent.without(clazz1, clazz2);
+        if (clazz1.isInstance(this) || clazz2.isInstance(this)) return newParent;
+        if (parent == newParent) return this;
+        return reparent(newParent);
+    }
+
+    AuthenticationConfiguration without(Class<?> clazz1, Class<?> clazz2, Class<?> clazz3) {
+        AuthenticationConfiguration newParent = parent.without(clazz1, clazz2, clazz3);
+        if (clazz1.isInstance(this) || clazz2.isInstance(this) || clazz3.isInstance(this)) return newParent;
         if (parent == newParent) return this;
         return reparent(newParent);
     }
@@ -342,7 +452,7 @@ public abstract class AuthenticationConfiguration {
 
     /**
      * Create a new configuration which is the same as this configuration, but rewrites the user name using the given
-     * name rewriter.
+     * name rewriter.  The name rewriter is appended to the the existing name rewrite function.
      *
      * @param rewriter the name rewriter
      * @return the new configuration
@@ -351,7 +461,21 @@ public abstract class AuthenticationConfiguration {
         if (rewriter == null) {
             return this;
         }
-        return new RewriteNameAuthenticationConfiguration(this, rewriter);
+        return new RewriteNameAuthenticationConfiguration(this, getNameRewriter().andThen(rewriter::rewriteName));
+    }
+
+    /**
+     * Create a new configuration which is the same as this configuration, but rewrites the user name using <em>only</em>
+     * the given name rewriter.  Any name rewriters on this configuration are ignored for the new configuration.
+     *
+     * @param rewriter the name rewriter
+     * @return the new configuration
+     */
+    public final AuthenticationConfiguration rewriteUserOnlyWith(NameRewriter rewriter) {
+        if (rewriter == null) {
+            return this;
+        }
+        return new RewriteNameAuthenticationConfiguration(this, rewriter::rewriteName);
     }
 
     // assembly methods - filter
@@ -616,7 +740,24 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useChoice(BiPredicate<Class<? extends ChoiceCallback>, String> matchPredicate, String choice) {
-        return matchPredicate == null ? this : new SetChoiceAuthenticationConfiguration(this, matchPredicate, choice);
+        return matchPredicate == null ? this : new SetChoiceAuthenticationConfiguration(this, getChoiceOperation().or(c -> {
+            if (matchPredicate.test(c.getClass(), c.getPrompt())) {
+                //TODO handle multiple selections etc.
+                if (choice == null) {
+                    c.setSelectedIndex(c.getDefaultChoice());
+                    return true;
+                } else {
+                    String[] choices = c.getChoices();
+                    for (int i = 0; i < choices.length; i++) {
+                        if (choice.equals(choices[i])) {
+                            c.setSelectedIndex(i);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }));
     }
 
     /**
@@ -626,7 +767,25 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useParameterSpec(AlgorithmParameterSpec parameterSpec) {
-        return parameterSpec == null ? this : new SetParameterSpecAuthenticationConfiguration(this, parameterSpec);
+        if (parameterSpec == null) {
+            return this;
+        }
+        final List<AlgorithmParameterSpec> specs = getParameterSpecs();
+        if (specs.isEmpty()) {
+            return new SetParameterSpecAuthenticationConfiguration(this, Collections.singletonList(parameterSpec));
+        } else {
+            ArrayList<AlgorithmParameterSpec> newList = new ArrayList<>();
+            for (AlgorithmParameterSpec spec : specs) {
+                if (spec.getClass() == parameterSpec.getClass()) continue;
+                newList.add(spec);
+            }
+            if (newList.isEmpty()) {
+                return new SetParameterSpecAuthenticationConfiguration(this, Collections.singletonList(parameterSpec));
+            } else {
+                newList.add(parameterSpec);
+                return new SetParameterSpecAuthenticationConfiguration(this, newList);
+            }
+        }
     }
 
     /**
@@ -771,59 +930,47 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration.
      */
     public final AuthenticationConfiguration allowAllSaslMechanisms() {
-        return new SetAllowAllSaslMechanisms(this);
+        return without(FilterSaslMechanismAuthenticationConfiguration.class);
     }
 
     /**
-     * Create a new configuration which is the same as this configuration, but which sets the allowed mechanism set
-     * to only include the given named mechanisms.
+     * Create a new configuration which is the same as this configuration, but which allows only the given named mechanisms.
      *
      * @param names the mechanism names
      * @return the new configuration
      */
     public final AuthenticationConfiguration allowSaslMechanisms(String... names) {
-        return names == null || names.length == 0 ? new FilterSaslMechanismAuthenticationConfiguration(this, true, Collections.<String>emptySet()) : new FilterSaslMechanismAuthenticationConfiguration(this, true, new HashSet<String>(Arrays.asList(names)));
+        final List<String> namesList = names == null || names.length == 0 ? Collections.emptyList() : Arrays.asList(names);
+        final Set<String> allowedSaslMechanisms = getAllowedSaslMechanisms();
+        final Set<String> deniedSaslMechanisms = getDeniedSaslMechanisms();
+        final Set<String> newAllowed = new HashSet<>(allowedSaslMechanisms);
+        newAllowed.addAll(namesList);
+        final Set<String> newDenied = new HashSet<>(deniedSaslMechanisms);
+        newDenied.removeAll(namesList);
+        return newAllowed.isEmpty() && newDenied.isEmpty() ? allowAllSaslMechanisms() : new FilterSaslMechanismAuthenticationConfiguration(this, newAllowed, newDenied);
     }
 
     /**
-     * Create a new configuration which is the same as this configuration, but which sets the allowed mechanism set
-     * to all available mechanisms except for the given named mechanisms.
+     * Create a new configuration which is the same as this configuration, but which forbids the given named mechanisms.
      *
      * @param names the mechanism names
      * @return the new configuration
      */
     public final AuthenticationConfiguration forbidSaslMechanisms(String... names) {
-        return names == null || names.length == 0 ? this : new FilterSaslMechanismAuthenticationConfiguration(this, false, new HashSet<String>(Arrays.asList(names)));
-    }
-
-    // SSL
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
-     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
-     *
-     * @param sslContext the SSL context to use
-     * @return the new configuration
-     */
-    public final AuthenticationConfiguration useSslContext(SSLContext sslContext) {
-        return sslContext == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContext);
-    }
-
-    /**
-     * Create a new configuration which is the same as this configuration, but which uses the given predefined SSL context
-     * for choosing the set of SSL/TLS cipher suites, performing authentication, etc.
-     *
-     * @param sslContextFactory the SSL context factory to use
-     * @return the new configuration
-     */
-    public final AuthenticationConfiguration useSslContext(SecurityFactory<SSLContext> sslContextFactory) {
-        return sslContextFactory == null ? without(SSLContextAuthenticationConfiguration.class) : new SSLContextAuthenticationConfiguration(this, sslContextFactory);
+        final List<String> namesList = names == null || names.length == 0 ? Collections.emptyList() : Arrays.asList(names);
+        final Set<String> allowedSaslMechanisms = getAllowedSaslMechanisms();
+        final Set<String> deniedSaslMechanisms = getDeniedSaslMechanisms();
+        final Set<String> newAllowed = new HashSet<>(allowedSaslMechanisms);
+        newAllowed.removeAll(namesList);
+        final Set<String> newDenied = new HashSet<>(deniedSaslMechanisms);
+        newDenied.addAll(namesList);
+        return newAllowed.isEmpty() && newDenied.isEmpty() ? allowAllSaslMechanisms() : new FilterSaslMechanismAuthenticationConfiguration(this, newAllowed, newDenied);
     }
 
     // other
 
     public final AuthenticationConfiguration useRealm(String realm) {
-        return new SetRealmAuthenticationConfiguration(this, realm);
+        return realm == null ? without(SetRealmAuthenticationConfiguration.class) : new SetRealmAuthenticationConfiguration(this, realm);
     }
 
     /**
@@ -879,6 +1026,59 @@ public abstract class AuthenticationConfiguration {
                 getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
     }
 
+    // equality
+
+    /**
+     * Determine whether this configuration is equal to another object.  Two configurations are equal if they
+     * apply the same items.
+     *
+     * @param obj the other object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
+    public final boolean equals(final Object obj) {
+        return obj instanceof AuthenticationConfiguration && equals((AuthenticationConfiguration) obj);
+    }
+
+    /**
+     * Determine whether this configuration is equal to another object.  Two configurations are equal if they
+     * apply the same items.
+     *
+     * @param other the other object
+     * @return {@code true} if they are equal, {@code false} otherwise
+     */
+    public final boolean equals(final AuthenticationConfiguration other) {
+        return calcHashCode() == other.calcHashCode() && halfEqual(other) && other.halfEqual(this);
+    }
+
+    abstract boolean halfEqual(final AuthenticationConfiguration other);
+
+    final boolean parentHalfEqual(final AuthenticationConfiguration other) {
+        return parent.halfEqual(other);
+    }
+
+    abstract int calcHashCode();
+
+    /**
+     * Get the hash code of this authentication configuration.
+     *
+     * @return the hash code of this authentication configuration
+     */
+    public int hashCode() {
+        int hashCode = this.hashCode;
+        if (hashCode == 0) {
+            hashCode = calcHashCode();
+            if (hashCode == 0) {
+                hashCode = 1;
+            }
+            this.hashCode = hashCode;
+        }
+        return hashCode;
+    }
+
+    final int parentHashCode() {
+        return parent.calcHashCode();
+    }
+
     // String Representation
 
     @Override
@@ -895,8 +1095,51 @@ public abstract class AuthenticationConfiguration {
         return parent.asString(sb);
     }
 
+    // delegates for equality tests
+
+    Function<String, String> getNameRewriter() {
+        return parent.getNameRewriter();
+    }
+
+    Set<String> getAllowedSaslMechanisms() {
+        return parent.getAllowedSaslMechanisms();
+    }
+
+    Set<String> getDeniedSaslMechanisms() {
+        return parent.getDeniedSaslMechanisms();
+    }
+
+    Predicate<ChoiceCallback> getChoiceOperation() {
+        return parent.getChoiceOperation();
+    }
+
+    SecurityDomain getForwardSecurityDomain() {
+        return parent.getForwardSecurityDomain();
+    }
+
+    AccessControlContext getForwardAccessControlContext() {
+        return parent.getForwardAccessControlContext();
+    }
+
+    Map<String, String> getMechanismProperties() {
+        return parent.getMechanismProperties();
+    }
+
+    List<AlgorithmParameterSpec> getParameterSpecs() {
+        return parent.getParameterSpecs();
+    }
+
+    String getMechanismRealm() {
+        return parent.getMechanismRealm();
+    }
+
+    Supplier<SaslClientFactory> getSaslClientFactorySupplier() {
+        return parent.getSaslClientFactorySupplier();
+    }
+
     // interfaces
 
-    interface UserSetting {}
-    interface CredentialSetting {}
+    interface UserSetting extends HandlesCallbacks {}
+    interface CredentialSetting extends HandlesCallbacks {}
+    interface HandlesCallbacks {}
 }

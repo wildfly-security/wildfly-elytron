@@ -34,10 +34,6 @@ class DefaultAuthenticationContextProvider {
 
     static {
         DEFAULT = doPrivileged((PrivilegedAction<AuthenticationContext>) () -> {
-            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-            if (classLoader == null) {
-                classLoader = DefaultAuthenticationContextProvider.class.getClassLoader();
-            }
             try {
                 return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
             } catch (Throwable t) {

@@ -45,6 +45,14 @@ class SetMechanismPropertiesConfiguration extends AuthenticationConfiguration {
         properties.putAll(mechanismProperties);
     }
 
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return mechanismProperties.equals(other.getMechanismProperties()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 10267, mechanismProperties.hashCode());
+    }
+
     @Override
     StringBuilder asString(StringBuilder sb) {
         parentAsString(sb);

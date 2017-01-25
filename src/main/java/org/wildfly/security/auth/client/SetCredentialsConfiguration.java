@@ -20,6 +20,7 @@ package org.wildfly.security.auth.client;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.security.auth.callback.Callback;
@@ -46,7 +47,7 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
     private final CredentialSource credentialSource;
 
     SetCredentialsConfiguration(final AuthenticationConfiguration parent, final CredentialSource credentialSource) {
-        super(parent.without(CredentialSetting.class));
+        super(parent.without(CredentialSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.credentialSource = credentialSource;
     }
 
@@ -81,7 +82,7 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
         super.handleCallback(callbacks, index);
     }
 
-    boolean filterOneSaslMechanism(final String mechanismName) {
+    boolean saslSupportedByConfiguration(final String mechanismName) {
         Set<Class<? extends Credential>> types = SaslMechanismInformation.getSupportedClientCredentialTypes(mechanismName);
         final CredentialSource credentials = credentialSource;
         for (Class<? extends Credential> type : types) {
@@ -116,7 +117,7 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
                 }
             }
         }
-        return super.filterOneSaslMechanism(mechanismName);
+        return super.saslSupportedByConfiguration(mechanismName);
     }
 
     @Override
@@ -126,6 +127,14 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetCredentialsConfiguration(newParent, credentialSource);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(other.getCredentialSource(), credentialSource) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 2693, Objects.hashCode(credentialSource));
     }
 
     @Override

@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import java.util.Objects;
+
 class SetAuthorizationNameAuthenticationConfiguration extends AuthenticationConfiguration {
 
     private final String name;
@@ -33,6 +35,14 @@ class SetAuthorizationNameAuthenticationConfiguration extends AuthenticationConf
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetAuthorizationNameAuthenticationConfiguration(newParent, name);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(name, other.getAuthorizationName()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 4397, name.hashCode());
     }
 
     @Override

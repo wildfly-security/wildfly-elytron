@@ -35,11 +35,11 @@ import org.wildfly.security.sasl.util.SaslMechanismInformation;
 class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguration implements UserSetting {
 
     SetAnonymousAuthenticationConfiguration(final AuthenticationConfiguration parent) {
-        super(parent.without(UserSetting.class));
+        super(parent.without(UserSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
     }
 
-    boolean filterOneSaslMechanism(final String mechanismName) {
-        return SaslMechanismInformation.Names.ANONYMOUS.equals(mechanismName) || super.filterOneSaslMechanism(mechanismName);
+    boolean saslSupportedByConfiguration(final String mechanismName) {
+        return SaslMechanismInformation.Names.ANONYMOUS.equals(mechanismName) || super.saslSupportedByConfiguration(mechanismName);
     }
 
     void handleCallback(final Callback[] callbacks, final int index) throws UnsupportedCallbackException, IOException {
@@ -57,6 +57,14 @@ class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguratio
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetAnonymousAuthenticationConfiguration(newParent);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return other.delegatesThrough(SetAnonymousAuthenticationConfiguration.class) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 70729, 0);
     }
 
     @Override

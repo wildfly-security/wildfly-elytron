@@ -49,7 +49,7 @@ class MatchAbstractTypeRule extends MatchRule {
     }
 
     public int hashCode() {
-        return 5693 * type.hashCode() + parentHashCode();
+        return Util.hashiply(parentHashCode(), 5693, type.hashCode());
     }
 
     StringBuilder asString(final StringBuilder b) {

@@ -46,9 +46,20 @@ public class SetSaslClientFactoryAuthenticationConfiguration extends Authenticat
         return new SetSaslClientFactoryAuthenticationConfiguration(newParent, saslClientFactorySupplier);
     }
 
+    Supplier<SaslClientFactory> getSaslClientFactorySupplier() {
+        return saslClientFactorySupplier;
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return saslClientFactorySupplier.equals(other.getSaslClientFactorySupplier()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(parentHashCode(), 4733, saslClientFactorySupplier.hashCode());
+    }
+
     @Override
     StringBuilder asString(StringBuilder sb) {
         return parentAsString(sb).append("SaslClientFactory,");
     }
-
 }

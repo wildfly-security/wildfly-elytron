@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -25,34 +26,55 @@ import java.util.Set;
  */
 class FilterSaslMechanismAuthenticationConfiguration extends AuthenticationConfiguration {
 
-    private final boolean allow;
-    private final Set<String> names;
+    private final Set<String> allowed;
+    private final Set<String> denied;
 
-    FilterSaslMechanismAuthenticationConfiguration(final AuthenticationConfiguration parent, final boolean allow, final Set<String> names) {
-        super(parent, true);
-        this.allow = allow;
-        this.names = names;
+    FilterSaslMechanismAuthenticationConfiguration(final AuthenticationConfiguration parent, final Set<String> allowed, final Set<String> denied) {
+        super(parent);
+        this.allowed = allowed;
+        this.denied = denied;
     }
 
-    boolean filterOneSaslMechanism(final String mechanismName) {
-        return names.contains(mechanismName) ? allow : super.filterOneSaslMechanism(mechanismName);
+    boolean saslSupportedByConfiguration(final String mechanismName) {
+        return allowed.contains(mechanismName) || super.saslSupportedByConfiguration(mechanismName);
+    }
+
+    boolean saslAllowedByConfiguration(final String mechanismName) {
+        return ! denied.contains(mechanismName) && super.saslAllowedByConfiguration(mechanismName);
     }
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
-        return new FilterSaslMechanismAuthenticationConfiguration(newParent, allow, names);
+        return new FilterSaslMechanismAuthenticationConfiguration(newParent, allowed, denied);
     }
 
     @Override
     StringBuilder asString(StringBuilder sb) {
         parentAsString(sb);
-        sb.append("FilterSaslMechanism allow=").append(allow).append(",name=[ ");
-        if (names!=null) {
-            names.forEach(s -> sb.append(s).append(' '));
+        sb.append("FilterSaslMechanism ");
+        final boolean deniedEmpty = denied.isEmpty();
+        if (! allowed.isEmpty()) {
+            sb.append("allowed=").append(allowed).append(deniedEmpty ? ',' : ' ');
         }
-        sb.append("],");
+        if (! deniedEmpty) {
+            sb.append("denied=").append(denied).append(',');
+        }
 
         return sb;
     }
 
+    Set<String> getAllowedSaslMechanisms() {
+        return allowed;
+    }
 
+    Set<String> getDeniedSaslMechanisms() {
+        return denied;
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(allowed, other.getAllowedSaslMechanisms()) && Objects.equals(denied, other.getDeniedSaslMechanisms()) && parentHalfEqual(other);
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(Util.hashiply(parentHashCode(), 5393, Objects.hashCode(denied)), 3719, Objects.hashCode(allowed));
+    }
 }

@@ -25,6 +25,7 @@ import java.security.AccessControlContext;
 import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.NameCallback;
@@ -51,7 +52,7 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
     private final AccessControlContext context;
 
     SetForwardAuthenticationConfiguration(final AuthenticationConfiguration parent, final SecurityDomain sourceDomain, final AccessControlContext context) {
-        super(parent.without(UserSetting.class, CredentialSetting.class));
+        super(parent.without(UserSetting.class, CredentialSetting.class, SetCallbackHandlerAuthenticationConfiguration.class));
         this.sourceDomain = sourceDomain;
         this.context = context;
     }
@@ -92,8 +93,8 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
         return doPrivileged((PrivilegedAction<IdentityCredentials>) identity::getPrivateCredentials, context);
     }
 
-    boolean filterOneSaslMechanism(final String mechanismName) {
-        return sourceDomain.getCurrentSecurityIdentity().isAnonymous() ? SaslMechanismInformation.Names.ANONYMOUS.equals(mechanismName) : super.filterOneSaslMechanism(mechanismName);
+    boolean saslSupportedByConfiguration(final String mechanismName) {
+        return sourceDomain.getCurrentSecurityIdentity().isAnonymous() && SaslMechanismInformation.Names.ANONYMOUS.equals(mechanismName) || super.saslSupportedByConfiguration(mechanismName);
     }
 
     Principal getPrincipal() {
@@ -102,6 +103,22 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
 
     AuthenticationConfiguration reparent(final AuthenticationConfiguration newParent) {
         return new SetForwardAuthenticationConfiguration(newParent, sourceDomain, context);
+    }
+
+    boolean halfEqual(final AuthenticationConfiguration other) {
+        return Objects.equals(sourceDomain, other.getForwardSecurityDomain()) && Objects.equals(context, other.getForwardAccessControlContext()) && parentHalfEqual(other);
+    }
+
+    SecurityDomain getForwardSecurityDomain() {
+        return sourceDomain;
+    }
+
+    AccessControlContext getForwardAccessControlContext() {
+        return context;
+    }
+
+    int calcHashCode() {
+        return Util.hashiply(Util.hashiply(parentHashCode(), 2551, Objects.hashCode(sourceDomain)), 2113, Objects.hashCode(context));
     }
 
     @Override
