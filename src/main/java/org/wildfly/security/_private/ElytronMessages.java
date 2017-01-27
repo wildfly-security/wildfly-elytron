@@ -867,6 +867,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 4025, value = "DirContext tries to connect without SSLSocketFactory thread local setting")
     IllegalStateException sslSocketFactoryThreadLocalNotSet();
 
+    @Message(id = 4026, value = "Could not create trust manager [%s]")
+    IllegalStateException sslErrorCreatingTrustManager(String name, @Cause Throwable cause);
+
     /* mechanism package */
 
     @Message(id = 5001, value = "[%s] Authentication mechanism exchange received a message after authentication was already complete")
