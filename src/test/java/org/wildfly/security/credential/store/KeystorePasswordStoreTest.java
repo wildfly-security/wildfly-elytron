@@ -187,6 +187,7 @@ public class KeystorePasswordStoreTest {
         Assert.assertArrayEquals(password2, getPasswordFromCredential(cs.retrieve(passwordAlias2, PasswordCredential.class)));
 
         cs.store("abc", createCredentialFromPassword(password1));
+        cs.flush();
         if (!ks.exists()) {
             Assert.fail("KeyStore [" + ks.getAbsolutePath() + "] must exist yet.");
         }
