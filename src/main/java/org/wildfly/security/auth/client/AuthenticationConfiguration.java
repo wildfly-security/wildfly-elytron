@@ -1070,7 +1070,7 @@ public abstract class AuthenticationConfiguration {
      * @return {@code true} if they are equal, {@code false} otherwise
      */
     public final boolean equals(final AuthenticationConfiguration other) {
-        return calcHashCode() == other.calcHashCode() && halfEqual(other) && other.halfEqual(this);
+        return hashCode() == other.hashCode() && halfEqual(other) && other.halfEqual(this);
     }
 
     abstract boolean halfEqual(final AuthenticationConfiguration other);
@@ -1099,7 +1099,7 @@ public abstract class AuthenticationConfiguration {
     }
 
     final int parentHashCode() {
-        return parent.calcHashCode();
+        return parent.hashCode();
     }
 
     // String Representation
