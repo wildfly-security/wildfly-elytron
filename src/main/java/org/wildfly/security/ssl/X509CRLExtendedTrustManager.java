@@ -52,7 +52,7 @@ import org.wildfly.security._private.ElytronMessages;
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class X509CRLExtendedTrustManager extends X509ExtendedTrustManager {
+public final class X509CRLExtendedTrustManager extends X509ExtendedTrustManager {
 
     private static final int DEFAULT_MAX_CERT_PATH_LENGTH = 5;
 
