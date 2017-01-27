@@ -160,6 +160,10 @@ public abstract class AuthenticationConfiguration {
             return this;
         }
 
+        AuthenticationConfiguration copyTo(final AuthenticationConfiguration newParent) {
+            return newParent;
+        }
+
         AuthenticationConfiguration without(final Class<?> clazz) {
             return this;
         }
@@ -424,6 +428,10 @@ public abstract class AuthenticationConfiguration {
     }
 
     abstract AuthenticationConfiguration reparent(AuthenticationConfiguration newParent);
+
+    AuthenticationConfiguration copyTo(AuthenticationConfiguration newParent) {
+        return reparent(parent.copyTo(newParent));
+    }
 
     AuthenticationConfiguration without(Class<?> clazz) {
         AuthenticationConfiguration newParent = parent.without(clazz);
@@ -983,6 +991,19 @@ public abstract class AuthenticationConfiguration {
      */
     public final AuthenticationConfiguration useBearerTokenCredential(BearerTokenCredential credential) {
         return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
+    }
+
+    // merging
+
+    /**
+     * Create a new configuration which is the same as this configuration, but which adds or replaces every item in the
+     * {@code other} configuration with that item, overwriting any corresponding such item in this configuration.
+     *
+     * @param other the other authentication configuration
+     * @return the merged authentication configuration
+     */
+    public final AuthenticationConfiguration with(AuthenticationConfiguration other) {
+        return other.copyTo(this);
     }
 
     // client methods
