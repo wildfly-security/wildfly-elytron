@@ -17,6 +17,8 @@
  */
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.security.Provider;
 import java.util.function.Supplier;
 
@@ -55,7 +57,7 @@ public class SetSaslClientFactoryAuthenticationConfiguration extends Authenticat
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 4733, saslClientFactorySupplier.hashCode());
+        return multiHashOrdered(parentHashCode(), 4733, saslClientFactorySupplier.hashCode());
     }
 
     @Override

@@ -19,6 +19,7 @@
 package org.wildfly.security.auth.client;
 
 import static java.security.AccessController.doPrivileged;
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 
 import java.io.IOException;
 import java.security.AccessControlContext;
@@ -118,7 +119,7 @@ class SetForwardAuthenticationConfiguration extends AuthenticationConfiguration 
     }
 
     int calcHashCode() {
-        return Util.hashiply(Util.hashiply(parentHashCode(), 2551, Objects.hashCode(sourceDomain)), 2113, Objects.hashCode(context));
+        return multiHashOrdered(multiHashOrdered(parentHashCode(), 2551, Objects.hashCode(sourceDomain)), 2113, Objects.hashCode(context));
     }
 
     @Override

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.x500.TrustedAuthority.CertificateTrustedAuthority;
 import static org.wildfly.security.x500.TrustedAuthority.NameTrustedAuthority;
@@ -128,7 +129,7 @@ class SetKeyManagerCredentialAuthenticationConfiguration extends AuthenticationC
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 5309, Objects.hashCode(keyManagerFactory));
+        return multiHashOrdered(parentHashCode(), 5309, Objects.hashCode(keyManagerFactory));
     }
 
     @Override

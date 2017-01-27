@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.io.IOException;
 import java.util.Objects;
 
@@ -52,7 +54,7 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 1487, Objects.hashCode(callbackHandler));
+        return multiHashOrdered(parentHashCode(), 1487, Objects.hashCode(callbackHandler));
     }
 
     @Override

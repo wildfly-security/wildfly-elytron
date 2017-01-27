@@ -22,12 +22,14 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.wildfly.common.Assert;
+import org.wildfly.common.math.HashMath;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;

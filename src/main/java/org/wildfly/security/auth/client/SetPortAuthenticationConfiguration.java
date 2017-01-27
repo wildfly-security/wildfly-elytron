@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
@@ -43,7 +45,7 @@ class SetPortAuthenticationConfiguration extends AuthenticationConfiguration {
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 13597, port);
+        return multiHashOrdered(parentHashCode(), 13597, port);
     }
 
     @Override
