@@ -20,7 +20,6 @@ package org.wildfly.security.auth.client;
 
 import static org.junit.Assert.*;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -41,7 +40,6 @@ public final class AuthenticationConfigurationTest {
     }
 
     @Test
-    @Ignore("ELY-900")
     public void testBaseEquality2() {
         AuthenticationConfiguration c1;
         AuthenticationConfiguration c2;
@@ -54,7 +52,6 @@ public final class AuthenticationConfigurationTest {
 
 
     @Test
-    @Ignore("ELY-900")
     public void testCopying() {
         AuthenticationConfiguration c1;
         AuthenticationConfiguration c2;

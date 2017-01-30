@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -136,7 +136,7 @@ class SetCredentialsConfiguration extends AuthenticationConfiguration implements
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 2693, Objects.hashCode(credentialSource));
+        return multiHashUnordered(parentHashCode(), 2693, Objects.hashCode(credentialSource));
     }
 
     @Override

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.net.URI;
@@ -65,7 +65,7 @@ class MatchHostRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 2011
-        return multiHashOrdered(parentHashCode(), 2011, hostSpec.hashCode());
+        return multiHashUnordered(parentHashCode(), 2011, hostSpec.hashCode());
     }
 
     boolean halfEqual(final MatchRule other) {

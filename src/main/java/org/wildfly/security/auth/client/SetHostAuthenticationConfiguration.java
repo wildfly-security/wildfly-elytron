@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.util.Objects;
 
@@ -47,7 +47,7 @@ class SetHostAuthenticationConfiguration extends AuthenticationConfiguration {
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 1553, hostName.hashCode());
+        return multiHashUnordered(parentHashCode(), 1553, hostName.hashCode());
     }
 
     @Override

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.util.Objects;
 import java.util.Set;
@@ -77,6 +77,6 @@ class FilterSaslMechanismAuthenticationConfiguration extends AuthenticationConfi
     }
 
     int calcHashCode() {
-        return multiHashOrdered(multiHashOrdered(parentHashCode(), 5393, Objects.hashCode(denied)), 3719, Objects.hashCode(allowed));
+        return multiHashUnordered(multiHashUnordered(parentHashCode(), 5393, Objects.hashCode(denied)), 3719, Objects.hashCode(allowed));
     }
 }

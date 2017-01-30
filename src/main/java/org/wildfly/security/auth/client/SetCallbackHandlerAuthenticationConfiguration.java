@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -49,12 +49,16 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
         return new SetCallbackHandlerAuthenticationConfiguration(newParent, callbackHandler);
     }
 
+    CallbackHandler getCallbackHandler() {
+        return callbackHandler;
+    }
+
     boolean halfEqual(final AuthenticationConfiguration other) {
         return Objects.equals(callbackHandler, other.getCallbackHandler()) && parentHalfEqual(other);
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 1487, Objects.hashCode(callbackHandler));
+        return multiHashUnordered(parentHashCode(), 1487, Objects.hashCode(callbackHandler));
     }
 
     @Override

@@ -207,7 +207,8 @@ public final class AuthenticationContextConfigurationClient {
      */
     public CallbackHandler getCallbackHandler(AuthenticationConfiguration configuration) {
         Assert.checkNotNullParam("configuration", configuration);
-        return configuration.getCallbackHandler();
+        final CallbackHandler callbackHandler = configuration.getCallbackHandler();
+        return callbackHandler == null ? configuration::defaultHandleCallbacks : callbackHandler;
     }
 
     /**

@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 /**
  * An {@link AuthenticationConfiguration} that sets the protocol reported to the authentication mechanisms.
@@ -47,7 +47,7 @@ public class SetProtocolAuthenticationConfiguration extends AuthenticationConfig
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 10391, protocol.hashCode());
+        return multiHashUnordered(parentHashCode(), 10391, protocol.hashCode());
     }
 
     @Override

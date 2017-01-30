@@ -17,7 +17,7 @@
  */
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -52,7 +52,7 @@ class SetMechanismPropertiesConfiguration extends AuthenticationConfiguration {
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 10267, mechanismProperties.hashCode());
+        return multiHashUnordered(parentHashCode(), 10267, mechanismProperties.hashCode());
     }
 
     @Override

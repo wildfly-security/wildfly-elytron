@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.util.function.Function;
 
@@ -52,7 +52,7 @@ class RewriteNameAuthenticationConfiguration extends AuthenticationConfiguration
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 47287, rewriter.hashCode());
+        return multiHashUnordered(parentHashCode(), 47287, rewriter.hashCode());
     }
 
     Function<String, String> getNameRewriter() {

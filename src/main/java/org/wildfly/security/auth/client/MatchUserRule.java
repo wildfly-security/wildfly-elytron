@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.net.URI;
 
@@ -58,7 +58,7 @@ class MatchUserRule extends MatchRule {
     }
 
     public int hashCode() {
-        return multiHashOrdered(parentHashCode(), 3323, userSpec.hashCode());
+        return multiHashUnordered(parentHashCode(), 3323, userSpec.hashCode());
     }
 
     StringBuilder asString(final StringBuilder b) {

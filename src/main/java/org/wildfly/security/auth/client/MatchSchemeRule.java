@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.net.URI;
 
@@ -53,7 +53,7 @@ class MatchSchemeRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 3547
-        return multiHashOrdered(parentHashCode(), 3547, protoName.hashCode());
+        return multiHashUnordered(parentHashCode(), 3547, protoName.hashCode());
     }
 
     boolean halfEqual(final MatchRule other) {

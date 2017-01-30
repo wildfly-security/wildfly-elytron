@@ -67,6 +67,7 @@ import org.ietf.jgss.GSSCredential;
 import org.wildfly.common.Assert;
 import org.wildfly.security.FixedSecurityFactory;
 import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.GSSKerberosCredential;
 import org.wildfly.security.credential.source.CallbackHandlerCredentialSource;
 import org.wildfly.security.credential.source.CredentialSource;
@@ -239,7 +240,7 @@ public abstract class AuthenticationConfiguration {
         }
 
         CredentialSource getCredentialSource() {
-            return CredentialSource.NONE;
+            return IdentityCredentials.NONE;
         }
 
         @Override
@@ -293,13 +294,16 @@ public abstract class AuthenticationConfiguration {
             return true;
         }
 
+        public String toString() {
+            return "";
+        }
+
         int calcHashCode() {
             return System.identityHashCode(this);
         }
     }.useAnonymous().useTrustManager(null).forbidSaslMechanisms(SaslMechanismInformation.Names.EXTERNAL);
 
     private final AuthenticationConfiguration parent;
-    private final CallbackHandler callbackHandler = callbacks -> AuthenticationConfiguration.this.handleCallbacks(AuthenticationConfiguration.this, callbacks);
     private SaslClientFactory saslClientFactory = null;
     private int hashCode;
 
@@ -532,6 +536,16 @@ public abstract class AuthenticationConfiguration {
         return new SetAuthorizationNameAuthenticationConfiguration(this, name);
     }
 
+    public final AuthenticationConfiguration useCredential(Credential credential) {
+        if (credential == null) return this;
+        final CredentialSource credentialSource = getCredentialSource();
+        if (credentialSource instanceof IdentityCredentials) {
+            return new SetCredentialsConfiguration(this, ((IdentityCredentials) credentialSource).withCredential(credential));
+        } else {
+            return new SetCredentialsConfiguration(this, credentialSource.with(IdentityCredentials.NONE.withCredential(credential)));
+        }
+    }
+
     /**
      * Create a new configuration which is the same as this configuration, but which uses the given password to authenticate.
      *
@@ -540,7 +554,7 @@ public abstract class AuthenticationConfiguration {
      */
     public final AuthenticationConfiguration usePassword(Password password) {
         final CredentialSource filtered = getCredentialSource().without(PasswordCredential.class);
-        return password == null ? useCredentials(filtered) : useCredentials(filtered.with(IdentityCredentials.NONE.withCredential(new PasswordCredential(password))));
+        return password == null ? useCredentials(filtered) : useCredentials(filtered).useCredential(new PasswordCredential(password));
     }
 
     /**
@@ -628,7 +642,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useGSSCredential(GSSCredential credential) {
-        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(new GSSKerberosCredential(credential))));
+        return credential == null ? this : useCredential(new GSSKerberosCredential(credential));
     }
 
     /**
@@ -687,7 +701,7 @@ public abstract class AuthenticationConfiguration {
      * @return the new configuration
      */
     public final AuthenticationConfiguration useCertificateCredential(X509CertificateChainPrivateCredential credential) {
-        return credential == null ? this : useCredentials(getCredentialSource().with(IdentityCredentials.NONE.withCredential(credential)));
+        return credential == null ? this : useCredential(credential);
     }
 
     /**
@@ -1008,8 +1022,8 @@ public abstract class AuthenticationConfiguration {
 
     // client methods
 
-    final CallbackHandler getCallbackHandler() {
-        return callbackHandler;
+    CallbackHandler getCallbackHandler() {
+        return null;
     }
 
     /**
@@ -1045,8 +1059,13 @@ public abstract class AuthenticationConfiguration {
         }
         saslClientFactory = new FilterMechanismSaslClientFactory(saslClientFactory, this::filterOneSaslMechanism);
 
+        final CallbackHandler callbackHandler = getCallbackHandler();
         return saslClientFactory.createSaslClient(serverMechanisms.toArray(new String[serverMechanisms.size()]),
-                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), getCallbackHandler());
+                getAuthorizationName(), uri.getScheme(), uri.getHost(), Collections.emptyMap(), callbackHandler == null ? this::defaultHandleCallbacks : callbackHandler);
+    }
+
+    void defaultHandleCallbacks(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
+        handleCallbacks(this, callbacks);
     }
 
     // equality

@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.security.Provider;
 import java.util.Objects;
@@ -49,7 +49,7 @@ class ProvidersAuthenticationConfiguration extends AuthenticationConfiguration {
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 99251, Objects.hashCode(providerSupplier));
+        return multiHashUnordered(parentHashCode(), 99251, Objects.hashCode(providerSupplier));
     }
 
     @Override

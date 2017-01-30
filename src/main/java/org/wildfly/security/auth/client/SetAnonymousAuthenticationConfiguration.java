@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -66,7 +66,7 @@ class SetAnonymousAuthenticationConfiguration extends AuthenticationConfiguratio
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 70729, 0);
+        return multiHashUnordered(parentHashCode(), 70729, 0);
     }
 
     @Override

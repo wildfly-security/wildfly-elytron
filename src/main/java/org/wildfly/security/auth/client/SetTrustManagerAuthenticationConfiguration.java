@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
@@ -82,7 +82,7 @@ class SetTrustManagerAuthenticationConfiguration extends AuthenticationConfigura
     }
 
     int calcHashCode() {
-        return multiHashOrdered(parentHashCode(), 8527, trustManagerFactory.hashCode());
+        return multiHashUnordered(parentHashCode(), 8527, trustManagerFactory.hashCode());
     }
 
     @Override

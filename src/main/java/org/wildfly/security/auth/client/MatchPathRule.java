@@ -18,7 +18,7 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.math.HashMath.multiHashOrdered;
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
 
 import java.net.URI;
 
@@ -60,7 +60,7 @@ class MatchPathRule extends MatchRule {
 
     public int hashCode() {
         // our prime is 3923
-        return multiHashOrdered(parentHashCode(), 3923, pathSpec.hashCode());
+        return multiHashUnordered(parentHashCode(), 3923, pathSpec.hashCode());
     }
 
     private boolean prefixes(String pathSpec) {
