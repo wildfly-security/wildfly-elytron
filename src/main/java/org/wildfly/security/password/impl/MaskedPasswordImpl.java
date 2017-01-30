@@ -18,6 +18,8 @@
 
 package org.wildfly.security.password.impl;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -191,5 +193,13 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
             throw new InvalidKeySpecException(e);
         }
+    }
+
+    Object writeReplace() {
+        return MaskedPassword.createRaw(algorithm, initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone());
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
     }
 }
