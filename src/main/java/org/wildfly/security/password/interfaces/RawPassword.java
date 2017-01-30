@@ -44,4 +44,7 @@ abstract class RawPassword implements Password {
 
     public abstract RawPassword clone();
 
+    public abstract int hashCode();
+
+    public abstract boolean equals(final Object obj);
 }

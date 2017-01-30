@@ -125,5 +125,12 @@ public final class PasswordCredential implements AlgorithmCredential {
         return clone == password ? this : new PasswordCredential(clone);
     }
 
+    public int hashCode() {
+        return password.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof PasswordCredential && password.equals(((PasswordCredential) obj).password);
+    }
 }
 

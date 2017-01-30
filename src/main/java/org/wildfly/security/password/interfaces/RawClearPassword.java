@@ -79,4 +79,16 @@ class RawClearPassword extends RawPassword implements ClearPassword {
         return new RawClearPassword(getAlgorithm(), password.clone());
     }
 
+    public int hashCode() {
+        // hashcode becomes 0 when destroyed!
+        return Arrays.hashCode(password);
+    }
+
+    public boolean equals(final Object obj) {
+        final char[] password = this.password;
+        // destroyed passwords are equal to nothing
+        if (! (obj instanceof RawClearPassword)) return false;
+        final RawClearPassword other = (RawClearPassword) obj;
+        return password != null && Arrays.equals(password, other.password) && getAlgorithm().equals(other.getAlgorithm());
+    }
 }

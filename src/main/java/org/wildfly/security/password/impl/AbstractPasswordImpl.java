@@ -60,4 +60,8 @@ abstract class AbstractPasswordImpl implements Password {
     public byte[] getEncoded() {
         return null;
     }
+
+    public abstract int hashCode();
+
+    public abstract boolean equals(final Object obj);
 }

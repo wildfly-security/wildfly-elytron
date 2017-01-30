@@ -72,4 +72,11 @@ public final class SecretKeyCredential implements AlgorithmCredential {
         return clone == secretKey ? this : new SecretKeyCredential(clone);
     }
 
+    public int hashCode() {
+        return secretKey.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof SecretKeyCredential && secretKey.equals(((SecretKeyCredential) obj).secretKey);
+    }
 }

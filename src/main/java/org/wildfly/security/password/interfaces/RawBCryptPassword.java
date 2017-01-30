@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawBCryptPassword extends RawPassword implements BCryptPassword {
 
     private static final long serialVersionUID = -3386914527972301638L;
@@ -47,5 +51,17 @@ class RawBCryptPassword extends RawPassword implements BCryptPassword {
 
     public RawBCryptPassword clone() {
         return this;
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt)), iterationCount);
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawBCryptPassword)) {
+            return false;
+        }
+        RawBCryptPassword other = (RawBCryptPassword) obj;
+        return iterationCount == other.iterationCount && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt) && getAlgorithm().equals(other.getAlgorithm());
     }
 }

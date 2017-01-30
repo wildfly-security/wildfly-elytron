@@ -18,6 +18,10 @@
 
 package org.wildfly.security.credential;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Objects;
+
 import javax.security.auth.kerberos.KerberosTicket;
 
 import org.ietf.jgss.GSSCredential;
@@ -73,4 +77,15 @@ public final class GSSKerberosCredential implements Credential {
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(gssCredential.hashCode(), 31, Objects.hashCode(kerberosTicket));
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof GSSKerberosCredential && equals((GSSKerberosCredential) obj);
+    }
+
+    private boolean equals(final GSSKerberosCredential obj) {
+        return gssCredential.equals(obj.gssCredential) && Objects.equals(kerberosTicket, obj.kerberosTicket);
+    }
 }

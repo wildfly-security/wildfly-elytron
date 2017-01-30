@@ -18,11 +18,14 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.security.InvalidKeyException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 
 import org.wildfly.security.password.interfaces.OneTimePassword;
 import org.wildfly.security.password.spec.OneTimePasswordSpec;
@@ -93,6 +96,18 @@ class OneTimePasswordImpl extends AbstractPasswordImpl implements OneTimePasswor
     @Override
     <T extends KeySpec> boolean convertibleTo(Class<T> keySpecType) {
         return keySpecType.isAssignableFrom(OneTimePasswordSpec.class);
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(seed)), sequenceNumber), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof OneTimePasswordImpl)) {
+            return false;
+        }
+        OneTimePasswordImpl other = (OneTimePasswordImpl) obj;
+        return sequenceNumber == other.sequenceNumber && algorithm.equals(other.algorithm) && Arrays.equals(hash, other.hash) && Arrays.equals(seed, other.seed);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

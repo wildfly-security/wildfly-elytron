@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static org.wildfly.security.mechanism.digest.DigestUtil.userRealmPasswordDigest;
 
@@ -140,6 +141,18 @@ class DigestPasswordImpl extends AbstractPasswordImpl implements DigestPassword 
             default:
                 throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(digest), username.hashCode()), realm.hashCode()), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof DigestPasswordImpl)) {
+            return false;
+        }
+        DigestPasswordImpl other = (DigestPasswordImpl) obj;
+        return Arrays.equals(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && algorithm.equals(other.algorithm);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

@@ -22,6 +22,7 @@ import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Objects;
 
 import org.wildfly.common.Assert;
 import org.wildfly.security._private.ElytronMessages;
@@ -86,5 +87,17 @@ public final class KeyPairCredential implements AlgorithmCredential {
         final PrivateKey privateKey = keyPair.getPrivate();
         final PrivateKey clone = KeyUtil.cloneKey(PrivateKey.class, privateKey);
         return privateKey == clone ? this : new KeyPairCredential(new KeyPair(keyPair.getPublic(), clone));
+    }
+
+    public int hashCode() {
+        return Objects.hash(keyPair.getPublic(), keyPair.getPrivate());
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof KeyPairCredential && equals((KeyPairCredential) obj);
+    }
+
+    private boolean equals(final KeyPairCredential obj) {
+        return keyPair.getPublic().equals(obj.keyPair.getPublic()) && keyPair.getPrivate().equals(obj.keyPair.getPrivate());
     }
 }

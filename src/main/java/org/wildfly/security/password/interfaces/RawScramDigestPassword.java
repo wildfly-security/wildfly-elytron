@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawScramDigestPassword extends RawPassword implements ScramDigestPassword {
 
     private static final long serialVersionUID = -6829330384649271844L;
@@ -49,4 +53,15 @@ class RawScramDigestPassword extends RawPassword implements ScramDigestPassword 
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(digest), Arrays.hashCode(salt)), iterationCount), getAlgorithm().hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawScramDigestPassword)) {
+            return false;
+        }
+        RawScramDigestPassword other = (RawScramDigestPassword) obj;
+        return iterationCount == other.iterationCount && getAlgorithm().equals(other.getAlgorithm()) && Arrays.equals(digest, other.digest) && Arrays.equals(salt, other.salt);
+    }
 }

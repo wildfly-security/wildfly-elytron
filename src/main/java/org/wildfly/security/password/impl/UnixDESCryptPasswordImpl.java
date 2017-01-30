@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -385,6 +386,18 @@ class UnixDESCryptPasswordImpl extends AbstractPasswordImpl implements UnixDESCr
         b ^= t;
         results[0] = a;
         results[1] = b;
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(hash), salt);
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof UnixDESCryptPasswordImpl)) {
+            return false;
+        }
+        UnixDESCryptPasswordImpl other = (UnixDESCryptPasswordImpl) obj;
+        return salt == other.salt && Arrays.equals(hash, other.hash);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

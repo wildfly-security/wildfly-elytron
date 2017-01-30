@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -417,6 +418,18 @@ final class UnixSHACryptPasswordImpl extends AbstractPasswordImpl implements Uni
             case ALGORITHM_CRYPT_SHA_512: return 64;
             default: throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt)), iterationCount), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof UnixSHACryptPasswordImpl)) {
+            return false;
+        }
+        UnixSHACryptPasswordImpl other = (UnixSHACryptPasswordImpl) obj;
+        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

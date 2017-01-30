@@ -19,7 +19,6 @@
 package org.wildfly.security.credential;
 
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.function.Function;
 
 import org.wildfly.common.Assert;
 
@@ -107,19 +106,15 @@ public interface AlgorithmCredential extends Credential {
      */
     AlgorithmCredential clone();
 
-    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
-        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) && (parameterSpec == null || impliesParameters(parameterSpec)) ? function.apply(credentialType.cast(this)) : null;
-    }
-
-    default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
-        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) ? function.apply(credentialType.cast(this)) : null;
-    }
-
     default boolean matches(Credential other) {
         return other instanceof AlgorithmCredential && matches((AlgorithmCredential) other);
     }
 
     default boolean matches(AlgorithmCredential other) {
         return other != null && other.getClass() == getClass() && getAlgorithm().equals(other.getAlgorithm()) && impliesSameParameters(other);
+    }
+
+    default boolean matches(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
+        return credentialType.isInstance(this) && (algorithmName == null || algorithmName.equals(getAlgorithm())) && (parameterSpec == null || impliesParameters(parameterSpec));
     }
 }
