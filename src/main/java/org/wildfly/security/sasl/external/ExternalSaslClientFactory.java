@@ -42,9 +42,11 @@ import org.wildfly.security.util._private.Arrays2;
 public final class ExternalSaslClientFactory implements SaslClientFactory {
 
     public SaslClient createSaslClient(final String[] mechanisms, final String authorizationId, final String protocol, final String serverName, final Map<String, ?> props, final CallbackHandler cbh) throws SaslException {
-        for (String mechanism : mechanisms) {
-            if (SaslMechanismInformation.Names.EXTERNAL.equals(mechanism)) {
-                return new ExternalSaslClient(authorizationId);
+        if (getMechanismNames(props).length != 0) {
+            for (String mechanism : mechanisms) {
+                if (SaslMechanismInformation.Names.EXTERNAL.equals(mechanism)) {
+                    return new ExternalSaslClient(authorizationId);
+                }
             }
         }
         return null;
