@@ -597,6 +597,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
     IllegalStateException classLoaderSecurityDomainExists();
 
+    @Message(id = 1149, value = "Obtaining DirContext credentials from AuthenticationContext failed.")
+    NamingException obtainingDirContextCredentialFromAuthenticationContextFailed(@Cause Throwable cause);
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
