@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -116,6 +117,18 @@ class SimpleDigestPasswordImpl extends AbstractPasswordImpl implements SimpleDig
 
     public byte[] getDigest() {
         return digest.clone();
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(digest), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof SimpleDigestPasswordImpl)) {
+            return false;
+        }
+        SimpleDigestPasswordImpl other = (SimpleDigestPasswordImpl) obj;
+        return algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

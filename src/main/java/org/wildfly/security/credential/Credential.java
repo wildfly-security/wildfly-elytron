@@ -141,7 +141,7 @@ public interface Credential extends Cloneable {
      * @return the result of the function, or {@code null} if the credential is not of the given type
      */
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec, Function<C, R> function) {
-        return credentialType.isInstance(this) && algorithmName == null && parameterSpec == null ? function.apply(credentialType.cast(this)) : null;
+        return matches(credentialType, algorithmName, parameterSpec) ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**
@@ -155,7 +155,7 @@ public interface Credential extends Cloneable {
      * @return the result of the function, or {@code null} if the credential is not of the given type
      */
     default <C extends Credential, R> R castAndApply(Class<C> credentialType, String algorithmName, Function<C, R> function) {
-        return credentialType.isInstance(this) && algorithmName == null ? function.apply(credentialType.cast(this)) : null;
+        return matches(credentialType, algorithmName, null) ? function.apply(credentialType.cast(this)) : null;
     }
 
     /**
@@ -196,6 +196,18 @@ public interface Credential extends Cloneable {
      */
     default boolean matches(AlgorithmCredential other) {
         return false;
+    }
+
+    /**
+     * Determine if this credential matches the given criteria.
+     *
+     * @param credentialType the credential type class to check
+     * @param algorithmName the name of the algorithm or {@code null} if any algorithm is acceptable
+     * @param parameterSpec the parameter specification or {@code null} if any parameter specification is acceptable
+     * @return {@code true} if the credential matches the specification, {@code false} otherwise
+     */
+    default boolean matches(Class<? extends Credential> credentialType, String algorithmName, AlgorithmParameterSpec parameterSpec) {
+        return credentialType.isInstance(this) && algorithmName == null && parameterSpec == null;
     }
 
     /**

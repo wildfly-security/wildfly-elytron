@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawDigestPassword extends RawPassword implements DigestPassword {
 
     private static final long serialVersionUID = 7084601864990731347L;
@@ -49,4 +53,15 @@ class RawDigestPassword extends RawPassword implements DigestPassword {
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(digest), username.hashCode()), realm.hashCode()), getAlgorithm().hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawDigestPassword)) {
+            return false;
+        }
+        RawDigestPassword other = (RawDigestPassword) obj;
+        return Arrays.equals(digest, other.digest) && username.equals(other.username) && realm.equals(other.realm) && getAlgorithm().equals(other.getAlgorithm());
+    }
 }

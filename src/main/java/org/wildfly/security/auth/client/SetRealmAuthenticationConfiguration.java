@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
+
 import java.io.IOException;
 
 import javax.security.auth.callback.Callback;
@@ -76,7 +78,7 @@ class SetRealmAuthenticationConfiguration extends AuthenticationConfiguration im
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 28493, realm.hashCode());
+        return multiHashUnordered(parentHashCode(), 28493, realm.hashCode());
     }
 
     @Override

@@ -51,4 +51,11 @@ public final class BearerTokenCredential implements Credential {
         return this;
     }
 
+    public int hashCode() {
+        return token.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof BearerTokenCredential && token.equals(((BearerTokenCredential) obj).token);
+    }
 }

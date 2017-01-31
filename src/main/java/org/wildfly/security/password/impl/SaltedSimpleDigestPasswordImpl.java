@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -183,6 +184,18 @@ class SaltedSimpleDigestPasswordImpl extends AbstractPasswordImpl implements Sal
             default:
                 throw log.noSuchAlgorithmInvalidAlgorithm(algorithm);
         }
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Arrays.hashCode(digest), Arrays.hashCode(salt)), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof SaltedSimpleDigestPasswordImpl)) {
+            return false;
+        }
+        SaltedSimpleDigestPasswordImpl other = (SaltedSimpleDigestPasswordImpl) obj;
+        return algorithm.equals(other.algorithm) && Arrays.equals(digest, other.digest) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

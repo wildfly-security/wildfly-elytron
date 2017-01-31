@@ -19,6 +19,7 @@
 package org.wildfly.security.credential;
 
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 
 /**
  * A credential containing an X.509 certificate chain.
@@ -40,4 +41,11 @@ public final class X509CertificateChainPublicCredential extends AbstractX509Cert
         return this;
     }
 
+    public int hashCode() {
+        return Arrays.hashCode(certificateChain);
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof X509CertificateChainPublicCredential && Arrays.equals(certificateChain, ((X509CertificateChainPublicCredential) obj).certificateChain);
+    }
 }

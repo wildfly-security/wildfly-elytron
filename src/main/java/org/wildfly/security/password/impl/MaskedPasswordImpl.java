@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -191,5 +195,25 @@ final class MaskedPasswordImpl extends AbstractPasswordImpl implements MaskedPas
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | InvalidKeyException e) {
             throw new InvalidKeySpecException(e);
         }
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(initialKeyMaterial), Arrays.hashCode(salt)), Arrays.hashCode(maskedPasswordBytes)), iterationCount), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof MaskedPasswordImpl)) {
+            return false;
+        }
+        MaskedPasswordImpl other = (MaskedPasswordImpl) obj;
+        return iterationCount == other.iterationCount && Arrays.equals(initialKeyMaterial, other.initialKeyMaterial) && Arrays.equals(salt, other.salt) && Arrays.equals(maskedPasswordBytes, other.maskedPasswordBytes) && algorithm.equals(other.algorithm);
+    }
+
+    Object writeReplace() {
+        return MaskedPassword.createRaw(algorithm, initialKeyMaterial.clone(), iterationCount, salt.clone(), maskedPasswordBytes.clone());
+    }
+
+    private void readObject(ObjectInputStream ignored) throws NotSerializableException {
+        throw new NotSerializableException();
     }
 }

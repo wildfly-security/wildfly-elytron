@@ -74,4 +74,11 @@ public final class PublicKeyCredential implements AlgorithmCredential {
         return this;
     }
 
+    public int hashCode() {
+        return publicKey.hashCode();
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof PublicKeyCredential && publicKey.equals(((PublicKeyCredential) obj).publicKey);
+    }
 }

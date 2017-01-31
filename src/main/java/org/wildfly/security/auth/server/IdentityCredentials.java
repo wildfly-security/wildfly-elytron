@@ -18,12 +18,18 @@
 
 package org.wildfly.security.auth.server;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
 import java.security.spec.AlgorithmParameterSpec;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -32,6 +38,7 @@ import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.credential.AlgorithmCredential;
 import org.wildfly.security.credential.Credential;
+import org.wildfly.security.util.EnumerationIterator;
 
 /**
  * The public or private credentials retained by an identity, which can be used for authentication forwarding.  This
@@ -204,9 +211,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      * @param credential the credential to append (must not be {@code null})
      * @return the new credential set (not {@code null})
      */
-    public final IdentityCredentials withCredential(Credential credential) {
-        return new CredentialNode(withoutMatching(credential), credential);
-    }
+    public abstract IdentityCredentials withCredential(Credential credential);
 
     /**
      * Return a copy of this credential set with the given credential set added to it.
@@ -236,6 +241,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      * @return the new credential set (not {@code null})
      */
     public final IdentityCredentials without(Class<? extends Credential> credentialType) {
+        Assert.checkNotNullParam("credentialType", credentialType);
         return without(credentialType::isInstance);
     }
 
@@ -248,28 +254,13 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      * @return the new credential set (not {@code null})
      */
     public final IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName) {
+        Assert.checkNotNullParam("credentialType", credentialType);
         return without(credentialType, algorithmName, null);
     }
 
     public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
         Assert.checkNotNullParam("credentialType", credentialType);
-        if (algorithmName == null) {
-            if (parameterSpec == null) {
-                return without(credentialType);
-            } else {
-                return without(credentialType::isInstance);
-            }
-        } else if (AlgorithmCredential.class.isAssignableFrom(credentialType)) {
-            Class<? extends AlgorithmCredential> algorithmCredentialType = credentialType.asSubclass(AlgorithmCredential.class);
-            if (parameterSpec == null) {
-                return without(AlgorithmCredential.class, cred -> algorithmCredentialType.isInstance(cred) && algorithmName.equals(cred.getAlgorithm()));
-            } else {
-                return without(AlgorithmCredential.class, cred -> algorithmCredentialType.isInstance(cred) && algorithmName.equals(cred.getAlgorithm()) && cred.impliesParameters(parameterSpec));
-            }
-        } else {
-            // impossible to have a credential with an algorithm that isn't an AlgorithmCredential
-            return this;
-        }
+        return without(c -> c.matches(credentialType, algorithmName, parameterSpec));
     }
 
     /**
@@ -295,21 +286,12 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
     }
 
     /**
-     * Iterate over this identity credential set.
-     *
-     * @return the iterator (not {@code null})
-     */
-    public Iterator<Credential> iterator() {
-        return new Itr(this);
-    }
-
-    /**
      * Get a {@link Spliterator} for this credential set.
      *
      * @return the spliterator (not {@code null})
      */
     public Spliterator<Credential> spliterator() {
-        return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED);
+        return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.DISTINCT | Spliterator.NONNULL | Spliterator.ORDERED | Spliterator.SIZED);
     }
 
     /**
@@ -323,39 +305,28 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
      * The empty credentials object.
      */
     public static final IdentityCredentials NONE = new IdentityCredentials() {
-        IdentityCredentials getNext() {
-            return null;
-        }
-
         public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
             return false;
         }
 
-        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
-            return this;
-        }
-
-        Credential getCredential() {
-            return null;
-        }
-
-        public IdentityCredentials withoutMatching(final Credential credential) {
-            return this;
-        }
-
-        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-            return this;
-        }
-
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-            return null;
-        }
-
-        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+            Assert.checkNotNullParam("credentialType", credentialType);
             return null;
         }
 
         public IdentityCredentials with(final IdentityCredentials other) {
+            Assert.checkNotNullParam("other", other);
+            return other;
+        }
+
+        public IdentityCredentials withCredential(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            return new One(credential);
+        }
+
+        public CredentialSource with(final CredentialSource other) {
+            Assert.checkNotNullParam("other", other);
             return other;
         }
 
@@ -363,122 +334,480 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
             return Collections.emptyIterator();
         }
 
+        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return null;
+        }
+
+        public IdentityCredentials withoutMatching(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            return this;
+        }
+
+        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return this;
+        }
+
+        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
+            Assert.checkNotNullParam("predicate", predicate);
+            return this;
+        }
+
         public Spliterator<Credential> spliterator() {
             return Spliterators.emptySpliterator();
+        }
+
+        public void forEach(final Consumer<? super Credential> action) {
+            Assert.checkNotNullParam("action", action);
         }
 
         public int size() {
             return 0;
         }
+
+        public int hashCode() {
+            return 0;
+        }
+
+        public boolean equals(Object o) {
+            return o == this;
+        }
     };
 
-    // Linked list specification, used for iterator
-
-    abstract IdentityCredentials getNext();
-
-    abstract Credential getCredential();
-
-    // Iterator implementation
-
-    static class Itr implements Iterator<Credential> {
-        private IdentityCredentials current;
-
-        Itr(final IdentityCredentials current) {
-            this.current = current;
-        }
-
-        public boolean hasNext() {
-            return current != NONE;
-        }
-
-        public Credential next() {
-            IdentityCredentials current = this.current;
-            if (current == NONE) {
-                throw new NoSuchElementException();
-            } else try {
-                return current.getCredential();
-            } finally {
-                this.current = current.getNext();
-            }
-        }
-    }
-
-    static class CredentialNode extends IdentityCredentials {
-        private final IdentityCredentials next;
+    static class One extends IdentityCredentials {
         private final Credential credential;
-        private final int size;
 
-        CredentialNode(final IdentityCredentials next, final Credential credential) {
-            this.next = next;
+        One(final Credential credential) {
             this.credential = credential;
-            size = next.size() + 1;
-        }
-
-        private CredentialNode withNext(IdentityCredentials next) {
-            if (next == this.next) {
-                return this;
-            } else {
-                return new CredentialNode(next, credential);
-            }
-        }
-
-        IdentityCredentials getNext() {
-            return next;
-        }
-
-        Credential getCredential() {
-            return credential;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-            Assert.checkNotNullParam("credentialType", credentialType);
-            final Credential credential = this.credential;
-            if (credential instanceof AlgorithmCredential) {
-                AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
-                if (parameterSpec != null && ! algorithmCredential.impliesParameters(parameterSpec)) {
-                    return next.getCredential(credentialType, algorithmName);
-                }
-                if (credentialType.isInstance(algorithmCredential) && (algorithmName == null || algorithmName.equals(algorithmCredential.getAlgorithm()))) {
-                    return credentialType.cast(algorithmCredential.clone());
-                } else {
-                    return next.getCredential(credentialType, algorithmName);
-                }
-            } else {
-                if (algorithmName == null && credentialType.isInstance(credential)) {
-                    return credentialType.cast(credential);
-                } else {
-                    return next.getCredential(credentialType, algorithmName);
-                }
-            }
         }
 
         public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
-            Credential credential = this.credential;
-            if (credential instanceof AlgorithmCredential) {
-                final AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
-                return credentialType.isInstance(credential) && (algorithmName == null || algorithmName.equals(algorithmCredential.getAlgorithm())) && (parameterSpec == null || algorithmCredential.impliesParameters(parameterSpec));
-            } else {
-                return algorithmName == null && parameterSpec == null && credentialType.isInstance(credential);
-            }
+            return credential.matches(credentialType, algorithmName, parameterSpec);
         }
 
-        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
-            Assert.checkNotNullParam("predicate", predicate);
-            if (predicate.test(credential)) {
-                return next.without(predicate);
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential) : null;
+        }
+
+        public IdentityCredentials withCredential(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            if (this.credential.matches(credential)) {
+                return new One(credential);
             } else {
-                return withNext(next.without(predicate));
+                return new Two(this.credential, credential);
             }
         }
 
         public IdentityCredentials with(final IdentityCredentials other) {
-            if (other == NONE) return this;
-            return withNext(without(cred -> cred instanceof AlgorithmCredential ? other.getCredential(cred.getClass(), ((AlgorithmCredential) cred).getAlgorithm()) != null : other.getCredential(cred.getClass()) != null));
+            Assert.checkNotNullParam("other", other);
+            if (other == NONE) {
+                return this;
+            } else if (other instanceof One) {
+                return withCredential(((One) other).credential);
+            } else {
+                return other.with(this);
+            }
+        }
+
+        public CredentialSource with(final CredentialSource other) {
+            Assert.checkNotNullParam("other", other);
+            if (other instanceof IdentityCredentials) {
+                return with((IdentityCredentials) other);
+            } else {
+                return super.with(other);
+            }
+        }
+
+        public Iterator<Credential> iterator() {
+            return EnumerationIterator.over(credential);
+        }
+
+        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential.castAndApply(credentialType, algorithmName, parameterSpec, function);
+        }
+
+        public IdentityCredentials withoutMatching(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            return this.credential.matches(credential) ? NONE : this;
+        }
+
+        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential.matches(credentialType, algorithmName, parameterSpec) ? NONE : this;
+        }
+
+        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
+            Assert.checkNotNullParam("predicate", predicate);
+            return predicate.test(credential) ? NONE : this;
+        }
+
+        public void forEach(final Consumer<? super Credential> action) {
+            Assert.checkNotNullParam("action", action);
+            action.accept(credential);
+        }
+
+        public int size() {
+            return 1;
+        }
+
+        public int hashCode() {
+            return typeHash(credential);
+        }
+
+        public boolean equals(final Object obj) {
+            return obj instanceof One && ((One) obj).credential.equals(credential);
+        }
+    }
+
+    static class Two extends IdentityCredentials {
+        private final Credential credential1;
+        private final Credential credential2;
+
+        Two(final Credential credential1, final Credential credential2) {
+            this.credential1 = credential1;
+            this.credential2 = credential2;
+        }
+
+        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential1.matches(credentialType, algorithmName, parameterSpec) || credential2.matches(credentialType, algorithmName, parameterSpec);
+        }
+
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential1.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential1) :
+                   credential2.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential2) : null;
+        }
+
+        public IdentityCredentials withCredential(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            if (credential.matches(credential1)) {
+                return new Two(credential2, credential);
+            } else if (credential.matches(credential2)) {
+                return new Two(credential1, credential);
+            } else {
+                return new Many(credential1, credential2, credential);
+            }
+        }
+
+        public IdentityCredentials with(final IdentityCredentials other) {
+            Assert.checkNotNullParam("other", other);
+            if (other == NONE) {
+                return this;
+            } else if (other instanceof One) {
+                return withCredential(((One) other).credential);
+            } else if (other instanceof Two) {
+                final Two otherTwo = (Two) other;
+                return withCredential(otherTwo.credential1).withCredential(otherTwo.credential2);
+            } else if (other instanceof Many) {
+                Many otherMany = (Many) other;
+                if (otherMany.containsMatching(credential1)) {
+                    if (otherMany.containsMatching(credential2)) {
+                        return otherMany;
+                    } else {
+                        return new Many(credential2, otherMany);
+                    }
+                } else if (otherMany.containsMatching(credential2)) {
+                    return new Many(credential1, otherMany);
+                } else {
+                    return new Many(credential1, credential2, otherMany);
+                }
+            } else {
+                throw Assert.unreachableCode();
+            }
+        }
+
+        public CredentialSource with(final CredentialSource other) {
+            Assert.checkNotNullParam("other", other);
+            if (other instanceof IdentityCredentials) {
+                return with((IdentityCredentials) other);
+            } else {
+                return super.with(other);
+            }
+        }
+
+        public Iterator<Credential> iterator() {
+            return EnumerationIterator.over(credential1);
+        }
+
+        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential1.castAndApply(credentialType, algorithmName, parameterSpec, function);
+        }
+
+        public IdentityCredentials withoutMatching(final Credential credential) {
+            Assert.checkNotNullParam("credential", credential);
+            return this.credential1.matches(credential) ? NONE : this;
+        }
+
+        public IdentityCredentials without(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            Assert.checkNotNullParam("credentialType", credentialType);
+            return credential1.matches(credentialType, algorithmName, parameterSpec) ? NONE : this;
+        }
+
+        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
+            Assert.checkNotNullParam("predicate", predicate);
+            return predicate.test(credential1) ? predicate.test(credential2) ? NONE : new One(credential2) : predicate.test(credential2) ? new One(credential1) : this;
+        }
+
+        public void forEach(final Consumer<? super Credential> action) {
+            Assert.checkNotNullParam("action", action);
+            action.accept(credential1);
+            action.accept(credential2);
+        }
+
+        public int size() {
+            return 2;
+        }
+
+        public int hashCode() {
+            return typeHash(credential1) ^ typeHash(credential2);
+        }
+
+        public boolean equals(final Object obj) {
+            if (! (obj instanceof Two)) {
+                return false;
+            }
+            final Two two = (Two) obj;
+            return credential1.equals(two.credential1) && credential2.equals(two.credential2) || credential1.equals(two.credential2) && credential2.equals(two.credential1);
+        }
+    }
+
+    /**
+     * A (hopefully) unique hash code for the kind of credential.
+     *
+     * @param credential the credential
+     * @return the type hash
+     */
+    static int typeHash(Credential credential) {
+        int ch = credential.getClass().hashCode();
+        if (credential instanceof AlgorithmCredential) {
+            final AlgorithmCredential algorithmCredential = (AlgorithmCredential) credential;
+            return multiHashOrdered(multiHashOrdered(ch, 42979, Objects.hashCode(algorithmCredential.getAlgorithm())), 62861, Objects.hashCode(algorithmCredential.getParameters()));
+        } else {
+            return ch;
+        }
+    }
+
+    static class Many extends IdentityCredentials {
+        private final LinkedHashMap<Key, Credential> map;
+        private final int hashCode;
+
+        Many(final Credential c1, final Many subsequent) {
+            LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(subsequent.map.size() + 1);
+            map.put(Key.of(c1), c1);
+            map.putAll(subsequent.map);
+            this.map = map;
+            int hc = 0;
+            for (Credential credential : map.values()) {
+                hc ^= typeHash(credential);
+            }
+            hashCode = hc;
+            assert size() > 2;
+        }
+
+        Many(final Credential c1, final Credential c2, final Many subsequent) {
+            LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(subsequent.map.size() + 2);
+            map.put(Key.of(c1), c1);
+            map.put(Key.of(c2), c2);
+            map.putAll(subsequent.map);
+            this.map = map;
+            int hc = 0;
+            for (Credential credential : map.values()) {
+                hc ^= typeHash(credential);
+            }
+            hashCode = hc;
+            assert size() > 2;
+        }
+
+        Many(final LinkedHashMap<Key, Credential> map) {
+            this.map = map;
+            int hc = 0;
+            for (Credential credential : map.values()) {
+                hc ^= typeHash(credential);
+            }
+            hashCode = hc;
+            assert size() > 2;
+        }
+
+        Many(final Credential credential1, final Credential credential2, final Credential credential3) {
+            LinkedHashMap<Key, Credential> map = new LinkedHashMap<>(3);
+            map.put(Key.of(credential1), credential1);
+            map.put(Key.of(credential2), credential2);
+            map.put(Key.of(credential3), credential3);
+            this.map = map;
+            int hc = 0;
+            for (Credential credential : map.values()) {
+                hc ^= typeHash(credential);
+            }
+            hashCode = hc;
+            assert size() > 2;
+        }
+
+        public boolean contains(final Class<? extends Credential> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            return map.containsKey(new Key(credentialType, algorithmName, parameterSpec));
+        }
+
+        public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
+            return credentialType.cast(map.get(new Key(credentialType, algorithmName, parameterSpec)));
+        }
+
+        public IdentityCredentials withoutMatching(final Credential credential) {
+            final Key key = Key.of(credential);
+            if (map.containsKey(key)) {
+                final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
+                clone.remove(key);
+                if (clone.size() == 2) {
+                    final Iterator<Credential> iterator = clone.values().iterator();
+                    return new Two(iterator.next(), iterator.next());
+                } else {
+                    return new Many(clone);
+                }
+            } else {
+                return this;
+            }
+        }
+
+        public void forEach(final Consumer<? super Credential> action) {
+            map.values().forEach(action);
+        }
+
+        public int size() {
+            return map.size();
+        }
+
+        public IdentityCredentials withCredential(final Credential credential) {
+            final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
+            final Key key = Key.of(credential);
+            // do this as two steps so it's added to the end
+            clone.remove(key);
+            clone.put(key, credential);
+            return new Many(clone);
+        }
+
+        public IdentityCredentials with(final IdentityCredentials other) {
+            final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
+            for (Credential credential : other) {
+                final Key key = Key.of(credential);
+                clone.remove(key);
+                clone.put(key, credential);
+            }
+            return new Many(clone);
+        }
+
+        public CredentialSource with(final CredentialSource other) {
+            return other instanceof IdentityCredentials ? with((IdentityCredentials) other) : super.with(other);
+        }
+
+        public Iterator<Credential> iterator() {
+            return Collections.unmodifiableCollection(map.values()).iterator();
+        }
+
+        public <C extends Credential, R> R applyToCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec, final Function<C, R> function) {
+            final Key key = new Key(credentialType, algorithmName, parameterSpec);
+            final Credential credential = map.get(key);
+            if (credential != null) {
+                return function.apply(credentialType.cast(credential));
+            }
+            return null;
+        }
+
+        public IdentityCredentials without(final Predicate<? super Credential> predicate) {
+            final LinkedHashMap<Key, Credential> clone = new LinkedHashMap<>(map);
+            final Collection<Credential> values = clone.values();
+            values.removeIf(predicate);
+            final Iterator<Credential> iterator = values.iterator();
+            if (iterator.hasNext()) {
+                final Credential c1 = iterator.next();
+                if (iterator.hasNext()) {
+                    final Credential c2 = iterator.next();
+                    if (iterator.hasNext()) {
+                        return new Many(clone);
+                    } else {
+                        return new Two(c1, c2);
+                    }
+                } else {
+                    return new One(c1);
+                }
+            } else {
+                return NONE;
+            }
+        }
+
+        public int hashCode() {
+            return hashCode;
+        }
+
+        public boolean equals(final Object obj) {
+            if (! (obj instanceof Many)) {
+                return false;
+            }
+            Many many = (Many) obj;
+            // check is potentially expensive so start here
+            if (hashCode != many.hashCode) {
+                return false;
+            }
+            if (map.size() != many.map.size()) {
+                return false;
+            }
+            // now the O(n) part
+            for (Map.Entry<Key, Credential> entry : map.entrySet()) {
+                if (! Objects.equals(many.map.get(entry.getKey()), entry.getValue())) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    static final class Key {
+        private final Class<? extends Credential> clazz;
+        private final String algorithm;
+        private final AlgorithmParameterSpec parameterSpec;
+        private final int hashCode;
+
+        Key(final Class<? extends Credential> clazz, final String algorithm, final AlgorithmParameterSpec parameterSpec) {
+            this.clazz = clazz;
+            this.algorithm = algorithm;
+            this.parameterSpec = parameterSpec;
+            hashCode = multiHashOrdered(multiHashOrdered(clazz.hashCode(), 42979, Objects.hashCode(algorithm)), 62861, Objects.hashCode(parameterSpec));
+        }
+
+        static Key of(Credential c) {
+            if (c instanceof AlgorithmCredential) {
+                final AlgorithmCredential ac = (AlgorithmCredential) c;
+                return new Key(ac.getClass(), ac.getAlgorithm(), ac.getParameters());
+            } else {
+                return new Key(c.getClass(), null, null);
+            }
+        }
+
+        public int hashCode() {
+            return hashCode;
+        }
+
+        public boolean equals(final Object obj) {
+            return obj instanceof Key && equals((Key) obj);
+        }
+
+        private boolean equals(final Key key) {
+            return clazz == key.clazz && Objects.equals(algorithm, key.algorithm) && Objects.equals(parameterSpec, key.parameterSpec);
+        }
+
+        Class<? extends Credential> getClazz() {
+            return clazz;
+        }
+
+        String getAlgorithm() {
+            return algorithm;
+        }
+
+        AlgorithmParameterSpec getParameterSpec() {
+            return parameterSpec;
         }
     }
 }

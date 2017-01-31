@@ -97,4 +97,14 @@ final class ClearPasswordImpl extends AbstractPasswordImpl implements ClearPassw
         return new ClearPasswordImpl(password.clone());
     }
 
+    public int hashCode() {
+        // hashcode becomes 0 when destroyed!
+        return Arrays.hashCode(password);
+    }
+
+    public boolean equals(final Object obj) {
+        final char[] password = this.password;
+        // destroyed passwords are equal to nothing
+        return obj instanceof ClearPasswordImpl && password != null && Arrays.equals(password, ((ClearPasswordImpl) obj).password);
+    }
 }

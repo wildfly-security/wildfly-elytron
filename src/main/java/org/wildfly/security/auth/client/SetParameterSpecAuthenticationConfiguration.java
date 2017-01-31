@@ -21,6 +21,8 @@
  */
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
+
 import java.io.IOException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Collections;
@@ -78,7 +80,7 @@ class SetParameterSpecAuthenticationConfiguration extends AuthenticationConfigur
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 7817, parameterSpecs.hashCode());
+        return multiHashUnordered(parentHashCode(), 7817, parameterSpecs.hashCode());
     }
 
     @Override

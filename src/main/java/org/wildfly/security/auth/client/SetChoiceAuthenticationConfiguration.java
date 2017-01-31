@@ -21,6 +21,8 @@
  */
 package org.wildfly.security.auth.client;
 
+import static org.wildfly.common.math.HashMath.multiHashUnordered;
+
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -64,7 +66,7 @@ class SetChoiceAuthenticationConfiguration extends AuthenticationConfiguration i
     }
 
     int calcHashCode() {
-        return Util.hashiply(parentHashCode(), 22817, Objects.hashCode(operation));
+        return multiHashUnordered(parentHashCode(), 22817, Objects.hashCode(operation));
     }
 
     Predicate<ChoiceCallback> getChoiceOperation() {

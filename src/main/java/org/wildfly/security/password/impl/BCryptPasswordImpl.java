@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -595,6 +596,18 @@ class BCryptPasswordImpl extends AbstractPasswordImpl implements BCryptPassword 
             }
             return value;
         }
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt)), iterationCount);
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof BCryptPasswordImpl)) {
+            return false;
+        }
+        BCryptPasswordImpl other = (BCryptPasswordImpl) obj;
+        return iterationCount == other.iterationCount && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {

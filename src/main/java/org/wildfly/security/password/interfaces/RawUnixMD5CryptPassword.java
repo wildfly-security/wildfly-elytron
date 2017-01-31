@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawUnixMD5CryptPassword extends RawPassword implements UnixMD5CryptPassword {
 
     private static final long serialVersionUID = 4011217552590161658L;
@@ -43,4 +47,15 @@ class RawUnixMD5CryptPassword extends RawPassword implements UnixMD5CryptPasswor
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt));
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawUnixMD5CryptPassword)) {
+            return false;
+        }
+        RawUnixMD5CryptPassword other = (RawUnixMD5CryptPassword) obj;
+        return Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
+    }
 }

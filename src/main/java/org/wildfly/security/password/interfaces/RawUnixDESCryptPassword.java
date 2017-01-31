@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawUnixDESCryptPassword extends RawPassword implements UnixDESCryptPassword {
 
     private static final long serialVersionUID = -450182335481921391L;
@@ -43,4 +47,15 @@ class RawUnixDESCryptPassword extends RawPassword implements UnixDESCryptPasswor
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(Arrays.hashCode(hash), salt);
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawUnixDESCryptPassword)) {
+            return false;
+        }
+        RawUnixDESCryptPassword other = (RawUnixDESCryptPassword) obj;
+        return salt == other.salt && Arrays.equals(hash, other.hash);
+    }
 }

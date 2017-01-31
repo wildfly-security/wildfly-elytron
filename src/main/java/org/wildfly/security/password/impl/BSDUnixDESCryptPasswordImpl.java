@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -618,6 +619,18 @@ class BSDUnixDESCryptPasswordImpl extends AbstractPasswordImpl implements BSDUni
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
         throw new NotSerializableException();
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), salt), iterationCount);
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof BSDUnixDESCryptPasswordImpl)) {
+            return false;
+        }
+        BSDUnixDESCryptPasswordImpl other = (BSDUnixDESCryptPasswordImpl) obj;
+        return iterationCount == other.iterationCount && salt == other.salt && Arrays.equals(hash, other.hash);
     }
 
     Object writeReplace() {

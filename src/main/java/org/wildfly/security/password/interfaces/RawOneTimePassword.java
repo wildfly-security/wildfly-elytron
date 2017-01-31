@@ -18,6 +18,10 @@
 
 package org.wildfly.security.password.interfaces;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
+
+import java.util.Arrays;
+
 class RawOneTimePassword extends RawPassword implements OneTimePassword {
 
     private static final long serialVersionUID = -5742928998692812041L;
@@ -49,4 +53,15 @@ class RawOneTimePassword extends RawPassword implements OneTimePassword {
         return this;
     }
 
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(seed)), sequenceNumber), getAlgorithm().hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof RawOneTimePassword)) {
+            return false;
+        }
+        RawOneTimePassword other = (RawOneTimePassword) obj;
+        return sequenceNumber == other.sequenceNumber && getAlgorithm().equals(other.getAlgorithm()) && Arrays.equals(hash, other.hash) && Arrays.equals(seed, other.seed);
+    }
 }

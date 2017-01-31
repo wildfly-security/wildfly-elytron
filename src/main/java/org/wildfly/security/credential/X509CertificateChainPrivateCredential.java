@@ -20,7 +20,10 @@ package org.wildfly.security.credential;
 
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
 import org.wildfly.common.Assert;
+import org.wildfly.common.math.HashMath;
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.key.KeyUtil;
 
@@ -63,5 +66,17 @@ public final class X509CertificateChainPrivateCredential extends AbstractX509Cer
         final PrivateKey privateKey = this.privateKey;
         final PrivateKey clone = KeyUtil.cloneKey(PrivateKey.class, privateKey);
         return privateKey == clone ? this : new X509CertificateChainPrivateCredential(clone, getCertificateChain());
+    }
+
+    public int hashCode() {
+        return HashMath.multiHashOrdered(Arrays.hashCode(certificateChain), privateKey.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        return obj instanceof X509CertificateChainPrivateCredential && equals((X509CertificateChainPrivateCredential) obj);
+    }
+
+    private boolean equals(final X509CertificateChainPrivateCredential obj) {
+        return privateKey.equals(obj.privateKey) && Arrays.equals(certificateChain, obj.certificateChain);
     }
 }

@@ -18,6 +18,7 @@
 
 package org.wildfly.security.password.impl;
 
+import static org.wildfly.common.math.HashMath.multiHashOrdered;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.NotSerializableException;
@@ -280,6 +281,18 @@ final class SunUnixMD5CryptPasswordImpl extends AbstractPasswordImpl implements 
 
     private static MessageDigest getMD5MessageDigest() throws NoSuchAlgorithmException {
         return MessageDigest.getInstance(MD5);
+    }
+
+    public int hashCode() {
+        return multiHashOrdered(multiHashOrdered(multiHashOrdered(Arrays.hashCode(hash), Arrays.hashCode(salt)), iterationCount), algorithm.hashCode());
+    }
+
+    public boolean equals(final Object obj) {
+        if (! (obj instanceof SunUnixMD5CryptPasswordImpl)) {
+            return false;
+        }
+        SunUnixMD5CryptPasswordImpl other = (SunUnixMD5CryptPasswordImpl) obj;
+        return iterationCount == other.iterationCount && algorithm.equals(other.algorithm) && Arrays.equals(hash, other.hash) && Arrays.equals(salt, other.salt);
     }
 
     private void readObject(ObjectInputStream ignored) throws NotSerializableException {
