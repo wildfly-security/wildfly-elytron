@@ -26,8 +26,10 @@ import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
@@ -70,6 +72,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private final PermissionVerifier verifier;
     private final IdentityCredentials publicCredentials;
     private final IdentityCredentials privateCredentials;
+    private final SecurityIdentity[] withIdentities;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final IdentityCredentials publicCredentials, final IdentityCredentials privateCredentials) {
         this.securityDomain = securityDomain;
@@ -81,6 +84,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = securityDomain.mapPermissions(this);
         this.publicCredentials = publicCredentials;
         this.privateCredentials = privateCredentials;
+        this.withIdentities = new SecurityIdentity[] {};
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -93,6 +97,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
+        this.withIdentities = old.withIdentities;
     }
 
     SecurityIdentity(final SecurityIdentity old, final PermissionVerifier verifier) {
@@ -105,6 +110,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
+        this.withIdentities = old.withIdentities;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Credential credential, final boolean isPrivate) {
@@ -117,6 +123,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.withCredential(credential);
         this.privateCredentials = isPrivate ? old.privateCredentials.withCredential(credential) : old.privateCredentials;
+        this.withIdentities = old.withIdentities;
     }
 
     SecurityIdentity(final SecurityIdentity old, final IdentityCredentials credentials, final boolean isPrivate) {
@@ -129,6 +136,20 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.with(credentials);
         this.privateCredentials = isPrivate ? old.privateCredentials.with(credentials) : old.privateCredentials;
+        this.withIdentities = old.withIdentities;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final SecurityIdentity[] withIdentities) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
+        this.withIdentities = withIdentities;
     }
 
     SecurityDomain getSecurityDomain() {
@@ -143,6 +164,25 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return authorizationIdentity;
     }
 
+    private SecurityIdentity[] establishIdentities() {
+        SecurityIdentity[] oldIdentities = new SecurityIdentity[withIdentities.length + 1];
+        SecurityDomain securityDomain = this.securityDomain;
+        oldIdentities[0] = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        for (int i = 0; i < withIdentities.length; i++) {
+            SecurityIdentity securityIdentity = withIdentities[i];
+            securityDomain = securityIdentity.getSecurityDomain();
+            oldIdentities[i + 1] = securityDomain.getAndSetCurrentSecurityIdentity(securityIdentity);
+        }
+
+        return oldIdentities;
+    }
+
+    private void restoreIdentities(SecurityIdentity[] securityIdentities) {
+        for (SecurityIdentity currentIdentity : securityIdentities) {
+            currentIdentity.securityDomain.setCurrentSecurityIdentity(currentIdentity);
+        }
+    }
+
     /**
      * Run an action under this identity.
      *
@@ -150,12 +190,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public void runAs(Runnable action) {
         if (action == null) return;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             action.run();
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -169,12 +209,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(Callable<T> action) throws Exception {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.call();
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -187,12 +227,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(PrivilegedAction<T> action) {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.run();
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -206,8 +246,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAs(PrivilegedExceptionAction<T> action) throws PrivilegedActionException {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.run();
         } catch (RuntimeException | PrivilegedActionException e) {
@@ -215,7 +255,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -230,12 +270,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, P> T runAs(P parameter, ParametricPrivilegedAction<T, P> action) {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.run(parameter);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -251,8 +291,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, P> T runAs(P parameter, ParametricPrivilegedExceptionAction<T, P> action) throws PrivilegedActionException {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.run(parameter);
         } catch (RuntimeException | PrivilegedActionException e) {
@@ -260,7 +300,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         } catch (Exception e) {
             throw new PrivilegedActionException(e);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -291,12 +331,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U, R> R runAsFunction(BiFunction<T, U, R> action, T parameter1, U parameter2) {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.apply(parameter1, parameter2);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -323,12 +363,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T, U> void runAsConsumer(BiConsumer<T, U> action, T parameter1, U parameter2) {
         if (action == null) return;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -342,12 +382,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> void runAsObjIntConsumer(ObjIntConsumer<T> action, T parameter1, int parameter2) {
         if (action == null) return;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             action.accept(parameter1, parameter2);
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -360,12 +400,12 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public <T> T runAsSupplier(Supplier<T> action) {
         if (action == null) return null;
-        final SecurityDomain securityDomain = this.securityDomain;
-        final SecurityIdentity old = securityDomain.getAndSetCurrentSecurityIdentity(this);
+        SecurityIdentity[] toRestore = establishIdentities();
+
         try {
             return action.get();
         } finally {
-            securityDomain.setCurrentSecurityIdentity(old);
+            restoreIdentities(toRestore);
         }
     }
 
@@ -420,6 +460,39 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
      */
     public Roles getRoles(String category) {
         return getRoles(category, false);
+    }
+
+    /**
+     * Attempt to create a new identity that is the same as this identity but with an additional identity from a different
+     * security domain that will be associated with all 'run' calls.
+     *
+     * @param securityIdentity the {@link SecurityIdentity} to also be associated with all run calls made to this identity.
+     * @return the new identity
+     * @throws IllegalArgumentException if the supplied identity
+     */
+    public SecurityIdentity withSecurityIdentity(SecurityIdentity securityIdentity) {
+        Assert.checkNotNullParam("securityIdentity", securityIdentity);
+        if (securityIdentity == this) {
+            return this;
+        }
+
+        if (securityDomain == securityIdentity.securityDomain) {
+            throw log.cantWithSameSecurityDomainDomain();
+        }
+
+        List<SecurityIdentity> withIdentities = new ArrayList<>(this.withIdentities.length + 1);
+        for (SecurityIdentity currentIdentity : this.withIdentities) {
+            if (currentIdentity == securityIdentity) {
+                return this;
+            }
+
+            if (currentIdentity.securityDomain != securityIdentity.securityDomain) {
+                withIdentities.add(currentIdentity);
+            }
+            withIdentities.add(securityIdentity);
+        }
+
+        return new SecurityIdentity(this, withIdentities.toArray(new SecurityIdentity[withIdentities.size()]));
     }
 
     /**

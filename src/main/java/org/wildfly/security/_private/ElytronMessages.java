@@ -597,6 +597,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
     IllegalStateException classLoaderSecurityDomainExists();
 
+    @Message(id = 1149, value = "Can not use SecurityIdentity with SecurityIdentity from same SecurityDomain")
+    IllegalArgumentException cantWithSameSecurityDomainDomain();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
