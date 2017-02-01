@@ -51,6 +51,10 @@ class SetMechanismPropertiesConfiguration extends AuthenticationConfiguration {
         return mechanismProperties.equals(other.getMechanismProperties()) && parentHalfEqual(other);
     }
 
+    Map<String, String> getMechanismProperties() {
+        return mechanismProperties;
+    }
+
     int calcHashCode() {
         return multiHashUnordered(parentHashCode(), 10267, mechanismProperties.hashCode());
     }
