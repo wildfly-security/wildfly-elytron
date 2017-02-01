@@ -53,6 +53,11 @@ class SetCallbackHandlerAuthenticationConfiguration extends AuthenticationConfig
         return callbackHandler;
     }
 
+    @Override
+    boolean saslSupportedByConfiguration(String mechanismName) {
+        return true;
+    }
+
     boolean halfEqual(final AuthenticationConfiguration other) {
         return Objects.equals(callbackHandler, other.getCallbackHandler()) && parentHalfEqual(other);
     }
