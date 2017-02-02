@@ -127,6 +127,9 @@ import org.wildfly.security.x500.X500;
  * </ul>
  */
 public final class KeyStoreCredentialStore extends CredentialStoreSpi {
+
+    private static final String DATA_OID = "1.2.840.113549.1.7.1";
+
     /**
      * The name of this credential store implementation.
      */
@@ -174,7 +177,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 final KeyFactory keyFactory = KeyFactory.getInstance(publicKey.getAlgorithm());
                 final X509EncodedKeySpec keySpec = keyFactory.getKeySpec(keyFactory.translateKey(publicKey), X509EncodedKeySpec.class);
                 final byte[] encoded = keySpec.getEncoded();
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encoded, "xxx"));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(encoded, DATA_OID));
             } else if (credentialClass == KeyPairCredential.class) {
                 final KeyPair keyPair = credential.castAndApply(KeyPairCredential.class, KeyPairCredential::getKeyPair);
                 final PublicKey publicKey = keyPair.getPublic();
@@ -190,7 +193,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 encoder.writeEncoded(publicSpec.getEncoded());
                 encoder.writeEncoded(privateSpec.getEncoded());
                 encoder.endSequence();
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), "xxx"));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
             } else if (credentialClass == X509CertificateChainPublicCredential.class) {
                 final X509Certificate[] x509Certificates = credential.castAndApply(X509CertificateChainPublicCredential.class, X509CertificateChainPublicCredential::getCertificateChain);
                 final ByteStringBuilder b = new ByteStringBuilder();
@@ -201,13 +204,13 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                     encoder.writeEncoded(x509Certificate.getEncoded());
                 }
                 encoder.endSequence();
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), "xxx"));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
             } else if (credentialClass == X509CertificateChainPrivateCredential.class) {
                 @SuppressWarnings("ConstantConditions")
                 X509CertificateChainPrivateCredential cred = (X509CertificateChainPrivateCredential) credential;
                 entry = new KeyStore.PrivateKeyEntry(cred.getPrivateKey(), cred.getCertificateChain());
             } else if (credentialClass == BearerTokenCredential.class) {
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(credential.castAndApply(BearerTokenCredential.class, c -> c.getToken().getBytes(StandardCharsets.UTF_8)), "xxx"));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(credential.castAndApply(BearerTokenCredential.class, c -> c.getToken().getBytes(StandardCharsets.UTF_8)), DATA_OID));
             } else if (credentialClass == PasswordCredential.class) {
                 final Password password = credential.castAndApply(PasswordCredential.class, PasswordCredential::getPassword);
                 final String algorithm = password.getAlgorithm();
@@ -307,7 +310,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                         }
                     }
                 }
-                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), "xxx"));
+                entry = new KeyStore.SecretKeyEntry(new SecretKeySpec(b.toArray(), DATA_OID));
             } else {
                 throw log.unsupportedCredentialType(credentialClass);
             }

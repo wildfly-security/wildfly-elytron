@@ -156,6 +156,7 @@ public class WildFlyElytronProvider extends Provider {
         putSaslMechanismImplementations();
         putCredentialStoreProviderImplementations();
         putAlgorithmParametersImplementations();
+        put("Alg.Alias.Data.OID.1.2.840.113549.1.7.1", "Data");
     }
 
     private void putAlgorithmParametersImplementations() {
