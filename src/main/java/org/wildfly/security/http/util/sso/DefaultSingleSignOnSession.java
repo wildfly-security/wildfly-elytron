@@ -27,8 +27,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,7 +109,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
             scope.registerForNotification(notification -> {
                 HttpScope sessionScope = notification.getScope(Scope.SESSION);
 
-                Collection<Map.Entry<String, URI>> logoutTargets = Collections.emptyList();
+                Map<String, Map.Entry<String, URI>> logoutTargets = Collections.emptyMap();
                 try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
                     if (target != null) {
                         Map.Entry<String, URI> localParticipant = target.removeParticipant(applicationId);
@@ -117,24 +117,25 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                             log.debugf("Removed local session [%s] from SSO [%s]", localParticipant.getKey(), target.getId());
                         }
                         if (sessionScope.getAttachment(SESSION_INVALIDATING_ATTRIBUTE) == null) {
-                            Collection<Map.Entry<String, URI>> participants = target.getParticipants();
+                            Map<String, Map.Entry<String, URI>> participants = target.getParticipants();
                             if (participants.isEmpty()) {
                                 log.debugf("Destroying SSO [%s]. SSO is not associated with participants", target.getId());
                                 target.invalidate();
                             } else if (notification.isOfType(INVALIDATED)) {
-                                logoutTargets = participants;
+                                logoutTargets = new HashMap<>(participants);
                             }
                         }
                     }
                 }
 
                 if (!logoutTargets.isEmpty()) {
-                    logoutTargets.forEach(participant -> {
+                    logoutTargets.forEach((participantId, participant) -> {
                         String remoteSessionId = participant.getKey();
                         URI remoteURI = participant.getValue();
                         try {
                             URL participantUrl = remoteURI.toURL();
                             HttpURLConnection connection = (HttpURLConnection) participantUrl.openConnection();
+
                             this.context.configureLogoutConnection(connection);
 
                             connection.setRequestMethod("POST");
@@ -160,6 +161,10 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                             connection.getInputStream().close();
                         } catch (Exception cause) {
                             log.warnHttpMechSsoFailedLogoutParticipant(remoteURI.toString(), cause);
+                            // failed to logout participant, remove it from the list of participants
+                            try (SingleSignOn target = context.getSingleSignOnManagerManager().find(id)) {
+                                target.removeParticipant(participantId);
+                            }
                         }
                     });
 

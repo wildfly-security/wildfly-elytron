@@ -18,7 +18,6 @@
 package org.wildfly.security.http.util.sso;
 
 import java.net.URI;
-import java.util.Collection;
 import java.util.Map;
 
 import org.wildfly.security.auth.server.SecurityIdentity;
@@ -53,8 +52,8 @@ public interface ImmutableSingleSignOn {
     SecurityIdentity getIdentity();
 
     /**
-     * Returns the participants associated with this single sign-on entry
+     * Returns the participants associated with this single sign-on entry.
      * @return an unmodifiable mapping of application identifier to a tuple of the session identifier and request URI
      */
-    Collection<Map.Entry<String, URI>> getParticipants();
+    Map<String, Map.Entry<String, URI>> getParticipants();
 }
