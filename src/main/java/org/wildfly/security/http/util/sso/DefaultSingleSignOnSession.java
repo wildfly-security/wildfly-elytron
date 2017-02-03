@@ -161,20 +161,18 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                             connection.getInputStream().close();
                         } catch (Exception cause) {
                             log.warnHttpMechSsoFailedLogoutParticipant(remoteURI.toString(), cause);
-                            // failed to logout participant, remove it from the list of participants
-                            try (SingleSignOn target = context.getSingleSignOnManager().find(id)) {
-                                target.removeParticipant(participantId);
-                            }
                         }
                     });
 
                     try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                         if (target != null) {
                             // If all logout requests were successful, then there should be no participants, and we can invalidate the SSO
-                            if (target.getParticipants().isEmpty()) {
+                            if (!target.getParticipants().isEmpty()) {
+                                log.debugf("Destroying SSO [%s]. Participant list not empty.", target.getId());
+                            } else {
                                 log.debugf("Destroying SSO [%s]. SSO is no longer associated with any participants", target.getId());
-                                target.invalidate();
                             }
+                            target.invalidate();
                         }
                     }
                 }
