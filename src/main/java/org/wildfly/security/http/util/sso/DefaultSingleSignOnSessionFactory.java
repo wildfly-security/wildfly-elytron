@@ -23,6 +23,7 @@ import org.wildfly.security.util.ByteIterator;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -89,7 +90,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
 
             Base64.Encoder urlEncoder = Base64.getUrlEncoder();
 
-            return sessionId + "." + ByteIterator.ofBytes(urlEncoder.encode(ByteIterator.ofBytes(sessionId.getBytes()).sign(signature).drain())).asUtf8String().drainToString();
+            return sessionId + "." + ByteIterator.ofBytes(urlEncoder.encode(ByteIterator.ofBytes(sessionId.getBytes(StandardCharsets.UTF_8)).sign(signature).drain())).asUtf8String().drainToString();
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new IllegalStateException(e);
         }
@@ -102,15 +103,15 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
             throw new IllegalArgumentException(parameter);
         }
         try {
-            String localSessionId = ByteIterator.ofBytes(parts[0].getBytes()).asUtf8String().drainToString();
+            String localSessionId = ByteIterator.ofBytes(parts[0].getBytes(StandardCharsets.UTF_8)).asUtf8String().drainToString();
             Signature signature = Signature.getInstance(DEFAULT_SIGNATURE_ALGORITHM);
 
             signature.initVerify(this.keyPair.getPublic());
-            signature.update(localSessionId.getBytes());
+            signature.update(localSessionId.getBytes(StandardCharsets.UTF_8));
 
             Base64.Decoder urlDecoder = Base64.getUrlDecoder();
 
-            if (!ByteIterator.ofBytes(urlDecoder.decode(parts[1].getBytes())).verify(signature)) {
+            if (!ByteIterator.ofBytes(urlDecoder.decode(parts[1].getBytes(StandardCharsets.UTF_8))).verify(signature)) {
                 throw log.httpMechSsoInvalidLogoutMessage(localSessionId);
             }
 
