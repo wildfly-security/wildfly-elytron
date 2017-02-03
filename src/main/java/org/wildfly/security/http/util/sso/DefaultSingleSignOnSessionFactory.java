@@ -76,7 +76,7 @@ public class DefaultSingleSignOnSessionFactory implements SingleSignOnSessionFac
     }
 
     @Override
-    public SingleSignOnManager getSingleSignOnManagerManager() {
+    public SingleSignOnManager getSingleSignOnManager() {
         return this.manager;
     }
 

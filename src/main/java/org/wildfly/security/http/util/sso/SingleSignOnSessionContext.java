@@ -24,7 +24,7 @@ import java.net.HttpURLConnection;
  * @author Paul Ferraro
  */
 public interface SingleSignOnSessionContext {
-    SingleSignOnManager getSingleSignOnManagerManager();
+    SingleSignOnManager getSingleSignOnManager();
 
     String createLogoutParameter(String sessionId);
     String verifyLogoutParameter(String logoutRequest);

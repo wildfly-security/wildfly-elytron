@@ -65,7 +65,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
         this.context = checkNotNullParam("context", context);
         this.request = checkNotNullParam("request", request);
         checkNotNullParam("mechanismName", mechanismName);
-        this.ssoFactory = identity -> context.getSingleSignOnManagerManager().create(mechanismName, identity);
+        this.ssoFactory = identity -> context.getSingleSignOnManager().create(mechanismName, identity);
     }
 
     public DefaultSingleSignOnSession(SingleSignOnSessionContext context, HttpServerRequest request, SingleSignOn sso) {
@@ -110,7 +110,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                 HttpScope sessionScope = notification.getScope(Scope.SESSION);
 
                 Map<String, Map.Entry<String, URI>> logoutTargets = Collections.emptyMap();
-                try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
+                try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                     if (target != null) {
                         Map.Entry<String, URI> localParticipant = target.removeParticipant(applicationId);
                         if (localParticipant != null) {
@@ -162,13 +162,13 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                         } catch (Exception cause) {
                             log.warnHttpMechSsoFailedLogoutParticipant(remoteURI.toString(), cause);
                             // failed to logout participant, remove it from the list of participants
-                            try (SingleSignOn target = context.getSingleSignOnManagerManager().find(id)) {
+                            try (SingleSignOn target = context.getSingleSignOnManager().find(id)) {
                                 target.removeParticipant(participantId);
                             }
                         }
                     });
 
-                    try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
+                    try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                         if (target != null) {
                             // If all logout requests were successful, then there should be no participants, and we can invalidate the SSO
                             if (target.getParticipants().isEmpty()) {
