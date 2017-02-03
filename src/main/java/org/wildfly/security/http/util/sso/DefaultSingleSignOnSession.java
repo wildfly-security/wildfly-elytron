@@ -28,7 +28,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -108,8 +107,8 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
             scope.registerForNotification(notification -> {
                 HttpScope sessionScope = notification.getScope(Scope.SESSION);
-
                 Map<String, Map.Entry<String, URI>> logoutTargets = Collections.emptyMap();
+
                 try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                     if (target != null) {
                         Map.Entry<String, URI> localParticipant = target.removeParticipant(applicationId);
@@ -122,7 +121,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                                 log.debugf("Destroying SSO [%s]. SSO is not associated with participants", target.getId());
                                 target.invalidate();
                             } else if (notification.isOfType(INVALIDATED)) {
-                                logoutTargets = new HashMap<>(participants);
+                                logoutTargets = participants;
                             }
                         }
                     }
