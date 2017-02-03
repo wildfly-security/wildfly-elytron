@@ -174,6 +174,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
+        public void authenticationInProgress(HttpServerMechanismsResponder responder, boolean authenticationRequired) {
+            wrapped.authenticationInProgress(wrap(responder), authenticationRequired);
+        }
+
+        @Override
         public void authenticationComplete(HttpServerMechanismsResponder responder) {
             wrapped.authenticationComplete(wrap(responder));
         }

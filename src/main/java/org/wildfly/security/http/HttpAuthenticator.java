@@ -184,10 +184,12 @@ public class HttpAuthenticator {
         }
 
         @Override
-        public void authenticationInProgress(HttpServerMechanismsResponder responder) {
-            authenticationAttempted = true;
-            if (responder != null) {
-                responders.add(responder);
+        public void authenticationInProgress(HttpServerMechanismsResponder responder, boolean authenticationRquired) {
+            if (authenticationRquired || required) {
+                authenticationAttempted = true;
+                if (responder != null) {
+                    responders.add(responder);
+                }
             }
         }
 
