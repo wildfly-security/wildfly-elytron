@@ -72,6 +72,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     private final PermissionVerifier verifier;
     private final IdentityCredentials publicCredentials;
     private final IdentityCredentials privateCredentials;
+    private final Supplier<SecurityIdentity[]> withSuppliedIdentities;
     private final SecurityIdentity[] withIdentities;
 
     SecurityIdentity(final SecurityDomain securityDomain, final Principal principal, final RealmInfo realmInfo, final AuthorizationIdentity authorizationIdentity, final Map<String, RoleMapper> roleMappers, final IdentityCredentials publicCredentials, final IdentityCredentials privateCredentials) {
@@ -84,7 +85,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = securityDomain.mapPermissions(this);
         this.publicCredentials = publicCredentials;
         this.privateCredentials = privateCredentials;
-        this.withIdentities = new SecurityIdentity[] {};
+        this.withSuppliedIdentities = null;
+        this.withIdentities = null;
     }
 
     SecurityIdentity(final SecurityIdentity old, final Map<String, RoleMapper> roleMappers) {
@@ -97,6 +99,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
     }
 
@@ -110,6 +113,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
     }
 
@@ -123,6 +127,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.withCredential(credential);
         this.privateCredentials = isPrivate ? old.privateCredentials.withCredential(credential) : old.privateCredentials;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
     }
 
@@ -136,7 +141,22 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = isPrivate ? old.publicCredentials : old.publicCredentials.with(credentials);
         this.privateCredentials = isPrivate ? old.privateCredentials.with(credentials) : old.privateCredentials;
+        this.withSuppliedIdentities = old.withSuppliedIdentities;
         this.withIdentities = old.withIdentities;
+    }
+
+    SecurityIdentity(final SecurityIdentity old, final Supplier<SecurityIdentity[]> withSuppliedIdentites) {
+        this.securityDomain = old.securityDomain;
+        this.principal = old.principal;
+        this.realmInfo = old.realmInfo;
+        this.authorizationIdentity = old.authorizationIdentity;
+        this.roleMappers = old.roleMappers;
+        this.creationTime = old.creationTime;
+        this.verifier = old.verifier;
+        this.publicCredentials = old.publicCredentials;
+        this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = withSuppliedIdentites;
+        this.withIdentities = null;
     }
 
     SecurityIdentity(final SecurityIdentity old, final SecurityIdentity[] withIdentities) {
@@ -149,6 +169,7 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         this.verifier = old.verifier;
         this.publicCredentials = old.publicCredentials;
         this.privateCredentials = old.privateCredentials;
+        this.withSuppliedIdentities = null;
         this.withIdentities = withIdentities;
     }
 
@@ -165,6 +186,8 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     private SecurityIdentity[] establishIdentities() {
+        SecurityIdentity[] withIdentities = this.withIdentities != null ? this.withIdentities : withSuppliedIdentities != null ? withSuppliedIdentities.get() : new SecurityIdentity[] {};
+
         SecurityIdentity[] oldIdentities = new SecurityIdentity[withIdentities.length + 1];
         SecurityDomain securityDomain = this.securityDomain;
         oldIdentities[0] = securityDomain.getAndSetCurrentSecurityIdentity(this);
@@ -462,9 +485,32 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
         return getRoles(category, false);
     }
 
+
+    /**
+     * Attempt to create a new identity that is the same as this identity but with a {@link Supplier<SecurityIdentity[]>} to supply identities that will be associated with all 'run' calls.
+     *
+     * Any existing individual identities associated with this identity will be dropped.
+     *
+     * The supplier will be called for each run call so were possible should handle it's own optimisation.
+     *
+     * @param securityIdentities a {@link Supplier<SecurityIdentity[]>} for identities to be associated with every run call.
+     * @return the new identity
+     * @throws IllegalArgumentException if the supplied identity
+     */
+    public SecurityIdentity withSecurityIdentitySupplier(Supplier<SecurityIdentity[]> securityIdentities) {
+        Assert.checkNotNullParam("securityIdentities", securityIdentities);
+        if (this.withSuppliedIdentities == securityIdentities) {
+            return this;
+        }
+
+        return new SecurityIdentity(this, securityIdentities);
+    }
+
     /**
      * Attempt to create a new identity that is the same as this identity but with an additional identity from a different
      * security domain that will be associated with all 'run' calls.
+     *
+     * If a {@link Supplier<SecurityIdentity[]>} has previously been associated with this identity it will be dropped.
      *
      * @param securityIdentity the {@link SecurityIdentity} to also be associated with all run calls made to this identity.
      * @return the new identity
