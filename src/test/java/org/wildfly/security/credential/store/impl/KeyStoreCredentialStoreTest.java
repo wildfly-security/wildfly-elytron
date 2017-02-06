@@ -18,9 +18,12 @@
 
 package org.wildfly.security.credential.store.impl;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.security.Security;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,9 +48,6 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-
 @RunWith(Parameterized.class)
 public class KeyStoreCredentialStoreTest {
 
@@ -71,7 +71,7 @@ public class KeyStoreCredentialStoreTest {
 
     @Parameters(name = "format={0}")
     public static Iterable<Object[]> keystoreFormats() {
-        return Arrays.asList(new Object[] {"JCEKS"}, new Object[] {"PKCS12"});
+        return Collections.singletonList(new Object[] {"JCEKS"});
     }
 
     @Before
