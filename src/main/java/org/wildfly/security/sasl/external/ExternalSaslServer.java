@@ -30,7 +30,6 @@ import javax.security.sasl.AuthorizeCallback;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
-import org.wildfly.security.sasl.util.AbstractSaslParticipant;
 import org.wildfly.security.sasl.util.SaslMechanismInformation;
 import org.wildfly.security.util._private.Arrays2;
 
@@ -79,7 +78,7 @@ final class ExternalSaslServer implements SaslServer {
             throw log.mechAuthorizationFailed(getMechanismName(), null, authorizationId).toSaslException();
         }
         this.authorizationID = authorizeCallback.getAuthorizedID();
-        return AbstractSaslParticipant.NO_BYTES;
+        return null;
     }
 
     public boolean isComplete() {
