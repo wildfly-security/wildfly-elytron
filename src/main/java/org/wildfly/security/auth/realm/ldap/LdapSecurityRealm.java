@@ -627,10 +627,9 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 ldapSearch.setReturningAttributes(); // no attributes needed
 
-                try (
-                    Stream<LdapIdentity> identityStream = ldapSearch.search(context)
-                            .map(result -> new LdapIdentity(result.getNameInNamespace()))
-                ) {
+                try (Stream<SearchResult> ldapSearchStream = ldapSearch.search(context);
+                        Stream<LdapIdentity> identityStream = ldapSearchStream
+                                .map(result -> new LdapIdentity(result.getNameInNamespace()))) {
                     LdapIdentity identity = identityStream.findFirst().orElse(null);
                     if (identity != null) {
                         log.debugf("Identity for principal [%s] found at [%s].", name, identity.getDistinguishedName());
