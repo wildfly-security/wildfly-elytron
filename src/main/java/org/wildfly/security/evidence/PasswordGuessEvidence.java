@@ -18,6 +18,8 @@
 
 package org.wildfly.security.evidence;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.util.Arrays;
 
 import javax.security.auth.Destroyable;
@@ -32,10 +34,10 @@ public final class PasswordGuessEvidence implements Evidence, Destroyable {
     /**
      * Construct a new instance.
      *
-     * @param guess the password guess
+     * @param guess the non {@code null} password guess
      */
     public PasswordGuessEvidence(final char[] guess) {
-        this.guess = guess;
+        this.guess = checkNotNullParam("guess", guess);
     }
 
     /**
