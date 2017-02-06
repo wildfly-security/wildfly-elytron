@@ -31,9 +31,9 @@ import java.util.function.Consumer;
 public interface HttpScope {
 
     /**
-     * Get the ID of this scope or (@code null} if IDs are not supported for this scope.
+     * Get the ID of this scope or (@code null} if IDs are not supported for this scope or the scope doesn't currently exist.
      *
-     * @return the ID of this scope or (@code null} if IDs are not supported for this scope.
+     * @return the ID of this scope or (@code null} if IDs are not supported for this scope or the scope doesn't currently exist..
      */
     default String getID() {
         return null;
