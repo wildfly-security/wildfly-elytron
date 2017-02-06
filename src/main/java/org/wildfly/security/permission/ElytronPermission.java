@@ -28,6 +28,9 @@ import org.wildfly.security.util.StringMapping;
  *     <li>{@code createAuthenticator}</li>
  *     <li>{@code createAuthenticationContextConfigurationClient}</li>
  *     <li>{@code createSecurityDomain}</li>
+ *     <li>{@code registerSecurityDomain}</li>
+ *     <li>{@code getSecurityDomain}</li>
+ *     <li>{@code unregisterSecurityDomain}</li>
  *     <li>{@code setRunAsPrincipal}</li>
  *     <li>{@code createServerAuthenticationContext}</li>
  *     <li>{@code getPrivateCredentials}</li>
@@ -46,6 +49,9 @@ public final class ElytronPermission extends AbstractNameSetOnlyPermission<Elytr
         "createAuthenticator",
         "createAuthenticationContextConfigurationClient",
         "createSecurityDomain",
+        "registerSecurityDomain",
+        "getSecurityDomain",
+        "unregisterSecurityDomain",
         "setRunAsPrincipal",
         "createServerAuthenticationContext",
         "getPrivateCredentials",

@@ -20,6 +20,7 @@ package org.wildfly.security.auth.server;
 
 import static java.security.AccessController.doPrivileged;
 import static java.util.Collections.emptyMap;
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.security.Principal;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
@@ -64,7 +66,12 @@ import org.wildfly.security.permission.PermissionVerifier;
  */
 public final class SecurityDomain {
 
+    private static final ConcurrentHashMap<ClassLoader, SecurityDomain> CLASS_LOADER_DOMAIN_MAP = new ConcurrentHashMap<>();
+
     static final ElytronPermission CREATE_SECURITY_DOMAIN = ElytronPermission.forName("createSecurityDomain");
+    static final ElytronPermission REGISTER_SECURITY_DOMAIN = ElytronPermission.forName("registerSecurityDomain");
+    static final ElytronPermission GET_SECURITY_DOMAIN = ElytronPermission.forName("getSecurityDomain");
+    static final ElytronPermission UNREGISTER_SECURITY_DOMAIN = ElytronPermission.forName("unregisterSecurityDomain");
     static final ElytronPermission CREATE_AUTH_CONTEXT = ElytronPermission.forName("createServerAuthenticationContext");
     static final ElytronPermission GET_IDENTITY = ElytronPermission.forName("getIdentity");
     static final ElytronPermission GET_IDENTITY_FOR_UPDATE = ElytronPermission.forName("getIdentityForUpdate");
@@ -107,6 +114,63 @@ public final class SecurityDomain {
         final RealmInfo realmInfo = new RealmInfo();
         anonymousIdentity = Assert.assertNotNull(securityIdentityTransformer.apply(new SecurityIdentity(this, AnonymousPrincipal.getInstance(), realmInfo, AuthorizationIdentity.EMPTY, copiedRoleMappers, IdentityCredentials.NONE, IdentityCredentials.NONE)));
         currentSecurityIdentity = ThreadLocal.withInitial(() -> anonymousIdentity);
+    }
+
+    /**
+     * Register this {@link SecurityDomain} with the specified {@link ClassLoader}.
+     *
+     * @throws IllegalStateException If a {@link SecurityDomain} is already associated with the specified {@link ClassLoader}.
+     * @param classLoader the non {@code null} {@link ClassLoader} to associate this {@link SecurityDomain} with.
+     */
+    public void registerWithClassLoader(ClassLoader classLoader) {
+        checkNotNullParam("classLoader", classLoader);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(REGISTER_SECURITY_DOMAIN);
+        }
+
+        if (CLASS_LOADER_DOMAIN_MAP.putIfAbsent(classLoader, this) != null) {
+            throw log.classLoaderSecurityDomainExists();
+        }
+    }
+
+    /**
+     * Get the {@link SecurityDomain} associated with the context class loader of the calling Thread or {@code null} if one is
+     * not associated.
+     *
+     * @return the {@link SecurityDomain} associated with the context class loader of the calling Thread or {@code null} if one
+     *         is not associated.
+     */
+    public static SecurityDomain getCurrent() {
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(GET_SECURITY_DOMAIN);
+        }
+
+        final Thread currentThread = Thread.currentThread();
+        ClassLoader classLoader;
+        if (sm != null) {
+            classLoader = doPrivileged((PrivilegedAction<ClassLoader>) currentThread::getContextClassLoader);
+        } else {
+            classLoader = currentThread.getContextClassLoader();
+        }
+
+        return CLASS_LOADER_DOMAIN_MAP.get(classLoader);
+    }
+
+    /**
+     * Unregister any {@link SecurityDomain} associated with the specified {@link ClassLoader}.
+     *
+     * @param classLoader the non {@code null} {@link ClassLoader} to clear any {@link SecurityDomain} association.
+     */
+    public static void unregisterClassLoader(ClassLoader classLoader) {
+        checkNotNullParam("classLoader", classLoader);
+        final SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(UNREGISTER_SECURITY_DOMAIN);
+        }
+
+        CLASS_LOADER_DOMAIN_MAP.remove(classLoader);
     }
 
     /**
