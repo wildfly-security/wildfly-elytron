@@ -18,12 +18,11 @@
 
 package org.wildfly.security.credential.store.impl;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
+import java.lang.reflect.Field;
+import java.security.Provider;
 import java.security.Security;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +47,9 @@ import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.interfaces.ClearPassword;
 import org.wildfly.security.password.spec.ClearPasswordSpec;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
+
 @RunWith(Parameterized.class)
 public class KeyStoreCredentialStoreTest {
 
@@ -71,7 +73,7 @@ public class KeyStoreCredentialStoreTest {
 
     @Parameters(name = "format={0}")
     public static Iterable<Object[]> keystoreFormats() {
-        return Collections.singletonList(new Object[] {"JCEKS"});
+        return Arrays.asList(new Object[] {"JCEKS"}, new Object[] {"PKCS12"});
     }
 
     @Before
@@ -81,6 +83,15 @@ public class KeyStoreCredentialStoreTest {
         providerName = provider.getName();
 
         Security.addProvider(provider);
+
+        // a hack to make JCE believe that it has verified the signature of the JAR that contains the
+        // WildFlyElytronProvider, as when running from Maven the classes are in target/classes, not in a JAR file
+        final Class<?> jceSecurity = Class.forName("javax.crypto.JceSecurity");
+        final Field verificationResults = jceSecurity.getDeclaredField("verificationResults");
+        verificationResults.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        final Map<Provider, Object> results = (Map<Provider, Object>) verificationResults.get(null);
+        results.put(provider, Boolean.TRUE);
 
         passwordFactory = PasswordFactory.getInstance(ClearPassword.ALGORITHM_CLEAR);
         final Password password = passwordFactory.generatePassword(new ClearPasswordSpec(keyStorePassword));

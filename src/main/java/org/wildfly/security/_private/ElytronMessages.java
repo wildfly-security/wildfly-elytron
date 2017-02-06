@@ -694,6 +694,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 2031, value = "LdapKeyStore failed to iterate aliases")
     IllegalStateException ldapKeyStoreFailedToIterateAliases(@Cause Throwable cause);
 
+    @Message(id = 2032, value = "keySpec must be SecretKeySpect, given: [%s]")
+    InvalidKeySpecException keySpecMustBeSecretKeySpec(String type);
+
+    @Message(id = 2033, value = "key must implement SecretKeySpec and keySpec must be SecretKeySpec, given key, keySpec: [%s]")
+    InvalidKeySpecException keyMustImplementSecretKeySpecAndKeySpecMustBeSecretKeySpec(String keyAndKeySpec);
 
     /* util package */
 
