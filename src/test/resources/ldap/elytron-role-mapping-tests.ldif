@@ -40,20 +40,6 @@ objectClass: groupOfNames
 cn: Manager
 member: uid=userWithRdnAttribute,dc=elytron,dc=wildfly,dc=org
 
-dn: uid=userWithMemberOfRoles,dc=elytron,dc=wildfly,dc=org
-objectClass: top
-objectClass: groupMember
-objectClass: inetOrgPerson
-objectClass: uidObject
-objectClass: person
-objectClass: organizationalPerson
-cn: userWithMemberOfRoles
-sn: userWithMemberOfRoles
-uid: userWithMemberOfRoles
-memberOf: cn=RoleFromBaseDN,dc=elytron,dc=wildfly,dc=org
-userPassword:: cGxhaW5QYXNzd29yZA==
-# Password plainPassword
-
 dn: uid=userWithRoles,dc=elytron,dc=wildfly,dc=org
 objectClass: top
 objectClass: inetOrgPerson
@@ -76,6 +62,7 @@ uid: userWithRdnAttribute
 userPassword:: cGxhaW5QYXNzd29yZA==
 # Password plainPassword
 
+
 # Recursive roles
 dn: uid=jduke,dc=elytron,dc=wildfly,dc=org
 objectclass: top
@@ -91,6 +78,7 @@ objectclass: top
 objectclass: groupOfNames
 cn: R1
 member: uid=jduke,dc=elytron,dc=wildfly,dc=org
+member: cn=R3,dc=elytron,dc=wildfly,dc=org
 description: the R1 group
 
 dn: cn=R2,dc=elytron,dc=wildfly,dc=org
@@ -107,7 +95,41 @@ cn: R3
 member: cn=R2,dc=elytron,dc=wildfly,dc=org
 description: the R3 group
 
-# Recursive roles by name
+
+# Recursive roles with more (short and long) ways to one role
+dn: uid=ranvir,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: person
+objectclass: inetOrgPerson
+uid: ranvir
+cn: Ranvir
+sn: Ran
+userPassword: Password3
+
+dn: cn=MWR1,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: MWR1
+member: uid=ranvir,dc=elytron,dc=wildfly,dc=org
+description: the MWR1 group
+
+dn: cn=MWR2,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: MWR2
+member: cn=MWR1,dc=elytron,dc=wildfly,dc=org
+member: uid=ranvir,dc=elytron,dc=wildfly,dc=org
+description: the MWR2 group
+
+dn: cn=MWR3,dc=elytron,dc=wildfly,dc=org
+objectclass: top
+objectclass: groupOfNames
+cn: MWR3
+member: cn=MWR2,dc=elytron,dc=wildfly,dc=org
+description: the MWR3 group
+
+
+# Recursive roles by name (attribute "description")
 dn: uid=falith,dc=elytron,dc=wildfly,dc=org
 objectclass: top
 objectclass: person
@@ -135,3 +157,33 @@ objectclass: organizationalRole
 cn: RN3
 description: RN2
 description: hybridUser
+
+
+# Recursive memberOf
+dn: uid=userWithMemberOfRoles,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectClass: groupMember
+objectClass: inetOrgPerson
+objectClass: uidObject
+objectClass: person
+objectClass: organizationalPerson
+cn: userWithMemberOfRolesCn
+sn: userWithMemberOfRolesSn
+uid: userWithMemberOfRolesUid
+memberOf: cn=roleByMemberOf,dc=elytron,dc=wildfly,dc=org
+userPassword:: cGxhaW5QYXNzd29yZA==
+# Password plainPassword
+
+dn: cn=roleByMemberOf,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectclass: organizationalRole
+objectClass: groupMember
+cn: roleByMemberOfCn
+memberOf: cn=roleOfRoleByMemberOf,dc=elytron,dc=wildfly,dc=org
+description: roleByMemberOfDescription
+
+dn: cn=roleOfRoleByMemberOf,dc=elytron,dc=wildfly,dc=org
+objectClass: top
+objectclass: organizationalRole
+cn: roleOfRoleByMemberOfCn
+description: roleOfRoleByMemberOfDescription
