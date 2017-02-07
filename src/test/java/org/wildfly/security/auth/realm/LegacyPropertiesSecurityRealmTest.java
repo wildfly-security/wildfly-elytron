@@ -30,7 +30,6 @@ import java.security.Security;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.auth.principal.NamePrincipal;
@@ -274,7 +273,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that username in property file can contain umlaut characters.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_umlautsUsername() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytronumlautöäü", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -283,7 +281,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that username in property file can contain Chinese characters.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_chineseUsername() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron用戶", ELYTRON_SIMPLE_PASSWORD);
     }
@@ -373,7 +370,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can contain umlaut characters.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_umlautsPassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron6", "passwordWithumlautöäü");
     }
@@ -382,7 +378,6 @@ public class LegacyPropertiesSecurityRealmTest {
      * Test that password in property file can contain Chinese characters.
      */
     @Test
-    @Ignore("https://issues.jboss.org/browse/ELY-691")
     public void testSpecialChar_chinesePassword() throws Exception {
         checkVerifyIdentity(specialCharsRealm, "elytron7", "用戶");
     }
