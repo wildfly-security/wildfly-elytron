@@ -594,6 +594,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 1147, value = "Invalid LDAP name [%s]")
     RuntimeException ldapInvalidLdapName(String name, @Cause Throwable cause);
 
+    @Message(id = 1148, value = "A SecurityDomain has already been associated with the specified ClassLoader")
+    IllegalStateException classLoaderSecurityDomainExists();
+
     /* keystore package */
 
     @Message(id = 2001, value = "Invalid key store entry password for alias \"%s\"")
