@@ -112,6 +112,7 @@ import org.wildfly.security.credential.store.impl.VaultCredentialStore;
 import org.wildfly.security.http.HttpServerAuthenticationMechanismFactory;
 import org.wildfly.security.http.impl.ServerMechanismFactoryImpl;
 import org.wildfly.security.key.RSAParameterSpiImpl;
+import org.wildfly.security.key.RawSecretKeyFactory;
 import org.wildfly.security.keystore.PasswordKeyStoreSpi;
 import org.wildfly.security.password.PasswordFactory;
 import org.wildfly.security.password.impl.DigestPasswordAlgorithmParametersSpiImpl;
@@ -157,6 +158,7 @@ public class WildFlyElytronProvider extends Provider {
         putCredentialStoreProviderImplementations();
         putAlgorithmParametersImplementations();
         put("Alg.Alias.Data.OID.1.2.840.113549.1.7.1", "Data");
+        putService(new Service(this, "SecretKeyFactory", "1.2.840.113549.1.7.1", RawSecretKeyFactory.class.getName(), Collections.emptyList(), Collections.emptyMap()));
     }
 
     private void putAlgorithmParametersImplementations() {
