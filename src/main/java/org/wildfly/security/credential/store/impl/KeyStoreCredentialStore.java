@@ -36,6 +36,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
@@ -143,8 +144,13 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private KeyStore keyStore;
     private Path location;
     private CredentialStore.ProtectionParameter protectionParameter;
+    private Provider[] providers;
 
     public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException {
+        initialize(attributes, protectionParameter, null);
+    }
+
+    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, final Provider[] providers) throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
             if (protectionParameter == null) {
                 throw log.protectionParameterRequired();
@@ -154,6 +160,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             this.modifiable = Boolean.parseBoolean(attributes.getOrDefault("modifiable", "true"));
             final String locationName = attributes.get("location");
             this.location = locationName == null ? null : Paths.get(locationName);
+            this.providers = providers;
             load(attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType()));
             initialized = true;
         }
@@ -747,17 +754,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
 
     private void load(String type) throws CredentialStoreException {
         // lock held
-        try {
-            keyStore = KeyStore.getInstance(type);
-        } catch (KeyStoreException e) {
-            throw log.cannotInitializeCredentialStore(e);
-        }
         final Enumeration<String> enumeration;
-        if (location != null && Files.exists(location)) try (InputStream fileStream = Files.newInputStream(location)) {
-            keyStore.load(fileStream, getStorePassword(protectionParameter));
-            enumeration = keyStore.aliases();
-        } catch (GeneralSecurityException | IOException e) {
-            throw log.cannotInitializeCredentialStore(e);
+        // load the KeyStore from file
+        keyStore = getKeyStoreInstance(type);
+        if (location != null && Files.exists(location))
+            try (InputStream fileStream = Files.newInputStream(location)) {
+                keyStore.load(fileStream, getStorePassword(protectionParameter));
+                enumeration = keyStore.aliases();
+            } catch (GeneralSecurityException | IOException e) {
+                throw log.cannotInitializeCredentialStore(e);
         } else try {
             keyStore.load(null, null);
             enumeration = Collections.emptyEnumeration();
@@ -807,6 +812,23 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             } catch (NoSuchAlgorithmException | InvalidParameterSpecException | IOException e) {
                 log.logFailedToReadKeyFromKeyStore(e);
             }
+        }
+    }
+
+    private KeyStore getKeyStoreInstance(String type) throws CredentialStoreException {
+        if (providers != null) {
+            for (Provider p: providers) {
+                try {
+                    return KeyStore.getInstance(type, p);
+                } catch (KeyStoreException e) {
+                    // no such keystore type in provider, ignore
+                }
+            }
+        }
+        try {
+            return KeyStore.getInstance(type);
+        } catch (KeyStoreException e) {
+            throw log.cannotInitializeCredentialStore(e);
         }
     }
 
