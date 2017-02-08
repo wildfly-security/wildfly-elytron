@@ -124,7 +124,8 @@ import org.wildfly.security.x500.X500;
  * <ul>
  *     <li>{@code location}: specifies the location of the key store (none means, use an in-memory store and do not save changes)</li>
  *     <li>{@code modifiable}: specifies whether the credential store should be modifiable</li>
- *     <li>{@code keyStoreType}: specify the key store type to use (defaults to {@link KeyStore#getDefaultType()}</li>
+ *     <li>{@code create}: specifies to automatically create storage file for this credential store (defaults to {@code false})</li>
+ *     <li>{@code keyStoreType}: specify the key store type to use (defaults to {@link KeyStore#getDefaultType()})</li>
  * </ul>
  */
 public final class KeyStoreCredentialStore extends CredentialStoreSpi {
@@ -143,6 +144,7 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private volatile boolean modifiable;
     private KeyStore keyStore;
     private Path location;
+    private boolean create;
     private CredentialStore.ProtectionParameter protectionParameter;
     private Provider[] providers;
 
@@ -157,9 +159,10 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
             }
             cache.clear();
             this.protectionParameter = protectionParameter;
-            this.modifiable = Boolean.parseBoolean(attributes.getOrDefault("modifiable", "true"));
+            modifiable = Boolean.parseBoolean(attributes.getOrDefault("modifiable", "true"));
+            create = Boolean.parseBoolean(attributes.getOrDefault("create", "false"));
             final String locationName = attributes.get("location");
-            this.location = locationName == null ? null : Paths.get(locationName);
+            location = locationName == null ? null : Paths.get(locationName);
             this.providers = providers;
             load(attributes.getOrDefault("keyStoreType", KeyStore.getDefaultType()));
             initialized = true;
@@ -763,11 +766,15 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
                 enumeration = keyStore.aliases();
             } catch (GeneralSecurityException | IOException e) {
                 throw log.cannotInitializeCredentialStore(e);
-        } else try {
-            keyStore.load(null, null);
-            enumeration = Collections.emptyEnumeration();
-        } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
-            throw log.cannotInitializeCredentialStore(e);
+        } else if (create) {
+            try {
+                keyStore.load(null, null);
+                enumeration = Collections.emptyEnumeration();
+            } catch (CertificateException | IOException | NoSuchAlgorithmException e) {
+                throw log.cannotInitializeCredentialStore(e);
+            }
+        } else {
+            throw log.automaticStorageCreationDisabled(location.toString());
         }
         Matcher matcher;
         while (enumeration.hasMoreElements()) {

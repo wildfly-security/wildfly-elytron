@@ -119,6 +119,7 @@ public class CredentialStoreBuilder {
 
         final Map<String, String> map = new HashMap<>();
         map.put("location", file);
+        map.put("create", Boolean.TRUE.toString());
         if (type != null) map.put("keyStoreType", type);
         storeImpl.initialize(
             map,

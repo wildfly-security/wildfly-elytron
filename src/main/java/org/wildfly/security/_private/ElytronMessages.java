@@ -1739,6 +1739,9 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 9529, value = "This credential store type requires a store-wide protection parameter")
     CredentialStoreException protectionParameterRequired();
 
+    @Message(id = 9530, value = "Automatic storage creation for the Credential Store is disabled \"%s\"")
+    CredentialStoreException automaticStorageCreationDisabled(String location);
+
     /* X.500 exceptions */
 
     @Message(id = 10000, value = "X.509 certificate extension with OID %s already exists")

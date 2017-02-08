@@ -146,6 +146,7 @@ public class KeystorePasswordStoreTest {
 
         csAttributes.put("location", stores.get("ONE"));
         csAttributes.put("keyStoreType", "JCEKS");
+        csAttributes.put("create", Boolean.TRUE.toString());
 
         String passwordAlias1 = "db1-password1";
         String passwordAlias2 = "db1-password2";
