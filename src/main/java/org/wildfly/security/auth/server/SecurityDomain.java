@@ -129,7 +129,8 @@ public final class SecurityDomain {
             sm.checkPermission(REGISTER_SECURITY_DOMAIN);
         }
 
-        if (CLASS_LOADER_DOMAIN_MAP.putIfAbsent(classLoader, this) != null) {
+        final SecurityDomain classLoaderDomain = CLASS_LOADER_DOMAIN_MAP.putIfAbsent(classLoader, this);
+        if ((classLoaderDomain != null) && (classLoaderDomain != this)) {
             throw log.classLoaderSecurityDomainExists();
         }
     }
