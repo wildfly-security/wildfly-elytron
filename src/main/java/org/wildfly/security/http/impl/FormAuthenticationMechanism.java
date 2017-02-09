@@ -223,15 +223,15 @@ class FormAuthenticationMechanism extends UsernamePasswordAuthenticationMechanis
 
     private boolean attemptReAuthentication(HttpServerRequest request) throws HttpAuthenticationException {
         if (log.isTraceEnabled()) {
-            if (getSessionScope(request, false) != null) {
+            HttpScope sessionScope = getSessionScope(request, false);
+            if (sessionScope != null && sessionScope.exists()) {
                 log.tracef("Trying to re-authenticate session %s using FormAuthenticationMechanism. Request URI: [%s], Context path: [%s]",
-                        getSessionScope(request, false).getID(), request.getRequestURI(), this.contextPath);
+                        sessionScope.getID(), request.getRequestURI(), this.contextPath);
             } else {
-                log.tracef("Unable to re-authenticate using FormAuthenticationMechanism. There is no session attached to the following request. " +
+                log.tracef("Trying to re-authenticate using FormAuthenticationMechanism. There is no session attached to the following request. " +
                         "Request URI: [%s], Context path: [%s]", request.getRequestURI(), this.contextPath);
             }
         }
-
 
         IdentityCache identityCache = createIdentityCache(request, false);
         if (identityCache != null) {
