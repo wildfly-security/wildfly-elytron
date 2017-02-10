@@ -103,7 +103,7 @@ public class LdapKeyStore extends KeyStore {
                     filterAlias, filterCertificate, filterIterate, createPath, createRdn, createAttributes, aliasAttribute,
                     certificateAttribute, certificateType, certificateChainAttribute, certificateChainEncoding,
                     keyAttribute, keyType);
-            return new LdapKeyStore(spi, EmptyProvider.getInstance(), "LdapRealm");
+            return new LdapKeyStore(spi, EmptyProvider.getInstance(), "LdapKeyStore");
         }
 
         /**
