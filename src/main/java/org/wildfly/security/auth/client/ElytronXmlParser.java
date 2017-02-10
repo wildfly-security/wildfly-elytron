@@ -18,12 +18,12 @@
 
 package org.wildfly.security.auth.client;
 
-import static org.wildfly.common.Assert.checkNotNullParam;
 import static javax.xml.stream.XMLStreamConstants.COMMENT;
 import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
 import static javax.xml.stream.XMLStreamConstants.PROCESSING_INSTRUCTION;
 import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
+import static org.wildfly.common.Assert.checkNotNullParam;
 import static org.wildfly.security._private.ElytronMessages.xmlLog;
 
 import java.io.FileInputStream;
@@ -1267,7 +1267,8 @@ public final class ElytronXmlParser {
                     }
                     case "key-store-clear-password": {
                         if (keyStoreCredential != null) throw reader.unexpectedElement();
-                        keyStoreCredential = () -> new PasswordEntry(parseClearPassword(reader, Security::getProviders).get());
+                        ExceptionSupplier<Password, ConfigXMLParseException> credential = parseClearPassword(reader, Security::getProviders);
+                        keyStoreCredential = () -> new PasswordEntry(credential.get());
                         break;
                     }
                     default: throw reader.unexpectedElement();
