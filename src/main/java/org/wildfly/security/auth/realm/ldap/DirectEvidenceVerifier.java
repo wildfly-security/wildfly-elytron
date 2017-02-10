@@ -47,8 +47,8 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(final DirContext context, final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
-        return evidenceType == PasswordGuessEvidence.class && context instanceof LdapContext ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+    public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName) throws RealmUnavailableException {
+        return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
     @Override
@@ -56,7 +56,7 @@ class DirectEvidenceVerifier implements EvidenceVerifier {
         return new IdentityEvidenceVerifier() {
             @Override
             public SupportLevel getEvidenceVerifySupport(final Class<? extends Evidence> evidenceType, final String algorithmName, final Supplier<Provider[]> providers) throws RealmUnavailableException {
-                return evidenceType == PasswordGuessEvidence.class ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
+                return evidenceType == PasswordGuessEvidence.class && dirContext instanceof LdapContext ? SupportLevel.SUPPORTED : SupportLevel.UNSUPPORTED;
             }
 
             @Override

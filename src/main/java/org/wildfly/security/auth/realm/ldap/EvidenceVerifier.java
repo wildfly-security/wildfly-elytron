@@ -37,13 +37,12 @@ interface EvidenceVerifier {
     /**
      * Get the {@link SupportLevel} for the level of evidence validation support for the named credential.
      *
-     * @param dirContext the {@link DirContext} to use to connect to LDAP.
      * @param evidenceType the evidence type (must not be {@code null})
      * @param algorithmName the evidence algorithm name or {@code null} if none
      * @return the level of support for the named credential
      * @throws RealmUnavailableException if the realm is currently unable to handle requests
      */
-    SupportLevel getEvidenceVerifySupport(DirContext dirContext, Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
+    SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException;
 
     /**
      * Obtain an {@link IdentityEvidenceVerifier} to verify the evidence for a specific identity.

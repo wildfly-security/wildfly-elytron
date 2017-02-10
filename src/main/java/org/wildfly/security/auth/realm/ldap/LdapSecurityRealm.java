@@ -264,20 +264,15 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         Assert.checkNotNullParam("evidenceType", evidenceType);
         SupportLevel response = SupportLevel.UNSUPPORTED;
 
-        DirContext dirContext = obtainContext();
-        try {
-            for (EvidenceVerifier verifier : evidenceVerifiers) {
-                SupportLevel support = verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName);
-                if (support.isDefinitelySupported()) {
-                    // One claiming it is definitely supported is enough!
-                    return support;
-                }
-                if (response.compareTo(support) < 0) {
-                    response = support;
-                }
+        for (EvidenceVerifier verifier : evidenceVerifiers) {
+            SupportLevel support = verifier.getEvidenceVerifySupport(evidenceType, algorithmName);
+            if (support.isDefinitelySupported()) {
+                // One claiming it is definitely supported is enough!
+                return support;
             }
-        } finally {
-            closeContext(dirContext);
+            if (response.compareTo(support) < 0) {
+                response = support;
+            }
         }
         return response;
     }
@@ -533,7 +528,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
                 SupportLevel response = SupportLevel.UNSUPPORTED;
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
-                    if (verifier.getEvidenceVerifySupport(dirContext, evidenceType, algorithmName).mayBeSupported()) {
+                    if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
                         final IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
                         final SupportLevel support = iev.getEvidenceVerifySupport(evidenceType, algorithmName, providers);
@@ -580,7 +575,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                 }
 
                 for (EvidenceVerifier verifier : evidenceVerifiers) {
-                    if (verifier.getEvidenceVerifySupport(identity.getDirContext(), evidenceType, algorithmName).mayBeSupported()) {
+                    if (verifier.getEvidenceVerifySupport(evidenceType, algorithmName).mayBeSupported()) {
                         IdentityEvidenceVerifier iev = verifier.forIdentity(identity.getDirContext(), identity.getDistinguishedName(), identity.getEntry().getAttributes());
 
                         if (iev.verifyEvidence(evidence, providers)) {

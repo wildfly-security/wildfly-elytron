@@ -373,6 +373,7 @@ public final class SecurityDomain {
             try {
                 return r.getCredentialAcquireSupport(credentialType, algorithmName);
             } catch (RealmUnavailableException e) {
+                log.trace("Failed to obtain credential acquire support from realm", e);
                 return null;
             }
         });
@@ -403,6 +404,7 @@ public final class SecurityDomain {
             try {
                 return r.getEvidenceVerifySupport(evidenceType, algorithmName);
             } catch (RealmUnavailableException e) {
+                log.trace("Failed to obtain evidence verify support from realm", e);
                 return null;
             }
         });

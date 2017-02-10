@@ -202,7 +202,7 @@ class X509EvidenceVerifier implements EvidenceVerifier {
     }
 
     @Override
-    public SupportLevel getEvidenceVerifySupport(DirContext context, Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+    public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
         return evidenceType == X509PeerCertificateChainEvidence.class ? SupportLevel.POSSIBLY_SUPPORTED : SupportLevel.UNSUPPORTED;
     }
 
