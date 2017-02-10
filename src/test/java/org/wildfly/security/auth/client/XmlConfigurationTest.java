@@ -77,6 +77,7 @@ public class XmlConfigurationTest {
             "            </protection-parameter-credentials>\n" +
             "            <attributes>\n" +
             "                <attribute name=\"keyStoreType\" value=\"JCEKS\"/>\n" +
+            "                <attribute name=\"create\" value=\"true\"/>\n" +
             "            </attributes>\n" +
             "        </credential-store>\n" +
             "    </credential-stores>\n" +

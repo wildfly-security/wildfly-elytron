@@ -120,6 +120,7 @@ public class KeyStoreCredentialStoreTest {
 
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("location", keyStoreFile.getAbsolutePath());
+        attributes.put("create", Boolean.TRUE.toString());
         attributes.put("keyStoreType", keyStoreFormat);
 
         originalStore.initialize(attributes, storeProtection);
