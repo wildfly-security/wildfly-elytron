@@ -18,10 +18,16 @@
 
 package org.wildfly.security.auth.realm.ldap;
 
+import org.wildfly.security.SecurityFactory;
+import org.wildfly.security.auth.callback.CredentialCallback;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
 import org.wildfly.security.credential.PasswordCredential;
 import org.wildfly.security.credential.source.CredentialSource;
 import org.wildfly.security.password.interfaces.ClearPassword;
 
+import static java.security.AccessController.doPrivileged;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import javax.naming.NamingException;
@@ -29,11 +35,13 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import javax.naming.ldap.InitialLdapContext;
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
 import javax.security.auth.DestroyFailedException;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
+import java.net.URI;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -51,6 +59,8 @@ public class SimpleDirContextFactoryBuilder {
 
     private static final int DEFAULT_CONNECT_TIMEOUT = 5000; // ms
     private static final int DEFAULT_READ_TIMEOUT = 60000; // ms
+    private static final String CONNECT_PURPOSE = "dir-context-connect";
+    private static final String LDAPS_SCHEME = "ldaps";
 
     private boolean built = false;
     private String initialContextFactory = "com.sun.jndi.ldap.LdapCtxFactory";
@@ -59,10 +69,13 @@ public class SimpleDirContextFactoryBuilder {
     private String securityPrincipal = null;
     private String securityCredential = null;
     private CredentialSource credentialSource = null;
+    private AuthenticationContext authenticationContext = null;
     private SocketFactory socketFactory = null;
     private Properties connectionProperties;
     private int connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
+
+    private static final AuthenticationContextConfigurationClient authClient = doPrivileged(AuthenticationContextConfigurationClient.ACTION);
 
     private SimpleDirContextFactoryBuilder() {
     }
@@ -130,7 +143,9 @@ public class SimpleDirContextFactoryBuilder {
 
     /**
      * Set the authentication credential.
-     * Alternative to {@link #setCredentialSource(CredentialSource)}.
+     * If not set, factory try to obtain it from {@link CredentialSource} specified by
+     * {@link #setCredentialSource(org.wildfly.security.credential.source.CredentialSource)} of from
+     * {@link AuthenticationContext} specified by {@link #setAuthenticationContext(AuthenticationContext)}.
      *
      * @param securityCredential the credential
      * @return this builder
@@ -157,8 +172,24 @@ public class SimpleDirContextFactoryBuilder {
     }
 
     /**
+     * Set the authentication context as source of security credential.
+     * Alternative to {@link #setSecurityCredential(String)}.
+     *
+     * @param authenticationContext the credential source
+     * @return this builder
+     */
+    public SimpleDirContextFactoryBuilder setAuthenticationContext(final AuthenticationContext authenticationContext) {
+        assertNotBuilt();
+        this.authenticationContext = authenticationContext;
+
+        return this;
+    }
+
+    /**
      * Set the socket factory to be used by LDAP context.
      * Used primarily for SSL connections.
+     *
+     * If not set, factory try to obtain it from {@link AuthenticationContext} specified by {@link #setAuthenticationContext(AuthenticationContext)}.
      *
      * @param socketFactory the socket factory
      * @return this builder
@@ -240,10 +271,11 @@ public class SimpleDirContextFactoryBuilder {
 
         @Override
         public DirContext obtainDirContext(ReferralMode mode) throws NamingException {
+            String securityPrincipal = SimpleDirContextFactoryBuilder.this.securityPrincipal;
             char[] charPassword = null;
-            if (securityCredential != null) {
+            if (securityCredential != null) { // password from String
                 charPassword = securityCredential.toCharArray();
-            } else if (credentialSource != null) {
+            } else if (credentialSource != null) { // password from CredentialSource
                 ClearPassword password = null;
                 try {
                     PasswordCredential credential = credentialSource.getCredential(PasswordCredential.class);
@@ -256,12 +288,41 @@ public class SimpleDirContextFactoryBuilder {
                 } finally {
                     try {
                         if (password != null) password.destroy();
-                    } catch (DestroyFailedException e) {
+                    } catch (DestroyFailedException e){
+                        log.credentialDestroyingFailed(e);
+                    }
+                }
+            } else if (authenticationContext != null) { // password from AuthenticationContext
+                ClearPassword password = null;
+                try {
+                    URI uri = new URI(providerUrl);
+                    AuthenticationConfiguration configuration = authClient.getAuthenticationConfiguration(uri, authenticationContext, 0, null, null, CONNECT_PURPOSE);
+
+                    NameCallback nameCallback = new NameCallback("LDAP principal");
+                    CredentialCallback credentialCallback = new CredentialCallback(PasswordCredential.class, ClearPassword.ALGORITHM_CLEAR);
+                    try {
+                        authClient.getCallbackHandler(configuration).handle(new Callback[]{nameCallback, credentialCallback});
+                    } catch (Exception e) {
+                        throw log.couldNotObtainCredentialWithCause(e);
+                    }
+
+                    securityPrincipal = nameCallback.getName();
+                    PasswordCredential credential = credentialCallback.getCredential(PasswordCredential.class);
+                    if (credential == null) throw log.couldNotObtainCredential();
+                    password = credential.getPassword(ClearPassword.class);
+                    if (password == null) throw log.couldNotObtainCredential();
+                    charPassword = password.getPassword();
+                } catch (Exception e) {
+                    throw log.obtainingDirContextCredentialFromAuthenticationContextFailed(e);
+                } finally {
+                    try {
+                        if (password != null) password.destroy();
+                    } catch (DestroyFailedException e){
                         log.credentialDestroyingFailed(e);
                     }
                 }
             }
-            return createDirContext(securityPrincipal, charPassword, mode);
+            return createDirContext(securityPrincipal, charPassword, mode, getSocketFactory());
         }
 
         @Override
@@ -287,10 +348,26 @@ public class SimpleDirContextFactoryBuilder {
                 throw log.couldNotObtainCredential();
             }
 
-            return createDirContext(securityPrincipal, securityCredential, mode);
+            return createDirContext(securityPrincipal, securityCredential, mode, getSocketFactory());
         }
 
-        private DirContext createDirContext(String securityPrincipal, char[] securityCredential, ReferralMode mode) throws NamingException {
+        private SocketFactory getSocketFactory() throws NamingException {
+            if (socketFactory == null && authenticationContext != null) {
+                try {
+                    URI uri = new URI(providerUrl);
+                    if ( ! uri.getScheme().equalsIgnoreCase(LDAPS_SCHEME)) {
+                        return socketFactory; // non-SSL connection
+                    }
+                    SecurityFactory<SSLContext> sslContextFactory = authClient.getSSLContextFactory(uri, authenticationContext, null, null, CONNECT_PURPOSE);
+                    return sslContextFactory.create().getSocketFactory();
+                } catch (Exception e) {
+                    throw log.obtainingDirContextCredentialFromAuthenticationContextFailed(e);
+                }
+            }
+            return socketFactory;
+        }
+
+        private DirContext createDirContext(String securityPrincipal, char[] securityCredential, ReferralMode mode, SocketFactory socketFactory) throws NamingException {
             Hashtable<String, Object> env = new Hashtable<>();
 
             env.put(InitialDirContext.INITIAL_CONTEXT_FACTORY, initialContextFactory);
