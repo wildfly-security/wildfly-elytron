@@ -18,6 +18,8 @@
 
 package org.wildfly.security.auth.client;
 
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +37,6 @@ import org.wildfly.client.config.ConfigurationXMLStreamReader;
 import org.wildfly.security.SecurityFactory;
 import org.wildfly.security.WildFlyElytronProvider;
 import org.wildfly.security.credential.store.impl.KeyStoreCredentialStore;
-
-import static org.junit.Assert.fail;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -109,6 +109,59 @@ public class XmlConfigurationTest {
             "            <match-host name=\"test2\"/>\n" +
             "            <match-userinfo name=\"fred\"/>\n" +
             "        </rule>\n" +
+            "    </authentication-rules>\n" +
+            "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
+        final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
+        factory.create();
+    }
+
+    /**
+     * Test different names to be used in match-host.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testMatchHostRuleConfiguration() throws Exception {
+        final byte[] xmlBytes = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "\n" +
+            "<authentication-client xmlns=\"urn:elytron:1.0\">\n" +
+            "    <authentication-configurations>\n" +
+            "        <configuration name=\"set-host-to-localhost\">\n" +
+            "            <set-host name=\"localhost\"/>\n" +
+            "        </configuration>\n" +
+            "    </authentication-configurations>\n" +
+            "    <authentication-rules>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test1\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test2\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test2.domain\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test2.domain.org\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test2.Domain.org\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test-2.domain.org\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"test_2.domain.org\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"2_test.domain.org\"/>\n" +
+            "        </rule>\n" +
+            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+            "            <match-host name=\"127.0.0.1\"/>\n" +
+            "        </rule>\n" +
+// Ignore https://issues.jboss.org/browse/WFLY-7890
+//            "        <rule use-configuration=\"set-host-to-localhost\">\n" +
+//            "            <match-host name=\"::1\"/>\n" +
+//            "        </rule>\n" +
             "    </authentication-rules>\n" +
             "</authentication-client>\n").getBytes(StandardCharsets.UTF_8);
         final SecurityFactory<AuthenticationContext> factory = ElytronXmlParser.parseAuthenticationClientConfiguration(ConfigurationXMLStreamReader.openUri(URI.create("authentication-client.xml"), XMLInputFactory.newFactory(), new ByteArrayInputStream(xmlBytes)));
