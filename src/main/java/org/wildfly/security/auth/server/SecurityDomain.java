@@ -588,7 +588,7 @@ public final class SecurityDomain {
         this.securityEventListener.accept(securityEvent);
     }
 
-    static void safeHandlerSecurityEvent(final SecurityDomain domain, final SecurityEvent event) {
+    static void safeHandleSecurityEvent(final SecurityDomain domain, final SecurityEvent event) {
         checkNotNullParam("domain", domain);
         checkNotNullParam("event", event);
         try {
