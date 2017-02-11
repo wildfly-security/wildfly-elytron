@@ -21,7 +21,6 @@ import static org.wildfly.common.Assert.checkNotNullParam;
 
 import java.net.URI;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -93,8 +92,8 @@ public class DefaultSingleSignOn implements SingleSignOn {
     }
 
     @Override
-    public Collection<Map.Entry<String, URI>> getParticipants() {
-        return Collections.unmodifiableCollection(this.entry.getParticipants().values());
+    public Map<String, Map.Entry<String, URI>> getParticipants() {
+        return Collections.unmodifiableMap(this.entry.getParticipants());
     }
 
     @Override

@@ -1417,7 +1417,7 @@ public interface ElytronMessages extends BasicLogger {
     String usernameOrPasswordMissing();
 
     @LogMessage(level = WARN)
-    @Message(id = 6008, value = "Failed to logout participant [%s]")
+    @Message(id = 6008, value = "Failed to logout participant [%s]. Participant will be removed from list of participants but its local session may still be active.")
     void warnHttpMechSsoFailedLogoutParticipant(String url, @Cause  Throwable cause);
 
     @Message(id = 6012, value = "Invalid logout message received for local session [%s]")

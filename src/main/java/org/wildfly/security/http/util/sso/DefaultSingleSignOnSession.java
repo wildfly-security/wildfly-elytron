@@ -27,7 +27,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -65,7 +64,7 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
         this.context = checkNotNullParam("context", context);
         this.request = checkNotNullParam("request", request);
         checkNotNullParam("mechanismName", mechanismName);
-        this.ssoFactory = identity -> context.getSingleSignOnManagerManager().create(mechanismName, identity);
+        this.ssoFactory = identity -> context.getSingleSignOnManager().create(mechanismName, identity);
     }
 
     public DefaultSingleSignOnSession(SingleSignOnSessionContext context, HttpServerRequest request, SingleSignOn sso) {
@@ -108,16 +107,16 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
 
             scope.registerForNotification(notification -> {
                 HttpScope sessionScope = notification.getScope(Scope.SESSION);
+                Map<String, Map.Entry<String, URI>> logoutTargets = Collections.emptyMap();
 
-                Collection<Map.Entry<String, URI>> logoutTargets = Collections.emptyList();
-                try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
+                try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                     if (target != null) {
                         Map.Entry<String, URI> localParticipant = target.removeParticipant(applicationId);
                         if (localParticipant != null) {
                             log.debugf("Removed local session [%s] from SSO [%s]", localParticipant.getKey(), target.getId());
                         }
                         if (sessionScope.getAttachment(SESSION_INVALIDATING_ATTRIBUTE) == null) {
-                            Collection<Map.Entry<String, URI>> participants = target.getParticipants();
+                            Map<String, Map.Entry<String, URI>> participants = target.getParticipants();
                             if (participants.isEmpty()) {
                                 log.debugf("Destroying SSO [%s]. SSO is not associated with participants", target.getId());
                                 target.invalidate();
@@ -129,12 +128,13 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                 }
 
                 if (!logoutTargets.isEmpty()) {
-                    logoutTargets.forEach(participant -> {
+                    logoutTargets.forEach((participantId, participant) -> {
                         String remoteSessionId = participant.getKey();
                         URI remoteURI = participant.getValue();
                         try {
                             URL participantUrl = remoteURI.toURL();
                             HttpURLConnection connection = (HttpURLConnection) participantUrl.openConnection();
+
                             this.context.configureLogoutConnection(connection);
 
                             connection.setRequestMethod("POST");
@@ -163,13 +163,15 @@ public class DefaultSingleSignOnSession implements SingleSignOnSession {
                         }
                     });
 
-                    try (SingleSignOn target = this.context.getSingleSignOnManagerManager().find(id)) {
+                    try (SingleSignOn target = this.context.getSingleSignOnManager().find(id)) {
                         if (target != null) {
                             // If all logout requests were successful, then there should be no participants, and we can invalidate the SSO
-                            if (target.getParticipants().isEmpty()) {
+                            if (!target.getParticipants().isEmpty()) {
+                                log.debugf("Destroying SSO [%s]. Participant list not empty.", target.getId());
+                            } else {
                                 log.debugf("Destroying SSO [%s]. SSO is no longer associated with any participants", target.getId());
-                                target.invalidate();
                             }
+                            target.invalidate();
                         }
                     }
                 }
