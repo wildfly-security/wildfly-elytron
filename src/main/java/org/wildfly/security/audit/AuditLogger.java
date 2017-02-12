@@ -18,11 +18,13 @@
 package org.wildfly.security.audit;
 
 import static org.wildfly.common.Assert.checkNotNullParam;
+import static org.wildfly.security._private.ElytronMessages.audit;
 
-import java.util.function.BiConsumer;
+import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.wildfly.common.function.ExceptionBiConsumer;
 import org.wildfly.security.auth.server.event.SecurityEvent;
 
 /**
@@ -32,7 +34,7 @@ import org.wildfly.security.auth.server.event.SecurityEvent;
  */
 public final class AuditLogger implements Consumer<SecurityEvent> {
 
-    private final BiConsumer<EventPriority, String> auditEndpoint;
+    private final ExceptionBiConsumer<EventPriority, String, IOException> auditEndpoint;
     private final Function<SecurityEvent, EventPriority> priorityMapper;
     private final Function<SecurityEvent, String> messageFormatter;
 
@@ -48,14 +50,24 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
     @Override
     public void accept(SecurityEvent t) {
         EventPriority priority = priorityMapper.apply(t);
-        if (priority == EventPriority.OFF) return;
+        if (priority == EventPriority.OFF)
+            return;
 
-        auditEndpoint.accept(priority, messageFormatter.apply(t));
+        String formatted = messageFormatter.apply(t);
+        try {
+            auditEndpoint.accept(priority, formatted);
+        } catch (Throwable throwable) {
+            audit.endpointUnavaiable(priority.toString(), formatted, throwable);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder {
 
-        private BiConsumer<EventPriority, String> auditEndpoint;
+        private ExceptionBiConsumer<EventPriority, String, IOException> auditEndpoint;
         private Function<SecurityEvent, EventPriority> priorityMapper;
         private Function<SecurityEvent, String> messageFormatter;
 
@@ -68,7 +80,7 @@ public final class AuditLogger implements Consumer<SecurityEvent> {
          * @param auditEndpoint the endpoint to receive the resulting audit messages.
          * @return this builder.
          */
-        public Builder setAuditEndpoint(BiConsumer<EventPriority, String> auditEndpoint) {
+        public Builder setAuditEndpoint(ExceptionBiConsumer<EventPriority, String, IOException> auditEndpoint) {
             this.auditEndpoint = checkNotNullParam("auditEndpoint", auditEndpoint);
 
             return this;

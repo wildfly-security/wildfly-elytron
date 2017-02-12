@@ -92,6 +92,7 @@ import org.wildfly.security.util.DecodeException;
 public interface ElytronMessages extends BasicLogger {
 
     ElytronMessages log = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security");
+    ElytronMessages audit = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.audit");
     ElytronMessages xmlLog = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.xml");
     ElytronMessages tls = Logger.getMessageLogger(ElytronMessages.class, "org.wildfly.security.tls");
 
@@ -1791,4 +1792,14 @@ public interface ElytronMessages extends BasicLogger {
 
     @Message(id = 10013, value = "Certificate serial number too large (cannot exceed 20 octets)")
     IllegalArgumentException serialNumberTooLarge();
+
+    /* Audit Exceptions */
+
+    @Message(id = 11000, value = "Partial SecurityEvent written.")
+    IOException partialSecurityEventWritten(@Cause IOException cause);
+
+    @LogMessage(level = Logger.Level.FATAL)
+    @Message(id = 11001, value = "Endpoint unable to handle SecurityEvent priority=%s, message=%s")
+    void endpointUnavaiable(String priority, String message, @Cause Throwable cause);
+
 }
