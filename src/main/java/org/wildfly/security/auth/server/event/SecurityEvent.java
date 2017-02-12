@@ -18,8 +18,11 @@
 
 package org.wildfly.security.auth.server.event;
 
+import static org.wildfly.common.Assert.checkNotNullParam;
+
 import java.time.Instant;
 
+import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
 /**
@@ -39,7 +42,7 @@ public abstract class SecurityEvent {
      * @param securityIdentity the current {@link SecurityIdentity} for the event.
      */
     SecurityEvent(SecurityIdentity securityIdentity) {
-        this.securityIdentity = securityIdentity;
+        this.securityIdentity = checkNotNullParam("securityIdentity", securityIdentity);
     }
 
     /**
