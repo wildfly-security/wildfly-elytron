@@ -255,11 +255,10 @@ public final class SSLContextBuilder {
     /**
      * Set the provider name.
      *
-     * @param name the provider name (must not be {@code null})
+     * @param name the provider name (if {@code null} and provider is allowed)
      * @return this builder
      */
     public SSLContextBuilder setProviderName(final String name) {
-        Assert.checkNotNullParam("name", name);
         this.providerName = name;
         return this;
     }
