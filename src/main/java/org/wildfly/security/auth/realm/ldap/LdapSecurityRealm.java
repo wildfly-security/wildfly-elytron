@@ -645,7 +645,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             log.debugf("Trying to create identity for principal [%s].", name);
             LdapSearch ldapSearch = createLdapSearchByDn();
             if (ldapSearch == null) { // name is not a valid DN, search by name
-                ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, 0, identityMapping.filterName, name);
+                if (identityMapping.searchDn != null) {
+                    ldapSearch = new LdapSearch(identityMapping.searchDn, identityMapping.searchRecursive, 0, identityMapping.filterName, name);
+                } else {
+                    log.debugf("Identity for principal [%s] not found. The name is not a valid DN and the search base DN is null", name);
+                    return null;
+                }
             }
 
             ldapSearch.setReturningAttributes(returningAttributes);
