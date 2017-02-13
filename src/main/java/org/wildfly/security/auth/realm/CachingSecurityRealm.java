@@ -24,16 +24,19 @@ import java.security.Principal;
 
 import org.wildfly.security._private.ElytronMessages;
 import org.wildfly.security.auth.SupportLevel;
+import org.wildfly.security.auth.server.IdentityCredentials;
 import org.wildfly.security.auth.server.RealmIdentity;
 import org.wildfly.security.auth.server.RealmUnavailableException;
 import org.wildfly.security.auth.server.SecurityRealm;
 import org.wildfly.security.auth.server.event.RealmEvent;
+import org.wildfly.security.authz.Attributes;
+import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.cache.RealmIdentityCache;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.evidence.Evidence;
 
 /**
- * <p>A wrapper class that provides caching capabilities for a {@link org.wildfly.security.auth.server.SecurityRealm} and its identities.
+ * <p>A wrapper class that provides caching capabilities for a {@link SecurityRealm} and its identities.
  *
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
@@ -68,15 +71,109 @@ public class CachingSecurityRealm implements SecurityRealm {
             return cached;
         }
 
-        RealmIdentity identity = getCacheableRealm().getRealmIdentity(principal);
+        RealmIdentity realmIdentity = getCacheableRealm().getRealmIdentity(principal);
 
-        if (!identity.exists()) {
-            return identity;
+        if (!realmIdentity.exists()) {
+            return realmIdentity;
         }
 
-        cache.put(principal, identity);
+        RealmIdentity cachedIdentity = new RealmIdentity() {
+            final RealmIdentity identity = realmIdentity;
 
-        return identity;
+            AuthorizationIdentity authorizationIdentity = null;
+            Attributes attributes = null;
+            IdentityCredentials credentials = IdentityCredentials.NONE;
+
+            @Override
+            public Principal getRealmIdentityPrincipal() {
+                return identity.getRealmIdentityPrincipal();
+            }
+
+            @Override
+            public SupportLevel getCredentialAcquireSupport(Class<? extends Credential> credentialType, String algorithmName) throws RealmUnavailableException {
+                if (credentials.contains(credentialType, algorithmName)) {
+                    return credentials.getCredentialAcquireSupport(credentialType, algorithmName);
+                }
+                Credential credential = identity.getCredential(credentialType, algorithmName);
+                if (credential != null) {
+                    credentials = credentials.withCredential(credential);
+                }
+                return credentials.getCredentialAcquireSupport(credentialType, algorithmName);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(Class<C> credentialType) throws RealmUnavailableException {
+                if (credentials.contains(credentialType)) {
+                    return credentials.getCredential(credentialType);
+                }
+                Credential credential = identity.getCredential(credentialType);
+                if (credential != null) {
+                    credentials = credentials.withCredential(credential);
+                }
+                return credentials.getCredential(credentialType);
+            }
+
+            @Override
+            public <C extends Credential> C getCredential(Class<C> credentialType, String algorithmName) throws RealmUnavailableException {
+                if (credentials.contains(credentialType, algorithmName)) {
+                    return credentials.getCredential(credentialType, algorithmName);
+                }
+                Credential credential = identity.getCredential(credentialType, algorithmName);
+                if (credential != null) {
+                    credentials = credentials.withCredential(credential);
+                }
+                return credentials.getCredential(credentialType, algorithmName);
+            }
+
+            @Override
+            public void updateCredential(Credential credential) throws RealmUnavailableException {
+                try {
+                    identity.updateCredential(credential);
+                } finally {
+                    removeFromCache(identity.getRealmIdentityPrincipal());
+                }
+            }
+
+            @Override
+            public SupportLevel getEvidenceVerifySupport(Class<? extends Evidence> evidenceType, String algorithmName) throws RealmUnavailableException {
+                return identity.getEvidenceVerifySupport(evidenceType, algorithmName);
+            }
+
+            @Override
+            public boolean verifyEvidence(Evidence evidence) throws RealmUnavailableException {
+                return identity.verifyEvidence(evidence);
+            }
+
+            @Override
+            public boolean exists() throws RealmUnavailableException {
+                return true; // non-existing identities will not be wrapped
+            }
+
+            @Override
+            public AuthorizationIdentity getAuthorizationIdentity() throws RealmUnavailableException {
+                if (authorizationIdentity == null) {
+                    authorizationIdentity = identity.getAuthorizationIdentity();
+                }
+                return authorizationIdentity;
+            }
+
+            @Override
+            public Attributes getAttributes() throws RealmUnavailableException {
+                if (attributes == null) {
+                    attributes = identity.getAttributes();
+                }
+                return attributes;
+            }
+
+            @Override
+            public void dispose() {
+                identity.dispose();
+            }
+        };
+
+        cache.put(principal, cachedIdentity);
+
+        return cachedIdentity;
     }
 
     @Override
