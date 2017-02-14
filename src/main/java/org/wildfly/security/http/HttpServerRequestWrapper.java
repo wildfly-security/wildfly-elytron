@@ -107,6 +107,11 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     }
 
     @Override
+    public String getRequestPath() {
+        return delegate.getRequestPath();
+    }
+
+    @Override
     public Map<String, List<String>> getParameters() {
         return delegate.getParameters();
     }

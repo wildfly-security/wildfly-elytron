@@ -229,6 +229,11 @@ public class HttpAuthenticator {
         }
 
         @Override
+        public String getRequestPath() {
+            return httpExchangeSpi.getRequestPath();
+        }
+
+        @Override
         public Map<String, List<String>> getParameters() {
             return httpExchangeSpi.getRequestParameters();
         }
