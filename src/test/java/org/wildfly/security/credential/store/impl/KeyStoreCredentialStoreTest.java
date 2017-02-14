@@ -123,7 +123,7 @@ public class KeyStoreCredentialStoreTest {
         attributes.put("create", Boolean.TRUE.toString());
         attributes.put("keyStoreType", keyStoreFormat);
 
-        originalStore.initialize(attributes, storeProtection);
+        originalStore.initialize(attributes, storeProtection, null);
 
         originalStore.store("key", storedCredential, null);
 
@@ -134,7 +134,7 @@ public class KeyStoreCredentialStoreTest {
         final KeyStoreCredentialStore retrievalStore = new KeyStoreCredentialStore();
         attributes.put("modifiable", "false");
 
-        retrievalStore.initialize(attributes, storeProtection);
+        retrievalStore.initialize(attributes, storeProtection, null);
 
         final PasswordCredential retrievedCredential = retrievalStore.retrieve("key", PasswordCredential.class, null,
                 null, null);
