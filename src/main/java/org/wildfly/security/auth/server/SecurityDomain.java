@@ -35,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -48,6 +49,7 @@ import org.wildfly.security.auth.SupportLevel;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
 import org.wildfly.security.auth.principal.RealmNestedPrincipal;
+import org.wildfly.security.auth.server.event.SecurityEvent;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMapper;
 import org.wildfly.security.authz.RoleDecoder;
@@ -88,6 +90,7 @@ public final class SecurityDomain {
     private final Map<String, RoleMapper> categoryRoleMappers;
     private final UnaryOperator<SecurityIdentity> securityIdentityTransformer;
     private final Predicate<SecurityDomain> trustedSecurityDomain;
+    private final Consumer<SecurityEvent> securityEventListener;
 
     SecurityDomain(Builder builder, final LinkedHashMap<String, RealmInfo> realmMap) {
         this.realmMap = realmMap;
@@ -99,6 +102,7 @@ public final class SecurityDomain {
         this.postRealmPrincipalRewriter = builder.postRealmRewriter;
         this.securityIdentityTransformer = builder.securityIdentityTransformer;
         this.trustedSecurityDomain = builder.trustedSecurityDomain;
+        this.securityEventListener = builder.securityEventListener;
         final Map<String, RoleMapper> originalRoleMappers = builder.categoryRoleMappers;
         final Map<String, RoleMapper> copiedRoleMappers;
         if (originalRoleMappers.isEmpty()) {
@@ -578,6 +582,22 @@ public final class SecurityDomain {
         return this == domain || trustedSecurityDomain.test(domain);
     }
 
+    void handleSecurityEvent(final SecurityEvent securityEvent) {
+        // If visibility of this method is increased double check the
+        // event does relate to this security domain.
+        this.securityEventListener.accept(securityEvent);
+    }
+
+    static void safeHandleSecurityEvent(final SecurityDomain domain, final SecurityEvent event) {
+        checkNotNullParam("domain", domain);
+        checkNotNullParam("event", event);
+        try {
+            domain.handleSecurityEvent(event);
+        } catch (Exception e) {
+            log.eventHandlerFailed(e);
+        }
+    }
+
     /**
      * A builder for creating new security domains.
      */
@@ -595,6 +615,7 @@ public final class SecurityDomain {
         private Map<String, RoleMapper> categoryRoleMappers = emptyMap();
         private UnaryOperator<SecurityIdentity> securityIdentityTransformer = UnaryOperator.identity();
         private Predicate<SecurityDomain> trustedSecurityDomain = domain -> false;
+        private Consumer<SecurityEvent> securityEventListener = e -> {};
 
         Builder() {
         }
@@ -786,6 +807,17 @@ public final class SecurityDomain {
         public Builder setTrustedSecurityDomainPredicate(final Predicate<SecurityDomain> trustedSecurityDomain) {
             Assert.checkNotNullParam("trustedSecurityDomain", trustedSecurityDomain);
             this.trustedSecurityDomain = trustedSecurityDomain;
+            return this;
+        }
+
+        /**
+         * Set the security event listener that will consume all {@link SecurityEvent} instances emitted but the domain.
+         *
+         * @param securityEventListener the security event listener that will consume all {@link SecurityEvent} instances emitted but the domain.
+         * @return this builder
+         */
+        public Builder setSecurityEventListener(final Consumer<SecurityEvent> securityEventListener) {
+            this.securityEventListener = Assert.checkNotNullParam("securityEventListener", securityEventListener);
             return this;
         }
 

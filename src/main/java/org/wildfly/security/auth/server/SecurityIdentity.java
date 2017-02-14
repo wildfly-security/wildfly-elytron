@@ -45,6 +45,8 @@ import org.wildfly.security.ParametricPrivilegedExceptionAction;
 import org.wildfly.security.auth.permission.ChangeRoleMapperPermission;
 import org.wildfly.security.auth.principal.AnonymousPrincipal;
 import org.wildfly.security.auth.principal.NamePrincipal;
+import org.wildfly.security.auth.server.event.SecurityPermissionCheckFailedEvent;
+import org.wildfly.security.auth.server.event.SecurityPermissionCheckSuccessfulEvent;
 import org.wildfly.security.authz.Attributes;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.authz.PermissionMappable;
@@ -678,8 +680,10 @@ public final class SecurityIdentity implements PermissionVerifier, PermissionMap
     }
 
     public boolean implies(final Permission permission) {
-        // TODO: authorization audit goes here
-        return verifier.implies(permission);
+        final boolean result = verifier.implies(permission);
+        SecurityDomain.safeHandleSecurityEvent(securityDomain,
+                result ? new SecurityPermissionCheckSuccessfulEvent(this, permission) : new SecurityPermissionCheckFailedEvent(this, permission));
+        return result;
     }
 
     /**

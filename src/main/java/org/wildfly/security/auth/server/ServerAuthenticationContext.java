@@ -68,6 +68,8 @@ import org.wildfly.security.auth.server.event.RealmFailedAuthenticationEvent;
 import org.wildfly.security.auth.server.event.RealmIdentityFailedAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmIdentitySuccessfulAuthorizationEvent;
 import org.wildfly.security.auth.server.event.RealmSuccessfulAuthenticationEvent;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationFailedEvent;
+import org.wildfly.security.auth.server.event.SecurityAuthenticationSuccessfulEvent;
 import org.wildfly.security.authz.AuthorizationIdentity;
 import org.wildfly.security.credential.Credential;
 import org.wildfly.security.credential.PasswordCredential;
@@ -2124,6 +2126,7 @@ public final class ServerAuthenticationContext {
             final AtomicReference<State> stateRef = getStateRef();
             if (stateRef.compareAndSet(this, new CompleteState(authorizedIdentity))) {
                 SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmSuccessfulAuthenticationEvent(realmIdentity, authorizedIdentity.getAuthorizationIdentity(), null, null));
+                SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationSuccessfulEvent(authorizedIdentity));
                 realmIdentity.dispose();
                 return;
             }
@@ -2132,9 +2135,11 @@ public final class ServerAuthenticationContext {
 
         @Override
         void fail() {
+            final SecurityIdentity authorizedIdentity = getSourceIdentity();
             final AtomicReference<State> stateRef = getStateRef();
             if (stateRef.compareAndSet(this, FAILED)) {
                 SecurityRealm.safeHandleRealmEvent(getRealmInfo().getSecurityRealm(), new RealmFailedAuthenticationEvent(realmIdentity, null, null));
+                SecurityDomain.safeHandleSecurityEvent(authorizedIdentity.getSecurityDomain(), new SecurityAuthenticationFailedEvent(getSourceIdentity()));
                 realmIdentity.dispose();
                 return;
             }
