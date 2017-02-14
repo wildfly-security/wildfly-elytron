@@ -122,6 +122,14 @@ public interface HttpExchangeSpi extends HttpServerScopes {
     URI getRequestURI();
 
     /**
+     * Get the request path. This is the path relative to the context path. E.g.: for a request to
+     * <code>http://my.appserver.com/my-application/path/sub-path</code> this method is going to return <code>/path/sub-path</code>.
+     *
+     * @return the request relative path
+     */
+    String getRequestPath();
+
+    /**
      * Returns the parameters received in the current request.
      *
      * These parameters will be from both the query string and the form data when available.

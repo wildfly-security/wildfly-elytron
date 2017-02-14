@@ -199,6 +199,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
+        public String getRequestPath() {
+            return wrapped.getRequestPath();
+        }
+
+        @Override
         public Map<String, List<String>> getParameters() {
             return wrapped.getParameters();
         }
