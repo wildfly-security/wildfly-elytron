@@ -303,6 +303,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         } catch (Exception e) {
             throw log.mechProblemDuringCrypt(getMechanismName(), e).toSaslException();
         }
+        if (cipheredPart == null){
+            throw log.mechProblemDuringCryptResultIsNull(getMechanismName()).toSaslException();
+        }
 
         byte[] result = new byte[cipheredPart.length + 6];
         System.arraycopy(cipheredPart, 0, result, 0, cipheredPart.length);
@@ -331,6 +334,9 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
             clearText = unwrapCipher.update(message, offset, len - 6);
         } catch (Exception e) {
             throw log.mechProblemDuringDecrypt(getMechanismName(), e).toSaslException();
+        }
+        if (clearText == null){
+            throw log.mechProblemDuringDecryptResultIsNull(getMechanismName()).toSaslException();
         }
 
         byte[] hmac = new byte[10];
@@ -417,7 +423,11 @@ abstract class AbstractDigestMechanism extends AbstractSaslParticipant {
         SecretKey cipherKey;
 
         try {
-            ciph = Cipher.getInstance(trans.getTransformationSpec(SaslMechanismInformation.Names.DIGEST_MD5, cipher).getTransformation());
+            TransformationSpec transformationSpec = trans.getTransformationSpec(SaslMechanismInformation.Names.DIGEST_MD5, cipher);
+            if (transformationSpec == null ) {
+                throw log.mechUnknownCipher(getMechanismName(), cipher).toSaslException();
+            }
+            ciph = Cipher.getInstance(transformationSpec.getTransformation());
             int slash = ciph.getAlgorithm().indexOf('/');
             String alg = (slash > -1 ? ciph.getAlgorithm().substring(0, slash) : ciph.getAlgorithm());
 

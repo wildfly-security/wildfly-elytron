@@ -1392,6 +1392,11 @@ public interface ElytronMessages extends BasicLogger {
     @Message(id = 5169, value = "[%s] Clients response token does not match expected token")
     String mechResponseTokenMismatch(String mechName);
 
+    @Message(id = 5170, value = "[%s] Problem during crypt: The encrypted result is null. The input data has a length of zero or too short to result in a new block.")
+    AuthenticationMechanismException mechProblemDuringCryptResultIsNull(String mechName);
+
+    @Message(id = 5171, value = "[%s] Problem during decrypt: The decrypted result is null. The input data has a length of zero or too short to result in a new block.")
+    AuthenticationMechanismException mechProblemDuringDecryptResultIsNull(String mechName);
 
     /* http package */
 
