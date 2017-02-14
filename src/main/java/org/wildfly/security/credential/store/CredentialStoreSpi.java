@@ -17,6 +17,7 @@
  */
 package org.wildfly.security.credential.store;
 
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +32,7 @@ import org.wildfly.security.credential.Credential;
 public abstract class CredentialStoreSpi {
 
     /**
-     * Field indicating successful initialization ({@link #initialize(Map, CredentialStore.ProtectionParameter)}. Each subclass should set this field.
+     * Field indicating successful initialization ({@link #initialize(Map, CredentialStore.ProtectionParameter, Provider[])}. Each subclass should set this field.
      */
     protected boolean initialized = false;
 
@@ -47,9 +48,10 @@ public abstract class CredentialStoreSpi {
      *
      * @param attributes attributes to used to pass information to credential store service
      * @param protectionParameter the store-wide protection parameter to apply, or {@code null} for none
+     * @param providers providers to be injected into SPI implementation to get custom object instances of various type from, or {@code null} for none
      * @throws CredentialStoreException if initialization fails due to any reason
      */
-    public abstract void initialize(Map<String, String> attributes, CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException;
+    public abstract void initialize(Map<String, String> attributes, CredentialStore.ProtectionParameter protectionParameter, Provider[] providers) throws CredentialStoreException;
 
     /**
      * Checks whether underlying credential store service is initialized.

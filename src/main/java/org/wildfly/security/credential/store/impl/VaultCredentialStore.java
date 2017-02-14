@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +72,7 @@ public final class VaultCredentialStore extends CredentialStoreSpi {
     public VaultCredentialStore() {
     }
 
-    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException {
+    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, Provider[] providers) throws CredentialStoreException {
         if (! (protectionParameter instanceof CredentialStore.CredentialSourceProtectionParameter)) {
             throw log.invalidProtectionParameter(protectionParameter);
         }

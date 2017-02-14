@@ -112,10 +112,23 @@ public class CredentialStore {
      *
      * @param attributes attributes to used to pass information to Credential Store service
      * @param protectionParameter the protection parameter to use when accessing the store
+     * @param providers providers to be injected into SPI implementation to get custom object instances of various type from
+     * @throws CredentialStoreException if initialization fails due to any reason
+     */
+    public void initialize(Map<String, String> attributes, ProtectionParameter protectionParameter, Provider[] providers) throws CredentialStoreException {
+        spi.initialize(attributes, protectionParameter, providers);
+    }
+
+    /**
+     * Initialize Credential Store service with given attributes.
+     * This procedure should set {@link CredentialStoreSpi#initialized} after successful initialization.
+     *
+     * @param attributes attributes to used to pass information to Credential Store service
+     * @param protectionParameter the protection parameter to use when accessing the store
      * @throws CredentialStoreException if initialization fails due to any reason
      */
     public void initialize(Map<String, String> attributes, ProtectionParameter protectionParameter) throws CredentialStoreException {
-        spi.initialize(attributes, protectionParameter);
+        initialize(attributes, protectionParameter, null);
     }
 
     /**

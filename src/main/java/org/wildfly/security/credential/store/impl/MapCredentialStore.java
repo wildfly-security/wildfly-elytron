@@ -21,6 +21,7 @@ package org.wildfly.security.credential.store.impl;
 import static org.wildfly.security._private.ElytronMessages.log;
 
 import java.io.IOException;
+import java.security.Provider;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.HashSet;
 import java.util.Map;
@@ -74,7 +75,7 @@ public final class MapCredentialStore extends CredentialStoreSpi {
         this(new ConcurrentHashMap<String, CredentialSource>(), true);
     }
 
-    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException {
+    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, Provider[] providers) throws CredentialStoreException {
         if (protectionParameter != null) {
             throw log.invalidProtectionParameter(protectionParameter);
         }

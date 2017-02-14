@@ -148,10 +148,6 @@ public final class KeyStoreCredentialStore extends CredentialStoreSpi {
     private CredentialStore.ProtectionParameter protectionParameter;
     private Provider[] providers;
 
-    public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter) throws CredentialStoreException {
-        initialize(attributes, protectionParameter, null);
-    }
-
     public void initialize(final Map<String, String> attributes, final CredentialStore.ProtectionParameter protectionParameter, final Provider[] providers) throws CredentialStoreException {
         try (Hold hold = lockForWrite()) {
             if (protectionParameter == null) {

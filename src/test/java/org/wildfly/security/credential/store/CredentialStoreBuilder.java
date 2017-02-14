@@ -124,7 +124,8 @@ public class CredentialStoreBuilder {
         storeImpl.initialize(
             map,
             new CredentialStore.CredentialSourceProtectionParameter(
-                IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, storagePassword))))
+                IdentityCredentials.NONE.withCredential(new PasswordCredential(ClearPassword.createRaw(ClearPassword.ALGORITHM_CLEAR, storagePassword)))),
+            null
             );
 
         for (Data item : data) {
