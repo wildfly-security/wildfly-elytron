@@ -206,7 +206,7 @@ public final class DigestUtil {
         int result = buf[offset];
         for (int i = 1; i < len; i++) {
             result <<= 8;
-            result |= buf[offset + i];
+            result |= (buf[offset + i] & 0xff);
         }
         return result;
     }

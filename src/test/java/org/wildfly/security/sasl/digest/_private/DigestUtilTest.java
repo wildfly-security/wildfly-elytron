@@ -160,6 +160,10 @@ public class DigestUtilTest {
 
         byte[] inputFFFFFFFF = CodePointIterator.ofString("FFFFFFFF").hexDecode().drain();
         assertEquals(0xFFFFFFFF, decodeByteOrderedInteger(inputFFFFFFFF, 0, 4));
+
+        byte[] inputFF = CodePointIterator.ofString("000000FF").hexDecode().drain();
+        assertEquals(0xFF, decodeByteOrderedInteger(inputFF, 0, 4));
+
     }
 
 }
