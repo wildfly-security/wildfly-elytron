@@ -73,7 +73,7 @@ public interface ElytronToolMessages extends BasicLogger {
     @Message(id = Message.NONE, value = "Check if alias exists within the credential store")
     String cmdLineCheckAliasDesc();
 
-    @Message(id = Message.NONE, value = "Display alla aliases")
+    @Message(id = Message.NONE, value = "Display all aliases")
     String cmdLineAliasesDesc();
 
     @Message(id = Message.NONE, value = "Print summary, especially command how to create this credential store")
