@@ -42,6 +42,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Properties;
 
@@ -386,7 +387,7 @@ public class SimpleDirContextFactoryBuilder {
                     Object value = connectionProperties.get(key.toString());
 
                     if (value != null) {
-                        env.put(key.toString(), value.toString());
+                        env.put(key.toString(), value);
                     }
                 }
             }
@@ -394,7 +395,11 @@ public class SimpleDirContextFactoryBuilder {
             if (log.isDebugEnabled()) {
                 log.debugf("Creating [" + InitialDirContext.class + "] with environment:");
                 env.forEach((key, value) -> {
-                    log.debugf("    Property [%s] with Value [%s]", key, value);
+                    if (value instanceof Object[]) {
+                        log.debugf("    Property [%s] with values %s", key, Arrays.deepToString((Object[]) value));
+                    } else {
+                        log.debugf("    Property [%s] with value [%s]", key, value);
+                    }
                 });
             }
 
