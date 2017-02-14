@@ -389,7 +389,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
-            return credential.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential) : null;
+            return credential.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential.clone()) : null;
         }
 
         public IdentityCredentials withCredential(final Credential credential) {
@@ -479,8 +479,8 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
 
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
             Assert.checkNotNullParam("credentialType", credentialType);
-            return credential1.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential1) :
-                   credential2.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential2) : null;
+            return credential1.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential1.clone()) :
+                   credential2.matches(credentialType, algorithmName, parameterSpec) ? credentialType.cast(credential2.clone()) : null;
         }
 
         public IdentityCredentials withCredential(final Credential credential) {
@@ -653,7 +653,7 @@ public abstract class IdentityCredentials implements Iterable<Credential>, Crede
         }
 
         public <C extends Credential> C getCredential(final Class<C> credentialType, final String algorithmName, final AlgorithmParameterSpec parameterSpec) {
-            return credentialType.cast(map.get(new Key(credentialType, algorithmName, parameterSpec)));
+            return credentialType.cast(map.get(new Key(credentialType, algorithmName, parameterSpec)).clone());
         }
 
         public IdentityCredentials withoutMatching(final Credential credential) {
