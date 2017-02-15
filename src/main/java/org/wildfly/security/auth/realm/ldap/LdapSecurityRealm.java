@@ -680,20 +680,20 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         /**
-         * Obtains values of attribute given by mapping from given entry.
+         * Obtains attribute value by mapping from given entry and put it into given collection.
          *
          * @param entry LDAP entry, from which should be values obtained
          * @param mapping attribute mapping defining attribute, whose values should be obtained
-         * @param identityAttributeValues output collection for obtained values
-         * @return {@code true} if identityAttributeValues was changed.
+         * @param outputCollection output collection for obtained values
+         * @return {@code true} if {@code outputCollection} was changed.
          */
-        private boolean valuesFromAttribute(SearchResult entry, AttributeMapping mapping, Collection<String> identityAttributeValues) throws NamingException {
+        private boolean valuesFromAttribute(SearchResult entry, AttributeMapping mapping, Collection<String> outputCollection) throws NamingException {
             if (mapping.getLdapName() == null) {
                 String value = entry.getNameInNamespace();
                 if (mapping.getRdn() != null) {
                     value = extractRdn(mapping, value);
                 }
-                return identityAttributeValues.add(value);
+                return outputCollection.add(value);
             } else {
                 Attributes entryAttributes = entry.getAttributes();
                 javax.naming.directory.Attribute ldapAttribute = entryAttributes.get(mapping.getLdapName());
@@ -705,7 +705,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                     if (mapping.getRdn() != null) {
                         values = values.map(val -> extractRdn(mapping, val)).filter(Objects::nonNull);
                     }
-                    return values.map(identityAttributeValues::add).filter(changed -> changed).count() != 0;
+                    return values.map(outputCollection::add).filter(changed -> changed).count() != 0;
                 } finally {
                     if (attributesEnum != null) {
                         try {
@@ -719,35 +719,40 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         private Map<String, Collection<String>> extractFilteredAttributes(SearchResult identityEntry, DirContext context, DirContext identityContext) {
             return extractAttributes(AttributeMapping::isFilteredOrReference, mapping -> {
-                Collection<String> identityAttributeValues = mapping.getRoleRecursionDepth() == 0 ? new ArrayList<>() : new HashSet<>();
-                extractFilteredAttributesRecursion(identityEntry, mapping, context, identityContext, 0, identityAttributeValues);
-                return identityAttributeValues;
+                Collection<String> values = mapping.getRoleRecursionDepth() == 0 ? new ArrayList<>() : new HashSet<>();
+                final String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
+
+                List<SearchResult> toSearch = new LinkedList<>();
+                toSearch.add(identityEntry);
+
+                for (int depth = 0; depth <= mapping.getRoleRecursionDepth() && ! toSearch.isEmpty(); depth++) {
+                    List<SearchResult> toSearchInNextLevel = new LinkedList<>();
+                    for(SearchResult entry : toSearch) {
+                        final String entryDn = entry != null ? entry.getNameInNamespace() : null;
+                        if (mapping.getReference() != null && entry != null) { // reference
+                            forEachAttributeValue(entry, mapping.getReference(), value -> {
+                                LdapSearch search = new LdapSearch(value);
+                                extractFilteredAttributesFromSearch(search, entry, mapping, context, identityContext, values, toSearchInNextLevel);
+                            });
+                        } else if (mapping.getReference() == null) { // filter
+                            if (depth == 0) { // roles of identity
+                                LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), name, entryDn);
+                                extractFilteredAttributesFromSearch(search, entry, mapping, context, identityContext, values, toSearchInNextLevel);
+                            } else if (entry != null) { // roles of role
+                                forEachAttributeValue(entry, mapping.getRoleRecursionName(), roleName -> {
+                                    LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), roleName, entryDn);
+                                    extractFilteredAttributesFromSearch(search, entry, mapping, context, identityContext, values, toSearchInNextLevel);
+                                });
+                            }
+                        }
+                    }
+                    toSearch = toSearchInNextLevel;
+                }
+                return values;
             });
         }
 
-        private void extractFilteredAttributesRecursion(SearchResult entry, AttributeMapping mapping, DirContext context, DirContext identityContext, int depth, Collection<String> identityAttributeValues) {
-            final String entryDn = entry != null ? entry.getNameInNamespace() : null;
-            final String searchDn = mapping.getSearchDn() != null ? mapping.getSearchDn() : identityMapping.searchDn;
-
-            if (mapping.getReference() != null && entry != null) { // reference
-                forEachAttributeValue(entry, mapping.getReference(), value -> {
-                    LdapSearch search = new LdapSearch(value);
-                    extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
-                });
-            } else if (mapping.getReference() == null) { // filter
-                if (depth == 0) { // roles of identity
-                    LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), name, entryDn);
-                    extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
-                } else if (entry != null) { // roles of role
-                    forEachAttributeValue(entry, mapping.getRoleRecursionName(), roleName -> {
-                        LdapSearch search = new LdapSearch(searchDn, mapping.getRecursiveSearch(), 0, mapping.getFilter(), roleName, entryDn);
-                        extractFilteredReferencedAttributesFromSearch(search, entry, mapping, context, identityContext, depth, identityAttributeValues);
-                    });
-                }
-            }
-        }
-
-        private void extractFilteredReferencedAttributesFromSearch(LdapSearch search, SearchResult referencedEntry, AttributeMapping mapping, DirContext context, DirContext identityContext, int depth, Collection<String> identityAttributeValues) {
+        private void extractFilteredAttributesFromSearch(LdapSearch search, SearchResult referencedEntry, AttributeMapping mapping, DirContext context, DirContext identityContext, Collection<String> identityAttributeValues, Collection<SearchResult> toSearchInNextLevel) {
             String referencedDn = referencedEntry != null ? referencedEntry.getNameInNamespace() : null;
 
             Set<String> attributes = new HashSet<>();
@@ -758,14 +763,12 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
             try (Stream<SearchResult> entries = search.search(mapping.searchInIdentityContext() ? identityContext : context)) {
                 entries.forEach(entry -> {
-                    boolean changed;
                     try {
-                        changed = valuesFromAttribute(entry, mapping, identityAttributeValues);
+                        if (valuesFromAttribute(entry, mapping, identityAttributeValues)) {
+                            toSearchInNextLevel.add(entry);
+                        }
                     } catch (Exception cause) {
                         throw ElytronMessages.log.ldapRealmFailedObtainAttributes(referencedDn, cause);
-                    }
-                    if (mapping.getRoleRecursionDepth() > depth && changed) {
-                        extractFilteredAttributesRecursion(entry, mapping, context, identityContext, depth+1, identityAttributeValues);
                     }
                 });
             } catch (Exception cause) {

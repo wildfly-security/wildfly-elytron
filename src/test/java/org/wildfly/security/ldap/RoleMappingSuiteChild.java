@@ -32,6 +32,7 @@ import org.wildfly.security.permission.PermissionVerifier;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
+ * @author <a href="mailto:jkalina@redhat.com">Jan Kalina</a>
  */
 public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
 
@@ -39,7 +40,7 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
     public void testRoleMappingWithMemberOf() throws Exception {
         assertAttributes("userWithMemberOfRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
-            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDN");
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "roleByMemberOf");
         }, AttributeMapping.fromIdentity().from("memberOf").extractRdn("CN").to(RoleDecoder.KEY_ROLES).build());
     }
 
@@ -47,8 +48,16 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
     public void testRoleMappingWithMemberOfAttribute() throws Exception {
         assertAttributes("userWithMemberOfRoles", attributes -> {
             assertEquals("Expected a single attribute.", 1, attributes.size());
-            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "RoleFromBaseDNDescription");
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "roleByMemberOfDescription");
         }, AttributeMapping.fromReference("memberOf").from("description").to(RoleDecoder.KEY_ROLES).build());
+    }
+
+    @Test
+    public void testRoleMappingWithMemberOfRecursive() throws Exception {
+        assertAttributes("userWithMemberOfRoles", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "roleByMemberOfDescription", "roleOfRoleByMemberOfDescription");
+        }, AttributeMapping.fromReference("memberOf").roleRecursion(3).from("description").to(RoleDecoder.KEY_ROLES).build());
     }
 
     @Test
@@ -90,6 +99,14 @@ public class RoleMappingSuiteChild extends AbstractAttributeMappingSuiteChild {
             assertEquals("Expected a single attribute.", 1, attributes.size());
             assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "R1", "R2","R3");
         }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(10).to(RoleDecoder.KEY_ROLES).build());
+    }
+
+    @Test
+    public void testRecursiveRolesMoreWaysToOneRole() throws Exception {
+        assertAttributes("ranvir", attributes -> {
+            assertEquals("Expected a single attribute.", 1, attributes.size());
+            assertAttributeValue(attributes.get(RoleDecoder.KEY_ROLES), "MWR1", "MWR2","MWR3");
+        }, AttributeMapping.fromFilter("(&(objectClass=groupOfNames)(member={1}))").from("cn").roleRecursion(1).to(RoleDecoder.KEY_ROLES).build());
     }
 
     @Test
