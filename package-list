@@ -1,5 +1,6 @@
 org.wildfly.security
 org.wildfly.security.asn1
+org.wildfly.security.audit
 org.wildfly.security.auth
 org.wildfly.security.auth.callback
 org.wildfly.security.auth.client
@@ -16,7 +17,9 @@ org.wildfly.security.auth.server.event
 org.wildfly.security.auth.util
 org.wildfly.security.authz
 org.wildfly.security.authz.jacc
+org.wildfly.security.cache
 org.wildfly.security.credential
+org.wildfly.security.credential.source
 org.wildfly.security.credential.store
 org.wildfly.security.credential.store.impl
 org.wildfly.security.digest
@@ -24,10 +27,13 @@ org.wildfly.security.evidence
 org.wildfly.security.http
 org.wildfly.security.http.impl
 org.wildfly.security.http.util
+org.wildfly.security.http.util.sso
+org.wildfly.security.key
 org.wildfly.security.keystore
 org.wildfly.security.manager
 org.wildfly.security.manager.action
 org.wildfly.security.mechanism
+org.wildfly.security.mechanism.digest
 org.wildfly.security.mechanism.oauth2
 org.wildfly.security.mechanism.scram
 org.wildfly.security.password
