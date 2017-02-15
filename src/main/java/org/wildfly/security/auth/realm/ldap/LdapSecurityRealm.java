@@ -20,7 +20,6 @@ package org.wildfly.security.auth.realm.ldap;
 
 import static org.wildfly.security._private.ElytronMessages.log;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.Provider;
@@ -927,7 +926,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
             }
         }
 
-        private class LdapIdentity implements Closeable {
+        private class LdapIdentity {
 
             private final String name;
             private final DirContext dirContext;
@@ -955,15 +954,6 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
             SearchResult getEntry() {
                 return this.entry;
-            }
-
-            @Override
-            public void close() throws IOException {
-                try {
-                    dirContext.close();
-                } catch (NamingException e) {
-                    log.debug("LdapSecurityRealm failed to close DirContext", e);
-                }
             }
         }
     }
@@ -1143,7 +1133,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
         private final String searchDn;
         private final boolean searchRecursive;
-        public final int searchTimeLimit;
+        private final int searchTimeLimit;
         private final String rdnIdentifier;
         private final List<AttributeMapping> attributes;
         private final LdapName newIdentityParent;
