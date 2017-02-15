@@ -97,6 +97,17 @@ public interface HttpServerRequest extends HttpServerScopes {
     void authenticationComplete(final HttpServerMechanismsResponder responder);
 
     /**
+     * <p>Notification that authentication is now complete.
+     *
+     * <p>This method behaves exactly like {@code {@link #authenticationComplete(HttpServerMechanismsResponder)}}, allowing
+     * mechanisms to register a logout handler which should be called when a logout request is received by the underlying container.
+     *
+     * @param responder a {@link HttpServerMechanismsResponder} that can send a response.
+     * @param logoutHandler a {@link Runnable} that can handle logout
+     */
+    void authenticationComplete(final HttpServerMechanismsResponder responder, Runnable logoutHandler);
+
+    /**
      * Notification that authentication is now complete.
      *
      * After this point the framework will perform an authorization check for the authenticated user and if successful establish

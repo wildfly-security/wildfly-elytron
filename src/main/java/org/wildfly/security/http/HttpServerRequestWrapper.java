@@ -87,6 +87,11 @@ public class HttpServerRequestWrapper implements HttpServerRequest {
     }
 
     @Override
+    public void authenticationComplete(HttpServerMechanismsResponder responder, Runnable logoutHandler) {
+        delegate.authenticationComplete(responder, logoutHandler);
+    }
+
+    @Override
     public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
         delegate.authenticationFailed(message, responder);
     }

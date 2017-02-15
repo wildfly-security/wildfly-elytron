@@ -179,6 +179,11 @@ final class PrivilegedServerMechanism implements HttpServerAuthenticationMechani
         }
 
         @Override
+        public void authenticationComplete(HttpServerMechanismsResponder responder, Runnable logoutHandler) {
+            wrapped.authenticationComplete(responder, logoutHandler);
+        }
+
+        @Override
         public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
             wrapped.authenticationFailed(message, wrap(responder));
         }
