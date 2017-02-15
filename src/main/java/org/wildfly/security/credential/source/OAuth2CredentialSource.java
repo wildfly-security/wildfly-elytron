@@ -167,10 +167,11 @@ public class OAuth2CredentialSource implements CredentialSource {
         log.debugf("Opening connection to [%s]", tokenEndpointUri);
         HttpURLConnection connection = (HttpURLConnection) tokenEndpointUri.openConnection();
 
-        if (isHttps(tokenEndpointUri)) {
+        SSLContext sslContext = resolveSSLContext();
+        if (sslContext != null) {
             HttpsURLConnection https = (HttpsURLConnection) connection;
 
-            https.setSSLSocketFactory(resolveSSLContext().getSocketFactory());
+            https.setSSLSocketFactory(sslContext.getSocketFactory());
             if (hostnameVerifierSupplier != null) {
                 https.setHostnameVerifier(checkNotNullParam("hostnameVerifier", hostnameVerifierSupplier.get()));
             }
