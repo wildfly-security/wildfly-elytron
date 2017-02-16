@@ -169,6 +169,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         // Acquire the appropriate lock for the realm identity
+        log.debugf("Obtaining lock for identity [%s]...", name);
         IdentitySharedExclusiveLock realmIdentityLock = getRealmIdentityLockForName(name);
         IdentityLock lock;
         if (exclusive) {
@@ -176,6 +177,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         } else {
             lock = realmIdentityLock.lockShared();
         }
+        log.debugf("Obtained lock for identity [%s].", name);
         return new LdapRealmIdentity(name, lock);
     }
 
@@ -211,7 +213,14 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         } catch (NamingException e) {
             throw log.ldapRealmIdentitySearchFailed(e);
         }
-        Iterator<SearchResult> iterator = resultStream.iterator();
+
+        Iterator<String> iterator = resultStream.map(entry -> {
+            try {
+                return (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
+            } catch (NamingException e) {
+                throw log.ldapRealmIdentitySearchFailed(e);
+            }
+        }).distinct().iterator(); // distinct to prevent deadlock on identity locking when one identity found twice
 
         return new CloseableIterator<ModifiableRealmIdentity>() {
 
@@ -222,14 +231,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
 
             @Override
             public ModifiableRealmIdentity next() {
-                SearchResult entry = iterator.next();
-                // because referrals support cannot be identity obtained by DN
-                try {
-                    String name = (String) entry.getAttributes().get(identityMapping.rdnIdentifier).get();
-                    return getRealmIdentityForUpdate(new NamePrincipal(name));
-                } catch (NamingException e) {
-                    throw log.ldapRealmIdentitySearchFailed(e);
-                }
+                String name = iterator.next();
+                return getRealmIdentityForUpdate(new NamePrincipal(name));
             }
 
             @Override
@@ -1007,20 +1010,35 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
         }
 
         public Stream<SearchResult> search(DirContext ctx) throws RealmUnavailableException {
-            log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]. Binary attributes are [%s].", filter, searchDn, filterArgs, returningAttributes, binaryAttributes);
+            if (log.isDebugEnabled()) {
+                log.debugf("Executing search [%s] in context [%s] with arguments [%s]. Returning attributes are [%s]. Binary attributes are [%s].",
+                        filter, searchDn,
+                        filterArgs == null ? null : String.join(", ", filterArgs),
+                        returningAttributes == null ? null : String.join(", ", returningAttributes),
+                        binaryAttributes == null ? null : String.join(", ", binaryAttributes)
+                );
+            }
             context = ctx;
             cookie = null;
             try {
                 result = searchWithPagination();
                 return StreamSupport.stream(new Spliterators.AbstractSpliterator<SearchResult>(Long.MAX_VALUE, Spliterator.NONNULL) {
+
+                    boolean finished = false;
+                    Set<Object> followedReferrals = new HashSet<>();
+
                     @Override
                     public boolean tryAdvance(Consumer<? super SearchResult> action) {
+
+                        if (finished) return false;
+
                         try {
                             while (true) {
                                 try {
                                     if ( ! result.hasMore()) { // end of page
                                         if ( ! (pageSize != 0 && context instanceof LdapContext) ) {
                                             log.trace("Identity iterating - pagination not supported - end of list");
+                                            finished = true;
                                             return false;
                                         }
                                         Control[] controls = ((LdapContext) context).getResponseControls();
@@ -1030,6 +1048,7 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                                     cookie = ((PagedResultsResponseControl) control).getCookie();
                                                     if (cookie == null) {
                                                         log.trace("Identity iterating - no more pages - end of list");
+                                                        finished = true;
                                                         return false; // no more pages
                                                     }
                                                 }
@@ -1040,7 +1059,8 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                         result = searchWithPagination();
                                         if ( ! result.hasMore()) {
                                             log.trace("Identity iterating - even after page loading no results - end of list");
-                                            return false;
+                                            finished = true;
+                                            return false; // no more elements
                                         }
                                     }
                                     SearchResult entry = result.next();
@@ -1048,9 +1068,21 @@ class LdapSecurityRealm implements ModifiableSecurityRealm, CacheableSecurityRea
                                     action.accept(entry);
                                     return true;
                                 } catch (ReferralException e) {
-                                    log.debug("Next referral following in identity iterating...");
-                                    context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
-                                    result = searchWithPagination();
+                                    if (followedReferrals.add(e.getReferralInfo())) { // follow
+                                        log.debugf("Next referral following in identity iterating: [%s]", e.getReferralInfo());
+                                        context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
+                                        result = searchWithPagination();
+                                    } else { // already searched - skip
+                                        if (e.skipReferral()) {
+                                            log.debugf("Referral skipped, continue: [%s]", e.getReferralInfo());
+                                            context = ((DelegatingLdapContext) context).wrapReferralContextObtaining(e);
+                                            result = searchWithPagination();
+                                        } else {
+                                            log.debugf("Referral skipped and no more elements: [%s]", e.getReferralInfo());
+                                            finished = true;
+                                            return false; // no more elements
+                                        }
+                                    }
                                 }
                             }
                         } catch (NamingException | IOException e) {
