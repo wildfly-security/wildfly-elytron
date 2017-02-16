@@ -33,10 +33,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.net.ssl.SSLSession;
 
+import org.wildfly.common.Assert;
 import org.wildfly.security.auth.server.SecurityDomain;
 import org.wildfly.security.auth.server.SecurityIdentity;
 
@@ -53,14 +55,16 @@ public class HttpAuthenticator {
     private final HttpExchangeSpi httpExchangeSpi;
     private final boolean required;
     private final boolean ignoreOptionalFailures;
+    private final Consumer<Runnable> logoutHandlerConsumer;
     private volatile boolean authenticated = false;
 
     private HttpAuthenticator(final Supplier<List<HttpServerAuthenticationMechanism>> mechanismSupplier, final HttpExchangeSpi httpExchangeSpi,
-                              final boolean required, final boolean ignoreOptionalFailures) {
+                              final boolean required, final boolean ignoreOptionalFailures, Consumer<Runnable> logoutHandlerConsumer) {
         this.mechanismSupplier = mechanismSupplier;
         this.httpExchangeSpi = httpExchangeSpi;
         this.required = required;
         this.ignoreOptionalFailures = ignoreOptionalFailures;
+        this.logoutHandlerConsumer = logoutHandlerConsumer;
     }
 
     /**
@@ -201,6 +205,14 @@ public class HttpAuthenticator {
         }
 
         @Override
+        public void authenticationComplete(HttpServerMechanismsResponder responder, Runnable logoutHandler) {
+            authenticationComplete(responder);
+            if (logoutHandlerConsumer != null) {
+                logoutHandlerConsumer.accept(logoutHandler);
+            }
+        }
+
+        @Override
         public void authenticationFailed(String message, HttpServerMechanismsResponder responder) {
             authenticationAttempted = true;
             httpExchangeSpi.authenticationFailed(message, currentMechanism.getMechanismName());
@@ -327,6 +339,7 @@ public class HttpAuthenticator {
         private HttpExchangeSpi httpExchangeSpi;
         private boolean required;
         private boolean ignoreOptionalFailures;
+        private Consumer<Runnable> logoutHandlerConsumer;
 
         Builder() {
         }
@@ -387,12 +400,28 @@ public class HttpAuthenticator {
         }
 
         /**
+         * <p>A {@link Consumer} responsible for registering a {@link Runnable} emitted by one of the mechanisms during the evaluation
+         * of a request and representing some action to be taken during logout.
+         *
+         * <p>This method is mainly targeted for programmatic logout where logout requests are send by the application after the
+         * authentication. Although, integration code is free to register the logout handler whatever they want in order to support
+         * different logout scenarios.
+         *
+         * @param logoutHandlerConsumer the consumer responsible for registering the logout handler (not {@code null})
+         * @return the {@link Builder} to allow method call chaining.
+         */
+        public Builder registerLogoutHandler(Consumer<Runnable> logoutHandlerConsumer) {
+            this.logoutHandlerConsumer = Assert.checkNotNullParam("logoutHandlerConsumer", logoutHandlerConsumer);
+            return this;
+        }
+
+        /**
          * Build the new {@code HttpAuthenticator} instance.
          *
          * @return the new {@code HttpAuthenticator} instance.
          */
         public HttpAuthenticator build() {
-            return new HttpAuthenticator(mechanismSupplier, httpExchangeSpi, required, ignoreOptionalFailures);
+            return new HttpAuthenticator(mechanismSupplier, httpExchangeSpi, required, ignoreOptionalFailures, logoutHandlerConsumer);
         }
 
     }
